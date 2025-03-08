@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["resources/js/*"],
+            "@sakai-vue/*": ["resources/external/sakai-vue/*"]
+        }
+    },
+    "exclude": ["node_modules", "public"]
+}
