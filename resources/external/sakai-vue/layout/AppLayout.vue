@@ -4,10 +4,16 @@ import { computed, ref, watch } from 'vue';
 import AppFooter from './AppFooter.vue';
 import AppSidebar from './AppSidebar.vue';
 import AppTopbar from './AppTopbar.vue';
+import Toast from 'primevue/toast';
+import { Head } from '@inertiajs/vue3';
 
 const { layoutConfig, layoutState, isSidebarActive } = useLayout();
 
 const outsideClickListener = ref(null);
+
+defineProps({
+    title: String
+})
 
 watch(isSidebarActive, (newVal) => {
     if (newVal) {
@@ -56,12 +62,14 @@ function isOutsideClicked(event) {
 </script>
 
 <template>
+    <Head :title="title" />
+
     <div class="layout-wrapper" :class="containerClass">
         <app-topbar></app-topbar>
         <app-sidebar></app-sidebar>
         <div class="layout-main-container">
             <div class="layout-main">
-                <router-view></router-view>
+                <slot />
             </div>
             <app-footer></app-footer>
         </div>

@@ -1,8 +1,12 @@
 <script setup>
 import { useLayout } from '@sakai-vue/layout/composables/layout';
 import AppConfigurator from './AppConfigurator.vue';
+import AppUserMenu from './AppUserMenu.vue';
+import { Link } from '@inertiajs/vue3';
 
 const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
+
+const appName = import.meta.env.VITE_APP_NAME;
 </script>
 
 <template>
@@ -11,7 +15,7 @@ const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
             <button class="layout-menu-button layout-topbar-action" @click="toggleMenu">
                 <i class="pi pi-bars"></i>
             </button>
-            <router-link to="/" class="layout-topbar-logo">
+            <Link :href="route('sakai')" class="layout-topbar-logo">
                 <svg viewBox="0 0 54 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
                         fill-rule="evenodd"
@@ -30,8 +34,8 @@ const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
                     </g>
                 </svg>
 
-                <span>SAKAI</span>
-            </router-link>
+                <span>{{ appName }}</span>
+            </Link>
         </div>
 
         <div class="layout-topbar-actions">
@@ -62,16 +66,13 @@ const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
                 <div class="layout-topbar-menu-content">
                     <button type="button" class="layout-topbar-action">
                         <i class="pi pi-calendar"></i>
-                        <span>Calendar</span>
+                        <span>Calendario</span>
                     </button>
                     <button type="button" class="layout-topbar-action">
                         <i class="pi pi-inbox"></i>
-                        <span>Messages</span>
+                        <span>Notificaciones</span>
                     </button>
-                    <button type="button" class="layout-topbar-action">
-                        <i class="pi pi-user"></i>
-                        <span>Profile</span>
-                    </button>
+                    <AppUserMenu />
                 </div>
             </div>
         </div>

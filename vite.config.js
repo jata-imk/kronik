@@ -1,5 +1,9 @@
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
+
+import Components from 'unplugin-vue-components/vite';
+import {PrimeVueResolver} from '@primevue/auto-import-resolver';
+
 import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
 
@@ -17,6 +21,9 @@ export default defineConfig({
                 },
             },
         }),
+        Components({
+            resolvers: [PrimeVueResolver()]
+        })
     ],
     resolve: {
         alias: {
