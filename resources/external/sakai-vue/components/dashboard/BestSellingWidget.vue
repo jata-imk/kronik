@@ -1,5 +1,7 @@
 <script setup>
 import { ref } from 'vue';
+import Button from 'primevue/button';
+import Menu from 'primevue/menu';
 
 const menu = ref(null);
 

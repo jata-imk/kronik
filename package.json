@@ -7,6 +7,7 @@
     },
     "devDependencies": {
         "@inertiajs/vue3": "^1.0.14",
+        "@primevue/auto-import-resolver": "^4.3.1",
         "@tailwindcss/forms": "^0.5.7",
         "@tailwindcss/typography": "^0.5.10",
         "@vitejs/plugin-vue": "^5.0.0",
@@ -18,12 +19,16 @@
         "sass": "^1.85.0",
         "tailwindcss": "^3.4.0",
         "tailwindcss-primeui": "^0.4.0",
+        "unplugin-vue-components": "^28.4.1",
         "vite": "^6.0.11",
         "vue": "^3.3.13"
     },
     "dependencies": {
-        "@primeuix/themes": "^1.0.0-rc.1",
+        "@primevue/themes": "^4.3.1",
+        "chart.js": "^4.4.8",
         "primeicons": "^7.0.0",
-        "primevue": "^4.2.5"
+        "primevue": "^4.2.5",
+        "typewriter-effect": "^2.21.0",
+        "vue-typewriter-effect": "^1.0.1"
     }
 }

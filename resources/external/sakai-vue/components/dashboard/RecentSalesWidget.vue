@@ -2,6 +2,10 @@
 import { ProductService } from '@sakai-vue/service/ProductService';
 import { onMounted, ref } from 'vue';
 
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import Button from 'primevue/button';
+
 const products = ref(null);
 
 function formatCurrency(value) {

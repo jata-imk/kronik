@@ -2,6 +2,8 @@
 import { useLayout } from '@sakai-vue/layout/composables/layout';
 import { onMounted, ref, watch } from 'vue';
 
+import Chart from 'primevue/chart';
+
 const { getPrimary, getSurface, isDarkTheme } = useLayout();
 
 const chartData = ref(null);

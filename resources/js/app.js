@@ -1,16 +1,18 @@
-import './bootstrap';
-import '../css/app.css';
-import '@sakai-vue/assets/styles.scss';
-
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 
+import Aura from '@primevue/themes/aura';
 import PrimeVue from 'primevue/config';
-import Aura from '@primeuix/themes/aura';
+import AnimateOnScroll from 'primevue/animateonscroll';
+
 import ConfirmationService from 'primevue/confirmationservice';
 import ToastService from 'primevue/toastservice';
+
+import './bootstrap';
+import '../css/app.css';
+import '@sakai-vue/assets/styles.scss';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -31,6 +33,7 @@ createInertiaApp({
             })
             .use(ConfirmationService)
             .use(ToastService)
+            .directive('animateonscroll', AnimateOnScroll)
             .mount(el);
     },
     progress: {

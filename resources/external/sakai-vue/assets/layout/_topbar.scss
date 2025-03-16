@@ -71,6 +71,10 @@
         }
     }
 
+    .layout-menu-prime-vue {
+        display: none;
+    }
+
     .layout-menu-button {
         margin-right: 0.5rem;
     }
@@ -154,6 +158,14 @@
 
         .layout-topbar-menu-content {
             flex-direction: column;
+        }
+
+        .layout-menu-desktop-prime-vue {
+            display: none;
+        }
+
+        .layout-menu-prime-vue {
+            display: block;
         }
     }
 }
