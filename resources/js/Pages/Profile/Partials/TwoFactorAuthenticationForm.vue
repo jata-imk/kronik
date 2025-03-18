@@ -1,14 +1,14 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
-import { router, useForm, usePage } from '@inertiajs/vue3';
-import ActionSection from '@/Components/ActionSection.vue';
-import ConfirmsPassword from '@/Components/ConfirmsPassword.vue';
-import DangerButton from '@/Components/DangerButton.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import SecondaryButton from '@/Components/SecondaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
+import { ref, computed, watch } from "vue";
+import { router, useForm, usePage } from "@inertiajs/vue3";
+import ActionSection from "@/Components/ActionSection.vue";
+import ConfirmsPassword from "@/Components/ConfirmsPassword.vue";
+import DangerButton from "@/Components/DangerButton.vue";
+import InputError from "@/Components/InputError.vue";
+import InputLabel from "@/Components/InputLabel.vue";
+import PrimaryButton from "@/Components/PrimaryButton.vue";
+import SecondaryButton from "@/Components/SecondaryButton.vue";
+import TextInput from "@/Components/TextInput.vue";
 
 const props = defineProps({
     requiresConfirmation: Boolean,
@@ -23,15 +23,15 @@ const setupKey = ref(null);
 const recoveryCodes = ref([]);
 
 const confirmationForm = useForm({
-    code: '',
+    code: "",
 });
 
 const twoFactorEnabled = computed(
-    () => ! enabling.value && page.props.auth.user?.two_factor_enabled,
+    () => !enabling.value && page.props.auth.user?.two_factor_enabled,
 );
 
 watch(twoFactorEnabled, () => {
-    if (! twoFactorEnabled.value) {
+    if (!twoFactorEnabled.value) {
         confirmationForm.reset();
         confirmationForm.clearErrors();
     }
@@ -40,40 +40,45 @@ watch(twoFactorEnabled, () => {
 const enableTwoFactorAuthentication = () => {
     enabling.value = true;
 
-    router.post(route('two-factor.enable'), {}, {
-        preserveScroll: true,
-        onSuccess: () => Promise.all([
-            showQrCode(),
-            showSetupKey(),
-            showRecoveryCodes(),
-        ]),
-        onFinish: () => {
-            enabling.value = false;
-            confirming.value = props.requiresConfirmation;
+    router.post(
+        route("two-factor.enable"),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () =>
+                Promise.all([
+                    showQrCode(),
+                    showSetupKey(),
+                    showRecoveryCodes(),
+                ]),
+            onFinish: () => {
+                enabling.value = false;
+                confirming.value = props.requiresConfirmation;
+            },
         },
-    });
+    );
 };
 
 const showQrCode = () => {
-    return axios.get(route('two-factor.qr-code')).then(response => {
+    return axios.get(route("two-factor.qr-code")).then((response) => {
         qrCode.value = response.data.svg;
     });
 };
 
 const showSetupKey = () => {
-    return axios.get(route('two-factor.secret-key')).then(response => {
+    return axios.get(route("two-factor.secret-key")).then((response) => {
         setupKey.value = response.data.secretKey;
     });
-}
+};
 
 const showRecoveryCodes = () => {
-    return axios.get(route('two-factor.recovery-codes')).then(response => {
+    return axios.get(route("two-factor.recovery-codes")).then((response) => {
         recoveryCodes.value = response.data;
     });
 };
 
 const confirmTwoFactorAuthentication = () => {
-    confirmationForm.post(route('two-factor.confirm'), {
+    confirmationForm.post(route("two-factor.confirm"), {
         errorBag: "confirmTwoFactorAuthentication",
         preserveScroll: true,
         preserveState: true,
@@ -87,14 +92,14 @@ const confirmTwoFactorAuthentication = () => {
 
 const regenerateRecoveryCodes = () => {
     axios
-        .post(route('two-factor.recovery-codes'))
+        .post(route("two-factor.recovery-codes"))
         .then(() => showRecoveryCodes());
 };
 
 const disableTwoFactorAuthentication = () => {
     disabling.value = true;
 
-    router.delete(route('two-factor.disable'), {
+    router.delete(route("two-factor.disable"), {
         preserveScroll: true,
         onSuccess: () => {
             disabling.value = false;

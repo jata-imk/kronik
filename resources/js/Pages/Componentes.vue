@@ -1,14 +1,14 @@
 <script setup>
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AppLayout from "@/Layouts/AppLayout.vue";
 
-import { ref, onMounted } from 'vue';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Button from 'primevue/button';
-import Rating from 'primevue/rating';
-import Tag from 'primevue/tag';
+import { ref, onMounted } from "vue";
+import DataTable from "primevue/datatable";
+import Column from "primevue/column";
+import Button from "primevue/button";
+import Rating from "primevue/rating";
+import Tag from "primevue/tag";
 
-import { ProductService } from '@sakai-vue/service/ProductService';
+import { ProductService } from "@sakai-vue/service/ProductService";
 
 onMounted(() => {
     ProductService.getProductsMini().then((data) => (products.value = data));
@@ -16,24 +16,26 @@ onMounted(() => {
 
 const products = ref();
 const formatCurrency = (value) => {
-    return value.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+    return value.toLocaleString("en-US", {
+        style: "currency",
+        currency: "USD",
+    });
 };
 const getSeverity = (product) => {
     switch (product.inventoryStatus) {
-        case 'INSTOCK':
-            return 'success';
+        case "INSTOCK":
+            return "success";
 
-        case 'LOWSTOCK':
-            return 'warn';
+        case "LOWSTOCK":
+            return "warn";
 
-        case 'OUTOFSTOCK':
-            return 'danger';
+        case "OUTOFSTOCK":
+            return "danger";
 
         default:
             return null;
     }
 };
-
 </script>
 
 <template>

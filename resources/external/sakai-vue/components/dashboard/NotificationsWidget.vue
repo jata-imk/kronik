@@ -1,13 +1,13 @@
 <script setup>
-import { ref } from 'vue';
-import Button from 'primevue/button';
-import Menu from 'primevue/menu';
+import { ref } from "vue";
+import Button from "primevue/button";
+import Menu from "primevue/menu";
 
 const menu = ref(null);
 
 const items = ref([
-    { label: 'Add New', icon: 'pi pi-fw pi-plus' },
-    { label: 'Remove', icon: 'pi pi-fw pi-trash' }
+    { label: "Add New", icon: "pi pi-fw pi-plus" },
+    { label: "Remove", icon: "pi pi-fw pi-trash" },
 ]);
 </script>
 

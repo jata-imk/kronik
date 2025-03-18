@@ -1,8 +1,8 @@
 <script setup>
-import { useLayout } from '@sakai-vue/layout/composables/layout';
-import AppConfigurator from './AppConfigurator.vue';
-import AppUserMenu from './AppUserMenu.vue';
-import { Link } from '@inertiajs/vue3';
+import { useLayout } from "@sakai-vue/layout/composables/layout";
+import AppConfigurator from "./AppConfigurator.vue";
+import AppUserMenu from "./AppUserMenu.vue";
+import { Link } from "@inertiajs/vue3";
 
 const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
 
