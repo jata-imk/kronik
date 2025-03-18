@@ -1,45 +1,51 @@
 <script setup>
-import { useLayout } from '@sakai-vue/layout/composables/layout';
-import { onBeforeMount, ref, watch } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { useLayout } from "@sakai-vue/layout/composables/layout";
+import { onBeforeMount, ref, watch } from "vue";
+import { Link } from "@inertiajs/vue3";
 
 const { layoutState, setActiveMenuItem, toggleMenu } = useLayout();
 
 const props = defineProps({
     item: {
         type: Object,
-        default: () => ({})
+        default: () => ({}),
     },
     index: {
         type: Number,
-        default: 0
+        default: 0,
     },
     root: {
         type: Boolean,
-        default: true
+        default: true,
     },
     parentItemKey: {
         type: String,
-        default: null
-    }
+        default: null,
+    },
 });
 
 const isActiveMenu = ref(false);
 const itemKey = ref(null);
 
 onBeforeMount(() => {
-    itemKey.value = props.parentItemKey ? props.parentItemKey + '-' + props.index : String(props.index);
+    itemKey.value = props.parentItemKey
+        ? props.parentItemKey + "-" + props.index
+        : String(props.index);
 
     const activeItem = layoutState.activeMenuItem;
 
-    isActiveMenu.value = activeItem === itemKey.value || activeItem ? activeItem.startsWith(itemKey.value + '-') : false;
+    isActiveMenu.value =
+        activeItem === itemKey.value || activeItem
+            ? activeItem.startsWith(itemKey.value + "-")
+            : false;
 });
 
 watch(
     () => layoutState.activeMenuItem,
     (newVal) => {
-        isActiveMenu.value = newVal === itemKey.value || newVal.startsWith(itemKey.value + '-');
-    }
+        isActiveMenu.value =
+            newVal === itemKey.value || newVal.startsWith(itemKey.value + "-");
+    },
 );
 
 function itemClick(event, item) {
@@ -48,7 +54,10 @@ function itemClick(event, item) {
         return;
     }
 
-    if ((item.to || item.url) && (layoutState.staticMenuMobileActive || layoutState.overlayMenuActive)) {
+    if (
+        (item.to || item.url) &&
+        (layoutState.staticMenuMobileActive || layoutState.overlayMenuActive)
+    ) {
         toggleMenu();
     }
 
@@ -56,7 +65,11 @@ function itemClick(event, item) {
         item.command({ originalEvent: event, item: item });
     }
 
-    const foundItemKey = item.items ? (isActiveMenu.value ? props.parentItemKey : itemKey) : itemKey.value;
+    const foundItemKey = item.items
+        ? isActiveMenu.value
+            ? props.parentItemKey
+            : itemKey
+        : itemKey.value;
 
     setActiveMenuItem(foundItemKey);
 }

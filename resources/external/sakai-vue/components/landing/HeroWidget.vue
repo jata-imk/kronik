@@ -5,9 +5,9 @@ const appName = import.meta.env.VITE_APP_NAME;
 
 defineProps({
     smoothScroll: {
-        type: Function
-    }
-})
+        type: Function,
+    },
+});
 </script>
 
 <template>

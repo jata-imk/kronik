@@ -2,12 +2,12 @@
 const props = defineProps({
     team: {
         type: Object,
-        required: true
+        required: true,
     },
     switchToTeam: {
         type: Function,
-        required: true
-    }
+        required: true,
+    },
 });
 </script>
 

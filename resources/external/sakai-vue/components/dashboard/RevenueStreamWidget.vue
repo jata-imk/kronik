@@ -1,8 +1,8 @@
 <script setup>
-import { useLayout } from '@sakai-vue/layout/composables/layout';
-import { onMounted, ref, watch } from 'vue';
+import { useLayout } from "@sakai-vue/layout/composables/layout";
+import { onMounted, ref, watch } from "vue";
 
-import Chart from 'primevue/chart';
+import Chart from "primevue/chart";
 
 const { getPrimary, getSurface, isDarkTheme } = useLayout();
 
@@ -13,42 +13,47 @@ function setChartData() {
     const documentStyle = getComputedStyle(document.documentElement);
 
     return {
-        labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+        labels: ["Q1", "Q2", "Q3", "Q4"],
         datasets: [
             {
-                type: 'bar',
-                label: 'Subscriptions',
-                backgroundColor: documentStyle.getPropertyValue('--p-primary-400'),
+                type: "bar",
+                label: "Subscriptions",
+                backgroundColor:
+                    documentStyle.getPropertyValue("--p-primary-400"),
                 data: [4000, 10000, 15000, 4000],
-                barThickness: 32
+                barThickness: 32,
             },
             {
-                type: 'bar',
-                label: 'Advertising',
-                backgroundColor: documentStyle.getPropertyValue('--p-primary-300'),
+                type: "bar",
+                label: "Advertising",
+                backgroundColor:
+                    documentStyle.getPropertyValue("--p-primary-300"),
                 data: [2100, 8400, 2400, 7500],
-                barThickness: 32
+                barThickness: 32,
             },
             {
-                type: 'bar',
-                label: 'Affiliate',
-                backgroundColor: documentStyle.getPropertyValue('--p-primary-200'),
+                type: "bar",
+                label: "Affiliate",
+                backgroundColor:
+                    documentStyle.getPropertyValue("--p-primary-200"),
                 data: [4100, 5200, 3400, 7400],
                 borderRadius: {
                     topLeft: 8,
-                    topRight: 8
+                    topRight: 8,
                 },
                 borderSkipped: true,
-                barThickness: 32
-            }
-        ]
+                barThickness: 32,
+            },
+        ],
     };
 }
 
 function setChartOptions() {
     const documentStyle = getComputedStyle(document.documentElement);
-    const borderColor = documentStyle.getPropertyValue('--surface-border');
-    const textMutedColor = documentStyle.getPropertyValue('--text-color-secondary');
+    const borderColor = documentStyle.getPropertyValue("--surface-border");
+    const textMutedColor = documentStyle.getPropertyValue(
+        "--text-color-secondary",
+    );
 
     return {
         maintainAspectRatio: false,
@@ -57,25 +62,25 @@ function setChartOptions() {
             x: {
                 stacked: true,
                 ticks: {
-                    color: textMutedColor
+                    color: textMutedColor,
                 },
                 grid: {
-                    color: 'transparent',
-                    borderColor: 'transparent'
-                }
+                    color: "transparent",
+                    borderColor: "transparent",
+                },
             },
             y: {
                 stacked: true,
                 ticks: {
-                    color: textMutedColor
+                    color: textMutedColor,
                 },
                 grid: {
                     color: borderColor,
-                    borderColor: 'transparent',
-                    drawTicks: false
-                }
-            }
-        }
+                    borderColor: "transparent",
+                    drawTicks: false,
+                },
+            },
+        },
     };
 }
 

@@ -1,5 +1,5 @@
 <script setup>
-import { Link } from '@inertiajs/vue3';
+import { Link } from "@inertiajs/vue3";
 
 defineProps({
     canLogin: {
@@ -9,8 +9,8 @@ defineProps({
         type: Boolean,
     },
     smoothScroll: {
-        type: Function
-    }
+        type: Function,
+    },
 });
 
 const appName = import.meta.env.VITE_APP_NAME;

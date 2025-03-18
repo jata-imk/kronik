@@ -18,45 +18,49 @@ const toggleUserMenu = (event) => {
 };
 
 const switchToTeam = (team) => {
-    router.put(route('current-team.update'), {
-        team_id: team.id,
-    }, {
-        preserveState: false,
-    });
+    router.put(
+        route("current-team.update"),
+        {
+            team_id: team.id,
+        },
+        {
+            preserveState: false,
+        },
+    );
 };
 
 const page = usePage();
 const teamMenu = ref();
 const teamMenuItems = ref([
     {
-        label: 'Manejo de equipos',
+        label: "Manejo de equipos",
         items: [
             {
-                label: 'Configurar equipo',
-                icon: 'pi pi-cog',
-                shortcut: '⌘+T',
-                route: route('teams.show', page.props.auth.user.current_team)
-            }
-        ]
-    }
+                label: "Configurar equipo",
+                icon: "pi pi-cog",
+                shortcut: "⌘+T",
+                route: route("teams.show", page.props.auth.user.current_team),
+            },
+        ],
+    },
 ]);
 
 if (page.props.jetstream.canCreateTeams) {
     teamMenuItems.value[0].items.push({
-        label: 'Crear nuevo equipo',
-        icon: 'pi pi-plus',
-        route: route('teams.create')
+        label: "Crear nuevo equipo",
+        icon: "pi pi-plus",
+        route: route("teams.create"),
     });
 }
 
 if (page.props.auth.user.all_teams.length > 1) {
     teamMenuItems.value.push({
-        separator: true
+        separator: true,
     });
 
     if (page.props.auth.user.all_teams.length > 1) {
         teamMenuItems.value.push({
-            label: 'Cambiar de equipo',
+            label: "Cambiar de equipo",
             items: page.props.auth.user.all_teams.map((team) => {
                 return {
                     label: team.name,
@@ -65,43 +69,42 @@ if (page.props.auth.user.all_teams.length > 1) {
                             component: markRaw(TeamItemLink),
                             props: {
                                 team: team,
-                                switchToTeam: switchToTeam
-                            }
-                        }
-                    ]
-                }
-            })
-        })
+                                switchToTeam: switchToTeam,
+                            },
+                        },
+                    ],
+                };
+            }),
+        });
     }
 }
 
 const userMenu = ref();
 const userMenuItems = ref([
     {
-        label: 'Manejo de cuenta',
+        label: "Manejo de cuenta",
         items: [
             {
-                label: 'Ver perfil',
-                icon: 'pi pi-user',
-                shortcut: '⌘+P',
-                route: route('profile.show')
+                label: "Ver perfil",
+                icon: "pi pi-user",
+                shortcut: "⌘+P",
+                route: route("profile.show"),
             },
-        ]
+        ],
     },
     {
-        separator: true
+        separator: true,
     },
     {
         items: [
             {
-                label: 'Cerrar sesión',
-                icon: 'pi pi-sign-out',
-                shortcut: '⌘+O',
-                route: route('logout')
+                label: "Cerrar sesión",
+                icon: "pi pi-sign-out",
+                shortcut: "⌘+O",
+                route: route("logout"),
             },
-        ]
+        ],
     },
-
 ]);
 </script>
 
