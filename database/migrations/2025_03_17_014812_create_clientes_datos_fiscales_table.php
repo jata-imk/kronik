@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -15,8 +16,12 @@ return new class extends Migration
             $table->id();
 
             $table->unsignedBigInteger('cliente_id');
-            
-            $table->rawColumn('tipo_persona', 'varchar(7) not null constraint tipo_persona_check check (tipo_persona in (\'fisica\', \'moral\'))');
+
+            if (DB::connection()->getDriverName() === 'mariadb') {
+                $table->string('tipo_persona', 7);
+            } else {
+                $table->rawColumn('tipo_persona', 'varchar(7) not null constraint tipo_persona_check check (tipo_persona in (\'fisica\', \'moral\'))');
+            }
 
             $table->unsignedBigInteger('regimen_fiscal_id');
             $table->string('curp');
@@ -27,6 +32,32 @@ return new class extends Migration
 
             $table->foreign('cliente_id')->references('id')->on('clientes');
             $table->foreign('regimen_fiscal_id')->references('id')->on('regimenes_fiscales');
+
+            if (DB::connection()->getDriverName() === 'mariadb') {
+                DB::statement("
+                        CREATE TRIGGER check_tipo_persona_before_insert
+                        BEFORE INSERT ON clientes_datos_fiscales
+                        FOR EACH ROW
+                        BEGIN
+                            IF NEW.tipo_persona NOT IN ('fisica', 'moral') THEN
+                                SIGNAL SQLSTATE '45000'
+                                SET MESSAGE_TEXT = 'Valor inválido para tipo_persona';
+                            END IF;
+                        END;
+                    ");
+
+                DB::statement("
+                        CREATE TRIGGER check_tipo_persona_before_update
+                        BEFORE UPDATE ON clientes_datos_fiscales
+                        FOR EACH ROW
+                        BEGIN
+                            IF NEW.tipo_persona NOT IN ('fisica', 'moral') THEN
+                                SIGNAL SQLSTATE '45000'
+                                SET MESSAGE_TEXT = 'Valor inválido para tipo_persona';
+                            END IF;
+                        END;
+                    ");
+            }
         });
     }
 
@@ -35,6 +66,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('clientes');
+        DB::statement("DROP TRIGGER IF EXISTS check_tipo_persona_before_insert;");
+        DB::statement("DROP TRIGGER IF EXISTS check_tipo_persona_before_update;");
+
+        Schema::dropIfExists('clientes_datos_fiscales');
     }
 };
