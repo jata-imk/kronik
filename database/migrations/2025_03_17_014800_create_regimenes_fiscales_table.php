@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('regimenes_fiscales', function (Blueprint $table) {
             $table->id();
-            
+
             $table->string('clave', 3);
             $table->string('descripcion', 127);
             $table->boolean('fisica');
@@ -30,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('clientes');
+        Schema::dropIfExists('regimenes_fiscales');
     }
 };

@@ -12,6 +12,8 @@
         "laravel/jetstream": "^5.3",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
+        "symfony/browser-kit": "^7.2",
+        "symfony/http-client": "^7.2",
         "tightenco/ziggy": "^2.0"
     },
     "require-dev": {

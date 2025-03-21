@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -20,15 +21,45 @@ return new class extends Migration
 
             $table->date('fecha_nacimiento');
             $table->bigInteger('pais_nacimiento_id');
-            
+
             $table->string('telefono_codigo_pais', 4);
             $table->string('telefono', 15);
             $table->string('email', 127);
-            
-            $table->rawColumn('sexo', 'varchar(15) not null constraint sexo_check check (sexo in (\'masculino\', \'femenino\'))');
-            
+
+            if (DB::connection()->getDriverName() === 'mariadb') {
+                $table->string('sexo', 15);
+            } else {
+                $table->rawColumn('sexo', 'varchar(15) constraint sexo_check check (sexo in (\'masculino\', \'femenino\'))');
+            }
+
             $table->timestamps();
         });
+
+        if (DB::connection()->getDriverName() === 'mariadb') {
+            DB::statement("
+                    CREATE TRIGGER check_sexo_before_insert
+                    BEFORE INSERT ON clientes
+                    FOR EACH ROW
+                    BEGIN
+                        IF NEW.sexo NOT IN ('masculino', 'femenino') THEN
+                            SIGNAL SQLSTATE '45000'
+                            SET MESSAGE_TEXT = 'Valor inválido para sexo';
+                        END IF;
+                    END;
+                ");
+
+            DB::statement("
+                    CREATE TRIGGER check_sexo_before_update
+                    BEFORE UPDATE ON clientes
+                    FOR EACH ROW
+                    BEGIN
+                        IF NEW.sexo NOT IN ('masculino', 'femenino') THEN
+                            SIGNAL SQLSTATE '45000'
+                            SET MESSAGE_TEXT = 'Valor inválido para sexo';
+                        END IF;
+                    END;
+                ");
+        }
     }
 
     /**
@@ -36,6 +67,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Eliminar los triggers antes de borrar la tabla
+        DB::statement("DROP TRIGGER IF EXISTS check_sexo_before_insert;");
+        DB::statement("DROP TRIGGER IF EXISTS check_sexo_before_update;");
+
         Schema::dropIfExists('clientes');
     }
 };

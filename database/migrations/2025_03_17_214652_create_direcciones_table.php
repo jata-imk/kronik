@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -15,17 +16,23 @@ return new class extends Migration
             $table->id();
 
             $table->unsignedBigInteger('entidad_id');
-            $table->rawColumn('entidad_tipo', 'varchar(10) not null constraint entidad_tipo_check check (entidad_tipo in (\'clientes\'))');
-            
-            $table->rawColumn('tipo', 'varchar(10) not null constraint tipo_check check (tipo in (\'personal\', \'fiscal\'))');
+
+            if (DB::connection()->getDriverName() === 'mariadb') {
+                $table->string('entidad_tipo', 10);
+                $table->string('tipo', 10);
+            } else {
+                $table->rawColumn('entidad_tipo', 'varchar(10) not null constraint entidad_tipo_check check (entidad_tipo in (\'clientes\'))');
+                $table->rawColumn('tipo', 'varchar(10) not null constraint tipo_check check (tipo in (\'personal\', \'fiscal\'))');
+            }
+
 
             $table->unsignedBigInteger('pais_id');
             $table->unsignedBigInteger('codigo_postal_id')->nullable();
-            
+
             // Las líneas de dirección (línea_uno, línea_dos y línea_tres) sirven para propósitos
             // diferentes que las divisiones administrativas y no entran en conflicto con ellas.
             // Representan información complementaria:
-                
+
             // Líneas de dirección (línea_uno, línea_dos, línea_tres):
             // Contienen los detalles específicos de la ubicación física
             // Incluyen información como calle, número, apartamento, edificio, etc.
@@ -43,7 +50,7 @@ return new class extends Migration
 
             // Para información adicional específica por país
             $table->json('datos_adicionales')->nullable()->comment('Dependiendo del país. Para Mexico puede ser: Ciudad, Localidad, Asentamiento, Tipo de asentamiento, etc.');
-            
+
             $table->rawColumn('coordenadas', 'POINT');
 
             $table->timestamps();
@@ -55,6 +62,55 @@ return new class extends Migration
             $table->foreign('division_admin_tres_id')->references('id')->on('divisiones_administrativas');
 
             $table->spatialIndex('coordenadas');
+            if (DB::connection()->getDriverName() === 'mariadb') {
+                DB::statement("
+                        CREATE TRIGGER check_entidad_tipo_before_insert
+                        BEFORE INSERT ON direcciones
+                        FOR EACH ROW
+                        BEGIN
+                            IF NEW.entidad_tipo NOT IN ('clientes') THEN
+                                SIGNAL SQLSTATE '45000'
+                                SET MESSAGE_TEXT = 'Valor inválido para entidad_tipo';
+                            END IF;
+                        END;
+                    ");
+
+                DB::statement("
+                        CREATE TRIGGER check_entidad_tipo_before_update
+                        BEFORE UPDATE ON direcciones
+                        FOR EACH ROW
+                        BEGIN
+                            IF NEW.entidad_tipo NOT IN ('clientes') THEN
+                                SIGNAL SQLSTATE '45000'
+                                SET MESSAGE_TEXT = 'Valor inválido para entidad_tipo';
+                            END IF;
+                        END;
+                    ");
+
+                DB::statement("
+                        CREATE TRIGGER check_tipo_before_insert
+                        BEFORE INSERT ON direcciones
+                        FOR EACH ROW
+                        BEGIN
+                            IF NEW.tipo NOT IN ('personal', 'fiscal') THEN
+                                SIGNAL SQLSTATE '45000'
+                                SET MESSAGE_TEXT = 'Valor inválido para tipo';
+                            END IF;
+                        END;
+                    ");
+
+                DB::statement("
+                        CREATE TRIGGER check_tipo_before_update
+                        BEFORE UPDATE ON direcciones
+                        FOR EACH ROW
+                        BEGIN
+                            IF NEW.tipo NOT IN ('personal', 'fiscal') THEN
+                                SIGNAL SQLSTATE '45000'
+                                SET MESSAGE_TEXT = 'Valor inválido para tipo';
+                            END IF;
+                        END;
+                    ");
+            }
         });
     }
 
@@ -63,6 +119,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        DB::statement("DROP TRIGGER IF EXISTS check_entidad_tipo_before_insert;");
+        DB::statement("DROP TRIGGER IF EXISTS check_entidad_tipo_before_update;");
+        DB::statement("DROP TRIGGER IF EXISTS check_tipo_before_insert;");
+        DB::statement("DROP TRIGGER IF EXISTS check_tipo_before_update;");
+
         Schema::dropIfExists('direcciones');
     }
 };
