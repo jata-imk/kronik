@@ -46,7 +46,7 @@ class UpdateSepomexCatalog extends Command
                 $this->info('El catálogo ya está actualizado. No se requieren cambios.');
             }
 
-            return 0;
+            return Command::SUCCESS;
         } catch (\Exception $e) {
             $this->error('Error: ' . $e->getMessage());
             return 1;

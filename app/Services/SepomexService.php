@@ -9,7 +9,6 @@ use GuzzleHttp\Client;
 use Symfony\Component\BrowserKit\HttpBrowser;
 use Symfony\Component\HttpClient\HttpClient;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use ZipArchive;
 use Illuminate\Support\Facades\Log;
 
@@ -57,7 +56,7 @@ class SepomexService
             }
 
             // Descargar el archivo
-            $zipFilePath = $this->downloadCatalog();
+            $zipFilePath = $this->downloadCatalogFile();
 
             // // Extraer el archivo
             $txtFilePath = $this->extractZipFile($zipFilePath);
@@ -143,7 +142,7 @@ class SepomexService
     /**
      * Descarga el catálogo de SEPOMEX
      */
-    protected function downloadCatalog()
+    protected function downloadCatalogFile()
     {
         try {
             // Obtenemos la página y sus tokens

@@ -3,9 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Pais;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use GuzzleHttp\Client;
+use Illuminate\Database\Seeder;
 
 class PaisesSeeder extends Seeder
 {
