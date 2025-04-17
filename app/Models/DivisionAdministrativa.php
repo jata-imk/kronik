@@ -15,4 +15,9 @@ class DivisionAdministrativa extends Model
         'division_padre_id',
         'tipo',
     ];
+
+    public function padre()
+    {
+        return $this->belongsTo(DivisionAdministrativa::class, 'division_padre_id');
+    }
 }
