@@ -1,43 +1,36 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Scrapers;
+
+use Symfony\Component\HttpClient\HttpClient;
+use App\Services\Scrapers\BrowserClientService;
 
 use App\Models\CodigoPostal;
 use App\Models\DivisionAdministrativa;
 use App\Models\Pais;
-use GuzzleHttp\Client;
-use Symfony\Component\BrowserKit\HttpBrowser;
-use Symfony\Component\HttpClient\HttpClient;
+
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use ZipArchive;
+
 use Illuminate\Support\Facades\Log;
 
-class SepomexService
+class SepomexService extends BaseCatalogScraperService
 {
     protected $url = 'https://www.correosdemexico.gob.mx/SSLServicios/ConsultaCP/CodigoPostal_Exportar.aspx';
-    protected $downloadPath;
-    protected $extractPath;
-    protected $browserClient;
-    protected $http;
+    protected $downloadPath = 'app/sepomex';
+    protected $extractPath = 'app/sepomex/extracted';
 
     public function __construct()
     {
-        $this->browserClient = new HttpBrowser(HttpClient::create());
-        $this->http = new Client([
+        $http = HttpClient::create([
             'timeout' => 60,
-            'verify' => false, // Considera cambiar a true en producción
+            'verify_host' => false,
         ]);
-        $this->downloadPath = storage_path('app/sepomex');
-        $this->extractPath = storage_path('app/sepomex/extracted');
+        $browserClient = new BrowserClientService($http);
 
-        if (!file_exists($this->downloadPath)) {
-            mkdir($this->downloadPath, 0755, true);
-        }
+        parent::__construct($http, $browserClient);
 
-        if (!file_exists($this->extractPath)) {
-            mkdir($this->extractPath, 0755, true);
-        }
+        $this->extractPath = $this->getOrCreatePath($this->extractPath);
     }
 
     /**
@@ -47,12 +40,14 @@ class SepomexService
     {
         try {
             Log::info('Iniciando descarga del catálogo SEPOMEX');
+            Log::channel('stderr')->info('Iniciando descarga del catálogo SEPOMEX');
 
             // Obtener la fecha de última actualización y verificar si necesitamos actualizar
             $lastUpdateDate = $this->getLastUpdateDate();
 
             if (!$this->needsUpdate($lastUpdateDate)) {
                 Log::info('El catálogo SEPOMEX ya está actualizado. Última actualización: ' . $lastUpdateDate);
+                Log::channel('stderr')->info('El catálogo SEPOMEX ya está actualizado. Última actualización: ' . $lastUpdateDate);
                 return false;
             }
 
@@ -63,9 +58,10 @@ class SepomexService
             $txtFilePath = $this->extractZipFile($zipFilePath);
 
             // Procesar el archivo TXT
-            $this->processTxtFile($txtFilePath, $lastUpdateDate);
+            $this->processFile($txtFilePath, $lastUpdateDate);
 
             Log::info('Catálogo SEPOMEX procesado correctamente');
+            Log::channel('stderr')->info('Catálogo SEPOMEX procesado correctamente');
             return true;
         } catch (\Exception $e) {
             Log::error('Error al procesar el catálogo SEPOMEX: ' . $e->getMessage());
@@ -163,19 +159,31 @@ class SepomexService
             // Realizamos la petición POST para descargar
             $zipFilePath = $this->downloadPath . '/sepomex_' . date('Ymd_His') . '.zip';
 
-            $response = $this->http->post($this->url, [
-                'form_params' => [
+            $response = $this->http->request('POST', $this->url, [
+                'body' => [
                     '__VIEWSTATE' => $viewstate,
                     '__EVENTVALIDATION' => $eventvalidation,
                     'rblTipo' => 'txt',
                     'btnDescarga.x' => '54',
                     'btnDescarga.y' => '13'
-                ],
-                'sink' => $zipFilePath
+                ]
             ]);
+
+            // Responses are lazy: this code is executed as soon as headers are received
+            if (200 !== $response->getStatusCode()) {
+                $response->getContent(); // this method throws an appropriate exception
+            }
+
+            // get the response content in chunks and save them in a file
+            // response chunks implement Symfony\Contracts\HttpClient\ChunkInterface
+            $fileHandler = fopen($zipFilePath, 'w');
+            foreach ($this->http->stream($response) as $chunk) {
+                fwrite($fileHandler, $chunk->getContent());
+            }
 
             if (file_exists($zipFilePath) && filesize($zipFilePath) > 0) {
                 Log::info('Archivo ZIP descargado correctamente: ' . $zipFilePath);
+                Log::channel('stderr')->info('Archivo ZIP descargado correctamente: ' . $zipFilePath);
                 return $zipFilePath;
             } else {
                 throw new \Exception('Error al descargar el archivo ZIP o archivo vacío');
@@ -203,6 +211,7 @@ class SepomexService
 
                 if (count($files) > 0) {
                     Log::info('Archivo TXT extraído correctamente: ' . $files[0]);
+                    Log::channel('stderr')->info('Archivo TXT extraído correctamente: ' . $files[0]);
                     return $files[0];
                 } else {
                     throw new \Exception('No se encontró archivo TXT dentro del ZIP');
@@ -219,7 +228,7 @@ class SepomexService
     /**
      * Procesa el archivo TXT descargado
      */
-    protected function processTxtFile($txtFilePath, $lastUpdateDate)
+    protected function processFile($txtFilePath, $lastUpdateDate)
     {
         try {
             // Leer el archivo
@@ -310,6 +319,7 @@ class SepomexService
                 // Cada 1000 registros, informamos el progreso
                 if ($index % 1000 === 0) {
                     Log::info("Procesando catálogo SEPOMEX: $index/$total registros");
+                    Log::channel('stderr')->info("Procesando catálogo SEPOMEX: $index/$total registros");
                 }
 
                 $lines[$index] = null;
@@ -319,6 +329,7 @@ class SepomexService
             file_put_contents($this->downloadPath . '/last_update.txt', $lastUpdateDate->format('Y-m-d'));
 
             Log::info("Catálogo SEPOMEX procesado: $total registros en total");
+            Log::channel('stderr')->info("Catálogo SEPOMEX procesado: $total registros en total");
 
             return $total;
         } catch (\Exception $e) {
