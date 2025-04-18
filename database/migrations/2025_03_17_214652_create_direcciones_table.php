@@ -62,56 +62,57 @@ return new class extends Migration
             $table->foreign('division_admin_tres_id')->references('id')->on('divisiones_administrativas');
 
             $table->spatialIndex('coordenadas');
-            if (DB::connection()->getDriverName() === 'mariadb') {
-                DB::statement("
-                        CREATE TRIGGER check_entidad_tipo_before_insert
-                        BEFORE INSERT ON direcciones
-                        FOR EACH ROW
-                        BEGIN
-                            IF NEW.entidad_tipo NOT IN ('clientes') THEN
-                                SIGNAL SQLSTATE '45000'
-                                SET MESSAGE_TEXT = 'Valor inválido para entidad_tipo';
-                            END IF;
-                        END;
-                    ");
-
-                DB::statement("
-                        CREATE TRIGGER check_entidad_tipo_before_update
-                        BEFORE UPDATE ON direcciones
-                        FOR EACH ROW
-                        BEGIN
-                            IF NEW.entidad_tipo NOT IN ('clientes') THEN
-                                SIGNAL SQLSTATE '45000'
-                                SET MESSAGE_TEXT = 'Valor inválido para entidad_tipo';
-                            END IF;
-                        END;
-                    ");
-
-                DB::statement("
-                        CREATE TRIGGER check_tipo_before_insert
-                        BEFORE INSERT ON direcciones
-                        FOR EACH ROW
-                        BEGIN
-                            IF NEW.tipo NOT IN ('personal', 'fiscal') THEN
-                                SIGNAL SQLSTATE '45000'
-                                SET MESSAGE_TEXT = 'Valor inválido para tipo';
-                            END IF;
-                        END;
-                    ");
-
-                DB::statement("
-                        CREATE TRIGGER check_tipo_before_update
-                        BEFORE UPDATE ON direcciones
-                        FOR EACH ROW
-                        BEGIN
-                            IF NEW.tipo NOT IN ('personal', 'fiscal') THEN
-                                SIGNAL SQLSTATE '45000'
-                                SET MESSAGE_TEXT = 'Valor inválido para tipo';
-                            END IF;
-                        END;
-                    ");
-            }
         });
+
+        if (DB::connection()->getDriverName() === 'mariadb') {
+            DB::statement("
+                    CREATE TRIGGER check_entidad_tipo_before_insert
+                    BEFORE INSERT ON direcciones
+                    FOR EACH ROW
+                    BEGIN
+                        IF NEW.entidad_tipo NOT IN ('clientes') THEN
+                            SIGNAL SQLSTATE '45000'
+                            SET MESSAGE_TEXT = 'Valor inválido para entidad_tipo';
+                        END IF;
+                    END;
+                ");
+
+            DB::statement("
+                    CREATE TRIGGER check_entidad_tipo_before_update
+                    BEFORE UPDATE ON direcciones
+                    FOR EACH ROW
+                    BEGIN
+                        IF NEW.entidad_tipo NOT IN ('clientes') THEN
+                            SIGNAL SQLSTATE '45000'
+                            SET MESSAGE_TEXT = 'Valor inválido para entidad_tipo';
+                        END IF;
+                    END;
+                ");
+
+            DB::statement("
+                    CREATE TRIGGER check_tipo_before_insert
+                    BEFORE INSERT ON direcciones
+                    FOR EACH ROW
+                    BEGIN
+                        IF NEW.tipo NOT IN ('personal', 'fiscal') THEN
+                            SIGNAL SQLSTATE '45000'
+                            SET MESSAGE_TEXT = 'Valor inválido para tipo';
+                        END IF;
+                    END;
+                ");
+
+            DB::statement("
+                    CREATE TRIGGER check_tipo_before_update
+                    BEFORE UPDATE ON direcciones
+                    FOR EACH ROW
+                    BEGIN
+                        IF NEW.tipo NOT IN ('personal', 'fiscal') THEN
+                            SIGNAL SQLSTATE '45000'
+                            SET MESSAGE_TEXT = 'Valor inválido para tipo';
+                        END IF;
+                    END;
+                ");
+        }
     }
 
     /**

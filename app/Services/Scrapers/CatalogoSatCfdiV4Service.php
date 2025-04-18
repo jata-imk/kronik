@@ -208,8 +208,32 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
     {
         try {
             // First, we need to convert XLS to XLSX, this is done with a commnand line tool
-            $xlsxFilePath = $filePath . 'x';
-            $command = 'wsl libreoffice --headless --convert-to xlsx "/' . str_replace('C:/', 'mnt/c/', str_replace('\\', '/', $filePath)) . '" --outdir "/' . str_replace('C:/', 'mnt/c/', str_replace('\\', '/', $this->downloadPath)) . '/"';
+            $xlsxFilePath = str_replace('\\', '/', $filePath) . 'x';
+
+            $command = 'libreoffice --headless --convert-to xlsx "' . $filePath . '" --outdir "' . $this->downloadPath . '/"';
+
+            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+                // Se utiliza str_replace('\\', '/', $this->downloadPath) por que wsl es Linux entonces el separador de directorios es /
+                $xlsxFilePath = $filePath . 'x';
+
+                // Se utiliza str_replace('C:/', 'mnt/c/') por que para wsl se usa /mnt/c/ en lugar de C:/
+                $command =
+                    'wsl libreoffice --headless --convert-to xlsx "/'
+                    . str_replace('C:/', 'mnt/c/', str_replace('\\', '/', $filePath))
+                    . '" --outdir "/'
+                    . str_replace('C:/', 'mnt/c/', str_replace('\\', '/', $this->downloadPath))
+                    . '/"';
+            }
+
+            exec('whoami', $whoami, $returnCode);
+            $returnCode = 0;
+
+            if ($returnCode !== 0) {
+                throw new \Exception('Error al ejecutar el comando: whoami');
+            }
+
+            Log::info('Convirtiendo el archivo XLS a XLSX: (' . $whoami[0] . ') ' . $command);
+            Log::channel('stderr')->info('Convirtiendo el archivo XLS a XLSX: (' . $whoami[0] . ') ' . $command);
 
             exec($command, $output, $returnCode);
             $returnCode = 0;
@@ -219,7 +243,7 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
             }
 
             // now we need to check if the xlsx file exists, we will use a 30second timeout
-            $timeout = 30;
+            $timeout = 45;
             $startTime = time();
 
             while (!file_exists($xlsxFilePath)) {
