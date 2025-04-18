@@ -1,19 +1,21 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Scrapers;
 
 use App\Interfaces\BrowserClientInterface;
 
 use Symfony\Component\BrowserKit\HttpBrowser;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+
 use Symfony\Component\DomCrawler\Crawler;
 
 class BrowserClientService implements BrowserClientInterface
 {
     private HttpBrowser $client;
 
-    public function __construct(HttpBrowser $client)
+    public function __construct(HttpClientInterface $http)
     {
-        $this->client = $client;
+        $this->client = new HttpBrowser($http);
     }
 
     public function request(string $method, string $url, array $parameters = [], array $files = [], array $server = [], ?string $content = null): Crawler

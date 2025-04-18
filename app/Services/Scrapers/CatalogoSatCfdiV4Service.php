@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Scrapers;
 
 use Carbon\Carbon;
 use App\Models\RegimenFiscal;
@@ -10,8 +10,25 @@ use Illuminate\Support\Facades\Log;
 use OpenSpout\Reader\XLSX\Reader;
 use OpenSpout\Reader\XLSX\Options;
 
+use Symfony\Component\HttpClient\HttpClient;
+use App\Services\Scrapers\BrowserClientService;
+
 class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
 {
+    protected $url = 'http://omawww.sat.gob.mx/tramitesyservicios/Paginas/anexo_20.htm';
+    protected $downloadPath = 'app/sat_cfdi_v4';
+
+    public function __construct()
+    {
+        $http = HttpClient::create([
+            'timeout' => 60,
+            'verify_host' => false,
+        ]);
+        $browserClient = new BrowserClientService($http);
+
+        parent::__construct($http, $browserClient);
+    }
+
     /**
      * Proceso principal para descargar y procesar el catálogo CFDI V4 del SAT
      */
@@ -22,7 +39,7 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
             Log::channel('stderr')->info('Iniciando descarga del catálogo CFDI V4 del SAT');
 
             // Obtener la información del catálogo CFDI V4 del SAT
-            $catalogInfo = $this->getCfdiCatalogInfo();
+            $catalogInfo = $this->getCatalogInfo();
 
             // Obtener la fecha de última actualización y verificar si necesitamos actualizar
             $lastUpdateDate = $catalogInfo['last_update_date']; // YYYYMMDD
@@ -39,7 +56,7 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
             $filePath = $this->downloadCatalog($catalogInfo['download_link']);
 
             // Procesar el archivo XLS
-            $this->processXlsFile($filePath, $lastUpdateDateFormatted);
+            $this->processFile($filePath, $lastUpdateDateFormatted);
 
             Log::info('Catálogo CFDI V4 del SAT procesado correctamente');
             Log::channel('stderr')->info('Catálogo CFDI V4 del SAT procesado correctamente');
@@ -80,7 +97,7 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
      * @return array Información sobre el catalogo CFDI V4, incluyendo el enlace y la fecha de la ultima actualización en el SAT
      * @throws \Exception
      */
-    public function getCfdiCatalogInfo(): array
+    public function getCatalogInfo(): array
     {
         try {
             // Visitar la página del SAT
@@ -187,7 +204,7 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
     /**
      * Procesa el archivo XLS descargado
      */
-    protected function processXlsFile($filePath, $lastUpdateDate)
+    protected function processFile($filePath, $lastUpdateDate)
     {
         try {
             // First, we need to convert XLS to XLSX, this is done with a commnand line tool

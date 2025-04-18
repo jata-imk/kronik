@@ -3,12 +3,11 @@
 namespace App\Services;
 
 use App\Models\CodigoPostal;
-use App\Models\DivisionAdministrativa;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-class DireccionService
+class CodigoPostalService
 {
-    public function obtenerDatosPorCodigoPostal(string $codigoPostal)
+    public function buscarPorCodigo(string $codigoPostal)
     {
         $codigosPostales = CodigoPostal::with(['pais', 'divisionAdministrativa.padre.padre'])->where('codigo', 'like', "$codigoPostal%")->get();
 

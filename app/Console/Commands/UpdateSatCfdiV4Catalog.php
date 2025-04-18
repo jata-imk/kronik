@@ -2,11 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\CatalogoSatCfdiV4Service;
-
-use App\Services\BrowserClientService;
-use Symfony\Component\BrowserKit\HttpBrowser;
-use Symfony\Component\HttpClient\HttpClient;
+use App\Services\Scrapers\CatalogoSatCfdiV4Service;
 
 use Illuminate\Console\Command;
 use Exception;
@@ -27,18 +23,12 @@ class UpdateSatCfdiV4Catalog extends Command
      */
     protected $description = 'Descarga y crea/actualiza el catálogo CFDI V4.0 desde el sitio del SAT';
 
-    protected $satCfdiV4Service;
+    protected $catalogoSatCfdiV4Service;
 
-    public function __construct()
+    public function __construct(CatalogoSatCfdiV4Service $satCfdiV4Service)
     {
         parent::__construct();
-        $http = HttpClient::create([
-            'timeout' => 60,
-            'verify_host' => false,
-        ]);
-
-        $browserClient = new BrowserClientService(new HttpBrowser($http));
-        $this->satCfdiV4Service = new CatalogoSatCfdiV4Service($http, $browserClient);
+        $this->catalogoSatCfdiV4Service = $satCfdiV4Service;
     }
 
     /**
@@ -52,7 +42,7 @@ class UpdateSatCfdiV4Catalog extends Command
         $this->info('Iniciando descarga del catálogo CFDI V4.0...');
 
         try {
-            $updated = $this->satCfdiV4Service->downloadAndProcessCatalog();
+            $updated = $this->catalogoSatCfdiV4Service->downloadAndProcessCatalog();
 
             if ($updated) {
                 $this->info('Catálogo SAT CFDI V4 actualizado correctamente.');

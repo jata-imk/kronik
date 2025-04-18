@@ -2,8 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Scrapers\SepomexService;
+
 use Illuminate\Console\Command;
-use App\Services\SepomexService;
+use Exception;
 
 class UpdateSepomexCatalog extends Command
 {
@@ -47,7 +49,7 @@ class UpdateSepomexCatalog extends Command
             }
 
             return Command::SUCCESS;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error('Error: ' . $e->getMessage());
             return 1;
         }
