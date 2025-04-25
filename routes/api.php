@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\API\ClienteController;
 use App\Http\Controllers\CodigoPostalController;
 use App\Http\Controllers\RegimenFiscalController;
 use Illuminate\Http\Request;
@@ -11,7 +11,10 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         return $request->user();
     });
 
-    Route::apiResource('clientes', ClienteController::class);
+    Route::apiResource('clientes', ClienteController::class)->names('api.clientes');
+
     Route::get('/codigos-postales/buscar', [CodigoPostalController::class, 'buscar']);
+    Route::get('/codigos-postales/sugerencias', [CodigoPostalController::class, 'sugerencias']);
+
     Route::get('/regimenes-fiscales', [RegimenFiscalController::class, 'index']);
 });

@@ -7,13 +7,6 @@ const toggleTeamsMenu = (event) => {
     teamMenu.value.toggle(event);
 };
 const toggleUserMenu = (event) => {
-    console.log(event);
-    // const menu = this.$refs.menu.$el;
-    // menu.style.position = 'relative';
-    // menu.style.insetInlineStart = 'unset';
-    // menu.style.top = 'unset';
-    // menu.style.left = 'unset';
-
     userMenu.value.toggle(event);
 };
 
@@ -90,6 +83,11 @@ const userMenuItems = ref([
                 shortcut: "⌘+P",
                 route: route("profile.show"),
             },
+            page.props.jetstream.hasApiFeatures && {
+                label: "API Tokens",
+                icon: "pi pi-key",
+                route: route("api-tokens.index"),
+            },
         ],
     },
     {
@@ -102,6 +100,8 @@ const userMenuItems = ref([
                 icon: "pi pi-sign-out",
                 shortcut: "⌘+O",
                 route: route("logout"),
+                as: "button",
+                method: "post",
             },
         ],
     },
@@ -131,7 +131,7 @@ const userMenuItems = ref([
             <template #item="{ item, props }">
                 <component v-if="item.customElements" :is="item.customElements[0].component" v-bind="item.customElements[0].props" />
                 
-                <Link v-else :href="item.route" v-ripple class="flex items-center" v-bind="props.action">
+                <Link v-else :href="item.route" :as="item.as" :method="item.method" v-ripple class="flex items-center w-full" v-bind="props.action">
                 <span :class="item.icon" />
                 <span>{{ item.label }}</span>
                 <Badge v-if="item.badge" class="ml-auto" :value="item.badge" />
@@ -158,7 +158,7 @@ const userMenuItems = ref([
                 <span class="text-primary font-bold">{{ item.label }}</span>
             </template>
             <template #item="{ item, props }">
-                <Link :href="item.route" v-ripple class="flex items-center" v-bind="props.action">
+                <Link :href="item.route" :as="item.as" :method="item.method" v-ripple class="flex items-center w-full" v-bind="props.action">
                 <span :class="item.icon" />
                 <span>{{ item.label }}</span>
                 <Badge v-if="item.badge" class="ml-auto" :value="item.badge" />
@@ -178,7 +178,7 @@ const userMenuItems = ref([
         <template #item="{ item, props }">
             <component v-if="item.customElements" :is="item.customElements[0].component" v-bind="item.customElements[0].props" />
             
-            <Link v-else :href="item.route" v-ripple class="flex items-center" v-bind="props.action">
+            <Link v-else :href="item.route" :as="item.as" :method="item.method" v-ripple class="flex items-center w-full" v-bind="props.action">
             <span :class="item.icon" />
             <span>{{ item.label }}</span>
             <Badge v-if="item.badge" class="ml-auto" :value="item.badge" />
@@ -196,13 +196,13 @@ const userMenuItems = ref([
             <span class="text-primary font-bold">{{ item.label }}</span>
         </template>
         <template #item="{ item, props }">
-            <Link :href="item.route" v-ripple class="flex items-center" v-bind="props.action">
-            <span :class="item.icon" />
-            <span>{{ item.label }}</span>
-            <Badge v-if="item.badge" class="ml-auto" :value="item.badge" />
-            <span v-if="item.shortcut"
-                class="ml-auto border border-surface rounded bg-emphasis text-muted-color text-xs p-1">{{
-                item.shortcut }}</span>
+            <Link :href="item.route" :as="item.as" :method="item.method" v-ripple class="flex items-center w-full" v-bind="props.action">
+                <span :class="item.icon" />
+                <span>{{ item.label }}</span>
+                <Badge v-if="item.badge" class="ml-auto" :value="item.badge" />
+                <span v-if="item.shortcut"
+                    class="ml-auto border border-surface rounded bg-emphasis text-muted-color text-xs p-1">{{
+                    item.shortcut }}</span>
             </Link>
         </template>
     </Menu>

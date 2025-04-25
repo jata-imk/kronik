@@ -39,15 +39,10 @@ class StoreClienteRequest extends BaseClienteRequest
             'datos_fiscales.curp' => ['required'],
             'datos_fiscales.rfc' => ['required'],
             'direcciones' => ['required', 'min:1'],
-            'direcciones.*.entidad_id' => ['required'],
-            'direcciones.*.entidad_tipo' => ['required'],
-            'direcciones.*.tipo' => ['required'],
-            'direcciones.*.pais_id' => ['required'],
             'direcciones.*.linea_uno' => ['required'],
             'direcciones.*.division_admin_uno_id' => ['required'],
             'direcciones.*.division_admin_dos_id' => ['required'],
-            'direcciones.*.coordenadas.lat' => ['required'],
-            'direcciones.*.coordenadas.lng' => ['required']
+            'direcciones.*.division_admin_tres_id' => ['required'],
         ];
 
         return $this->extendRules($baseRules, $additionalRules);

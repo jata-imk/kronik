@@ -17,11 +17,22 @@ class CodigoPostalController extends Controller
     public function buscar(Request $request)
     {
         $request->validate([
-            'codigo_postal' => 'required|string|min:3|max:15',
+            'codigo' => 'required|string|min:3|max:15',
         ]);
 
         return CodigoPostalResource::collection(
-            $this->codigoPostalService->buscarPorCodigo($request->codigo_postal)
+            $this->codigoPostalService->buscarPorCodigo($request->codigo)
         );
+    }
+
+    public function sugerencias(Request $request)
+    {
+        $request->validate([
+            'codigo' => 'required|string|min:2|max:15',
+        ]);
+
+        return [
+            'data' => $this->codigoPostalService->sugerencias($request->codigo),
+        ];
     }
 }

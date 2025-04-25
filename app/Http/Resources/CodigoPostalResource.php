@@ -15,7 +15,7 @@ class CodigoPostalResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'codigo_postal' => $this->codigo,
+            'codigo' => $this->codigo,
             'pais' => new PaisResource($this->pais),
             'divisiones_administrativas' => [
                 'nivel_uno' => new DivisionAdministrativaResource($nivelUno),

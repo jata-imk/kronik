@@ -25,6 +25,11 @@ class Cliente extends Model
         'fecha_nacimiento' => 'datetime',
     ];
 
+    public function paisNacimiento()
+    {
+        return $this->belongsTo(Pais::class, 'pais_nacimiento_id');
+    }
+
     public function datosFiscales()
     {
         return $this->hasOne(ClienteDatosFiscales::class);

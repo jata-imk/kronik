@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\CodigoPostalController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -21,12 +23,17 @@ Route::middleware([
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
+
+    Route::resource('clientes', ClienteController::class);
+
+    Route::get('/codigos-postales/sugerencias', [CodigoPostalController::class, 'sugerencias']);
+    Route::get('/codigos-postales/buscar', [CodigoPostalController::class, 'buscar']);
+
+    Route::get('/sakai', function () {
+        return Inertia::render('Sakai');
+    })->name('sakai');
+
+    Route::get('/componentes', function () {
+        return Inertia::render('Componentes');
+    })->name('componentes');
 });
-
-Route::get('/sakai', function () {
-    return Inertia::render('Sakai');
-})->name('sakai');
-
-Route::get('/componentes', function () {
-    return Inertia::render('Componentes');
-})->name('componentes');

@@ -1,3 +1,12 @@
 [x-cloak] {
     display: none;
 }
+
+.iti {
+    display: unset !important;
+
+    --iti-path-flags-1x: url("./../../public/images/flags/flags.webp");
+    --iti-path-flags-2x: url("./../../public/images/flags/flags@2x.webp");
+    --iti-path-globe-1x: url("./../../public/images/flags/globe.webp");
+    --iti-path-globe-2x: url("./../../public/images/flags/globe@2x.webp");
+}

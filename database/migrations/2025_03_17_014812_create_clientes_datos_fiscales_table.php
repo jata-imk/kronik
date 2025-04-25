@@ -32,33 +32,33 @@ return new class extends Migration
 
             $table->foreign('cliente_id')->references('id')->on('clientes');
             $table->foreign('regimen_fiscal_id')->references('id')->on('regimenes_fiscales');
-
-            if (DB::connection()->getDriverName() === 'mariadb') {
-                DB::statement("
-                        CREATE TRIGGER check_tipo_persona_before_insert
-                        BEFORE INSERT ON clientes_datos_fiscales
-                        FOR EACH ROW
-                        BEGIN
-                            IF NEW.tipo_persona NOT IN ('fisica', 'moral') THEN
-                                SIGNAL SQLSTATE '45000'
-                                SET MESSAGE_TEXT = 'Valor inválido para tipo_persona';
-                            END IF;
-                        END;
-                    ");
-
-                DB::statement("
-                        CREATE TRIGGER check_tipo_persona_before_update
-                        BEFORE UPDATE ON clientes_datos_fiscales
-                        FOR EACH ROW
-                        BEGIN
-                            IF NEW.tipo_persona NOT IN ('fisica', 'moral') THEN
-                                SIGNAL SQLSTATE '45000'
-                                SET MESSAGE_TEXT = 'Valor inválido para tipo_persona';
-                            END IF;
-                        END;
-                    ");
-            }
         });
+
+        if (DB::connection()->getDriverName() === 'mariadb') {
+            DB::statement("
+                    CREATE TRIGGER check_tipo_persona_before_insert
+                    BEFORE INSERT ON clientes_datos_fiscales
+                    FOR EACH ROW
+                    BEGIN
+                        IF NEW.tipo_persona NOT IN ('fisica', 'moral') THEN
+                            SIGNAL SQLSTATE '45000'
+                            SET MESSAGE_TEXT = 'Valor inválido para tipo_persona';
+                        END IF;
+                    END;
+                ");
+
+            DB::statement("
+                    CREATE TRIGGER check_tipo_persona_before_update
+                    BEFORE UPDATE ON clientes_datos_fiscales
+                    FOR EACH ROW
+                    BEGIN
+                        IF NEW.tipo_persona NOT IN ('fisica', 'moral') THEN
+                            SIGNAL SQLSTATE '45000'
+                            SET MESSAGE_TEXT = 'Valor inválido para tipo_persona';
+                        END IF;
+                    END;
+                ");
+        }
     }
 
     /**

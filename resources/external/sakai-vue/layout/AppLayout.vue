@@ -1,9 +1,12 @@
 <script setup>
 import { useLayout } from "@sakai-vue/layout/composables/layout";
 import { computed, ref, watch } from "vue";
-import AppFooter from "./AppFooter.vue";
-import AppSidebar from "./AppSidebar.vue";
+
 import AppTopbar from "./AppTopbar.vue";
+import Banner from "@/Components/Banner.vue";
+import AppSidebar from "./AppSidebar.vue";
+import AppFooter from "./AppFooter.vue";
+
 import Toast from "primevue/toast";
 import { Head } from "@inertiajs/vue3";
 
@@ -74,13 +77,24 @@ function isOutsideClicked(event) {
     <div class="layout-wrapper" :class="containerClass">
         <app-topbar></app-topbar>
         <app-sidebar></app-sidebar>
+        
         <div class="layout-main-container">
-            <div class="layout-main">
+            <Banner />
+
+            <!-- Page Heading -->
+            <header v-if="$slots.header">
+                <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                    <slot name="header" />
+                </div>
+            </header>
+
+            <main class="layout-main">
                 <slot />
-            </div>
+            </main>
             <app-footer></app-footer>
         </div>
         <div class="layout-mask animate-fadein"></div>
     </div>
-    <Toast />
+
+    <Toast position="bottom-right" />
 </template>

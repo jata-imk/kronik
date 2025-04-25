@@ -28,6 +28,8 @@
     "dependencies": {
         "@primevue/themes": "^4.3.1",
         "chart.js": "^4.4.8",
+        "intl-tel-input": "^25.3.1",
+        "maplibre-gl": "^5.4.0",
         "primeicons": "^7.0.0",
         "primevue": "^4.2.5",
         "typewriter-effect": "^2.21.0",

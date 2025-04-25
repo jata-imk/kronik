@@ -5,8 +5,60 @@ import AppMenuItem from "./AppMenuItem.vue";
 
 const model = ref([
     {
-        label: "Home",
-        items: [{ label: "Dashboard", icon: "pi pi-fw pi-home", to: "sakai" }],
+        label: "Inicio",
+        items: [
+            {
+                label: "Tablero general",
+                icon: "pi pi-fw pi-home",
+                to: "dashboard",
+            },
+            {
+                label: "Ejemplos",
+                icon: "pi pi-fw pi-bolt",
+                to: "sakai",
+            },
+        ],
+    },
+    {
+        label: "Modulos",
+        items: [
+            {
+                label: "CRM",
+                icon: "pi pi-fw pi-users",
+                items: [
+                    {
+                        label: "Clientes",
+                        icon: "pi pi-fw pi-users",
+                        to: "clientes.index",
+                    },
+                    {
+                        label: "Pipeline de ventas",
+                        icon: "pi pi-fw pi-shopping-cart",
+                        // to: "sales-pipeline",
+                    },
+                    {
+                        label: "Atención al cliente",
+                        icon: "pi pi-fw pi-ticket",
+                        // to: "accounts",
+                    },
+                ],
+            },
+        ],
+    },
+    {
+        label: "Configuraciones",
+        items: [
+            {
+                label: "Manejo de equipos",
+                icon: "pi pi-fw pi-users",
+                // to: "teams",
+            },
+            {
+                label: "Manejo de usuarios",
+                icon: "pi pi-fw pi-user-plus",
+                // to: "users",
+            },
+        ],
     },
     // {
     //     label: 'UI Components',
@@ -38,27 +90,27 @@ const model = ref([
     //             icon: 'pi pi-fw pi-globe',
     //             to: '/landing'
     //         },
+    // {
+    //     label: 'Auth',
+    //     icon: 'pi pi-fw pi-user',
+    //     items: [
     //         {
-    //             label: 'Auth',
-    //             icon: 'pi pi-fw pi-user',
-    //             items: [
-    //                 {
-    //                     label: 'Login',
-    //                     icon: 'pi pi-fw pi-sign-in',
-    //                     to: '/auth/login'
-    //                 },
-    //                 {
-    //                     label: 'Error',
-    //                     icon: 'pi pi-fw pi-times-circle',
-    //                     to: '/auth/error'
-    //                 },
-    //                 {
-    //                     label: 'Access Denied',
-    //                     icon: 'pi pi-fw pi-lock',
-    //                     to: '/auth/access'
-    //                 }
-    //             ]
+    //             label: 'Login',
+    //             icon: 'pi pi-fw pi-sign-in',
+    //             to: '/auth/login'
     //         },
+    //         {
+    //             label: 'Error',
+    //             icon: 'pi pi-fw pi-times-circle',
+    //             to: '/auth/error'
+    //         },
+    //         {
+    //             label: 'Access Denied',
+    //             icon: 'pi pi-fw pi-lock',
+    //             to: '/auth/access'
+    //         }
+    //     ]
+    // },
     //         {
     //             label: 'Crud',
     //             icon: 'pi pi-fw pi-pencil',
