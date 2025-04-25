@@ -28,6 +28,9 @@ export default defineConfig({
     resolve: {
         alias: {
             "@": fileURLToPath(new URL("./resources/js", import.meta.url)),
+            "@css": fileURLToPath(new URL("./resources/css", import.meta.url)),
+            "@config": fileURLToPath(new URL("./resources/config", import.meta.url)),
+            "@services": fileURLToPath(new URL("./resources/js/Services", import.meta.url)),
             "@sakai-vue": fileURLToPath(
                 new URL("./resources/external/sakai-vue", import.meta.url),
             ),

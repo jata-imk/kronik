@@ -33,6 +33,32 @@ class Direccion extends Model
         return $this->morphTo();
     }
 
+    public function pais()
+    {
+        return $this->belongsTo(Pais::class);
+    }
+
+
+    public function codigoPostal()
+    {
+        return $this->belongsTo(CodigoPostal::class, 'codigo_postal_id');
+    }
+
+    public function divisionAdministrativaUno()
+    {
+        return $this->belongsTo(DivisionAdministrativa::class, 'division_admin_uno_id');
+    }
+
+    public function divisionAdministrativaDos()
+    {
+        return $this->belongsTo(DivisionAdministrativa::class, 'division_admin_dos_id');
+    }
+
+    public function divisionAdministrativaTres()
+    {
+        return $this->belongsTo(DivisionAdministrativa::class, 'division_admin_tres_id');
+    }
+
     // Accessor
     public function getCoordenadasAttribute($value)
     {

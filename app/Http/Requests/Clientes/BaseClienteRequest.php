@@ -33,8 +33,9 @@ abstract class BaseClienteRequest extends FormRequest
             'direcciones' => ['array'],
             'direcciones.*.entidad_id' => ['integer'],
             'direcciones.*.entidad_tipo' => ['string', 'in:clientes'], // puedes ajustar según tus políticas
-            'direcciones.*.tipo' => ['string', 'max:10'],
+            'direcciones.*.tipo' => ['nullable', 'string', 'max:10'],
             'direcciones.*.pais_id' => ['integer', 'exists:paises,id'],
+            'direcciones.*.codigo_postal' => ['nullable', 'string', 'max:15'],
             'direcciones.*.codigo_postal_id' => ['nullable', 'integer', 'exists:codigos_postales,id'],
             'direcciones.*.linea_uno' => ['string', 'max:255'],
             'direcciones.*.linea_dos' => ['nullable', 'string', 'max:127'],

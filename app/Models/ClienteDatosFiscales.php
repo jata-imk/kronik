@@ -20,4 +20,9 @@ class ClienteDatosFiscales extends Model
     {
         return $this->belongsTo(Cliente::class);
     }
+
+    public function regimenFiscal()
+    {
+        return $this->belongsTo(RegimenFiscal::class);
+    }
 }

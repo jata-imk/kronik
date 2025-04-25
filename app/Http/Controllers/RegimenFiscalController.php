@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\RegimenFiscalResource;
-use App\Models\RegimenFiscal;
+use App\Services\RegimenFiscalService;
 use Illuminate\Http\Request;
 
 class RegimenFiscalController extends Controller
 {
-    public function index()
+    public function index(Request $request, RegimenFiscalService $regimenFiscalService)
     {
-        return RegimenFiscalResource::collection(RegimenFiscal::all());
+        return RegimenFiscalResource::collection($regimenFiscalService->readAll());
     }
 }
