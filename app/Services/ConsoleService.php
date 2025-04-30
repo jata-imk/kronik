@@ -32,7 +32,7 @@ class ConsoleService
      * @param bool $forceWSL Forzar uso de WSL aunque no sea necesario
      * @return array [
      *     'output' => array de salida (stdout + stderr),
-     *     'exitCode' => código de salida,
+     *     'outputCode' => código de salida,
      *     'usedWSL' => bool indicando si se usó WSL
      * ]
      */
@@ -47,11 +47,11 @@ class ConsoleService
         // Redirigir stderr a stdout para capturar todo
         $command .= ' 2>&1';
 
-        exec($command, $output, $exitCode);
+        exec($command, $output, $outputCode);
 
         return [
             'output' => $output,
-            'exitCode' => $exitCode,
+            'outputCode' => $outputCode,
             'usedWSL' => $useWSL,
         ];
     }
@@ -72,10 +72,10 @@ class ConsoleService
     {
         $result = $this->run($command, $forceWSL);
 
-        if ($result['exitCode'] !== 0) {
+        if ($result['outputCode'] !== 0) {
             throw new \RuntimeException(
                 "Error ejecutando comando: '{$command}'\n" .
-                    "Código: {$result['exitCode']}\n" .
+                    "Código: {$result['outputCode']}\n" .
                     "Salida: " . implode("\n", $result['output'])
             );
         }

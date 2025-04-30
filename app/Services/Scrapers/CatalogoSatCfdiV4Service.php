@@ -173,6 +173,12 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
             // Realizamos la petición POST para descargar
             $filePath = $this->downloadPath . '/' . basename($url);
 
+            if (file_exists($filePath) && filesize($filePath) > 0) {
+                Log::info('Archivo XLS ya descargado anteriormente: ' . $filePath);
+                Log::channel('stderr')->info('Archivo XLS ya descargado anteriormente: ' . $filePath);
+                return $filePath;
+            }
+
             $response = $this->http->request('GET', $url);
 
             // Responses are lazy: this code is executed as soon as headers are received
@@ -210,17 +216,18 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
             // First, we need to convert XLS to XLSX, this is done with a command line tool
             $xlsxFilePath = $filePath . 'x';
 
-            $command = 'libreoffice --headless --convert-to xlsx "' . $filePath . '" --outdir "' . $this->downloadPath . '/"';
-            $commandNormalized = $this->consoleService->normalizePath($command)['normalized'];
+            $filePathNormalized = $this->consoleService->normalizePath($filePath)['normalized'];
+            $downloadPathNormalized = $this->consoleService->normalizePath($this->downloadPath . '/')['normalized'];
 
-            exec($commandNormalized, $output, $returnCode);
+            $command = 'libreoffice --headless --convert-to xlsx "' . $filePathNormalized . '" --outdir "' . $downloadPathNormalized . '"';
+
+            $resultExcecuteCommand = $this->consoleService->run($command);
+            $output = $resultExcecuteCommand['output'];
+            $returnCode = $resultExcecuteCommand['outputCode'];
 
             if ($returnCode !== 0) {
                 throw new \Exception('Error al ejecutar el comando: ' . implode(' ', $output));
             }
-
-            Log::info('Archivo XLS convertido a XLSX correctamente, comando ejecutado: ' . implode(' ', $output));
-            Log::channel('stderr')->info('Archivo XLS convertido a XLSX correctamente, comando ejecutado: ' . implode(' ', $output));
 
             $timeout = 45;
             $startTime = time();
@@ -232,6 +239,9 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
                 sleep(1);
             }
 
+            Log::info('Archivo XLS convertido a XLSX correctamente, comando ejecutado: ' . implode(' ', $output));
+            Log::channel('stderr')->info('Archivo XLS convertido a XLSX correctamente, comando ejecutado: ' . implode(' ', $output));
+
             $options = new Options();
             $options->SHOULD_PRESERVE_EMPTY_ROWS = true;
             $reader = new Reader($options);
@@ -240,6 +250,7 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
             $procesedRows = 0;
 
             foreach ($reader->getSheetIterator() as $sheet) {
+                Log::channel('stderr')->info($sheet->getName());
                 if ($sheet->getName() === 'c_RegimenFiscal') {
                     foreach ($sheet->getRowIterator() as $indexRow => $row) {
                         if ($indexRow < 7) {
