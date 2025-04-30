@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
+use Illuminate\Console\Command;
 use App\Services\Scrapers\CatalogoSatCfdiV4Service;
 
-use Illuminate\Console\Command;
-use Exception;
+use Throwable;
 
 class UpdateSatCfdiV4Catalog extends Command
 {
@@ -23,26 +23,23 @@ class UpdateSatCfdiV4Catalog extends Command
      */
     protected $description = 'Descarga y crea/actualiza el catálogo CFDI V4.0 desde el sitio del SAT';
 
-    protected $catalogoSatCfdiV4Service;
-
-    public function __construct(CatalogoSatCfdiV4Service $satCfdiV4Service)
+    public function __construct()
     {
         parent::__construct();
-        $this->catalogoSatCfdiV4Service = $satCfdiV4Service;
     }
 
     /**
      * Execute the console command.
      *
-     * @param CatalogoSatCfdiV4Service $satCfdiV4Service
+     * @param CatalogoSatCfdiV4Service $catalogoSatCfdiV4Service
      * @return int
      */
-    public function handle()
+    public function handle(CatalogoSatCfdiV4Service $catalogoSatCfdiV4Service): int
     {
-        $this->info('Iniciando descarga del catálogo CFDI V4.0...');
+        $this->info('Iniciando descarga del catálogo CFDI V4.0 desde el SAT...');
 
         try {
-            $updated = $this->catalogoSatCfdiV4Service->downloadAndProcessCatalog();
+            $updated = $catalogoSatCfdiV4Service->downloadAndProcessCatalog();
 
             if ($updated) {
                 $this->info('Catálogo SAT CFDI V4 actualizado correctamente.');
@@ -51,7 +48,7 @@ class UpdateSatCfdiV4Catalog extends Command
             }
 
             return Command::SUCCESS;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->error('Error al descargar el catálogo: ' . $e->getMessage());
             return Command::FAILURE;
         }

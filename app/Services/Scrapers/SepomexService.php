@@ -2,9 +2,6 @@
 
 namespace App\Services\Scrapers;
 
-use Symfony\Component\HttpClient\HttpClient;
-use App\Services\Scrapers\BrowserClientService;
-
 use App\Models\CodigoPostal;
 use App\Models\DivisionAdministrativa;
 use App\Models\Pais;
@@ -12,23 +9,21 @@ use App\Models\Pais;
 use Carbon\Carbon;
 use ZipArchive;
 
+use App\Interfaces\BrowserClientInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+
 use Illuminate\Support\Facades\Log;
 
 class SepomexService extends BaseCatalogScraperService
 {
-    protected $url = 'https://www.correosdemexico.gob.mx/SSLServicios/ConsultaCP/CodigoPostal_Exportar.aspx';
-    protected $downloadPath = 'app/sepomex';
-    protected $extractPath = 'app/sepomex/extracted';
+    private const URL_SEPOMEX = 'https://www.correosdemexico.gob.mx/SSLServicios/ConsultaCP/CodigoPostal_Exportar.aspx';
+    private string $extractPath = 'app/sepomex/extracted';
 
-    public function __construct()
-    {
-        $http = HttpClient::create([
-            'timeout' => 60,
-            'verify_host' => false,
-        ]);
-        $browserClient = new BrowserClientService($http);
-
-        parent::__construct($http, $browserClient);
+    public function __construct(
+        HttpClientInterface $http,
+        BrowserClientInterface $browserClient
+    ) {
+        parent::__construct($http, $browserClient, self::URL_SEPOMEX, 'app/sepomex');
 
         $this->extractPath = $this->getOrCreatePath($this->extractPath);
     }

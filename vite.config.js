@@ -31,6 +31,8 @@ export default defineConfig({
             "@css": fileURLToPath(new URL("./resources/css", import.meta.url)),
             "@config": fileURLToPath(new URL("./resources/config", import.meta.url)),
             "@services": fileURLToPath(new URL("./resources/js/Services", import.meta.url)),
+            "@components": fileURLToPath(new URL("./resources/js/Components", import.meta.url)),
+            "@composables": fileURLToPath(new URL("./resources/js/Composables", import.meta.url)),
             "@sakai-vue": fileURLToPath(
                 new URL("./resources/external/sakai-vue", import.meta.url),
             ),

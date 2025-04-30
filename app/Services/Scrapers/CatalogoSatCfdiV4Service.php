@@ -4,29 +4,29 @@ namespace App\Services\Scrapers;
 
 use Carbon\Carbon;
 use App\Models\RegimenFiscal;
-
+use App\Services\ConsoleService;
 use Illuminate\Support\Facades\Log;
 
 use OpenSpout\Reader\XLSX\Reader;
 use OpenSpout\Reader\XLSX\Options;
 
-use Symfony\Component\HttpClient\HttpClient;
-use App\Services\Scrapers\BrowserClientService;
+use App\Interfaces\BrowserClientInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
 {
-    protected $url = 'http://omawww.sat.gob.mx/tramitesyservicios/Paginas/anexo_20.htm';
-    protected $downloadPath = 'app/sat_cfdi_v4';
+    private ConsoleService $consoleService;
 
-    public function __construct()
-    {
-        $http = HttpClient::create([
-            'timeout' => 60,
-            'verify_host' => false,
-        ]);
-        $browserClient = new BrowserClientService($http);
+    private const SAT_URL = 'http://omawww.sat.gob.mx/tramitesyservicios/Paginas/anexo_20.htm';
 
-        parent::__construct($http, $browserClient);
+    public function __construct(
+        HttpClientInterface $http,
+        BrowserClientInterface $browserClient,
+        ConsoleService $consoleService
+    ) {
+        parent::__construct($http, $browserClient, self::SAT_URL, 'app/sat_cfdi_v4');
+
+        $this->consoleService = $consoleService;
     }
 
     /**
@@ -207,42 +207,21 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
     protected function processFile($filePath, $lastUpdateDate)
     {
         try {
-            // First, we need to convert XLS to XLSX, this is done with a commnand line tool
-            $xlsxFilePath = str_replace('\\', '/', $filePath) . 'x';
+            // First, we need to convert XLS to XLSX, this is done with a command line tool
+            $xlsxFilePath = $filePath . 'x';
 
             $command = 'libreoffice --headless --convert-to xlsx "' . $filePath . '" --outdir "' . $this->downloadPath . '/"';
+            $commandNormalized = $this->consoleService->normalizePath($command)['normalized'];
 
-            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-                // Se utiliza str_replace('\\', '/', $this->downloadPath) por que wsl es Linux entonces el separador de directorios es /
-                $xlsxFilePath = $filePath . 'x';
-
-                // Se utiliza str_replace('C:/', 'mnt/c/') por que para wsl se usa /mnt/c/ en lugar de C:/
-                $command =
-                    'wsl libreoffice --headless --convert-to xlsx "/'
-                    . str_replace('C:/', 'mnt/c/', str_replace('\\', '/', $filePath))
-                    . '" --outdir "/'
-                    . str_replace('C:/', 'mnt/c/', str_replace('\\', '/', $this->downloadPath))
-                    . '/"';
-            }
-
-            exec('whoami', $whoami, $returnCode);
-            $returnCode = 0;
-
-            if ($returnCode !== 0) {
-                throw new \Exception('Error al ejecutar el comando: whoami');
-            }
-
-            Log::info('Convirtiendo el archivo XLS a XLSX: (' . $whoami[0] . ') ' . $command);
-            Log::channel('stderr')->info('Convirtiendo el archivo XLS a XLSX: (' . $whoami[0] . ') ' . $command);
-
-            exec($command, $output, $returnCode);
-            $returnCode = 0;
+            exec($commandNormalized, $output, $returnCode);
 
             if ($returnCode !== 0) {
                 throw new \Exception('Error al ejecutar el comando: ' . implode(' ', $output));
             }
 
-            // now we need to check if the xlsx file exists, we will use a 30second timeout
+            Log::info('Archivo XLS convertido a XLSX correctamente, comando ejecutado: ' . implode(' ', $output));
+            Log::channel('stderr')->info('Archivo XLS convertido a XLSX correctamente, comando ejecutado: ' . implode(' ', $output));
+
             $timeout = 45;
             $startTime = time();
 
@@ -253,7 +232,6 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
                 sleep(1);
             }
 
-            // now we need to process the XLSX file
             $options = new Options();
             $options->SHOULD_PRESERVE_EMPTY_ROWS = true;
             $reader = new Reader($options);

@@ -1,10 +1,15 @@
 <script setup>
-import { onMounted } from "vue";
+import { ref, onMounted, onUnmounted, provide } from "vue";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 
+const emit = defineEmits(["mapLoaded"]); // Emitimos evento cuando el mapa está listo
+
+const mapContainer = ref(null);
+const mapInstance = ref(null);
+
 onMounted(() => {
-    const map = new maplibregl.Map({
+    mapInstance.value = new maplibregl.Map({
         container: "map",
         style: {
             version: 8,
@@ -28,6 +33,17 @@ onMounted(() => {
         zoom: 14,
     });
 
+    // Bound con GeoJSON de ejemplo
+    mapInstance.value.on("load", () => {
+        // Fit bounds on mexico country
+        mapInstance.value.fitBounds([
+            [-118.599188, 14.3811832], // [west, south]
+            [-86.493266, 32.7187133], // [east, north]
+        ]);
+    });
+
+    provide("mapInstance", mapInstance); // 🔥 Aquí damos el mapa a todos los hijos
+
     // Geolocalización
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((pos) => {
@@ -35,23 +51,26 @@ onMounted(() => {
 
             new maplibregl.Marker({ draggable: true })
                 .setLngLat(coords)
-                .addTo(map);
+                .addTo(mapInstance.value);
         });
     }
+});
 
-    // Bound con GeoJSON de ejemplo
-    map.on("load", () => {
-        // Fit bounds on mexico country
-        map.fitBounds([
-            [-118.599188, 14.3811832], // [west, south]
-            [-86.493266, 32.7187133], // [east, north]
-        ]);
-    });
+onUnmounted(() => {
+    if (mapInstance.value) {
+        mapInstance.value.remove();
+    }
+});
+
+defineExpose({
+    map: mapInstance,
 });
 </script>
   
 <template>
-    <div id="map" class="map-container"></div>
+    <div ref="mapContainer" id="map" class="map-container">
+        <slot v-if="mapInstance" /> <!-- Solo renderizamos hijos cuando el mapa esté listo -->
+    </div>
 </template>
   
 <style>
