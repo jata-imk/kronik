@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\CodigoPostalController;
+use App\Http\Controllers\GeocodingController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -36,4 +37,6 @@ Route::middleware([
     Route::get('/componentes', function () {
         return Inertia::render('Componentes');
     })->name('componentes');
+
+    Route::get('/geocoding/search', [GeocodingController::class, 'search'])->name('geocoding.search');
 });

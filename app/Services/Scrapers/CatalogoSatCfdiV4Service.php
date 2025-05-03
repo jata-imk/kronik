@@ -250,7 +250,6 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
             $procesedRows = 0;
 
             foreach ($reader->getSheetIterator() as $sheet) {
-                Log::channel('stderr')->info($sheet->getName());
                 if ($sheet->getName() === 'c_RegimenFiscal') {
                     foreach ($sheet->getRowIterator() as $indexRow => $row) {
                         if ($indexRow < 7) {

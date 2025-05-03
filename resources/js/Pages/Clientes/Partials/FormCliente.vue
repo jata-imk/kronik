@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import { useToast } from "primevue/usetoast";
 import { usePage, useForm } from "@inertiajs/vue3";
 
@@ -8,6 +8,16 @@ import IntlTelInput from "@components/IntlTelInput.vue";
 import MapLibreMap from "@components/MapLibre/MapLibreMap.vue";
 
 import { useCodigoPostal } from "@composables/useCodigoPostal";
+import { useGeocoding } from "@/Composables/useGeocoding";
+const {
+    result: geocodingResult,
+    error: geocodingError,
+    search: geocodingSearch,
+} = useGeocoding();
+
+import { useClientMapSetup } from "@/Composables/MapLibre/useClientMapSetup";
+
+const { handleGeocodingResult } = useClientMapSetup();
 
 const page = usePage();
 const form = useForm({
@@ -79,6 +89,14 @@ const onChangePaisNumeroTelefono = ({ dialCode }) => {
 };
 
 const refAutocompleteCodigoPostal = ref(null);
+
+const divisionesAdminUno = ref([]);
+const divisionAdminUnoSeleccionada = ref(null);
+const divisionesAdminDos = ref([]);
+const divisionAdminDosSeleccionada = ref(null);
+const divisionesAdminTres = ref([]);
+const divisionAdminTresSeleccionada = ref(null);
+const tipoLocalidadSeleccionada = ref(null);
 
 const DEBOUNCE_MS_CODIGO_POSTAL = 300;
 const MIN_LENGTH_CODIGO_POSTAL = 3;
@@ -220,6 +238,75 @@ const onChangeLocalidad = (event) => {
         divisionNivelTresSeleccionada.id;
 };
 
+const queryGeocoding = computed(() => {
+    if (
+        !divisionAdminUnoSeleccionada.value ||
+        !divisionAdminDosSeleccionada.value ||
+        !divisionAdminTresSeleccionada.value
+    ) {
+        return null;
+    }
+    const nombreDivisionAdminUno =
+        divisionesAdminUno.value.find(
+            (item) => item.id === divisionAdminUnoSeleccionada.value,
+        ).nombre || "";
+    const nombreDivisionAdminDos =
+        divisionesAdminDos.value.find(
+            (item) => item.id === divisionAdminDosSeleccionada.value,
+        ).nombre || "";
+    const nombreDivisionAdminTres =
+        divisionesAdminTres.value.find(
+            (item) => item.id === divisionAdminTresSeleccionada.value,
+        ).nombre || "";
+
+    return `${form.direcciones[0].codigo_postal}, ${nombreDivisionAdminTres}, ${nombreDivisionAdminDos}, ${nombreDivisionAdminUno}`;
+});
+
+watch(
+    () => queryGeocoding.value,
+    async () => {
+        if (!queryGeocoding.value) {
+            return;
+        }
+
+        await geocodingSearch(queryGeocoding.value);
+
+        if (geocodingError.value) {
+            toast.add({
+                severity: "warn",
+                summary: "Datos geoespaciales no encontrados",
+                detail: "Ubique el marcador de domicilio manualmente en el mapa",
+            });
+
+            try {
+                const nombreDivisionAdminUno =
+                    divisionesAdminUno.value.find(
+                        (item) =>
+                            item.id === divisionAdminUnoSeleccionada.value,
+                    ).nombre || "";
+
+                const nombreDivisionAdminDos =
+                    divisionesAdminDos.value.find(
+                        (item) =>
+                            item.id === divisionAdminDosSeleccionada.value,
+                    ).nombre || "";
+
+                await geocodingSearch(
+                    `${nombreDivisionAdminDos}, ${nombreDivisionAdminUno}`,
+                );
+
+                handleGeocodingResult(geocodingResult.value);
+            } catch (error) {
+                console.error(error);
+            }
+
+            return;
+        }
+
+        handleGeocodingResult(geocodingResult.value);
+    },
+);
+
 watch(
     () => refAutocompleteCodigoPostal.value,
     () => {
@@ -276,14 +363,6 @@ watch([busquedaCodigosPostales, errorUseCodigoPostal], () => {
 
     hideResultsAutocomplete(refAutocompleteCodigoPostal);
 });
-
-const divisionesAdminUno = ref([]);
-const divisionAdminUnoSeleccionada = ref(null);
-const divisionesAdminDos = ref([]);
-const divisionAdminDosSeleccionada = ref(null);
-const divisionesAdminTres = ref([]);
-const divisionAdminTresSeleccionada = ref(null);
-const tipoLocalidadSeleccionada = ref(null);
 
 const sexos = page.props.sexos;
 const tiposPersona = page.props.tiposPersona;

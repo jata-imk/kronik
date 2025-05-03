@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Interfaces\BrowserClientInterface;
+use App\Interfaces\GeocodingServiceInterface;
+use App\Services\GeocodingService;
 use App\Services\Scrapers\BrowserClientService;
 
 use Illuminate\Support\ServiceProvider;
@@ -23,6 +25,7 @@ class AppServiceProvider extends ServiceProvider
             ]);
         });
         $this->app->bind(BrowserClientInterface::class, BrowserClientService::class);
+        $this->app->bind(GeocodingServiceInterface::class, GeocodingService::class);
     }
 
     /**

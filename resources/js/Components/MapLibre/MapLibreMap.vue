@@ -1,12 +1,19 @@
 <script setup>
 import { ref, onMounted, onUnmounted, provide } from "vue";
+
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+
+import { useMap } from "@/Composables/MapLibre/useMap";
+import { useCenterMap } from "@/Composables/MapLibre/useCenterMap";
+import { useFitBounds } from "@/Composables/MapLibre/useFitBounds";
 
 const emit = defineEmits(["mapLoaded"]); // Emitimos evento cuando el mapa está listo
 
 const mapContainer = ref(null);
 const mapInstance = ref(null);
+
+const { setMap } = useMap();
 
 onMounted(() => {
     mapInstance.value = new maplibregl.Map({
@@ -28,32 +35,23 @@ onMounted(() => {
                 },
             ],
         },
-        // Center on Mexico
-        center: [-102.0077097, 23.6585116],
-        zoom: 14,
     });
 
-    // Bound con GeoJSON de ejemplo
+    setMap(mapInstance.value);
+    provide("mapInstance", mapInstance); // 🔥 Aquí damos el mapa a todos los hijos
+
+    // En la primer carga centrar el mapa en Mexico
     mapInstance.value.on("load", () => {
-        // Fit bounds on mexico country
-        mapInstance.value.fitBounds([
+        window.map = mapInstance.value;
+        useCenterMap().centerAt([-102.0077097, 23.6585116], 14);
+
+        useFitBounds().fitBounds([
             [-118.599188, 14.3811832], // [west, south]
             [-86.493266, 32.7187133], // [east, north]
         ]);
+
+        emit("mapLoaded");
     });
-
-    provide("mapInstance", mapInstance); // 🔥 Aquí damos el mapa a todos los hijos
-
-    // Geolocalización
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((pos) => {
-            const coords = [pos.coords.longitude, pos.coords.latitude];
-
-            new maplibregl.Marker({ draggable: true })
-                .setLngLat(coords)
-                .addTo(mapInstance.value);
-        });
-    }
 });
 
 onUnmounted(() => {
