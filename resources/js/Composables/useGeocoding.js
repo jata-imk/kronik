@@ -20,6 +20,11 @@ export function useGeocoding() {
             }
 
             const data = await response.json();
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
             result.value = data;
         } catch (err) {
             error.value = err.message || "Error al buscar ubicación";

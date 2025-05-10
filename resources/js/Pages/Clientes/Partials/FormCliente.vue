@@ -1,7 +1,7 @@
 <script setup>
-import { ref, watch, computed } from "vue";
+import { ref, watch, computed, onMounted } from "vue";
 import { useToast } from "primevue/usetoast";
-import { usePage, useForm } from "@inertiajs/vue3";
+import { usePage, useForm, Link } from "@inertiajs/vue3";
 
 import "@css/flags.css";
 import IntlTelInput from "@components/IntlTelInput.vue";
@@ -17,46 +17,100 @@ const {
 
 import { useClientMapSetup } from "@/Composables/MapLibre/useClientMapSetup";
 
-const { handleGeocodingResult } = useClientMapSetup();
+const { handleGeocodingResult, marker } = useClientMapSetup();
+
+watch(
+    () => marker.value,
+    () => {
+        marker.value.on("dragend", () => {
+            const coordenadas = marker.value.getLngLat();
+            form.direcciones[0].coordenadas = {
+                lat: coordenadas.lat,
+                lng: coordenadas.lng,
+            };
+        });
+    },
+);
 
 const page = usePage();
+const readOnly = ref(page.props.readOnly || false);
+const firstLoad = ref(true);
+const clienteSeleccionado = ref(page.props.cliente);
+
 const form = useForm({
-    primer_nombre: "",
-    segundo_nombre: "",
-    apellido_paterno: "",
-    apellido_materno: "",
-    fecha_nacimiento: "",
-    pais_nacimiento_id: null,
-    email: "",
-    sexo: "",
-    telefono_codigo_pais: "",
-    telefono: "",
+    primer_nombre: clienteSeleccionado.value?.primer_nombre ?? "",
+    segundo_nombre: clienteSeleccionado.value?.segundo_nombre ?? "",
+    apellido_paterno: clienteSeleccionado.value?.apellido_paterno ?? "",
+    apellido_materno: clienteSeleccionado.value?.apellido_materno ?? "",
+    fecha_nacimiento: clienteSeleccionado.value
+        ? new Date(clienteSeleccionado.value?.fecha_nacimiento)
+        : null,
+    pais_nacimiento_id: clienteSeleccionado.value?.pais_nacimiento_id ?? null,
+    email: clienteSeleccionado.value?.email ?? "",
+    sexo: clienteSeleccionado.value?.sexo ?? "",
+    telefono_codigo_pais: clienteSeleccionado.value?.telefono_codigo_pais
+        ? `${clienteSeleccionado.value?.telefono_codigo_pais}`
+        : "",
+    telefono: clienteSeleccionado.value?.telefono ?? "",
     datos_fiscales: {
-        tipo_persona: "",
-        regimen_fiscal_id: null,
-        curp: "",
-        rfc: "",
-        razon_social: "",
+        tipo_persona:
+            clienteSeleccionado.value?.datos_fiscales?.tipo_persona ?? "",
+        regimen_fiscal_id:
+            clienteSeleccionado.value?.datos_fiscales?.regimen_fiscal_id ??
+            null,
+        curp: clienteSeleccionado.value?.datos_fiscales?.curp ?? "",
+        rfc: clienteSeleccionado.value?.datos_fiscales?.rfc ?? "",
+        razon_social:
+            clienteSeleccionado.value?.datos_fiscales?.razon_social ?? "",
     },
-    direcciones: [
-        {
-            tipo: "",
-            linea_uno: "",
-            linea_dos: "",
-            linea_tres: "",
-            codigo_postal: "",
-            division_admin_uno_id: null,
-            division_admin_dos_id: null,
-            division_admin_tres_id: null,
-            datos_adicionales: "",
-        },
-    ],
+    direcciones: clienteSeleccionado.value?.direcciones.length
+        ? clienteSeleccionado.value?.direcciones.map((direccion) => ({
+              tipo: direccion?.tipo ?? "",
+              linea_uno: direccion?.linea_uno ?? "",
+              linea_dos: direccion?.linea_dos ?? "",
+              linea_tres: direccion?.linea_tres ?? "",
+              codigo_postal: direccion?.codigo_postal.codigo ?? "",
+              division_admin_uno_id: direccion?.division_admin_uno_id ?? null,
+              division_admin_dos_id: direccion?.division_admin_dos_id ?? null,
+              division_admin_tres_id: direccion?.division_admin_tres_id ?? null,
+              datos_adicionales: direccion?.datos_adicionales ?? "",
+              coordenadas: {
+                  lat: direccion?.coordenadas.lat ?? 0,
+                  lng: direccion?.coordenadas.lng ?? 0,
+              },
+          }))
+        : [
+              {
+                  tipo: "",
+                  linea_uno: "",
+                  linea_dos: "",
+                  linea_tres: "",
+                  codigo_postal: "",
+                  division_admin_uno_id: null,
+                  division_admin_dos_id: null,
+                  division_admin_tres_id: null,
+                  datos_adicionales: "",
+                  coordenadas: {
+                      lat: 0,
+                      lng: 0,
+                  },
+              },
+          ],
 });
 
 const paises = ref(page.props.paises);
-const paisSeleccionado = ref();
-const paisesFiltrados = ref();
-
+const paisSeleccionado = ref(
+    clienteSeleccionado.value?.pais_nacimiento_id
+        ? {
+              id: form.pais_nacimiento_id,
+              nombre_es:
+                  paises.value.find(
+                      (pais) => pais.id === form.pais_nacimiento_id,
+                  ).nombre_es ?? "",
+          }
+        : null,
+);
+const paisesFiltrados = ref(paises);
 const filtrarPaises = (event) => {
     setTimeout(() => {
         if (!event.query.trim().length) {
@@ -89,14 +143,73 @@ const onChangePaisNumeroTelefono = ({ dialCode }) => {
 };
 
 const refAutocompleteCodigoPostal = ref(null);
-
-const divisionesAdminUno = ref([]);
-const divisionAdminUnoSeleccionada = ref(null);
-const divisionesAdminDos = ref([]);
-const divisionAdminDosSeleccionada = ref(null);
-const divisionesAdminTres = ref([]);
-const divisionAdminTresSeleccionada = ref(null);
-const tipoLocalidadSeleccionada = ref(null);
+const divisionesAdminUno = ref(
+    clienteSeleccionado.value?.direcciones[0]?.division_admin_uno_id
+        ? [
+              {
+                  id: clienteSeleccionado.value?.direcciones[0].codigo_postal
+                      .division_administrativa.padre.padre.id,
+                  nombre: clienteSeleccionado.value?.direcciones[0]
+                      .codigo_postal.division_administrativa.padre.padre.nombre,
+                  codigo: clienteSeleccionado.value?.direcciones[0]
+                      .codigo_postal.division_administrativa.padre.padre.codigo,
+                  nivel: clienteSeleccionado.value?.direcciones[0].codigo_postal
+                      .division_administrativa.padre.padre.nivel,
+                  tipo: clienteSeleccionado.value?.direcciones[0].codigo_postal
+                      .division_administrativa.padre.padre.tipo,
+              },
+          ]
+        : [],
+);
+const divisionAdminUnoSeleccionada = ref(
+    clienteSeleccionado.value?.direcciones[0]?.division_admin_uno_id ?? null,
+);
+const divisionesAdminDos = ref(
+    clienteSeleccionado.value?.direcciones[0]?.division_admin_dos_id
+        ? [
+              {
+                  id: clienteSeleccionado.value?.direcciones[0].codigo_postal
+                      .division_administrativa.padre.id,
+                  nombre: clienteSeleccionado.value?.direcciones[0]
+                      .codigo_postal.division_administrativa.padre.nombre,
+                  codigo: clienteSeleccionado.value?.direcciones[0]
+                      .codigo_postal.division_administrativa.padre.codigo,
+                  nivel: clienteSeleccionado.value?.direcciones[0].codigo_postal
+                      .division_administrativa.padre.nivel,
+                  tipo: clienteSeleccionado.value?.direcciones[0].codigo_postal
+                      .division_administrativa.padre.tipo,
+              },
+          ]
+        : [],
+);
+const divisionAdminDosSeleccionada = ref(
+    clienteSeleccionado.value?.direcciones[0]?.division_admin_dos_id ?? null,
+);
+const divisionesAdminTres = ref(
+    clienteSeleccionado.value?.direcciones[0]?.division_admin_tres_id
+        ? [
+              {
+                  id: clienteSeleccionado.value?.direcciones[0].codigo_postal
+                      .division_administrativa.id,
+                  nombre: clienteSeleccionado.value?.direcciones[0]
+                      .codigo_postal.division_administrativa.nombre,
+                  codigo: clienteSeleccionado.value?.direcciones[0]
+                      .codigo_postal.division_administrativa.codigo,
+                  nivel: clienteSeleccionado.value?.direcciones[0].codigo_postal
+                      .division_administrativa.nivel,
+                  tipo: clienteSeleccionado.value?.direcciones[0].codigo_postal
+                      .division_administrativa.tipo,
+              },
+          ]
+        : [],
+);
+const divisionAdminTresSeleccionada = ref(
+    clienteSeleccionado.value?.direcciones[0]?.division_admin_tres_id ?? null,
+);
+const tipoLocalidadSeleccionada = ref(
+    clienteSeleccionado.value?.direcciones[0]?.codigo_postal
+        ?.division_administrativa?.tipo ?? "",
+);
 
 const DEBOUNCE_MS_CODIGO_POSTAL = 300;
 const MIN_LENGTH_CODIGO_POSTAL = 3;
@@ -222,8 +335,13 @@ watch(
             resetDivisionAdministrativaSelectOptionsAndValue();
         }
 
+        if (clienteSeleccionado.value && firstLoad.value) {
+            return;
+        }
+
         buscarCodigoPostal();
     },
+    { immediate: true },
 );
 
 const onChangeLocalidad = (event) => {
@@ -270,6 +388,20 @@ watch(
         }
 
         await geocodingSearch(queryGeocoding.value);
+    },
+    { immediate: true },
+);
+
+watch(
+    () => [geocodingResult.value, geocodingError.value],
+    () => {
+        if (!queryGeocoding.value) {
+            return;
+        }
+
+        if (!geocodingResult.value && !geocodingError.value) {
+            return;
+        }
 
         if (geocodingError.value) {
             toast.add({
@@ -291,11 +423,9 @@ watch(
                             item.id === divisionAdminDosSeleccionada.value,
                     ).nombre || "";
 
-                await geocodingSearch(
+                geocodingSearch(
                     `${nombreDivisionAdminDos}, ${nombreDivisionAdminUno}`,
                 );
-
-                handleGeocodingResult(geocodingResult.value);
             } catch (error) {
                 console.error(error);
             }
@@ -303,7 +433,23 @@ watch(
             return;
         }
 
-        handleGeocodingResult(geocodingResult.value);
+        handleGeocodingResult(
+            geocodingResult.value,
+            clienteSeleccionado.value &&
+                firstLoad.value &&
+                form.direcciones[0].coordenadas
+                ? {
+                      lat: form.direcciones[0].coordenadas.lng,
+                      lon: form.direcciones[0].coordenadas.lat,
+                  }
+                : null,
+            !readOnly.value,
+        );
+
+        if (firstLoad.value) {
+            firstLoad.value = false;
+            return;
+        }
     },
 );
 
@@ -317,6 +463,10 @@ watch(
 );
 
 watch([busquedaCodigosPostales, errorUseCodigoPostal], () => {
+    if (clienteSeleccionado.value && firstLoad.value) {
+        return;
+    }
+
     if (errorUseCodigoPostal.value) {
         toast.add({
             severity: "error",
@@ -367,7 +517,7 @@ watch([busquedaCodigosPostales, errorUseCodigoPostal], () => {
 const sexos = page.props.sexos;
 const tiposPersona = page.props.tiposPersona;
 const regimenesFiscales = page.props.regimenesFiscales;
-const regimenesFiscalesFiltered = ref();
+const regimenesFiscalesFiltered = ref(regimenesFiscales);
 
 const onChangeTipoPersona = ({ value }) => {
     if (value === "fisica") {
@@ -387,22 +537,40 @@ const fechaMinimaAdultos = ref(new Date());
 fechaMinimaAdultos.value.setFullYear(fechaHoy.getFullYear() - 18);
 
 const onSubmit = () => {
-    form.post(route("clientes.store"), {
-        preserveScroll: true,
-        onSuccess: () => {
-            form.reset();
-            toast.add({
-                severity: "success",
-                summary: "Cliente creado exitosamente",
-                life: 3000,
-            });
+    form[page.props.action === "clientes.store" ? "post" : "patch"](
+        route(
+            page.props.action ?? "clientes.store",
+            page.props.action === "clientes.store"
+                ? null
+                : clienteSeleccionado.value?.id,
+        ),
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                form.reset();
+                toast.add({
+                    severity: "success",
+                    summary: "Cliente creado exitosamente",
+                    life: 3000,
+                });
+            },
         },
-    });
+    );
 };
+
+onMounted(() => {
+    if (!clienteSeleccionado.value) {
+        firstLoad.value = false;
+    }
+});
 </script>
 
 <template>
     <div class="card p-4 max-w-3xl mx-auto">
+        <Link :href="route('clientes.index')" class="mb-4 block">
+            <Button label="Volver" icon="pi pi-arrow-left" />
+        </Link>
+
         <h2 class="text-2xl font-bold mb-4">Formulario de clientes</h2>
 
         <form
@@ -416,7 +584,7 @@ const onSubmit = () => {
                     <label class="block text-sm font-medium mb-1" for="primer_nombre">Primer Nombre</label>
                     <InputText
                         id="primer_nombre" name="primer_nombre"
-                        v-model="form.primer_nombre"
+                        v-model="form.primer_nombre" :disabled="readOnly"
                         fluid :invalid="!!form.errors.primer_nombre " />
                     <Message v-if="form.errors.primer_nombre" severity="error" size="small">
                         {{ form.errors.primer_nombre }}
@@ -427,7 +595,7 @@ const onSubmit = () => {
                     <label class="block text-sm font-medium mb-1" for="primer_nombre">Segundo Nombre</label>
                     <InputText
                         id="segundo_nombre" name="segundo_nombre"
-                        v-model="form.segundo_nombre"
+                        v-model="form.segundo_nombre" :disabled="readOnly"
                         fluid :invalid="!!form.errors.segundo_nombre " />
                     <Message v-if="form.errors.segundo_nombre" severity="error" size="small">
                         {{ form.errors.segundo_nombre }}
@@ -439,7 +607,7 @@ const onSubmit = () => {
                     <label class="block text-sm font-medium mb-1" for="apellido_paterno">Primer Apellido</label>
                     <InputText
                         id="apellido_paterno" name="apellido_paterno"
-                        v-model="form.apellido_paterno"
+                        v-model="form.apellido_paterno" :disabled="readOnly"
                         fluid :invalid="!!form.errors.apellido_paterno " />
                     <Message v-if="form.errors.apellido_paterno" severity="error" size="small">
                         {{ form.errors.apellido_paterno }}
@@ -451,7 +619,7 @@ const onSubmit = () => {
                     <label class="block text-sm font-medium mb-1" for="apellido_materno">Segundo Apellido</label>
                     <InputText
                         id="apellido_materno" name="apellido_materno"
-                        v-model="form.apellido_materno"
+                        v-model="form.apellido_materno" :disabled="readOnly"
                         fluid :invalid="!!form.errors.apellido_materno " />
                     <Message v-if="form.errors.apellido_materno" severity="error" size="small">
                         {{ form.errors.apellido_materno }}
@@ -463,7 +631,7 @@ const onSubmit = () => {
                     <label class="block text-sm font-medium mb-1" for="fecha_nacimiento">Fecha de nacimiento</label>
                     <DatePicker
                         id="fecha_nacimiento" name="fecha_nacimiento"
-                        v-model="form.fecha_nacimiento"
+                        v-model="form.fecha_nacimiento" :disabled="readOnly"
                         fluid
                         :maxDate="fechaMinimaAdultos" :invalid="!!form.errors.fecha_nacimiento"
                         showIcon iconDisplay="input" />
@@ -478,7 +646,7 @@ const onSubmit = () => {
                     <AutoComplete 
                         dropdown :suggestions="paisesFiltrados" @complete="filtrarPaises"
                         id="pais_nacimiento_id" name="pais_nacimiento_id"
-                        v-model="paisSeleccionado"
+                        v-model="paisSeleccionado" :disabled="readOnly"
                         @change="onChangePaisNacimiento"
                         optionLabel="nombre_es"
                         optionValue="id"
@@ -504,7 +672,7 @@ const onSubmit = () => {
                     <label class="block text-sm font-medium mb-1" for="sexo">Sexo</label>
                     <Select
                         id="sexo" name="sexo"
-                        v-model="form.sexo"
+                        v-model="form.sexo" :disabled="readOnly"
                         :options="sexos"
                         optionLabel="label"
                         optionValue="value"
@@ -521,7 +689,7 @@ const onSubmit = () => {
                     <label class="block text-sm font-medium mb-1">Email</label>
                     <InputText
                         id="email" name="email"
-                        v-model="form.email"
+                        v-model="form.email" :disabled="readOnly"
                         fluid :invalid="!!form.errors.email" />
                     <Message v-if="form.errors.email" severity="error" size="small">
                         {{ form.errors.email }}
@@ -533,7 +701,7 @@ const onSubmit = () => {
                     <label class="block text-sm font-medium mb-1" for="telefono">Número de teléfono</label>
                     <IntlTelInput
                         id="telefono" name="telefono"
-                        v-model="form.telefono"
+                        v-model="form.telefono" :disabled="readOnly"
                         @changeCountry="onChangePaisNumeroTelefono"
                         fluid :invalid="!!form.errors.telefono" />
                     <Message v-if="form.errors.telefono" severity="error" size="small">
@@ -552,7 +720,7 @@ const onSubmit = () => {
                     <label class="block text-sm font-medium mb-1" for="tipo_persona">Tipo de persona</label>
                     <Select
                         id="tipo_persona" name="tipo_persona"
-                        v-model="form.datos_fiscales.tipo_persona"
+                        v-model="form.datos_fiscales.tipo_persona" :disabled="readOnly"
                         :options="tiposPersona"
                         optionLabel="label"
                         optionValue="value"
@@ -567,7 +735,7 @@ const onSubmit = () => {
                 <div>
                     <label class="block text-sm font-medium mb-1" for="regimen_fiscal_id">Regimen fiscal</label>
                     <Select
-                        :disabled="!form.datos_fiscales.tipo_persona"
+                        :disabled="!form.datos_fiscales.tipo_persona || readOnly"
                         id="regimen_fiscal_id" name="regimen_fiscal_id"
                         v-model="form.datos_fiscales.regimen_fiscal_id"
                         :options="regimenesFiscalesFiltered"
@@ -584,7 +752,7 @@ const onSubmit = () => {
                     <label class="block text-sm font-medium mb-1" for="curp">CURP</label>
                     <InputText
                         id="curp" name="curp"
-                        v-model="form.datos_fiscales.curp"
+                        v-model="form.datos_fiscales.curp" :disabled="readOnly"
                         fluid :invalid="!!form.errors['datos_fiscales.curp']" />
                     <Message v-if="form.errors['datos_fiscales.curp']" severity="error" size="small">
                         {{ form.errors['datos_fiscales.curp'] }}
@@ -596,7 +764,7 @@ const onSubmit = () => {
                     <label class="block text-sm font-medium mb-1" for="rfc">RFC</label>
                     <InputText
                         id="rfc" name="rfc"
-                        v-model="form.datos_fiscales.rfc"
+                        v-model="form.datos_fiscales.rfc" :disabled="readOnly"
                         fluid :invalid="!!form.errors['datos_fiscales.rfc']" />
                     <Message v-if="form.errors['datos_fiscales.rfc']" severity="error" size="small">
                         {{ form.errors['datos_fiscales.rfc'] }}
@@ -608,7 +776,7 @@ const onSubmit = () => {
                     <label class="block text-sm font-medium mb-1" for="razon_social">Razón social</label>
                     <InputText
                         id="razon_social" name="razon_social"
-                        v-model="form.datos_fiscales.razon_social"
+                        v-model="form.datos_fiscales.razon_social" :disabled="readOnly"
                         fluid :invalid="!!form.errors['datos_fiscales.razon_social']" />
                     <Message v-if="form.errors['datos_fiscales.razon_social']" severity="error" size="small">
                         {{ form.errors['datos_fiscales.razon_social'] }}
@@ -624,10 +792,10 @@ const onSubmit = () => {
             <div class="grid grid-cols-4 gap-4">
                 <div class="col-span-4">
                     <label class="block text-sm font-medium mb-1" for="direcciones.0.linea_uno">Dirección</label>
-                    <input type="hidden" v-model="form.direcciones[0].tipo" name="direcciones.0.tipo" value="personal">
+                    <input type="hidden" v-model="form.direcciones[0].tipo" :disabled="readOnly" name="direcciones.0.tipo" value="personal">
                     <InputText
                         id="direcciones.0.linea_uno" name="direcciones.0.linea_uno"
-                        v-model="form.direcciones[0].linea_uno"
+                        v-model="form.direcciones[0].linea_uno" :disabled="readOnly"
                         fluid :invalid="!!form.errors['direcciones.0.linea_uno']" />
                     <Message size="small" severity="secondary" variant="simple">Llene con la calle, el número exterior y los cruzamientos.</Message>
                     <Message v-if="form.errors['direcciones.0.linea_uno']" severity="error" size="small">
@@ -642,7 +810,7 @@ const onSubmit = () => {
                     <AutoComplete 
                         :suggestions="sugerenciasCodigosPostales" @complete="handleCompleteCodigosPostales"
                         id="direcciones.0.codigo_postal" name="direcciones.0.codigo_postal"
-                        :modelValue="form.direcciones[0].codigo_postal" ref="refAutocompleteCodigoPostal"
+                        :modelValue="form.direcciones[0].codigo_postal" :disabled="readOnly" ref="refAutocompleteCodigoPostal"
                         @update:modelValue="val => form.direcciones[0].codigo_postal = val?.codigo || val"
                         optionLabel="codigo"
                         optionValue="codigo"
@@ -659,7 +827,7 @@ const onSubmit = () => {
                     <label class="block text-sm font-medium mb-1" for="direcciones.0.division_admin_uno_id">Estado</label>
                     <Select
                         id="direcciones.0.division_admin_uno_id" name="direcciones.0.division_admin_uno_id"
-                        v-model="divisionAdminUnoSeleccionada"
+                        v-model="divisionAdminUnoSeleccionada" :disabled="readOnly"
                         :options="divisionesAdminUno"
                         optionLabel="nombre"
                         optionValue="id"
@@ -674,7 +842,7 @@ const onSubmit = () => {
                     <label class="block text-sm font-medium mb-1" for="direcciones.0.division_admin_dos_id">Municipio</label>
                     <Select
                         id="direcciones.0.division_admin_dos_id" name="direcciones.0.division_admin_dos_id"
-                        v-model="divisionAdminDosSeleccionada"
+                        v-model="divisionAdminDosSeleccionada" :disabled="readOnly"
                         :options="divisionesAdminDos"
                         optionLabel="nombre"
                         optionValue="id"
@@ -689,7 +857,7 @@ const onSubmit = () => {
                     <label class="block text-sm font-medium mb-1" for="direcciones.0.division_admin_tres_id">Localidad</label>
                     <Select
                         id="direcciones.0.division_admin_tres_id" name="direcciones.0.division_admin_tres_id"
-                        v-model="divisionAdminTresSeleccionada"
+                        v-model="divisionAdminTresSeleccionada" :disabled="readOnly"
                         @change="onChangeLocalidad"
                         :options="divisionesAdminTres"
                         optionLabel="nombre"
@@ -709,7 +877,7 @@ const onSubmit = () => {
                     <label class="block text-sm font-medium mb-1" for="direcciones.0.linea_dos">Número interior / Departamento</label>
                     <InputText
                         id="direcciones.0.linea_dos" name="direcciones.0.linea_dos"
-                        v-model="form.direcciones[0].linea_dos"
+                        v-model="form.direcciones[0].linea_dos" :disabled="readOnly"
                         fluid :invalid="!!form.errors['direcciones.0.linea_dos']" />
                     <Message v-if="form.errors['direcciones.0.linea_dos']" severity="error" size="small">
                         {{ form.errors['direcciones.0.linea_dos'] }}
@@ -721,7 +889,7 @@ const onSubmit = () => {
                 <label class="block text-sm font-medium mb-1" for="direcciones.0.linea_tres">Datos adicionales (Referencias)</label>
                 <InputText
                     id="direcciones.0.linea_tres" name="direcciones.0.linea_tres"
-                    v-model="form.direcciones[0].linea_tres"
+                    v-model="form.direcciones[0].linea_tres" :disabled="readOnly"
                     fluid :invalid="!!form.errors['direcciones.0.linea_tres']" />
                 <Message v-if="form.errors['direcciones.0.linea_tres']" severity="error" size="small">
                     {{ form.errors['direcciones.0.linea_tres'] }}
@@ -732,7 +900,7 @@ const onSubmit = () => {
                 <MapLibreMap />
             </div>
 
-            <Button label="Guardar Cliente" type="submit" :disabled="form.processing" :loading="form.processing" />
+            <Button v-if="!readOnly" label="Guardar Cliente" type="submit" :disabled="form.processing" :loading="form.processing" />
         </form>
     </div>
 </template>

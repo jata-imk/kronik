@@ -37,6 +37,10 @@ const isValid = () => {
 };
 
 const updateValidity = () => {
+    if (!instance.value) {
+        return;
+    }
+
     const isCurrentlyValid = isValid();
 
     if (wasPreviouslyValid.value !== isCurrentlyValid) {
@@ -51,8 +55,12 @@ const updateValidity = () => {
 };
 
 const updateValue = () => {
+    if (!instance.value) {
+        return;
+    }
+
     emit("changeNumber", {
-        number: instance.value._getFullNumber() ?? null,
+        number: instance.value?._getFullNumber() ?? null,
         numberWithoutCountryCode: instance.value.getNumber() ?? null,
         isValid: isValid(),
     });

@@ -65,12 +65,12 @@ class ClienteController extends Controller
             $cliente->datosFiscales()->create($request->validated()['datos_fiscales']);
 
             foreach ($request->validated()['direcciones'] as $direccion) {
-                $codigoPostal = CodigoPostal::where('codigo', $direccion['codigo_postal'])->where('division_admin_id', $direccion['division_admin_tres_id'])->first();
-
                 $direccion['entidad_id'] = $cliente->id;
-                $direccion['entidad_tipo'] = 'cliente';
+                $direccion['entidad_tipo'] = 'clientes';
 
                 if (!isset($direccion['codigo_postal_id'])) {
+                    $codigoPostal = CodigoPostal::where('codigo', $direccion['codigo_postal'])->where('division_admin_id', $direccion['division_admin_tres_id'])->first();
+
                     $direccion['codigo_postal_id'] = $codigoPostal->id;
                     $direccion['pais_id'] = $codigoPostal->pais_id;
                 }
@@ -89,13 +89,59 @@ class ClienteController extends Controller
                 $cliente->direcciones()->create($direccion);
             }
 
-            return response()->json($cliente->load(['datosFiscales', 'direcciones']), 201);
+            return response()->redirectToRoute('clientes.index');
         });
     }
 
-    public function show(Cliente $cliente)
+    public function show(Cliente $cliente, PaisService $paisService, RegimenFiscalService $regimenFiscalService)
     {
-        return $cliente->load(['datosFiscales', 'direcciones']);
+        $paises = $paisService->readAll(['id', 'nombre_es', 'nombre_nativo', 'codigo_iso', 'emoji']);
+        $sexos = [
+            ['value' => 'masculino', 'label' => 'Masculino'],
+            ['value' => 'femenino', 'label' => 'Femenino']
+        ];
+
+        $tiposPersona = [
+            ['value' => 'fisica', 'label' => 'Fisica'],
+            ['value' => 'moral', 'label' => 'Moral']
+        ];
+
+        $regimenesFiscales = $regimenFiscalService->readAll(['id', 'clave', 'descripcion', 'fisica', 'moral']);
+
+        return Inertia::render('Clientes/Show', [
+            'readOnly' => true,
+            'cliente' => $cliente->load(['datosFiscales', 'direcciones.pais', 'direcciones.codigoPostal.divisionAdministrativa.padre.padre']),
+            'paises' => $paises,
+            'sexos' => $sexos,
+            'tiposPersona' => $tiposPersona,
+            'regimenesFiscales' => $regimenesFiscales
+        ]);
+    }
+
+    public function edit(Cliente $cliente, PaisService $paisService, RegimenFiscalService $regimenFiscalService)
+    {
+        $paises = $paisService->readAll(['id', 'nombre_es', 'nombre_nativo', 'codigo_iso', 'emoji']);
+        $sexos = [
+            ['value' => 'masculino', 'label' => 'Masculino'],
+            ['value' => 'femenino', 'label' => 'Femenino']
+        ];
+
+        $tiposPersona = [
+            ['value' => 'fisica', 'label' => 'Fisica'],
+            ['value' => 'moral', 'label' => 'Moral']
+        ];
+
+        $regimenesFiscales = $regimenFiscalService->readAll(['id', 'clave', 'descripcion', 'fisica', 'moral']);
+
+        return Inertia::render('Clientes/Update', [
+            'action' => 'clientes.update',
+            'readOnly' => false,
+            'cliente' => $cliente->load(['datosFiscales', 'direcciones.pais', 'direcciones.codigoPostal.divisionAdministrativa.padre.padre']),
+            'paises' => $paises,
+            'sexos' => $sexos,
+            'tiposPersona' => $tiposPersona,
+            'regimenesFiscales' => $regimenesFiscales
+        ]);
     }
 
     public function update(UpdateClienteRequest $request, Cliente $cliente)
@@ -108,13 +154,33 @@ class ClienteController extends Controller
             }
 
             if ($request->has('direcciones')) {
-
                 foreach ($request->validated()['direcciones'] as $direccion) {
+                    $direccion['entidad_id'] = $cliente->id;
+                    $direccion['entidad_tipo'] = 'clientes';
+
+                    if (!isset($direccion['codigo_postal_id'])) {
+                        $codigoPostal = CodigoPostal::where('codigo', $direccion['codigo_postal'])->where('division_admin_id', $direccion['division_admin_tres_id'])->first();
+
+                        $direccion['codigo_postal_id'] = $codigoPostal->id;
+                        $direccion['pais_id'] = $codigoPostal->pais_id;
+                    }
+
+                    if (!isset($direccion['tipo'])) {
+                        $direccion['tipo'] = 'personal';
+                    }
+
+                    if (!isset($direccion['coordenadas'])) {
+                        $direccion['coordenadas'] = [
+                            'lat' => 0,
+                            'lng' => 0
+                        ];
+                    }
+
                     $cliente->direcciones()->updateOrCreate(['tipo' => $direccion['tipo']], $direccion);
                 }
             }
 
-            return response()->json($cliente->load(['datosFiscales', 'direcciones']));
+            return response()->redirectToRoute('clientes.index');
         });
     }
 

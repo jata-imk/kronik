@@ -249,7 +249,7 @@ const exportData = async () => {
                     </Tag>
                 </template>
                 <template #filter="{ filterModel, filterCallback }">
-                    <Dropdown v-model="filterModel.value" @change="filterCallback()"
+                    <Select v-model="filterModel.value" @change="filterCallback()"
                         :options="['masculino', 'femenino']" placeholder="Seleccionar sexo" class="p-column-filter"
                         :showClear="true" />
                 </template>

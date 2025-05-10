@@ -23,7 +23,7 @@ export function useClientMapSetup() {
         fitBounds(bounds);
     }
 
-    async function createOrUpdateMarker(lngLat) {
+    async function createOrUpdateMarker(lngLat, draggable = true) {
         if (!map.value) return;
 
         if (marker.value) {
@@ -31,7 +31,7 @@ export function useClientMapSetup() {
             return marker.value;
         }
 
-        marker.value = _addMarker(lngLat, { draggable: true });
+        marker.value = _addMarker(lngLat, { draggable });
         return marker;
     }
 
@@ -54,7 +54,11 @@ export function useClientMapSetup() {
         updateSourceData(data);
     }
 
-    async function handleGeocodingResult(data) {
+    async function handleGeocodingResult(
+        data,
+        markerCoordinates = null,
+        markerDraggable = true,
+    ) {
         const itemGeocoding = data[0] || data;
 
         fitMapToZone([
@@ -62,7 +66,13 @@ export function useClientMapSetup() {
             [itemGeocoding.boundingbox[3], itemGeocoding.boundingbox[1]],
         ]);
 
-        createOrUpdateMarker([itemGeocoding.lon, itemGeocoding.lat]);
+        createOrUpdateMarker(
+            [
+                markerCoordinates?.lon ?? itemGeocoding.lon,
+                markerCoordinates?.lat ?? itemGeocoding.lat,
+            ],
+            markerDraggable,
+        );
 
         createOrUpdateGeoJsonSourceAndLayers({
             type: "Feature",
@@ -71,6 +81,7 @@ export function useClientMapSetup() {
     }
 
     return {
+        marker,
         fitMapToZone,
         createOrUpdateMarker,
         createOrUpdateGeoJsonSourceAndLayers,
