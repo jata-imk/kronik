@@ -3,6 +3,11 @@
         "baseUrl": ".",
         "paths": {
             "@/*": ["resources/js/*"],
+            "@css/*": ["resources/css/*"],
+            "@config/*": ["resources/config/*"],
+            "@services/*": ["resources/js/Services/*"],
+            "@components/*": ["resources/js/Components/*"],
+            "@composables/*": ["resources/js/Composables/*"],
             "@sakai-vue/*": ["resources/external/sakai-vue/*"]
         }
     },

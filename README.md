@@ -118,7 +118,11 @@ Sistema ERP especializado en la gestión financiera integral, diseñado para ins
 5. Compilar assets: `npm run build`
 6. Ejecutar migraciones: `php artisan migrate`
 7. Inicializar datos base: `php artisan db:seed`
-8. Configurar servicios externos (email, APIs de terceros)
+8. Instalar en el SO los programas
+    8.1 Libreoffice: https://es.libreoffice.org/descarga/libreoffice/
+    8.2 wkhtmltopdf https://wkhtmltopdf.org/downloads.html
+    8.3 Pandoc: https://pandoc.org/installing.html
+9. Configurar servicios externos (email, APIs de terceros)
 
 ## Roadmap
 

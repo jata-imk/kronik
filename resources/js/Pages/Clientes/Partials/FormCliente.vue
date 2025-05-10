@@ -1,15 +1,57 @@
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import { useToast } from "primevue/usetoast";
 import { usePage, useForm } from "@inertiajs/vue3";
-import IntlTelInput from "@/Components/IntlTelInput.vue";
-
-import { sugerencias, buscar } from "@/Services/CodigoPostalService";
 
 import "@css/flags.css";
-import MapLibreMap from "@/Components/MapLibre/MapLibreMap.vue";
+import IntlTelInput from "@components/IntlTelInput.vue";
+import MapLibreMap from "@components/MapLibre/MapLibreMap.vue";
+
+import { useCodigoPostal } from "@composables/useCodigoPostal";
+import { useGeocoding } from "@/Composables/useGeocoding";
+const {
+    result: geocodingResult,
+    error: geocodingError,
+    search: geocodingSearch,
+} = useGeocoding();
+
+import { useClientMapSetup } from "@/Composables/MapLibre/useClientMapSetup";
+
+const { handleGeocodingResult } = useClientMapSetup();
 
 const page = usePage();
+const form = useForm({
+    primer_nombre: "",
+    segundo_nombre: "",
+    apellido_paterno: "",
+    apellido_materno: "",
+    fecha_nacimiento: "",
+    pais_nacimiento_id: null,
+    email: "",
+    sexo: "",
+    telefono_codigo_pais: "",
+    telefono: "",
+    datos_fiscales: {
+        tipo_persona: "",
+        regimen_fiscal_id: null,
+        curp: "",
+        rfc: "",
+        razon_social: "",
+    },
+    direcciones: [
+        {
+            tipo: "",
+            linea_uno: "",
+            linea_dos: "",
+            linea_tres: "",
+            codigo_postal: "",
+            division_admin_uno_id: null,
+            division_admin_dos_id: null,
+            division_admin_tres_id: null,
+            datos_adicionales: "",
+        },
+    ],
+});
 
 const paises = ref(page.props.paises);
 const paisSeleccionado = ref();
@@ -46,17 +88,50 @@ const onChangePaisNumeroTelefono = ({ dialCode }) => {
     }
 };
 
-const onChangeNumeroTelefonico = ({ number }) => {
-    if (number) {
-        form.telefono = number.trim();
-    }
-};
-
-const codigoPostalSeleccionado = ref("");
-const codigosPostalesFiltrados = ref([]);
 const refAutocompleteCodigoPostal = ref(null);
 
-const flagCodigoPostalCompletado = ref(false);
+const divisionesAdminUno = ref([]);
+const divisionAdminUnoSeleccionada = ref(null);
+const divisionesAdminDos = ref([]);
+const divisionAdminDosSeleccionada = ref(null);
+const divisionesAdminTres = ref([]);
+const divisionAdminTresSeleccionada = ref(null);
+const tipoLocalidadSeleccionada = ref(null);
+
+const DEBOUNCE_MS_CODIGO_POSTAL = 300;
+const MIN_LENGTH_CODIGO_POSTAL = 3;
+const MAX_LENGTH_CODIGO_POSTAL = 5;
+
+const shouldFetchSugerencias = (codigo) => {
+    if (!codigo || codigo.length < MIN_LENGTH_CODIGO_POSTAL) {
+        return false;
+    }
+
+    if (codigo.length === MAX_LENGTH_CODIGO_POSTAL) {
+        return false;
+    }
+
+    return true;
+};
+
+const shouldFetchBusqueda = (codigo) => {
+    if (codigo.length < MAX_LENGTH_CODIGO_POSTAL) {
+        return false;
+    }
+
+    return true;
+};
+
+const {
+    sugerenciasData: sugerenciasCodigosPostales,
+    busquedaData: busquedaCodigosPostales,
+    error: errorUseCodigoPostal,
+    busqueda: buscarCodigoPostal,
+} = useCodigoPostal(() => form.direcciones[0].codigo_postal, {
+    shouldFetchSugerencias,
+    shouldFetchBusqueda,
+    debounceMs: DEBOUNCE_MS_CODIGO_POSTAL,
+});
 
 const hideResultsAutocomplete = (refAutocomplete) => {
     if (!refAutocomplete.value) return;
@@ -133,88 +208,23 @@ const resetDivisionAdministrativaSelectOptionsAndValue = () => {
     tipoLocalidadSeleccionada.value = null;
 };
 
-const sugerenciasCodigosPostales = async ({ query }) => {
-    if (!query || query.length < 2) return;
-
-    try {
-        await setTimeout(() => {}, 300);
-
-        if (flagCodigoPostalCompletado.value) {
-            hideResultsAutocomplete(refAutocompleteCodigoPostal);
-            return;
-        }
-
-        const response = await sugerencias(query);
-        codigosPostalesFiltrados.value = response.data;
-    } catch (error) {
-        console.error(error);
+const handleCompleteCodigosPostales = () => {
+    if (form.direcciones[0].codigo_postal.length === MAX_LENGTH_CODIGO_POSTAL) {
+        hideResultsAutocomplete(refAutocompleteCodigoPostal);
+        return;
     }
 };
 
-const onChangeCodigoPostal = async (event) => {
-    const codigoPostal = codigoPostalSeleccionado.value;
-    const maxLength = refAutocompleteCodigoPostal.value.$el
-        .querySelector("input")
-        .getAttribute("maxlength");
-
-    if (maxLength && codigoPostal.length < maxLength) {
-        flagCodigoPostalCompletado.value = false;
-
-        if (codigoPostal.length === 0) {
+watch(
+    () => form.direcciones[0].codigo_postal,
+    () => {
+        if (form.direcciones[0].codigo_postal.length === 0) {
             resetDivisionAdministrativaSelectOptionsAndValue();
         }
 
-        return;
-    }
-
-    flagCodigoPostalCompletado.value = true;
-    form.direcciones[0].codigo_postal = codigoPostal;
-
-    try {
-        const response = await buscar(codigoPostal);
-
-        if (response.data.length === 0) {
-            throw new Error("No se encontraron resultados");
-        }
-
-        for (const [index, nivel] of Object.entries(["uno", "dos", "tres"])) {
-            const divisionesAdminOptions = [
-                divisionesAdminUno,
-                divisionesAdminDos,
-                divisionesAdminTres,
-            ][index];
-
-            const divisionAdminSeleccionada = [
-                divisionAdminUnoSeleccionada,
-                divisionAdminDosSeleccionada,
-                divisionAdminTresSeleccionada,
-            ][index];
-
-            setDivisionAdministrativaSelectOptionsAndValue(
-                response.data,
-                divisionesAdminOptions,
-                divisionAdminSeleccionada,
-                `nivel_${nivel}`,
-                nivel === "tres" ? null : undefined,
-            );
-
-            form.direcciones[0][`division_admin_${nivel}_id`] =
-                divisionAdminSeleccionada.value;
-        }
-    } catch (error) {
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: "No se encontraron resultados",
-        });
-
-        resetDivisionAdministrativaSelectOptionsAndValue();
-
-        console.error(error);
-    }
-
-    hideResultsAutocomplete(refAutocompleteCodigoPostal);
-};
+        buscarCodigoPostal();
+    },
+);
 
 const onChangeLocalidad = (event) => {
     let divisionNivelTresSeleccionada = null;
@@ -228,22 +238,131 @@ const onChangeLocalidad = (event) => {
         divisionNivelTresSeleccionada.id;
 };
 
+const queryGeocoding = computed(() => {
+    if (
+        !divisionAdminUnoSeleccionada.value ||
+        !divisionAdminDosSeleccionada.value ||
+        !divisionAdminTresSeleccionada.value
+    ) {
+        return null;
+    }
+    const nombreDivisionAdminUno =
+        divisionesAdminUno.value.find(
+            (item) => item.id === divisionAdminUnoSeleccionada.value,
+        ).nombre || "";
+    const nombreDivisionAdminDos =
+        divisionesAdminDos.value.find(
+            (item) => item.id === divisionAdminDosSeleccionada.value,
+        ).nombre || "";
+    const nombreDivisionAdminTres =
+        divisionesAdminTres.value.find(
+            (item) => item.id === divisionAdminTresSeleccionada.value,
+        ).nombre || "";
+
+    return `${form.direcciones[0].codigo_postal}, ${nombreDivisionAdminTres}, ${nombreDivisionAdminDos}, ${nombreDivisionAdminUno}`;
+});
+
+watch(
+    () => queryGeocoding.value,
+    async () => {
+        if (!queryGeocoding.value) {
+            return;
+        }
+
+        await geocodingSearch(queryGeocoding.value);
+
+        if (geocodingError.value) {
+            toast.add({
+                severity: "warn",
+                summary: "Datos geoespaciales no encontrados",
+                detail: "Ubique el marcador de domicilio manualmente en el mapa",
+            });
+
+            try {
+                const nombreDivisionAdminUno =
+                    divisionesAdminUno.value.find(
+                        (item) =>
+                            item.id === divisionAdminUnoSeleccionada.value,
+                    ).nombre || "";
+
+                const nombreDivisionAdminDos =
+                    divisionesAdminDos.value.find(
+                        (item) =>
+                            item.id === divisionAdminDosSeleccionada.value,
+                    ).nombre || "";
+
+                await geocodingSearch(
+                    `${nombreDivisionAdminDos}, ${nombreDivisionAdminUno}`,
+                );
+
+                handleGeocodingResult(geocodingResult.value);
+            } catch (error) {
+                console.error(error);
+            }
+
+            return;
+        }
+
+        handleGeocodingResult(geocodingResult.value);
+    },
+);
+
 watch(
     () => refAutocompleteCodigoPostal.value,
     () => {
         refAutocompleteCodigoPostal.value?.$el
             .querySelector("input")
-            .setAttribute("maxlength", "5");
+            .setAttribute("maxlength", MAX_LENGTH_CODIGO_POSTAL);
     },
 );
 
-const divisionesAdminUno = ref([]);
-const divisionAdminUnoSeleccionada = ref(null);
-const divisionesAdminDos = ref([]);
-const divisionAdminDosSeleccionada = ref(null);
-const divisionesAdminTres = ref([]);
-const divisionAdminTresSeleccionada = ref(null);
-const tipoLocalidadSeleccionada = ref(null);
+watch([busquedaCodigosPostales, errorUseCodigoPostal], () => {
+    if (errorUseCodigoPostal.value) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "No se encontraron resultados",
+        });
+
+        resetDivisionAdministrativaSelectOptionsAndValue();
+
+        return;
+    }
+
+    if (
+        busquedaCodigosPostales.value &&
+        busquedaCodigosPostales.value.length === 0
+    ) {
+        throw new Error("No se encontraron resultados");
+    }
+
+    for (const [index, nivel] of Object.entries(["uno", "dos", "tres"])) {
+        const divisionesAdminOptions = [
+            divisionesAdminUno,
+            divisionesAdminDos,
+            divisionesAdminTres,
+        ][index];
+
+        const divisionAdminSeleccionada = [
+            divisionAdminUnoSeleccionada,
+            divisionAdminDosSeleccionada,
+            divisionAdminTresSeleccionada,
+        ][index];
+
+        setDivisionAdministrativaSelectOptionsAndValue(
+            busquedaCodigosPostales.value ?? [],
+            divisionesAdminOptions,
+            divisionAdminSeleccionada,
+            `nivel_${nivel}`,
+            nivel === "tres" ? null : undefined,
+        );
+
+        form.direcciones[0][`division_admin_${nivel}_id`] =
+            divisionAdminSeleccionada.value;
+    }
+
+    hideResultsAutocomplete(refAutocompleteCodigoPostal);
+});
 
 const sexos = page.props.sexos;
 const tiposPersona = page.props.tiposPersona;
@@ -263,40 +382,6 @@ const onChangeTipoPersona = ({ value }) => {
 };
 
 const toast = useToast();
-
-const form = useForm({
-    primer_nombre: "",
-    segundo_nombre: "",
-    apellido_paterno: "",
-    apellido_materno: "",
-    fecha_nacimiento: "",
-    pais_nacimiento_id: null,
-    email: "",
-    sexo: "",
-    telefono_codigo_pais: null,
-    telefono: "",
-    datos_fiscales: {
-        tipo_persona: "",
-        regimen_fiscal_id: null,
-        curp: "",
-        rfc: "",
-        razon_social: "",
-    },
-    direcciones: [
-        {
-            tipo: "",
-            linea_uno: "",
-            linea_dos: "",
-            linea_tres: "",
-            codigo_postal: null,
-            division_admin_uno_id: null,
-            division_admin_dos_id: null,
-            division_admin_tres_id: null,
-            datos_adicionales: "",
-        },
-    ],
-});
-
 const fechaHoy = new Date();
 const fechaMinimaAdultos = ref(new Date());
 fechaMinimaAdultos.value.setFullYear(fechaHoy.getFullYear() - 18);
@@ -449,7 +534,6 @@ const onSubmit = () => {
                     <IntlTelInput
                         id="telefono" name="telefono"
                         v-model="form.telefono"
-                        @changeNumber="onChangeNumeroTelefonico"
                         @changeCountry="onChangePaisNumeroTelefono"
                         fluid :invalid="!!form.errors.telefono" />
                     <Message v-if="form.errors.telefono" severity="error" size="small">
@@ -556,12 +640,12 @@ const onSubmit = () => {
                 <div class="col-span-2">
                     <label class="block text-sm font-medium mb-1" for="direcciones.0.codigo_postal">Código Postal</label>
                     <AutoComplete 
-                        :suggestions="codigosPostalesFiltrados" @complete="sugerenciasCodigosPostales"
+                        :suggestions="sugerenciasCodigosPostales" @complete="handleCompleteCodigosPostales"
                         id="direcciones.0.codigo_postal" name="direcciones.0.codigo_postal"
-                        v-model="codigoPostalSeleccionado" ref="refAutocompleteCodigoPostal"
-                        @change="onChangeCodigoPostal"
+                        :modelValue="form.direcciones[0].codigo_postal" ref="refAutocompleteCodigoPostal"
+                        @update:modelValue="val => form.direcciones[0].codigo_postal = val?.codigo || val"
                         optionLabel="codigo"
-                        optionValue="id"
+                        optionValue="codigo"
                         fluid :invalid="!!form.errors['direcciones.0.codigo_postal']" />
                     <Message v-if="form.errors['direcciones.0.codigo_postal']" severity="error" size="small">
                         {{ form.errors['direcciones.0.codigo_postal'] }}

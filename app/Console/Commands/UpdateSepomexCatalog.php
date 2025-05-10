@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
+use Illuminate\Console\Command;
 use App\Services\Scrapers\SepomexService;
 
-use Illuminate\Console\Command;
-use Exception;
+use Throwable;
 
 class UpdateSepomexCatalog extends Command
 {
@@ -16,7 +16,6 @@ class UpdateSepomexCatalog extends Command
      */
     protected $signature = 'sepomex:update';
 
-
     /**
      * The console command description.
      *
@@ -24,23 +23,20 @@ class UpdateSepomexCatalog extends Command
      */
     protected $description = 'Descarga y actualiza el catálogo de códigos postales de SEPOMEX';
 
-    protected $sepomexService;
-
-    public function __construct(SepomexService $sepomexService)
+    public function __construct()
     {
         parent::__construct();
-        $this->sepomexService = $sepomexService;
     }
 
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(SepomexService $sepomexService)
     {
         $this->info('Iniciando actualización del catálogo SEPOMEX...');
 
         try {
-            $updated = $this->sepomexService->downloadAndProcessCatalog();
+            $updated = $sepomexService->downloadAndProcessCatalog();
 
             if ($updated) {
                 $this->info('Catálogo SEPOMEX actualizado correctamente.');
@@ -49,7 +45,7 @@ class UpdateSepomexCatalog extends Command
             }
 
             return Command::SUCCESS;
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->error('Error: ' . $e->getMessage());
             return 1;
         }

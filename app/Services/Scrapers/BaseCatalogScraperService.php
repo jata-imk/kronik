@@ -7,16 +7,21 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 abstract class BaseCatalogScraperService
 {
-    protected $url = '';
-    protected $downloadPath;
-    protected $browserClient;
-    protected $http;
+    protected HttpClientInterface $http;
+    protected BrowserClientInterface $browserClient;
+    protected string $url;
+    protected string $downloadPath;
 
-    public function __construct(HttpClientInterface $http, BrowserClientInterface $browserClient)
-    {
+    public function __construct(
+        HttpClientInterface $http,
+        BrowserClientInterface $browserClient,
+        string $url,
+        string $downloadPath
+    ) {
         $this->http = $http;
         $this->browserClient = $browserClient;
-        $this->downloadPath = $this->getOrCreatePath($this->downloadPath);
+        $this->url = $url;
+        $this->downloadPath = $this->getOrCreatePath($downloadPath);
     }
 
     public function getOrCreatePath($relativePath): string
