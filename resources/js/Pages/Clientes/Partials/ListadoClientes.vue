@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, reactive } from "vue";
+import { ref } from "vue";
 import { useToast } from "primevue/usetoast";
 import { FilterMatchMode } from "@primevue/core/api";
 import { router } from "@inertiajs/vue3";
@@ -35,6 +35,7 @@ const filters = ref({
 });
 
 const loadClientes = async () => {
+    console.log("loadClientes");
     loading.value = true;
     try {
         router.reload({
@@ -69,30 +70,27 @@ const confirmDelete = (cliente) => {
     deleteDialog.value = true;
 };
 
-const deleteCliente = async () => {
+const deleteCliente = () => {
     try {
-        await fetch(`/api/clientes/${clienteSeleccionado.value.id}`, {
-            method: "DELETE",
-            headers: {
-                "X-CSRF-TOKEN": document
-                    .querySelector('meta[name="csrf-token"]')
-                    .getAttribute("content"),
+        router.delete(route("clientes.destroy", clienteSeleccionado.value.id), {
+            preserveScroll: true,
+            preserveState: true,
+            onFinish: (visit) => {
+                toast.add({
+                    severity: "success",
+                    summary: "Éxito",
+                    detail: "Cliente eliminado correctamente",
+                    life: 3000,
+                });
+
+                deleteDialog.value = false;
             },
         });
-
-        toast.add({
-            severity: "success",
-            summary: "Éxito",
-            detail: "Cliente eliminado correctamente",
-            life: 3000,
-        });
-        loadClientes();
-        deleteDialog.value = false;
     } catch (error) {
         toast.add({
             severity: "error",
             summary: "Error",
-            detail: "No se pudo eliminar el cliente",
+            detail: `"No se pudo eliminar el cliente, detalles: ${error.message}"`,
             life: 3000,
         });
     }
@@ -299,7 +297,5 @@ const exportData = async () => {
                 </a>
             </template>
         </Dialog>
-
-        <Toast />
     </div>
 </template>

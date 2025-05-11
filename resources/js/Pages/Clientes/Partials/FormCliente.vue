@@ -1,106 +1,66 @@
 <script setup>
-import { ref, watch, computed, onMounted } from "vue";
+import { ref, watch, reactive } from "vue";
 import { useToast } from "primevue/usetoast";
 import { usePage, useForm, Link } from "@inertiajs/vue3";
 
 import "@css/flags.css";
 import IntlTelInput from "@components/IntlTelInput.vue";
 import MapLibreMap from "@components/MapLibre/MapLibreMap.vue";
+import FormularioDatosFiscales from "@/Components/FormularioDatosFiscales.vue";
+import FormularioDireccion from "@/Components/FormularioDireccion.vue";
 
-import { useCodigoPostal } from "@composables/useCodigoPostal";
-import { useGeocoding } from "@/Composables/useGeocoding";
-const {
-    result: geocodingResult,
-    error: geocodingError,
-    search: geocodingSearch,
-} = useGeocoding();
+import { useDireccionMapConnector } from "@/Composables/MapLibre/useDireccionMapConnector";
 
-import { useClientMapSetup } from "@/Composables/MapLibre/useClientMapSetup";
-
-const { handleGeocodingResult, marker } = useClientMapSetup();
-
-watch(
-    () => marker.value,
-    () => {
-        marker.value.on("dragend", () => {
-            const coordenadas = marker.value.getLngLat();
-            form.direcciones[0].coordenadas = {
-                lat: coordenadas.lat,
-                lng: coordenadas.lng,
-            };
-        });
-    },
-);
-
+const toast = useToast();
 const page = usePage();
 const readOnly = ref(page.props.readOnly || false);
-const firstLoad = ref(true);
-const clienteSeleccionado = ref(page.props.cliente);
+const cliente = ref(page.props.cliente);
+
+const formDatosFiscales = reactive({
+    tipo_persona: cliente.value?.datos_fiscales?.tipo_persona ?? "",
+    regimen_fiscal_id: cliente.value?.datos_fiscales?.regimen_fiscal_id ?? null,
+    curp: cliente.value?.datos_fiscales?.curp ?? "",
+    rfc: cliente.value?.datos_fiscales?.rfc ?? "",
+    razon_social: cliente.value?.datos_fiscales?.razon_social ?? "",
+});
+
+const clienteDireccion = { ...cliente.value?.direcciones[0] };
+const formDireccion = reactive({
+    tipo: clienteDireccion.tipo ?? "",
+    linea_uno: clienteDireccion.linea_uno ?? "",
+    linea_dos: clienteDireccion.linea_dos ?? "",
+    linea_tres: clienteDireccion.linea_tres ?? "",
+    codigo_postal: clienteDireccion.codigo_postal?.codigo ?? "",
+    division_admin_uno_id: clienteDireccion.division_admin_uno_id ?? null,
+    division_admin_dos_id: clienteDireccion.division_admin_dos_id ?? null,
+    division_admin_tres_id: clienteDireccion.division_admin_tres_id ?? null,
+    datos_adicionales: clienteDireccion.datos_adicionales ?? "",
+    coordenadas: {
+        lat: clienteDireccion.coordenadas?.lat ?? 0,
+        lng: clienteDireccion.coordenadas?.lng ?? 0,
+    },
+});
 
 const form = useForm({
-    primer_nombre: clienteSeleccionado.value?.primer_nombre ?? "",
-    segundo_nombre: clienteSeleccionado.value?.segundo_nombre ?? "",
-    apellido_paterno: clienteSeleccionado.value?.apellido_paterno ?? "",
-    apellido_materno: clienteSeleccionado.value?.apellido_materno ?? "",
-    fecha_nacimiento: clienteSeleccionado.value
-        ? new Date(clienteSeleccionado.value?.fecha_nacimiento)
+    primer_nombre: cliente.value?.primer_nombre ?? "",
+    segundo_nombre: cliente.value?.segundo_nombre ?? "",
+    apellido_paterno: cliente.value?.apellido_paterno ?? "",
+    apellido_materno: cliente.value?.apellido_materno ?? "",
+    fecha_nacimiento: cliente.value?.fecha_nacimiento
+        ? new Date(cliente.value?.fecha_nacimiento)
         : null,
-    pais_nacimiento_id: clienteSeleccionado.value?.pais_nacimiento_id ?? null,
-    email: clienteSeleccionado.value?.email ?? "",
-    sexo: clienteSeleccionado.value?.sexo ?? "",
-    telefono_codigo_pais: clienteSeleccionado.value?.telefono_codigo_pais
-        ? `${clienteSeleccionado.value?.telefono_codigo_pais}`
-        : "",
-    telefono: clienteSeleccionado.value?.telefono ?? "",
-    datos_fiscales: {
-        tipo_persona:
-            clienteSeleccionado.value?.datos_fiscales?.tipo_persona ?? "",
-        regimen_fiscal_id:
-            clienteSeleccionado.value?.datos_fiscales?.regimen_fiscal_id ??
-            null,
-        curp: clienteSeleccionado.value?.datos_fiscales?.curp ?? "",
-        rfc: clienteSeleccionado.value?.datos_fiscales?.rfc ?? "",
-        razon_social:
-            clienteSeleccionado.value?.datos_fiscales?.razon_social ?? "",
-    },
-    direcciones: clienteSeleccionado.value?.direcciones.length
-        ? clienteSeleccionado.value?.direcciones.map((direccion) => ({
-              tipo: direccion?.tipo ?? "",
-              linea_uno: direccion?.linea_uno ?? "",
-              linea_dos: direccion?.linea_dos ?? "",
-              linea_tres: direccion?.linea_tres ?? "",
-              codigo_postal: direccion?.codigo_postal.codigo ?? "",
-              division_admin_uno_id: direccion?.division_admin_uno_id ?? null,
-              division_admin_dos_id: direccion?.division_admin_dos_id ?? null,
-              division_admin_tres_id: direccion?.division_admin_tres_id ?? null,
-              datos_adicionales: direccion?.datos_adicionales ?? "",
-              coordenadas: {
-                  lat: direccion?.coordenadas.lat ?? 0,
-                  lng: direccion?.coordenadas.lng ?? 0,
-              },
-          }))
-        : [
-              {
-                  tipo: "",
-                  linea_uno: "",
-                  linea_dos: "",
-                  linea_tres: "",
-                  codigo_postal: "",
-                  division_admin_uno_id: null,
-                  division_admin_dos_id: null,
-                  division_admin_tres_id: null,
-                  datos_adicionales: "",
-                  coordenadas: {
-                      lat: 0,
-                      lng: 0,
-                  },
-              },
-          ],
+    pais_nacimiento_id: cliente.value?.pais_nacimiento_id ?? null,
+    email: cliente.value?.email ?? "",
+    sexo: cliente.value?.sexo ?? "",
+    telefono_codigo_pais: cliente.value?.telefono_codigo_pais ?? "",
+    telefono: cliente.value?.telefono ?? "",
+    datos_fiscales: { ...formDatosFiscales },
+    direcciones: [{ ...formDireccion }],
 });
 
 const paises = ref(page.props.paises);
 const paisSeleccionado = ref(
-    clienteSeleccionado.value?.pais_nacimiento_id
+    cliente.value?.pais_nacimiento_id
         ? {
               id: form.pais_nacimiento_id,
               nombre_es:
@@ -111,6 +71,7 @@ const paisSeleccionado = ref(
         : null,
 );
 const paisesFiltrados = ref(paises);
+
 const filtrarPaises = (event) => {
     setTimeout(() => {
         if (!event.query.trim().length) {
@@ -129,7 +90,7 @@ const onChangePaisNacimiento = (event) => {
     const opcionSeleccionada = event.value;
 
     if (opcionSeleccionada?.id === undefined) {
-        form.pais_nacimiento_id = "";
+        form.pais_nacimiento_id = null;
         return;
     }
 
@@ -142,407 +103,136 @@ const onChangePaisNumeroTelefono = ({ dialCode }) => {
     }
 };
 
-const refAutocompleteCodigoPostal = ref(null);
-const divisionesAdminUno = ref(
-    clienteSeleccionado.value?.direcciones[0]?.division_admin_uno_id
-        ? [
-              {
-                  id: clienteSeleccionado.value?.direcciones[0].codigo_postal
-                      .division_administrativa.padre.padre.id,
-                  nombre: clienteSeleccionado.value?.direcciones[0]
-                      .codigo_postal.division_administrativa.padre.padre.nombre,
-                  codigo: clienteSeleccionado.value?.direcciones[0]
-                      .codigo_postal.division_administrativa.padre.padre.codigo,
-                  nivel: clienteSeleccionado.value?.direcciones[0].codigo_postal
-                      .division_administrativa.padre.padre.nivel,
-                  tipo: clienteSeleccionado.value?.direcciones[0].codigo_postal
-                      .division_administrativa.padre.padre.tipo,
-              },
-          ]
-        : [],
-);
-const divisionAdminUnoSeleccionada = ref(
-    clienteSeleccionado.value?.direcciones[0]?.division_admin_uno_id ?? null,
-);
-const divisionesAdminDos = ref(
-    clienteSeleccionado.value?.direcciones[0]?.division_admin_dos_id
-        ? [
-              {
-                  id: clienteSeleccionado.value?.direcciones[0].codigo_postal
-                      .division_administrativa.padre.id,
-                  nombre: clienteSeleccionado.value?.direcciones[0]
-                      .codigo_postal.division_administrativa.padre.nombre,
-                  codigo: clienteSeleccionado.value?.direcciones[0]
-                      .codigo_postal.division_administrativa.padre.codigo,
-                  nivel: clienteSeleccionado.value?.direcciones[0].codigo_postal
-                      .division_administrativa.padre.nivel,
-                  tipo: clienteSeleccionado.value?.direcciones[0].codigo_postal
-                      .division_administrativa.padre.tipo,
-              },
-          ]
-        : [],
-);
-const divisionAdminDosSeleccionada = ref(
-    clienteSeleccionado.value?.direcciones[0]?.division_admin_dos_id ?? null,
-);
-const divisionesAdminTres = ref(
-    clienteSeleccionado.value?.direcciones[0]?.division_admin_tres_id
-        ? [
-              {
-                  id: clienteSeleccionado.value?.direcciones[0].codigo_postal
-                      .division_administrativa.id,
-                  nombre: clienteSeleccionado.value?.direcciones[0]
-                      .codigo_postal.division_administrativa.nombre,
-                  codigo: clienteSeleccionado.value?.direcciones[0]
-                      .codigo_postal.division_administrativa.codigo,
-                  nivel: clienteSeleccionado.value?.direcciones[0].codigo_postal
-                      .division_administrativa.nivel,
-                  tipo: clienteSeleccionado.value?.direcciones[0].codigo_postal
-                      .division_administrativa.tipo,
-              },
-          ]
-        : [],
-);
-const divisionAdminTresSeleccionada = ref(
-    clienteSeleccionado.value?.direcciones[0]?.division_admin_tres_id ?? null,
-);
-const tipoLocalidadSeleccionada = ref(
-    clienteSeleccionado.value?.direcciones[0]?.codigo_postal
-        ?.division_administrativa?.tipo ?? "",
-);
-
-const DEBOUNCE_MS_CODIGO_POSTAL = 300;
-const MIN_LENGTH_CODIGO_POSTAL = 3;
-const MAX_LENGTH_CODIGO_POSTAL = 5;
-
-const shouldFetchSugerencias = (codigo) => {
-    if (!codigo || codigo.length < MIN_LENGTH_CODIGO_POSTAL) {
-        return false;
-    }
-
-    if (codigo.length === MAX_LENGTH_CODIGO_POSTAL) {
-        return false;
-    }
-
-    return true;
-};
-
-const shouldFetchBusqueda = (codigo) => {
-    if (codigo.length < MAX_LENGTH_CODIGO_POSTAL) {
-        return false;
-    }
-
-    return true;
-};
-
-const {
-    sugerenciasData: sugerenciasCodigosPostales,
-    busquedaData: busquedaCodigosPostales,
-    error: errorUseCodigoPostal,
-    busqueda: buscarCodigoPostal,
-} = useCodigoPostal(() => form.direcciones[0].codigo_postal, {
-    shouldFetchSugerencias,
-    shouldFetchBusqueda,
-    debounceMs: DEBOUNCE_MS_CODIGO_POSTAL,
-});
-
-const hideResultsAutocomplete = (refAutocomplete) => {
-    if (!refAutocomplete.value) return;
-
-    refAutocomplete.value.hide();
-    const svgSpinner = refAutocomplete.value.$el.querySelector(
-        ".p-icon.p-icon-spin.p-autocomplete-loader",
-    );
-    if (svgSpinner) {
-        svgSpinner.parentElement.removeChild(svgSpinner);
-    }
-};
-
-const obtenerDivisionesAdministrativasPorNivel = (nivel, codigosPostales) => {
-    return [
-        ...new Set(
-            codigosPostales.map((cpItem) => {
-                return {
-                    id: cpItem.divisiones_administrativas[nivel].id,
-                    nombre: cpItem.divisiones_administrativas[nivel].nombre,
-                    tipo: cpItem.divisiones_administrativas[nivel].tipo,
-                };
-            }),
-        ),
-    ];
-};
-
-const setDivisionAdministrativaSelectOptionsAndValue = (
-    codigosPostales,
-    refDivisionesAdminOptions,
-    refDivisionAdminValue,
-    stringNivel,
-    selectedValue = undefined,
-) => {
-    const divisionesAdmin =
-        codigosPostales.length > 0 &&
-        codigosPostales[0].divisiones_administrativas;
-
-    refDivisionesAdminOptions.value = divisionesAdmin
-        ? obtenerDivisionesAdministrativasPorNivel(stringNivel, codigosPostales)
-        : [];
-
-    refDivisionAdminValue.value =
-        selectedValue === undefined
-            ? divisionesAdmin[stringNivel]?.id
-            : selectedValue;
-};
-
-const resetDivisionAdministrativaSelectOptionsAndValue = () => {
-    for (const [index, nivel] of Object.entries(["uno", "dos", "tres"])) {
-        const divisionesAdminOptions = [
-            divisionesAdminUno,
-            divisionesAdminDos,
-            divisionesAdminTres,
-        ][index];
-
-        const divisionAdminSeleccionada = [
-            divisionAdminUnoSeleccionada,
-            divisionAdminDosSeleccionada,
-            divisionAdminTresSeleccionada,
-        ][index];
-
-        setDivisionAdministrativaSelectOptionsAndValue(
-            [],
-            divisionesAdminOptions,
-            divisionAdminSeleccionada,
-            `nivel_${nivel}`,
-            null,
-        );
-
-        form.direcciones[0][`division_admin_${nivel}_id`] = null;
-    }
-
-    tipoLocalidadSeleccionada.value = null;
-};
-
-const handleCompleteCodigosPostales = () => {
-    if (form.direcciones[0].codigo_postal.length === MAX_LENGTH_CODIGO_POSTAL) {
-        hideResultsAutocomplete(refAutocompleteCodigoPostal);
-        return;
-    }
-};
-
-watch(
-    () => form.direcciones[0].codigo_postal,
-    () => {
-        if (form.direcciones[0].codigo_postal.length === 0) {
-            resetDivisionAdministrativaSelectOptionsAndValue();
-        }
-
-        if (clienteSeleccionado.value && firstLoad.value) {
-            return;
-        }
-
-        buscarCodigoPostal();
-    },
-    { immediate: true },
-);
-
-const onChangeLocalidad = (event) => {
-    let divisionNivelTresSeleccionada = null;
-
-    divisionNivelTresSeleccionada = divisionesAdminTres.value.find(
-        (item) => item.id === event.value,
-    );
-
-    tipoLocalidadSeleccionada.value = divisionNivelTresSeleccionada.tipo;
-    form.direcciones[0].division_admin_tres_id =
-        divisionNivelTresSeleccionada.id;
-};
-
-const queryGeocoding = computed(() => {
-    if (
-        !divisionAdminUnoSeleccionada.value ||
-        !divisionAdminDosSeleccionada.value ||
-        !divisionAdminTresSeleccionada.value
-    ) {
-        return null;
-    }
-    const nombreDivisionAdminUno =
-        divisionesAdminUno.value.find(
-            (item) => item.id === divisionAdminUnoSeleccionada.value,
-        ).nombre || "";
-    const nombreDivisionAdminDos =
-        divisionesAdminDos.value.find(
-            (item) => item.id === divisionAdminDosSeleccionada.value,
-        ).nombre || "";
-    const nombreDivisionAdminTres =
-        divisionesAdminTres.value.find(
-            (item) => item.id === divisionAdminTresSeleccionada.value,
-        ).nombre || "";
-
-    return `${form.direcciones[0].codigo_postal}, ${nombreDivisionAdminTres}, ${nombreDivisionAdminDos}, ${nombreDivisionAdminUno}`;
-});
-
-watch(
-    () => queryGeocoding.value,
-    async () => {
-        if (!queryGeocoding.value) {
-            return;
-        }
-
-        await geocodingSearch(queryGeocoding.value);
-    },
-    { immediate: true },
-);
-
-watch(
-    () => [geocodingResult.value, geocodingError.value],
-    () => {
-        if (!queryGeocoding.value) {
-            return;
-        }
-
-        if (!geocodingResult.value && !geocodingError.value) {
-            return;
-        }
-
-        if (geocodingError.value) {
-            toast.add({
-                severity: "warn",
-                summary: "Datos geoespaciales no encontrados",
-                detail: "Ubique el marcador de domicilio manualmente en el mapa",
-            });
-
-            try {
-                const nombreDivisionAdminUno =
-                    divisionesAdminUno.value.find(
-                        (item) =>
-                            item.id === divisionAdminUnoSeleccionada.value,
-                    ).nombre || "";
-
-                const nombreDivisionAdminDos =
-                    divisionesAdminDos.value.find(
-                        (item) =>
-                            item.id === divisionAdminDosSeleccionada.value,
-                    ).nombre || "";
-
-                geocodingSearch(
-                    `${nombreDivisionAdminDos}, ${nombreDivisionAdminUno}`,
-                );
-            } catch (error) {
-                console.error(error);
-            }
-
-            return;
-        }
-
-        handleGeocodingResult(
-            geocodingResult.value,
-            clienteSeleccionado.value &&
-                firstLoad.value &&
-                form.direcciones[0].coordenadas
-                ? {
-                      lat: form.direcciones[0].coordenadas.lng,
-                      lon: form.direcciones[0].coordenadas.lat,
-                  }
-                : null,
-            !readOnly.value,
-        );
-
-        if (firstLoad.value) {
-            firstLoad.value = false;
-            return;
-        }
-    },
-);
-
-watch(
-    () => refAutocompleteCodigoPostal.value,
-    () => {
-        refAutocompleteCodigoPostal.value?.$el
-            .querySelector("input")
-            .setAttribute("maxlength", MAX_LENGTH_CODIGO_POSTAL);
-    },
-);
-
-watch([busquedaCodigosPostales, errorUseCodigoPostal], () => {
-    if (clienteSeleccionado.value && firstLoad.value) {
-        return;
-    }
-
-    if (errorUseCodigoPostal.value) {
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: "No se encontraron resultados",
-        });
-
-        resetDivisionAdministrativaSelectOptionsAndValue();
-
-        return;
-    }
-
-    if (
-        busquedaCodigosPostales.value &&
-        busquedaCodigosPostales.value.length === 0
-    ) {
-        throw new Error("No se encontraron resultados");
-    }
-
-    for (const [index, nivel] of Object.entries(["uno", "dos", "tres"])) {
-        const divisionesAdminOptions = [
-            divisionesAdminUno,
-            divisionesAdminDos,
-            divisionesAdminTres,
-        ][index];
-
-        const divisionAdminSeleccionada = [
-            divisionAdminUnoSeleccionada,
-            divisionAdminDosSeleccionada,
-            divisionAdminTresSeleccionada,
-        ][index];
-
-        setDivisionAdministrativaSelectOptionsAndValue(
-            busquedaCodigosPostales.value ?? [],
-            divisionesAdminOptions,
-            divisionAdminSeleccionada,
-            `nivel_${nivel}`,
-            nivel === "tres" ? null : undefined,
-        );
-
-        form.direcciones[0][`division_admin_${nivel}_id`] =
-            divisionAdminSeleccionada.value;
-    }
-
-    hideResultsAutocomplete(refAutocompleteCodigoPostal);
-});
-
 const sexos = page.props.sexos;
-const tiposPersona = page.props.tiposPersona;
-const regimenesFiscales = page.props.regimenesFiscales;
-const regimenesFiscalesFiltered = ref(regimenesFiscales);
-
-const onChangeTipoPersona = ({ value }) => {
-    if (value === "fisica") {
-        regimenesFiscalesFiltered.value = regimenesFiscales.filter(
-            (regimen) => regimen.fisica,
-        );
-    } else {
-        regimenesFiscalesFiltered.value = regimenesFiscales.filter(
-            (regimen) => regimen.moral,
-        );
-    }
-};
-
-const toast = useToast();
 const fechaHoy = new Date();
 const fechaMinimaAdultos = ref(new Date());
 fechaMinimaAdultos.value.setFullYear(fechaHoy.getFullYear() - 18);
 
+watch(
+    () => formDireccion,
+    (newVal) => {
+        form.direcciones[0] = { ...newVal };
+    },
+    { deep: true },
+);
+
+watch(
+    () => formDatosFiscales,
+    (newVal) => {
+        form.datos_fiscales = { ...newVal };
+    },
+    { deep: true },
+);
+
+const formDireccionErrors = reactive({});
+watch(
+    () => form.errors,
+    () => {
+        // Limpiar todo
+        for (const k of Object.keys(formDireccionErrors)) {
+            delete formDireccionErrors[k];
+        }
+
+        // Agregar nuevos
+        const newErrors = Object.fromEntries(
+            Object.entries(form.errors)
+                .filter(([key]) => key.startsWith("direcciones.0"))
+                .map(([key, value]) => [
+                    key.replace("direcciones.0.", ""),
+                    value,
+                ]),
+        );
+
+        Object.assign(formDireccionErrors, newErrors);
+    },
+);
+
+const formDatosFiscalesErrors = reactive({});
+watch(
+    () => form.errors,
+    () => {
+        // Limpiar todo
+        for (const k of Object.keys(formDatosFiscalesErrors)) {
+            delete formDatosFiscalesErrors[k];
+        }
+
+        // Agregar nuevos
+        const newErrors = Object.fromEntries(
+            Object.entries(form.errors)
+                .filter(([key]) => key.startsWith("datos_fiscales."))
+                .map(([key, value]) => [
+                    key.replace("datos_fiscales.", ""),
+                    value,
+                ]),
+        );
+
+        Object.assign(formDatosFiscalesErrors, newErrors);
+    },
+);
+
+const initialLoadFormDireccion = ref({
+    divisionesAdministrativas: {
+        uno: cliente.value?.direcciones[0]?.division_admin_uno_id
+            ? [
+                  {
+                      id: cliente.value?.direcciones[0].codigo_postal
+                          .division_administrativa.padre.padre.id,
+                      nombre: cliente.value?.direcciones[0].codigo_postal
+                          .division_administrativa.padre.padre.nombre,
+                      codigo: cliente.value?.direcciones[0].codigo_postal
+                          .division_administrativa.padre.padre.codigo,
+                      nivel: cliente.value?.direcciones[0].codigo_postal
+                          .division_administrativa.padre.padre.nivel,
+                      tipo: cliente.value?.direcciones[0].codigo_postal
+                          .division_administrativa.padre.padre.tipo,
+                  },
+              ]
+            : [],
+        dos: cliente.value?.direcciones[0]?.division_admin_dos_id
+            ? [
+                  {
+                      id: cliente.value?.direcciones[0].codigo_postal
+                          .division_administrativa.padre.id,
+                      nombre: cliente.value?.direcciones[0].codigo_postal
+                          .division_administrativa.padre.nombre,
+                      codigo: cliente.value?.direcciones[0].codigo_postal
+                          .division_administrativa.padre.codigo,
+                      nivel: cliente.value?.direcciones[0].codigo_postal
+                          .division_administrativa.padre.nivel,
+                      tipo: cliente.value?.direcciones[0].codigo_postal
+                          .division_administrativa.padre.tipo,
+                  },
+              ]
+            : [],
+        tres: cliente.value?.direcciones[0]?.division_admin_tres_id
+            ? [
+                  {
+                      id: cliente.value?.direcciones[0].codigo_postal
+                          .division_administrativa.id,
+                      nombre: cliente.value?.direcciones[0].codigo_postal
+                          .division_administrativa.nombre,
+                      codigo: cliente.value?.direcciones[0].codigo_postal
+                          .division_administrativa.codigo,
+                      nivel: cliente.value?.direcciones[0].codigo_postal
+                          .division_administrativa.nivel,
+                      tipo: cliente.value?.direcciones[0].codigo_postal
+                          .division_administrativa.tipo,
+                  },
+              ]
+            : [],
+    },
+});
+
+const initialLoadFormDatosFiscales = ref({
+    tiposPersona: page.props.tiposPersona,
+    regimenesFiscales: page.props.regimenesFiscales,
+});
+
 const onSubmit = () => {
-    form[page.props.action === "clientes.store" ? "post" : "patch"](
+    form[page.props.action === "clientes.update" ? "patch" : "post"](
         route(
             page.props.action ?? "clientes.store",
-            page.props.action === "clientes.store"
-                ? null
-                : clienteSeleccionado.value?.id,
+            page.props.action === "clientes.store" ? null : cliente.value?.id,
         ),
         {
             preserveScroll: true,
@@ -557,12 +247,6 @@ const onSubmit = () => {
         },
     );
 };
-
-onMounted(() => {
-    if (!clienteSeleccionado.value) {
-        firstLoad.value = false;
-    }
-});
 </script>
 
 <template>
@@ -715,188 +399,27 @@ onMounted(() => {
 
             <h3 class="text-lg font-medium text-gray-900">Información fiscal</h3>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium mb-1" for="tipo_persona">Tipo de persona</label>
-                    <Select
-                        id="tipo_persona" name="tipo_persona"
-                        v-model="form.datos_fiscales.tipo_persona" :disabled="readOnly"
-                        :options="tiposPersona"
-                        optionLabel="label"
-                        optionValue="value"
-                        @change="onChangeTipoPersona"
-                        fluid :invalid="!!form.errors['datos_fiscales.tipo_persona']" />
-                    <Message v-if="form.errors['datos_fiscales.tipo_persona']" severity="error" size="small">
-                        {{ form.errors['datos_fiscales.tipo_persona'] }}
-                    </Message
-                    >
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1" for="regimen_fiscal_id">Regimen fiscal</label>
-                    <Select
-                        :disabled="!form.datos_fiscales.tipo_persona || readOnly"
-                        id="regimen_fiscal_id" name="regimen_fiscal_id"
-                        v-model="form.datos_fiscales.regimen_fiscal_id"
-                        :options="regimenesFiscalesFiltered"
-                        optionLabel="descripcion"
-                        optionValue="id"
-                        fluid :invalid="!!form.errors['datos_fiscales.regimen_fiscal_id']" />
-                    <Message v-if="form.errors['datos_fiscales.regimen_fiscal_id']" severity="error" size="small">
-                        {{ form.errors['datos_fiscales.regimen_fiscal_id'] }}
-                    </Message
-                    >
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1" for="curp">CURP</label>
-                    <InputText
-                        id="curp" name="curp"
-                        v-model="form.datos_fiscales.curp" :disabled="readOnly"
-                        fluid :invalid="!!form.errors['datos_fiscales.curp']" />
-                    <Message v-if="form.errors['datos_fiscales.curp']" severity="error" size="small">
-                        {{ form.errors['datos_fiscales.curp'] }}
-                    </Message
-                    >
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1" for="rfc">RFC</label>
-                    <InputText
-                        id="rfc" name="rfc"
-                        v-model="form.datos_fiscales.rfc" :disabled="readOnly"
-                        fluid :invalid="!!form.errors['datos_fiscales.rfc']" />
-                    <Message v-if="form.errors['datos_fiscales.rfc']" severity="error" size="small">
-                        {{ form.errors['datos_fiscales.rfc'] }}
-                    </Message
-                    >
-                </div>
-
-                <div v-if="form.datos_fiscales.tipo_persona === 'moral'">
-                    <label class="block text-sm font-medium mb-1" for="razon_social">Razón social</label>
-                    <InputText
-                        id="razon_social" name="razon_social"
-                        v-model="form.datos_fiscales.razon_social" :disabled="readOnly"
-                        fluid :invalid="!!form.errors['datos_fiscales.razon_social']" />
-                    <Message v-if="form.errors['datos_fiscales.razon_social']" severity="error" size="small">
-                        {{ form.errors['datos_fiscales.razon_social'] }}
-                    </Message
-                    >
-                </div>
-            </div>
+            <FormularioDatosFiscales
+                :form="formDatosFiscales"
+                :formErrors="formDatosFiscalesErrors" 
+                :newRecord="!cliente" 
+                :initialLoad="initialLoadFormDatosFiscales"
+                :readOnly="readOnly"
+            />
 
             <Divider />
 
             <h3 class="text-lg font-medium text-gray-900">Domicilio</h3>
 
-            <div class="grid grid-cols-4 gap-4">
-                <div class="col-span-4">
-                    <label class="block text-sm font-medium mb-1" for="direcciones.0.linea_uno">Dirección</label>
-                    <input type="hidden" v-model="form.direcciones[0].tipo" :disabled="readOnly" name="direcciones.0.tipo" value="personal">
-                    <InputText
-                        id="direcciones.0.linea_uno" name="direcciones.0.linea_uno"
-                        v-model="form.direcciones[0].linea_uno" :disabled="readOnly"
-                        fluid :invalid="!!form.errors['direcciones.0.linea_uno']" />
-                    <Message size="small" severity="secondary" variant="simple">Llene con la calle, el número exterior y los cruzamientos.</Message>
-                    <Message v-if="form.errors['direcciones.0.linea_uno']" severity="error" size="small">
-                    
+            <FormularioDireccion 
+                :form="formDireccion"
+                :formErrors="formDireccionErrors" 
+                :newRecord="!cliente" 
+                :initialLoad="initialLoadFormDireccion"
+                :readOnly="readOnly"
+                :direccionMapConnector="useDireccionMapConnector" />
 
-                        {{ form.errors['direcciones.0.linea_uno'] }}
-                    </Message>
-                </div>
-
-                <div class="col-span-2">
-                    <label class="block text-sm font-medium mb-1" for="direcciones.0.codigo_postal">Código Postal</label>
-                    <AutoComplete 
-                        :suggestions="sugerenciasCodigosPostales" @complete="handleCompleteCodigosPostales"
-                        id="direcciones.0.codigo_postal" name="direcciones.0.codigo_postal"
-                        :modelValue="form.direcciones[0].codigo_postal" :disabled="readOnly" ref="refAutocompleteCodigoPostal"
-                        @update:modelValue="val => form.direcciones[0].codigo_postal = val?.codigo || val"
-                        optionLabel="codigo"
-                        optionValue="codigo"
-                        fluid :invalid="!!form.errors['direcciones.0.codigo_postal']" />
-                    <Message v-if="form.errors['direcciones.0.codigo_postal']" severity="error" size="small">
-                        {{ form.errors['direcciones.0.codigo_postal'] }}
-                    </Message
-                    >
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium mb-1" for="direcciones.0.division_admin_uno_id">Estado</label>
-                    <Select
-                        id="direcciones.0.division_admin_uno_id" name="direcciones.0.division_admin_uno_id"
-                        v-model="divisionAdminUnoSeleccionada" :disabled="readOnly"
-                        :options="divisionesAdminUno"
-                        optionLabel="nombre"
-                        optionValue="id"
-                        disabled
-                        fluid :invalid="!!form.errors['direcciones.0.division_admin_uno_id']" />
-                    <Message v-if="form.errors['direcciones.0.division_admin_uno_id']" severity="error" size="small">
-                        {{ form.errors['direcciones.0.division_admin_uno_id'] }}
-                    </Message>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1" for="direcciones.0.division_admin_dos_id">Municipio</label>
-                    <Select
-                        id="direcciones.0.division_admin_dos_id" name="direcciones.0.division_admin_dos_id"
-                        v-model="divisionAdminDosSeleccionada" :disabled="readOnly"
-                        :options="divisionesAdminDos"
-                        optionLabel="nombre"
-                        optionValue="id"
-                        disabled
-                        fluid :invalid="!!form.errors['direcciones.0.division_admin_dos_id']" />
-                    <Message v-if="form.errors['direcciones.0.division_admin_dos_id']" severity="error" size="small">
-                        {{ form.errors['direcciones.0.division_admin_dos_id'] }}
-                    </Message>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium mb-1" for="direcciones.0.division_admin_tres_id">Localidad</label>
-                    <Select
-                        id="direcciones.0.division_admin_tres_id" name="direcciones.0.division_admin_tres_id"
-                        v-model="divisionAdminTresSeleccionada" :disabled="readOnly"
-                        @change="onChangeLocalidad"
-                        :options="divisionesAdminTres"
-                        optionLabel="nombre"
-                        optionValue="id"
-                        fluid :invalid="!!form.errors['direcciones.0.division_admin_tres_id']" />
-                    <Message v-if="form.errors['direcciones.0.division_admin_tres_id']" severity="error" size="small">
-                        {{ form.errors['direcciones.0.division_admin_tres_id'] }}
-                    </Message>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1">Tipo Localidad</label>
-                    <InputText v-model="tipoLocalidadSeleccionada" disabled fluid />
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1" for="direcciones.0.linea_dos">Número interior / Departamento</label>
-                    <InputText
-                        id="direcciones.0.linea_dos" name="direcciones.0.linea_dos"
-                        v-model="form.direcciones[0].linea_dos" :disabled="readOnly"
-                        fluid :invalid="!!form.errors['direcciones.0.linea_dos']" />
-                    <Message v-if="form.errors['direcciones.0.linea_dos']" severity="error" size="small">
-                        {{ form.errors['direcciones.0.linea_dos'] }}
-                    </Message>
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium mb-1" for="direcciones.0.linea_tres">Datos adicionales (Referencias)</label>
-                <InputText
-                    id="direcciones.0.linea_tres" name="direcciones.0.linea_tres"
-                    v-model="form.direcciones[0].linea_tres" :disabled="readOnly"
-                    fluid :invalid="!!form.errors['direcciones.0.linea_tres']" />
-                <Message v-if="form.errors['direcciones.0.linea_tres']" severity="error" size="small">
-                    {{ form.errors['direcciones.0.linea_tres'] }}
-                </Message>
-            </div>
-
-            <div class="mt-4 w-full h-[400px]">
+            <div class="mt-4 w-full h-[400px] sm:h-[300px]">
                 <MapLibreMap />
             </div>
 
@@ -904,4 +427,3 @@ onMounted(() => {
         </form>
     </div>
 </template>
-

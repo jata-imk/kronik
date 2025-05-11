@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Requests\Clientes\StoreClienteRequest;
 use App\Http\Requests\Clientes\UpdateClienteRequest;
 use App\Models\CodigoPostal;
-use App\Models\RegimenFiscal;
 use App\Services\ClienteService;
 use App\Services\PaisService;
 use App\Services\RegimenFiscalService;
@@ -89,7 +88,7 @@ class ClienteController extends Controller
                 $cliente->direcciones()->create($direccion);
             }
 
-            return response()->redirectToRoute('clientes.index');
+            return response()->redirectToRoute('clientes.edit', ['cliente' => $cliente->id]);
         });
     }
 
@@ -180,7 +179,7 @@ class ClienteController extends Controller
                 }
             }
 
-            return response()->redirectToRoute('clientes.index');
+            return response()->redirectToRoute('clientes.edit', ['cliente' => $cliente->id]);
         });
     }
 
@@ -191,7 +190,7 @@ class ClienteController extends Controller
             $cliente->datosFiscales()->delete();
             $cliente->delete();
 
-            return response()->json(null, 204);
+            return response()->redirectToRoute('clientes.index');
         });
     }
 }
