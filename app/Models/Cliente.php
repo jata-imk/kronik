@@ -40,6 +40,11 @@ class Cliente extends Model
         return $this->morphMany(Direccion::class, 'entidad', 'entidad_tipo', 'entidad_id');
     }
 
+    public function sicQueries()
+    {
+        return $this->hasMany(SicQuery::class);
+    }
+
     public function getMorphClass()
     {
         return 'clientes';

@@ -4,15 +4,10 @@ import { router, useForm, usePage } from "@inertiajs/vue3";
 import ActionMessage from "@/Components/ActionMessage.vue";
 import ActionSection from "@/Components/ActionSection.vue";
 import ConfirmationModal from "@/Components/ConfirmationModal.vue";
-import DangerButton from "@/Components/DangerButton.vue";
 import DialogModal from "@/Components/DialogModal.vue";
 import FormSection from "@/Components/FormSection.vue";
-import InputError from "@/Components/InputError.vue";
 import InputLabel from "@/Components/InputLabel.vue";
-import PrimaryButton from "@/Components/PrimaryButton.vue";
-import SecondaryButton from "@/Components/SecondaryButton.vue";
 import SectionBorder from "@/Components/SectionBorder.vue";
-import TextInput from "@/Components/TextInput.vue";
 
 const props = defineProps({
     team: Object,
@@ -64,7 +59,9 @@ const updateRole = () => {
         route("team-members.update", [props.team, managingRoleFor.value]),
         {
             preserveScroll: true,
-            onSuccess: () => (currentlyManagingRole.value = false),
+            onSuccess: () => {
+                currentlyManagingRole.value = false;
+            },
         },
     );
 };
@@ -93,7 +90,9 @@ const removeTeamMember = () => {
             errorBag: "removeTeamMember",
             preserveScroll: true,
             preserveState: true,
-            onSuccess: () => (teamMemberBeingRemoved.value = null),
+            onSuccess: () => {
+                teamMemberBeingRemoved.value = null;
+            },
         },
     );
 };
@@ -111,36 +110,36 @@ const displayableRole = (role) => {
             <!-- Add Team Member -->
             <FormSection @submitted="addTeamMember">
                 <template #title>
-                    Add Team Member
+                    Agregar miembro del equipo
                 </template>
 
                 <template #description>
-                    Add a new team member to your team, allowing them to collaborate with you.
+                    Agrega un nuevo miembro a tu equipo, permitiéndole colaborar contigo.
                 </template>
 
                 <template #form>
                     <div class="col-span-6">
-                        <div class="max-w-xl text-sm text-gray-600">
-                            Please provide the email address of the person you would like to add to this team.
+                        <div class="max-w-xl text-sm text-gray-600 dark:text-gray-400">
+                            Proporcione la dirección de correo electrónico de la persona que desea agregar a este equipo.
                         </div>
                     </div>
 
                     <!-- Member Email -->
                     <div class="col-span-6 sm:col-span-4">
                         <InputLabel for="email" value="Email" />
-                        <TextInput
+                        <InputText
                             id="email"
                             v-model="addTeamMemberForm.email"
                             type="email"
                             class="mt-1 block w-full"
                         />
-                        <InputError :message="addTeamMemberForm.errors.email" class="mt-2" />
+                        <Message v-if="addTeamMemberForm.errors.email" severity="error" size="small" class="mt-2" > {{ addTeamMemberForm.errors.email }} </Message>
                     </div>
 
                     <!-- Role -->
                     <div v-if="availableRoles.length > 0" class="col-span-6 lg:col-span-4">
-                        <InputLabel for="roles" value="Role" />
-                        <InputError :message="addTeamMemberForm.errors.role" class="mt-2" />
+                        <InputLabel for="roles" value="Rol" />
+                        <Message v-if="addTeamMemberForm.errors.role" severity="error" size="small" class="mt-2" > {{ addTeamMemberForm.errors.role }} </Message>
 
                         <div class="relative z-0 mt-1 border border-gray-200 rounded-lg cursor-pointer">
                             <button
@@ -154,7 +153,7 @@ const displayableRole = (role) => {
                                 <div :class="{'opacity-50': addTeamMemberForm.role && addTeamMemberForm.role != role.key}">
                                     <!-- Role Name -->
                                     <div class="flex items-center">
-                                        <div class="text-sm text-gray-600" :class="{'font-semibold': addTeamMemberForm.role == role.key}">
+                                        <div class="text-sm text-gray-600 dark:text-gray-400" :class="{'font-semibold': addTeamMemberForm.role == role.key}">
                                             {{ role.name }}
                                         </div>
 
@@ -164,7 +163,7 @@ const displayableRole = (role) => {
                                     </div>
 
                                     <!-- Role Description -->
-                                    <div class="mt-2 text-xs text-gray-600 text-start">
+                                    <div class="mt-2 text-xs text-gray-600 dark:text-gray-400 text-start">
                                         {{ role.description }}
                                     </div>
                                 </div>
@@ -175,12 +174,12 @@ const displayableRole = (role) => {
 
                 <template #actions>
                     <ActionMessage :on="addTeamMemberForm.recentlySuccessful" class="me-3">
-                        Added.
+                        Agregado.
                     </ActionMessage>
 
-                    <PrimaryButton :class="{ 'opacity-25': addTeamMemberForm.processing }" :disabled="addTeamMemberForm.processing">
-                        Add
-                    </PrimaryButton>
+                    <Button severity="contrast" class="uppercase font-semibold !text-xs" :class="{ 'opacity-25': addTeamMemberForm.processing }" :disabled="addTeamMemberForm.processing">
+                        Agregar
+                    </Button>
                 </template>
             </FormSection>
         </div>
@@ -191,18 +190,18 @@ const displayableRole = (role) => {
             <!-- Team Member Invitations -->
             <ActionSection class="mt-10 sm:mt-0">
                 <template #title>
-                    Pending Team Invitations
+                    Invitaciones de equipo pendientes
                 </template>
 
                 <template #description>
-                    These people have been invited to your team and have been sent an invitation email. They may join the team by accepting the email invitation.
+                    Estas personas han sido invitadas a tu equipo y recibieron un correo electrónico de invitación. Pueden unirse al equipo si aceptan la invitación.
                 </template>
 
                 <!-- Pending Team Member Invitation List -->
                 <template #content>
                     <div class="space-y-6">
                         <div v-for="invitation in team.team_invitations" :key="invitation.id" class="flex items-center justify-between">
-                            <div class="text-gray-600">
+                            <div class="text-gray-600 dark:text-gray-400">
                                 {{ invitation.email }}
                             </div>
 
@@ -213,7 +212,7 @@ const displayableRole = (role) => {
                                     class="cursor-pointer ms-6 text-sm text-red-500 focus:outline-none"
                                     @click="cancelTeamInvitation(invitation)"
                                 >
-                                    Cancel
+                                    Cancelar
                                 </button>
                             </div>
                         </div>
@@ -228,11 +227,11 @@ const displayableRole = (role) => {
             <!-- Manage Team Members -->
             <ActionSection class="mt-10 sm:mt-0">
                 <template #title>
-                    Team Members
+                    Miembros del equipo
                 </template>
 
                 <template #description>
-                    All of the people that are part of this team.
+                    Todas las personas que forman parte de este equipo.
                 </template>
 
                 <!-- Team Member List -->
@@ -250,13 +249,13 @@ const displayableRole = (role) => {
                                 <!-- Manage Team Member Role -->
                                 <button
                                     v-if="userPermissions.canUpdateTeamMembers && availableRoles.length"
-                                    class="ms-2 text-sm text-gray-400 underline"
+                                    class="ms-2 text-sm text-gray-400 dark:text-gray-600 underline"
                                     @click="manageRole(user)"
                                 >
                                     {{ displayableRole(user.membership.role) }}
                                 </button>
 
-                                <div v-else-if="availableRoles.length" class="ms-2 text-sm text-gray-400">
+                                <div v-else-if="availableRoles.length" class="ms-2 text-sm text-gray-400 dark:text-gray-600">
                                     {{ displayableRole(user.membership.role) }}
                                 </div>
 
@@ -266,7 +265,7 @@ const displayableRole = (role) => {
                                     class="cursor-pointer ms-6 text-sm text-red-500"
                                     @click="confirmLeavingTeam"
                                 >
-                                    Leave
+                                    Dejar
                                 </button>
 
                                 <!-- Remove Team Member -->
@@ -275,7 +274,7 @@ const displayableRole = (role) => {
                                     class="cursor-pointer ms-6 text-sm text-red-500"
                                     @click="confirmTeamMemberRemoval(user)"
                                 >
-                                    Remove
+                                    Borrar
                                 </button>
                             </div>
                         </div>
@@ -287,7 +286,7 @@ const displayableRole = (role) => {
         <!-- Role Management Modal -->
         <DialogModal :show="currentlyManagingRole" @close="currentlyManagingRole = false">
             <template #title>
-                Manage Role
+                Administrar rol
             </template>
 
             <template #content>
@@ -304,17 +303,17 @@ const displayableRole = (role) => {
                             <div :class="{'opacity-50': updateRoleForm.role && updateRoleForm.role !== role.key}">
                                 <!-- Role Name -->
                                 <div class="flex items-center">
-                                    <div class="text-sm text-gray-600" :class="{'font-semibold': updateRoleForm.role === role.key}">
+                                    <div class="text-sm text-gray-600 dark:text-gray-400" :class="{'font-semibold': updateRoleForm.role === role.key}">
                                         {{ role.name }}
                                     </div>
 
-                                    <svg v-if="updateRoleForm.role == role.key" class="ms-2 size-5 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <svg v-if="updateRoleForm.role == role.key" class="ms-2 size-5 text-green-400 dark:text-green-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
 
                                 <!-- Role Description -->
-                                <div class="mt-2 text-xs text-gray-600">
+                                <div class="mt-2 text-xs text-gray-600 dark:text-gray-400">
                                     {{ role.description }}
                                 </div>
                             </div>
@@ -324,70 +323,73 @@ const displayableRole = (role) => {
             </template>
 
             <template #footer>
-                <SecondaryButton @click="currentlyManagingRole = false">
-                    Cancel
-                </SecondaryButton>
+                <Button severity="secondary" raised class="uppercase font-semibold !text-xs" @click="currentlyManagingRole = false">
+                    Cancelar
+                </Button>
 
-                <PrimaryButton
-                    class="ms-3"
+                <Button
+                    severity="contrast"
+                    class="ms-3 uppercase font-semibold !text-xs"
                     :class="{ 'opacity-25': updateRoleForm.processing }"
                     :disabled="updateRoleForm.processing"
                     @click="updateRole"
                 >
-                    Save
-                </PrimaryButton>
+                    Guardar
+                </Button>
             </template>
         </DialogModal>
 
         <!-- Leave Team Confirmation Modal -->
         <ConfirmationModal :show="confirmingLeavingTeam" @close="confirmingLeavingTeam = false">
             <template #title>
-                Leave Team
+                Dejar equipo
             </template>
 
             <template #content>
-                Are you sure you would like to leave this team?
+                ¿Estás seguro de que deseas abandonar este equipo?
             </template>
 
             <template #footer>
-                <SecondaryButton @click="confirmingLeavingTeam = false">
-                    Cancel
-                </SecondaryButton>
+                <Button severity="secondary" raised class="uppercase font-semibold !text-xs" @click="confirmingLeavingTeam = false">
+                    Cancelar
+                </Button>
 
-                <DangerButton
-                    class="ms-3"
+                <Button
+                    severity="danger" raised
+                    class="ms-3 uppercase font-semibold !text-xs"
                     :class="{ 'opacity-25': leaveTeamForm.processing }"
                     :disabled="leaveTeamForm.processing"
                     @click="leaveTeam"
                 >
-                    Leave
-                </DangerButton>
+                    Dejar
+                </Button>
             </template>
         </ConfirmationModal>
 
         <!-- Remove Team Member Confirmation Modal -->
         <ConfirmationModal :show="teamMemberBeingRemoved" @close="teamMemberBeingRemoved = null">
             <template #title>
-                Remove Team Member
+                Eliminar miembro del equipo
             </template>
 
             <template #content>
-                Are you sure you would like to remove this person from the team?
+                ¿Estás seguro de que deseas eliminar a esta persona del equipo?
             </template>
 
             <template #footer>
-                <SecondaryButton @click="teamMemberBeingRemoved = null">
-                    Cancel
-                </SecondaryButton>
+                <Button severity="secondary" raised class="uppercase font-semibold !text-xs" @click="teamMemberBeingRemoved = null">
+                    Cancelar
+                </Button>
 
-                <DangerButton
-                    class="ms-3"
+                <Button
+                    severity="danger" raised
+                    class="ms-3 uppercase font-semibold !text-xs"
                     :class="{ 'opacity-25': removeTeamMemberForm.processing }"
                     :disabled="removeTeamMemberForm.processing"
                     @click="removeTeamMember"
                 >
-                    Remove
-                </DangerButton>
+                    Borrar
+                </Button>
             </template>
         </ConfirmationModal>
     </div>

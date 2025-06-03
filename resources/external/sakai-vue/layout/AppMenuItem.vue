@@ -26,17 +26,29 @@ const props = defineProps({
 
 const isActiveMenu = ref(false);
 const itemKey = ref(null);
+const itemRoutesNames = ref(null);
 
 onBeforeMount(() => {
+    itemRoutesNames.value =
+        props.item.to ||
+        props.item.items?.reduce(
+            (prev, curr) =>
+                curr.to ? (prev || []).concat(curr.to) : prev || [],
+            null,
+        );
+
     itemKey.value = props.parentItemKey
-        ? props.parentItemKey + "-" + props.index
+        ? `${props.parentItemKey}-${props.index}`
         : String(props.index);
 
     const activeItem = layoutState.activeMenuItem;
 
     isActiveMenu.value =
-        activeItem === itemKey.value || activeItem
-            ? activeItem.startsWith(itemKey.value + "-")
+        activeItem === itemKey.value ||
+        itemRoutesNames.value?.includes(activeItem) ||
+        activeItem
+            ? activeItem.startsWith(`${itemKey.value}-`) ||
+              itemRoutesNames.value?.includes(activeItem)
             : false;
 });
 
@@ -44,7 +56,7 @@ watch(
     () => layoutState.activeMenuItem,
     (newVal) => {
         isActiveMenu.value =
-            newVal === itemKey.value || newVal.startsWith(itemKey.value + "-");
+            newVal === itemKey.value || newVal.startsWith(`${itemKey.value}-`);
     },
 );
 
@@ -75,7 +87,7 @@ function itemClick(event, item) {
 }
 
 function checkActiveRoute(item) {
-    return route.path === item.to;
+    return route().current() === item.to;
 }
 </script>
 
@@ -87,7 +99,7 @@ function checkActiveRoute(item) {
             <span class="layout-menuitem-text">{{ item.label }}</span>
             <i class="pi pi-fw pi-angle-down layout-submenu-toggler" v-if="item.items"></i>
         </a>
-        <Link v-if="item.to && !item.items && item.visible !== false" @click="itemClick($event, item, index)" :class="[item.class, { 'active-route': checkActiveRoute(item) }]" tabindex="0" :href="route(item.to)">
+        <Link v-if="item.to && !item.items && item.visible !== false" @click="itemClick($event, item, index)" :class="[item.class, { 'active-route': checkActiveRoute(item) }]" tabindex="0" :href="route(item.to, item.toParams || {})">
             <i :class="item.icon" class="layout-menuitem-icon"></i>
             <span class="layout-menuitem-text">{{ item.label }}</span>
             <i class="pi pi-fw pi-angle-down layout-submenu-toggler" v-if="item.items"></i>
@@ -100,4 +112,5 @@ function checkActiveRoute(item) {
     </li>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+</style>

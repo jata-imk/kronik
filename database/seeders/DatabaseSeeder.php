@@ -27,5 +27,8 @@ class DatabaseSeeder extends Seeder
         $this->call(PaisesSeeder::class);
         $this->call(CatalogoCfdiSeeder::class);
         $this->call(SepomexSeeder::class);
+        $this->call(ModulesAndPermissionsSeeder::class);
+        $this->call(MenubarItemsSeeder::class);
+        $this->call(SicsSeeder::class);
     }
 }

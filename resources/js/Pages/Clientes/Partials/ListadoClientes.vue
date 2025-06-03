@@ -35,7 +35,6 @@ const filters = ref({
 });
 
 const loadClientes = async () => {
-    console.log("loadClientes");
     loading.value = true;
     try {
         router.reload({
@@ -159,9 +158,8 @@ const exportData = async () => {
 </script>
 
 <template>
-    <div class="card">
+    <div class="card !p-0">
         <div class="flex flex-wrap gap-4 justify-content-between align-items-center mb-4">
-            <h1 class="text-3xl font-bold">Gestión de Clientes</h1>
             <div class="w-full flex gap-2">
                 <Button label="Nuevo Cliente" icon="pi pi-plus" class="p-button-success" @click="navigateToCreate" />
                 <Button label="Importar" icon="pi pi-upload" class="p-button-info" @click="showImportDialog" />

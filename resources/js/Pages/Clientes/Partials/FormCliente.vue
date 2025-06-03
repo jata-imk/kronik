@@ -250,178 +250,168 @@ const onSubmit = () => {
 </script>
 
 <template>
-    <div class="card p-4 max-w-3xl mx-auto">
-        <Link :href="route('clientes.index')" class="mb-4 block">
-            <Button label="Volver" icon="pi pi-arrow-left" />
-        </Link>
-
-        <h2 class="text-2xl font-bold mb-4">Formulario de clientes</h2>
-
+    <div class="card !p-0 max-w-4xl mx-auto">
         <form
             @submit.prevent="onSubmit"
             class="grid gap-4"
         >
-            <h3 class="text-lg font-medium text-gray-900">Información personal</h3>
+            <Fieldset legend="Datos Personales">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1" for="primer_nombre">Primer Nombre</label>
+                        <InputText
+                            id="primer_nombre" name="primer_nombre"
+                            v-model="form.primer_nombre" :disabled="readOnly"
+                            fluid :invalid="!!form.errors.primer_nombre " />
+                        <Message v-if="form.errors.primer_nombre" severity="error" size="small">
+                            {{ form.errors.primer_nombre }}
+                        </Message
+                        >
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1" for="primer_nombre">Segundo Nombre</label>
+                        <InputText
+                            id="segundo_nombre" name="segundo_nombre"
+                            v-model="form.segundo_nombre" :disabled="readOnly"
+                            fluid :invalid="!!form.errors.segundo_nombre " />
+                        <Message v-if="form.errors.segundo_nombre" severity="error" size="small">
+                            {{ form.errors.segundo_nombre }}
+                        </Message
+                        >
+                    </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium mb-1" for="primer_nombre">Primer Nombre</label>
-                    <InputText
-                        id="primer_nombre" name="primer_nombre"
-                        v-model="form.primer_nombre" :disabled="readOnly"
-                        fluid :invalid="!!form.errors.primer_nombre " />
-                    <Message v-if="form.errors.primer_nombre" severity="error" size="small">
-                        {{ form.errors.primer_nombre }}
-                    </Message
-                    >
-                </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1" for="primer_nombre">Segundo Nombre</label>
-                    <InputText
-                        id="segundo_nombre" name="segundo_nombre"
-                        v-model="form.segundo_nombre" :disabled="readOnly"
-                        fluid :invalid="!!form.errors.segundo_nombre " />
-                    <Message v-if="form.errors.segundo_nombre" severity="error" size="small">
-                        {{ form.errors.segundo_nombre }}
-                    </Message
-                    >
-                </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1" for="apellido_paterno">Primer Apellido</label>
+                        <InputText
+                            id="apellido_paterno" name="apellido_paterno"
+                            v-model="form.apellido_paterno" :disabled="readOnly"
+                            fluid :invalid="!!form.errors.apellido_paterno " />
+                        <Message v-if="form.errors.apellido_paterno" severity="error" size="small">
+                            {{ form.errors.apellido_paterno }}
+                        </Message
+                        >
+                    </div>
 
-                <div>
-                    <label class="block text-sm font-medium mb-1" for="apellido_paterno">Primer Apellido</label>
-                    <InputText
-                        id="apellido_paterno" name="apellido_paterno"
-                        v-model="form.apellido_paterno" :disabled="readOnly"
-                        fluid :invalid="!!form.errors.apellido_paterno " />
-                    <Message v-if="form.errors.apellido_paterno" severity="error" size="small">
-                        {{ form.errors.apellido_paterno }}
-                    </Message
-                    >
-                </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1" for="apellido_materno">Segundo Apellido</label>
+                        <InputText
+                            id="apellido_materno" name="apellido_materno"
+                            v-model="form.apellido_materno" :disabled="readOnly"
+                            fluid :invalid="!!form.errors.apellido_materno " />
+                        <Message v-if="form.errors.apellido_materno" severity="error" size="small">
+                            {{ form.errors.apellido_materno }}
+                        </Message
+                        >
+                    </div>
 
-                <div>
-                    <label class="block text-sm font-medium mb-1" for="apellido_materno">Segundo Apellido</label>
-                    <InputText
-                        id="apellido_materno" name="apellido_materno"
-                        v-model="form.apellido_materno" :disabled="readOnly"
-                        fluid :invalid="!!form.errors.apellido_materno " />
-                    <Message v-if="form.errors.apellido_materno" severity="error" size="small">
-                        {{ form.errors.apellido_materno }}
-                    </Message
-                    >
-                </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1" for="fecha_nacimiento">Fecha de nacimiento</label>
+                        <DatePicker
+                            id="fecha_nacimiento" name="fecha_nacimiento"
+                            v-model="form.fecha_nacimiento" :disabled="readOnly"
+                            fluid
+                            :maxDate="fechaMinimaAdultos" :invalid="!!form.errors.fecha_nacimiento"
+                            showIcon iconDisplay="input" />
+                        <Message v-if="form.errors.fecha_nacimiento" severity="error" size="small">
+                            {{ form.errors.fecha_nacimiento }}
+                        </Message
+                        >
+                    </div>
 
-                <div>
-                    <label class="block text-sm font-medium mb-1" for="fecha_nacimiento">Fecha de nacimiento</label>
-                    <DatePicker
-                        id="fecha_nacimiento" name="fecha_nacimiento"
-                        v-model="form.fecha_nacimiento" :disabled="readOnly"
-                        fluid
-                        :maxDate="fechaMinimaAdultos" :invalid="!!form.errors.fecha_nacimiento"
-                        showIcon iconDisplay="input" />
-                    <Message v-if="form.errors.fecha_nacimiento" severity="error" size="small">
-                        {{ form.errors.fecha_nacimiento }}
-                    </Message
-                    >
-                </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1" for="pais_nacimiento_id">País de nacimiento</label>
+                        <AutoComplete 
+                            dropdown :suggestions="paisesFiltrados" @complete="filtrarPaises"
+                            id="pais_nacimiento_id" name="pais_nacimiento_id"
+                            v-model="paisSeleccionado" :disabled="readOnly"
+                            @change="onChangePaisNacimiento"
+                            optionLabel="nombre_es"
+                            optionValue="id"
+                            fluid :invalid="!!form.errors.pais_nacimiento_id" >
+                            <template #option="slotProps">
+                                <div class="flex items-center">
+                                    <img :alt="slotProps.option.nombre_es" src="https://primefaces.org/cdn/primevue/images/flag/flag_placeholder.png" :class="`mr-2 flag flag-${slotProps.option.codigo_iso.toLowerCase()}`" style="width: 18px" />
+                                    <div>{{ slotProps.option.nombre_es }}</div>
+                                </div>
+                            </template>
+                            <template #dropdownicon>
+                                <i class="pi pi-map" />
+                            </template>
+                        </AutoComplete>
+                        <Message v-if="form.errors.pais_nacimiento_id" severity="error" size="small">
+                            {{ form.errors.pais_nacimiento_id }}
+                        </Message
+                        >
 
-                <div>
-                    <label class="block text-sm font-medium mb-1" for="pais_nacimiento_id">País de nacimiento</label>
-                    <AutoComplete 
-                        dropdown :suggestions="paisesFiltrados" @complete="filtrarPaises"
-                        id="pais_nacimiento_id" name="pais_nacimiento_id"
-                        v-model="paisSeleccionado" :disabled="readOnly"
-                        @change="onChangePaisNacimiento"
-                        optionLabel="nombre_es"
-                        optionValue="id"
-                        fluid :invalid="!!form.errors.pais_nacimiento_id" >
-                        <template #option="slotProps">
-                            <div class="flex items-center">
-                                <img :alt="slotProps.option.nombre_es" src="https://primefaces.org/cdn/primevue/images/flag/flag_placeholder.png" :class="`mr-2 flag flag-${slotProps.option.codigo_iso.toLowerCase()}`" style="width: 18px" />
-                                <div>{{ slotProps.option.nombre_es }}</div>
-                            </div>
-                        </template>
-                        <template #dropdownicon>
-                            <i class="pi pi-map" />
-                        </template>
-                    </AutoComplete>
-                    <Message v-if="form.errors.pais_nacimiento_id" severity="error" size="small">
-                        {{ form.errors.pais_nacimiento_id }}
-                    </Message
-                    >
+                    </div>
 
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium mb-1" for="sexo">Sexo</label>
-                    <Select
-                        id="sexo" name="sexo"
-                        v-model="form.sexo" :disabled="readOnly"
-                        :options="sexos"
-                        optionLabel="label"
-                        optionValue="value"
-                        fluid :invalid="!!form.errors.sexo" />
-                    <Message v-if="form.errors.sexo" severity="error" size="small">
-                        {{ form.errors.sexo }}
-                    </Message
-                    >
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium mb-1">Email</label>
-                    <InputText
-                        id="email" name="email"
-                        v-model="form.email" :disabled="readOnly"
-                        fluid :invalid="!!form.errors.email" />
-                    <Message v-if="form.errors.email" severity="error" size="small">
-                        {{ form.errors.email }}
-                    </Message
-                    >
+                    <div>
+                        <label class="block text-sm font-medium mb-1" for="sexo">Sexo</label>
+                        <Select
+                            id="sexo" name="sexo"
+                            v-model="form.sexo" :disabled="readOnly"
+                            :options="sexos"
+                            optionLabel="label"
+                            optionValue="value"
+                            fluid :invalid="!!form.errors.sexo" />
+                        <Message v-if="form.errors.sexo" severity="error" size="small">
+                            {{ form.errors.sexo }}
+                        </Message
+                        >
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium mb-1" for="telefono">Número de teléfono</label>
-                    <IntlTelInput
-                        id="telefono" name="telefono"
-                        v-model="form.telefono" :disabled="readOnly"
-                        @changeCountry="onChangePaisNumeroTelefono"
-                        fluid :invalid="!!form.errors.telefono" />
-                    <Message v-if="form.errors.telefono" severity="error" size="small">
-                        {{ form.errors.telefono }}
-                    </Message
-                    >
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Email</label>
+                        <InputText
+                            id="email" name="email"
+                            v-model="form.email" :disabled="readOnly"
+                            fluid :invalid="!!form.errors.email" />
+                        <Message v-if="form.errors.email" severity="error" size="small">
+                            {{ form.errors.email }}
+                        </Message
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1" for="telefono">Número de teléfono</label>
+                        <IntlTelInput
+                            id="telefono" name="telefono"
+                            v-model="form.telefono" :disabled="readOnly"
+                            @changeCountry="onChangePaisNumeroTelefono"
+                            fluid :invalid="!!form.errors.telefono" />
+                        <Message v-if="form.errors.telefono" severity="error" size="small">
+                            {{ form.errors.telefono }}
+                        </Message
+                        >
+                    </div>
                 </div>
-            </div>
+            </Fieldset>
 
-            <Divider />
+            <Fieldset legend="Datos Fiscales" :toggleable="true" :collapsed="false">
+                <FormularioDatosFiscales
+                    :form="formDatosFiscales"
+                    :formErrors="formDatosFiscalesErrors" 
+                    :newRecord="!cliente" 
+                    :initialLoad="initialLoadFormDatosFiscales"
+                    :readOnly="readOnly"
+                />
+            </Fieldset>
 
-            <h3 class="text-lg font-medium text-gray-900">Información fiscal</h3>
+            <Fieldset legend="Dirección" :toggleable="true" :collapsed="false">
+                <FormularioDireccion 
+                    :form="formDireccion"
+                    :formErrors="formDireccionErrors" 
+                    :newRecord="!cliente" 
+                    :initialLoad="initialLoadFormDireccion"
+                    :readOnly="readOnly"
+                    :direccionMapConnector="useDireccionMapConnector" />
 
-            <FormularioDatosFiscales
-                :form="formDatosFiscales"
-                :formErrors="formDatosFiscalesErrors" 
-                :newRecord="!cliente" 
-                :initialLoad="initialLoadFormDatosFiscales"
-                :readOnly="readOnly"
-            />
-
-            <Divider />
-
-            <h3 class="text-lg font-medium text-gray-900">Domicilio</h3>
-
-            <FormularioDireccion 
-                :form="formDireccion"
-                :formErrors="formDireccionErrors" 
-                :newRecord="!cliente" 
-                :initialLoad="initialLoadFormDireccion"
-                :readOnly="readOnly"
-                :direccionMapConnector="useDireccionMapConnector" />
-
-            <div class="mt-4 w-full h-[400px] sm:h-[300px]">
-                <MapLibreMap />
-            </div>
+                <div class="mt-4 w-full h-[400px] sm:h-[300px]">
+                    <MapLibreMap />
+                </div>
+            </Fieldset>
 
             <Button v-if="!readOnly" label="Guardar Cliente" type="submit" :disabled="form.processing" :loading="form.processing" />
         </form>

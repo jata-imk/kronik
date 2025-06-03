@@ -89,7 +89,17 @@ function isOutsideClicked(event) {
             </header>
 
             <main class="layout-main">
-                <slot />
+                <Card v-if="$slots['card-header'] || $slots['card-content']" :pt="$attrs.pt?.['card-content-body'] && { body: $attrs.pt['card-content-body'] }">
+                    <template #header>
+                        <slot v-if="$slots['card-header']" name="card-header" />
+                    </template>
+
+                    <template v-if="$slots['card-content']" #content>
+                        <slot name="card-content" />
+                    </template>
+                </Card>
+
+                <slot v-else />
             </main>
             <app-footer></app-footer>
         </div>

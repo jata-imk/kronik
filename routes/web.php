@@ -1,8 +1,13 @@
 <?php
 
+use App\Http\Controllers\Admin\MenubarItemController;
+use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\CirculoCreditoController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\CodigoPostalController;
 use App\Http\Controllers\GeocodingController;
+use App\Http\Controllers\HistorialCrediticioController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -20,15 +25,25 @@ Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
     'verified',
+    'teams_permission'
 ])->group(function () {
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
 
-    Route::resource('clientes', ClienteController::class);
+    Route::resource('clientes', ClienteController::class)->names('clientes');
 
-    Route::get('/codigos-postales/sugerencias', [CodigoPostalController::class, 'sugerencias']);
-    Route::get('/codigos-postales/buscar', [CodigoPostalController::class, 'buscar']);
+    Route::get('/historial-crediticio', [HistorialCrediticioController::class, 'index'])->name('historial-crediticio.index');
+    Route::resource('circulo-credito', CirculoCreditoController::class)->only([
+        'index',
+        'create',
+        'store',
+        'show'
+    ])->names('circulo-credito');
+
+    Route::get('/codigos-postales/sugerencias', [CodigoPostalController::class, 'sugerencias'])->name('codigos-postales.sugerencias');
+    Route::get('/codigos-postales/buscar', [CodigoPostalController::class, 'buscar'])->name('codigos-postales.buscar');
+    Route::get('/geocoding/search', [GeocodingController::class, 'search'])->name('geocoding.search');
 
     Route::get('/sakai', function () {
         return Inertia::render('Sakai');
@@ -38,5 +53,13 @@ Route::middleware([
         return Inertia::render('Componentes');
     })->name('componentes');
 
-    Route::get('/geocoding/search', [GeocodingController::class, 'search'])->name('geocoding.search');
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/', function () {
+            return Inertia::render('Admin/Dashboard');
+        })->name('dashboard');
+
+        Route::resource('users', UserController::class);
+        Route::resource('menubar-items', MenubarItemController::class);
+        Route::resource('roles', RoleController::class);
+    });
 });

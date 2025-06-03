@@ -21,6 +21,11 @@ export default {
             xl: "1200px",
             "2xl": "1920px",
         },
+        extend: {
+            colors: {
+                'bg-surface-card': 'var(--surface-card)',
+            }
+        },
     },
     plugins: [forms, typography, PrimeUI],
 };

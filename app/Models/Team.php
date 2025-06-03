@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Laravel\Jetstream\Events\TeamCreated;
 use Laravel\Jetstream\Events\TeamDeleted;
 use Laravel\Jetstream\Events\TeamUpdated;
 use Laravel\Jetstream\Team as JetstreamTeam;
+use Spatie\Permission\PermissionRegistrar;
 
 class Team extends JetstreamTeam
 {
@@ -44,5 +46,13 @@ class Team extends JetstreamTeam
         return [
             'personal_team' => 'boolean',
         ];
+    }
+
+    public function roles(): HasMany
+    {
+        return $this->hasMany(
+            config('permission.models.role'),
+            config('permission.column_names.team_foreign_key')
+        );
     }
 }

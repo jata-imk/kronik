@@ -113,7 +113,7 @@ const userMenuItems = ref([
     <!-- Teams Dropdown -->
     <div v-if="$page.props.jetstream.hasTeamFeatures" class="layout-menu-desktop-prime-vue">
         <button type="button"
-            class="inline-flex items-center px-2 py-3 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150"
+            class="inline-flex items-center px-2 py-3 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-300 bg-surface-card hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-600 active:bg-gray-50 dark:active:bg-gray-600 transition ease-in-out duration-150"
             @click="toggleTeamsMenu">
             {{ $page.props.auth.user.current_team.name }}
 
@@ -145,7 +145,7 @@ const userMenuItems = ref([
 
     <div class="layout-menu-desktop-prime-vue">
         <button type="button"
-            class="inline-flex items-center px-2 py-3 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150"
+            class="inline-flex items-center px-2 py-3 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-300 bg-surface-card hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-600 active:bg-gray-50 dark:active:bg-gray-600 transition ease-in-out duration-150"
             @click="toggleUserMenu" aria-haspopup="true" aria-controls="overlay_menu">
             {{ $page.props.auth.user.name }}
             <svg class="ms-2 -me-0.5 size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"

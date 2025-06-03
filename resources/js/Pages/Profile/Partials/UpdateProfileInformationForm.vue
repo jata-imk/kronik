@@ -3,11 +3,7 @@ import { ref } from "vue";
 import { Link, router, useForm } from "@inertiajs/vue3";
 import ActionMessage from "@/Components/ActionMessage.vue";
 import FormSection from "@/Components/FormSection.vue";
-import InputError from "@/Components/InputError.vue";
 import InputLabel from "@/Components/InputLabel.vue";
-import PrimaryButton from "@/Components/PrimaryButton.vue";
-import SecondaryButton from "@/Components/SecondaryButton.vue";
-import TextInput from "@/Components/TextInput.vue";
 
 const props = defineProps({
     user: Object,
@@ -78,11 +74,11 @@ const clearPhotoFileInput = () => {
 <template>
     <FormSection @submitted="updateProfileInformation">
         <template #title>
-            Profile Information
+            Información del Perfil
         </template>
 
         <template #description>
-            Update your account's profile information and email address.
+            Actualice la información del perfil y la dirección de correo electrónico de su cuenta.
         </template>
 
         <template #form>
@@ -97,7 +93,7 @@ const clearPhotoFileInput = () => {
                     @change="updatePhotoPreview"
                 >
 
-                <InputLabel for="photo" value="Photo" />
+                <InputLabel for="photo" value="Foto" />
 
                 <!-- Current Profile Photo -->
                 <div v-show="! photoPreview" class="mt-2">
@@ -112,26 +108,27 @@ const clearPhotoFileInput = () => {
                     />
                 </div>
 
-                <SecondaryButton class="mt-2 me-2" type="button" @click.prevent="selectNewPhoto">
-                    Select A New Photo
-                </SecondaryButton>
+                <Button severity="secondary" class="mt-2 me-2" type="button" @click.prevent="selectNewPhoto">
+                    Seleccione una nueva foto
+                </Button>
 
-                <SecondaryButton
+                <Button
                     v-if="user.profile_photo_path"
+                    severity="secondary"
                     type="button"
                     class="mt-2"
                     @click.prevent="deletePhoto"
                 >
-                    Remove Photo
-                </SecondaryButton>
+                    Eliminar foto
+                </Button>
 
-                <InputError :message="form.errors.photo" class="mt-2" />
+                <Message v-if="form.errors.photo" severity="error" size="small" class="mt-2" > {{ form.errors.photo }} </Message>
             </div>
 
             <!-- Name -->
             <div class="col-span-6 sm:col-span-4">
-                <InputLabel for="name" value="Name" />
-                <TextInput
+                <InputLabel for="name" value="Nombre" />
+                <InputText
                     id="name"
                     v-model="form.name"
                     type="text"
@@ -139,13 +136,13 @@ const clearPhotoFileInput = () => {
                     required
                     autocomplete="name"
                 />
-                <InputError :message="form.errors.name" class="mt-2" />
+                <Message v-if="form.errors.name" severity="error" size="small" class="mt-2" > {{ form.errors.name }} </Message>
             </div>
 
             <!-- Email -->
             <div class="col-span-6 sm:col-span-4">
                 <InputLabel for="email" value="Email" />
-                <TextInput
+                <InputText
                     id="email"
                     v-model="form.email"
                     type="email"
@@ -153,11 +150,11 @@ const clearPhotoFileInput = () => {
                     required
                     autocomplete="username"
                 />
-                <InputError :message="form.errors.email" class="mt-2" />
+                <Message v-if="form.errors.email" severity="error" size="small" class="mt-2" > {{ form.errors.email }} </Message>
 
                 <div v-if="$page.props.jetstream.hasEmailVerification && user.email_verified_at === null">
                     <p class="text-sm mt-2">
-                        Your email address is unverified.
+                        Su dirección de correo electrónico no está verificada.
 
                         <Link
                             :href="route('verification.send')"
@@ -166,12 +163,12 @@ const clearPhotoFileInput = () => {
                             class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                             @click.prevent="sendEmailVerification"
                         >
-                            Click here to re-send the verification email.
+                            Haga clic aquí para volver a enviar el correo electrónico de verificación.
                         </Link>
                     </p>
 
-                    <div v-show="verificationLinkSent" class="mt-2 font-medium text-sm text-green-600">
-                        A new verification link has been sent to your email address.
+                    <div v-show="verificationLinkSent" class="mt-2 font-medium text-sm text-green-600 dark:text-green-400">
+                        Se ha enviado un nuevo enlace de verificación a su dirección de correo electrónico.
                     </div>
                 </div>
             </div>
@@ -179,12 +176,12 @@ const clearPhotoFileInput = () => {
 
         <template #actions>
             <ActionMessage :on="form.recentlySuccessful" class="me-3">
-                Saved.
+                Guardado.
             </ActionMessage>
 
-            <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                Save
-            </PrimaryButton>
+            <Button severity="contrast" class="uppercase font-semibold !text-xs" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+                Guardar
+            </Button>
         </template>
     </FormSection>
 </template>

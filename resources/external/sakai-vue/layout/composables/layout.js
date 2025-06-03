@@ -1,12 +1,26 @@
-import { computed, reactive } from "vue";
+import { computed, reactive, watch } from "vue";
 
-const layoutConfig = reactive({
+const storageKey = import.meta.env.VITE_JS_LOCAL_STORAGE_KEY || "layoutConfig";
+const defaultConfig = {
     preset: "Aura",
     primary: "emerald",
     surface: null,
     darkTheme: false,
     menuMode: "static",
-});
+};
+
+const savedConfig =
+    JSON.parse(localStorage.getItem(storageKey)) || defaultConfig;
+
+const layoutConfig = reactive(savedConfig);
+
+watch(
+    () => layoutConfig,
+    (newVal) => {
+        localStorage.setItem(storageKey, JSON.stringify(newVal));
+    },
+    { deep: true },
+);
 
 const layoutState = reactive({
     staticMenuDesktopInactive: false,
@@ -15,7 +29,7 @@ const layoutState = reactive({
     configSidebarVisible: false,
     staticMenuMobileActive: false,
     menuHoverActive: false,
-    activeMenuItem: null,
+    activeMenuItem: route().current() || null,
 });
 
 export function useLayout() {

@@ -26,11 +26,14 @@ class CreateTeam implements CreatesTeams
         ])->validateWithBag('createTeam');
 
         AddingTeam::dispatch($user);
-
-        $user->switchTeam($team = $user->ownedTeams()->create([
+        $team = $user->ownedTeams()->create([
             'name' => $input['name'],
             'personal_team' => false,
-        ]));
+        ]);
+        $user->switchTeam($team);
+
+        // get the user and assign roles/permissions on new team model
+        $user->assignRole('Super Admin');
 
         return $team;
     }

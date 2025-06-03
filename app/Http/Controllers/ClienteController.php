@@ -8,14 +8,27 @@ use App\Http\Requests\Clientes\StoreClienteRequest;
 use App\Http\Requests\Clientes\UpdateClienteRequest;
 use App\Models\CodigoPostal;
 use App\Services\ClienteService;
+use App\Services\MenubarService;
 use App\Services\PaisService;
 use App\Services\RegimenFiscalService;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 
-class ClienteController extends Controller
+class ClienteController extends Controller implements HasMiddleware
 {
-    public function index(Request $request, ClienteService $clienteService)
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('role_or_permission:Super Admin|read clientes', only: ['index']),
+            new Middleware('role_or_permission:Super Admin|create clientes', only: ['create', 'store']),
+            new Middleware('role_or_permission:Super Admin|update clientes', only: ['edit', 'update']),
+            new Middleware('role_or_permission:Super Admin|delete clientes', only: ['destroy']),
+        ];
+    }
+
+    public function index(Request $request, ClienteService $clienteService, MenubarService $menubarService)
     {
         $clientes = $clienteService->readAll();
 
@@ -29,11 +42,12 @@ class ClienteController extends Controller
         }
 
         return Inertia::render('Clientes/Index', [
+            'menubarItems' => $menubarService->getMenuItems($request),
             'clientes' => $clientes,
         ]);
     }
 
-    public function create(PaisService $paisService, RegimenFiscalService $regimenFiscalService)
+    public function create(Request $request, PaisService $paisService, RegimenFiscalService $regimenFiscalService, MenubarService $menubarService)
     {
         $paises = $paisService->readAll(['id', 'nombre_es', 'nombre_nativo', 'codigo_iso', 'emoji']);
         $sexos = [
@@ -49,6 +63,7 @@ class ClienteController extends Controller
         $regimenesFiscales = $regimenFiscalService->readAll(['id', 'clave', 'descripcion', 'fisica', 'moral']);
 
         return Inertia::render('Clientes/Create', [
+            'menubarItems' => $menubarService->getMenuItems($request),
             'paises' => $paises,
             'sexos' => $sexos,
             'tiposPersona' => $tiposPersona,
@@ -92,7 +107,7 @@ class ClienteController extends Controller
         });
     }
 
-    public function show(Cliente $cliente, PaisService $paisService, RegimenFiscalService $regimenFiscalService)
+    public function show(Request $request, Cliente $cliente, PaisService $paisService, RegimenFiscalService $regimenFiscalService, MenubarService $menubarService)
     {
         $paises = $paisService->readAll(['id', 'nombre_es', 'nombre_nativo', 'codigo_iso', 'emoji']);
         $sexos = [
@@ -108,6 +123,7 @@ class ClienteController extends Controller
         $regimenesFiscales = $regimenFiscalService->readAll(['id', 'clave', 'descripcion', 'fisica', 'moral']);
 
         return Inertia::render('Clientes/Show', [
+            'menubarItems' => $menubarService->getMenuItems($request),
             'readOnly' => true,
             'cliente' => $cliente->load(['datosFiscales', 'direcciones.pais', 'direcciones.codigoPostal.divisionAdministrativa.padre.padre']),
             'paises' => $paises,
@@ -117,7 +133,7 @@ class ClienteController extends Controller
         ]);
     }
 
-    public function edit(Cliente $cliente, PaisService $paisService, RegimenFiscalService $regimenFiscalService)
+    public function edit(Request $request, Cliente $cliente, PaisService $paisService, RegimenFiscalService $regimenFiscalService, MenubarService $menubarService)
     {
         $paises = $paisService->readAll(['id', 'nombre_es', 'nombre_nativo', 'codigo_iso', 'emoji']);
         $sexos = [
@@ -133,6 +149,7 @@ class ClienteController extends Controller
         $regimenesFiscales = $regimenFiscalService->readAll(['id', 'clave', 'descripcion', 'fisica', 'moral']);
 
         return Inertia::render('Clientes/Update', [
+            'menubarItems' => $menubarService->getMenuItems($request),
             'action' => 'clientes.update',
             'readOnly' => false,
             'cliente' => $cliente->load(['datosFiscales', 'direcciones.pais', 'direcciones.codigoPostal.divisionAdministrativa.padre.padre']),
