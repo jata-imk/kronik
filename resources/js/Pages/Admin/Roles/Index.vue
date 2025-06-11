@@ -19,6 +19,13 @@ const permissions = ref(page.props.permissions);
 const selectedRole = ref(null);
 
 watch(
+    () => page.props.roles,
+    () => {
+        roles.value = page.props.roles;
+    },
+);
+
+watch(
     () => [selectedRole.value],
     () => {
         formRolePermissions.name = selectedRole.value?.name;
@@ -28,12 +35,23 @@ watch(
     },
 );
 
-const permissionsHaveChanged = computed(() => {
-    const setUno = new Set(formRolePermissions.permissions);
-    const setDos = new Set(selectedRole.value?.permissions.map((p) => p.id));
-    return (
-        setUno.difference(setDos).size > 0 || setDos.difference(setUno).size > 0
-    );
+const permissionsHaveChanged = computed({
+    get() {
+        const setUno = new Set(formRolePermissions.permissions);
+        const setDos = new Set(
+            selectedRole.value?.permissions.map((p) => p.id),
+        );
+        return (
+            setUno.difference(setDos).size > 0 ||
+            setDos.difference(setUno).size > 0
+        );
+    },
+    set(value) {
+        formRolePermissions.permissions = value;
+        selectedRole.value = roles.value.find(
+            (role) => role.id === selectedRole.value.id,
+        );
+    },
 });
 
 const selectedRoleAvatarLabel = computed(
@@ -44,6 +62,40 @@ const createRoleModalIsOpen = ref(false);
 
 const closeCreateRoleModal = () => {
     createRoleModalIsOpen.value = false;
+};
+
+const permissionsByModule = ref({});
+watch(
+    () => formRolePermissions.permissions,
+    () => {
+        const objModules = {};
+        for (const permissionId of formRolePermissions.permissions) {
+            const permission = permissions.value.find(
+                (p) => p.id === permissionId,
+            );
+            if (permission) {
+                if (!objModules[permission.module.name]) {
+                    objModules[permission.module.name] = [];
+                }
+                objModules[permission.module.name].push(permission);
+            }
+        }
+
+        permissionsByModule.value = objModules;
+    },
+);
+
+const submit = () => {
+    formRolePermissions.put(
+        route("admin.roles.update", selectedRole.value.id),
+        {
+            only: ["roles"],
+            onSuccess: () => {
+                createRoleModalIsOpen.value = false;
+                permissionsHaveChanged.value = formRolePermissions.permissions;
+            },
+        },
+    );
 };
 </script>
 
@@ -58,15 +110,15 @@ const closeCreateRoleModal = () => {
 
         <template #card-content>
             <div class="grid grid-cols-12 min-h-screen">
-                <div class="col-span-2 h-full border-r border-gray-200">
+                <div class="col-span-3 h-full border-r border-gray-200">
                     <div class="flex justify-between p-4">
                         <h3 class="text-xl font-medium text-gray-900 dark:text-gray-100">Roles</h3>
 
                         <Button icon="pi pi-plus" class="p-button-success" @click="createRoleModalIsOpen = true"></Button>
                     </div>
 
-                    <div class="mt-2">
-                        <Listbox v-model="selectedRole" :options="roles" optionLabel="name" placeholder="Seleccione un rol" class="!border-none">
+                    <div class="mt-2 min-h-full">
+                        <Listbox v-model="selectedRole" :options="roles" optionLabel="name" placeholder="Seleccione un rol" class="!border-none" :pt="{listContainer: '!max-h-full'}">
                             <template #option="slotProps">
                                 <div class="flex items-center">
                                     <Avatar :label="slotProps.option.name.slice(0, 2).toUpperCase()" size="large" class="mr-2" style="background-color: #dee9fc; color: #1a2551" shape="circle" />
@@ -77,7 +129,7 @@ const closeCreateRoleModal = () => {
                     </div>
                 </div>
 
-                <div class="col-span-10 p-2 pt-24 h-full relative grid grid-cols-12">
+                <form @submit.prevent="submit" class="col-span-9 p-2 pt-24 h-full relative grid grid-cols-12">
                     <div class="flex justify-between mb-4 bg-gray-300 dark:bg-gray-800 p-4 rounded-xl rounded-tl-none rounded-tr-none absolute top-0 left-[20px] right-[20px]">
                         <div class="flex gap-4 items-center">
                             <span class="pi pi-fw pi-key !text-2xl"></span>
@@ -89,7 +141,7 @@ const closeCreateRoleModal = () => {
 
                         <div class="flex gap-4">
                             <Button icon="pi pi-fw pi-ellipsis-v" severity="secondary"></Button>
-                            <Button severity="primary" :disabled="!permissionsHaveChanged">Actualizar</Button>
+                            <Button severity="primary" :disabled="!permissionsHaveChanged" type="submit">Actualizar</Button>
                         </div>
                     </div>
 
@@ -125,44 +177,27 @@ const closeCreateRoleModal = () => {
                                 <span class="text text-gray-500 font-bold">Descripción general del rol</span>
 
                                 <div class="mt-4">
-                                    <div class="flex items-center gap-4 bg-gray-100 dark:bg-gray-800 p-4 border border-gray-200 dark:border-gray-200 rounded-xl rounded-bl-none rounded-br-none">
+                                    <div v-for="(permissions, moduleName) in permissionsByModule" class="flex items-center gap-4 bg-gray-100 dark:bg-gray-800 p-4 border border-gray-200 dark:border-gray-200 rounded-xl rounded-bl-none rounded-br-none">
                                         <span class="pi pi-fw pi-key !text-2xl"></span>
                                         <div>
-                                            <p class="text-sm font-bold text-primary-500">Clientes</p>
-                                            <div class="flex gap-2 mt-2">
-                                                <Tag value="Crear" rounded></Tag>
-                                                <Tag value="Editar" rounded></Tag>
-                                                <Tag value="Borrar" rounded></Tag>
+                                            <p class="text-sm font-bold text-primary-500">{{ moduleName.split("-").map((s) => s.charAt(0).toUpperCase() + s.substring(1)).join(" ") }}</p>
+                                            <div class="flex flex-wrap gap-1 mt-2">
+                                                <Tag v-for="permission in permissions" :key="permission.id" severity="primary" :value="permission.name.replace(moduleName, '')" rounded></Tag>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="flex items-center gap-4 bg-gray-100 dark:bg-gray-800 p-4 border border-gray-200 dark:border-gray-200">
+                                    <div v-if="!Object.keys(permissionsByModule).length" class="flex items-center gap-4 bg-gray-100 dark:bg-gray-800 p-4 border border-gray-200 dark:border-gray-200 rounded-xl rounded-bl-none rounded-br-none">
                                         <span class="pi pi-fw pi-key !text-2xl"></span>
                                         <div>
-                                            <p class="text-sm font-bold text-primary-500">Historial crediticio</p>
-                                            <div class="flex gap-2 mt-2">
-                                                <Tag value="Consultar" rounded></Tag>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="flex items-center gap-4 bg-gray-100 dark:bg-gray-800 p-4 border border-gray-200 dark:border-gray-200 rounded-xl rounded-tl-none rounded-tr-none">
-                                        <span class="pi pi-fw pi-key !text-2xl"></span>
-                                        <div>
-                                            <p class="text-sm font-bold text-primary-500">Documentos</p>
-                                            <div class="flex gap-2 mt-2">
-                                                <Tag value="Subir" rounded></Tag>
-                                                <Tag value="Descargar" rounded></Tag>
-                                                <Tag value="Editar" rounded></Tag>
-                                            </div>
+                                            <p class="text-sm font-bold text-secondary-500">Sin permisos</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </form>
             </div>
 
             <CreateRoleModal v-model:visible="createRoleModalIsOpen" @close="closeCreateRoleModal" />

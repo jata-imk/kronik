@@ -57,19 +57,19 @@ const updateTeamName = () => {
                     v-model="form.name"
                     type="text"
                     class="mt-1 block w-full"
-                    :disabled="! permissions.canUpdateTeam"
+                    :disabled="! permissions['update-teams']"
                 />
 
                 <Message v-if="form.errors.name" severity="error" size="small" class="mt-2">{{ form.errors.name }}</Message>
             </div>
         </template>
 
-        <template v-if="permissions.canUpdateTeam" #actions>
+        <template v-if="permissions['update-teams']" #actions>
             <ActionMessage :on="form.recentlySuccessful" class="me-3">
                 Guardado.
             </ActionMessage>
 
-            <Button severity="contrast" class="uppercase font-semibold !text-xs" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+            <Button severity="contrast" class="uppercase font-semibold !text-xs" :class="{ 'opacity-25': form.processing }" :disabled="form.processing" type="submit">
                 Guardar
             </Button>
         </template>

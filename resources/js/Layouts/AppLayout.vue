@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { Head, Link, router } from "@inertiajs/vue3";
 import ApplicationMark from "@/Components/ApplicationMark.vue";
 import Banner from "@/Components/Banner.vue";
@@ -13,6 +13,13 @@ defineProps({
 });
 
 const showingNavigationDropdown = ref(false);
+
+const userCanCreateTeams = computed(() => {
+    return (
+        $page.props.auth.user.roles.find((r) => r.name === "Super Admin") ||
+        $page.props.auth.user.permissions.find((p) => p.name === "create teams")
+    );
+});
 
 const switchToTeam = (team) => {
     router.put(
@@ -94,7 +101,7 @@ const logout = () => {
                                                 Configuración del equipo
                                             </DropdownLink>
 
-                                            <DropdownLink v-if="$page.props.jetstream.canCreateTeams" :href="route('teams.create')">
+                                            <DropdownLink v-if="userCanCreateTeams" :href="route('teams.create')">
                                                 Crear nuevo equipo
                                             </DropdownLink>
 
@@ -254,7 +261,7 @@ const logout = () => {
                                     Team Settings
                                 </ResponsiveNavLink>
 
-                                <ResponsiveNavLink v-if="$page.props.jetstream.canCreateTeams" :href="route('teams.create')" :active="route().current('teams.create')">
+                                <ResponsiveNavLink v-if="userCanCreateTeams" :href="route('teams.create')" :active="route().current('teams.create')">
                                     Create New Team
                                 </ResponsiveNavLink>
 

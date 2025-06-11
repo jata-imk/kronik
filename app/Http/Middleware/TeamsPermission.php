@@ -11,12 +11,12 @@ class TeamsPermission
 
     public function handle(Request $request, Closure $next): Response
     {
-        if (!empty($request->user())) {
-            if (function_exists('setPermissionsTeamId')) {
-                setPermissionsTeamId($request->user()->current_team_id);
+        if (!empty($request->user()) && function_exists('setPermissionsTeamId')) {
+            // set actual team_id to spatie/laravel-permission package
+            setPermissionsTeamId($request->user()->current_team_id);
 
-                $request->user()->load('roles.permissions');
-            }
+            $request->user()->setRelation('permissions', $request->user()->getAllPermissions());
+            $request->user()->load(['roles.permissions']);
         }
 
         return $next($request);

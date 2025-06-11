@@ -9,6 +9,7 @@ use App\Services\Scrapers\BrowserClientService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use App\Models\Permission;
+use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -40,12 +41,15 @@ class AppServiceProvider extends ServiceProvider
             return $user->hasRole('Super Admin') ? true : null;
         });
 
-        $permissions = Permission::all();
+        // Checks for table existence before registering policies
+        if (Schema::hasTable('permissions')) {
+            $permissions = Permission::all();
 
-        foreach ($permissions as $permission) {
-            Gate::define($permission->name, function ($user) use ($permission) {
-                return $user->hasPermissionTo($permission->name);
-            });
+            foreach ($permissions as $permission) {
+                Gate::define($permission->name, function ($user) use ($permission) {
+                    return $user->hasPermissionTo($permission->name);
+                });
+            }
         }
     }
 }

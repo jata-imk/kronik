@@ -8,6 +8,7 @@ use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\CodigoPostalController;
 use App\Http\Controllers\GeocodingController;
 use App\Http\Controllers\HistorialCrediticioController;
+use App\Http\Controllers\TeamController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -25,7 +26,6 @@ Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
     'verified',
-    'teams_permission'
 ])->group(function () {
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
@@ -52,6 +52,9 @@ Route::middleware([
     Route::get('/componentes', function () {
         return Inertia::render('Componentes');
     })->name('componentes');
+
+    Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');
+    Route::post('/teams', [TeamController::class, 'store'])->name('teams.store');
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', function () {

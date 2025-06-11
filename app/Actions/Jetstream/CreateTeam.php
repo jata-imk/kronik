@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Jetstream\Contracts\CreatesTeams;
 use Laravel\Jetstream\Events\AddingTeam;
-use Laravel\Jetstream\Jetstream;
 
 class CreateTeam implements CreatesTeams
 {
@@ -19,7 +18,9 @@ class CreateTeam implements CreatesTeams
      */
     public function create(User $user, array $input): Team
     {
-        Gate::forUser($user)->authorize('create', Jetstream::newTeamModel());
+        $permission = config('permission.models.permission')::where('name', 'create teams')->first();
+
+        Gate::check($permission->name, $user);
 
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
@@ -32,7 +33,26 @@ class CreateTeam implements CreatesTeams
         ]);
         $user->switchTeam($team);
 
-        // get the user and assign roles/permissions on new team model
+        if (!function_exists('setPermissionsTeamId')) {
+            return $team;
+        }
+
+        # https://spatie.be/docs/laravel-permission/v6/basic-usage/teams-permissions#content-defining-a-super-admin-on-teams
+        setPermissionsTeamId($team->id);
+
+        /** @var \Spatie\Permission\Models\Role $roleModel */
+        $roleModel = config('permission.models.role');
+        $teamsKey = config('permission.column_names.team_foreign_key', 'team_id');
+        $globalRoles = $roleModel::where($teamsKey, null)->where('name', '!=', 'Super Admin')->get();
+        foreach ($globalRoles as $role) {
+            $roleModel::query()->create([
+                'name' => $role->name,
+                $teamsKey => $team->id,
+                'guard_name' => $role->guard_name
+            ]);
+        }
+
+        // Super Admin Role
         $user->assignRole('Super Admin');
 
         return $team;

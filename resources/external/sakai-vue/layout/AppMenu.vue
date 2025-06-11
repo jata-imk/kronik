@@ -56,12 +56,14 @@ const model = ref([
                 icon: "pi pi-fw pi-user-edit",
                 to: "profile.show",
             },
-            page.props.auth.user.is_superuser && {
+            page.props.auth.user.roles.find(
+                (r) => r.name === "Super Admin",
+            ) && {
                 label: "Panel de superusuario",
                 icon: "pi pi-fw pi-cog",
                 to: "admin.dashboard",
             },
-        ],
+        ].filter(Boolean),
     },
 ]);
 </script>

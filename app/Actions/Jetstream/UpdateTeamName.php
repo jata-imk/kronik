@@ -17,7 +17,9 @@ class UpdateTeamName implements UpdatesTeamNames
      */
     public function update(User $user, Team $team, array $input): void
     {
-        Gate::forUser($user)->authorize('update', $team);
+        $permission = config('permission.models.permission')::where('name', 'update teams')->first();
+
+        Gate::check($permission->name, $user);
 
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],

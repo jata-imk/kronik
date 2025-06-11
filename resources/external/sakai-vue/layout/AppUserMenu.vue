@@ -38,7 +38,7 @@ const teamMenuItems = ref([
     },
 ]);
 
-if (page.props.jetstream.canCreateTeams) {
+if (page.props.auth.permissions["create-teams"] ?? false) {
     teamMenuItems.value[0].items.push({
         label: "Crear nuevo equipo",
         icon: "pi pi-plus",

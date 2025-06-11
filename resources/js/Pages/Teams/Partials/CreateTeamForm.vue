@@ -8,6 +8,7 @@ const form = useForm({
 });
 
 const createTeam = () => {
+    console.log(form);
     form.post(route("teams.store"), {
         errorBag: "createTeam",
         preserveScroll: true,
@@ -45,6 +46,7 @@ const createTeam = () => {
                 <InputLabel for="name" value="Nombre del equipo" />
                 <InputText
                     id="name"
+                    name="name"
                     v-model="form.name"
                     type="text"
                     class="block w-full mt-1"
@@ -55,7 +57,7 @@ const createTeam = () => {
         </template>
 
         <template #actions>
-            <Button severity="contrast" class="uppercase font-semibold !text-xs" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+            <Button severity="contrast" class="uppercase font-semibold !text-xs" :class="{ 'opacity-25': form.processing }" :disabled="form.processing" type="submit">
                 Crear
             </Button>
         </template>

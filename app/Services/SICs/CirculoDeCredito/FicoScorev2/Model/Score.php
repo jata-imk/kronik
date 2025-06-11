@@ -3,7 +3,7 @@
 namespace App\Services\SICs\CirculoDeCredito\FicoScorev2\Model;
 
 use \ArrayAccess;
-use \App\Services\SICs\CirculoDeCredito\Core\ObjectSerializer;
+use \App\Services\SICs\CirculoDeCredito\FicoScorev2\ObjectSerializer;
 
 class Score implements ModelInterface, ArrayAccess
 {

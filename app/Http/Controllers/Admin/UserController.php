@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
@@ -15,9 +16,12 @@ class UserController extends Controller
      */
     public function index()
     {
+        $teamKey = config('permission.column_names.team_foreign_key', 'team_id');
+        $user = Auth::user();
+
         return Inertia::render('Admin/Users/Index', [
             'users' => User::with('ownedTeams', 'roles')->get(),
-            'roles' => Role::all(),
+            'roles' => Role::where($teamKey, $user->currentTeam->id)->orWhere('name', 'Super Admin')->get(),
         ]);
     }
 

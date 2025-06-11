@@ -27,35 +27,12 @@ class JetstreamServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->configurePermissions();
-
-        Jetstream::createTeamsUsing(CreateTeam::class);
-        Jetstream::updateTeamNamesUsing(UpdateTeamName::class);
-        Jetstream::addTeamMembersUsing(AddTeamMember::class);
-        Jetstream::inviteTeamMembersUsing(InviteTeamMember::class);
-        Jetstream::removeTeamMembersUsing(RemoveTeamMember::class);
-        Jetstream::deleteTeamsUsing(DeleteTeam::class);
-        Jetstream::deleteUsersUsing(DeleteUser::class);
-    }
-
-    /**
-     * Configure the roles and permissions that are available within the application.
-     */
-    protected function configurePermissions(): void
-    {
-        Jetstream::defaultApiTokenPermissions(['read']);
-
-        Jetstream::role('admin', 'Administrator', [
-            'create',
-            'read',
-            'update',
-            'delete',
-        ])->description('Administrator users can perform any action.');
-
-        Jetstream::role('editor', 'Editor', [
-            'read',
-            'create',
-            'update',
-        ])->description('Editor users have the ability to read, create, and update.');
+        Jetstream::createTeamsUsing(CreateTeam::class);                 // spatie/laravel-permission: Validated ✅
+        Jetstream::updateTeamNamesUsing(UpdateTeamName::class);         // spatie/laravel-permission: Validated ✅
+        Jetstream::addTeamMembersUsing(AddTeamMember::class);           // spatie/laravel-permission: Validated ✅
+        Jetstream::inviteTeamMembersUsing(InviteTeamMember::class);     // spatie/laravel-permission: Validated ✅
+        Jetstream::removeTeamMembersUsing(RemoveTeamMember::class);     // spatie/laravel-permission: Pending 🕑
+        Jetstream::deleteTeamsUsing(DeleteTeam::class);                 // spatie/laravel-permission: Pending 🕑
+        Jetstream::deleteUsersUsing(DeleteUser::class);                 // spatie/laravel-permission: Pending 🕑
     }
 }

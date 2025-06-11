@@ -17,11 +17,11 @@ class RoleController extends Controller
      */
     public function index()
     {
-        // echo '<pre>';
-        // die(var_dump(Auth::user()->roles()->get()->toArray()));
+        $teamId = Auth::user()->currentTeam->id;
+        $roles = config('permission.models.role')::where(config('permission.column_names.team_foreign_key', 'team_id'), $teamId)->with('permissions.module')->get();
 
         return Inertia::render('Admin/Roles/Index', [
-            'roles' => Auth::user()->currentTeam->roles()->with('permissions')->get(),
+            'roles' => fn() => $roles,
             'permissions' => Permission::with('module')->get(),
             'modules' => Module::with('permissions')->get(),
         ]);

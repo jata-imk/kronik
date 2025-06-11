@@ -23,7 +23,9 @@ class InviteTeamMember implements InvitesTeamMembers
      */
     public function invite(User $user, Team $team, string $email, ?string $role = null): void
     {
-        Gate::forUser($user)->authorize('addTeamMember', $team);
+        $permission = config('permission.models.permission')::where('name', 'add members teams')->first();
+
+        Gate::check($permission->name, $user);
 
         $this->validate($team, $email, $role);
 
@@ -61,14 +63,15 @@ class InviteTeamMember implements InvitesTeamMembers
     {
         return array_filter([
             'email' => [
-                'required', 'email',
+                'required',
+                'email',
                 Rule::unique(Jetstream::teamInvitationModel())->where(function (Builder $query) use ($team) {
                     $query->where('team_id', $team->id);
                 }),
             ],
             'role' => Jetstream::hasRoles()
-                            ? ['required', 'string', new Role]
-                            : null,
+                ? ['required', 'string', new Role]
+                : null,
         ]);
     }
 

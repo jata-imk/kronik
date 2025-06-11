@@ -12,6 +12,16 @@ class DeleteTeam implements DeletesTeams
      */
     public function delete(Team $team): void
     {
+        // delete role and permissions related to the team
+        $roleModel = config('permission.models.role');
+
+        $rolesTeam = $roleModel::where(config('permission.column_names.team_foreign_key', 'team_id'), $team->id)->get();
+
+        foreach ($rolesTeam as $role) {
+            $role->permissions()->detach();
+            $role->delete();
+        }
+
         $team->purge();
     }
 }

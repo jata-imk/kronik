@@ -15,6 +15,8 @@ class HistorialCrediticioController extends Controller
     public function index(Request $request, MenubarService $menubarService)
     {
         $sicsQueries = SicQuery::where('cliente_id', 8)->get();
+        // echo '<pre>';
+        // die(var_dump($menubarService->getMenuItems($request)));
 
         return Inertia::render('HistorialCrediticio/Index', [
             'menubarItems' => $menubarService->getMenuItems($request),
