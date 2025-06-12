@@ -104,7 +104,7 @@ class MenubarService
                 if ($condition->condition_type == 'route_regexp') {
                     $preg_match_subject = $condition->condition_value->pregmatch_subject_type == 'referer' ? $request->headers->get('referer') : route($conditionDefault->route_name);
                     if (!preg_match($this->laravelPatternToRegex(Route::getRoutes()->getByName($condition->condition_value->route_name)->uri), $preg_match_subject)) {
-                        $params = collect($conditionDefault->params ?? [])->mapWithKeys(function ($value, $key) use ($request) {
+                        $params = collect(json_decode($conditionDefault->params) ?? [])->mapWithKeys(function ($value, $key) use ($request) {
                             return [$key => str_replace('{' . $key . '}', $request->route($key)->id, $value)];
                         })->toArray();
 
