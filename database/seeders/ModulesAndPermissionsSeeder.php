@@ -39,13 +39,6 @@ class ModulesAndPermissionsSeeder extends Seeder
             'parent_id' => null
         ]);
 
-        $circuloCredito = Module::create([
-            'name' => 'circulo-credito',
-            'icon' => 'pi-list',
-            'route_name' => 'circulo-credito',
-            'parent_id' => $historial->id
-        ]);
-
         $modules = [
             $clientes,
             $historial,
