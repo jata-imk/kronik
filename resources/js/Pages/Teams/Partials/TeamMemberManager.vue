@@ -98,7 +98,8 @@ const removeTeamMember = () => {
 };
 
 const displayableRole = (role) => {
-    return props.availableRoles.find((r) => Number(r.id) === Number(role)).name;
+    return props.availableRoles.find((r) => Number(r.id) === Number(role))
+        ?.name;
 };
 </script>
 

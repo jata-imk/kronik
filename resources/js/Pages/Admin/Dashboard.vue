@@ -19,13 +19,16 @@ const menubarItems = ref(page.props.menubarItems);
             </Menubar>
 
             <div class="flex justify-between items-center pl-8 pt-4">
-                <h2 class="text-2xl font-bold mb-4">Configuraciones generales del super usuario</h2>
+                <h2 class="text-2xl font-bold mb-4">Configuraciones del Super Admin</h2>
             </div>
         </template>
 
         <template #card-content>
-            <div class="pl-8 flex flex-col items-start justify-center gap-4">
-                <Button label="Usuarios" as="a" :href="route('admin.users.index')" class="mb-3" />
+            <div class="pl-8 flex flex-col items-start justify-center gap-2">
+                <div class="flex gap-2 mb-3">
+                    <Button label="Usuarios" as="a" :href="route('admin.users.index')" />
+                    <Button label="Logs de Actividades" as="a" :href="route('admin.users.activity')" />
+                </div>
                 <Button label="Configurar menubar" as="a" :href="route('admin.menubar-items.index')" class="mb-3" />
                 <Button label="Configurar roles" as="a" :href="route('admin.roles.index')" class="mb-3" />
             </div>

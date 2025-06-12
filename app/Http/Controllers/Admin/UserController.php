@@ -76,4 +76,12 @@ class UserController extends Controller
     {
         //
     }
+
+    /**
+     * Display users activity logs.
+     */
+    public function usersActivity(Request $request)
+    {
+        return Inertia::render('Admin/Logs/UserActivity', []);
+    }
 }

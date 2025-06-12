@@ -61,6 +61,7 @@ Route::middleware([
             return Inertia::render('Admin/Dashboard');
         })->name('dashboard');
 
+        Route::get('users/activity', [UserController::class, 'usersActivity'])->name('users.activity');
         Route::resource('users', UserController::class);
         Route::resource('menubar-items', MenubarItemController::class);
         Route::resource('roles', RoleController::class);
