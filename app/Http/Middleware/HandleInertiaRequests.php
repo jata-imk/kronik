@@ -45,6 +45,8 @@ class HandleInertiaRequests extends Middleware
 
             $request->user()->setRelation('permissions', $request->user()->getAllPermissions());
             $request->user()->load(['roles.permissions']);
+        } else if (empty($request->user())) {
+            return parent::share($request);
         }
 
         $roleModel = config('permission.models.role');
