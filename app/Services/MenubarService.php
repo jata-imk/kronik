@@ -141,7 +141,7 @@ class MenubarService
 
             case 'route:name':
                 $params = collect($item->params ?? [])->mapWithKeys(function ($value, $key) use ($request) {
-                    return [$key => str_replace('{' . $key . '}', $request->route($key)->id ?? '', $value)];
+                    return [$key => str_replace('{' . $key . '}', $request->route($key)->id ?? 'null', $value)];
                 })->toArray();
 
 
