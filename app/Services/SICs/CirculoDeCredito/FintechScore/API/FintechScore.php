@@ -12,7 +12,6 @@ use App\Services\SICs\CirculoDeCredito\FintechScore\ApiException;
 use App\Services\SICs\CirculoDeCredito\FintechScore\Configuration;
 use App\Services\SICs\CirculoDeCredito\FintechScore\HeaderSelector;
 use App\Services\SICs\CirculoDeCredito\FintechScore\ObjectSerializer;
-use GuzzleHttp\Psr7\Query;
 
 class FintechScore
 {
@@ -240,10 +239,10 @@ class FintechScore
 
             if ($headers['Content-Type'] === 'application/json') {
                 if ($httpBody instanceof \stdClass) {
-                    $httpBody = json_encode($httpBody);
+                    $httpBody = \GuzzleHttp\json_encode($httpBody);
                 }
                 if (is_array($httpBody)) {
-                    $httpBody = json_encode(ObjectSerializer::sanitizeForSerialization($httpBody));
+                    $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($httpBody));
                 }
             }
         } elseif (count($formParams) > 0) {
@@ -257,9 +256,9 @@ class FintechScore
                 }
                 $httpBody = new MultipartStream($multipartContents);
             } elseif ($headers['Content-Type'] === 'application/json') {
-                $httpBody = json_encode($formParams);
+                $httpBody = \GuzzleHttp\json_encode($formParams);
             } else {
-                $httpBody = Query::build($formParams);
+                $httpBody = \GuzzleHttp\Psr7\Query::build($formParams);
             }
         }
         $defaultHeaders = [];
@@ -271,7 +270,7 @@ class FintechScore
             $headerParams,
             $headers
         );
-        $query = Query::build($queryParams);
+        $query = \GuzzleHttp\Psr7\Query::build($queryParams);
         return new Request(
             'POST',
             $this->config->getHost() . $resourcePath . ($query ? "?{$query}" : ''),
@@ -446,7 +445,7 @@ class FintechScore
                 'Missing the required parameter $body when calling getReporteFolio'
             );
         }
-        $resourcePath = '/sandbox/v1/fintechscore/';
+        $resourcePath = '/folio';
         $formParams = [];
         $queryParams = [];
         $headerParams = [];
@@ -474,10 +473,10 @@ class FintechScore
 
             if ($headers['Content-Type'] === 'application/json') {
                 if ($httpBody instanceof \stdClass) {
-                    $httpBody = json_encode($httpBody);
+                    $httpBody = \GuzzleHttp\json_encode($httpBody);
                 }
                 if (is_array($httpBody)) {
-                    $httpBody = json_encode(ObjectSerializer::sanitizeForSerialization($httpBody));
+                    $httpBody = \GuzzleHttp\json_encode(ObjectSerializer::sanitizeForSerialization($httpBody));
                 }
             }
         } elseif (count($formParams) > 0) {
@@ -491,9 +490,9 @@ class FintechScore
                 }
                 $httpBody = new MultipartStream($multipartContents);
             } elseif ($headers['Content-Type'] === 'application/json') {
-                $httpBody = json_encode($formParams);
+                $httpBody = \GuzzleHttp\json_encode($formParams);
             } else {
-                $httpBody = Query::build($formParams);
+                $httpBody = \GuzzleHttp\Psr7\Query::build($formParams);
             }
         }
         $defaultHeaders = [];
@@ -505,7 +504,7 @@ class FintechScore
             $headerParams,
             $headers
         );
-        $query = Query::build($queryParams);
+        $query = \GuzzleHttp\Psr7\Query::build($queryParams);
         return new Request(
             'POST',
             $this->config->getHost() . $resourcePath . ($query ? "?{$query}" : ''),

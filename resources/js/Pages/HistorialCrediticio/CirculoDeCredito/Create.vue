@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch } from "vue";
-import { useToast } from "primevue/usetoast";
 import { usePage, useForm } from "@inertiajs/vue3";
+import { useToast } from "primevue/usetoast";
 
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 
@@ -10,11 +10,13 @@ const page = usePage();
 
 const readOnly = ref(page.props.readOnly || false);
 const api = ref(page.props.api);
-const cliente = ref(page.props.cliente);
-const menubarItems = ref(page.props.menubarItems);
+const clientes = page.props.clientes ?? [];
+const cliente = ref(page.props.cliente ?? null);
+const menubarItems = page.props.menubarItems;
 
 const form = useForm({
-    api: api.value ?? "",
+    cliente: cliente.value?.id ?? "null",
+    api: api ?? "",
 });
 
 const apisCirculoDeCredito = ref([
@@ -32,7 +34,7 @@ const apisCirculoDeCredito = ref([
     },
     {
         label: "Reporte de Crédito Fico Score",
-        value: "fico_score",
+        value: "rc_fico_score",
         description:
             "Esta API reporta el historial crediticio, el cumplimiento de pago de los compromisos que la persona ha adquirido con entidades financieras, no financieras e instituciones comerciales que dan crédito o participan en actividades afines al crédito. En esta versión se retornan los campos del Crédito Asociado a Nomina (CAN) en el nodo de créditos.",
     },
@@ -75,14 +77,12 @@ watch(
 );
 
 const onSubmit = () => {
-    form.post(route("circulo-credito.store"), {
-        preserveScroll: true,
+    form.post(route("circulo-credito.store", { cliente: form.cliente }), {
         onSuccess: () => {
-            form.reset();
             toast.add({
                 severity: "success",
                 summary: "Consulta realizada exitosamente",
-                life: 3000,
+                life: 5000,
             });
         },
     });
@@ -106,6 +106,23 @@ const onSubmit = () => {
 
         <template #card-content>
             <form @submit.prevent="onSubmit" class="grid gap-4">
+
+                <div v-if="!cliente">
+                    <label class="block text-sm font-medium mb-1" for="cliente">Seleccione un cliente</label>
+                    <Select
+                        id="cliente" name="cliente"
+                        v-model="form.cliente" :disabled="readOnly"
+                        :options="clientes"
+                        :optionLabel="(cliente) => `${cliente.primer_nombre} ${cliente.segundo_nombre} ${cliente.apellido_paterno} ${cliente.apellido_materno}`"
+                        optionValue="id"
+                        placeholder="Seleccione un cliente"
+                        required :allowEmpty="false"
+                        fluid :invalid="!!form.errors.cliente" />
+                    <Message v-if="form.errors.cliente" severity="error" size="small">
+                        {{ form.errors.cliente }}
+                    </Message>
+                </div>
+
                 <label class="block text-sm font-medium mb-1" for="api-circulo-de-credito">Seleccione el tipo de consulta</label>
                 <Select
                     id="api-circulo-de-credito" name="api-circulo-de-credito"

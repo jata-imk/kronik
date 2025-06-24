@@ -22,7 +22,7 @@ class ModulesAndPermissionsSeeder extends Seeder
             'name' => 'historial-crediticio',
             'icon' => 'pi-list',
             'route_name' => 'historial-crediticio',
-            'parent_id' => null
+            'parent_id' => $clientes->id
         ]);
 
         $circuloCredito = Module::create([

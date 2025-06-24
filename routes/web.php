@@ -31,15 +31,18 @@ Route::middleware([
         return Inertia::render('Dashboard');
     })->name('dashboard');
 
-    Route::resource('clientes', ClienteController::class)->names('clientes');
+    // Importante: Las rutas de clientes.historial-crediticio deben ir antes de la ruta de clientes
+    Route::get('clientes/historial-crediticio', [HistorialCrediticioController::class, 'index'])->name('clientes.historial-crediticio.index');
+    Route::get('clientes/{cliente}/historial-crediticio', [HistorialCrediticioController::class, 'show'])->name('clientes.historial-crediticio.show');
 
-    Route::get('/historial-crediticio', [HistorialCrediticioController::class, 'index'])->name('historial-crediticio.index');
-    Route::resource('circulo-credito', CirculoCreditoController::class)->only([
+    Route::resource('clientes/{cliente?}/circulo-credito', CirculoCreditoController::class)->only([
         'index',
         'create',
         'store',
         'show'
     ])->names('circulo-credito');
+
+    Route::resource('clientes', ClienteController::class)->names('clientes');
 
     Route::get('/codigos-postales/sugerencias', [CodigoPostalController::class, 'sugerencias'])->name('codigos-postales.sugerencias');
     Route::get('/codigos-postales/buscar', [CodigoPostalController::class, 'buscar'])->name('codigos-postales.buscar');

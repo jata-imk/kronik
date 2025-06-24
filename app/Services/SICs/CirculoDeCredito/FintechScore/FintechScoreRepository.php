@@ -2,6 +2,7 @@
 
 namespace App\Services\SICs\CirculoDeCredito\FintechScore;
 
+use App\Models\Cliente;
 use App\Models\Sic;
 use App\Models\SicApi;
 use App\Models\SicQuery;
@@ -21,15 +22,15 @@ class FintechScoreRepository
      * @param  object $requestData  Objeto Peticion para la consulta.
      * @return object              Respuesta de la API.
      */
-    public function consultaScore($requestData = null)
+    public function consultaScore(Cliente $cliente, $requestData = null)
     {
         try {
             $result = $this->service->getReporte($requestData);
 
             // Guardamos en la BD (por ejemplo, respuesta completa o campos relevantes)
             SicQuery::create([
-                'cliente_id'     => 8,
-                'sic_id'         => Sic::where('clave', 'circulo_credito')->first()->id,
+                'cliente_id'     => $cliente->id,
+                'sic_id'         => Sic::where('clave', 'circulo-credito')->first()->id,
                 'sic_api_id'     => SicApi::where('clave', 'fintech')->first()->id,
                 'fecha_consulta' => now(),
                 'status'         => 'success',
@@ -41,8 +42,8 @@ class FintechScoreRepository
         } catch (\Exception $e) {
             // Registrar el fallo en la base
             SicQuery::create([
-                'cliente_id'     => 8,
-                'sic_id'         => Sic::where('clave', 'circulo_credito')->first()->id,
+                'cliente_id'     => $cliente->id,
+                'sic_id'         => Sic::where('clave', 'circulo-credito')->first()->id,
                 'sic_api_id'     => SicApi::where('clave', 'fintech')->first()->id,
                 'fecha_consulta' => now(),
                 'status'         => 'error',

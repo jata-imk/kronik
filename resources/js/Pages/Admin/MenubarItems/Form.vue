@@ -62,7 +62,9 @@ const modulesSelectedMenubarItemModule = reactive(
         ? Object.fromEntries(
               modulesSelected.value.map((id) => [
                   id,
-                  form.modules[id].routes?.map((r) => r.split(".")[1]),
+                  form.modules[id].routes?.map(
+                      (r) => r.split(".").reverse().shift() || "",
+                  ),
               ]),
           )
         : {},

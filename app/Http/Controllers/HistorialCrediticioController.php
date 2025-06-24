@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cliente;
+use App\Models\Sic;
+use App\Models\SicApi;
 use App\Models\SicQuery;
 use App\Services\MenubarService;
 use Illuminate\Http\Request;
@@ -14,13 +17,40 @@ class HistorialCrediticioController extends Controller
      */
     public function index(Request $request, MenubarService $menubarService)
     {
-        $sicsQueries = SicQuery::where('cliente_id', 8)->get();
-        // echo '<pre>';
-        // die(var_dump($menubarService->getMenuItems($request)));
+        // Count the number of clients and those created until last month
+        $clientesCount = Cliente::count();
+        $clientesUntilLastMonth = Cliente::where('created_at', '<=', now()->subMonth())->count();
+
+        // Count the number of clients with a SIC query
+        $clientesWithSicQueryCount = SicQuery::distinct('cliente_id')->count('cliente_id');
+        $clientesWithSicQueryUntilLastMonthCount = SicQuery::where('fecha_consulta', '<=', now()->subMonth())->distinct('cliente_id')->count('cliente_id');
+
+        $sics = Sic::all();
+
+        $sicsQueriesCount = SicQuery::count();
+        $sicsQueriesCountUntilLastMonth = SicQuery::where('fecha_consulta', '<=', now()->subMonth())->count();
+
+        $sicApis = SicApi::all();
+        $sicQueries = SicQuery::with(['sic', 'api', 'cliente'])
+            ->orderBy('fecha_consulta', 'desc')
+            ->paginate(5, ['id', 'cliente_id', 'sic_id', 'sic_api_id', 'fecha_consulta', 'status', 'mensaje_error', 'response_data']);
+
+
+        // i want a client distribution by score, where ranges are:
+        // 400-599: High risk, 600-699: Medium risk, 700-799: Low risk, 800-850: Minimum risk
+
 
         return Inertia::render('HistorialCrediticio/Index', [
             'menubarItems' => $menubarService->getMenuItems($request),
-            'sicsQueries' => $sicsQueries
+            'clientesCount' => $clientesCount,
+            'clientesUntilLastMonth' => $clientesUntilLastMonth,
+            'clientesWithSicQueryCount' => $clientesWithSicQueryCount,
+            'clientesWithSicQueryUntilLastMonthCount' => $clientesWithSicQueryUntilLastMonthCount,
+            'sics' => $sics,
+            'sicsQueriesCount' => $sicsQueriesCount,
+            'sicsQueriesCountUntilLastMonth' => $sicsQueriesCountUntilLastMonth,
+            'sicApis' => $sicApis,
+            'sicQueriesPaginated' => $sicQueries,
         ]);
     }
 
@@ -43,9 +73,54 @@ class HistorialCrediticioController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, Cliente $cliente, MenubarService $menubarService)
     {
-        //
+        $sics = Sic::all();
+
+        $sicsQueries = SicQuery::where('cliente_id', $cliente->id)->get([
+            'id',
+            'cliente_id',
+            'sic_id',
+            'sic_api_id',
+            'fecha_consulta',
+            'status',
+        ]);
+
+        $lastSicQuery = $sicsQueries->last();
+        if ($lastSicQuery) {
+            $lastSicQuery = SicQuery::where('id', $lastSicQuery->id)->get([
+                'id',
+                'cliente_id',
+                'sic_id',
+                'sic_api_id',
+                'fecha_consulta',
+                'status',
+                'response_data'
+            ])->first();
+        }
+
+        $antepenultimateSicQuery = SicQuery::where('cliente_id', $cliente->id)
+            ->where('id', '<', $lastSicQuery->id ?? 0)
+            ->orderBy('fecha_consulta', 'desc')
+            ->get([
+                'id',
+                'cliente_id',
+                'sic_id',
+                'sic_api_id',
+                'fecha_consulta',
+                'status',
+                'response_data'
+            ])
+            ->first();
+
+        return Inertia::render('HistorialCrediticio/Show', [
+            'menubarItems' => $menubarService->getMenuItems($request),
+            'sics' => $sics,
+            'cliente' => $cliente,
+            'sicsQueries' => $sicsQueries,
+            'lastSicQuery' => $lastSicQuery,
+            'antepenultimateSicQuery' => $antepenultimateSicQuery,
+        ]);
     }
 
     /**

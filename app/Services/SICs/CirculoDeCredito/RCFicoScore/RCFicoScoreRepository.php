@@ -1,25 +1,25 @@
 <?php
 
-namespace App\Services\SICs\CirculoDeCredito\FicoScorev2;
+namespace App\Services\SICs\CirculoDeCredito\RCFicoScore;
 
 use App\Models\Cliente;
 use App\Models\Sic;
 use App\Models\SicApi;
 use App\Models\SicQuery;
-use App\Services\SICs\CirculoDeCredito\FicoScorev2\FicoScorev2Service;
+use App\Services\SICs\CirculoDeCredito\RCFicoScore\RCFicoScoreService;
 
-class FicoScorev2Repository
+class RCFicoScoreRepository
 {
     protected $service;
 
-    public function __construct(FicoScorev2Service $service)
+    public function __construct(RCFicoScoreService $service)
     {
         $this->service = $service;
     }
 
     /**
-     * Realiza la consulta de FICO Score y almacena el resultado.
-     * @param  object $requestData  Objeto Peticion para la consulta.
+     * Realiza la consulta de Reporte de Crédito con FICO Score y almacena el resultado.
+     * @param  object $requestData  Objeto PersonaPeticion para la consulta.
      * @return object              Respuesta de la API.
      */
     public function consultaScore(Cliente $cliente, $requestData = null)
@@ -31,7 +31,7 @@ class FicoScorev2Repository
             SicQuery::create([
                 'cliente_id'     => $cliente->id,
                 'sic_id'         => Sic::where('clave', 'circulo-credito')->first()->id,
-                'sic_api_id'     => SicApi::where('clave', 'fico_score_v2')->first()->id,
+                'sic_api_id'     => SicApi::where('clave', 'rc_fico_score')->first()->id,
                 'fecha_consulta' => now(),
                 'status'         => 'success',
                 'mensaje_error'  => null,
@@ -44,7 +44,7 @@ class FicoScorev2Repository
             SicQuery::create([
                 'cliente_id'     => $cliente->id,
                 'sic_id'         => Sic::where('clave', 'circulo-credito')->first()->id,
-                'sic_api_id'     => SicApi::where('clave', 'fico_score_v2')->first()->id,
+                'sic_api_id'     => SicApi::where('clave', 'rc_fico_score')->first()->id,
                 'fecha_consulta' => now(),
                 'status'         => 'error',
                 'mensaje_error'  => $e->getMessage(),

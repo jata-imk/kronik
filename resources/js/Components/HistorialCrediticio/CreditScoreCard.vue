@@ -100,7 +100,7 @@ watch(
           <span class="mr-1 pi pi-arrow-up" :class="{ 'rotate-180': !isPositive }"></span>
           {{ Math.abs(change) }} pts
         </span>
-        <span class="text-gray-500 dark:text-gray-400 text-sm ml-1">desde el ultimo mes</span>
+        <span class="text-gray-500 dark:text-gray-400 text-sm ml-1">desde la ultima evaluación</span>
       </div>
     </div>
 

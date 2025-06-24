@@ -1,3 +1,94 @@
+<script setup>
+import ActionButton from "./ActionButton.vue";
+
+import { computed } from "vue";
+import { FileSearch, ShieldCheck } from "lucide-vue-next"; // Asegúrate de instalar `lucide-vue-next` o adaptar al paquete que uses
+
+const props = defineProps({
+    type: {
+        type: String,
+        required: true,
+        validator: (val) =>
+            ["credit-score", "history", "accounts", "alerts"].includes(val),
+    },
+    primaryAction: {
+        type: Object,
+        default: null,
+    },
+    secondaryAction: {
+        type: String,
+        default: null,
+    },
+});
+
+const contentMap = {
+    "credit-score": {
+        icon: "ShieldCheck",
+        title: "No hay puntaje crediticio disponible",
+        description:
+            "Aún no hemos recibido los datos de tu puntaje crediticio. Esto podría deberse a que eres nuevo en el monitoreo de crédito o a que aún estamos procesando tu información.",
+        primaryAction: {
+            ...{
+                label: "Realizar consulta",
+                url: route("circulo-credito.create"),
+            },
+            ...(props.primaryAction || {}),
+        },
+        secondaryAction:
+            props.secondaryAction ||
+            "Más información sobre puntajes crediticios",
+    },
+    history: {
+        icon: "FileSearch",
+        title: "No se encontró historial crediticio",
+        description:
+            "Tu historial crediticio aparecerá aquí una vez que conectes tus cuentas o después de que se registre tu primera actividad crediticia.",
+        primaryAction: {
+            ...{
+                label: "Conectar cuentas",
+                url: route("circulo-credito.create"),
+            },
+            ...(props.primaryAction || {}),
+        },
+        secondaryAction: props.secondaryAction || "Ver guía de crédito",
+    },
+    accounts: {
+        icon: "FileSearch",
+        title: "No hay cuentas de crédito activas",
+        description:
+            "Aún no has agregado ninguna cuenta de crédito. Conecta tus cuentas para comenzar a monitorear tu actividad crediticia.",
+        primaryAction: {
+            ...{
+                label: "Conectar cuentas",
+                url: route("circulo-credito.create"),
+            },
+            ...(props.primaryAction || {}),
+        },
+        secondaryAction:
+            props.secondaryAction || "Explorar opciones de crédito",
+    },
+    alertas: {
+        ícono: "ShieldCheck",
+        título: "Alertas sin crédito",
+        descripción:
+            "¡Ya está todo al día! No hay alertas ni notificaciones activas en este momento.",
+        primaryAction: {
+            ...{
+                label: "Configurar alertas",
+            },
+            ...(props.primaryAction || {}),
+        },
+        secondaryAction: props.secondaryAction || "Configurar notificaciones",
+    },
+};
+
+const content = computed(() => contentMap[props.type]);
+const iconComponent = computed(() => {
+    const icons = { FileSearch, ShieldCheck };
+    return icons[content.value.icon];
+});
+</script>
+
 <template>
   <div
     :class="props.type == 'credit-score' ? 'col-span-3' : ''"
@@ -11,82 +102,9 @@
       <p class="text-gray-600 dark:text-gray-400 mb-8">{{ content.description }}</p>
 
       <div class="space-y-3">
-        
-        <Button v-if="!!content.primaryAction.url" :href="content.primaryAction.url" as="a" class="w-full" severity="primary">
-            {{ content.primaryAction.label }} <ArrowRight :size="16" class="mt-1" />
-        </Button>
-        <Button v-else :href="content.primaryAction.url" as="a" class="w-full" severity="primary">
-            {{ content.primaryAction.label }} <ArrowRight :size="16" class="mt-1" />
-        </Button>
-
-        <Button v-if="content.secondaryAction" class="w-full" severity="secondary">{{ content.secondaryAction }}</Button>
+        <ActionButton v-if="content.primaryAction" :href="content.primaryAction.url" :label="content.primaryAction.label" />
+        <ActionButton v-if="content.secondaryAction" href="#" :label="content.secondaryAction" severity="secondary" />
       </div>
     </div>
   </div>
 </template>
-
-<script setup>
-import { computed } from "vue";
-import { FileSearch, ArrowRight, ShieldCheck } from "lucide-vue-next"; // Asegúrate de instalar `lucide-vue-next` o adaptar al paquete que uses
-
-const props = defineProps({
-    type: {
-        type: String,
-        required: true,
-        validator: (val) =>
-            ["credit-score", "history", "accounts", "alerts"].includes(val),
-    },
-});
-
-const contentMap = {
-    "credit-score": {
-        icon: "ShieldCheck",
-        title: "No hay puntaje crediticio disponible",
-        description:
-            "Aún no hemos recibido los datos de tu puntaje crediticio. Esto podría deberse a que eres nuevo en el monitoreo de crédito o a que aún estamos procesando tu información.",
-        primaryAction: {
-            label: "Realizar consulta",
-            url: route("circulo-credito.create"),
-        },
-        secondaryAction: "Más información sobre puntajes crediticios",
-    },
-    history: {
-        icon: "FileSearch",
-        title: "No se encontró historial crediticio",
-        description:
-            "Tu historial crediticio aparecerá aquí una vez que conectes tus cuentas o después de que se registre tu primera actividad crediticia.",
-        primaryAction: {
-            label: "Conectar cuentas",
-            url: route("circulo-credito.create"),
-        },
-        secondaryAction: "Ver guía de crédito",
-    },
-    accounts: {
-        icon: "FileSearch",
-        title: "No hay cuentas de crédito activas",
-        description:
-            "Aún no has agregado ninguna cuenta de crédito. Conecta tus cuentas para comenzar a monitorear tu actividad crediticia.",
-        primaryAction: {
-            label: "Conectar cuentas",
-            url: route("circulo-credito.create"),
-        },
-        secondaryAction: "Explorar opciones de crédito",
-    },
-    alertas: {
-        ícono: "ShieldCheck",
-        título: "Alertas sin crédito",
-        descripción:
-            "¡Ya está todo al día! No hay alertas ni notificaciones activas en este momento.",
-        primaryAction: {
-            label: "Configurar alertas",
-        },
-        secondaryAction: "Configurar notificaciones",
-    },
-};
-
-const content = computed(() => contentMap[props.type]);
-const iconComponent = computed(() => {
-    const icons = { FileSearch, ShieldCheck };
-    return icons[content.value.icon];
-});
-</script>

@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+
 use App\Models\Module;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
 
 class MenubarService
 {
@@ -14,37 +16,54 @@ class MenubarService
     public function getMenuItems(Request $request): array
     {
         $route = Route::current();
-        $actionMethod = $route->getActionMethod();
-        $routeName = $route->getName();
-        $module = explode('.', $routeName)[0]; // 'clientes', 'creditos', etc.
 
-        $mod = Module::where('name', $module)->first();
-        $mod->load([
-            'menubarItems' => function ($query) use ($mod) {
+        // TODO: Add this to the model in the future
+        // $routeController = $route->getController();
+        // $routeControllerClass = $route->getControllerClass();
+
+        $routeAction = $route->getAction();
+        $routeActionMethod = Str::parseCallback($routeAction['uses'])[1];
+        $routeName = $route->getName();
+        $routeNameWithoutAction = str_replace('.' . $routeActionMethod, '', $routeName);
+
+        $modules = explode('.', $routeNameWithoutAction);
+        $module = Module::where('route_name', $routeNameWithoutAction)->first();
+
+        $module->load([
+            'menubarItems' => function ($query) use ($module) {
                 $query->where('parent_id', null)->with([
-                    'children.menubarItemModules' => function ($query) use ($mod) {
-                        $query->where('module_id', $mod->id);
+                    'children.menubarItemModules' => function ($query) use ($module) {
+                        $query->where('module_id', $module->id);
                     },
-                    'children.children.menubarItemModules' => function ($query) use ($mod) {
-                        $query->where('module_id', $mod->id);
+                    'children.children.menubarItemModules' => function ($query) use ($module) {
+                        $query->where('module_id', $module->id);
                     },
-                    'children.children.children.menubarItemModules' => function ($query) use ($mod) {
-                        $query->where('module_id', $mod->id);
+                    'children.children.children.menubarItemModules' => function ($query) use ($module) {
+                        $query->where('module_id', $module->id);
                     }
                 ])->orderBy('sort_order');
             }
         ]);
 
-        if (!$mod) return [];
+        if (!$module) return [];
 
-        return array_filter($this->buildMenu($module, $mod->menubarItems, $request, $actionMethod), function ($item) {
-            return isset($item['items']) && count($item['items']) > 0 || isset($item['url']);
-        });
+        return array_filter(
+            $this->buildMenu(
+                $routeNameWithoutAction,
+                $module->menubarItems,
+                $request,
+                $routeActionMethod
+            ),
+            function ($item) {
+                return isset($item['items']) && count($item['items']) > 0 || isset($item['url']);
+            }
+        );
     }
 
-    protected function buildMenu(string $module, array | Collection $items, Request $request, string $action, $parent = null): array
+    protected function buildMenu(string | array $modules, array | Collection $items, Request $request, string $action, $parent = null): array
     {
         $menu = [];
+        $module = is_array($modules) ? implode('.', $modules) : $modules;
 
         if ($action === 'index' && !$parent) {
             $menu[] = [
@@ -84,7 +103,7 @@ class MenubarService
             }
 
             if ($item->children && $item->children->count()) {
-                $menuItem['items'] = $this->buildMenu($module, $item->children, $request, $action, $item);
+                $menuItem['items'] = $this->buildMenu($modules, $item->children, $request, $action, $item);
             }
 
             $menu[] = $menuItem;

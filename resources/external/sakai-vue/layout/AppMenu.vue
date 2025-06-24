@@ -22,7 +22,7 @@ const model = ref([
         ],
     },
     {
-        label: "Modulos",
+        label: "Módulos",
         items: [
             {
                 label: "CRM",
@@ -36,7 +36,7 @@ const model = ref([
                     {
                         label: "Historial crediticio",
                         icon: "pi pi-credit-card",
-                        to: "historial-crediticio.index",
+                        to: "clientes.historial-crediticio.index",
                     },
                 ],
             },

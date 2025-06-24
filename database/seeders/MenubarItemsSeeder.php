@@ -9,6 +9,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
+// TODO: Update the seeder to use the new Module and MenubarItemModule models
 class MenubarItemsSeeder extends Seeder
 {
     /**
