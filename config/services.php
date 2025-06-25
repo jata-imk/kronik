@@ -34,5 +34,9 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-
+    'circulo-credito' => [
+        'host' => env('CIRCULO_CREDITO_HOST'),
+        'api_key' => env('CIRCULO_CREDITO_API_KEY'),
+        'sandbox    ' => env('CIRCULO_CREDITO_SANDBOX'),
+    ],
 ];

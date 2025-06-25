@@ -22,12 +22,12 @@ class FicoScorev2Service
     public function __construct()
     {
         $config = new Configuration();
-        $config->setHost(env('CIRCULO_CREDITO_HOST'));
+        $config->setHost(config('services.circulo-credito.host'));
         $client = new Client([
             'verify' => false
         ]);
         $this->apiInstance = new Instance($client, $config);
-        $this->apiKey = env('CIRCULO_CREDITO_API_KEY');
+        $this->apiKey = config('services.circulo-credito.api_key');
     }
 
     /**
