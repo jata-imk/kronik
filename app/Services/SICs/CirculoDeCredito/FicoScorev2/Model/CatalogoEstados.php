@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\SICs\CirculoDeCredito\FicoScorev2\Models;
+namespace App\Services\SICs\CirculoDeCredito\FicoScorev2\Model;
 
 class CatalogoEstados
 {
