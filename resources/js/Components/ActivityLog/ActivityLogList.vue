@@ -1,3 +1,39 @@
+<script setup>
+import { onMounted } from "vue";
+import ActivityLogTable from "./ActivityLogTable.vue";
+import ActivityLogFilters from "./ActivityLogFilters.vue";
+import { useActivityLogs } from "@/Composables/useActivityLogs";
+
+const props = defineProps({
+    paginatedActivityLogs: Object,
+});
+
+const {
+    logs,
+    loading,
+    pagination,
+    filters,
+    fetchLogs,
+    applyFilters,
+    clearFilters,
+    exportLogs,
+} = useActivityLogs();
+
+const updateFilters = (newFilters) => {
+    Object.assign(filters, newFilters);
+};
+
+const onPageChange = (event) => {
+    filters.page = event.page + 1;
+    filters.per_page = event.rows;
+    fetchLogs();
+};
+
+onMounted(() => {
+    fetchLogs();
+});
+</script>
+
 <template>
   <div>
     <!-- Header -->
@@ -82,38 +118,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { onMounted } from "vue";
-import ActivityLogTable from "./ActivityLogTable.vue";
-import ActivityLogFilters from "./ActivityLogFilters.vue";
-import { useActivityLogs } from "@/Composables/useActivityLogs";
-
-const {
-    logs,
-    loading,
-    pagination,
-    filters,
-    fetchLogs,
-    applyFilters,
-    clearFilters,
-    exportLogs,
-} = useActivityLogs();
-
-const updateFilters = (newFilters) => {
-    Object.assign(filters, newFilters);
-};
-
-const onPageChange = (event) => {
-    filters.page = event.page + 1;
-    filters.per_page = event.rows;
-    fetchLogs();
-};
-
-onMounted(() => {
-    fetchLogs();
-});
-</script>
 
 <style scoped>
 

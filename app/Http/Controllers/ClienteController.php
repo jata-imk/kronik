@@ -71,40 +71,10 @@ class ClienteController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function store(StoreClienteRequest $request)
+    public function store(StoreClienteRequest $request, ClienteService $clienteService)
     {
-        return DB::transaction(function () use ($request) {
-            $cliente = Cliente::create($request->validated());
-
-            $cliente->datosFiscales()->create($request->validated()['datos_fiscales']);
-
-            foreach ($request->validated()['direcciones'] as $direccion) {
-                $direccion['entidad_id'] = $cliente->id;
-                $direccion['entidad_tipo'] = 'clientes';
-
-                if (!isset($direccion['codigo_postal_id'])) {
-                    $codigoPostal = CodigoPostal::where('codigo', $direccion['codigo_postal'])->where('division_admin_id', $direccion['division_admin_tres_id'])->first();
-
-                    $direccion['codigo_postal_id'] = $codigoPostal->id;
-                    $direccion['pais_id'] = $codigoPostal->pais_id;
-                }
-
-                if (!isset($direccion['tipo'])) {
-                    $direccion['tipo'] = 'personal';
-                }
-
-                if (!isset($direccion['coordenadas'])) {
-                    $direccion['coordenadas'] = [
-                        'lat' => 0,
-                        'lng' => 0
-                    ];
-                }
-
-                $cliente->direcciones()->create($direccion);
-            }
-
-            return response()->redirectToRoute('clientes.edit', ['cliente' => $cliente->id]);
-        });
+        $cliente = $clienteService->store($request->validated());
+        return response()->redirectToRoute('clientes.edit', ['cliente' => $cliente->id]);
     }
 
     public function show(Request $request, Cliente $cliente, PaisService $paisService, RegimenFiscalService $regimenFiscalService, MenubarService $menubarService)
@@ -160,54 +130,15 @@ class ClienteController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function update(UpdateClienteRequest $request, Cliente $cliente)
+    public function update(UpdateClienteRequest $request, Cliente $cliente, ClienteService $clienteService)
     {
-        return DB::transaction(function () use ($request, $cliente) {
-            $cliente->update($request->validated());
-
-            if ($request->has('datos_fiscales')) {
-                $cliente->datosFiscales()->updateOrCreate([], $request->validated()['datos_fiscales']);
-            }
-
-            if ($request->has('direcciones')) {
-                foreach ($request->validated()['direcciones'] as $direccion) {
-                    $direccion['entidad_id'] = $cliente->id;
-                    $direccion['entidad_tipo'] = 'clientes';
-
-                    if (!isset($direccion['codigo_postal_id'])) {
-                        $codigoPostal = CodigoPostal::where('codigo', $direccion['codigo_postal'])->where('division_admin_id', $direccion['division_admin_tres_id'])->first();
-
-                        $direccion['codigo_postal_id'] = $codigoPostal->id;
-                        $direccion['pais_id'] = $codigoPostal->pais_id;
-                    }
-
-                    if (!isset($direccion['tipo'])) {
-                        $direccion['tipo'] = 'personal';
-                    }
-
-                    if (!isset($direccion['coordenadas'])) {
-                        $direccion['coordenadas'] = [
-                            'lat' => 0,
-                            'lng' => 0
-                        ];
-                    }
-
-                    $cliente->direcciones()->updateOrCreate(['tipo' => $direccion['tipo']], $direccion);
-                }
-            }
-
-            return response()->redirectToRoute('clientes.edit', ['cliente' => $cliente->id]);
-        });
+        $clienteService->update($cliente, $request->validated());
+        return response()->redirectToRoute('clientes.edit', ['cliente' => $cliente->id]);
     }
 
-    public function destroy(Cliente $cliente)
+    public function destroy(Cliente $cliente, ClienteService $clienteService)
     {
-        return DB::transaction(function () use ($cliente) {
-            $cliente->direcciones()->delete();
-            $cliente->datosFiscales()->delete();
-            $cliente->delete();
-
-            return response()->redirectToRoute('clientes.index');
-        });
+        $clienteService->destroy($cliente);
+        return response()->redirectToRoute('clientes.index');
     }
 }

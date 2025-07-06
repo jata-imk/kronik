@@ -17,11 +17,9 @@ class HistorialCrediticioController extends Controller
      */
     public function index(Request $request, MenubarService $menubarService)
     {
-        // Count the number of clients and those created until last month
         $clientesCount = Cliente::count();
         $clientesUntilLastMonth = Cliente::where('created_at', '<=', now()->subMonth())->count();
 
-        // Count the number of clients with a SIC query
         $clientesWithSicQueryCount = SicQuery::distinct('cliente_id')->count('cliente_id');
         $clientesWithSicQueryUntilLastMonthCount = SicQuery::where('fecha_consulta', '<=', now()->subMonth())->distinct('cliente_id')->count('cliente_id');
 
@@ -34,10 +32,6 @@ class HistorialCrediticioController extends Controller
         $sicQueries = SicQuery::with(['sic', 'api', 'cliente'])
             ->orderBy('fecha_consulta', 'desc')
             ->paginate(5, ['id', 'cliente_id', 'sic_id', 'sic_api_id', 'fecha_consulta', 'status', 'mensaje_error', 'response_data']);
-
-
-        // i want a client distribution by score, where ranges are:
-        // 400-599: High risk, 600-699: Medium risk, 700-799: Low risk, 800-850: Minimum risk
 
 
         return Inertia::render('HistorialCrediticio/Index', [

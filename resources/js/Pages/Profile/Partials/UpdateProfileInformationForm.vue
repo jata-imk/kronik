@@ -179,7 +179,7 @@ const clearPhotoFileInput = () => {
                 Guardado.
             </ActionMessage>
 
-            <Button severity="contrast" class="uppercase font-semibold !text-xs" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
+            <Button type="submit" severity="contrast" class="uppercase font-semibold !text-xs" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
                 Guardar
             </Button>
         </template>

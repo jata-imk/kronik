@@ -21,7 +21,7 @@ class SicQuery extends Model
     ];
 
     protected $casts = [
-        'response_data' => 'array',
+        'response_data' => 'json',
         'fecha_consulta' => 'datetime',
     ];
 

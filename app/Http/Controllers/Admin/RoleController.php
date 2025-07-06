@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use App\Models\Permission;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
@@ -15,7 +16,7 @@ class RoleController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $teamId = Auth::user()->currentTeam->id;
         $roles = config('permission.models.role')::where(config('permission.column_names.team_foreign_key', 'team_id'), $teamId)->with('permissions.module')->get();
@@ -97,9 +98,22 @@ class RoleController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Role $role)
     {
-        //
+        DB::transaction(function () use ($role) {
+            $permissionsCount = $role->permissions()->count();
+            $usersCount = $role->users()->count();
+
+            if ($permissionsCount > 0 || $usersCount > 0) {
+                return redirect()->back()->withErrors([
+                    'message' => 'El rol tiene permisos o usuarios asociados, no se puede eliminar',
+                ]);
+            }
+
+            $role->delete();
+
+            return redirect()->back()->with('success', 'Rol eliminado');
+        });
     }
 
     public function createPermission(Request $request)

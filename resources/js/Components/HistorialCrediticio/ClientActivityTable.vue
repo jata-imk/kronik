@@ -20,7 +20,7 @@ const clientFullName = (client) => {
     return `${client.primer_nombre} ${client.segundo_nombre} ${client.apellido_paterno} ${client.apellido_materno}`;
 };
 const clientCreditScore = (sicQuery) => {
-    const data = JSON.parse(sicQuery.response_data);
+    const data = sicQuery.response_data;
     return data?.scores?.[0].valor || data?.score?.valor || 0;
 };
 

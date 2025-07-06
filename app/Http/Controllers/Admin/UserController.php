@@ -82,6 +82,11 @@ class UserController extends Controller
      */
     public function usersActivity(Request $request)
     {
-        return Inertia::render('Admin/Logs/UserActivity', []);
+        $activityModel = config('activitylog.activity_model');
+        $paginatedActivityLogs = $activityModel::with('causer', 'subject')->paginate(3);
+
+        return Inertia::render('Admin/Logs/UserActivity', [
+            'paginatedActivityLogs' => $paginatedActivityLogs
+        ]);
     }
 }

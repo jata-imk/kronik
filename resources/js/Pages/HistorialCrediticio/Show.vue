@@ -22,15 +22,10 @@ const creditScoreHistory = computed(
 const sicsQueries = page.props.sicsQueries;
 
 const antepenultimateSicQuery = page.props.antepenultimateSicQuery;
-const antepenultimateSicQueryData = ref(
-    antepenultimateSicQuery?.response_data &&
-        JSON.parse(antepenultimateSicQuery.response_data),
-);
+const antepenultimateSicQueryData = ref(antepenultimateSicQuery?.response_data);
 
 const lastSicQuery = page.props.lastSicQuery;
-const lastSicQueryData = ref(
-    lastSicQuery?.response_data && JSON.parse(lastSicQuery.response_data),
-);
+const lastSicQueryData = ref(lastSicQuery?.response_data);
 
 const creditScoreData = reactive({
     score:

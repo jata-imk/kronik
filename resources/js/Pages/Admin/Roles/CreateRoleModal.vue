@@ -54,7 +54,7 @@ const submit = async () => {
         </div>
 
         <div class="flex items-center gap-2">
-            <Checkbox input-id="add_all_permissions" value="true" v-model="form.add_all_permissions" binary="true" />
+            <Checkbox input-id="add_all_permissions" :value="true" v-model="form.add_all_permissions" :binary="true" />
             <label class="block text-sm font-medium mb-1" for="add_all_permissions">Agregar todos los permisos</label>
         </div>
       </div>

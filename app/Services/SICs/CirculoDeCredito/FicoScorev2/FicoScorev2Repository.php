@@ -7,6 +7,7 @@ use App\Models\Sic;
 use App\Models\SicApi;
 use App\Models\SicQuery;
 use App\Services\SICs\CirculoDeCredito\FicoScorev2\FicoScorev2Service;
+use Illuminate\Support\Facades\Auth;
 
 class FicoScorev2Repository
 {
@@ -28,15 +29,25 @@ class FicoScorev2Repository
             $result = $this->service->getReporte($requestData);
 
             // Guardamos en la BD (por ejemplo, respuesta completa o campos relevantes)
-            SicQuery::create([
+            $SicQuery = SicQuery::create([
                 'cliente_id'     => $cliente->id,
                 'sic_id'         => Sic::where('clave', 'circulo-credito')->first()->id,
                 'sic_api_id'     => SicApi::where('clave', 'fico_score_v2')->first()->id,
                 'fecha_consulta' => now(),
                 'status'         => 'success',
                 'mensaje_error'  => null,
-                'response_data'  => $result->__toString()
+                'response_data'  => json_decode($result->__toString())
             ]);
+
+            activity()
+                ->performedOn($cliente)
+                ->causedBy(Auth::user())
+                ->withProperties([
+                    'ip' => request()->ip(),
+                    'user_agent' => request()->header('User-Agent'),
+                    'sic_query_id' => $SicQuery->id
+                ])
+                ->log('Realizó una consulta de FICO Score');
 
             return $result;
         } catch (\Exception $e) {
