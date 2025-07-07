@@ -321,7 +321,8 @@ class SepomexService extends BaseCatalogScraperService
             }
 
             // Guardar fecha de actualización
-            file_put_contents($this->downloadPath . '/last_update.txt', $lastUpdateDate->format('Y-m-d'));
+            $updateDateString = $lastUpdateDate ? $lastUpdateDate->format('Y-m-d') : date('Y-m-d');
+            file_put_contents($this->downloadPath . '/last_update.txt', $updateDateString);
 
             Log::info("Catálogo SEPOMEX procesado: $total registros en total");
             Log::channel('stderr')->info("Catálogo SEPOMEX procesado: $total registros en total");
