@@ -34,6 +34,9 @@ class MenubarService
         $module->load([
             'menubarItems' => function ($query) use ($module) {
                 $query->where('parent_id', null)->with([
+                    'menubarItemModules' => function ($q) use ($module) {
+                        $q->where('module_id', $module->id);
+                    },
                     'children.menubarItemModules' => function ($query) use ($module) {
                         $query->where('module_id', $module->id);
                     },
@@ -116,20 +119,25 @@ class MenubarService
     {
         if ($item->type == 'route:dynamic') {
             $conditionValues = json_decode($item->value);
+            $conditionDefault = collect($conditionValues)->where('condition_type', 'default')->first();
 
+            if ($conditionDefault) {
+                foreach ($conditionValues as $condition) {
+                    if ($condition->condition_type !== 'route_regexp') continue;
 
-            $conditionDefault = collect($conditionValues)->where('condition_type', 'default')->first() ?? $conditionValues->where('condition_type', 'default')->first();
-            foreach ($conditionValues as $condition) {
-                if ($condition->condition_type == 'route_regexp') {
-                    $preg_match_subject = $condition->condition_value->pregmatch_subject_type == 'referer' ? $request->headers->get('referer') : route($conditionDefault->route_name);
-                    if (!preg_match($this->laravelPatternToRegex(Route::getRoutes()->getByName($condition->condition_value->route_name)->uri), $preg_match_subject)) {
-                        $params = collect(json_decode($conditionDefault->params) ?? [])->mapWithKeys(function ($value, $key) use ($request) {
-                            return [$key => str_replace('{' . $key . '}', $request->route($key)->id, $value)];
-                        })->toArray();
+                    $subject = $condition->condition_value->pregmatch_subject_type === 'referer'
+                        ? $request->headers->get('referer', '')
+                        : route($conditionDefault->route_name);
 
-                        return route($conditionDefault->route_name, $params);
+                    $triggerRoute = Route::getRoutes()->getByName($condition->condition_value->route_name);
+                    if (!$triggerRoute) continue;
+
+                    if (preg_match($this->laravelPatternToRegex($triggerRoute->uri), $subject)) {
+                        return $this->buildRouteUrl($condition->route_name ?? $conditionDefault->route_name, $condition->params ?? null, $request);
                     }
                 }
+
+                return $this->buildRouteUrl($conditionDefault->route_name, $conditionDefault->params ?? null, $request);
             }
         }
 
@@ -138,21 +146,24 @@ class MenubarService
                 return null;
             case 'route:static':
                 return $item->value;
-
             case 'route:name':
-                $params = collect($item->params ?? [])->mapWithKeys(function ($value, $key) use ($request) {
-                    return [$key => str_replace('{' . $key . '}', $request->route($key)->id ?? 'null', $value)];
-                })->toArray();
-
-
-                return route($item->value, $params);
-
+                return $this->buildRouteUrl($item->value, $item->params, $request);
             case 'route:referer_fallback':
                 return $request->headers->get('referer') ?? route($item->value);
-
             default:
                 return route('dashboard');
         }
+    }
+
+    private function buildRouteUrl(string $routeName, $rawParams, Request $request): string
+    {
+        $params = collect((array) ($rawParams ?? []))->mapWithKeys(function ($value, $key) use ($request) {
+            $param = $request->route($key);
+            $resolved = is_object($param) ? ($param->id ?? 'null') : ($param ?? 'null');
+            return [$key => str_replace('{' . $key . '}', $resolved, $value)];
+        })->toArray();
+
+        return route($routeName, $params);
     }
 
     function laravelPatternToRegex(string $pattern): string

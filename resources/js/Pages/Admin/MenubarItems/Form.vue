@@ -118,31 +118,42 @@ if (item?.type === "route:dynamic" && item?.value) {
         }
         const conds = parsed.filter((c) => c.condition_type === "route_regexp");
         dynamicConditions.value = conds.map((c) => ({
-            routeName: c.condition_value?.route_name ?? "",
+            triggerRouteName: c.condition_value?.route_name ?? "",
+            destinationRouteName: c.route_name ?? "",
+            params: c.params ? JSON.stringify(c.params) : "",
         }));
     } catch (e) {
         // keep empty
     }
 }
 
-const addDynamicCondition = () => dynamicConditions.value.push({ routeName: "" });
+const addDynamicCondition = () =>
+    dynamicConditions.value.push({ triggerRouteName: "", destinationRouteName: "", params: "" });
 const removeDynamicCondition = (i) => dynamicConditions.value.splice(i, 1);
+
+const safeParseParams = (raw) => {
+    if (!raw) return undefined;
+    try { return JSON.parse(raw); } catch (e) { return undefined; }
+};
 
 const buildDynamicValue = () => {
     const result = [];
     if (dynamicDefault.routeName) {
         const entry = { condition_type: "default", route_name: dynamicDefault.routeName };
-        try {
-            if (dynamicDefault.params) entry.params = JSON.parse(dynamicDefault.params);
-        } catch (e) {}
+        const p = safeParseParams(dynamicDefault.params);
+        if (p) entry.params = p;
         result.push(entry);
     }
     dynamicConditions.value.forEach((c) => {
-        if (c.routeName) {
-            result.push({
+        if (c.triggerRouteName && c.destinationRouteName) {
+            const entry = {
                 condition_type: "route_regexp",
-                condition_value: { pregmatch_subject_type: "referer", route_name: c.routeName },
-            });
+                condition_value: { pregmatch_subject_type: "referer", route_name: c.triggerRouteName },
+                route_name: c.destinationRouteName,
+            };
+            const p = safeParseParams(c.params);
+            if (p) entry.params = p;
+            result.push(entry);
         }
     });
     return JSON.stringify(result);
@@ -321,7 +332,7 @@ const submit = () => {
                     <label class="block text-sm font-medium">Configuración condicional</label>
 
                     <div class="p-3 rounded-lg bg-surface-50 dark:bg-surface-800 border border-surface-200 dark:border-surface-700">
-                        <p class="text-sm font-medium mb-3">Condición por defecto</p>
+                        <p class="text-sm font-medium mb-3">Si ninguna condición coincide, ir a:</p>
                         <div class="flex flex-col gap-2">
                             <div>
                                 <label class="text-xs text-surface-500 mb-1 block">Ruta de destino</label>
@@ -330,7 +341,7 @@ const submit = () => {
                                     :suggestions="routeSuggestions"
                                     @complete="searchRoutes"
                                     fluid dropdown
-                                    placeholder="clientes.show" />
+                                    placeholder="clientes.index" />
                             </div>
                             <div>
                                 <label class="text-xs text-surface-500 mb-1 block">Parámetros (JSON, opcional)</label>
@@ -343,16 +354,34 @@ const submit = () => {
                         v-for="(cond, i) in dynamicConditions"
                         :key="i"
                         class="p-3 rounded-lg bg-surface-50 dark:bg-surface-800 border border-surface-200 dark:border-surface-700">
-                        <div class="flex justify-between items-center mb-2">
-                            <p class="text-sm font-medium">Condición {{ i + 1 }} — si el referer coincide con la ruta:</p>
+                        <div class="flex justify-between items-center mb-3">
+                            <p class="text-sm font-medium">Condición {{ i + 1 }}</p>
                             <Button type="button" icon="pi pi-times" size="small" severity="danger" text @click="removeDynamicCondition(i)" />
                         </div>
-                        <AutoComplete
-                            v-model="cond.routeName"
-                            :suggestions="routeSuggestions"
-                            @complete="searchRoutes"
-                            fluid dropdown
-                            placeholder="clientes.historial-crediticio.show" />
+                        <div class="flex flex-col gap-2">
+                            <div>
+                                <label class="text-xs text-surface-500 mb-1 block">Si vengo de (patrón del referer):</label>
+                                <AutoComplete
+                                    v-model="cond.triggerRouteName"
+                                    :suggestions="routeSuggestions"
+                                    @complete="searchRoutes"
+                                    fluid dropdown
+                                    placeholder="clientes.historial-crediticio.index" />
+                            </div>
+                            <div>
+                                <label class="text-xs text-surface-500 mb-1 block">Ir a:</label>
+                                <AutoComplete
+                                    v-model="cond.destinationRouteName"
+                                    :suggestions="routeSuggestions"
+                                    @complete="searchRoutes"
+                                    fluid dropdown
+                                    placeholder="clientes.historial-crediticio.index" />
+                            </div>
+                            <div>
+                                <label class="text-xs text-surface-500 mb-1 block">Parámetros (JSON, opcional)</label>
+                                <InputText v-model="cond.params" fluid placeholder='{"historial": "{historial}"}' />
+                            </div>
+                        </div>
                     </div>
 
                     <Button type="button" icon="pi pi-plus" label="Agregar condición" size="small" outlined @click="addDynamicCondition" />
