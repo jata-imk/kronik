@@ -6,11 +6,24 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\MenubarItemRequest;
 use App\Models\MenubarItem;
 use App\Models\Module;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route as LaravelRoute;
 use Inertia\Inertia;
 
 class MenubarItemController extends Controller
 {
+    public function availableRoutes(): JsonResponse
+    {
+        $routes = collect(LaravelRoute::getRoutes())
+            ->map(fn($r) => $r->getName())
+            ->filter()
+            ->sort()
+            ->values();
+
+        return response()->json($routes);
+    }
+
     public function index()
     {
         return Inertia::render('Admin/MenubarItems/Index', [

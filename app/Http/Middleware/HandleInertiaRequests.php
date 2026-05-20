@@ -2,9 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Module;
 use App\Services\MenubarService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Inertia\Middleware;
 use Laravel\Fortify\Features;
@@ -61,6 +63,13 @@ class HandleInertiaRequests extends Middleware
                 } catch (\Throwable $e) {
                     return [];
                 }
+            },
+            'menubarAdmin' => function () use ($request) {
+                if (!$request->user()?->hasRole('Super Admin')) return null;
+                return [
+                    'modules' => Module::select(['id', 'name', 'route_name'])->get(),
+                    'currentRouteName' => Route::current()?->getName(),
+                ];
             },
             'jetstream' => [
                 'canManageTwoFactorAuthentication' => Features::canManageTwoFactorAuthentication(),

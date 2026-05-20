@@ -8,6 +8,7 @@ import AppTopbar from "./AppTopbar.vue";
 import Banner from "@/Components/Banner.vue";
 import AppSidebar from "./AppSidebar.vue";
 import AppFooter from "./AppFooter.vue";
+import MenubarQuickAdd from "@/Components/MenubarQuickAdd.vue";
 
 import Toast from "primevue/toast";
 
@@ -139,4 +140,5 @@ function isOutsideClicked(event) {
     </div>
 
     <Toast position="bottom-right" />
+    <MenubarQuickAdd v-if="page.props.menubarAdmin" />
 </template>

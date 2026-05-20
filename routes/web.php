@@ -66,6 +66,7 @@ Route::middleware([
 
         Route::get('users/activity', [UserController::class, 'usersActivity'])->name('users.activity');
         Route::resource('users', UserController::class);
+        Route::get('menubar-items/routes', [MenubarItemController::class, 'availableRoutes'])->name('menubar-items.available-routes');
         Route::resource('menubar-items', MenubarItemController::class);
         Route::resource('roles', RoleController::class);
     });
