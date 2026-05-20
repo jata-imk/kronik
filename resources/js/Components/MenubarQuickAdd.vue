@@ -123,6 +123,8 @@ const buildModules = () => {
     );
 };
 
+defineExpose({ open });
+
 const submit = () => {
     form.modules = buildModules();
     form.post(route("admin.menubar-items.store"), {
@@ -141,15 +143,6 @@ const submit = () => {
 </script>
 
 <template>
-    <!-- FAB -->
-    <button
-        type="button"
-        class="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-primary text-primary-contrast shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
-        title="Agregar item al menú de esta página"
-        @click="open">
-        <span class="pi pi-bars text-lg"></span>
-    </button>
-
     <!-- Dialog de quick-add -->
     <Dialog v-model:visible="visible" header="Agregar item al menú de esta página" :modal="true" :style="{ width: '480px' }">
         <form @submit.prevent="submit" class="flex flex-col gap-4">

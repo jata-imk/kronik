@@ -1,29 +1,16 @@
 <script setup>
 import { useLayout } from "@sakai-vue/layout/composables/layout";
 import { computed, ref, watch } from "vue";
-import { Head, usePage } from "@inertiajs/vue3";
+import { Head } from "@inertiajs/vue3";
 
 
 import AppTopbar from "./AppTopbar.vue";
 import Banner from "@/Components/Banner.vue";
 import AppSidebar from "./AppSidebar.vue";
 import AppFooter from "./AppFooter.vue";
-import MenubarQuickAdd from "@/Components/MenubarQuickAdd.vue";
+import AppMenubar from "./AppMenubar.vue";
 
 import Toast from "primevue/toast";
-
-const page = usePage();
-const menubarItems = computed(() => page.props.menubarItems ?? []);
-
-const opcionesSuperAdmin = [
-    {
-        label: "Configurar menubar",
-        icon: "pi pi-bars",
-        command: () => {
-            window.location.href = route("admin.menubar-items.index");
-        },
-    },
-];
 
 const { layoutConfig, layoutState, isSidebarActive } = useLayout();
 
@@ -106,24 +93,7 @@ function isOutsideClicked(event) {
             <main class="layout-main">
                 <Card v-if="$slots['card-header'] || $slots['card-content']" :pt="$attrs.pt?.['card-content-body'] && { body: $attrs.pt['card-content-body'] }">
                     <template #header>
-                        <Menubar :model="menubarItems">
-                            <template #item="{ item, props }">
-                                <a v-if="item.url" :href="item.url" v-bind="props.action">
-                                    <span :class="item.icon" />
-                                    <span>{{ item.label }}</span>
-                                </a>
-                                <span v-else v-bind="props.action">
-                                    <span :class="item.icon" />
-                                    <span>{{ item.label }}</span>
-                                </span>
-                            </template>
-                            <template #end>
-                                <SplitButton
-                                    :buttonProps="{ class: '!hidden' }"
-                                    dropdownIcon="pi pi-cog"
-                                    :model="opcionesSuperAdmin" />
-                            </template>
-                        </Menubar>
+                        <AppMenubar />
                         <slot v-if="$slots['card-header']" name="card-header" />
                     </template>
 
@@ -140,5 +110,4 @@ function isOutsideClicked(event) {
     </div>
 
     <Toast position="bottom-right" />
-    <MenubarQuickAdd v-if="page.props.menubarAdmin" />
 </template>
