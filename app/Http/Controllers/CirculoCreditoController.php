@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
-use App\Services\MenubarService;
 use App\Services\SICs\CirculoDeCredito\FicoScorev2\FicoScorev2Service;
 use App\Services\SICs\CirculoDeCredito\FintechScore\FintechScoreService;
 
@@ -27,7 +26,7 @@ class CirculoCreditoController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(Request $request, MenubarService $menubarService, ?string $cliente = "")
+    public function create(Request $request, ?string $cliente = "")
     {
         $clientes = null;
         if ($cliente && is_numeric($cliente)) {
@@ -38,7 +37,6 @@ class CirculoCreditoController extends Controller
         }
 
         return Inertia::render('HistorialCrediticio/CirculoDeCredito/Create', [
-            'menubarItems' => $menubarService->getMenuItems($request),
             'clientes' => $clientes,
             'cliente' => $cliente,
         ]);

@@ -29,6 +29,8 @@ class MenubarService
         $modules = explode('.', $routeNameWithoutAction);
         $module = Module::where('route_name', $routeNameWithoutAction)->first();
 
+        if (!$module) return [];
+
         $module->load([
             'menubarItems' => function ($query) use ($module) {
                 $query->where('parent_id', null)->with([
@@ -45,9 +47,7 @@ class MenubarService
             }
         ]);
 
-        if (!$module) return [];
-
-        return array_filter(
+        return array_values(array_filter(
             $this->buildMenu(
                 $routeNameWithoutAction,
                 $module->menubarItems,
@@ -57,7 +57,7 @@ class MenubarService
             function ($item) {
                 return isset($item['items']) && count($item['items']) > 0 || isset($item['url']);
             }
-        );
+        ));
     }
 
     protected function buildMenu(string | array $modules, array | Collection $items, Request $request, string $action, $parent = null): array
@@ -81,7 +81,7 @@ class MenubarService
         }
 
         foreach ($items as $item) {
-            $actions = $item->menubarItemModule->routes ?? $item->menubarItemModules[0]->routes ?? [];
+            $actions = $item->menubarItemModules->first()?->routes ?? [];
 
             if (!in_array($module . '.' . $action, $actions)) {
                 continue;

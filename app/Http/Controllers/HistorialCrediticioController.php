@@ -6,7 +6,6 @@ use App\Models\Cliente;
 use App\Models\Sic;
 use App\Models\SicApi;
 use App\Models\SicQuery;
-use App\Services\MenubarService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -15,7 +14,7 @@ class HistorialCrediticioController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request, MenubarService $menubarService)
+    public function index(Request $request)
     {
         $clientesCount = Cliente::count();
         $clientesUntilLastMonth = Cliente::where('created_at', '<=', now()->subMonth())->count();
@@ -35,7 +34,6 @@ class HistorialCrediticioController extends Controller
 
 
         return Inertia::render('HistorialCrediticio/Index', [
-            'menubarItems' => $menubarService->getMenuItems($request),
             'clientesCount' => $clientesCount,
             'clientesUntilLastMonth' => $clientesUntilLastMonth,
             'clientesWithSicQueryCount' => $clientesWithSicQueryCount,
@@ -67,7 +65,7 @@ class HistorialCrediticioController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Request $request, Cliente $cliente, MenubarService $menubarService)
+    public function show(Request $request, Cliente $cliente)
     {
         $sics = Sic::all();
 
@@ -108,7 +106,6 @@ class HistorialCrediticioController extends Controller
             ->first();
 
         return Inertia::render('HistorialCrediticio/Show', [
-            'menubarItems' => $menubarService->getMenuItems($request),
             'sics' => $sics,
             'cliente' => $cliente,
             'sicsQueries' => $sicsQueries,

@@ -8,7 +8,6 @@ use App\Http\Requests\Clientes\StoreClienteRequest;
 use App\Http\Requests\Clientes\UpdateClienteRequest;
 use App\Models\CodigoPostal;
 use App\Services\ClienteService;
-use App\Services\MenubarService;
 use App\Services\PaisService;
 use App\Services\RegimenFiscalService;
 use Illuminate\Http\Request;
@@ -28,7 +27,7 @@ class ClienteController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index(Request $request, ClienteService $clienteService, MenubarService $menubarService)
+    public function index(Request $request, ClienteService $clienteService)
     {
         $clientes = $clienteService->readAll();
 
@@ -42,12 +41,11 @@ class ClienteController extends Controller implements HasMiddleware
         }
 
         return Inertia::render('Clientes/Index', [
-            'menubarItems' => $menubarService->getMenuItems($request),
             'clientes' => $clientes,
         ]);
     }
 
-    public function create(Request $request, PaisService $paisService, RegimenFiscalService $regimenFiscalService, MenubarService $menubarService)
+    public function create(Request $request, PaisService $paisService, RegimenFiscalService $regimenFiscalService)
     {
         $paises = $paisService->readAll(['id', 'nombre_es', 'nombre_nativo', 'codigo_iso', 'emoji']);
         $sexos = [
@@ -63,7 +61,6 @@ class ClienteController extends Controller implements HasMiddleware
         $regimenesFiscales = $regimenFiscalService->readAll(['id', 'clave', 'descripcion', 'fisica', 'moral']);
 
         return Inertia::render('Clientes/Create', [
-            'menubarItems' => $menubarService->getMenuItems($request),
             'paises' => $paises,
             'sexos' => $sexos,
             'tiposPersona' => $tiposPersona,
@@ -77,7 +74,7 @@ class ClienteController extends Controller implements HasMiddleware
         return response()->redirectToRoute('clientes.edit', ['cliente' => $cliente->id]);
     }
 
-    public function show(Request $request, Cliente $cliente, PaisService $paisService, RegimenFiscalService $regimenFiscalService, MenubarService $menubarService)
+    public function show(Request $request, Cliente $cliente, PaisService $paisService, RegimenFiscalService $regimenFiscalService)
     {
         $paises = $paisService->readAll(['id', 'nombre_es', 'nombre_nativo', 'codigo_iso', 'emoji']);
         $sexos = [
@@ -93,7 +90,6 @@ class ClienteController extends Controller implements HasMiddleware
         $regimenesFiscales = $regimenFiscalService->readAll(['id', 'clave', 'descripcion', 'fisica', 'moral']);
 
         return Inertia::render('Clientes/Show', [
-            'menubarItems' => $menubarService->getMenuItems($request),
             'readOnly' => true,
             'cliente' => $cliente->load(['datosFiscales', 'direcciones.pais', 'direcciones.codigoPostal.divisionAdministrativa.padre.padre']),
             'paises' => $paises,
@@ -103,7 +99,7 @@ class ClienteController extends Controller implements HasMiddleware
         ]);
     }
 
-    public function edit(Request $request, Cliente $cliente, PaisService $paisService, RegimenFiscalService $regimenFiscalService, MenubarService $menubarService)
+    public function edit(Request $request, Cliente $cliente, PaisService $paisService, RegimenFiscalService $regimenFiscalService)
     {
         $paises = $paisService->readAll(['id', 'nombre_es', 'nombre_nativo', 'codigo_iso', 'emoji']);
         $sexos = [
@@ -119,7 +115,6 @@ class ClienteController extends Controller implements HasMiddleware
         $regimenesFiscales = $regimenFiscalService->readAll(['id', 'clave', 'descripcion', 'fisica', 'moral']);
 
         return Inertia::render('Clientes/Update', [
-            'menubarItems' => $menubarService->getMenuItems($request),
             'action' => 'clientes.update',
             'readOnly' => false,
             'cliente' => $cliente->load(['datosFiscales', 'direcciones.pais', 'direcciones.codigoPostal.divisionAdministrativa.padre.padre']),

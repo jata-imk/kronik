@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\MenubarItemModule;
 
 class Module extends Model
 {
@@ -39,7 +40,7 @@ class Module extends Model
 
     public function menubarItemModules()
     {
-        return $this->hasMany(Module::class);
+        return $this->hasMany(MenubarItemModule::class);
     }
 
     public function permissions()

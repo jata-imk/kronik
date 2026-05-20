@@ -46,8 +46,6 @@ const sicsQueriesChange = computed(() =>
 
 const sicQueriesPaginated = page.props.sicQueriesPaginated;
 
-const menubarItems = ref(page.props.menubarItems);
-
 import { Users, Database, TrendingUp, Zap, Shield } from "lucide-vue-next";
 
 const primaryMetrics = ref([
@@ -127,13 +125,6 @@ const additionalSections = ref([
 <template>
     <AppLayout title="Historial Crediticio">
         <template #card-header>
-            <Menubar :model="menubarItems">
-                <template #end>
-                    <i class="pi pi-search px-2" />
-                    <i class="pi pi-bars px-2" />
-                </template>
-            </Menubar>
-
             <div class="pl-6">
                 <div class="flex flex-col pt-4">
                     <h2 class="text-2xl font-bold mb-4">Resumen del historial de crédito de los clientes</h2>

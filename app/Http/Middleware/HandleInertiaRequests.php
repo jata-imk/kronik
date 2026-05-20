@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\MenubarService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -53,10 +54,14 @@ class HandleInertiaRequests extends Middleware
         $teamsKey = config('permission.column_names.team_foreign_key', 'team_id');
         $teamRolesPermissions = $roleModel::where($teamsKey, $request->user()->current_team_id)->with('permissions')->get()->pluck('permissions')->flatten();
 
-        // TODO: Deshacer la relacion de permissions ya que sobrecarga el objeto user
-        // para lo anterior hay que guardar el arreglo que se devuelve en una variable
-        // y luego investigar como deshacer la relacion
         return array_merge(parent::share($request), [
+            'menubarItems' => function () use ($request) {
+                try {
+                    return app(MenubarService::class)->getMenuItems($request);
+                } catch (\Throwable $e) {
+                    return [];
+                }
+            },
             'jetstream' => [
                 'canManageTwoFactorAuthentication' => Features::canManageTwoFactorAuthentication(),
                 'canUpdatePassword' => Features::enabled(Features::updatePasswords()),

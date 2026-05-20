@@ -12,8 +12,6 @@ const readOnly = ref(page.props.readOnly || false);
 const api = ref(page.props.api);
 const clientes = page.props.clientes ?? [];
 const cliente = ref(page.props.cliente ?? null);
-const menubarItems = page.props.menubarItems;
-
 const form = useForm({
     cliente: cliente.value?.id ?? "null",
     api: api ?? "",
@@ -92,13 +90,6 @@ const onSubmit = () => {
 <template>
     <AppLayout title="Listado de clientes">
         <template #card-header>
-            <Menubar :model="menubarItems">
-                <template #end>
-                    <i class="pi pi-search px-2" />
-                    <i class="pi pi-bars px-2" />
-                </template>
-            </Menubar>
-
             <div class="flex justify-between items-center pl-8 pt-4">
                 <h2 class="text-2xl font-bold mb-4">Nueva consulta</h2>
             </div>

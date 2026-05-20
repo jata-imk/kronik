@@ -112,19 +112,11 @@ const creditTransactions = ref([
     },
 ]);
 
-const menubarItems = ref(page.props.menubarItems);
 </script>
 
 <template>
     <AppLayout title="Listado de clientes">
         <template #card-header>
-            <Menubar :model="menubarItems">
-                <template #end>
-                    <i class="pi pi-search px-2" />
-                    <i class="pi pi-bars px-2" />
-                </template>
-            </Menubar>
-
             <div class="pl-6">
                 <div class="flex justify-between items-center pt-4">
                     <h2 class="text-2xl font-bold mb-4">Listado de consultas</h2>
