@@ -53,6 +53,9 @@ class HandleInertiaRequests extends Middleware
         $teamsKey = config('permission.column_names.team_foreign_key', 'team_id');
         $teamRolesPermissions = $roleModel::where($teamsKey, $request->user()->current_team_id)->with('permissions')->get()->pluck('permissions')->flatten();
 
+        // TODO: Deshacer la relacion de permissions ya que sobrecarga el objeto user
+        // para lo anterior hay que guardar el arreglo que se devuelve en una variable
+        // y luego investigar como deshacer la relacion
         return array_merge(parent::share($request), [
             'jetstream' => [
                 'canManageTwoFactorAuthentication' => Features::canManageTwoFactorAuthentication(),

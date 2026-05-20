@@ -1,23 +1,10 @@
 <script setup>
-import { ref } from "vue";
-import { usePage } from "@inertiajs/vue3";
-
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
-
-const page = usePage();
-const menubarItems = ref(page.props.menubarItems);
 </script>
 
 <template>
     <AppLayout title="Opciones de Super Usuario">
         <template #card-header>
-            <Menubar :model="menubarItems">
-                <template #end>
-                    <i class="pi pi-search px-2" />
-                    <i class="pi pi-bars px-2" />
-                </template>
-            </Menubar>
-
             <div class="flex justify-between items-center pl-8 pt-4">
                 <h2 class="text-2xl font-bold mb-4">Configuraciones del Super Admin</h2>
             </div>
