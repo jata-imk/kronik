@@ -1,134 +1,110 @@
 # Sistema ERP Financiero
 
-[![Formatted with Biome](https://img.shields.io/badge/Formatted_with-Biome-60a5fa?style=flat&logo=biome)](https://biomejs.dev/)
-[![Linted with Biome](https://img.shields.io/badge/Linted_with-Biome-60a5fa?style=flat&logo=biome)](https://biomejs.dev)
+ERP financiero orientado a pequeñas financieras y fintech mexicanas que operan productos de crédito. El supuesto funcional principal es una **SOFOM ENR**, con soporte inicial para crédito simple y roadmap temprano para crédito revolvente.
 
-[![MariaDB Badge](https://img.shields.io/badge/MariaDB-003545?style=for-the-badge&logo=mariadb&logoColor=white)](https://mariadb.org/)
-[![Apache Badge](https://img.shields.io/badge/Apache-D22128?style=for-the-badge&logo=Apache&logoColor=white)](https://httpd.apache.org/)
-[![Nginx Badge](https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white)](https://nginx.org/)
-[![PHP Badge](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://www.php.net/manual/es/intro-whatis.php)
-[![Composer Badge](https://img.shields.io/badge/Composer-885630?style=for-the-badge&logo=Composer&logoColor=white)](https://getcomposer.org/)
+La plataforma busca centralizar configuración de empresa, clientes, expedientes KYC, consultas a Sociedades de Información Crediticia (SIC), originación, PLD, amortización, cobranza, reportes y auditoría.
 
-[![Laravel Badge](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com/docs/11.x/)
+## Estado Actual
 
-[![ChartsJS Badge](https://img.shields.io/badge/Chart%20js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
-[![Tailwind Badge](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Vite Badge](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)](https://vite.dev/)
-[![Vue JS Badge](https://img.shields.io/badge/Vue%20js-35495E?style=for-the-badge&logo=vuedotjs&logoColor=4FC08D)](https://vuejs.org/)
+El repositorio ya cuenta con una base Laravel 11 + Inertia + Vue 3:
 
-[![Jira Badge](https://img.shields.io/badge/Jira-0052CC?style=for-the-badge&logo=Jira&logoColor=white)](https://www.atlassian.com/es/software/jira)
+- Autenticación, equipos Jetstream, roles y permisos Spatie por equipo.
+- Alta, edición, consulta y eliminación de clientes.
+- Datos fiscales, domicilios, catálogos de países, régimen fiscal y códigos postales.
+- Integración parcial con Círculo de Crédito para FICO Score, Fintech Score y reportes relacionados.
+- Dashboard de historial crediticio con consultas SIC almacenadas.
+- Menubar configurable por base de datos.
+- Bitácora de actividad con `spatie/laravel-activitylog`.
 
-## Descripción
+## Alcance Funcional Objetivo
 
-Sistema ERP especializado en la gestión financiera integral, diseñado para instituciones financieras, cooperativas de crédito y empresas que ofrecen servicios financieros. Nuestra plataforma proporciona una solución completa para la administración de productos crediticios, análisis de riesgo, cumplimiento normativo y gestión de clientes.
+### Configuración Global de Empresa
 
-## Funcionalidades Principales
+Cada financiera debe configurar razón social, datos fiscales, sucursales/equipos, usuarios, roles, permisos, moneda, zona horaria, folios, parámetros de cobranza, formatos contractuales, llaves de integraciones y políticas de operación.
 
-### Gestión de Productos Financieros
-- Creación y administración de productos de crédito (tarjetas, préstamos personales, hipotecarios)
-- Configuración personalizada de tasas, plazos y condiciones
-- Simuladores de crédito para clientes potenciales
+### Productos de Crédito
 
-### Gestión de Clientes
-- Expediente digital completo de clientes
-- Historial crediticio y transaccional
-- Gestión de líneas de crédito asignadas
-- Portal de autoservicio para clientes
+El primer motor debe cubrir **crédito simple**: monto, plazo, tasa ordinaria, tasa moratoria, comisiones, periodicidad, días de gracia, tabla de amortización, reglas de prepago y desembolso.
 
-### Análisis de Riesgo
-- Evaluación de score crediticio
-- Análisis de capacidad de pago (ingresos, egresos)
-- Estudio de capital y garantías
-- Modelos predictivos de riesgo de impago
-- Análisis de condiciones de mercado
+El segundo motor debe cubrir **crédito revolvente**: línea autorizada, disposiciones, cortes, pagos mínimos, intereses por saldo, límite disponible, cargos, estados de cuenta y CAT revolvente.
 
-### Cumplimiento Normativo
-- Prevención de Lavado de Dinero (PLD)
-- Know Your Customer (KYC)
-- Generación de reportes regulatorios
-- Auditoría y trazabilidad de operaciones
+### Solicitantes, KYC y Expediente
 
-### Facturación y Contabilidad
-- Facturación electrónica integrada
-- Gestión contable de operaciones crediticias
-- Reportes financieros (balance general, estado de resultados)
-- Integración con SAT y autoridades fiscales
+El sistema debe extender el cliente actual hacia expediente digital: identificación oficial, comprobante de domicilio, ingresos, actividad económica, referencias, documentos, avales, beneficiario/control cuando aplique, consentimiento para consulta SIC y evidencia de aceptación de aviso de privacidad.
 
-### Cobranza y Recuperación
-- Gestión de cartera vencida
-- Estrategias automatizadas de cobranza
-- Reestructuración de créditos
-- Indicadores de desempeño de cobranza
+### Originación y Riesgo
+
+El flujo objetivo incluye solicitud, validación documental, consulta SIC, score, capacidad de pago, reglas de decisión, dictamen, aprobación, rechazo, contrato, firma, desembolso y seguimiento posterior.
+
+### PLD y Cumplimiento
+
+Para SOFOM ENR, el sistema debe soportar expediente de identificación, perfil transaccional, clasificación de riesgo, listas, alertas, operaciones inusuales/relevantes, bitácoras, evidencia documental y reportes internos. La configuración debe permitir adaptar políticas por financiera.
+
+### Operación Crediticia
+
+Se deben implementar tablas de amortización, pagos, aplicación de pagos, intereses ordinarios, intereses moratorios, comisiones, cobranza preventiva, cartera vencida, reestructuras, convenios, condonaciones controladas y reportes operativos.
 
 ## Stack Tecnológico
 
-### Infraestructura
-- **Sistema Operativo**: AlmaLinux 9
-- **Base de Datos**: MariaDB
-- **Servidor Web**: Nginx/Apache (vía PLESK)
-- **Email**: Postfix + Dovecot
-- **Panel de Control**: PLESK (con todas sus herramientas integradas)
-- **Seguridad**: Certificados SSL, Firewall, Backup automatizado
+- **Backend:** Laravel 11, PHP 8.2+, Sanctum, Jetstream, Spatie Permission, Spatie Activitylog.
+- **Frontend:** Vue 3, Inertia.js, Vite, Tailwind CSS, PrimeVue, Chart.js.
+- **Base de datos:** MariaDB.
+- **Herramientas:** Composer, npm, Biome, Laravel Pint, Pest/PHPUnit.
 
-### Backend
-- **Framework**: Laravel (PHP 8)
-- **API**: RESTful con autenticación OAuth2/JWT
-- **Seguridad**: Encriptación avanzada para datos sensibles
-- **Colas**: Laravel Queues para procesamiento asíncrono
+## Instalación y Desarrollo
 
-### Frontend
-- **Framework**: Vue.js con Inertia.js (Jetstream)
-- **Build Tool**: Vite
-- **CSS**: Tailwind CSS
-- **Componentes**: PrimeVue
-- **Gráficos**: Chart.js para visualización de datos
-- **Responsive**: Diseño adaptable a múltiples dispositivos
+```bash
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate --seed
+composer dev
+```
 
-## Principios de Desarrollo
+Comandos útiles:
 
-- **Arquitectura**: Patrón MVC con servicios y repositorios
-- **Código**: Siguiendo PSR-12 y convenciones de Laravel
-- **Testing**: PHPUnit para pruebas unitarias y de integración
-- **CI/CD**: Pipelines automatizados para despliegue continuo
-- **Versionado**: Git con estrategia de ramas por características
-- **Documentación**: API documentada con OpenAPI/Swagger
+- `composer dev`: inicia servidor Laravel, queue listener y Vite.
+- `npm run dev`: inicia Vite.
+- `npm run build`: compila assets de producción.
+- `php artisan test` o `vendor/bin/pest`: ejecuta pruebas.
+- `vendor/bin/pint`: formatea PHP.
+- `npm run format`: formatea archivos frontend con Biome.
 
-## Seguridad y Cumplimiento
+Dependencias externas del sistema cuando se requieran documentos:
 
-- Cifrado de extremo a extremo para información sensible
-- Autenticación multifactor para usuarios administrativos
-- Registro detallado de auditoría para todas las operaciones
-- Cumplimiento con regulaciones financieras aplicables
-- Protección avanzada contra vulnerabilidades OWASP
-- Gestión de sesiones y permisos granulares
+- LibreOffice
+- wkhtmltopdf
+- Pandoc
 
-## Requisitos del Sistema
+## Roadmap Prioritario
 
-- PHP 8.1 o superior
-- MariaDB 10.5 o superior
-- Node.js 18+ (para construcción de frontend)
-- Servidor con mínimo 4GB RAM y 2 CPUs
+1. **Documentación y diseño funcional:** convertir el análisis financiero en TODOs implementables por módulo.
+2. **Configuración de empresa:** perfil de financiera, sucursales/equipos, folios, parámetros globales e integraciones.
+3. **Expediente de cliente/KYC:** completar solicitantes, documentos, consentimientos, avales, referencias e ingresos.
+4. **Productos de crédito:** crédito simple configurable, simulador, CAT, comisiones y reglas de mora.
+5. **Originación:** solicitud, evaluación, consulta SIC, dictamen y aprobación.
+6. **CDC/SIC:** formalizar request data desde cliente real, consentimiento, manejo de errores y resultados normalizados.
+7. **PLD:** perfil transaccional, riesgo, alertas, listas, evidencia y reportes.
+8. **Amortización y cobranza:** calendario, pagos, mora, cartera vencida y reestructuras.
+9. **Crédito revolvente:** líneas, disposiciones, cortes, pagos mínimos y estados de cuenta.
+10. **Reportes y contabilidad:** cartera, colocación, cobranza, morosidad, conciliación y exportables.
 
-## Instalación y Configuración
+## Documentación de Trabajo
 
-1. Clonar el repositorio
-2. Configurar variables de entorno en `.env`
-3. Instalar dependencias de PHP: `composer install`
-4. Instalar dependencias de JavaScript: `npm install`
-5. Compilar assets: `npm run build`
-6. Ejecutar migraciones: `php artisan migrate`
-7. Inicializar datos base: `php artisan db:seed`
-8. Instalar en el SO los programas
-    8.1 Libreoffice: https://es.libreoffice.org/descarga/libreoffice/
-    8.2 wkhtmltopdf https://wkhtmltopdf.org/downloads.html
-    8.3 Pandoc: https://pandoc.org/installing.html
-9. Configurar servicios externos (email, APIs de terceros)
+La investigación y los TODOs viven en:
 
-## Roadmap
+- `docs/roadmap-financiero.md`
+- `docs/todos/00-lecturas-y-fuentes.md`
+- `docs/todos/01-configuracion-empresa.md`
+- `docs/todos/02-clientes-expediente-kyc.md`
+- `docs/todos/03-productos-crediticios.md`
+- `docs/todos/04-originacion-solicitudes.md`
+- `docs/todos/05-cdc-score-sic.md`
+- `docs/todos/06-pld-cumplimiento.md`
+- `docs/todos/07-amortizacion-pagos-cobranza.md`
+- `docs/todos/08-reportes-contabilidad.md`
 
-- Integración con pasarelas de pago
-- Módulo de banca digital
-- App móvil para clientes
-- Inteligencia artificial para análisis predictivo
-- Integración con blockchain para contratos inteligentes
-- Expansión internacional con soporte multi-divisa y multi-idioma
+## Nota Legal
+
+Esta documentación identifica capacidades que el software debe soportar, pero no sustituye asesoría legal, regulatoria, fiscal ni de PLD. Cada financiera debe validar sus obligaciones concretas con asesores especializados y autoridades aplicables.
