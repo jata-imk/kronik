@@ -6,6 +6,7 @@ use App\Models\Cliente;
 use App\Models\ClienteDatosFiscales;
 use App\Models\CodigoPostal;
 use App\Models\Direccion;
+use App\Models\DivisionAdministrativa;
 use App\Models\Pais;
 use App\Models\RegimenFiscal;
 use App\Models\Sic;
@@ -16,6 +17,7 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\PermissionRegistrar;
 
 class DevelopmentSeeder extends Seeder
 {
@@ -58,11 +60,47 @@ class DevelopmentSeeder extends Seeder
             ])->save();
         }
 
+        $this->seedRolesForTeam($user, $team);
+
         return $user;
+    }
+
+    private function seedRolesForTeam(User $user, Team $team): void
+    {
+        if (! function_exists('setPermissionsTeamId')) {
+            return;
+        }
+
+        $roleModel = config('permission.models.role');
+        $teamsKey = config('permission.column_names.team_foreign_key', 'team_id');
+
+        $globalRoles = $roleModel::where($teamsKey, null)->get();
+
+        foreach ($globalRoles as $globalRole) {
+            if ($globalRole->name === 'Super Admin') {
+                continue;
+            }
+
+            $teamRole = $roleModel::firstOrCreate(
+                [
+                    'name' => $globalRole->name,
+                    'guard_name' => $globalRole->guard_name,
+                    $teamsKey => $team->id,
+                ]
+            );
+
+            $teamRole->syncPermissions($globalRole->permissions);
+        }
+
+        setPermissionsTeamId($team->id);
+        $user->assignRole('Super Admin');
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
     private function seedClientes(): void
     {
+        $this->seedFallbackCatalogs();
+
         $pais = Pais::where('codigo_iso', 'MX')->first();
         $regimenFisica = RegimenFiscal::where('fisica', true)->first();
         $regimenMoral = RegimenFiscal::where('moral', true)->first();
@@ -150,6 +188,102 @@ class DevelopmentSeeder extends Seeder
             $this->seedDireccion($cliente, $pais, $codigoPostal, $record['direccion']);
             $this->seedSicQuery($cliente, $sic, $sicApi, $record['score'], $record['status']);
         }
+    }
+
+    private function seedFallbackCatalogs(): void
+    {
+        $pais = Pais::firstOrCreate(
+            ['codigo_iso' => 'MX'],
+            [
+                'nombre_es' => 'México',
+                'nombre_us' => 'Mexico',
+                'nombre_nativo' => ['spa' => 'México'],
+                'idiomas' => ['spa' => 'Español'],
+                'codigo_iso3' => 'MEX',
+                'emoji' => '🇲🇽',
+                'mapas' => [
+                    'google' => 'https://www.google.com/maps/place/Mexico',
+                    'openstreetmap' => 'https://www.openstreetmap.org/relation/114686',
+                ],
+            ]
+        );
+
+        RegimenFiscal::firstOrCreate(
+            ['clave' => '612'],
+            [
+                'descripcion' => 'Personas Físicas con Actividades Empresariales y Profesionales',
+                'fisica' => true,
+                'moral' => false,
+                'fecha_inicio_vigencia' => '2022-01-01',
+                'fecha_fin_vigencia' => '2099-12-31',
+            ]
+        );
+
+        RegimenFiscal::firstOrCreate(
+            ['clave' => '601'],
+            [
+                'descripcion' => 'General de Ley Personas Morales',
+                'fisica' => false,
+                'moral' => true,
+                'fecha_inicio_vigencia' => '2022-01-01',
+                'fecha_fin_vigencia' => '2099-12-31',
+            ]
+        );
+
+        $estado = DivisionAdministrativa::firstOrCreate(
+            [
+                'pais_id' => $pais->id,
+                'codigo' => 'CMX',
+                'nivel' => 1,
+            ],
+            [
+                'nombre' => 'Ciudad de México',
+                'tipo' => 'estado',
+            ]
+        );
+
+        $municipio = DivisionAdministrativa::firstOrCreate(
+            [
+                'pais_id' => $pais->id,
+                'codigo' => 'CUA',
+                'nivel' => 2,
+                'division_padre_id' => $estado->id,
+            ],
+            [
+                'nombre' => 'Cuauhtémoc',
+                'tipo' => 'alcaldia',
+            ]
+        );
+
+        $localidad = DivisionAdministrativa::firstOrCreate(
+            [
+                'pais_id' => $pais->id,
+                'codigo' => 'CENTRO',
+                'nivel' => 3,
+                'division_padre_id' => $municipio->id,
+            ],
+            [
+                'nombre' => 'Centro',
+                'tipo' => 'colonia',
+            ]
+        );
+
+        CodigoPostal::firstOrCreate(
+            [
+                'codigo' => '06000',
+                'pais_id' => $pais->id,
+                'division_admin_id' => $localidad->id,
+            ],
+            [
+                'datos_adicionales' => [
+                    'estado' => 'Ciudad de México',
+                    'municipio' => 'Cuauhtémoc',
+                    'asentamiento' => 'Centro',
+                    'tipo_asentamiento' => 'Colonia',
+                    'demo' => true,
+                ],
+            ]
+        );
     }
 
     private function seedDireccion(Cliente $cliente, Pais $pais, CodigoPostal $codigoPostal, array $data): void

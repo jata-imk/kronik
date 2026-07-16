@@ -2,12 +2,11 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-
 use App\Models\Module;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 
 class MenubarService
 {
@@ -22,14 +21,22 @@ class MenubarService
         // $routeControllerClass = $route->getControllerClass();
 
         $routeAction = $route->getAction();
-        $routeActionMethod = Str::parseCallback($routeAction['uses'])[1];
+        $routeActionMethod = is_string($routeAction['uses'])
+            ? Str::parseCallback($routeAction['uses'])[1]
+            : $route->getActionMethod();
         $routeName = $route->getName();
-        $routeNameWithoutAction = str_replace('.' . $routeActionMethod, '', $routeName);
+        $isResourceAction = str_ends_with($routeName, '.'.$routeActionMethod);
+        $routeNameWithoutAction = $isResourceAction
+            ? str_replace('.'.$routeActionMethod, '', $routeName)
+            : $routeName;
+        $menuAction = $isResourceAction ? $routeActionMethod : '__route';
 
         $modules = explode('.', $routeNameWithoutAction);
         $module = Module::where('route_name', $routeNameWithoutAction)->first();
 
-        if (!$module) return [];
+        if (! $module) {
+            return [];
+        }
 
         $module->load([
             'menubarItems' => function ($query) use ($module) {
@@ -45,9 +52,9 @@ class MenubarService
                     },
                     'children.children.children.menubarItemModules' => function ($query) use ($module) {
                         $query->where('module_id', $module->id);
-                    }
+                    },
                 ])->orderBy('sort_order');
-            }
+            },
         ]);
 
         return array_values(array_filter(
@@ -55,7 +62,7 @@ class MenubarService
                 $routeNameWithoutAction,
                 $module->menubarItems,
                 $request,
-                $routeActionMethod
+                $menuAction
             ),
             function ($item) {
                 return isset($item['items']) && count($item['items']) > 0 || isset($item['url']);
@@ -63,36 +70,37 @@ class MenubarService
         ));
     }
 
-    protected function buildMenu(string | array $modules, array | Collection $items, Request $request, string $action, $parent = null): array
+    protected function buildMenu(string|array $modules, array|Collection $items, Request $request, string $action, $parent = null): array
     {
         $menu = [];
         $module = is_array($modules) ? implode('.', $modules) : $modules;
 
-        if ($action === 'index' && !$parent) {
+        if (($action === 'index' || $action === '__route') && ! $parent) {
             $menu[] = [
                 'label' => 'Inicio',
                 'icon' => 'pi pi-fw pi-home',
                 'url' => route('dashboard'),
             ];
-        } else if (!$parent) {
+        } elseif (! $parent) {
             $menu[] = [
                 'label' => 'Regresar',
                 'icon' => 'pi pi-arrow-left',
                 'iconPos' => 'left',
-                'url' => ($request->headers->has('referer')) ? $request->headers->get('referer') : route($module . '.index'),
+                'url' => ($request->headers->has('referer')) ? $request->headers->get('referer') : route($module.'.index'),
             ];
         }
 
         foreach ($items as $item) {
             $actions = $item->menubarItemModules->first()?->routes ?? [];
+            $currentRouteName = $action === '__route' ? $module : $module.'.'.$action;
 
-            if (!in_array($module . '.' . $action, $actions)) {
+            if (! in_array($currentRouteName, $actions)) {
                 continue;
             }
 
             $url = $this->resolveMenubarUrl($item, $request);
 
-            if (!$url && (!($item->children && $item->children->count()))) {
+            if (! $url && (! ($item->children && $item->children->count()))) {
                 continue;
             }
 
@@ -115,7 +123,7 @@ class MenubarService
         return $menu;
     }
 
-    function resolveMenubarUrl($item, Request $request)
+    public function resolveMenubarUrl($item, Request $request)
     {
         if ($item->type == 'route:dynamic') {
             $conditionValues = json_decode($item->value);
@@ -123,14 +131,18 @@ class MenubarService
 
             if ($conditionDefault) {
                 foreach ($conditionValues as $condition) {
-                    if ($condition->condition_type !== 'route_regexp') continue;
+                    if ($condition->condition_type !== 'route_regexp') {
+                        continue;
+                    }
 
                     $subject = $condition->condition_value->pregmatch_subject_type === 'referer'
                         ? $request->headers->get('referer', '')
                         : route($conditionDefault->route_name);
 
                     $triggerRoute = Route::getRoutes()->getByName($condition->condition_value->route_name);
-                    if (!$triggerRoute) continue;
+                    if (! $triggerRoute) {
+                        continue;
+                    }
 
                     if (preg_match($this->laravelPatternToRegex($triggerRoute->uri), $subject)) {
                         return $this->buildRouteUrl($condition->route_name ?? $conditionDefault->route_name, $condition->params ?? null, $request);
@@ -160,13 +172,14 @@ class MenubarService
         $params = collect((array) ($rawParams ?? []))->mapWithKeys(function ($value, $key) use ($request) {
             $param = $request->route($key);
             $resolved = is_object($param) ? ($param->id ?? 'null') : ($param ?? 'null');
-            return [$key => str_replace('{' . $key . '}', $resolved, $value)];
+
+            return [$key => str_replace('{'.$key.'}', $resolved, $value)];
         })->toArray();
 
         return route($routeName, $params);
     }
 
-    function laravelPatternToRegex(string $pattern): string
+    public function laravelPatternToRegex(string $pattern): string
     {
         // Escapa los caracteres especiales y convierte {param} en [^/]+
         $regex = preg_quote($pattern, '#');
@@ -175,6 +188,6 @@ class MenubarService
         $regex = preg_replace('/\\\\\{[^}]+\\\\\}/', '[^/]+', $regex);
 
         // Devuelve el regex listo para usar
-        return '#/' . $regex . '$#';
+        return '#/'.$regex.'$#';
     }
 }

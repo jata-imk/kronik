@@ -21,7 +21,11 @@ class UserController extends Controller
 
         return Inertia::render('Admin/Users/Index', [
             'users' => User::with('ownedTeams', 'roles')->get(),
-            'roles' => Role::where($teamKey, $user->currentTeam->id)->orWhere('name', 'Super Admin')->get(),
+            'roles' => Role::where($teamKey, $user->currentTeam->id)
+                ->orWhere(function ($query) use ($teamKey) {
+                    $query->where($teamKey, null)->where('name', 'Super Admin');
+                })
+                ->get(),
         ]);
     }
 
@@ -62,8 +66,27 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        $teamId = Auth::user()->currentTeam->id;
+        $teamKey = config('permission.column_names.team_foreign_key', 'team_id');
+
         if ($request->has('roles')) {
-            $user->syncRoles($request->roles);
+            $roleIds = collect($request->roles)->map(fn ($roleId) => (int) $roleId)->all();
+            $roles = Role::whereIn('id', $roleIds)->get();
+
+            $assignsSuperAdmin = $roles->contains(fn ($role) => $role->name === 'Super Admin' && $role->{$teamKey} === null);
+
+            if ($assignsSuperAdmin && ! Auth::user()->hasRole('Super Admin')) {
+                abort(403, 'Solo Super Admin puede asignar el rol Super Admin.');
+            }
+
+            $invalidRole = $roles->first(fn ($role) => $role->name !== 'Super Admin' && (int) $role->{$teamKey} !== (int) $teamId);
+            abort_if($invalidRole, 422, 'No puedes asignar roles de otro equipo.');
+
+            if (function_exists('setPermissionsTeamId')) {
+                setPermissionsTeamId($teamId);
+            }
+
+            $user->syncRoles($roles);
         }
 
         return redirect()->back()->with('success', 'Usuario actualizado');
@@ -86,7 +109,7 @@ class UserController extends Controller
         $paginatedActivityLogs = $activityModel::with('causer', 'subject')->paginate(3);
 
         return Inertia::render('Admin/Logs/UserActivity', [
-            'paginatedActivityLogs' => $paginatedActivityLogs
+            'paginatedActivityLogs' => $paginatedActivityLogs,
         ]);
     }
 }

@@ -39,7 +39,7 @@ Route::middleware([
         'index',
         'create',
         'store',
-        'show'
+        'show',
     ])->names('circulo-credito');
 
     Route::resource('clientes', ClienteController::class)->names('clientes');
@@ -59,15 +59,37 @@ Route::middleware([
     Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');
     Route::post('/teams', [TeamController::class, 'store'])->name('teams.store');
 
-    Route::prefix('admin')->name('admin.')->group(function () {
+    Route::prefix('admin')->name('admin.')->middleware('permission:access admin')->group(function () {
         Route::get('/', function () {
             return Inertia::render('Admin/Dashboard');
         })->name('dashboard');
 
-        Route::get('users/activity', [UserController::class, 'usersActivity'])->name('users.activity');
-        Route::resource('users', UserController::class);
-        Route::get('menubar-items/routes', [MenubarItemController::class, 'availableRoutes'])->name('menubar-items.available-routes');
-        Route::resource('menubar-items', MenubarItemController::class);
-        Route::resource('roles', RoleController::class);
+        Route::get('users/activity', [UserController::class, 'usersActivity'])
+            ->middleware('permission:read activity-log')
+            ->name('users.activity');
+        Route::resource('users', UserController::class)
+            ->middlewareFor(['index', 'show'], 'permission:read users')
+            ->middlewareFor('create', 'permission:create users')
+            ->middlewareFor('store', 'permission:create users')
+            ->middlewareFor('edit', 'permission:update users')
+            ->middlewareFor('update', 'permission:update users')
+            ->middlewareFor('destroy', 'permission:delete users');
+        Route::get('menubar-items/routes', [MenubarItemController::class, 'availableRoutes'])
+            ->middleware('permission:read menubar-items')
+            ->name('menubar-items.available-routes');
+        Route::resource('menubar-items', MenubarItemController::class)
+            ->middlewareFor(['index', 'show'], 'permission:read menubar-items')
+            ->middlewareFor('create', 'permission:create menubar-items')
+            ->middlewareFor('store', 'permission:create menubar-items')
+            ->middlewareFor('edit', 'permission:update menubar-items')
+            ->middlewareFor('update', 'permission:update menubar-items')
+            ->middlewareFor('destroy', 'permission:delete menubar-items');
+        Route::resource('roles', RoleController::class)
+            ->middlewareFor(['index', 'show'], 'permission:read roles')
+            ->middlewareFor('create', 'permission:create roles')
+            ->middlewareFor('store', 'permission:create roles')
+            ->middlewareFor('edit', 'permission:update roles')
+            ->middlewareFor('update', 'permission:update roles')
+            ->middlewareFor('destroy', 'permission:delete roles');
     });
 });

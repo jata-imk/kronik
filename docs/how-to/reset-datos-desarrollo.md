@@ -45,10 +45,13 @@ El reset rápido limpia usuarios, equipos, clientes, direcciones, consultas SIC,
 
 ## Datos que quedan después del reset
 
-Si los catálogos existen, el seeder deja datos demo mínimos:
+El seeder deja datos demo mínimos. Si la BD todavía no tiene catálogos, `DevelopmentSeeder` agrega fixtures mínimos de México, régimen fiscal y un CP CDMX para que existan clientes/direcciones de prueba sin esperar el scraper completo.
 
 - Usuario `test@example.com`.
 - Equipo personal para el usuario demo.
+- Rol global `Super Admin` asignado al usuario demo.
+- Roles scoped para el equipo demo, con permisos base.
+- Fixtures mínimos de catálogo cuando la BD está vacía.
 - Clientes de ejemplo con datos fiscales.
 - Dirección vinculada al catálogo SEPOMEX.
 - Consultas SIC fake para probar historial crediticio sin llamadas externas.

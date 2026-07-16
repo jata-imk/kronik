@@ -35,3 +35,17 @@ Relacionado:
 
 - [Reset de datos de desarrollo](../how-to/reset-datos-desarrollo.md)
 - [Seeders](../reference/seeders.md)
+
+## Autorizacion por Spatie Teams
+
+La autorizacion funcional usa Spatie Permission con `teams=true`. Los permisos son globales y los roles operativos se replican por equipo. `Super Admin` se mantiene como rol global con bypass por `Gate::before()`.
+
+Motivos:
+
+- Permite que cada financiera/equipo tenga roles con el mismo nombre y permisos distintos.
+- Mantiene un catalogo unico de permisos por modulo.
+- Evita asignar permisos explicitos al superusuario.
+
+Relacionado:
+
+- [Roles y permisos](../roles-y-permisos.md)

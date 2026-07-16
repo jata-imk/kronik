@@ -2,14 +2,68 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Module;
 use App\Models\Permission;
+use Illuminate\Database\Seeder;
 
 class ModulesAndPermissionsSeeder extends Seeder
 {
     public function run()
     {
+        $dashboard = Module::updateOrCreate(
+            ['name' => 'dashboard'],
+            [
+                'icon' => 'pi-home',
+                'route_name' => 'dashboard',
+                'parent_id' => null,
+            ]
+        );
+
+        $admin = Module::updateOrCreate(
+            ['name' => 'admin'],
+            [
+                'icon' => 'pi-shield',
+                'route_name' => 'admin.dashboard',
+                'parent_id' => null,
+            ]
+        );
+
+        $users = Module::updateOrCreate(
+            ['name' => 'users'],
+            [
+                'icon' => 'pi-user',
+                'route_name' => 'admin.users',
+                'parent_id' => $admin->id,
+            ]
+        );
+
+        $roles = Module::updateOrCreate(
+            ['name' => 'roles'],
+            [
+                'icon' => 'pi-key',
+                'route_name' => 'admin.roles',
+                'parent_id' => $admin->id,
+            ]
+        );
+
+        $menubarItems = Module::updateOrCreate(
+            ['name' => 'menubar-items'],
+            [
+                'icon' => 'pi-bars',
+                'route_name' => 'admin.menubar-items',
+                'parent_id' => $admin->id,
+            ]
+        );
+
+        $activityLog = Module::updateOrCreate(
+            ['name' => 'activity-log'],
+            [
+                'icon' => 'pi-history',
+                'route_name' => 'admin.users.activity',
+                'parent_id' => $admin->id,
+            ]
+        );
+
         $clientes = Module::updateOrCreate(
             ['name' => 'clientes'],
             [
@@ -47,13 +101,25 @@ class ModulesAndPermissionsSeeder extends Seeder
         );
 
         $modules = [
+            $dashboard,
+            $admin,
+            $users,
+            $roles,
+            $menubarItems,
+            $activityLog,
             $clientes,
             $historial,
             $circuloCredito,
-            $teams
+            $teams,
         ];
 
         $actionsPerModule = [
+            'dashboard' => ['read'],
+            'admin' => ['access'],
+            'users' => ['create', 'read', 'update', 'delete'],
+            'roles' => ['create', 'read', 'update', 'delete'],
+            'menubar-items' => ['create', 'read', 'update', 'delete'],
+            'activity-log' => ['read'],
             'clientes' => ['create', 'read', 'update', 'delete'],
             'historial-crediticio' => ['read'],
             'circulo-credito' => ['create', 'read'],

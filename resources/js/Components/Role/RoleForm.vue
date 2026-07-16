@@ -1,5 +1,8 @@
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { router } from "@inertiajs/vue3";
+import { useConfirm } from "primevue/useconfirm";
+import { useToast } from "primevue/usetoast";
 
 import RoleHeader from "./RoleHeader.vue";
 import RoleModules from "./RoleModules.vue";
@@ -17,14 +20,21 @@ const props = defineProps({
     selectedRoleAvatarLabel: String,
 });
 
+const confirm = useConfirm();
+const toast = useToast();
 const showUsers = ref(false);
 
 const emit = defineEmits(["update:editRoleNameMode", "submit"]);
 
-const menuItems = ref([
+const isGlobalSuperAdmin = computed(
+    () => props.role?.name === "Super Admin" && props.role?.team_id === null,
+);
+
+const menuItems = computed(() => [
     {
         label: "Cambiar nombre",
         icon: "pi pi-fw pi-pencil",
+        disabled: isGlobalSuperAdmin.value,
         command: () => {
             emit("update:editRoleNameMode", true);
         },
@@ -32,6 +42,7 @@ const menuItems = ref([
     {
         label: "Eliminar",
         icon: "pi pi-fw pi-trash",
+        disabled: isGlobalSuperAdmin.value,
         command: () => {
             confirm.require({
                 message: "Realmente desea eliminar el rol?",
@@ -48,38 +59,26 @@ const menuItems = ref([
                     severity: "danger",
                 },
                 accept: () => {
-                    router.delete(
-                        route("admin.roles.destroy", selectedRole.value.id),
-                        {
-                            only: ["roles", "errors"],
-                            onSuccess: () => {
-                                selectedRole.value = null;
-                                toast.add({
-                                    severity: "info",
-                                    summary: "Confirmado",
-                                    detail: "Rol eliminado",
-                                    life: 5000,
-                                });
-                            },
-                            onError: (errors) => {
-                                toast.add({
-                                    severity: "error",
-                                    summary: "Error",
-                                    detail:
-                                        errors.message ||
-                                        "No se pudo eliminar el rol",
-                                    life: 5000,
-                                });
-                            },
+                    router.delete(route("admin.roles.destroy", props.role.id), {
+                        only: ["roles", "errors"],
+                        onSuccess: () => {
+                            toast.add({
+                                severity: "info",
+                                summary: "Confirmado",
+                                detail: "Rol eliminado",
+                                life: 5000,
+                            });
                         },
-                    );
-                },
-                reject: () => {
-                    toast.add({
-                        severity: "error",
-                        summary: "Cancelado",
-                        detail: "Se ha cancelado la eliminación del rol",
-                        life: 5000,
+                        onError: (errors) => {
+                            toast.add({
+                                severity: "error",
+                                summary: "Error",
+                                detail:
+                                    errors.message ||
+                                    "No se pudo eliminar el rol",
+                                life: 5000,
+                            });
+                        },
                     });
                 },
             });
@@ -89,7 +88,7 @@ const menuItems = ref([
         label: showUsers.value ? "Ver permisos" : "Ver miembros",
         icon: showUsers.value ? "pi pi-fw pi-lock" : "pi pi-fw pi-users",
         command: () => {
-            showUsers.value = true;
+            showUsers.value = !showUsers.value;
         },
     },
 ]);

@@ -24,6 +24,8 @@ const model = defineModel("selected-permissions");
                     optionValue="id"
                     multiple
                     checkmark
+                    filter
+                    filter-placeholder="Buscar permiso"
                     fluid
                 />
             </div>

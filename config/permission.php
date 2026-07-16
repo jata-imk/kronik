@@ -26,6 +26,12 @@ return [
 
         'role' => Spatie\Permission\Models\Role::class,
 
+        /*
+         * The user model is required by Role::users() when the GUI needs to
+         * show which users are assigned to a role.
+         */
+        'user' => App\Models\User::class,
+
     ],
 
     'table_names' => [
