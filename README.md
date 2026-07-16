@@ -67,6 +67,7 @@ Comandos útiles:
 - `composer dev`: inicia servidor Laravel, queue listener y Vite.
 - `npm run dev`: inicia Vite.
 - `npm run build`: compila assets de producción.
+- `php artisan dev:reset-data`: limpia datos de desarrollo sin borrar catálogos SAT/SEPOMEX.
 - `php artisan test` o `vendor/bin/pest`: ejecuta pruebas.
 - `vendor/bin/pint`: formatea PHP.
 - `npm run format`: formatea archivos frontend con Biome.
@@ -95,6 +96,11 @@ Dependencias externas del sistema cuando se requieran documentos:
 La investigación y los TODOs viven en:
 
 - `docs/roadmap-financiero.md`
+- `docs/how-to/reset-datos-desarrollo.md`
+- `docs/how-to/migrar-vps.md`
+- `docs/reference/comandos-artisan.md`
+- `docs/reference/variables-entorno.md`
+- `docs/reference/seeders.md`
 - `docs/todos/00-lecturas-y-fuentes.md`
 - `docs/todos/01-configuracion-empresa.md`
 - `docs/todos/02-clientes-expediente-kyc.md`

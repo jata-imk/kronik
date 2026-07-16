@@ -5,11 +5,9 @@ namespace Database\Seeders;
 use App\Models\MenubarItem;
 use App\Models\MenubarItemModule;
 use App\Models\Module;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-// TODO: Update the seeder to use the new Module and MenubarItemModule models
 class MenubarItemsSeeder extends Seeder
 {
     /**
@@ -122,7 +120,12 @@ class MenubarItemsSeeder extends Seeder
                 ],
             ];
 
-            MenuBarItem::insert($data);
+            foreach ($data as $record) {
+                $id = $record['id'];
+                unset($record['id']);
+
+                MenuBarItem::updateOrCreate(['id' => $id], $record);
+            }
 
             ////////////////////////
             // MenubarItemModules //
@@ -145,7 +148,15 @@ class MenubarItemsSeeder extends Seeder
             ];
 
             foreach ($data as $record) {
-                MenubarItemModule::create($record);
+                MenubarItemModule::updateOrCreate(
+                    [
+                        'menubar_item_id' => $record['menubar_item_id'],
+                        'module_id' => $record['module_id'],
+                    ],
+                    [
+                        'routes' => $record['routes'],
+                    ]
+                );
             }
         });
     }

@@ -11,8 +11,15 @@ Documentos detallados sobre temas específicos de la aplicación. Leer solo cuan
 | [Equipos de Jetstream](docs/equipos-jetstream.md) | Cómo funcionan los equipos, su rol en el ERP financiero, archivos involucrados, flujo de contexto de equipo |
 | [Roles y Permisos](docs/roles-y-permisos.md) | Stack Spatie + Jetstream, modelo de datos, archivos backend/frontend, flujo de verificación, módulos |
 | [MenubarItems](docs/menubar-items.md) | Cómo funciona el sistema de navegación dinámica, tipos de items, módulos, pivot routes, archivos clave, TODO pendientes |
+| [Reset de datos de desarrollo](docs/how-to/reset-datos-desarrollo.md) | Cómo limpiar datos transaccionales sin borrar catálogos SAT/SEPOMEX |
+| [Comandos Artisan](docs/reference/comandos-artisan.md) | Comandos del proyecto y cuándo usarlos |
+| [Variables de entorno](docs/reference/variables-entorno.md) | Variables requeridas por entorno, incluyendo CDC |
 
 ---
+
+## Flujo de documentación
+
+Muy importante: antes de cada commit, actualizar la documentación correspondiente a los cambios realizados. Si cambian comandos, variables, seeders, migraciones, deploy, lógica de negocio o flujos de usuario, reflejarlo en `docs/` usando Diataxis: `tutorials/`, `how-to/`, `reference/`, `explanation/` o `todos/` según corresponda. Mantener enlaces Markdown relativos entre documentos para que el grafo de Obsidian siga siendo útil.
 
 ## Comandos
 
@@ -29,6 +36,7 @@ php artisan serve                          # Servidor local de desarrollo
 php artisan migrate                        # Ejecutar migraciones pendientes
 php artisan migrate:fresh --seed           # Reset completo + seeders
 php artisan db:seed                        # Seeders sin reset
+php artisan dev:reset-data                 # Reset rápido de datos dev, conserva SAT/SEPOMEX
 php artisan make:controller Nombre         # Generar controlador
 ```
 
@@ -42,9 +50,9 @@ php artisan test tests/Feature/Auth       # Archivo/directorio específico
 
 ### Comandos de Catálogos
 ```bash
-php artisan catalog:update-sat-cfdi-v4    # Actualizar catálogo SAT CFDI
-php artisan catalog:update-sepomex        # Actualizar catálogo de códigos postales
-php artisan permission:create             # Crear nuevo permiso
+php artisan sat-cfdi-v4:update            # Actualizar catálogo SAT CFDI
+php artisan sepomex:update                # Actualizar catálogo de códigos postales
+php artisan permission:create-permission "read clientes" web --module-id=1
 ```
 
 ## Arquitectura
@@ -112,7 +120,7 @@ Registro de actividad vía `spatie/laravel-activitylog` — modelos con el trait
 - **JS/Vue/CSS**: Biome (`npm run format`) — indentación 4 espacios, comillas dobles, acotado a `resources/` y `public/`
 
 ### Colas y Sesiones
-Sesiones y colas usan el driver `database` (configurado en `.env`). Ejecutar `php artisan queue:work` para trabajos asíncronos.
+Sesiones y colas usan el driver `database` (configurado en `.env`). Ejecutar `php artisan queue:work` para trabajos asíncronos. En desarrollo, `composer dev` usa `php artisan queue:listen --tries=1`.
 
 ## Convenciones Clave
 - Controladores delgados — delegar lógica a `app/Services/`.
