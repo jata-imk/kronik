@@ -48,6 +48,8 @@ php artisan test tests/Feature/Auth       # Archivo/directorio específico
 ./vendor/bin/pest                         # Pest directamente
 ```
 
+Muy importante: no marcar tareas funcionales o técnicas como completadas si no pasan las pruebas aplicables y no se actualizó la documentación relacionada. Backend requiere cobertura Pest/PHPUnit cuando sea práctico; lógica frontend requiere pruebas de componente o e2e cuando exista harness; flujos críticos requieren Playwright e2e. Las tareas solo de documentación o investigación deben declarar que no aplica test automatizado y conservar fuentes/fecha de consulta. Ver [Definición de terminado](docs/reference/definicion-terminado.md).
+
 ### Comandos de Catálogos
 ```bash
 php artisan sat-cfdi-v4:update            # Actualizar catálogo SAT CFDI

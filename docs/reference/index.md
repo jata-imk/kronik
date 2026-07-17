@@ -13,6 +13,7 @@ Datos técnicos consultables: comandos, configuración, seeders y conceptos.
 - [Comandos Artisan](comandos-artisan.md)
 - [Variables de entorno](variables-entorno.md)
 - [Seeders](seeders.md)
+- [Definición de terminado](definicion-terminado.md)
 - [Automatización de documentación](automatizacion-documentacion.md)
 - [Glosario de negocio](glosario-negocio.md)
 

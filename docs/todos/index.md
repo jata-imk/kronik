@@ -19,8 +19,10 @@ TODOs funcionales y técnicos organizados por módulo.
 - [06 PLD y cumplimiento](06-pld-cumplimiento.md)
 - [07 Amortización, pagos y cobranza](07-amortizacion-pagos-cobranza.md)
 - [08 Reportes y contabilidad](08-reportes-contabilidad.md)
+- [09 Calidad, tests y definición de terminado](09-calidad-tests-definicion-terminado.md)
 
 Ver también:
 
 - [Roadmap financiero](../roadmap-financiero.md)
 - [Glosario de negocio](../reference/glosario-negocio.md)
+- [Definición de terminado](../reference/definicion-terminado.md)

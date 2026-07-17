@@ -24,6 +24,8 @@ Use 4-space indentation, LF line endings, UTF-8, and final newlines as defined i
 
 Use Pest with Laravel helpers. Put HTTP, auth, team, and workflow coverage in `tests/Feature`; keep isolated logic tests in `tests/Unit`. Name tests after the behavior under test, for example `UpdateTeamNameTest.php`. Add or update tests when changing controllers, requests, policies, services, migrations, or user-visible Inertia flows.
 
+Very important: do not mark a functional or technical task as complete unless the applicable tests pass and the related documentation is updated. Backend changes need Pest/PHPUnit coverage where practical; frontend logic needs component or e2e coverage when a harness exists; critical user flows need Playwright e2e coverage. Documentation-only or research tasks must explicitly state that automated tests do not apply and must include source/date traceability. See `docs/reference/definicion-terminado.md`.
+
 ## Documentation Workflow
 
 Very important: before every commit, update the documentation that corresponds to the code, configuration, database, deployment, or business-logic changes just made. Use the Diataxis structure in `docs/`: tutorials for onboarding flows, how-to guides for operational tasks, reference docs for commands/config/schema, explanation docs for architecture/business decisions, and `docs/todos/` for backlog. Keep Markdown links between related docs so Obsidian's graph stays useful.

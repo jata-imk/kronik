@@ -15,6 +15,7 @@ Este directorio usa una estrategia híbrida: Markdown + Diataxis + compatibilida
 - [Referencia](reference/index.md): comandos, variables, seeders, conceptos y contratos técnicos.
 - [Explicación](explanation/index.md): contexto, decisiones y lógica de negocio.
 - [Backlog](todos/index.md): TODOs funcionales y técnicos.
+- [Fuentes](fuentes/index.md): resúmenes de fuentes oficiales y regulatorias.
 
 ## Documentos actuales
 
