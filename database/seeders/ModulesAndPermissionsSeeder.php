@@ -64,6 +64,15 @@ class ModulesAndPermissionsSeeder extends Seeder
             ]
         );
 
+        $empresaConfiguracion = Module::updateOrCreate(
+            ['name' => 'empresa-configuracion'],
+            [
+                'icon' => 'pi-building',
+                'route_name' => 'admin.empresa-configuracion',
+                'parent_id' => $admin->id,
+            ]
+        );
+
         $clientes = Module::updateOrCreate(
             ['name' => 'clientes'],
             [
@@ -107,6 +116,7 @@ class ModulesAndPermissionsSeeder extends Seeder
             $roles,
             $menubarItems,
             $activityLog,
+            $empresaConfiguracion,
             $clientes,
             $historial,
             $circuloCredito,
@@ -120,6 +130,7 @@ class ModulesAndPermissionsSeeder extends Seeder
             'roles' => ['create', 'read', 'update', 'delete'],
             'menubar-items' => ['create', 'read', 'update', 'delete'],
             'activity-log' => ['read'],
+            'empresa-configuracion' => ['read', 'update'],
             'clientes' => ['create', 'read', 'update', 'delete'],
             'historial-crediticio' => ['read'],
             'circulo-credito' => ['create', 'read'],

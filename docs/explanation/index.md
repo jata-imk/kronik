@@ -12,6 +12,7 @@ Contexto, decisiones y lógica de negocio.
 
 - [Estrategia de documentación](documentacion.md)
 - [Decisiones técnicas](decisiones.md)
+- [ADR 0001: `teams` como financiera operativa](adr-0001-teams-como-financiera.md)
 - [Roadmap financiero](../roadmap-financiero.md)
 - [Equipos Jetstream](../equipos-jetstream.md)
 - [Roles y permisos](../roles-y-permisos.md)

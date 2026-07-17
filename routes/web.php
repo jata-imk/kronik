@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\MenubarItemController;
+use App\Http\Controllers\Admin\EmpresaConfiguracionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CirculoCreditoController;
@@ -91,5 +92,11 @@ Route::middleware([
             ->middlewareFor('edit', 'permission:update roles')
             ->middlewareFor('update', 'permission:update roles')
             ->middlewareFor('destroy', 'permission:delete roles');
+        Route::get('empresa-configuracion', [EmpresaConfiguracionController::class, 'index'])
+            ->middleware('permission:read empresa-configuracion')
+            ->name('empresa-configuracion.index');
+        Route::put('empresa-configuracion', [EmpresaConfiguracionController::class, 'update'])
+            ->middleware('permission:update empresa-configuracion')
+            ->name('empresa-configuracion.update');
     });
 });

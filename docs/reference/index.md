@@ -14,6 +14,8 @@ Datos técnicos consultables: comandos, configuración, seeders y conceptos.
 - [Variables de entorno](variables-entorno.md)
 - [Seeders](seeders.md)
 - [Definición de terminado](definicion-terminado.md)
+- [Flujo de tareas, pruebas y PR](flujo-tareas-pruebas-pr.md)
+- [Configuración de empresa](configuracion-empresa.md)
 - [Automatización de documentación](automatizacion-documentacion.md)
 - [Glosario de negocio](glosario-negocio.md)
 

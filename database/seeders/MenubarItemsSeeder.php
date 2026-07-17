@@ -29,6 +29,7 @@ class MenubarItemsSeeder extends Seeder
             $roles = Module::where('name', 'roles')->first();
             $menubarItems = Module::where('name', 'menubar-items')->first();
             $activityLog = Module::where('name', 'activity-log')->first();
+            $empresaConfiguracion = Module::where('name', 'empresa-configuracion')->first();
 
             // ////////////////
             // MenuBarItems //
@@ -184,6 +185,16 @@ class MenubarItemsSeeder extends Seeder
                     'parent_id' => 10,
                     'sort_order' => 5,
                 ],
+                [
+                    'id' => 16,
+                    'label' => 'Empresa',
+                    'icon' => 'pi pi-fw pi-building',
+                    'type' => 'route:name',
+                    'value' => 'admin.empresa-configuracion.index',
+                    'params' => null,
+                    'parent_id' => 10,
+                    'sort_order' => 6,
+                ],
             ];
 
             foreach ($data as $record) {
@@ -225,10 +236,14 @@ class MenubarItemsSeeder extends Seeder
                     'admin.menubar-items.edit',
                 ],
                 $activityLog->id => ['admin.users.activity'],
+                $empresaConfiguracion->id => [
+                    'admin.empresa-configuracion.index',
+                    'admin.empresa-configuracion.update',
+                ],
             ];
 
             foreach ($adminRoutesByModule as $moduleId => $routes) {
-                foreach ([10, 11, 12, 13, 14, 15] as $menubarItemId) {
+                foreach ([10, 11, 12, 13, 14, 15, 16] as $menubarItemId) {
                     $data[] = [
                         'menubar_item_id' => $menubarItemId,
                         'module_id' => $moduleId,

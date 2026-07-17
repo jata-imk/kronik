@@ -7,6 +7,7 @@ use App\Models\ClienteDatosFiscales;
 use App\Models\CodigoPostal;
 use App\Models\Direccion;
 use App\Models\DivisionAdministrativa;
+use App\Models\EmpresaConfiguracion;
 use App\Models\Pais;
 use App\Models\RegimenFiscal;
 use App\Models\Sic;
@@ -24,8 +25,9 @@ class DevelopmentSeeder extends Seeder
     public function run(): void
     {
         DB::transaction(function () {
-            $this->seedUser();
+            $user = $this->seedUser();
             $this->seedClientes();
+            $this->seedEmpresaConfiguracion($user->currentTeam);
         });
     }
 
@@ -63,6 +65,80 @@ class DevelopmentSeeder extends Seeder
         $this->seedRolesForTeam($user, $team);
 
         return $user;
+    }
+
+    private function seedEmpresaConfiguracion(Team $team): void
+    {
+        $regimenMoral = RegimenFiscal::where('clave', '601')->first();
+
+        EmpresaConfiguracion::updateOrCreate(
+            ['team_id' => $team->id],
+            [
+                'razon_social' => 'KRONIK DEMO SA DE CV',
+                'nombre_comercial' => 'Kronik Demo',
+                'rfc' => 'KDE260101AB1',
+                'regimen_fiscal_id' => $regimenMoral?->id,
+                'email' => 'operaciones@example.test',
+                'telefono' => '+525512345678',
+                'sitio_web' => 'https://example.test',
+                'domicilio_fiscal' => [
+                    'calle' => 'Av. Paseo de la Reforma',
+                    'numero_exterior' => '100',
+                    'numero_interior' => 'Piso 4',
+                    'colonia' => 'Centro',
+                    'municipio' => 'Cuauhtémoc',
+                    'estado' => 'Ciudad de México',
+                    'codigo_postal' => '06000',
+                    'pais' => 'México',
+                ],
+                'moneda' => 'MXN',
+                'zona_horaria' => 'America/Mexico_City',
+                'horario_operacion' => [
+                    'lunes_viernes' => '09:00-18:00',
+                    'sabado' => '10:00-14:00',
+                ],
+                'folio_credito_prefijo' => 'KRN',
+                'folio_credito_siguiente' => 1001,
+                'dias_inhabiles' => [
+                    '2026-01-01',
+                    '2026-02-02',
+                    '2026-03-16',
+                ],
+                'reglas_cobranza' => [
+                    'dias_gracia' => 3,
+                    'contactar_desde_dia' => 1,
+                ],
+                'formatos_contrato' => [
+                    'contrato_credito_simple' => 'plantillas/contratos/credito-simple.docx',
+                ],
+                'cuentas_bancarias' => [
+                    [
+                        'banco' => 'Banco Demo',
+                        'clabe' => '002010077777777771',
+                        'uso' => 'cobranza',
+                    ],
+                ],
+                'contactos' => [
+                    [
+                        'nombre' => 'Mesa de Operaciones',
+                        'email' => 'operaciones@example.test',
+                        'telefono' => '+525512345678',
+                    ],
+                ],
+                'integraciones' => [
+                    'circulo_credito' => [
+                        'habilitado' => false,
+                        'env_prefix' => 'CDC',
+                    ],
+                    'geocoding' => [
+                        'habilitado' => false,
+                        'env_key' => 'GEOCODING_API_KEY',
+                    ],
+                ],
+                'activa' => false,
+                'activated_at' => null,
+            ]
+        );
     }
 
     private function seedRolesForTeam(User $user, Team $team): void

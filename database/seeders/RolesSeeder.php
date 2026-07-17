@@ -49,6 +49,7 @@ class RolesSeeder extends Seeder
                 || str_contains($name, 'users')
                 || str_contains($name, 'roles')
                 || str_contains($name, 'menubar-items')
+                || str_contains($name, 'empresa-configuracion')
                 || str_contains($name, 'teams')
                 || str_contains($name, 'activity-log'))->all(),
             'Jefe de Crédito' => [
