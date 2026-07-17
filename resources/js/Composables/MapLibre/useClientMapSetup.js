@@ -59,7 +59,17 @@ export function useClientMapSetup() {
         markerCoordinates = null,
         markerDraggable = true,
     ) {
+        if (!map.value || !data) return;
+
         const itemGeocoding = data[0] || data;
+
+        if (
+            !itemGeocoding?.boundingbox ||
+            !itemGeocoding?.lat ||
+            !itemGeocoding?.lon
+        ) {
+            return;
+        }
 
         fitMapToZone([
             [itemGeocoding.boundingbox[2], itemGeocoding.boundingbox[0]],
@@ -74,10 +84,12 @@ export function useClientMapSetup() {
             markerDraggable,
         );
 
-        createOrUpdateGeoJsonSourceAndLayers({
-            type: "Feature",
-            geometry: itemGeocoding.geojson,
-        });
+        if (itemGeocoding.geojson) {
+            createOrUpdateGeoJsonSourceAndLayers({
+                type: "Feature",
+                geometry: itemGeocoding.geojson,
+            });
+        }
     }
 
     return {

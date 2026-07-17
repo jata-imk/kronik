@@ -61,6 +61,8 @@ export function useDireccionMapConnector() {
     watch(
         () => marker.value,
         () => {
+            if (!marker.value || !form.value) return;
+
             marker.value.on("dragend", () => {
                 const coordenadas = marker.value.getLngLat();
                 form.value.coordenadas = {

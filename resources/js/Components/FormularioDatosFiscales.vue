@@ -9,7 +9,7 @@ const props = defineProps({
     formErrors: {
         type: Object,
         required: false,
-        default: {},
+        default: () => ({}),
     },
     readOnly: {
         type: Boolean,
@@ -19,7 +19,7 @@ const props = defineProps({
     initialLoad: {
         type: Object,
         required: false,
-        default: {},
+        default: () => ({}),
     },
 });
 

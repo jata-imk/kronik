@@ -8,6 +8,8 @@ Extender el alta actual de clientes hacia un expediente completo de solicitante.
 
 Ya existen clientes, datos fiscales, domicilios, país de nacimiento, teléfono, email, sexo y relación con consultas SIC.
 
+El formulario de alta/edición de clientes tolera relaciones incompletas de domicilio, catálogo postal, país de nacimiento y datos geoespaciales sin romper el render inicial. Esto permite seguir extendiendo el expediente KYC sobre una base más estable.
+
 ## TODO
 
 - [ ] Agregar campos de ocupación, actividad económica, ingresos, egresos y origen de recursos.

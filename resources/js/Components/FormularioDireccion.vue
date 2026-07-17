@@ -21,7 +21,7 @@ const props = defineProps({
     formErrors: {
         type: Object,
         required: false,
-        default: {},
+        default: () => ({}),
     },
     newRecord: {
         type: Boolean,
@@ -36,7 +36,7 @@ const props = defineProps({
     initialLoad: {
         type: Object,
         required: false,
-        default: {},
+        default: () => ({}),
     },
     direccionMapConnector: {
         type: Function,
@@ -50,31 +50,38 @@ const formErrors = props.formErrors;
 const newRecord = props.newRecord;
 const existentRecord = !newRecord;
 const readOnly = props.readOnly;
-const initialLoad = props.initialLoad;
+const initialLoad = {
+    divisionesAdministrativas: {
+        uno: [],
+        dos: [],
+        tres: [],
+        ...(props.initialLoad?.divisionesAdministrativas ?? {}),
+    },
+};
 const isInitialLoadProccessActive = ref(true);
 
 const refAutocompleteCodigoPostal = ref(null);
 
 const divisionesAdminUno = ref(
-    (existentRecord && initialLoad.divisionesAdministrativas?.uno) ?? [],
+    existentRecord ? initialLoad.divisionesAdministrativas.uno : [],
 );
 const divisionAdminUnoSeleccionada = ref(
     (existentRecord && form.division_admin_uno_id) ?? null,
 );
 const divisionesAdminDos = ref(
-    (existentRecord && initialLoad.divisionesAdministrativas?.dos) ?? [],
+    existentRecord ? initialLoad.divisionesAdministrativas.dos : [],
 );
 const divisionAdminDosSeleccionada = ref(
     (existentRecord && form.division_admin_dos_id) ?? null,
 );
 const divisionesAdminTres = ref(
-    (existentRecord && initialLoad.divisionesAdministrativas?.tres) ?? [],
+    existentRecord ? initialLoad.divisionesAdministrativas.tres : [],
 );
 const divisionAdminTresSeleccionada = ref(
     (existentRecord && form.division_admin_tres_id) ?? null,
 );
 const tipoLocalidadSeleccionada = ref(
-    existentRecord && initialLoad.divisionesAdministrativas?.tres[0]?.tipo,
+    existentRecord ? initialLoad.divisionesAdministrativas.tres[0]?.tipo : null,
 );
 
 const DEBOUNCE_MS_CODIGO_POSTAL = 300;
@@ -155,7 +162,7 @@ const setDivisionAdministrativaSelectOptionsAndValue = (
 
     refDivisionAdminValue.value =
         selectedValue === undefined
-            ? divisionesAdmin[stringNivel]?.id
+            ? (divisionesAdmin?.[stringNivel]?.id ?? null)
             : selectedValue;
 };
 
@@ -216,8 +223,8 @@ const onChangeLocalidad = (event) => {
         (item) => item.id === event.value,
     );
 
-    tipoLocalidadSeleccionada.value = divisionNivelTresSeleccionada.tipo;
-    form.division_admin_tres_id = divisionNivelTresSeleccionada.id;
+    tipoLocalidadSeleccionada.value = divisionNivelTresSeleccionada?.tipo ?? null;
+    form.division_admin_tres_id = divisionNivelTresSeleccionada?.id ?? null;
 };
 
 const queryGeocoding = computed(() => {
@@ -232,15 +239,15 @@ const queryGeocoding = computed(() => {
     const nombreDivisionAdminUno =
         divisionesAdminUno.value.find(
             (item) => item.id === divisionAdminUnoSeleccionada.value,
-        ).nombre || "";
+        )?.nombre || "";
     const nombreDivisionAdminDos =
         divisionesAdminDos.value.find(
             (item) => item.id === divisionAdminDosSeleccionada.value,
-        ).nombre || "";
+        )?.nombre || "";
     const nombreDivisionAdminTres =
         divisionesAdminTres.value.find(
             (item) => item.id === divisionAdminTresSeleccionada.value,
-        ).nombre || "";
+        )?.nombre || "";
 
     return `${form.codigo_postal}, ${nombreDivisionAdminTres}, ${nombreDivisionAdminDos}, ${nombreDivisionAdminUno}`;
 });
@@ -270,12 +277,10 @@ watch(
         if (newRecord) {
             form.coordenadas = {
                 lat:
-                    geocodingResult.value[0]?.lat ??
-                    geocodingResult.value[0]?.lat ??
+                    geocodingResult.value?.[0]?.lat ??
                     0,
                 lng:
-                    geocodingResult.value[0]?.lon ??
-                    geocodingResult.value[0]?.lon ??
+                    geocodingResult.value?.[0]?.lon ??
                     0,
             };
         }
@@ -292,13 +297,13 @@ watch(
                     divisionesAdminUno.value.find(
                         (item) =>
                             item.id === divisionAdminUnoSeleccionada.value,
-                    ).nombre || "";
+                    )?.nombre || "";
 
                 const nombreDivisionAdminDos =
                     divisionesAdminDos.value.find(
                         (item) =>
                             item.id === divisionAdminDosSeleccionada.value,
-                    ).nombre || "";
+                    )?.nombre || "";
 
                 geocodingSearch(
                     `${nombreDivisionAdminDos}, ${nombreDivisionAdminUno}`,
@@ -342,7 +347,8 @@ watch([busquedaCodigosPostales, errorUseCodigoPostal], () => {
         busquedaCodigosPostales.value &&
         busquedaCodigosPostales.value.length === 0
     ) {
-        throw new Error("No se encontraron resultados");
+        resetDivisionAdministrativaSelectOptionsAndValue();
+        return;
     }
 
     for (const [index, nivel] of Object.entries(["uno", "dos", "tres"])) {

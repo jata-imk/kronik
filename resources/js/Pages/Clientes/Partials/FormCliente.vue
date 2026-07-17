@@ -15,6 +15,12 @@ const toast = useToast();
 const page = usePage();
 const readOnly = ref(page.props.readOnly || false);
 const cliente = ref(page.props.cliente);
+const direcciones = cliente.value?.direcciones ?? [];
+const clienteDireccion = direcciones[0] ?? {};
+const codigoPostal = clienteDireccion.codigo_postal ?? {};
+const divisionAdministrativaTres = codigoPostal.division_administrativa ?? {};
+const divisionAdministrativaDos = divisionAdministrativaTres.padre ?? {};
+const divisionAdministrativaUno = divisionAdministrativaDos.padre ?? {};
 
 const formDatosFiscales = reactive({
     tipo_persona: cliente.value?.datos_fiscales?.tipo_persona ?? "",
@@ -24,7 +30,6 @@ const formDatosFiscales = reactive({
     razon_social: cliente.value?.datos_fiscales?.razon_social ?? "",
 });
 
-const clienteDireccion = { ...cliente.value?.direcciones[0] };
 const formDireccion = reactive({
     tipo: clienteDireccion.tipo ?? "",
     linea_uno: clienteDireccion.linea_uno ?? "",
@@ -58,7 +63,7 @@ const form = useForm({
     direcciones: [{ ...formDireccion }],
 });
 
-const paises = ref(page.props.paises);
+const paises = ref(page.props.paises ?? []);
 const paisSeleccionado = ref(
     cliente.value?.pais_nacimiento_id
         ? {
@@ -66,11 +71,11 @@ const paisSeleccionado = ref(
               nombre_es:
                   paises.value.find(
                       (pais) => pais.id === form.pais_nacimiento_id,
-                  ).nombre_es ?? "",
+                  )?.nombre_es ?? "",
           }
         : null,
 );
-const paisesFiltrados = ref(paises);
+const paisesFiltrados = ref([...paises.value]);
 
 const filtrarPaises = (event) => {
     setTimeout(() => {
@@ -172,51 +177,36 @@ watch(
 
 const initialLoadFormDireccion = ref({
     divisionesAdministrativas: {
-        uno: cliente.value?.direcciones[0]?.division_admin_uno_id
+        uno: clienteDireccion?.division_admin_uno_id && divisionAdministrativaUno?.id
             ? [
                   {
-                      id: cliente.value?.direcciones[0].codigo_postal
-                          .division_administrativa.padre.padre.id,
-                      nombre: cliente.value?.direcciones[0].codigo_postal
-                          .division_administrativa.padre.padre.nombre,
-                      codigo: cliente.value?.direcciones[0].codigo_postal
-                          .division_administrativa.padre.padre.codigo,
-                      nivel: cliente.value?.direcciones[0].codigo_postal
-                          .division_administrativa.padre.padre.nivel,
-                      tipo: cliente.value?.direcciones[0].codigo_postal
-                          .division_administrativa.padre.padre.tipo,
+                      id: divisionAdministrativaUno.id,
+                      nombre: divisionAdministrativaUno.nombre,
+                      codigo: divisionAdministrativaUno.codigo,
+                      nivel: divisionAdministrativaUno.nivel,
+                      tipo: divisionAdministrativaUno.tipo,
                   },
               ]
             : [],
-        dos: cliente.value?.direcciones[0]?.division_admin_dos_id
+        dos: clienteDireccion?.division_admin_dos_id && divisionAdministrativaDos?.id
             ? [
                   {
-                      id: cliente.value?.direcciones[0].codigo_postal
-                          .division_administrativa.padre.id,
-                      nombre: cliente.value?.direcciones[0].codigo_postal
-                          .division_administrativa.padre.nombre,
-                      codigo: cliente.value?.direcciones[0].codigo_postal
-                          .division_administrativa.padre.codigo,
-                      nivel: cliente.value?.direcciones[0].codigo_postal
-                          .division_administrativa.padre.nivel,
-                      tipo: cliente.value?.direcciones[0].codigo_postal
-                          .division_administrativa.padre.tipo,
+                      id: divisionAdministrativaDos.id,
+                      nombre: divisionAdministrativaDos.nombre,
+                      codigo: divisionAdministrativaDos.codigo,
+                      nivel: divisionAdministrativaDos.nivel,
+                      tipo: divisionAdministrativaDos.tipo,
                   },
               ]
             : [],
-        tres: cliente.value?.direcciones[0]?.division_admin_tres_id
+        tres: clienteDireccion?.division_admin_tres_id && divisionAdministrativaTres?.id
             ? [
                   {
-                      id: cliente.value?.direcciones[0].codigo_postal
-                          .division_administrativa.id,
-                      nombre: cliente.value?.direcciones[0].codigo_postal
-                          .division_administrativa.nombre,
-                      codigo: cliente.value?.direcciones[0].codigo_postal
-                          .division_administrativa.codigo,
-                      nivel: cliente.value?.direcciones[0].codigo_postal
-                          .division_administrativa.nivel,
-                      tipo: cliente.value?.direcciones[0].codigo_postal
-                          .division_administrativa.tipo,
+                      id: divisionAdministrativaTres.id,
+                      nombre: divisionAdministrativaTres.nombre,
+                      codigo: divisionAdministrativaTres.codigo,
+                      nivel: divisionAdministrativaTres.nivel,
+                      tipo: divisionAdministrativaTres.tipo,
                   },
               ]
             : [],
@@ -330,7 +320,7 @@ const onSubmit = () => {
                             fluid :invalid="!!form.errors.pais_nacimiento_id" >
                             <template #option="slotProps">
                                 <div class="flex items-center">
-                                    <img :alt="slotProps.option.nombre_es" src="https://primefaces.org/cdn/primevue/images/flag/flag_placeholder.png" :class="`mr-2 flag flag-${slotProps.option.codigo_iso.toLowerCase()}`" style="width: 18px" />
+                                    <img :alt="slotProps.option.nombre_es" src="https://primefaces.org/cdn/primevue/images/flag/flag_placeholder.png" :class="`mr-2 flag flag-${slotProps.option.codigo_iso?.toLowerCase() ?? 'mx'}`" style="width: 18px" />
                                     <div>{{ slotProps.option.nombre_es }}</div>
                                 </div>
                             </template>
