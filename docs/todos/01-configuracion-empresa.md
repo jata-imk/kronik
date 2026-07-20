@@ -1,25 +1,34 @@
-# TODO 01: Configuración de Empresa
+# TODO 01: Configuracion de Empresa
 
 ## Objetivo
 
-Permitir que la financiera configure su operación sin cambios de código. La app no será multi-financiera: cada instalación corresponde a una sola financiera.
+Permitir que la financiera configure su operacion sin cambios de codigo. La app no sera multi-financiera: cada instalacion corresponde a una sola financiera.
+
+## Estado Real
+
+Terminado para el primer corte funcional con la decision local vigente: `empresa_configuraciones` es singleton por instalacion y `teams` representa departamentos/grupos de trabajo, no la financiera.
 
 ## Alcance
 
-- Perfil legal: razón social, RFC, régimen, domicilio fiscal, teléfonos, correos y logotipo.
-- Operación: moneda, zona horaria, horarios, sucursales, folios y consecutivos.
-- Parámetros: días inhábiles, reglas de cobranza, formatos de contrato, cuentas bancarias y contactos.
-- Integraciones: llaves de Círculo de Crédito, correo, geocoding y servicios documentales.
+- Perfil legal: razon social, RFC, regimen, domicilio fiscal, telefonos, correos y logotipo.
+- Operacion: moneda, zona horaria, horarios, sucursales, folios y consecutivos.
+- Parametros: dias inhabiles, reglas de cobranza, formatos de contrato, cuentas bancarias y contactos.
+- Integraciones: referencias seguras a llaves de Circulo de Credito, correo, geocoding y servicios documentales.
 - Equipos: `teams` se reserva para departamentos, grupos de trabajo y permisos.
 
-## TODO
+## Implementado
 
 - [x] Definir que `teams` representa departamentos/grupos de trabajo, no la financiera.
-- [x] Diseñar configuración global única por instalación.
+- [x] Disenar configuracion global unica por instalacion.
 - [x] Crear CRUD administrativo de perfil de financiera.
 - [x] Crear entidad inicial de sucursales.
-- [x] Agregar configuración segura para credenciales externas.
-- [x] Agregar permisos Spatie para administrar configuración y sucursales.
-- [x] Auditar cambios críticos con Activitylog.
-- [ ] Documentar datos obligatorios antes de activar una financiera.
-- [ ] Vincular usuarios, clientes, solicitudes, créditos y pagos con `sucursal_id` cuando esos módulos existan.
+- [x] Agregar configuracion segura para credenciales externas.
+- [x] Agregar permisos Spatie para administrar configuracion y sucursales.
+- [x] Auditar cambios criticos con Activitylog.
+- [x] Documentar datos obligatorios antes de activar una financiera.
+- [x] Agregar seeders demo idempotentes para empresa y sucursal.
+- [x] Agregar pruebas feature de configuracion de empresa y sucursales.
+
+## Diferido
+
+- Vincular usuarios, clientes, solicitudes, creditos y pagos con `sucursal_id` cuando esos modulos existan y el modelo de asignacion por sucursal este definido.

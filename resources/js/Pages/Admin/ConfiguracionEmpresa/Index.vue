@@ -93,7 +93,14 @@ const submit = () => {
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Estatus</label>
-                        <Select v-model="form.estatus" :options="estatusOptions" option-label="label" option-value="value" fluid />
+                        <select
+                            v-model="form.estatus"
+                            class="w-full rounded-md border border-surface-300 bg-surface-0 px-3 py-2 text-surface-900 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-surface-700 dark:bg-surface-900 dark:text-surface-0"
+                        >
+                            <option v-for="option in estatusOptions" :key="option.value" :value="option.value">
+                                {{ option.label }}
+                            </option>
+                        </select>
                     </div>
                 </section>
 
@@ -176,7 +183,7 @@ const submit = () => {
 
                 <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="md:col-span-2">
-                        <h3 class="text-lg font-semibold mb-2">Integracion Círculo de Crédito</h3>
+                        <h3 class="text-lg font-semibold mb-2">Integracion Circulo de Credito</h3>
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">Host</label>
@@ -184,10 +191,11 @@ const submit = () => {
                     </div>
                     <div>
                         <label class="block text-sm font-medium mb-1">API key</label>
-                        <Password
+                        <InputText
                             v-model="form.integraciones.circulo_credito_api_key"
+                            type="password"
+                            autocomplete="new-password"
                             fluid
-                            :feedback="false"
                             :placeholder="configuracion.integraciones?.circulo_credito_api_key_configurada ? 'Ya configurada; llenar solo para reemplazar' : 'Capturar API key'" />
                     </div>
                     <div class="flex items-center gap-3">

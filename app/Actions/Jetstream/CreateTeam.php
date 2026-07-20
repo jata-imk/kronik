@@ -18,9 +18,7 @@ class CreateTeam implements CreatesTeams
      */
     public function create(User $user, array $input): Team
     {
-        $permission = config('permission.models.permission')::where('name', 'create teams')->first();
-
-        Gate::check($permission->name, $user);
+        Gate::forUser($user)->authorize('create', Team::class);
 
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
@@ -33,7 +31,7 @@ class CreateTeam implements CreatesTeams
         ]);
         $user->switchTeam($team);
 
-        if (!function_exists('setPermissionsTeamId')) {
+        if (! function_exists('setPermissionsTeamId')) {
             return $team;
         }
 
@@ -48,7 +46,7 @@ class CreateTeam implements CreatesTeams
             $roleModel::query()->create([
                 'name' => $role->name,
                 $teamsKey => $team->id,
-                'guard_name' => $role->guard_name
+                'guard_name' => $role->guard_name,
             ]);
         }
 

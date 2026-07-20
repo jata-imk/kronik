@@ -1,0 +1,44 @@
+#!/bin/sh
+
+set -eu
+
+if [ "${DOCS_NOT_NEEDED:-}" = "1" ]; then
+    exit 0
+fi
+
+changed_files="$(git diff --cached --name-only --diff-filter=ACMR)"
+
+if [ -z "$changed_files" ]; then
+    exit 0
+fi
+
+needs_docs=0
+has_docs=0
+
+for file in $changed_files; do
+    case "$file" in
+        app/*|bootstrap/*|config/*|database/*|resources/*|routes/*|tests/*|composer.json|composer.lock|package.json|package-lock.json|vite.config.js|tailwind.config.js|biome.json|phpunit.xml|.github/*|.githooks/*)
+            needs_docs=1
+            ;;
+    esac
+
+    case "$file" in
+        docs/*|README.md|AGENTS.md|CLAUDE.md|.env.example)
+            has_docs=1
+            ;;
+    esac
+done
+
+if [ "$needs_docs" -eq 1 ] && [ "$has_docs" -eq 0 ]; then
+    cat <<'EOF'
+Documentation check failed.
+
+This commit changes code/config/database/frontend/test files but has no staged documentation update.
+
+Update the relevant docs under docs/ or stage a related README.md, AGENTS.md, CLAUDE.md, or .env.example change.
+If documentation truly is not needed, rerun the commit with DOCS_NOT_NEEDED=1.
+EOF
+    exit 1
+fi
+
+exit 0

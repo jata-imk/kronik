@@ -23,9 +23,7 @@ class InviteTeamMember implements InvitesTeamMembers
      */
     public function invite(User $user, Team $team, string $email, ?string $role = null): void
     {
-        $permission = config('permission.models.permission')::where('name', 'add members teams')->first();
-
-        Gate::check($permission->name, $user);
+        Gate::forUser($user)->authorize('addTeamMember', $team);
 
         $this->validate($team, $email, $role);
 

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -eu
+
+if [ "${SKIP_PRE_PUSH:-}" = "1" ]; then
+    exit 0
+fi
+
+php artisan test
+npm run build
