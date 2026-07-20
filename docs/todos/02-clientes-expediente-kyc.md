@@ -6,7 +6,7 @@ Extender el alta actual de clientes hacia un expediente completo de solicitante.
 
 ## Estado
 
-Implementado y verificado localmente en `feat/backlog-02-clientes-expediente-kyc`. El cierre definitivo depende unicamente del CI de la PR.
+Completado en `feat/backlog-02-clientes-expediente-kyc` y publicado en la PR #10. Verificacion local y CI de GitHub aprobados.
 
 ## Completado
 
