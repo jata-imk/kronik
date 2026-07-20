@@ -19,8 +19,10 @@ El proyecto debe tener CI real en GitHub Actions ademas de hooks locales.
 - `composer install`.
 - `npm ci`.
 - Verificacion de documentacion para cambios de codigo/config/base de datos/frontend/tests.
-- `php artisan test`.
 - `npm run build`.
+- `php artisan test`.
+
+El build frontend corre antes de los tests porque las pruebas HTTP que renderizan Inertia necesitan `public/build/manifest.json` en el runner limpio de GitHub Actions.
 
 ## Politica
 

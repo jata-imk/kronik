@@ -105,8 +105,8 @@ jobs:
             exit 1
           fi
 
-      - name: Run backend tests
-        run: php artisan test
-
       - name: Build frontend
         run: npm run build
+
+      - name: Run backend tests
+        run: php artisan test
