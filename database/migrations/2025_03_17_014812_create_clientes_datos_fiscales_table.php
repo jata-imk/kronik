@@ -12,12 +12,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('clientes_datos_fiscales', function (Blueprint $table) {
+        $isMariaDb = str_contains(DB::connection()->getPdo()->getAttribute(\PDO::ATTR_SERVER_VERSION), 'MariaDB');
+
+        Schema::create('clientes_datos_fiscales', function (Blueprint $table) use ($isMariaDb) {
             $table->id();
 
             $table->unsignedBigInteger('cliente_id');
 
-            if (DB::connection()->getDriverName() === 'mariadb') {
+            if ($isMariaDb) {
                 $table->string('tipo_persona', 7);
             } else {
                 $table->rawColumn('tipo_persona', 'varchar(7) not null constraint tipo_persona_check check (tipo_persona in (\'fisica\', \'moral\'))');
@@ -34,7 +36,7 @@ return new class extends Migration
             $table->foreign('regimen_fiscal_id')->references('id')->on('regimenes_fiscales');
         });
 
-        if (DB::connection()->getDriverName() === 'mariadb') {
+        if ($isMariaDb) {
             DB::statement("
                     CREATE TRIGGER check_tipo_persona_before_insert
                     BEFORE INSERT ON clientes_datos_fiscales

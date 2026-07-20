@@ -29,7 +29,12 @@ class RolesSeeder extends Seeder
         ];
 
         foreach ($roles as $role) {
-            $roleModel::create(['name' => $role, 'guard_name' => 'web']);
+            $roleModel::updateOrCreate(
+                [
+                    'name' => $role,
+                    'guard_name' => 'web',
+                ],
+            );
         }
     }
 }

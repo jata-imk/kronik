@@ -45,3 +45,26 @@ function something()
 {
     // ..
 }
+
+function actingAsSuperAdmin(): App\Models\User
+{
+    $user = App\Models\User::factory()->withPersonalTeam()->create();
+    $team = $user->ownedTeams()->first();
+
+    $user->forceFill(['current_team_id' => $team->id])->save();
+
+    if (function_exists('setPermissionsTeamId')) {
+        setPermissionsTeamId($team->id);
+    }
+
+    $roleModel = config('permission.models.role');
+    $role = $roleModel::firstOrCreate([
+        'name' => 'Super Admin',
+        'guard_name' => 'web',
+    ]);
+
+    $user->assignRole($role);
+    app(Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+
+    return $user;
+}
