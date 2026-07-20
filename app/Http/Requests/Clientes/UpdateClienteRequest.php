@@ -2,8 +2,6 @@
 
 namespace App\Http\Requests\Clientes;
 
-use App\Http\Requests\Clientes\BaseClienteRequest;
-
 class UpdateClienteRequest extends BaseClienteRequest
 {
     /**
@@ -11,7 +9,7 @@ class UpdateClienteRequest extends BaseClienteRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('update', $this->route('cliente')) ?? false;
     }
 
     /**
@@ -22,7 +20,7 @@ class UpdateClienteRequest extends BaseClienteRequest
     public function rules(): array
     {
         return collect($this->baseRules())
-            ->mapWithKeys(fn($rules, $key) => [$key => array_merge(['sometimes'], $rules)])
+            ->mapWithKeys(fn ($rules, $key) => [$key => array_merge(['sometimes'], $rules)])
             ->toArray();
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Clientes;
 
-use App\Http\Requests\Clientes\BaseClienteRequest;
 use App\Http\Requests\Traits\ExtendRulesTrait;
 
 class StoreClienteRequest extends BaseClienteRequest
@@ -14,7 +13,7 @@ class StoreClienteRequest extends BaseClienteRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->can('create', \App\Models\Cliente::class) ?? false;
     }
 
     /**

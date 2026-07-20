@@ -1,12 +1,18 @@
 <?php
 
+use App\Http\Controllers\Admin\EmpresaConfiguracionController;
 use App\Http\Controllers\Admin\MenubarItemController;
 use App\Http\Controllers\Admin\RoleController;
-use App\Http\Controllers\Admin\EmpresaConfiguracionController;
 use App\Http\Controllers\Admin\SucursalController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CirculoCreditoController;
+use App\Http\Controllers\ClienteConsentimientoSicController;
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\ClienteDocumentoController;
+use App\Http\Controllers\ClienteExpedienteController;
+use App\Http\Controllers\ClienteGarantiaController;
+use App\Http\Controllers\ClienteReferenciaController;
+use App\Http\Controllers\ClienteVinculoController;
 use App\Http\Controllers\CodigoPostalController;
 use App\Http\Controllers\GeocodingController;
 use App\Http\Controllers\HistorialCrediticioController;
@@ -41,8 +47,30 @@ Route::middleware([
         'index',
         'create',
         'store',
-        'show'
+        'show',
     ])->names('circulo-credito');
+
+    Route::get('clientes/{cliente}/expediente', [ClienteExpedienteController::class, 'show'])->name('clientes.expediente.show');
+    Route::patch('clientes/{cliente}/expediente/perfil', [ClienteExpedienteController::class, 'updateProfile'])->name('clientes.expediente.perfil.update');
+
+    Route::post('clientes/{cliente}/documentos', [ClienteDocumentoController::class, 'store'])->name('clientes.documentos.store');
+    Route::patch('clientes/{cliente}/documentos/{documento}/estado', [ClienteDocumentoController::class, 'updateStatus'])->name('clientes.documentos.estado.update');
+    Route::get('clientes/{cliente}/documentos/{documento}/descargar', [ClienteDocumentoController::class, 'download'])->name('clientes.documentos.download');
+
+    Route::post('clientes/{cliente}/referencias', [ClienteReferenciaController::class, 'store'])->name('clientes.referencias.store');
+    Route::put('clientes/{cliente}/referencias/{referencia}', [ClienteReferenciaController::class, 'update'])->name('clientes.referencias.update');
+    Route::delete('clientes/{cliente}/referencias/{referencia}', [ClienteReferenciaController::class, 'destroy'])->name('clientes.referencias.destroy');
+
+    Route::post('clientes/{cliente}/vinculos', [ClienteVinculoController::class, 'store'])->name('clientes.vinculos.store');
+    Route::delete('clientes/{cliente}/vinculos/{vinculo}', [ClienteVinculoController::class, 'destroy'])->name('clientes.vinculos.destroy');
+
+    Route::post('clientes/{cliente}/garantias', [ClienteGarantiaController::class, 'store'])->name('clientes.garantias.store');
+    Route::put('clientes/{cliente}/garantias/{garantia}', [ClienteGarantiaController::class, 'update'])->name('clientes.garantias.update');
+    Route::delete('clientes/{cliente}/garantias/{garantia}', [ClienteGarantiaController::class, 'destroy'])->name('clientes.garantias.destroy');
+
+    Route::post('clientes/{cliente}/consentimientos-sic', [ClienteConsentimientoSicController::class, 'store'])->name('clientes.consentimientos-sic.store');
+    Route::patch('clientes/{cliente}/consentimientos-sic/{consentimiento}/revocar', [ClienteConsentimientoSicController::class, 'revoke'])->name('clientes.consentimientos-sic.revoke');
+    Route::get('clientes/{cliente}/consentimientos-sic/{consentimiento}/evidencia', [ClienteConsentimientoSicController::class, 'download'])->name('clientes.consentimientos-sic.download');
 
     Route::resource('clientes', ClienteController::class)->names('clientes');
 

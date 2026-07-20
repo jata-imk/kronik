@@ -87,6 +87,16 @@ class MenubarItemsSeeder extends Seeder
                     'sort_order' => 0,
                 ],
                 [
+                    'id' => 18,
+                    'label' => 'Expediente KYC',
+                    'icon' => 'pi pi-fw pi-folder-open',
+                    'type' => 'route:name',
+                    'value' => 'clientes.expediente.show',
+                    'params' => json_encode(['cliente' => '{cliente}']),
+                    'parent_id' => 1,
+                    'sort_order' => 2,
+                ],
+                [
                     'id' => 7,
                     'label' => 'Listado de consultas',
                     'icon' => 'pi pi-fw pi-list',
@@ -207,6 +217,7 @@ class MenubarItemsSeeder extends Seeder
 
             $links = [
                 ['menubar_item_id' => 1, 'module_id' => $clientes->id,  'routes' => ['clientes.edit', 'clientes.show']],
+                ['menubar_item_id' => 18, 'module_id' => $clientes->id, 'routes' => ['clientes.edit', 'clientes.show', 'clientes.expediente.show']],
                 ['menubar_item_id' => 2, 'module_id' => $clientes->id,  'routes' => ['clientes.edit']],
                 ['menubar_item_id' => 3, 'module_id' => $clientes->id,  'routes' => ['clientes.edit', 'clientes.show']],
                 ['menubar_item_id' => 4, 'module_id' => $clientes->id,  'routes' => ['clientes.show']],

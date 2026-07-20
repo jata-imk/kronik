@@ -26,6 +26,8 @@ Datos demo actuales:
 - Sucursal `MATRIZ`.
 - Cliente persona fisica con score SIC exitoso.
 - Cliente tipo moral con consulta SIC pendiente.
+- Perfil economico KYC en ambos clientes demo.
+- Checklist documental pendiente, referencia personal y ejemplo de aval/garantia.
 
 Relacionado:
 

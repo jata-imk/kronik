@@ -20,6 +20,11 @@ abstract class BaseClienteRequest extends FormRequest
             'telefono' => ['string', 'max:15'],
             'email' => ['email', 'max:127'],
             'sexo' => ['in:masculino,femenino'],
+            'ocupacion' => ['nullable', 'string', 'max:127'],
+            'actividad_economica' => ['nullable', 'string', 'max:255'],
+            'ingresos_mensuales' => ['nullable', 'numeric', 'min:0', 'max:9999999999999.99'],
+            'egresos_mensuales' => ['nullable', 'numeric', 'min:0', 'max:9999999999999.99'],
+            'origen_recursos' => ['nullable', 'string', 'max:2000'],
 
             // Datos fiscales
             'datos_fiscales' => ['array'],

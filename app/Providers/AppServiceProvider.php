@@ -4,12 +4,14 @@ namespace App\Providers;
 
 use App\Interfaces\BrowserClientInterface;
 use App\Interfaces\GeocodingServiceInterface;
+use App\Models\Cliente;
+use App\Models\Permission;
 use App\Services\GeocodingService;
 use App\Services\Scrapers\BrowserClientService;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\ServiceProvider;
-use App\Models\Permission;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\ServiceProvider;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -35,6 +37,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Relation::morphMap([
+            'clientes' => Cliente::class,
+        ]);
+
         // Implicitly grant "Super Admin" role all permissions
         // This works in the app by using gate-related functions like auth()->user->can() and @can()
         Gate::before(function ($user, $ability) {

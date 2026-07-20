@@ -3,70 +3,51 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-
-use App\Models\Cliente;
-use Illuminate\Support\Facades\DB;
 use App\Http\Requests\Clientes\StoreClienteRequest;
 use App\Http\Requests\Clientes\UpdateClienteRequest;
 use App\Http\Resources\ClienteResource;
+use App\Models\Cliente;
 use App\Services\ClienteService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class ClienteController extends Controller
 {
     public function index(Request $request, ClienteService $clienteService)
     {
+        Gate::authorize('viewAny', Cliente::class);
+
         return ClienteResource::collection($clienteService->readAll());
     }
 
-    public function store(StoreClienteRequest $request)
+    public function store(StoreClienteRequest $request, ClienteService $clienteService)
     {
-        return DB::transaction(function () use ($request) {
-            $cliente = Cliente::create($request->validated());
+        $cliente = $clienteService->store($request->validated());
 
-            $cliente->datosFiscales()->create($request->validated()['datos_fiscales']);
-
-            foreach ($request->validated()['direcciones'] as $direccion) {
-                $cliente->direcciones()->create($direccion);
-            }
-
-            return response()->json($cliente->load(['datosFiscales', 'direcciones']), 201);
-        });
+        return (new ClienteResource($cliente->load(['paisNacimiento', 'datosFiscales', 'direcciones'])))
+            ->response()
+            ->setStatusCode(201);
     }
 
     public function show(Cliente $cliente)
     {
-        return $cliente->load(['datosFiscales', 'direcciones']);
+        Gate::authorize('view', $cliente);
+
+        return new ClienteResource($cliente->load(['paisNacimiento', 'datosFiscales', 'direcciones']));
     }
 
-    public function update(UpdateClienteRequest $request, Cliente $cliente)
+    public function update(UpdateClienteRequest $request, Cliente $cliente, ClienteService $clienteService)
     {
-        return DB::transaction(function () use ($request, $cliente) {
-            $cliente->update($request->validated());
+        $clienteService->update($cliente, $request->validated());
 
-            if ($request->has('datos_fiscales')) {
-                $cliente->datosFiscales()->updateOrCreate([], $request->validated()['datos_fiscales']);
-            }
-
-            if ($request->has('direcciones')) {
-
-                foreach ($request->validated()['direcciones'] as $direccion) {
-                    $cliente->direcciones()->updateOrCreate(['tipo' => $direccion['tipo']], $direccion);
-                }
-            }
-
-            return response()->json($cliente->load(['datosFiscales', 'direcciones']));
-        });
+        return new ClienteResource($cliente->fresh()->load(['paisNacimiento', 'datosFiscales', 'direcciones']));
     }
 
-    public function destroy(Cliente $cliente)
+    public function destroy(Cliente $cliente, ClienteService $clienteService)
     {
-        return DB::transaction(function () use ($cliente) {
-            $cliente->direcciones()->delete();
-            $cliente->datosFiscales()->delete();
-            $cliente->delete();
+        Gate::authorize('delete', $cliente);
+        $clienteService->destroy($cliente);
 
-            return response()->json(null, 204);
-        });
+        return response()->json(null, 204);
     }
 }

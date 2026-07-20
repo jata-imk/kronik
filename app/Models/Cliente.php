@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Cliente extends Model
 {
+    use HasFactory;
+
     protected $table = 'clientes';
+
     protected $fillable = [
         'primer_nombre',
         'segundo_nombre',
@@ -19,10 +23,17 @@ class Cliente extends Model
         'telefono',
         'email',
         'sexo',
+        'ocupacion',
+        'actividad_economica',
+        'ingresos_mensuales',
+        'egresos_mensuales',
+        'origen_recursos',
     ];
 
     protected $casts = [
         'fecha_nacimiento' => 'datetime',
+        'ingresos_mensuales' => 'decimal:2',
+        'egresos_mensuales' => 'decimal:2',
     ];
 
     public function paisNacimiento()
@@ -45,11 +56,28 @@ class Cliente extends Model
         return $this->hasMany(SicQuery::class);
     }
 
-    // TODO: Cambiar el nombre que retorna getMorphClass por el namespace del modelo, por ejemplo: App\Models\Cliente
-    // seguidamente actualizar la BD para que la tabla de direcciones acepte este nuevo valor
-    // verificar todos los modelos que usen morphTo
-    public function getMorphClass()
+    public function documentos()
     {
-        return 'clientes';
+        return $this->hasMany(ClienteDocumento::class);
+    }
+
+    public function referencias()
+    {
+        return $this->hasMany(ClienteReferencia::class);
+    }
+
+    public function vinculos()
+    {
+        return $this->hasMany(ClienteVinculo::class);
+    }
+
+    public function garantias()
+    {
+        return $this->hasMany(ClienteGarantia::class);
+    }
+
+    public function consentimientosSic()
+    {
+        return $this->hasMany(ClienteConsentimientoSic::class);
     }
 }

@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Cliente;
-use Illuminate\Support\Facades\DB;
 use App\Http\Requests\Clientes\StoreClienteRequest;
 use App\Http\Requests\Clientes\UpdateClienteRequest;
-use App\Models\CodigoPostal;
+use App\Models\Cliente;
 use App\Services\ClienteService;
 use App\Services\PaisService;
 use App\Services\RegimenFiscalService;
@@ -20,7 +18,7 @@ class ClienteController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('role_or_permission:Super Admin|read clientes', only: ['index']),
+            new Middleware('role_or_permission:Super Admin|read clientes', only: ['index', 'show']),
             new Middleware('role_or_permission:Super Admin|create clientes', only: ['create', 'store']),
             new Middleware('role_or_permission:Super Admin|update clientes', only: ['edit', 'update']),
             new Middleware('role_or_permission:Super Admin|delete clientes', only: ['destroy']),
@@ -36,7 +34,7 @@ class ClienteController extends Controller implements HasMiddleware
                 $cliente['primer_nombre'],
                 $cliente['segundo_nombre'],
                 $cliente['apellido_paterno'],
-                $cliente['apellido_materno']
+                $cliente['apellido_materno'],
             ]));
         }
 
@@ -50,12 +48,12 @@ class ClienteController extends Controller implements HasMiddleware
         $paises = $paisService->readAll(['id', 'nombre_es', 'nombre_nativo', 'codigo_iso', 'emoji']);
         $sexos = [
             ['value' => 'masculino', 'label' => 'Masculino'],
-            ['value' => 'femenino', 'label' => 'Femenino']
+            ['value' => 'femenino', 'label' => 'Femenino'],
         ];
 
         $tiposPersona = [
             ['value' => 'fisica', 'label' => 'Fisica'],
-            ['value' => 'moral', 'label' => 'Moral']
+            ['value' => 'moral', 'label' => 'Moral'],
         ];
 
         $regimenesFiscales = $regimenFiscalService->readAll(['id', 'clave', 'descripcion', 'fisica', 'moral']);
@@ -64,14 +62,15 @@ class ClienteController extends Controller implements HasMiddleware
             'paises' => $paises,
             'sexos' => $sexos,
             'tiposPersona' => $tiposPersona,
-            'regimenesFiscales' => $regimenesFiscales
+            'regimenesFiscales' => $regimenesFiscales,
         ]);
     }
 
     public function store(StoreClienteRequest $request, ClienteService $clienteService)
     {
         $cliente = $clienteService->store($request->validated());
-        return response()->redirectToRoute('clientes.edit', ['cliente' => $cliente->id]);
+
+        return response()->redirectToRoute('clientes.expediente.show', ['cliente' => $cliente->id]);
     }
 
     public function show(Request $request, Cliente $cliente, PaisService $paisService, RegimenFiscalService $regimenFiscalService)
@@ -79,12 +78,12 @@ class ClienteController extends Controller implements HasMiddleware
         $paises = $paisService->readAll(['id', 'nombre_es', 'nombre_nativo', 'codigo_iso', 'emoji']);
         $sexos = [
             ['value' => 'masculino', 'label' => 'Masculino'],
-            ['value' => 'femenino', 'label' => 'Femenino']
+            ['value' => 'femenino', 'label' => 'Femenino'],
         ];
 
         $tiposPersona = [
             ['value' => 'fisica', 'label' => 'Fisica'],
-            ['value' => 'moral', 'label' => 'Moral']
+            ['value' => 'moral', 'label' => 'Moral'],
         ];
 
         $regimenesFiscales = $regimenFiscalService->readAll(['id', 'clave', 'descripcion', 'fisica', 'moral']);
@@ -95,7 +94,7 @@ class ClienteController extends Controller implements HasMiddleware
             'paises' => $paises,
             'sexos' => $sexos,
             'tiposPersona' => $tiposPersona,
-            'regimenesFiscales' => $regimenesFiscales
+            'regimenesFiscales' => $regimenesFiscales,
         ]);
     }
 
@@ -104,12 +103,12 @@ class ClienteController extends Controller implements HasMiddleware
         $paises = $paisService->readAll(['id', 'nombre_es', 'nombre_nativo', 'codigo_iso', 'emoji']);
         $sexos = [
             ['value' => 'masculino', 'label' => 'Masculino'],
-            ['value' => 'femenino', 'label' => 'Femenino']
+            ['value' => 'femenino', 'label' => 'Femenino'],
         ];
 
         $tiposPersona = [
             ['value' => 'fisica', 'label' => 'Fisica'],
-            ['value' => 'moral', 'label' => 'Moral']
+            ['value' => 'moral', 'label' => 'Moral'],
         ];
 
         $regimenesFiscales = $regimenFiscalService->readAll(['id', 'clave', 'descripcion', 'fisica', 'moral']);
@@ -121,19 +120,21 @@ class ClienteController extends Controller implements HasMiddleware
             'paises' => $paises,
             'sexos' => $sexos,
             'tiposPersona' => $tiposPersona,
-            'regimenesFiscales' => $regimenesFiscales
+            'regimenesFiscales' => $regimenesFiscales,
         ]);
     }
 
     public function update(UpdateClienteRequest $request, Cliente $cliente, ClienteService $clienteService)
     {
         $clienteService->update($cliente, $request->validated());
+
         return response()->redirectToRoute('clientes.edit', ['cliente' => $cliente->id]);
     }
 
     public function destroy(Cliente $cliente, ClienteService $clienteService)
     {
         $clienteService->destroy($cliente);
+
         return response()->redirectToRoute('clientes.index');
     }
 }

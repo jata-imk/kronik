@@ -5,6 +5,7 @@
 - [Comandos Artisan](comandos-artisan.md)
 - [Configuracion de empresa](configuracion-empresa.md)
 - [Definicion de terminado](definicion-terminado.md)
+- [Expediente de clientes](expediente-clientes.md)
 - [Flujo de tareas, pruebas y PR](flujo-tareas-pruebas-pr.md)
 - [Roles y permisos](roles-y-permisos.md)
 - [Seeders](seeders.md)

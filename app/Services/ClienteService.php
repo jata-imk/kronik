@@ -9,6 +9,12 @@ use Illuminate\Support\Facades\DB;
 
 class ClienteService
 {
+    public function __construct(
+        private readonly ClienteExpedienteService $expedienteService,
+        private readonly ClienteDocumentoService $documentoService,
+        private readonly ClienteConsentimientoSicService $consentimientoService,
+    ) {}
+
     public function readAll()
     {
         return Cliente::with([
@@ -19,8 +25,8 @@ class ClienteService
                 'codigoPostal.divisionAdministrativa.padre.padre',
                 'divisionAdministrativaUno',
                 'divisionAdministrativaDos',
-                'divisionAdministrativaTres'
-            ]
+                'divisionAdministrativaTres',
+            ],
         ])->get();
     }
 
@@ -29,13 +35,15 @@ class ClienteService
         return DB::transaction(function () use ($data) {
             $cliente = Cliente::create($data);
 
+            $this->expedienteService->initializeChecklist($cliente);
+
             $cliente->datosFiscales()->create($data['datos_fiscales']);
 
             foreach ($data['direcciones'] as $direccion) {
                 $direccion['entidad_id'] = $cliente->id;
                 $direccion['entidad_tipo'] = 'clientes';
 
-                if (!isset($direccion['codigo_postal_id'])) {
+                if (! isset($direccion['codigo_postal_id'])) {
                     $codigoPostal = CodigoPostal::where('codigo', $direccion['codigo_postal'])
                         ->where('division_admin_id', $direccion['division_admin_tres_id'])
                         ->first();
@@ -44,14 +52,14 @@ class ClienteService
                     $direccion['pais_id'] = $codigoPostal->pais_id;
                 }
 
-                if (!isset($direccion['tipo'])) {
+                if (! isset($direccion['tipo'])) {
                     $direccion['tipo'] = 'personal';
                 }
 
-                if (!isset($direccion['coordenadas'])) {
+                if (! isset($direccion['coordenadas'])) {
                     $direccion['coordenadas'] = [
                         'lat' => 0,
-                        'lng' => 0
+                        'lng' => 0,
                     ];
                 }
 
@@ -64,7 +72,7 @@ class ClienteService
                 ->withProperties([
                     'ip' => request()->ip(),
                     'user_agent' => request()->header('User-Agent'),
-                    'attributes' => $data
+                    'attributes' => $data,
                 ])
                 ->log('Cliente creado');
 
@@ -86,7 +94,7 @@ class ClienteService
                     $direccion['entidad_id'] = $cliente->id;
                     $direccion['entidad_tipo'] = 'clientes';
 
-                    if (!isset($direccion['codigo_postal_id'])) {
+                    if (! isset($direccion['codigo_postal_id'])) {
                         $codigoPostal = CodigoPostal::where('codigo', $direccion['codigo_postal'])
                             ->where('division_admin_id', $direccion['division_admin_tres_id'])
                             ->first();
@@ -95,14 +103,14 @@ class ClienteService
                         $direccion['pais_id'] = $codigoPostal->pais_id;
                     }
 
-                    if (!isset($direccion['tipo'])) {
+                    if (! isset($direccion['tipo'])) {
                         $direccion['tipo'] = 'personal';
                     }
 
-                    if (!isset($direccion['coordenadas'])) {
+                    if (! isset($direccion['coordenadas'])) {
                         $direccion['coordenadas'] = [
                             'lat' => 0,
-                            'lng' => 0
+                            'lng' => 0,
                         ];
                     }
 
@@ -116,7 +124,7 @@ class ClienteService
                 ->withProperties([
                     'ip' => request()->ip(),
                     'user_agent' => request()->header('User-Agent'),
-                    'attributes' => $data
+                    'attributes' => $data,
                 ])
                 ->log('Cliente actualizado');
 
@@ -127,6 +135,8 @@ class ClienteService
     public function destroy(Cliente $cliente)
     {
         return DB::transaction(function () use ($cliente) {
+            $this->documentoService->deleteFilesFor($cliente);
+            $this->consentimientoService->deleteFilesFor($cliente);
             $cliente->direcciones()->delete();
             $cliente->datosFiscales()->delete();
             $cliente->delete();

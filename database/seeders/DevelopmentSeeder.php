@@ -2,8 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ClienteDocumentoTipo;
 use App\Models\Cliente;
 use App\Models\ClienteDatosFiscales;
+use App\Models\ClienteDocumento;
+use App\Models\ClienteGarantia;
+use App\Models\ClienteReferencia;
+use App\Models\ClienteVinculo;
 use App\Models\CodigoPostal;
 use App\Models\Direccion;
 use App\Models\DivisionAdministrativa;
@@ -231,6 +236,11 @@ class DevelopmentSeeder extends Seeder
                     'telefono' => '5512345678',
                     'email' => 'ana.garcia@example.test',
                     'sexo' => 'femenino',
+                    'ocupacion' => 'Consultora administrativa',
+                    'actividad_economica' => 'Servicios profesionales de consultoria',
+                    'ingresos_mensuales' => 48000,
+                    'egresos_mensuales' => 21500,
+                    'origen_recursos' => 'Honorarios profesionales y servicios de consultoria.',
                 ],
                 'fiscal' => [
                     'tipo_persona' => 'fisica',
@@ -260,6 +270,11 @@ class DevelopmentSeeder extends Seeder
                     'telefono' => '5587654321',
                     'email' => 'carlos.martinez@example.test',
                     'sexo' => 'masculino',
+                    'ocupacion' => 'Director de operaciones',
+                    'actividad_economica' => 'Servicios financieros y administrativos',
+                    'ingresos_mensuales' => 72000,
+                    'egresos_mensuales' => 34800,
+                    'origen_recursos' => 'Sueldo y compensaciones laborales.',
                 ],
                 'fiscal' => [
                     'tipo_persona' => 'moral',
@@ -292,7 +307,10 @@ class DevelopmentSeeder extends Seeder
 
             $this->seedDireccion($cliente, $pais, $codigoPostal, $record['direccion']);
             $this->seedSicQuery($cliente, $sic, $sicApi, $record['score'], $record['status']);
+            $this->seedExpediente($cliente);
         }
+
+        $this->seedVinculosYGarantias();
     }
 
     private function seedFallbackCatalogs(): void
@@ -464,6 +482,57 @@ class DevelopmentSeeder extends Seeder
                         'Uso moderado de líneas de crédito',
                     ],
                 ],
+            ],
+        );
+    }
+
+    private function seedExpediente(Cliente $cliente): void
+    {
+        foreach (ClienteDocumentoTipo::requeridos() as $tipo) {
+            ClienteDocumento::firstOrCreate(
+                ['cliente_id' => $cliente->id, 'tipo' => $tipo->value, 'version' => 1],
+                ['estado' => 'pendiente', 'es_actual' => true],
+            );
+        }
+
+        ClienteReferencia::updateOrCreate(
+            ['cliente_id' => $cliente->id, 'tipo' => 'personal', 'telefono' => '5511112233'],
+            [
+                'nombre' => 'Referencia Demo',
+                'relacion' => 'Amistad',
+                'telefono_codigo_pais' => '+52',
+                'email' => 'referencia@example.test',
+                'notas' => 'Contacto disponible en horario laboral.',
+            ],
+        );
+    }
+
+    private function seedVinculosYGarantias(): void
+    {
+        $titular = Cliente::where('email', 'ana.garcia@example.test')->first();
+        $vinculado = Cliente::where('email', 'carlos.martinez@example.test')->first();
+
+        if (! $titular || ! $vinculado) {
+            return;
+        }
+
+        ClienteVinculo::updateOrCreate(
+            [
+                'cliente_id' => $titular->id,
+                'cliente_vinculado_id' => $vinculado->id,
+                'rol' => 'aval',
+            ],
+            ['notas' => 'Vinculo demo para validacion del expediente.'],
+        );
+
+        ClienteGarantia::updateOrCreate(
+            ['cliente_id' => $titular->id, 'descripcion' => 'Vehiculo utilitario demo'],
+            [
+                'propietario_cliente_id' => $titular->id,
+                'tipo' => 'prendaria',
+                'valor_estimado' => 285000,
+                'moneda' => 'MXN',
+                'notas' => 'Valor declarado para datos de demostracion.',
             ],
         );
     }
