@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\MenubarItemController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\EmpresaConfiguracionController;
+use App\Http\Controllers\Admin\SucursalController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CirculoCreditoController;
 use App\Http\Controllers\ClienteController;
@@ -66,6 +68,11 @@ Route::middleware([
 
         Route::get('users/activity', [UserController::class, 'usersActivity'])->name('users.activity');
         Route::resource('users', UserController::class);
+        Route::get('configuracion-empresa', [EmpresaConfiguracionController::class, 'index'])->name('configuracion-empresa.index');
+        Route::put('configuracion-empresa', [EmpresaConfiguracionController::class, 'update'])->name('configuracion-empresa.update');
+        Route::resource('sucursales', SucursalController::class)
+            ->only(['index', 'store', 'update', 'destroy'])
+            ->parameters(['sucursales' => 'sucursal']);
         Route::get('menubar-items/routes', [MenubarItemController::class, 'availableRoutes'])->name('menubar-items.available-routes');
         Route::resource('menubar-items', MenubarItemController::class);
         Route::resource('roles', RoleController::class);

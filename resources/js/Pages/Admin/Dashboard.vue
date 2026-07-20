@@ -16,6 +16,8 @@ import AppLayout from "@sakai-vue/layout/AppLayout.vue";
                     <Button label="Usuarios" as="a" :href="route('admin.users.index')" />
                     <Button label="Logs de Actividades" as="a" :href="route('admin.users.activity')" />
                 </div>
+                <Button label="Configuracion de empresa" as="a" :href="route('admin.configuracion-empresa.index')" class="mb-3" />
+                <Button label="Sucursales" as="a" :href="route('admin.sucursales.index')" class="mb-3" />
                 <Button label="Configurar menubar" as="a" :href="route('admin.menubar-items.index')" class="mb-3" />
                 <Button label="Configurar roles" as="a" :href="route('admin.roles.index')" class="mb-3" />
             </div>

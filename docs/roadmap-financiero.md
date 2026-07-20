@@ -2,19 +2,19 @@
 
 ## Objetivo
 
-Definir los procesos necesarios para convertir el sistema actual en una plataforma configurable para pequeñas financieras mexicanas. El supuesto base es una SOFOM ENR que otorga crédito propio, inicia con crédito simple y posteriormente opera crédito revolvente.
+Definir los procesos necesarios para convertir el sistema actual en una plataforma configurable para pequeñas financieras mexicanas. El supuesto base es una SOFOM ENR que otorga crédito propio, inicia con crédito simple y posteriormente opera crédito revolvente. El despliegue esperado es una instancia por financiera, no una app multi-financiera.
 
 ## Estado Actual del Sistema
 
-Ya existe una base funcional para usuarios, equipos, permisos, clientes, datos fiscales, domicilios y consultas de historial crediticio. El modelo de `teams` puede representar una financiera, sucursal o unidad operativa. Los clientes ya tienen datos personales, fiscales, direcciones y relación con consultas SIC. Círculo de Crédito está parcialmente integrado mediante servicios, repositorios, seeders y vistas para seleccionar APIs.
+Ya existe una base funcional para usuarios, equipos, permisos, clientes, datos fiscales, domicilios y consultas de historial crediticio. El modelo de `teams` debe representar departamentos, grupos de trabajo o contexto de permisos; las sucursales son una entidad de negocio separada. Los clientes ya tienen datos personales, fiscales, direcciones y relación con consultas SIC. Círculo de Crédito está parcialmente integrado mediante servicios, repositorios, seeders y vistas para seleccionar APIs.
 
-Faltan módulos centrales: configuración de empresa, expediente documental, solicitudes de crédito, productos, motor de amortización, autorización SIC formal, PLD, cobranza, pagos, reportes regulatorios/operativos y contabilidad.
+Faltan módulos centrales: expediente documental, solicitudes de crédito, productos, motor de amortización, autorización SIC formal, PLD, cobranza, pagos, reportes regulatorios/operativos y contabilidad.
 
 ## Procesos Requeridos
 
 ### Configuración de Empresa
 
-Cada financiera debe poder configurar identidad legal, datos fiscales, domicilio, sucursales, usuarios, roles, permisos, moneda, zona horaria, logotipos, folios, formatos, políticas generales, cuentas bancarias, plantillas contractuales y llaves de integraciones. Esta configuración debe aislarse por equipo/empresa.
+Cada instancia debe configurar identidad legal, datos fiscales, domicilio fiscal, usuarios, roles, permisos, moneda, zona horaria, logotipos, formatos, políticas generales, cuentas bancarias, plantillas contractuales y llaves de integraciones. Las sucursales guardan domicilio operativo, horarios y folios propios.
 
 ### Productos Crediticios
 
@@ -51,7 +51,7 @@ Los reportes mínimos son colocación, cartera vigente/vencida, morosidad, pagos
 ## Roadmap por Fases
 
 1. Documentar alcance, fuentes y TODOs.
-2. Implementar configuración global de empresa.
+2. Implementar configuración global de empresa y sucursales.
 3. Completar expediente KYC y documentación del solicitante.
 4. Diseñar productos de crédito simple y simulador.
 5. Crear solicitudes, evaluación y dictamen.

@@ -20,14 +20,15 @@ Al registrarse, cada usuario recibe automáticamente un **equipo personal** (`pe
 
 ## Cómo aplica en esta aplicación financiera
 
-En el contexto del ERP financiero, **un equipo representa una organización o sucursal**. Ejemplos de uso:
+En el contexto del ERP financiero, **un equipo representa un departamento, grupo de trabajo o contexto de permisos**. La app se despliega para una sola financiera y las sucursales se modelan aparte cuando necesitan domicilio, horarios o folios propios. Ejemplos de uso:
 
-- **Institución financiera principal** → equipo raíz con acceso total
-- **Sucursal regional** → equipo propio, solo ve sus clientes y operaciones
+- **Dirección** → acceso ejecutivo y configuración
+- **Comité de crédito** → revisión y aprobación de solicitudes
 - **Equipo de cobranza** → acceso limitado a cartera vencida
 - **Auditoría interna** → acceso de solo lectura a logs y reportes
+- **Software/soporte** → permisos administrativos técnicos
 
-Los usuarios se agregan a equipos y reciben **roles Spatie acotados a ese equipo**. Cambiar de equipo activo cambia los permisos disponibles en tiempo real.
+Los usuarios se agregan a equipos y reciben **roles Spatie acotados a ese equipo**. Cambiar de equipo activo cambia los permisos disponibles en tiempo real. La sucursal operativa de un crédito o pago debe guardarse en una entidad de negocio separada, no en `teams`.
 
 ---
 

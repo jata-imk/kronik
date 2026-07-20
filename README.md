@@ -2,6 +2,8 @@
 
 ERP financiero orientado a pequeñas financieras y fintech mexicanas que operan productos de crédito. El supuesto funcional principal es una **SOFOM ENR**, con soporte inicial para crédito simple y roadmap temprano para crédito revolvente.
 
+El despliegue esperado es **una app por financiera**. Si otra financiera contrata el sistema, se despliega otra instancia/VPS con su propia configuración.
+
 La plataforma busca centralizar configuración de empresa, clientes, expedientes KYC, consultas a Sociedades de Información Crediticia (SIC), originación, PLD, amortización, cobranza, reportes y auditoría.
 
 ## Estado Actual
@@ -9,6 +11,7 @@ La plataforma busca centralizar configuración de empresa, clientes, expedientes
 El repositorio ya cuenta con una base Laravel 11 + Inertia + Vue 3:
 
 - Autenticación, equipos Jetstream, roles y permisos Spatie por equipo.
+- Configuración global de empresa y sucursales operativas.
 - Alta, edición, consulta y eliminación de clientes.
 - Datos fiscales, domicilios, catálogos de países, régimen fiscal y códigos postales.
 - Integración parcial con Círculo de Crédito para FICO Score, Fintech Score y reportes relacionados.
@@ -20,7 +23,7 @@ El repositorio ya cuenta con una base Laravel 11 + Inertia + Vue 3:
 
 ### Configuración Global de Empresa
 
-Cada financiera debe configurar razón social, datos fiscales, sucursales/equipos, usuarios, roles, permisos, moneda, zona horaria, folios, parámetros de cobranza, formatos contractuales, llaves de integraciones y políticas de operación.
+Cada instancia debe configurar razón social, datos fiscales, usuarios, roles, permisos, moneda, zona horaria, parámetros de cobranza, formatos contractuales, llaves de integraciones y políticas de operación. Las sucursales guardan domicilio, horarios y folios propios. Los `teams` quedan para departamentos, grupos de trabajo y contexto de permisos.
 
 ### Productos de Crédito
 
@@ -80,7 +83,7 @@ Dependencias externas del sistema cuando se requieran documentos:
 ## Roadmap Prioritario
 
 1. **Documentación y diseño funcional:** convertir el análisis financiero en TODOs implementables por módulo.
-2. **Configuración de empresa:** perfil de financiera, sucursales/equipos, folios, parámetros globales e integraciones.
+2. **Configuración de empresa:** perfil de financiera, sucursales, folios, parámetros globales e integraciones.
 3. **Expediente de cliente/KYC:** completar solicitantes, documentos, consentimientos, avales, referencias e ingresos.
 4. **Productos de crédito:** crédito simple configurable, simulador, CAT, comisiones y reglas de mora.
 5. **Originación:** solicitud, evaluación, consulta SIC, dictamen y aprobación.
