@@ -76,7 +76,7 @@ class Direccion extends Model
         if (is_array($value)) {
             $lat = $value['lat'];
             $lng = $value['lng'];
-            $this->attributes['coordenadas'] = DB::raw("ST_GeomFromText('POINT($lng $lat)')");
+            $this->attributes['coordenadas'] = DB::raw("ST_GeomFromText('POINT($lat $lng)')");
         }
     }
 }

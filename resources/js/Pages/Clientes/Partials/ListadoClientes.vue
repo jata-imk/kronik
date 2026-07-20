@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, reactive } from "vue";
+import { ref } from "vue";
 import { useToast } from "primevue/usetoast";
 import { FilterMatchMode } from "@primevue/core/api";
 import { router } from "@inertiajs/vue3";
@@ -33,6 +33,41 @@ const filters = ref({
     sexo: { value: null, matchMode: FilterMatchMode.EQUALS },
     "datos_fiscales.rfc": { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
+
+/**
+ * Copia el texto proporcionado al portapapeles.
+ * @param {string} text - El texto que se copiará al portapapeles.
+ */
+function copyToClipboard(text) {
+    if (!navigator.clipboard) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "El portapapeles no está disponible en este navegador.",
+            life: 3000,
+        });
+        return;
+    }
+
+    navigator.clipboard
+        .writeText(text)
+        .then(() => {
+            toast.add({
+                severity: "success",
+                summary: "Éxito",
+                detail: "Texto copiado al portapapeles",
+                life: 3000,
+            });
+        })
+        .catch((err) => {
+            toast.add({
+                severity: "error",
+                summary: "Error",
+                detail: `No se pudo copiar el texto: ${err.message}`,
+                life: 3000,
+            });
+        });
+}
 
 const loadClientes = async () => {
     loading.value = true;
@@ -69,30 +104,27 @@ const confirmDelete = (cliente) => {
     deleteDialog.value = true;
 };
 
-const deleteCliente = async () => {
+const deleteCliente = () => {
     try {
-        await fetch(`/api/clientes/${clienteSeleccionado.value.id}`, {
-            method: "DELETE",
-            headers: {
-                "X-CSRF-TOKEN": document
-                    .querySelector('meta[name="csrf-token"]')
-                    .getAttribute("content"),
+        router.delete(route("clientes.destroy", clienteSeleccionado.value.id), {
+            preserveScroll: true,
+            preserveState: true,
+            onFinish: (visit) => {
+                toast.add({
+                    severity: "success",
+                    summary: "Éxito",
+                    detail: "Cliente eliminado correctamente",
+                    life: 3000,
+                });
+
+                deleteDialog.value = false;
             },
         });
-
-        toast.add({
-            severity: "success",
-            summary: "Éxito",
-            detail: "Cliente eliminado correctamente",
-            life: 3000,
-        });
-        loadClientes();
-        deleteDialog.value = false;
     } catch (error) {
         toast.add({
             severity: "error",
             summary: "Error",
-            detail: "No se pudo eliminar el cliente",
+            detail: `"No se pudo eliminar el cliente, detalles: ${error.message}"`,
             life: 3000,
         });
     }
@@ -161,9 +193,8 @@ const exportData = async () => {
 </script>
 
 <template>
-    <div class="card">
+    <div class="card !p-0">
         <div class="flex flex-wrap gap-4 justify-content-between align-items-center mb-4">
-            <h1 class="text-3xl font-bold">Gestión de Clientes</h1>
             <div class="w-full flex gap-2">
                 <Button label="Nuevo Cliente" icon="pi pi-plus" class="p-button-success" @click="navigateToCreate" />
                 <Button label="Importar" icon="pi pi-upload" class="p-button-info" @click="showImportDialog" />
@@ -171,14 +202,24 @@ const exportData = async () => {
             </div>
         </div>
 
-        <DataTable :value="clientes" v-model:filters="filters" filter-display="row" :global-filter-fields="[
-          'id', 'nombre_completo', 'email', 'telefono', 
-          'pais_nacimiento.nombre_es', 'sexo', 'datos_fiscales.rfc'
-        ]" :paginator="true" :rows="10" :loading="loading"
+        <DataTable
+            :value="clientes"
+            v-model:filters="filters"
+            filter-display="row"
+            :global-filter-fields="[
+                'id', 'nombre_completo', 'email', 'telefono', 
+                'pais_nacimiento.nombre_es', 'sexo', 'datos_fiscales.rfc'
+            ]"
+            :paginator="true"
+            :rows="10"
+            :loading="loading"
             paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
             @rows-per-page-options="[10, 25, 50]"
             current-page-report-template="Mostrando {first} a {last} de {totalRecords} clientes"
-            responsive-layout="scroll" striped-rows :row-hover="true" class="p-datatable-sm">
+            responsive-layout="scroll"
+            :scrollable="true"
+            scroll-height="73vh"
+            striped-rows :row-hover="true" class="p-datatable-sm">
             <template #header>
                 <div class="flex justify-end mb-4">
                     <span class="p-input-icon-left">
@@ -188,10 +229,13 @@ const exportData = async () => {
                 </div>
             </template>
 
-            <Column field="id" header="ID" sortable>
+            <Column field="id" header="ID" :show-filter-menu="false" :pt="{
+                columnheadercontent: { class: 'justify-center' },
+                bodycell: { class: '!text-center' },
+                filterElementContainer: { class: '!w-[7vw] !max-w-[100px]' },
+            }" sortable>
                 <template #filter="{ filterModel, filterCallback }">
-                    <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter"
-                        placeholder="Buscar por ID" />
+                    <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter w-full" />
                 </template>
             </Column>
 
@@ -210,11 +254,21 @@ const exportData = async () => {
                     <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter"
                         placeholder="Buscar por email" />
                 </template>
+
+                <template #body="{ data }">
+                    <Chip class="flex items-center !px-2 !py-1 !bg-primary-100 !text-gray-900 dark:!bg-primary-800 dark:!text-gray-200">
+                        <Button icon="pi pi-clipboard" @click="copyToClipboard(data.email)" size="small" rounded />
+                        <p class="font-semibold text-sm max-w-[250px] truncate">{{ data.email }}</p>
+                    </Chip>
+                </template>
             </Column>
 
             <Column field="telefono" header="Teléfono" sortable>
                 <template #body="{ data }">
-                    {{ data.telefono_codigo_pais }} {{ data.telefono }}
+                    <Tag v-if="data.telefono_codigo_pais" severity="success" rounded class="font-mono" >
+                        +{{ data.telefono_codigo_pais }}
+                    </Tag>
+                    <span class="ml-2 font-semibold font-mono">{{ data.telefono.replaceAll(' ', '') }}</span>
                 </template>
                 <template #filter="{ filterModel, filterCallback }">
                     <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter"
@@ -225,7 +279,7 @@ const exportData = async () => {
             <Column field="pais_nacimiento.nombre_es" header="País" sortable>
                 <template #body="{ data }">
                     <div class="flex align-items-center gap-2">
-                        <span>{{ data.pais_nacimiento?.emoji }}</span>
+                        <span v-twemoji >{{ data.pais_nacimiento?.emoji }}</span>
                         <span>{{ data.pais_nacimiento?.nombre_es }}</span>
                     </div>
                 </template>
@@ -255,7 +309,7 @@ const exportData = async () => {
                 </template>
             </Column>
 
-            <Column header="Acciones" :exportable="false">
+            <Column header="Acciones" :exportable="false" :frozen="true" align-frozen="right">
                 <template #body="{ data }">
                     <div class="flex gap-2">
                         <Button icon="pi pi-eye" class="p-button-rounded p-button-info p-button-sm"
@@ -299,7 +353,5 @@ const exportData = async () => {
                 </a>
             </template>
         </Dialog>
-
-        <Toast />
     </div>
 </template>

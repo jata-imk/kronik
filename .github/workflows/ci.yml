@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - devjatejero
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: kronik_test
+          MARIADB_USER: kronik
+          MARIADB_PASSWORD: secret
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:VdUXfE4mVbQd4D4QnS2SGdlx1DsFJsPhlfLCMyn5LIk=
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: kronik_test
+      DB_USERNAME: kronik
+      DB_PASSWORD: secret
+      CACHE_STORE: array
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: array
+      MAIL_MAILER: array
+      BCRYPT_ROUNDS: 4
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo_mysql, bcmath, soap, intl, gd
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Check documentation coverage
+        shell: bash
+        run: |
+          if [ -n "${GITHUB_BASE_REF:-}" ]; then
+            git fetch origin "$GITHUB_BASE_REF" --depth=1
+            diff_range="origin/$GITHUB_BASE_REF...HEAD"
+          elif [ -n "${{ github.event.before }}" ] && [ "${{ github.event.before }}" != "0000000000000000000000000000000000000000" ]; then
+            diff_range="${{ github.event.before }}...HEAD"
+          else
+            diff_range="HEAD~1...HEAD"
+          fi
+
+          changed_files="$(git diff --name-only --diff-filter=ACMR "$diff_range" || true)"
+
+          if [ -z "$changed_files" ]; then
+            exit 0
+          fi
+
+          needs_docs=0
+          has_docs=0
+
+          while IFS= read -r file; do
+            case "$file" in
+              app/*|bootstrap/*|config/*|database/*|resources/*|routes/*|tests/*|composer.json|composer.lock|package.json|package-lock.json|vite.config.js|tailwind.config.js|biome.json|phpunit.xml|.github/*|.githooks/*)
+                needs_docs=1
+                ;;
+            esac
+
+            case "$file" in
+              docs/*|README.md|AGENTS.md|CLAUDE.md|.env.example)
+                has_docs=1
+                ;;
+            esac
+          done <<< "$changed_files"
+
+          if [ "$needs_docs" -eq 1 ] && [ "$has_docs" -eq 0 ]; then
+            echo "Code/config changes require related documentation changes."
+            exit 1
+          fi
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Run backend tests
+        run: php artisan test

@@ -1,0 +1,111 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Sucursal;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+
+class SucursalController extends Controller implements HasMiddleware
+{
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('role_or_permission:Super Admin|read sucursales', only: ['index']),
+            new Middleware('role_or_permission:Super Admin|create sucursales', only: ['store']),
+            new Middleware('role_or_permission:Super Admin|update sucursales', only: ['update']),
+            new Middleware('role_or_permission:Super Admin|delete sucursales', only: ['destroy']),
+        ];
+    }
+
+    public function index()
+    {
+        return Inertia::render('Admin/Sucursales/Index', [
+            'sucursales' => fn() => Sucursal::orderByDesc('activa')
+                ->orderBy('nombre')
+                ->get(),
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $fields = $this->validateSucursal($request);
+        $sucursal = Sucursal::create($fields);
+
+        activity()
+            ->performedOn($sucursal)
+            ->causedBy(Auth::user())
+            ->withProperties(['attributes' => $sucursal->toArray()])
+            ->log('Sucursal creada');
+
+        return redirect()->back()->with('success', 'Sucursal creada');
+    }
+
+    public function update(Request $request, Sucursal $sucursal)
+    {
+        $fields = $this->validateSucursal($request, $sucursal);
+        $before = $sucursal->getOriginal();
+        $sucursal->update($fields);
+
+        activity()
+            ->performedOn($sucursal)
+            ->causedBy(Auth::user())
+            ->withProperties([
+                'before' => $before,
+                'after' => $sucursal->fresh()->toArray(),
+            ])
+            ->log('Sucursal actualizada');
+
+        return redirect()->back()->with('success', 'Sucursal actualizada');
+    }
+
+    public function destroy(Sucursal $sucursal)
+    {
+        $sucursal->update(['activa' => false]);
+
+        activity()
+            ->performedOn($sucursal)
+            ->causedBy(Auth::user())
+            ->log('Sucursal desactivada');
+
+        return redirect()->back()->with('success', 'Sucursal desactivada');
+    }
+
+    private function validateSucursal(Request $request, ?Sucursal $sucursal = null): array
+    {
+        return $request->validate([
+            'nombre' => ['required', 'string', 'max:255'],
+            'clave' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('sucursales', 'clave')->ignore($sucursal),
+            ],
+            'domicilio' => ['nullable', 'array'],
+            'domicilio.calle' => ['nullable', 'string', 'max:255'],
+            'domicilio.numero_exterior' => ['nullable', 'string', 'max:50'],
+            'domicilio.numero_interior' => ['nullable', 'string', 'max:50'],
+            'domicilio.colonia' => ['nullable', 'string', 'max:127'],
+            'domicilio.municipio' => ['nullable', 'string', 'max:127'],
+            'domicilio.estado' => ['nullable', 'string', 'max:127'],
+            'domicilio.codigo_postal' => ['nullable', 'string', 'max:15'],
+            'telefono' => ['nullable', 'string', 'max:30'],
+            'email' => ['nullable', 'email', 'max:127'],
+            'horario' => ['nullable', 'array'],
+            'horario.lunes_viernes' => ['nullable', 'string', 'max:80'],
+            'horario.sabado' => ['nullable', 'string', 'max:80'],
+            'horario.domingo' => ['nullable', 'string', 'max:80'],
+            'prefijo_folio' => ['nullable', 'string', 'max:20'],
+            'consecutivo_solicitud' => ['required', 'integer', 'min:1'],
+            'consecutivo_contrato' => ['required', 'integer', 'min:1'],
+            'consecutivo_credito' => ['required', 'integer', 'min:1'],
+            'consecutivo_recibo' => ['required', 'integer', 'min:1'],
+            'activa' => ['required', 'boolean'],
+        ]);
+    }
+}

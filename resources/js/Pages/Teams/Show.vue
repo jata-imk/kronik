@@ -5,18 +5,21 @@ import SectionBorder from "@/Components/SectionBorder.vue";
 import TeamMemberManager from "@/Pages/Teams/Partials/TeamMemberManager.vue";
 import UpdateTeamNameForm from "@/Pages/Teams/Partials/UpdateTeamNameForm.vue";
 
-defineProps({
-    team: Object,
-    availableRoles: Array,
-    permissions: Object,
-});
+import { usePage } from "@inertiajs/vue3";
+import { reactive } from "vue";
+
+const page = usePage();
+const auth = page.props.auth;
+const team = page.props.team;
+const availableRoles = auth.user.roles;
+const permissions = auth.permissions;
 </script>
 
 <template>
-    <AppLayout title="Team Settings">
+    <AppLayout title="Configuración del equipo">
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                Team Settings
+            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+                Configuración del equipo
             </h2>
         </template>
 
@@ -27,11 +30,11 @@ defineProps({
                 <TeamMemberManager
                     class="mt-10 sm:mt-0"
                     :team="team"
+                    :permissions="permissions"
                     :available-roles="availableRoles"
-                    :user-permissions="permissions"
                 />
 
-                <template v-if="permissions.canDeleteTeam && ! team.personal_team">
+                <template v-if="permissions['delete-teams'] && ! team.personal_team">
                     <SectionBorder />
 
                     <DeleteTeamForm class="mt-10 sm:mt-0" :team="team" />

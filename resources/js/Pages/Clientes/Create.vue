@@ -5,14 +5,14 @@ import FormCliente from "./Partials/FormCliente.vue";
 
 <template>
     <AppLayout title="Crear nuevo cliente">
-        <div class="pb-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <Card>
-                    <template #content>
-                        <FormCliente />
-                    </template>
-                </Card>
+        <template #card-header>
+            <div class="flex justify-between items-center pl-4 pt-4">
+                <h2 class="text-2xl font-bold">Formulario de creación de clientes</h2>
             </div>
-        </div>
+        </template>
+
+        <template #card-content>
+            <FormCliente />
+        </template>
     </AppLayout>
 </template>

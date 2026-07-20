@@ -29,7 +29,8 @@ class AddTeamMember implements AddsTeamMembers
         AddingTeamMember::dispatch($team, $newTeamMember);
 
         $team->users()->attach(
-            $newTeamMember, ['role' => $role]
+            $newTeamMember,
+            ['role' => $role]
         );
 
         TeamMemberAdded::dispatch($team, $newTeamMember);
@@ -60,8 +61,8 @@ class AddTeamMember implements AddsTeamMembers
         return array_filter([
             'email' => ['required', 'email', 'exists:users'],
             'role' => Jetstream::hasRoles()
-                            ? ['required', 'string', new Role]
-                            : null,
+                ? ['required', 'string', new Role]
+                : null,
         ]);
     }
 

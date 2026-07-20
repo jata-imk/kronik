@@ -12,12 +12,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('direcciones', function (Blueprint $table) {
+        $isMariaDb = str_contains(DB::connection()->getPdo()->getAttribute(\PDO::ATTR_SERVER_VERSION), 'MariaDB');
+
+        Schema::create('direcciones', function (Blueprint $table) use ($isMariaDb) {
             $table->id();
 
             $table->unsignedBigInteger('entidad_id');
 
-            if (DB::connection()->getDriverName() === 'mariadb') {
+            if ($isMariaDb) {
                 $table->string('entidad_tipo', 10);
                 $table->string('tipo', 10);
             } else {
@@ -64,7 +66,7 @@ return new class extends Migration
             $table->spatialIndex('coordenadas');
         });
 
-        if (DB::connection()->getDriverName() === 'mariadb') {
+        if ($isMariaDb) {
             DB::statement("
                     CREATE TRIGGER check_entidad_tipo_before_insert
                     BEFORE INSERT ON direcciones

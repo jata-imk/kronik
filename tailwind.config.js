@@ -17,9 +17,14 @@ export default {
         screens: {
             sm: "576px",
             md: "768px",
-            lg: "992px",
-            xl: "1200px",
+            lg: "1024px",
+            xl: "1280px",
             "2xl": "1920px",
+        },
+        extend: {
+            colors: {
+                'bg-surface-card': 'var(--surface-card)',
+            }
         },
     },
     plugins: [forms, typography, PrimeUI],

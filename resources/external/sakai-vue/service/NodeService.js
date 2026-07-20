@@ -480,4 +480,19 @@ export const NodeService = {
     getTreeNodes() {
         return Promise.resolve(this.getTreeNodesData());
     },
+
+    toTreeNodes(items) {
+        return items.map((item) => {
+            const newItem = Object.fromEntries(
+                Object.entries(item).filter(([key]) => key !== "children"),
+            );
+            return {
+                key: String(item.id), // obligatorio para TreeTable
+                data: {
+                    ...newItem,
+                },
+                children: item.children ? this.toTreeNodes(item.children) : [],
+            };
+        });
+    },
 };

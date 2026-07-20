@@ -1,14 +1,16 @@
 <script setup>
 import { useLayout } from "@sakai-vue/layout/composables/layout";
 import { computed, ref, watch } from "vue";
+import { Head } from "@inertiajs/vue3";
+
 
 import AppTopbar from "./AppTopbar.vue";
 import Banner from "@/Components/Banner.vue";
 import AppSidebar from "./AppSidebar.vue";
 import AppFooter from "./AppFooter.vue";
+import AppMenubar from "./AppMenubar.vue";
 
 import Toast from "primevue/toast";
-import { Head } from "@inertiajs/vue3";
 
 const { layoutConfig, layoutState, isSidebarActive } = useLayout();
 
@@ -89,7 +91,18 @@ function isOutsideClicked(event) {
             </header>
 
             <main class="layout-main">
-                <slot />
+                <Card v-if="$slots['card-header'] || $slots['card-content']" :pt="$attrs.pt?.['card-content-body'] && { body: $attrs.pt['card-content-body'] }">
+                    <template #header>
+                        <AppMenubar />
+                        <slot v-if="$slots['card-header']" name="card-header" />
+                    </template>
+
+                    <template v-if="$slots['card-content']" #content>
+                        <slot name="card-content" />
+                    </template>
+                </Card>
+
+                <slot v-else />
             </main>
             <app-footer></app-footer>
         </div>

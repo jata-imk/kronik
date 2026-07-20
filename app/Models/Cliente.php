@@ -40,6 +40,14 @@ class Cliente extends Model
         return $this->morphMany(Direccion::class, 'entidad', 'entidad_tipo', 'entidad_id');
     }
 
+    public function sicQueries()
+    {
+        return $this->hasMany(SicQuery::class);
+    }
+
+    // TODO: Cambiar el nombre que retorna getMorphClass por el namespace del modelo, por ejemplo: App\Models\Cliente
+    // seguidamente actualizar la BD para que la tabla de direcciones acepte este nuevo valor
+    // verificar todos los modelos que usen morphTo
     public function getMorphClass()
     {
         return 'clientes';

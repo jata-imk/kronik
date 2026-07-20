@@ -2,8 +2,15 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Module;
+use App\Services\MenubarService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 use Inertia\Middleware;
+use Laravel\Fortify\Features;
+use Laravel\Jetstream\Jetstream;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -35,8 +42,60 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        if (!empty($request->user()) && function_exists('setPermissionsTeamId')) {
+            // set actual team_id to spatie/laravel-permission package
+            setPermissionsTeamId($request->user()->current_team_id);
+
+            $request->user()->setRelation('permissions', $request->user()->getAllPermissions());
+            $request->user()->load(['roles.permissions']);
+        } else if (empty($request->user())) {
+            return parent::share($request);
+        }
+
+        $roleModel = config('permission.models.role');
+        $teamsKey = config('permission.column_names.team_foreign_key', 'team_id');
+        $teamRolesPermissions = $roleModel::where($teamsKey, $request->user()->current_team_id)->with('permissions')->get()->pluck('permissions')->flatten();
+
         return array_merge(parent::share($request), [
-            //
+            'menubarItems' => function () use ($request) {
+                try {
+                    return app(MenubarService::class)->getMenuItems($request);
+                } catch (\Throwable $e) {
+                    return [];
+                }
+            },
+            'menubarAdmin' => function () use ($request) {
+                if (!$request->user()?->hasRole('Super Admin')) return null;
+                return [
+                    'modules' => Module::select(['id', 'name', 'route_name'])->get(),
+                    'currentRouteName' => Route::current()?->getName(),
+                ];
+            },
+            'jetstream' => [
+                'canManageTwoFactorAuthentication' => Features::canManageTwoFactorAuthentication(),
+                'canUpdatePassword' => Features::enabled(Features::updatePasswords()),
+                'canUpdateProfileInformation' => Features::canUpdateProfileInformation(),
+                'hasEmailVerification' => Features::enabled(Features::emailVerification()),
+                'flash' => $request->session()->get('flash', []),
+                'hasAccountDeletionFeatures' => Jetstream::hasAccountDeletionFeatures(),
+                'hasApiFeatures' => Jetstream::hasApiFeatures(),
+                'hasTeamFeatures' => Jetstream::hasTeamFeatures(),
+                'hasTermsAndPrivacyPolicyFeature' => Jetstream::hasTermsAndPrivacyPolicyFeature(),
+                'managesProfilePhotos' => Jetstream::managesProfilePhotos(),
+            ],
+            'auth' => array_merge(
+                Inertia::getShared()['auth'] ?? [],
+                [
+                    'permissions' => [
+                        ...$teamRolesPermissions->map(function ($permission) use ($request) {
+                            return [
+                                "key" => str_replace(' ', '-', $permission->name),
+                                "value" => Gate::check($permission->name, $request->user()),
+                            ];
+                        })->pluck("value", "key"),
+                    ],
+                ]
+            ),
         ]);
     }
 }

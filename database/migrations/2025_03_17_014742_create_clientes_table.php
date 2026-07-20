@@ -12,7 +12,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('clientes', function (Blueprint $table) {
+        $isMariaDb = str_contains(DB::connection()->getPdo()->getAttribute(\PDO::ATTR_SERVER_VERSION), 'MariaDB');
+
+        Schema::create('clientes', function (Blueprint $table) use ($isMariaDb) {
             $table->id();
             $table->string('primer_nombre', 127);
             $table->string('segundo_nombre', 127);
@@ -26,7 +28,7 @@ return new class extends Migration
             $table->string('telefono', 15);
             $table->string('email', 127);
 
-            if (DB::connection()->getDriverName() === 'mariadb') {
+            if ($isMariaDb) {
                 $table->string('sexo', 15);
             } else {
                 $table->rawColumn('sexo', 'varchar(15) constraint sexo_check check (sexo in (\'masculino\', \'femenino\'))');
@@ -35,7 +37,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        if (DB::connection()->getDriverName() === 'mariadb') {
+        if ($isMariaDb) {
             DB::statement("
                     CREATE TRIGGER check_sexo_before_insert
                     BEFORE INSERT ON clientes

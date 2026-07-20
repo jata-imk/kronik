@@ -10,3 +10,9 @@
     --iti-path-globe-1x: url("./../../public/images/flags/globe.webp");
     --iti-path-globe-2x: url("./../../public/images/flags/globe@2x.webp");
 }
+
+.twemoji {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.1em;
+}

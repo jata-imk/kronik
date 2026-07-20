@@ -14,14 +14,14 @@ const { confirmsTwoFactorAuthentication, sessions, clientes } = defineProps({
 
 <template>
     <AppLayout title="Listado de clientes">
-        <div class="pb-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <Card>
-                    <template #content>
-                        <ListadoClientes :clientes="clientes" />
-                    </template>
-                </Card>
+        <template #card-header>
+            <div class="flex justify-between items-center pl-4 pt-4">
+                <h2 class="text-2xl font-bold">Gestión de clientes</h2>
             </div>
-        </div>
+        </template>
+
+        <template #card-content>
+            <ListadoClientes :clientes="clientes" />
+        </template>
     </AppLayout>
 </template>

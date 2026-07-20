@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { Head, Link, router } from "@inertiajs/vue3";
 import ApplicationMark from "@/Components/ApplicationMark.vue";
 import Banner from "@/Components/Banner.vue";
@@ -13,6 +13,13 @@ defineProps({
 });
 
 const showingNavigationDropdown = ref(false);
+
+const userCanCreateTeams = computed(() => {
+    return (
+        $page.props.auth.user.roles.find((r) => r.name === "Super Admin") ||
+        $page.props.auth.user.permissions.find((p) => p.name === "create teams")
+    );
+});
 
 const switchToTeam = (team) => {
     router.put(
@@ -72,7 +79,7 @@ const logout = () => {
                                 <Dropdown v-if="$page.props.jetstream.hasTeamFeatures" align="right" width="60">
                                     <template #trigger>
                                         <span class="inline-flex rounded-md">
-                                            <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150">
+                                            <button type="button" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 focus:outline-none focus:bg-gray-50 active:bg-gray-50 transition ease-in-out duration-150">
                                                 {{ $page.props.auth.user.current_team.name }}
 
                                                 <svg class="ms-2 -me-0.5 size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -85,25 +92,25 @@ const logout = () => {
                                     <template #content>
                                         <div class="w-60">
                                             <!-- Team Management -->
-                                            <div class="block px-4 py-2 text-xs text-gray-400">
-                                                Manage Team
+                                            <div class="block px-4 py-2 text-xs text-gray-400 dark:text-gray-300">
+                                                Gestionar equipo
                                             </div>
 
                                             <!-- Team Settings -->
                                             <DropdownLink :href="route('teams.show', $page.props.auth.user.current_team)">
-                                                Team Settings
+                                                Configuración del equipo
                                             </DropdownLink>
 
-                                            <DropdownLink v-if="$page.props.jetstream.canCreateTeams" :href="route('teams.create')">
-                                                Create New Team
+                                            <DropdownLink v-if="userCanCreateTeams" :href="route('teams.create')">
+                                                Crear nuevo equipo
                                             </DropdownLink>
 
                                             <!-- Team Switcher -->
                                             <template v-if="$page.props.auth.user.all_teams.length > 1">
                                                 <div class="border-t border-gray-200" />
 
-                                                <div class="block px-4 py-2 text-xs text-gray-400">
-                                                    Switch Teams
+                                                <div class="block px-4 py-2 text-xs text-gray-400 dark:text-gray-300">
+                                                    Cambiar de equipo
                                                 </div>
 
                                                 <template v-for="team in $page.props.auth.user.all_teams" :key="team.id">
@@ -254,7 +261,7 @@ const logout = () => {
                                     Team Settings
                                 </ResponsiveNavLink>
 
-                                <ResponsiveNavLink v-if="$page.props.jetstream.canCreateTeams" :href="route('teams.create')" :active="route().current('teams.create')">
+                                <ResponsiveNavLink v-if="userCanCreateTeams" :href="route('teams.create')" :active="route().current('teams.create')">
                                     Create New Team
                                 </ResponsiveNavLink>
 
