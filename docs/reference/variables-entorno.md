@@ -17,7 +17,7 @@
 
 ## Testing/CI
 
-CI usa MariaDB 11 con:
+CI usa PHP 8.3 y MariaDB 11 con:
 
 - `DB_CONNECTION=mysql`
 - `DB_DATABASE=kronik_test`

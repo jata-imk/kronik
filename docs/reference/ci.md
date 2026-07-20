@@ -13,7 +13,7 @@ El proyecto debe tener CI real en GitHub Actions ademas de hooks locales.
 `.github/workflows/ci.yml` ejecuta:
 
 - Checkout del repositorio.
-- PHP 8.2 con extensiones requeridas.
+- PHP 8.3 con extensiones requeridas.
 - Node 22 con cache de npm.
 - MariaDB 11 como base de datos de testing.
 - `composer install`.
