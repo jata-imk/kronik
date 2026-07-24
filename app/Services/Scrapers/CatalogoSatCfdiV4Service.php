@@ -2,15 +2,13 @@
 
 namespace App\Services\Scrapers;
 
-use Carbon\Carbon;
+use App\Interfaces\BrowserClientInterface;
 use App\Models\RegimenFiscal;
 use App\Services\ConsoleService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-
-use OpenSpout\Reader\XLSX\Reader;
 use OpenSpout\Reader\XLSX\Options;
-
-use App\Interfaces\BrowserClientInterface;
+use OpenSpout\Reader\XLSX\Reader;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
@@ -35,6 +33,19 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
     public function downloadAndProcessCatalog()
     {
         try {
+            if (RegimenFiscal::query()->doesntExist()) {
+                $cachedFiles = glob($this->downloadPath.'/catCFDI_V_4_*.xlsx');
+
+                if (! empty($cachedFiles)) {
+                    rsort($cachedFiles);
+                    preg_match('/(\d{8})/', basename($cachedFiles[0]), $matches);
+                    $cachedDate = Carbon::createFromFormat('Ymd', $matches[1] ?? date('Ymd'));
+                    $this->processFile($cachedFiles[0], $cachedDate);
+
+                    return true;
+                }
+            }
+
             Log::info('Iniciando descarga del catálogo CFDI V4 del SAT');
             Log::channel('stderr')->info('Iniciando descarga del catálogo CFDI V4 del SAT');
 
@@ -45,9 +56,9 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
             $lastUpdateDate = $catalogInfo['last_update_date']; // YYYYMMDD
             $lastUpdateDateFormatted = Carbon::createFromFormat('Ymd', $lastUpdateDate);
 
-            if (!$this->needsUpdate($lastUpdateDateFormatted)) {
-                Log::info('El catálogo CFDI V4 del SAT ya está actualizado. Última actualización: ' . $lastUpdateDate);
-                Log::channel('stderr')->info('El catálogo CFDI V4 del SAT ya está actualizado. Última actualización: ' . $lastUpdateDate);
+            if (! $this->needsUpdate($lastUpdateDateFormatted)) {
+                Log::info('El catálogo CFDI V4 del SAT ya está actualizado. Última actualización: '.$lastUpdateDate);
+                Log::channel('stderr')->info('El catálogo CFDI V4 del SAT ya está actualizado. Última actualización: '.$lastUpdateDate);
 
                 return false;
             }
@@ -63,8 +74,8 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
 
             return true;
         } catch (\Exception $e) {
-            Log::error('Error al procesar el catálogo CFDI V4 del SAT: ' . $e->getMessage());
-            Log::channel('stderr')->error('Error al procesar el catálogo CFDI V4 del SAT: ' . $e->getMessage());
+            Log::error('Error al procesar el catálogo CFDI V4 del SAT: '.$e->getMessage());
+            Log::channel('stderr')->error('Error al procesar el catálogo CFDI V4 del SAT: '.$e->getMessage());
 
             throw $e;
         }
@@ -75,14 +86,18 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
      */
     protected function needsUpdate(Carbon $lastUpdateDate)
     {
+        if (RegimenFiscal::query()->doesntExist()) {
+            return true;
+        }
+
         if ($lastUpdateDate === null) {
             return true;
         }
 
         // Verificar si existe un archivo de registro de la última actualización
-        $lastUpdateFile = $this->downloadPath . '/last_update.txt';
+        $lastUpdateFile = $this->downloadPath.'/last_update.txt';
 
-        if (!file_exists($lastUpdateFile)) {
+        if (! file_exists($lastUpdateFile)) {
             return true;
         }
 
@@ -93,8 +108,9 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
 
     /**
      * Obtiene la información sobre el catálogo CFDI V4.0
-     * 
+     *
      * @return array Información sobre el catalogo CFDI V4, incluyendo el enlace y la fecha de la ultima actualización en el SAT
+     *
      * @throws \Exception
      */
     public function getCatalogInfo(): array
@@ -131,38 +147,38 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
                 }
             });
 
-            if (!$catalogLink) {
+            if (! $catalogLink) {
                 throw new \Exception('No se encontró el enlace del catálogo CFDI V4.0');
             }
 
             // Asegurarnos que el enlace sea absoluto
-            if (!filter_var($catalogLink, FILTER_VALIDATE_URL)) {
+            if (! filter_var($catalogLink, FILTER_VALIDATE_URL)) {
                 // Si el enlace es relativo, construir la URL completa
                 if (strpos($catalogLink, 'http') !== 0) {
                     // Si el enlace comienza con '/'
                     if (strpos($catalogLink, '/') === 0) {
                         $parsedUrl = parse_url($this->url);
-                        $catalogLink = $parsedUrl['scheme'] . '://' . $parsedUrl['host'] . $catalogLink;
+                        $catalogLink = $parsedUrl['scheme'].'://'.$parsedUrl['host'].$catalogLink;
                     } else {
                         // Si el enlace es relativo a la página actual
-                        $catalogLink = dirname($this->url) . '/' . $catalogLink;
+                        $catalogLink = dirname($this->url).'/'.$catalogLink;
                     }
                 }
             }
 
-            Log::info("Información del catálogo CFDI V4.0 obtenida con éxito.");
-            Log::channel('stderr')->info("Información del catálogo CFDI V4.0 obtenida con éxito.");
+            Log::info('Información del catálogo CFDI V4.0 obtenida con éxito.');
+            Log::channel('stderr')->info('Información del catálogo CFDI V4.0 obtenida con éxito.');
 
             // Obtener la fecha de la actualización
             $lastUpdateDate = preg_match('/(\d{8})/', (string) $catalogFilename, $matches) ? $matches[1] : null;
 
             return [
                 'download_link' => $catalogLink,
-                'last_update_date' => $lastUpdateDate
+                'last_update_date' => $lastUpdateDate,
             ];
         } catch (\Exception $e) {
-            Log::error("Error al obtener la información del catálogo CFDI: " . $e->getMessage());
-            Log::channel('stderr')->error("Error al obtener la información del catálogo CFDI: " . $e->getMessage());
+            Log::error('Error al obtener la información del catálogo CFDI: '.$e->getMessage());
+            Log::channel('stderr')->error('Error al obtener la información del catálogo CFDI: '.$e->getMessage());
             throw $e;
         }
     }
@@ -171,18 +187,19 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
     {
         try {
             // Realizamos la petición POST para descargar
-            $filePath = $this->downloadPath . '/' . basename($url);
+            $filePath = $this->downloadPath.'/'.basename($url);
 
             if (file_exists($filePath) && filesize($filePath) > 0) {
-                Log::info('Archivo XLS ya descargado anteriormente: ' . $filePath);
-                Log::channel('stderr')->info('Archivo XLS ya descargado anteriormente: ' . $filePath);
+                Log::info('Archivo XLS ya descargado anteriormente: '.$filePath);
+                Log::channel('stderr')->info('Archivo XLS ya descargado anteriormente: '.$filePath);
+
                 return $filePath;
             }
 
             $response = $this->http->request('GET', $url);
 
             // Responses are lazy: this code is executed as soon as headers are received
-            if (200 !== $response->getStatusCode()) {
+            if ($response->getStatusCode() !== 200) {
                 $response->getContent(); // this method throws an appropriate exception
             }
 
@@ -194,16 +211,17 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
             }
 
             if (file_exists($filePath) && filesize($filePath) > 0) {
-                Log::info('Archivo XLS descargado correctamente: ' . $filePath);
-                Log::channel('stderr')->info('Archivo XLS descargado correctamente: ' . $filePath);
+                Log::info('Archivo XLS descargado correctamente: '.$filePath);
+                Log::channel('stderr')->info('Archivo XLS descargado correctamente: '.$filePath);
+
                 return $filePath;
             } else {
                 throw new \Exception('Error al descargar el archivo XLS o archivo vacío');
             }
         } catch (\Exception $e) {
-            Log::error('Error al descargar el archivo XLS: ' . $e->getMessage());
-            Log::channel('stderr')->error('Error al descargar el archivo XLS: ' . $e->getMessage());
-            throw new \Exception('Error al descargar el archivo XLS: ' . $e->getMessage());
+            Log::error('Error al descargar el archivo XLS: '.$e->getMessage());
+            Log::channel('stderr')->error('Error al descargar el archivo XLS: '.$e->getMessage());
+            throw new \Exception('Error al descargar el archivo XLS: '.$e->getMessage());
         }
     }
 
@@ -213,36 +231,36 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
     protected function processFile($filePath, $lastUpdateDate)
     {
         try {
-            // First, we need to convert XLS to XLSX, this is done with a command line tool
-            $xlsxFilePath = $filePath . 'x';
+            $xlsxFilePath = str_ends_with(mb_strtolower($filePath), '.xlsx')
+                ? $filePath
+                : $filePath.'x';
 
-            $filePathNormalized = $this->consoleService->normalizePath($filePath)['normalized'];
-            $downloadPathNormalized = $this->consoleService->normalizePath($this->downloadPath . '/')['normalized'];
+            if (! file_exists($xlsxFilePath)) {
+                $filePathNormalized = $this->consoleService->normalizePath($filePath)['normalized'];
+                $downloadPathNormalized = $this->consoleService->normalizePath($this->downloadPath.'/')['normalized'];
+                $command = 'libreoffice --headless --convert-to xlsx "'.$filePathNormalized.'" --outdir "'.$downloadPathNormalized.'"';
+                $resultExcecuteCommand = $this->consoleService->run($command);
+                $output = $resultExcecuteCommand['output'];
 
-            $command = 'libreoffice --headless --convert-to xlsx "' . $filePathNormalized . '" --outdir "' . $downloadPathNormalized . '"';
-
-            $resultExcecuteCommand = $this->consoleService->run($command);
-            $output = $resultExcecuteCommand['output'];
-            $returnCode = $resultExcecuteCommand['outputCode'];
-
-            if ($returnCode !== 0) {
-                throw new \Exception('Error al ejecutar el comando: ' . implode(' ', $output));
-            }
-
-            $timeout = 45;
-            $startTime = time();
-
-            while (!file_exists($xlsxFilePath)) {
-                if (time() - $startTime > $timeout) {
-                    throw new \Exception('Error al convertir el archivo XLS a XLSX, tiempo de espera agotado');
+                if ($resultExcecuteCommand['outputCode'] !== 0) {
+                    throw new \Exception('Error al ejecutar el comando: '.implode(' ', $output));
                 }
-                sleep(1);
+
+                $timeout = 45;
+                $startTime = time();
+
+                while (! file_exists($xlsxFilePath)) {
+                    if (time() - $startTime > $timeout) {
+                        throw new \Exception('Error al convertir el archivo XLS a XLSX, tiempo de espera agotado');
+                    }
+                    sleep(1);
+                }
+
+                Log::info('Archivo XLS convertido a XLSX correctamente, comando ejecutado: '.implode(' ', $output));
+                Log::channel('stderr')->info('Archivo XLS convertido a XLSX correctamente, comando ejecutado: '.implode(' ', $output));
             }
 
-            Log::info('Archivo XLS convertido a XLSX correctamente, comando ejecutado: ' . implode(' ', $output));
-            Log::channel('stderr')->info('Archivo XLS convertido a XLSX correctamente, comando ejecutado: ' . implode(' ', $output));
-
-            $options = new Options();
+            $options = new Options;
             $options->SHOULD_PRESERVE_EMPTY_ROWS = true;
             $reader = new Reader($options);
             $reader->open($xlsxFilePath);
@@ -270,14 +288,14 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
 
                         RegimenFiscal::updateOrCreate(
                             [
-                                'clave' => $clave
+                                'clave' => $clave,
                             ],
                             [
                                 'descripcion' => $descripcion,
                                 'fisica' => $fisica,
                                 'moral' => $moral,
                                 'fecha_inicio_vigencia' => $fecha_inicio_vigencia,
-                                'fecha_fin_vigencia' => $fecha_fin_vigencia
+                                'fecha_fin_vigencia' => $fecha_fin_vigencia,
                             ]
                         );
 
@@ -291,16 +309,16 @@ class CatalogoSatCfdiV4Service extends BaseCatalogScraperService
             $reader->close();
 
             // Guardar fecha de actualización
-            file_put_contents($this->downloadPath . '/last_update.txt', $lastUpdateDate->format('Y-m-d'));
+            file_put_contents($this->downloadPath.'/last_update.txt', $lastUpdateDate->format('Y-m-d'));
 
-            Log::info('Archivo XLS procesado correctamente, filas procesadas: ' . $procesedRows);
-            Log::channel('stderr')->info('Archivo XLS procesado correctamente, filas procesadas: ' . $procesedRows);
+            Log::info('Archivo XLS procesado correctamente, filas procesadas: '.$procesedRows);
+            Log::channel('stderr')->info('Archivo XLS procesado correctamente, filas procesadas: '.$procesedRows);
 
             return null;
         } catch (\Exception $e) {
-            Log::error('Error al procesar el archivo XLS: ' . $e->getMessage());
-            Log::channel('stderr')->error('Error al procesar el archivo XLS: ' . $e->getMessage());
-            throw new \Exception('Error al procesar el archivo XLS: ' . $e->getMessage());
+            Log::error('Error al procesar el archivo XLS: '.$e->getMessage());
+            Log::channel('stderr')->error('Error al procesar el archivo XLS: '.$e->getMessage());
+            throw new \Exception('Error al procesar el archivo XLS: '.$e->getMessage());
         }
     }
 }

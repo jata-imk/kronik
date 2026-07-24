@@ -1,10 +1,10 @@
-import { ref, toValue, watchEffect } from "vue";
+import { onScopeDispose, ref, toValue, watchEffect } from "vue";
 
 export function useCodigoPostal(cpInput, options = {}) {
     const {
-        shouldFetchSugerencias = () => true, // default: siempre hace fetch
-        shouldFetchBusqueda = () => true, // default: siempre hace fetch
-        debounceMs = 300, // tiempo de espera antes de hacer fetch
+        shouldFetchSugerencias = () => true,
+        shouldFetchBusqueda = () => true,
+        debounceMs = 300,
     } = options;
 
     const sugerenciasData = ref([]);
@@ -12,101 +12,104 @@ export function useCodigoPostal(cpInput, options = {}) {
     const loading = ref(false);
     const error = ref(null);
 
-    let debounceTimeout = null; // para guardar el timer
+    let debounceTimeout = null;
+    let activeController = null;
+    let activeRequest = 0;
 
-    // Función privada para hacer fetch
     const fetchData = async (endpoint, codigo) => {
+        activeController?.abort();
+        activeController = new AbortController();
+        const requestId = ++activeRequest;
+        loading.value = true;
+
         try {
             const response = await fetch(
-                `/codigos-postales/${endpoint}?codigo=${codigo}`,
+                `/codigos-postales/${endpoint}?codigo=${encodeURIComponent(codigo)}`,
                 {
                     method: "GET",
                     credentials: "include",
-                    headers: {
-                        Accept: "application/json",
-                    },
+                    signal: activeController.signal,
+                    headers: { Accept: "application/json" },
                 },
             );
 
             if (!response.ok) {
-                throw new Error(
-                    `Error ${response.status}: ${response.statusText}`,
-                );
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
             }
 
             const data = await response.json();
-            return data.data;
+            return requestId === activeRequest ? data.data : null;
         } catch (err) {
-            console.error(`Error al consultar ${endpoint}:`, err);
+            if (err.name === "AbortError") {
+                return null;
+            }
+
             throw err;
+        } finally {
+            if (requestId === activeRequest) {
+                loading.value = false;
+            }
         }
     };
 
-    // watchEffect para sugerencias automáticas
     watchEffect((onInvalidate) => {
         const codigo = toValue(cpInput);
-
-        // Limpiamos debounce anterior si el input cambia rápido
-        if (debounceTimeout) {
-            clearTimeout(debounceTimeout);
-        }
+        clearTimeout(debounceTimeout);
 
         if (!codigo) {
+            activeController?.abort();
             sugerenciasData.value = [];
+            loading.value = false;
             return;
         }
 
         if (!shouldFetchSugerencias(codigo)) {
+            activeController?.abort();
             sugerenciasData.value = [];
+            loading.value = false;
             return;
         }
 
-        loading.value = true;
         error.value = null;
 
         debounceTimeout = setTimeout(async () => {
             try {
                 const data = await fetchData("sugerencias", codigo);
-                sugerenciasData.value = data;
+                if (data !== null) {
+                    sugerenciasData.value = data;
+                }
             } catch (err) {
-                error.value = err.message || "Error en sugerencias";
-            } finally {
-                loading.value = false;
+                error.value = err.message || "Error al buscar sugerencias";
             }
         }, debounceMs);
 
-        // Si el efecto se invalida (por ejemplo, el componente se destruye), cancelamos el timeout
-        onInvalidate(() => {
-            if (debounceTimeout) {
-                clearTimeout(debounceTimeout);
-            }
-        });
+        onInvalidate(() => clearTimeout(debounceTimeout));
     });
 
     const busqueda = async () => {
         const codigo = toValue(cpInput);
 
-        if (!codigo) {
-            // busquedaData.value = null;
+        if (!codigo || !shouldFetchBusqueda(codigo)) {
             return;
         }
 
-        if (!shouldFetchBusqueda(codigo)) {
-            // busquedaData.value = null;
-            return;
-        }
-
-        loading.value = true;
         error.value = null;
+        busquedaData.value = null;
+
         try {
             const data = await fetchData("buscar", codigo);
-            busquedaData.value = data;
+            if (data !== null) {
+                busquedaData.value = data;
+            }
         } catch (err) {
-            error.value = err.message || "Error desconocido en búsqueda";
-        } finally {
-            loading.value = false;
+            error.value = err.message || "Error al buscar el código postal";
         }
     };
+
+    onScopeDispose(() => {
+        clearTimeout(debounceTimeout);
+        activeController?.abort();
+    });
 
     return {
         sugerenciasData,

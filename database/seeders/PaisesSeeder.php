@@ -27,7 +27,12 @@ class PaisesSeeder extends Seeder
             $response = $client->get('https://restcountries.com/v3.1/all?fields=name,translations,languages,cca2,cca3,flag,flags,maps');
             if ($response->getStatusCode() == 200) {
                 $paises = $response->getBody()->getContents();
-                $paises = json_decode($paises, true);
+                $paises = json_decode(
+                    $paises,
+                    true,
+                    512,
+                    JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR,
+                );
             }
         } catch (\Throwable $th) {
             // throw $th;
@@ -35,19 +40,39 @@ class PaisesSeeder extends Seeder
 
         if (empty($paises)) {
             // Opción 2: Desde archivo JSON local
-            $paises = json_decode(file_get_contents(database_path('data/countries.json')), true);
+            $paises = json_decode(
+                file_get_contents(database_path('data/countries.json')),
+                true,
+                512,
+                JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR,
+            );
+        }
+
+        $paises = array_filter(
+            $paises,
+            fn ($pais) => is_array($pais)
+                && isset($pais['name']['common'], $pais['cca2'], $pais['cca3']),
+        );
+
+        if (empty($paises)) {
+            $paises = json_decode(
+                file_get_contents(database_path('data/countries.json')),
+                true,
+                512,
+                JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR,
+            );
         }
 
         $paises = array_map(function ($pais) {
             return [
-                'nombre_es' => $pais['translations']['spa']['common'],
+                'nombre_es' => $pais['translations']['spa']['common'] ?? $pais['name']['common'],
                 'nombre_us' => $pais['name']['common'],
-                'nombre_nativo' => json_encode($pais['name']['nativeName']),
-                'idiomas' => json_encode($pais['languages']),
+                'nombre_nativo' => json_encode($pais['name']['nativeName'] ?? []),
+                'idiomas' => json_encode($pais['languages'] ?? []),
                 'codigo_iso' => $pais['cca2'],
                 'codigo_iso3' => $pais['cca3'],
-                'emoji' => $pais['flag'],
-                'mapas' => json_encode($pais['maps'])
+                'emoji' => $pais['flag'] ?? null,
+                'mapas' => json_encode($pais['maps'] ?? []),
             ];
         }, $paises);
 
