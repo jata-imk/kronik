@@ -10,3 +10,4 @@
 - [Backlog 07: Amortizacion, pagos y cobranza](07-amortizacion-pagos-cobranza.md)
 - [Backlog 08: Reportes y contabilidad](08-reportes-contabilidad.md)
 - [Backlog 09: Calidad, tests y definicion de terminado](09-calidad-tests-definicion-terminado.md)
+- [Backlog 10: Auditoria y trazabilidad](10-auditoria-y-trazabilidad.md)

@@ -1,8 +1,8 @@
 <script setup>
-import { ref } from "vue";
-import { useToast } from "primevue/usetoast";
-import { FilterMatchMode } from "@primevue/core/api";
 import { router } from "@inertiajs/vue3";
+import { FilterMatchMode } from "@primevue/core/api";
+import { useToast } from "primevue/usetoast";
+import { ref } from "vue";
 
 // Props para recibir los datos del controlador
 const props = defineProps({
@@ -97,6 +97,10 @@ const editCliente = (id) => {
 
 const viewCliente = (id) => {
     router.visit(`/clientes/${id}`);
+};
+
+const viewExpediente = (id) => {
+    router.visit(route("clientes.expediente.show", id));
 };
 
 const confirmDelete = (cliente) => {
@@ -312,6 +316,8 @@ const exportData = async () => {
             <Column header="Acciones" :exportable="false" :frozen="true" align-frozen="right">
                 <template #body="{ data }">
                     <div class="flex gap-2">
+                        <Button icon="pi pi-folder-open" v-tooltip.top="'Expediente KYC'" class="p-button-rounded p-button-warning p-button-sm"
+                            @click="viewExpediente(data.id)" />
                         <Button icon="pi pi-eye" class="p-button-rounded p-button-info p-button-sm"
                             @click="viewCliente(data.id)" />
                         <Button icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-sm"

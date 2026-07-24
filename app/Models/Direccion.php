@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 class Direccion extends Model
 {
     protected $table = 'direcciones';
+
     protected $fillable = [
         'entidad_id',
         'entidad_tipo',
@@ -38,7 +39,6 @@ class Direccion extends Model
         return $this->belongsTo(Pais::class);
     }
 
-
     public function codigoPostal()
     {
         return $this->belongsTo(CodigoPostal::class, 'codigo_postal_id');
@@ -62,8 +62,18 @@ class Direccion extends Model
     // Accessor
     public function getCoordenadasAttribute($value)
     {
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            preg_match('/POINT\(([-0-9.]+) ([-0-9.]+)\)/', (string) $value, $matches);
+
+            return [
+                'lat' => (float) ($matches[1] ?? 0),
+                'lng' => (float) ($matches[2] ?? 0),
+            ];
+        }
+
         // $value es un objeto tipo Point de MySQL
         $point = unpack('x/x/x/x/Corder/Ltype/dlat/dlng', $value);
+
         return [
             'lat' => $point['lat'],
             'lng' => $point['lng'],
@@ -76,7 +86,9 @@ class Direccion extends Model
         if (is_array($value)) {
             $lat = $value['lat'];
             $lng = $value['lng'];
-            $this->attributes['coordenadas'] = DB::raw("ST_GeomFromText('POINT($lat $lng)')");
+            $this->attributes['coordenadas'] = DB::connection()->getDriverName() === 'sqlite'
+                ? "POINT({$lat} {$lng})"
+                : DB::raw("ST_GeomFromText('POINT($lat $lng)')");
         }
     }
 }

@@ -24,7 +24,7 @@ class ClienteResource extends JsonResource
                 $this->primer_nombre,
                 $this->segundo_nombre,
                 $this->apellido_paterno,
-                $this->apellido_materno
+                $this->apellido_materno,
             ])),
             'fecha_nacimiento' => $this->fecha_nacimiento,
             'pais_nacimiento' => new PaisResource($this->paisNacimiento),
@@ -32,10 +32,15 @@ class ClienteResource extends JsonResource
             'telefono' => $this->telefono,
             'email' => $this->email,
             'sexo' => $this->sexo,
+            'ocupacion' => $this->ocupacion,
+            'actividad_economica' => $this->actividad_economica,
+            'ingresos_mensuales' => $this->ingresos_mensuales,
+            'egresos_mensuales' => $this->egresos_mensuales,
+            'origen_recursos' => $this->origen_recursos,
             'datos_fiscales' => new ClienteDatosFiscalesResource($this->datosFiscales),
             'direcciones' => DireccionResource::collection($this->direcciones),
             'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at
+            'updated_at' => $this->updated_at,
         ];
     }
 }

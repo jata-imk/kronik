@@ -20,6 +20,8 @@ Spatie sigue siendo la fuente para permisos funcionales del sistema, como:
 - `update sucursales`
 - `delete sucursales`
 
+El expediente KYC usa `ClientePolicy` y reutiliza `read clientes` para consulta/descarga y `update clientes` para cambios. No crea un segundo modulo de permisos para los recursos anidados.
+
 ## Pruebas
 
 La suite de Jetstream debe permanecer verde porque CI ejecuta `php artisan test` completo.

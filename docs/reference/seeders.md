@@ -19,6 +19,31 @@ Para volver a datos de prueba sin borrar SAT/SEPOMEX:
 php artisan dev:reset-data
 ```
 
+Catalogos protegidos por el reset:
+
+- `paises`
+- `regimenes_fiscales`
+- `divisiones_administrativas`
+- `codigos_postales`
+
+El comando toma conteos antes de truncar datos volatiles y falla si un catalogo pierde registros. Puede permitir aumentos idempotentes cuando el seeder completa un registro faltante.
+
+## Reconstruccion de Catalogos
+
+Ejecutar en orden:
+
+```bash
+php artisan db:seed --class=PaisesSeeder --force
+php artisan sat-cfdi-v4:update
+php artisan sepomex:update
+```
+
+`CatalogSeeder` agrupa esos pasos, pero para operaciones manuales se prefieren comandos separados porque permiten ver exactamente cual fuente fallo.
+
+`DevelopmentSeeder` solo crea catalogos minimos de respaldo cuando falta Mexico, un regimen fisico/moral o cualquier codigo postal. No agrega divisiones demo cuando los catalogos completos ya existen.
+
+Las pruebas locales usan SQLite `:memory:` mediante `phpunit.xml`. La migracion de direcciones conserva la columna de coordenadas y omite el indice espacial solo en SQLite; el modelo representa temporalmente el punto como texto WKT en ese motor. MySQL/MariaDB conservan `POINT`, `ST_GeomFromText` e indice espacial. El archivo `.env` nunca debe proporcionar la base de pruebas.
+
 Datos demo actuales:
 
 - `test@example.com` con password de factory `password`.
@@ -26,6 +51,8 @@ Datos demo actuales:
 - Sucursal `MATRIZ`.
 - Cliente persona fisica con score SIC exitoso.
 - Cliente tipo moral con consulta SIC pendiente.
+- Perfil economico KYC en ambos clientes demo.
+- Checklist documental pendiente, referencia personal y ejemplo de aval/garantia.
 
 Relacionado:
 

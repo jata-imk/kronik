@@ -2,12 +2,26 @@
 
 namespace App\Http\Requests\Clientes;
 
+use App\Rules\Rfc;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 abstract class BaseClienteRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $datosFiscales = $this->input('datos_fiscales', []);
+
+        if (is_array($datosFiscales) && is_string($datosFiscales['rfc'] ?? null)) {
+            $datosFiscales['rfc'] = mb_strtoupper(trim($datosFiscales['rfc']), 'UTF-8');
+            $this->merge(['datos_fiscales' => $datosFiscales]);
+        }
+    }
+
     protected function baseRules(): array
     {
+        $tipoPersonaColumn = $this->input('datos_fiscales.tipo_persona') === 'fisica' ? 'fisica' : 'moral';
+
         return [
             // Datos del cliente
             'primer_nombre' => ['string', 'max:127'],
@@ -20,13 +34,24 @@ abstract class BaseClienteRequest extends FormRequest
             'telefono' => ['string', 'max:15'],
             'email' => ['email', 'max:127'],
             'sexo' => ['in:masculino,femenino'],
+            'ocupacion' => ['nullable', 'string', 'max:127'],
+            'actividad_economica' => ['nullable', 'string', 'max:255'],
+            'ingresos_mensuales' => ['nullable', 'numeric', 'min:0', 'max:9999999999999.99'],
+            'egresos_mensuales' => ['nullable', 'numeric', 'min:0', 'max:9999999999999.99'],
+            'origen_recursos' => ['nullable', 'string', 'max:2000'],
 
             // Datos fiscales
             'datos_fiscales' => ['array'],
             'datos_fiscales.tipo_persona' => ['in:fisica,moral'],
-            'datos_fiscales.regimen_fiscal_id' => ['nullable', 'integer', 'exists:regimenes_fiscales,id'],
+            'datos_fiscales.regimen_fiscal_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('regimenes_fiscales', 'id')->where(
+                    fn ($query) => $query->where($tipoPersonaColumn, true),
+                ),
+            ],
             'datos_fiscales.curp' => ['string', 'max:255'],
-            'datos_fiscales.rfc' => ['string', 'max:255'],
+            'datos_fiscales.rfc' => [new Rfc($this->input('datos_fiscales.tipo_persona'))],
             'datos_fiscales.razon_social' => ['nullable', 'string', 'max:255'],
 
             // Direcciones

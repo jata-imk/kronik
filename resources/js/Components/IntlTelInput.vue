@@ -7,7 +7,21 @@ import "intl-tel-input/build/css/intlTelInput.css";
 import { InputText } from "primevue";
 import { onMounted, onUnmounted, ref, watch } from "vue";
 
+defineOptions({ inheritAttrs: false });
+
 const props = defineProps({
+    modelValue: {
+        type: String,
+        default: "",
+    },
+    disabled: {
+        type: Boolean,
+        default: false,
+    },
+    emitE164: {
+        type: Boolean,
+        default: false,
+    },
     intlTelInputOptions: {
         type: Object,
         default: () => ({}),
@@ -15,6 +29,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
+    "update:modelValue",
     "changeNumber",
     "changeCountry",
     "changeValidity",
@@ -59,9 +74,13 @@ const updateValue = () => {
         return;
     }
 
+    const number = instance.value.getNumber() || "";
+    const nationalNumber = input.value?.$el?.value ?? "";
+
+    emit("update:modelValue", props.emitE164 ? number : nationalNumber);
     emit("changeNumber", {
-        number: instance.value?._getFullNumber() ?? null,
-        numberWithoutCountryCode: instance.value.getNumber() ?? null,
+        number,
+        numberWithoutCountryCode: nationalNumber,
         isValid: isValid(),
     });
     updateValidity();
@@ -92,8 +111,8 @@ onMounted(() => {
             ...props.intlTelInputOptions,
         });
 
-        if (props.value) {
-            instance.value.setNumber(props.value);
+        if (props.modelValue) {
+            instance.value.setNumber(props.modelValue);
         }
 
         if (props.disabled) {
@@ -107,6 +126,27 @@ watch(
     (newValue) => instance.value?.setDisabled(newValue),
 );
 
+watch(
+    () => props.modelValue,
+    (newValue) => {
+        if (!instance.value) {
+            return;
+        }
+
+        if (!newValue) {
+            instance.value.setNumber("");
+            return;
+        }
+
+        if (
+            instance.value.getNumber() !== newValue &&
+            input.value?.$el?.value !== newValue
+        ) {
+            instance.value.setNumber(newValue);
+        }
+    },
+);
+
 onUnmounted(() => instance.value?.destroy());
 
 defineExpose({ instance, input });
@@ -116,6 +156,9 @@ defineExpose({ instance, input });
     <InputText
         ref="input"
         type="tel"
+        :disabled="disabled"
+        :model-value="modelValue"
+        @input="updateValue"
         @change="updateValue"
         @countrychange="updateCountry"
         v-bind="$attrs" />

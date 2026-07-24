@@ -2,8 +2,13 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ClienteDocumentoTipo;
 use App\Models\Cliente;
 use App\Models\ClienteDatosFiscales;
+use App\Models\ClienteDocumento;
+use App\Models\ClienteGarantia;
+use App\Models\ClienteReferencia;
+use App\Models\ClienteVinculo;
 use App\Models\CodigoPostal;
 use App\Models\Direccion;
 use App\Models\DivisionAdministrativa;
@@ -67,13 +72,16 @@ class DevelopmentSeeder extends Seeder
 
     private function seedEmpresaConfiguracion(): void
     {
+        $regimenMoral = RegimenFiscal::where('clave', '601')->first();
+
         EmpresaConfiguracion::updateOrCreate(
             ['singleton_key' => 'default'],
             [
                 'razon_social' => 'KRONIK DEMO SA DE CV',
                 'nombre_comercial' => 'Kronik Demo',
+                'tipo_persona' => 'moral',
                 'rfc' => 'KDE260101AB1',
-                'regimen_fiscal' => '601',
+                'regimen_fiscal_id' => $regimenMoral?->id,
                 'email' => 'operaciones@example.test',
                 'telefono' => '+525512345678',
                 'sitio_web' => 'https://example.test',
@@ -202,7 +210,14 @@ class DevelopmentSeeder extends Seeder
 
     private function seedClientes(): void
     {
-        $this->seedFallbackCatalogs();
+        if (
+            Pais::where('codigo_iso', 'MX')->doesntExist()
+            || RegimenFiscal::where('fisica', true)->doesntExist()
+            || RegimenFiscal::where('moral', true)->doesntExist()
+            || CodigoPostal::query()->doesntExist()
+        ) {
+            $this->seedFallbackCatalogs();
+        }
 
         $pais = Pais::where('codigo_iso', 'MX')->first();
         $regimenFisica = RegimenFiscal::where('fisica', true)->first();
@@ -231,12 +246,17 @@ class DevelopmentSeeder extends Seeder
                     'telefono' => '5512345678',
                     'email' => 'ana.garcia@example.test',
                     'sexo' => 'femenino',
+                    'ocupacion' => 'Consultora administrativa',
+                    'actividad_economica' => 'Servicios profesionales de consultoria',
+                    'ingresos_mensuales' => 48000,
+                    'egresos_mensuales' => 21500,
+                    'origen_recursos' => 'Honorarios profesionales y servicios de consultoria.',
                 ],
                 'fiscal' => [
                     'tipo_persona' => 'fisica',
                     'regimen_fiscal_id' => $regimenFisica->id,
                     'curp' => 'GALA910418MDFRPN01',
-                    'rfc' => 'GALA910418ABC',
+                    'rfc' => 'GALA910418AB8',
                     'razon_social' => 'ANA LUCIA GARCIA LOPEZ',
                 ],
                 'direccion' => [
@@ -260,6 +280,11 @@ class DevelopmentSeeder extends Seeder
                     'telefono' => '5587654321',
                     'email' => 'carlos.martinez@example.test',
                     'sexo' => 'masculino',
+                    'ocupacion' => 'Director de operaciones',
+                    'actividad_economica' => 'Servicios financieros y administrativos',
+                    'ingresos_mensuales' => 72000,
+                    'egresos_mensuales' => 34800,
+                    'origen_recursos' => 'Sueldo y compensaciones laborales.',
                 ],
                 'fiscal' => [
                     'tipo_persona' => 'moral',
@@ -292,7 +317,10 @@ class DevelopmentSeeder extends Seeder
 
             $this->seedDireccion($cliente, $pais, $codigoPostal, $record['direccion']);
             $this->seedSicQuery($cliente, $sic, $sicApi, $record['score'], $record['status']);
+            $this->seedExpediente($cliente);
         }
+
+        $this->seedVinculosYGarantias();
     }
 
     private function seedFallbackCatalogs(): void
@@ -464,6 +492,57 @@ class DevelopmentSeeder extends Seeder
                         'Uso moderado de líneas de crédito',
                     ],
                 ],
+            ],
+        );
+    }
+
+    private function seedExpediente(Cliente $cliente): void
+    {
+        foreach (ClienteDocumentoTipo::requeridos() as $tipo) {
+            ClienteDocumento::firstOrCreate(
+                ['cliente_id' => $cliente->id, 'tipo' => $tipo->value, 'version' => 1],
+                ['estado' => 'pendiente', 'es_actual' => true],
+            );
+        }
+
+        ClienteReferencia::updateOrCreate(
+            ['cliente_id' => $cliente->id, 'tipo' => 'personal', 'telefono' => '5511112233'],
+            [
+                'nombre' => 'Referencia Demo',
+                'relacion' => 'Amistad',
+                'telefono_codigo_pais' => '+52',
+                'email' => 'referencia@example.test',
+                'notas' => 'Contacto disponible en horario laboral.',
+            ],
+        );
+    }
+
+    private function seedVinculosYGarantias(): void
+    {
+        $titular = Cliente::where('email', 'ana.garcia@example.test')->first();
+        $vinculado = Cliente::where('email', 'carlos.martinez@example.test')->first();
+
+        if (! $titular || ! $vinculado) {
+            return;
+        }
+
+        ClienteVinculo::updateOrCreate(
+            [
+                'cliente_id' => $titular->id,
+                'cliente_vinculado_id' => $vinculado->id,
+                'rol' => 'aval',
+            ],
+            ['notas' => 'Vinculo demo para validacion del expediente.'],
+        );
+
+        ClienteGarantia::updateOrCreate(
+            ['cliente_id' => $titular->id, 'descripcion' => 'Vehiculo utilitario demo'],
+            [
+                'propietario_cliente_id' => $titular->id,
+                'tipo' => 'prendaria',
+                'valor_estimado' => 285000,
+                'moneda' => 'MXN',
+                'notas' => 'Valor declarado para datos de demostracion.',
             ],
         );
     }

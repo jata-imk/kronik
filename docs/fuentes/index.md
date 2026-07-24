@@ -15,6 +15,7 @@ Estos documentos no sustituyen asesoria legal, fiscal, contable o regulatoria. C
 - [Banxico CAT](banxico-cat.md)
 - [CNBV PLD/FT SOFOM ENR](cnbv-pld-sofom-enr.md)
 - [SAT Actividades Vulnerables](sat-actividades-vulnerables.md)
+- [SAT: estructura y verificacion del RFC](sat-rfc.md)
 - [Ley para Regular las Sociedades de Informacion Crediticia](ley-sic.md)
 - [Circulo de Credito](circulo-credito.md)
 

@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { computed, watch } from "vue";
 
 const props = defineProps({
     form: {
@@ -25,19 +25,34 @@ const props = defineProps({
 
 const tiposPersona = props.initialLoad?.tiposPersona ?? [];
 const regimenesFiscales = props.initialLoad?.regimenesFiscales ?? [];
-const regimenesFiscalesFiltered = ref(regimenesFiscales);
+const regimenesFiscalesFiltered = computed(() =>
+    regimenesFiscales.filter((regimen) =>
+        props.form.tipo_persona === "fisica" ? regimen.fisica : regimen.moral,
+    ),
+);
 
-const onChangeTipoPersona = ({ value }) => {
-    if (value === "fisica") {
-        regimenesFiscalesFiltered.value = regimenesFiscales.filter(
-            (regimen) => regimen.fisica,
-        );
-    } else {
-        regimenesFiscalesFiltered.value = regimenesFiscales.filter(
-            (regimen) => regimen.moral,
-        );
-    }
-};
+watch(
+    () => props.form.tipo_persona,
+    () => {
+        if (
+            props.form.regimen_fiscal_id &&
+            !regimenesFiscalesFiltered.value.some(
+                (regimen) => regimen.id === props.form.regimen_fiscal_id,
+            )
+        ) {
+            props.form.regimen_fiscal_id = null;
+        }
+    },
+);
+
+watch(
+    () => props.form.rfc,
+    (rfc) => {
+        if (typeof rfc === "string") {
+            props.form.rfc = rfc.toUpperCase().trimStart();
+        }
+    },
+);
 </script>
 
 <template>
@@ -50,7 +65,6 @@ const onChangeTipoPersona = ({ value }) => {
                 :options="tiposPersona"
                 optionLabel="label"
                 optionValue="value"
-                @change="onChangeTipoPersona"
                 fluid :invalid="!!formErrors.tipo_persona" />
             <Message v-if="formErrors.tipo_persona" severity="error" size="small">
                 {{ formErrors.tipo_persona }}
@@ -88,6 +102,7 @@ const onChangeTipoPersona = ({ value }) => {
             <InputText
                 id="rfc" name="rfc"
                 v-model="form.rfc" :disabled="readOnly"
+                :maxlength="form.tipo_persona === 'fisica' ? 13 : 12"
                 fluid :invalid="!!formErrors.rfc" />
             <Message v-if="formErrors.rfc" severity="error" size="small">
                 {{ formErrors.rfc }}
