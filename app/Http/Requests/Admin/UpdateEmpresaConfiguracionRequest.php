@@ -2,11 +2,21 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Rules\Rfc;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class UpdateEmpresaConfiguracionRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'rfc' => is_string($this->rfc) ? mb_strtoupper(trim($this->rfc), 'UTF-8') : $this->rfc,
+            'pais_base' => is_string($this->pais_base) ? mb_strtoupper(trim($this->pais_base), 'UTF-8') : $this->pais_base,
+        ]);
+    }
+
     public function authorize(): bool
     {
         return $this->user()?->can('update configuracion-empresa') ?? false;
@@ -14,25 +24,41 @@ class UpdateEmpresaConfiguracionRequest extends FormRequest
 
     public function rules(): array
     {
+        $tipoPersonaColumn = $this->input('tipo_persona') === 'fisica' ? 'fisica' : 'moral';
+
         return [
             'razon_social' => ['nullable', 'string', 'max:255'],
             'nombre_comercial' => ['nullable', 'string', 'max:255'],
-            'rfc' => ['nullable', 'string', 'min:12', 'max:13', 'regex:/^[A-Z&Ñ]{3,4}[0-9]{6}[A-Z0-9]{3}$/'],
-            'regimen_fiscal' => ['nullable', 'string', 'max:255'],
+            'tipo_persona' => ['required', 'string', 'in:fisica,moral'],
+            'rfc' => ['nullable', new Rfc($this->input('tipo_persona'))],
+            'regimen_fiscal_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('regimenes_fiscales', 'id')->where(
+                    fn ($query) => $query->where($tipoPersonaColumn, true),
+                ),
+            ],
             'domicilio_fiscal' => ['nullable', 'array'],
+            'domicilio_fiscal.pais_id' => ['nullable', 'integer', 'exists:paises,id'],
+            'domicilio_fiscal.pais_codigo_iso' => ['nullable', 'string', 'size:2'],
+            'domicilio_fiscal.codigo_postal_id' => ['nullable', 'integer', 'exists:codigos_postales,id'],
+            'domicilio_fiscal.division_admin_uno_id' => ['nullable', 'integer', 'exists:divisiones_administrativas,id'],
+            'domicilio_fiscal.division_admin_dos_id' => ['nullable', 'integer', 'exists:divisiones_administrativas,id'],
+            'domicilio_fiscal.division_admin_tres_id' => ['nullable', 'integer', 'exists:divisiones_administrativas,id'],
             'domicilio_fiscal.calle' => ['nullable', 'string', 'max:255'],
             'domicilio_fiscal.numero_exterior' => ['nullable', 'string', 'max:50'],
             'domicilio_fiscal.numero_interior' => ['nullable', 'string', 'max:50'],
             'domicilio_fiscal.colonia' => ['nullable', 'string', 'max:127'],
             'domicilio_fiscal.municipio' => ['nullable', 'string', 'max:127'],
             'domicilio_fiscal.estado' => ['nullable', 'string', 'max:127'],
+            'domicilio_fiscal.pais' => ['nullable', 'string', 'max:127'],
             'domicilio_fiscal.codigo_postal' => ['nullable', 'string', 'max:15'],
-            'telefono' => ['nullable', 'string', 'max:30'],
+            'telefono' => ['nullable', 'string', 'max:16', 'regex:/^\+[1-9][0-9]{7,14}$/'],
             'email' => ['nullable', 'email', 'max:127'],
             'sitio_web' => ['nullable', 'url', 'max:255'],
             'moneda' => ['required', 'string', 'size:3'],
             'zona_horaria' => ['required', 'timezone'],
-            'pais_base' => ['required', 'string', 'size:2'],
+            'pais_base' => ['required', 'string', 'size:2', 'exists:paises,codigo_iso'],
             'logotipo_path' => ['nullable', 'string', 'max:255'],
             'parametros_operativos' => ['nullable', 'array'],
             'parametros_operativos.dias_gracia_default' => ['nullable', 'integer', 'min:0', 'max:365'],
@@ -61,7 +87,7 @@ class UpdateEmpresaConfiguracionRequest extends FormRequest
                 foreach ([
                     'razon_social',
                     'rfc',
-                    'regimen_fiscal',
+                    'regimen_fiscal_id',
                     'email',
                     'domicilio_fiscal.calle',
                     'domicilio_fiscal.codigo_postal',

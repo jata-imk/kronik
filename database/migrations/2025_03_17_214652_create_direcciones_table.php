@@ -13,8 +13,9 @@ return new class extends Migration
     public function up(): void
     {
         $isMariaDb = str_contains(DB::connection()->getPdo()->getAttribute(\PDO::ATTR_SERVER_VERSION), 'MariaDB');
+        $supportsSpatialIndex = DB::connection()->getDriverName() !== 'sqlite';
 
-        Schema::create('direcciones', function (Blueprint $table) use ($isMariaDb) {
+        Schema::create('direcciones', function (Blueprint $table) use ($isMariaDb, $supportsSpatialIndex) {
             $table->id();
 
             $table->unsignedBigInteger('entidad_id');
@@ -26,7 +27,6 @@ return new class extends Migration
                 $table->rawColumn('entidad_tipo', 'varchar(10) not null constraint entidad_tipo_check check (entidad_tipo in (\'clientes\'))');
                 $table->rawColumn('tipo', 'varchar(10) not null constraint tipo_check check (tipo in (\'personal\', \'fiscal\'))');
             }
-
 
             $table->unsignedBigInteger('pais_id');
             $table->unsignedBigInteger('codigo_postal_id')->nullable();
@@ -63,7 +63,9 @@ return new class extends Migration
             $table->foreign('division_admin_dos_id')->references('id')->on('divisiones_administrativas');
             $table->foreign('division_admin_tres_id')->references('id')->on('divisiones_administrativas');
 
-            $table->spatialIndex('coordenadas');
+            if ($supportsSpatialIndex) {
+                $table->spatialIndex('coordenadas');
+            }
         });
 
         if ($isMariaDb) {
@@ -122,10 +124,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement("DROP TRIGGER IF EXISTS check_entidad_tipo_before_insert;");
-        DB::statement("DROP TRIGGER IF EXISTS check_entidad_tipo_before_update;");
-        DB::statement("DROP TRIGGER IF EXISTS check_tipo_before_insert;");
-        DB::statement("DROP TRIGGER IF EXISTS check_tipo_before_update;");
+        DB::statement('DROP TRIGGER IF EXISTS check_entidad_tipo_before_insert;');
+        DB::statement('DROP TRIGGER IF EXISTS check_entidad_tipo_before_update;');
+        DB::statement('DROP TRIGGER IF EXISTS check_tipo_before_insert;');
+        DB::statement('DROP TRIGGER IF EXISTS check_tipo_before_update;');
 
         Schema::dropIfExists('direcciones');
     }

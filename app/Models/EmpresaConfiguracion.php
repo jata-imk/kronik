@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EmpresaConfiguracion extends Model
 {
@@ -12,8 +13,9 @@ class EmpresaConfiguracion extends Model
         'singleton_key',
         'razon_social',
         'nombre_comercial',
+        'tipo_persona',
         'rfc',
-        'regimen_fiscal',
+        'regimen_fiscal_id',
         'domicilio_fiscal',
         'telefono',
         'email',
@@ -32,4 +34,9 @@ class EmpresaConfiguracion extends Model
         'parametros_operativos' => 'array',
         'integraciones' => 'encrypted:array',
     ];
+
+    public function regimenFiscal(): BelongsTo
+    {
+        return $this->belongsTo(RegimenFiscal::class);
+    }
 }

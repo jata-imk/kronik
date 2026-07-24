@@ -47,6 +47,12 @@ class AppServiceProvider extends ServiceProvider
             return $user->hasRole('Super Admin') ? true : null;
         });
 
+        // `artisan test` boots the application once before PHPUnit applies its
+        // isolated database environment. Avoid touching the configured app DB.
+        if ($this->app->runningInConsole() && ($_SERVER['argv'][1] ?? null) === 'test') {
+            return;
+        }
+
         // Checks for table existence before registering policies
         if (Schema::hasTable('permissions')) {
             $permissions = Permission::all();

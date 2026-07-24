@@ -18,7 +18,7 @@ Relacion:
 
 Campos principales:
 
-- Perfil legal: `razon_social`, `nombre_comercial`, `rfc`, `regimen_fiscal`, `domicilio_fiscal`.
+- Perfil legal: `razon_social`, `nombre_comercial`, `tipo_persona`, `rfc`, `regimen_fiscal_id`, `domicilio_fiscal`.
 - Contacto: `email`, `telefono`, `sitio_web`, `logotipo_path`.
 - Operacion: `moneda`, `zona_horaria`, `pais_base`, `estatus`.
 - Parametros: `parametros_operativos`.
@@ -33,6 +33,29 @@ Para cambiar `estatus` a `activa` se requieren:
 - Regimen fiscal.
 - Correo operativo.
 - Calle, codigo postal y estado del domicilio fiscal.
+
+`regimen_fiscal_id` debe apuntar a un regimen compatible con `tipo_persona`. La validacion exacta del RFC se documenta en [Validador de RFC](validacion-rfc.md).
+
+## Catalogos y formatos
+
+- `regimen_fiscal_id`: relacion con `regimenes_fiscales`.
+- `pais_base`: codigo ISO-2 existente en `paises`.
+- `zona_horaria`: identificador IANA entregado por `DateTimeZone::listIdentifiers()`.
+- `telefono`: numero internacional E.164.
+- `domicilio_fiscal`: JSON con IDs de catalogo y una copia textual de pais y divisiones administrativas.
+
+El domicilio guarda ambos valores porque los IDs permiten consultar los catalogos actuales y la copia textual conserva lo que el usuario vio al guardar.
+
+### Consulta de codigo postal
+
+La configuracion de empresa y el formulario de clientes comparten el composable `useCodigoPostal`.
+
+- Con cero, uno o dos digitos no se consulta el servidor.
+- Con tres o cuatro digitos se llama solamente a `codigos-postales/sugerencias`.
+- Con cinco digitos se llama solamente a `codigos-postales/buscar`.
+- Al cambiar la captura se cancela cualquier solicitud anterior y una respuesta atrasada no puede reemplazar la busqueda vigente.
+
+Antes ambos flujos se observaban al escribir porque las sugerencias reaccionaban al valor mientras el formulario invocaba tambien la busqueda detallada. Las condiciones ahora son mutuamente excluyentes: sugerencias sirven para completar el codigo y buscar carga asentamientos y divisiones solo con el codigo completo.
 
 ## Credenciales Externas
 

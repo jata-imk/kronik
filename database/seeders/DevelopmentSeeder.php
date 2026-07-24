@@ -72,13 +72,16 @@ class DevelopmentSeeder extends Seeder
 
     private function seedEmpresaConfiguracion(): void
     {
+        $regimenMoral = RegimenFiscal::where('clave', '601')->first();
+
         EmpresaConfiguracion::updateOrCreate(
             ['singleton_key' => 'default'],
             [
                 'razon_social' => 'KRONIK DEMO SA DE CV',
                 'nombre_comercial' => 'Kronik Demo',
+                'tipo_persona' => 'moral',
                 'rfc' => 'KDE260101AB1',
-                'regimen_fiscal' => '601',
+                'regimen_fiscal_id' => $regimenMoral?->id,
                 'email' => 'operaciones@example.test',
                 'telefono' => '+525512345678',
                 'sitio_web' => 'https://example.test',
@@ -207,7 +210,14 @@ class DevelopmentSeeder extends Seeder
 
     private function seedClientes(): void
     {
-        $this->seedFallbackCatalogs();
+        if (
+            Pais::where('codigo_iso', 'MX')->doesntExist()
+            || RegimenFiscal::where('fisica', true)->doesntExist()
+            || RegimenFiscal::where('moral', true)->doesntExist()
+            || CodigoPostal::query()->doesntExist()
+        ) {
+            $this->seedFallbackCatalogs();
+        }
 
         $pais = Pais::where('codigo_iso', 'MX')->first();
         $regimenFisica = RegimenFiscal::where('fisica', true)->first();
@@ -246,7 +256,7 @@ class DevelopmentSeeder extends Seeder
                     'tipo_persona' => 'fisica',
                     'regimen_fiscal_id' => $regimenFisica->id,
                     'curp' => 'GALA910418MDFRPN01',
-                    'rfc' => 'GALA910418ABC',
+                    'rfc' => 'GALA910418AB8',
                     'razon_social' => 'ANA LUCIA GARCIA LOPEZ',
                 ],
                 'direccion' => [

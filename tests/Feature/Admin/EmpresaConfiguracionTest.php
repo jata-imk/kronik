@@ -1,7 +1,28 @@
 <?php
 
 use App\Models\EmpresaConfiguracion;
+use App\Models\Pais;
+use App\Models\RegimenFiscal;
 use Inertia\Testing\AssertableInertia as Assert;
+
+beforeEach(function () {
+    Pais::create([
+        'nombre_es' => 'México',
+        'nombre_us' => 'Mexico',
+        'codigo_iso' => 'MX',
+        'codigo_iso3' => 'MEX',
+        'emoji' => '🇲🇽',
+    ]);
+
+    RegimenFiscal::create([
+        'clave' => '601',
+        'descripcion' => 'General de Ley Personas Morales',
+        'fisica' => false,
+        'moral' => true,
+        'fecha_inicio_vigencia' => '2022-01-01',
+        'fecha_fin_vigencia' => '2099-12-31',
+    ]);
+});
 
 test('super admin can see singleton company configuration', function () {
     $user = actingAsSuperAdmin();
@@ -13,6 +34,10 @@ test('super admin can see singleton company configuration', function () {
             ->component('Admin/ConfiguracionEmpresa/Index')
             ->has('configuracion')
             ->where('configuracion.singleton_key', 'default')
+            ->has('tiposPersona', 2)
+            ->has('regimenesFiscales', 1)
+            ->has('paises', 1)
+            ->has('zonasHorarias')
         );
 
     expect(EmpresaConfiguracion::where('singleton_key', 'default')->exists())->toBeTrue();
@@ -24,8 +49,9 @@ test('super admin can update singleton company configuration without exposing ap
     $payload = [
         'razon_social' => 'KRONIK DEMO SA DE CV',
         'nombre_comercial' => 'Kronik Demo',
+        'tipo_persona' => 'moral',
         'rfc' => 'KDE260101AB1',
-        'regimen_fiscal' => 'General de Ley Personas Morales',
+        'regimen_fiscal_id' => RegimenFiscal::where('clave', '601')->value('id'),
         'domicilio_fiscal' => [
             'calle' => 'Av. Paseo de la Reforma',
             'codigo_postal' => '06000',
@@ -64,6 +90,7 @@ test('super admin can update singleton company configuration without exposing ap
 
     expect($configuracion->razon_social)->toBe('KRONIK DEMO SA DE CV')
         ->and($configuracion->estatus)->toBe('activa')
+        ->and($configuracion->tipo_persona)->toBe('moral')
         ->and($configuracion->integraciones['circulo_credito_api_key'])->toBe('secret-api-key')
         ->and($configuracion->parametros_operativos['reglas_cobranza']['dias_mora_notificacion'])->toBe(1);
 
@@ -90,8 +117,9 @@ test('activation requires minimum legal data', function () {
         ->put(route('admin.configuracion-empresa.update'), [
             'razon_social' => '',
             'nombre_comercial' => '',
+            'tipo_persona' => 'moral',
             'rfc' => '',
-            'regimen_fiscal' => '',
+            'regimen_fiscal_id' => null,
             'domicilio_fiscal' => [],
             'telefono' => '',
             'email' => '',
@@ -108,7 +136,7 @@ test('activation requires minimum legal data', function () {
         ->assertSessionHasErrors([
             'razon_social',
             'rfc',
-            'regimen_fiscal',
+            'regimen_fiscal_id',
             'email',
             'domicilio_fiscal.calle',
             'domicilio_fiscal.codigo_postal',

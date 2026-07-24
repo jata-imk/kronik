@@ -21,6 +21,16 @@ class ResetDevelopmentData extends Command
             return self::FAILURE;
         }
 
+        $catalogTables = [
+            'paises',
+            'regimenes_fiscales',
+            'divisiones_administrativas',
+            'codigos_postales',
+        ];
+        $catalogCounts = collect($catalogTables)
+            ->filter(fn (string $table) => Schema::hasTable($table))
+            ->mapWithKeys(fn (string $table) => [$table => DB::table($table)->count()]);
+
         $tables = [
             config('activitylog.table_name', 'activity_log'),
             'sic_query_results',
@@ -91,6 +101,14 @@ class ResetDevelopmentData extends Command
         if (! $this->option('no-seed')) {
             $this->call('db:seed', ['--class' => SystemSeeder::class]);
             $this->call('db:seed', ['--class' => DevelopmentSeeder::class]);
+        }
+
+        foreach ($catalogCounts as $table => $count) {
+            if (DB::table($table)->count() < $count) {
+                $this->error("Catalog integrity check failed: {$table} lost records during reset.");
+
+                return self::FAILURE;
+            }
         }
 
         $this->info('Development data reset completed. SAT/SEPOMEX catalogs were preserved.');
