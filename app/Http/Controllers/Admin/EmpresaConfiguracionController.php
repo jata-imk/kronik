@@ -83,6 +83,7 @@ class EmpresaConfiguracionController extends Controller implements HasMiddleware
         activity()
             ->performedOn($configuracion)
             ->causedBy(Auth::user())
+            ->event('empresa.updated')
             ->withProperties([
                 'before' => $before,
                 'after' => $this->auditPayload($configuracion->fresh()),

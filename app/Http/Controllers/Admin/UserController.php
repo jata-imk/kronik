@@ -5,12 +5,20 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
-class UserController extends Controller
+class UserController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('role_or_permission:Super Admin|read activity-log', only: ['usersActivity', 'exportActivity']),
+        ];
+    }
     /**
      * Display a listing of the resource.
      */
@@ -82,11 +90,163 @@ class UserController extends Controller
      */
     public function usersActivity(Request $request)
     {
-        $activityModel = config('activitylog.activity_model');
-        $paginatedActivityLogs = $activityModel::with('causer', 'subject')->paginate(3);
+        $filters = $this->validatedActivityFilters($request);
+        $activityLogs = $this->activityQuery($filters)
+            ->paginate($filters['per_page'] ?? 20)
+            ->withQueryString()
+            ->through(fn ($activity) => $this->activityPayload($activity));
 
         return Inertia::render('Admin/Logs/UserActivity', [
-            'paginatedActivityLogs' => $paginatedActivityLogs
+            'activityLogs' => $activityLogs,
+            'filters' => $filters,
+            'filterOptions' => $this->activityFilterOptions(),
         ]);
+    }
+
+    public function exportActivity(Request $request)
+    {
+        $filters = $this->validatedActivityFilters($request);
+        $filename = 'actividad-'.now()->format('Y-m-d-His').'.csv';
+
+        return response()->streamDownload(function () use ($filters) {
+            $stream = fopen('php://output', 'w');
+            fputcsv($stream, ['ID', 'Fecha', 'Evento', 'Descripción', 'Usuario', 'Email', 'Sujeto', 'ID sujeto', 'IP', 'Propiedades']);
+
+            $this->activityQuery($filters)->cursor()->each(function ($activity) use ($stream) {
+                $payload = $this->activityPayload($activity);
+
+                fputcsv($stream, [
+                    $payload['id'],
+                    $payload['created_at'],
+                    $payload['event'],
+                    $payload['description'],
+                    $payload['causer']['name'],
+                    $payload['causer']['email'],
+                    $payload['subject']['type'],
+                    $payload['subject']['id'],
+                    $payload['ip'],
+                    json_encode($payload['properties'], JSON_UNESCAPED_UNICODE),
+                ]);
+            });
+
+            fclose($stream);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    private function validatedActivityFilters(Request $request): array
+    {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'event' => ['nullable', 'string', 'max:100'],
+            'subject_type' => ['nullable', 'string', 'max:255'],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+            'per_page' => ['nullable', 'integer', 'in:10,20,50,100'],
+        ]);
+
+        return [
+            'search' => '',
+            'user_id' => null,
+            'event' => null,
+            'subject_type' => null,
+            'date_from' => '',
+            'date_to' => '',
+            'per_page' => 20,
+            ...$filters,
+        ];
+    }
+
+    private function activityQuery(array $filters)
+    {
+        $activityModel = config('activitylog.activity_model');
+        $query = $activityModel::query()->with('causer')->latest();
+
+        if (! empty($filters['search'])) {
+            $search = '%'.$filters['search'].'%';
+            $query->where(function ($builder) use ($search) {
+                $builder->where('description', 'like', $search)
+                    ->orWhere('event', 'like', $search)
+                    ->orWhere('subject_type', 'like', $search)
+                    ->orWhereHasMorph('causer', [User::class], fn ($causer) => $causer
+                        ->where('name', 'like', $search)
+                        ->orWhere('email', 'like', $search));
+            });
+        }
+
+        if (! empty($filters['user_id'])) {
+            $query->where('causer_type', User::class)->where('causer_id', $filters['user_id']);
+        }
+
+        foreach (['event', 'subject_type'] as $field) {
+            if (! empty($filters[$field])) {
+                $query->where($field, $filters[$field]);
+            }
+        }
+
+        if (! empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+
+        if (! empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        return $query;
+    }
+
+    private function activityPayload($activity): array
+    {
+        $properties = $activity->properties;
+        $properties = is_object($properties) && method_exists($properties, 'toArray')
+            ? $properties->toArray()
+            : (array) $properties;
+        $causer = $activity->causer;
+
+        return [
+            'id' => $activity->id,
+            'event' => $activity->event ?: 'sin_clasificar',
+            'description' => $activity->description,
+            'causer' => [
+                'id' => $causer?->id,
+                'name' => $causer?->name ?? 'Sistema',
+                'email' => $causer?->email ?? '',
+            ],
+            'subject' => [
+                'type' => $activity->subject_type ? class_basename($activity->subject_type) : '—',
+                'id' => $activity->subject_id,
+            ],
+            'ip' => $properties['ip'] ?? null,
+            'properties' => $properties,
+            'created_at' => $activity->created_at?->toIso8601String(),
+        ];
+    }
+
+    private function activityFilterOptions(): array
+    {
+        $activityModel = config('activitylog.activity_model');
+        $knownEvents = [
+            'login' => 'Inicio de sesión',
+            'empresa.updated' => 'Empresa actualizada',
+            'sucursal.created' => 'Sucursal creada',
+            'sucursal.updated' => 'Sucursal actualizada',
+            'sucursal.deactivated' => 'Sucursal desactivada',
+        ];
+
+        $events = collect(array_keys($knownEvents))
+            ->merge($activityModel::query()->whereNotNull('event')->distinct()->pluck('event'))
+            ->unique()
+            ->sort()
+            ->values();
+
+        return [
+            'users' => User::query()->orderBy('name')->get(['id', 'name', 'email']),
+            'events' => $events->map(fn ($event) => [
+                'value' => $event,
+                'label' => $knownEvents[$event] ?? $event,
+            ])->values(),
+            'subjectTypes' => $activityModel::query()->whereNotNull('subject_type')->distinct()->pluck('subject_type')
+                ->map(fn ($type) => ['value' => $type, 'label' => class_basename($type)])->values(),
+        ];
     }
 }

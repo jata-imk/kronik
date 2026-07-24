@@ -10,7 +10,9 @@ class CodigoPostalService
 {
     public function buscarPorCodigo(string $codigoPostal)
     {
-        $codigosPostales = CodigoPostal::with(['pais', 'divisionAdministrativa.padre.padre'])->where('codigo', 'like', "$codigoPostal%")->get();
+        $codigosPostales = CodigoPostal::with(['pais', 'divisionAdministrativa.padre.padre'])
+            ->where('codigo', $codigoPostal)
+            ->get();
 
         if ($codigosPostales->isEmpty()) {
             throw new NotFoundHttpException('No se encontraron códigos postales que coincidan.');
@@ -21,6 +23,11 @@ class CodigoPostalService
 
     public function sugerencias(string $codigoPostal): Collection
     {
-        return CodigoPostal::where('codigo', 'like', "$codigoPostal%")->distinct()->take(10)->get('codigo');
+        return CodigoPostal::query()
+            ->where('codigo', 'like', "$codigoPostal%")
+            ->orderBy('codigo')
+            ->distinct()
+            ->take(10)
+            ->get('codigo');
     }
 }

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, reactive } from "vue";
+import { nextTick, ref, watch, reactive } from "vue";
 import { useToast } from "primevue/usetoast";
 import { usePage, useForm, Link } from "@inertiajs/vue3";
 
@@ -242,6 +242,26 @@ const onSubmit = () => {
                     severity: "success",
                     summary: "Cliente creado exitosamente",
                     life: 3000,
+                });
+            },
+            onError: async (errors) => {
+                await nextTick();
+
+                const firstInvalidField = document.querySelector(
+                    '[aria-invalid="true"]',
+                );
+
+                firstInvalidField?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                });
+                firstInvalidField?.focus();
+
+                toast.add({
+                    severity: "error",
+                    summary: "No se pudo guardar el cliente",
+                    detail: `${Object.keys(errors).length} campo(s) requieren atención.`,
+                    life: 5000,
                 });
             },
         },

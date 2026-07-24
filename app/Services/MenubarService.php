@@ -2,111 +2,107 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Str;
+use App\Models\Module;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-use App\Models\Module;
-use Illuminate\Database\Eloquent\Collection;
-
 class MenubarService
 {
-    protected array $menuConfig;
-
     public function getMenuItems(Request $request): array
     {
         $route = Route::current();
+        $routeName = $route?->getName();
 
-        // TODO: Add this to the model in the future
-        // $routeController = $route->getController();
-        // $routeControllerClass = $route->getControllerClass();
+        if (!$routeName) {
+            return [];
+        }
 
-        $routeAction = $route->getAction();
-        $routeActionMethod = Str::parseCallback($routeAction['uses'])[1];
-        $routeName = $route->getName();
-        $routeNameWithoutAction = str_replace('.' . $routeActionMethod, '', $routeName);
+        $module = Module::query()
+            ->get()
+            ->filter(fn (Module $candidate) => $routeName === $candidate->route_name || str_starts_with($routeName, $candidate->route_name.'.'))
+            ->sortByDesc(fn (Module $candidate) => strlen($candidate->route_name))
+            ->first();
 
-        $modules = explode('.', $routeNameWithoutAction);
-        $module = Module::where('route_name', $routeNameWithoutAction)->first();
-
-        if (!$module) return [];
+        if (!$module) {
+            return [];
+        }
 
         $module->load([
             'menubarItems' => function ($query) use ($module) {
                 $query->where('parent_id', null)->with([
-                    'menubarItemModules' => function ($q) use ($module) {
-                        $q->where('module_id', $module->id);
-                    },
-                    'children.menubarItemModules' => function ($query) use ($module) {
-                        $query->where('module_id', $module->id);
-                    },
-                    'children.children.menubarItemModules' => function ($query) use ($module) {
-                        $query->where('module_id', $module->id);
-                    },
-                    'children.children.children.menubarItemModules' => function ($query) use ($module) {
-                        $query->where('module_id', $module->id);
-                    }
+                    'menubarItemModules' => fn ($q) => $q->where('module_id', $module->id),
+                    'children.menubarItemModules' => fn ($q) => $q->where('module_id', $module->id),
+                    'children.children.menubarItemModules' => fn ($q) => $q->where('module_id', $module->id),
+                    'children.children.children.menubarItemModules' => fn ($q) => $q->where('module_id', $module->id),
                 ])->orderBy('sort_order');
-            }
+            },
         ]);
 
         return array_values(array_filter(
             $this->buildMenu(
-                $routeNameWithoutAction,
+                $routeName,
+                $module->route_name,
                 $module->menubarItems,
                 $request,
-                $routeActionMethod
             ),
-            function ($item) {
-                return isset($item['items']) && count($item['items']) > 0 || isset($item['url']);
-            }
+            fn (array $item) => (isset($item['items']) && count($item['items']) > 0) || isset($item['url']),
         ));
     }
 
-    protected function buildMenu(string | array $modules, array | Collection $items, Request $request, string $action, $parent = null): array
-    {
+    protected function buildMenu(
+        string $currentRouteName,
+        string $moduleRouteName,
+        array|Collection $items,
+        Request $request,
+        mixed $parent = null,
+    ): array {
         $menu = [];
-        $module = is_array($modules) ? implode('.', $modules) : $modules;
 
-        if ($action === 'index' && !$parent) {
-            $menu[] = [
-                'label' => 'Inicio',
-                'icon' => 'pi pi-fw pi-home',
-                'url' => route('dashboard'),
-            ];
-        } else if (!$parent) {
-            $menu[] = [
-                'label' => 'Regresar',
-                'icon' => 'pi pi-arrow-left',
-                'iconPos' => 'left',
-                'url' => ($request->headers->has('referer')) ? $request->headers->get('referer') : route($module . '.index'),
-            ];
+        if (!$parent) {
+            $menu[] = $currentRouteName === $moduleRouteName.'.index'
+                ? [
+                    'label' => 'Inicio',
+                    'icon' => 'pi pi-fw pi-home',
+                    'url' => route('dashboard'),
+                ]
+                : [
+                    'label' => 'Regresar',
+                    'icon' => 'pi pi-arrow-left',
+                    'iconPos' => 'left',
+                    'url' => $request->headers->get('referer') ?? $this->buildRouteUrl($moduleRouteName.'.index', null, $request),
+                ];
         }
 
         foreach ($items as $item) {
-            $actions = $item->menubarItemModules->first()?->routes ?? [];
+            $routes = $item->menubarItemModules->first()?->routes ?? [];
+            $children = $item->children?->count()
+                ? $this->buildMenu($currentRouteName, $moduleRouteName, $item->children, $request, $item)
+                : [];
 
-            if (!in_array($module . '.' . $action, $actions)) {
+            $isAvailableOnRoute = in_array($currentRouteName, $routes, true);
+
+            if (!$isAvailableOnRoute && !$children) {
                 continue;
             }
 
-            $url = $this->resolveMenubarUrl($item, $request);
+            $url = $isAvailableOnRoute
+                ? $this->resolveMenubarUrl($item, $request)
+                : null;
 
-            if (!$url && (!($item->children && $item->children->count()))) {
+            if (!$url && !$children) {
                 continue;
             }
 
-            $menuItem = [
-                'label' => $item->label,
-            ];
+            $menuItem = ['label' => $item->label];
 
             if ($url) {
                 $menuItem['icon'] = $item->icon;
                 $menuItem['url'] = $url;
             }
 
-            if ($item->children && $item->children->count()) {
-                $menuItem['items'] = $this->buildMenu($modules, $item->children, $request, $action, $item);
+            if ($children) {
+                $menuItem['items'] = $children;
             }
 
             $menu[] = $menuItem;
@@ -115,66 +111,85 @@ class MenubarService
         return $menu;
     }
 
-    function resolveMenubarUrl($item, Request $request)
+    protected function resolveMenubarUrl($item, Request $request): ?string
     {
-        if ($item->type == 'route:dynamic') {
-            $conditionValues = json_decode($item->value);
-            $conditionDefault = collect($conditionValues)->where('condition_type', 'default')->first();
+        if ($item->type === 'route:dynamic') {
+            $conditions = json_decode($item->value);
+            $default = collect($conditions)->firstWhere('condition_type', 'default');
 
-            if ($conditionDefault) {
-                foreach ($conditionValues as $condition) {
-                    if ($condition->condition_type !== 'route_regexp') continue;
+            if (!$default) {
+                return null;
+            }
 
-                    $subject = $condition->condition_value->pregmatch_subject_type === 'referer'
-                        ? $request->headers->get('referer', '')
-                        : route($conditionDefault->route_name);
-
-                    $triggerRoute = Route::getRoutes()->getByName($condition->condition_value->route_name);
-                    if (!$triggerRoute) continue;
-
-                    if (preg_match($this->laravelPatternToRegex($triggerRoute->uri), $subject)) {
-                        return $this->buildRouteUrl($condition->route_name ?? $conditionDefault->route_name, $condition->params ?? null, $request);
-                    }
+            foreach ($conditions as $condition) {
+                if ($condition->condition_type !== 'route_regexp' || empty($condition->condition_value?->route_name)) {
+                    continue;
                 }
 
-                return $this->buildRouteUrl($conditionDefault->route_name, $conditionDefault->params ?? null, $request);
+                $triggerRoute = Route::getRoutes()->getByName($condition->condition_value->route_name);
+                if (!$triggerRoute) {
+                    continue;
+                }
+
+                $subject = $condition->condition_value->pregmatch_subject_type === 'referer'
+                    ? $request->headers->get('referer', '')
+                    : $this->buildRouteUrl($default->route_name, $default->params ?? null, $request);
+
+                if ($subject && preg_match($this->laravelPatternToRegex($triggerRoute->uri), $subject)) {
+                    return $this->buildRouteUrl(
+                        $condition->route_name ?? $default->route_name,
+                        $condition->params ?? null,
+                        $request,
+                    );
+                }
             }
+
+            return $this->buildRouteUrl($default->route_name, $default->params ?? null, $request);
         }
 
-        switch ($item->type) {
-            case 'menu':
+        return match ($item->type) {
+            'menu' => null,
+            'route:static' => $item->value,
+            'route:name' => $this->buildRouteUrl($item->value, $item->params, $request),
+            'route:referer_fallback' => $request->headers->get('referer') ?? $this->buildRouteUrl($item->value, null, $request),
+            default => route('dashboard'),
+        };
+    }
+
+    private function buildRouteUrl(string $routeName, mixed $rawParams, Request $request): ?string
+    {
+        if (!Route::has($routeName)) {
+            return null;
+        }
+
+        $params = is_string($rawParams) ? json_decode($rawParams, true) : $rawParams;
+        $params = is_array($params) ? $params : [];
+
+        foreach ($params as $key => $value) {
+            $routeParam = $request->route($key);
+            $resolved = is_object($routeParam) ? ($routeParam->id ?? null) : $routeParam;
+
+            if ($value === '{'.$key.'}' && $resolved === null) {
                 return null;
-            case 'route:static':
-                return $item->value;
-            case 'route:name':
-                return $this->buildRouteUrl($item->value, $item->params, $request);
-            case 'route:referer_fallback':
-                return $request->headers->get('referer') ?? route($item->value);
-            default:
-                return route('dashboard');
+            }
+
+            $params[$key] = is_string($value)
+                ? str_replace('{'.$key.'}', (string) $resolved, $value)
+                : $value;
+        }
+
+        try {
+            return route($routeName, $params);
+        } catch (\Throwable) {
+            return null;
         }
     }
 
-    private function buildRouteUrl(string $routeName, $rawParams, Request $request): string
+    protected function laravelPatternToRegex(string $pattern): string
     {
-        $params = collect((array) ($rawParams ?? []))->mapWithKeys(function ($value, $key) use ($request) {
-            $param = $request->route($key);
-            $resolved = is_object($param) ? ($param->id ?? 'null') : ($param ?? 'null');
-            return [$key => str_replace('{' . $key . '}', $resolved, $value)];
-        })->toArray();
-
-        return route($routeName, $params);
-    }
-
-    function laravelPatternToRegex(string $pattern): string
-    {
-        // Escapa los caracteres especiales y convierte {param} en [^/]+
         $regex = preg_quote($pattern, '#');
-
-        // Reemplaza los parámetros tipo \{param\} por [^/]+
         $regex = preg_replace('/\\\\\{[^}]+\\\\\}/', '[^/]+', $regex);
 
-        // Devuelve el regex listo para usar
-        return '#/' . $regex . '$#';
+        return '#/'.$regex.'$#';
     }
 }

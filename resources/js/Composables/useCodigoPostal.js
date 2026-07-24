@@ -1,4 +1,4 @@
-import { onScopeDispose, ref, toValue, watchEffect } from "vue";
+import { computed, onScopeDispose, ref, toValue, watchEffect } from "vue";
 
 export function useCodigoPostal(cpInput, options = {}) {
     const {
@@ -9,18 +9,28 @@ export function useCodigoPostal(cpInput, options = {}) {
 
     const sugerenciasData = ref([]);
     const busquedaData = ref(null);
-    const loading = ref(false);
-    const error = ref(null);
+    const cargandoSugerencias = ref(false);
+    const cargandoBusqueda = ref(false);
+    const errorSugerencias = ref(null);
+    const errorBusqueda = ref(null);
+    const loading = computed(
+        () => cargandoSugerencias.value || cargandoBusqueda.value,
+    );
+    const error = computed(
+        () => errorBusqueda.value ?? errorSugerencias.value,
+    );
 
     let debounceTimeout = null;
-    let activeController = null;
-    let activeRequest = 0;
+    let sugerenciasController = null;
+    let busquedaController = null;
+    let sugerenciasRequest = 0;
+    let busquedaRequest = 0;
 
-    const fetchData = async (endpoint, codigo) => {
-        activeController?.abort();
-        activeController = new AbortController();
-        const requestId = ++activeRequest;
-        loading.value = true;
+    const fetchData = async (endpoint, codigo, requestState) => {
+        requestState.controller?.abort();
+        requestState.controller = new AbortController();
+        const requestId = ++requestState.request.value;
+        requestState.loading.value = true;
 
         try {
             const response = await fetch(
@@ -28,7 +38,7 @@ export function useCodigoPostal(cpInput, options = {}) {
                 {
                     method: "GET",
                     credentials: "include",
-                    signal: activeController.signal,
+                    signal: requestState.controller.signal,
                     headers: { Accept: "application/json" },
                 },
             );
@@ -38,7 +48,7 @@ export function useCodigoPostal(cpInput, options = {}) {
             }
 
             const data = await response.json();
-            return requestId === activeRequest ? data.data : null;
+            return requestId === requestState.request.value ? data.data : null;
         } catch (err) {
             if (err.name === "AbortError") {
                 return null;
@@ -46,8 +56,8 @@ export function useCodigoPostal(cpInput, options = {}) {
 
             throw err;
         } finally {
-            if (requestId === activeRequest) {
-                loading.value = false;
+            if (requestId === requestState.request.value) {
+                requestState.loading.value = false;
             }
         }
     };
@@ -57,29 +67,48 @@ export function useCodigoPostal(cpInput, options = {}) {
         clearTimeout(debounceTimeout);
 
         if (!codigo) {
-            activeController?.abort();
+            sugerenciasController?.abort();
             sugerenciasData.value = [];
-            loading.value = false;
+            cargandoSugerencias.value = false;
             return;
         }
 
         if (!shouldFetchSugerencias(codigo)) {
-            activeController?.abort();
+            sugerenciasController?.abort();
             sugerenciasData.value = [];
-            loading.value = false;
+            cargandoSugerencias.value = false;
             return;
         }
 
-        error.value = null;
+        errorSugerencias.value = null;
 
         debounceTimeout = setTimeout(async () => {
+            const state = {
+                get controller() {
+                    return sugerenciasController;
+                },
+                set controller(controller) {
+                    sugerenciasController = controller;
+                },
+                request: {
+                    get value() {
+                        return sugerenciasRequest;
+                    },
+                    set value(value) {
+                        sugerenciasRequest = value;
+                    },
+                },
+                loading: cargandoSugerencias,
+            };
+
             try {
-                const data = await fetchData("sugerencias", codigo);
+                const data = await fetchData("sugerencias", codigo, state);
                 if (data !== null) {
                     sugerenciasData.value = data;
                 }
             } catch (err) {
-                error.value = err.message || "Error al buscar sugerencias";
+                errorSugerencias.value =
+                    err.message || "Error al buscar sugerencias";
             }
         }, debounceMs);
 
@@ -90,25 +119,48 @@ export function useCodigoPostal(cpInput, options = {}) {
         const codigo = toValue(cpInput);
 
         if (!codigo || !shouldFetchBusqueda(codigo)) {
+            busquedaController?.abort();
+            busquedaData.value = null;
+            errorBusqueda.value = null;
+            cargandoBusqueda.value = false;
             return;
         }
 
-        error.value = null;
+        errorBusqueda.value = null;
         busquedaData.value = null;
 
+        const state = {
+            get controller() {
+                return busquedaController;
+            },
+            set controller(controller) {
+                busquedaController = controller;
+            },
+            request: {
+                get value() {
+                    return busquedaRequest;
+                },
+                set value(value) {
+                    busquedaRequest = value;
+                },
+            },
+            loading: cargandoBusqueda,
+        };
+
         try {
-            const data = await fetchData("buscar", codigo);
+            const data = await fetchData("buscar", codigo, state);
             if (data !== null) {
                 busquedaData.value = data;
             }
         } catch (err) {
-            error.value = err.message || "Error al buscar el código postal";
+            errorBusqueda.value = err.message || "Error al buscar el código postal";
         }
     };
 
     onScopeDispose(() => {
         clearTimeout(debounceTimeout);
-        activeController?.abort();
+        sugerenciasController?.abort();
+        busquedaController?.abort();
     });
 
     return {
@@ -116,6 +168,8 @@ export function useCodigoPostal(cpInput, options = {}) {
         busquedaData,
         loading,
         error,
+        errorSugerencias,
+        errorBusqueda,
         busqueda,
     };
 }

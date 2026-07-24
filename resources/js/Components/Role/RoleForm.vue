@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 import RoleHeader from "./RoleHeader.vue";
 import RoleModules from "./RoleModules.vue";
@@ -21,7 +21,7 @@ const showUsers = ref(false);
 
 const emit = defineEmits(["update:editRoleNameMode", "submit"]);
 
-const menuItems = ref([
+const menuItems = computed(() => [
     {
         label: "Cambiar nombre",
         icon: "pi pi-fw pi-pencil",
@@ -89,7 +89,7 @@ const menuItems = ref([
         label: showUsers.value ? "Ver permisos" : "Ver miembros",
         icon: showUsers.value ? "pi pi-fw pi-lock" : "pi pi-fw pi-users",
         command: () => {
-            showUsers.value = true;
+            showUsers.value = !showUsers.value;
         },
     },
 ]);

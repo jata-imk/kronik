@@ -40,6 +40,7 @@ class SucursalController extends Controller implements HasMiddleware
         activity()
             ->performedOn($sucursal)
             ->causedBy(Auth::user())
+            ->event('sucursal.created')
             ->withProperties(['attributes' => $sucursal->toArray()])
             ->log('Sucursal creada');
 
@@ -55,6 +56,7 @@ class SucursalController extends Controller implements HasMiddleware
         activity()
             ->performedOn($sucursal)
             ->causedBy(Auth::user())
+            ->event('sucursal.updated')
             ->withProperties([
                 'before' => $before,
                 'after' => $sucursal->fresh()->toArray(),
@@ -71,6 +73,7 @@ class SucursalController extends Controller implements HasMiddleware
         activity()
             ->performedOn($sucursal)
             ->causedBy(Auth::user())
+            ->event('sucursal.deactivated')
             ->log('Sucursal desactivada');
 
         return redirect()->back()->with('success', 'Sucursal desactivada');
@@ -94,6 +97,13 @@ class SucursalController extends Controller implements HasMiddleware
             'domicilio.municipio' => ['nullable', 'string', 'max:127'],
             'domicilio.estado' => ['nullable', 'string', 'max:127'],
             'domicilio.codigo_postal' => ['nullable', 'string', 'max:15'],
+            'domicilio.pais_id' => ['nullable', 'integer'],
+            'domicilio.pais_codigo_iso' => ['nullable', 'string', 'max:3'],
+            'domicilio.codigo_postal_id' => ['nullable', 'integer'],
+            'domicilio.division_admin_uno_id' => ['nullable', 'integer'],
+            'domicilio.division_admin_dos_id' => ['nullable', 'integer'],
+            'domicilio.division_admin_tres_id' => ['nullable', 'integer'],
+            'domicilio.pais' => ['nullable', 'string', 'max:127'],
             'telefono' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:127'],
             'horario' => ['nullable', 'array'],
@@ -106,6 +116,8 @@ class SucursalController extends Controller implements HasMiddleware
             'consecutivo_credito' => ['required', 'integer', 'min:1'],
             'consecutivo_recibo' => ['required', 'integer', 'min:1'],
             'activa' => ['required', 'boolean'],
+        ], [
+            'clave.unique' => 'La clave de sucursal ya está en uso.',
         ]);
     }
 }

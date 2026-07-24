@@ -134,7 +134,7 @@ const referenceForm = useForm({
     relacion: "",
     empresa: "",
     puesto: "",
-    telefono_codigo_pais: "+52",
+    telefono_codigo_pais: "52",
     telefono: "",
     email: "",
     notas: "",
@@ -228,7 +228,7 @@ const openReference = (reference = null) => {
             relacion: reference.relacion ?? "",
             empresa: reference.empresa ?? "",
             puesto: reference.puesto ?? "",
-            telefono_codigo_pais: reference.telefono_codigo_pais ?? "+52",
+            telefono_codigo_pais: reference.telefono_codigo_pais ?? "52",
             telefono: reference.telefono,
             email: reference.email ?? "",
             notas: reference.notas ?? "",
@@ -581,7 +581,7 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                             <div v-for="reference in cliente.referencias" :key="reference.id" class="record-row">
                                 <div class="record-symbol"><UserRound :size="20" /></div>
                                 <div><strong>{{ reference.nombre }}</strong><p>{{ optionLabel(opciones.referencias, reference.tipo) }} · {{ reference.relacion || reference.empresa }}</p></div>
-                                <div class="record-contact"><span>{{ reference.telefono_codigo_pais }} {{ reference.telefono }}</span><small>{{ reference.email }}</small></div>
+                                <div class="record-contact"><span v-if="reference.telefono_codigo_pais">+{{ String(reference.telefono_codigo_pais).replace(/^\+/, "") }} </span><span>{{ reference.telefono }}</span><small>{{ reference.email }}</small></div>
                                 <div class="row-actions">
                                     <Button text rounded @click="openReference(reference)"><template #icon><Pencil :size="17" /></template></Button>
                                     <Button text rounded severity="danger" @click="confirmDelete('Se eliminara esta referencia.', route('clientes.referencias.destroy', [cliente.id, reference.id]), 'Referencia eliminada')"><template #icon><Trash2 :size="17" /></template></Button>

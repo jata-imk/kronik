@@ -270,7 +270,7 @@ const exportData = async () => {
             <Column field="telefono" header="Teléfono" sortable>
                 <template #body="{ data }">
                     <Tag v-if="data.telefono_codigo_pais" severity="success" rounded class="font-mono" >
-                        +{{ data.telefono_codigo_pais }}
+                        +{{ String(data.telefono_codigo_pais).replace(/^\+/, "") }}
                     </Tag>
                     <span class="ml-2 font-semibold font-mono">{{ data.telefono.replaceAll(' ', '') }}</span>
                 </template>

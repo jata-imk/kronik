@@ -95,6 +95,7 @@ Route::middleware([
         })->name('dashboard');
 
         Route::get('users/activity', [UserController::class, 'usersActivity'])->name('users.activity');
+        Route::get('users/activity/export', [UserController::class, 'exportActivity'])->name('users.activity.export');
         Route::resource('users', UserController::class);
         Route::get('configuracion-empresa', [EmpresaConfiguracionController::class, 'index'])->name('configuracion-empresa.index');
         Route::put('configuracion-empresa', [EmpresaConfiguracionController::class, 'update'])->name('configuracion-empresa.update');

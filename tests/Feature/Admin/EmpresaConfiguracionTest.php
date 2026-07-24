@@ -97,6 +97,7 @@ test('super admin can update singleton company configuration without exposing ap
     $this->assertDatabaseHas(config('activitylog.table_name'), [
         'subject_type' => EmpresaConfiguracion::class,
         'subject_id' => $configuracion->id,
+        'event' => 'empresa.updated',
         'description' => 'Configuracion de empresa actualizada',
     ]);
 

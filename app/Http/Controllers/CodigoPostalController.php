@@ -17,7 +17,7 @@ class CodigoPostalController extends Controller
     public function buscar(Request $request)
     {
         $request->validate([
-            'codigo' => 'required|string|min:3|max:15',
+            'codigo' => ['required', 'string', 'regex:/^\\d{5}$/'],
         ]);
 
         return CodigoPostalResource::collection(
@@ -28,7 +28,7 @@ class CodigoPostalController extends Controller
     public function sugerencias(Request $request)
     {
         $request->validate([
-            'codigo' => 'required|string|min:2|max:15',
+            'codigo' => ['required', 'string', 'regex:/^\\d{3,4}$/'],
         ]);
 
         return [

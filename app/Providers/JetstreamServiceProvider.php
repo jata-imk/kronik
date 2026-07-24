@@ -69,6 +69,7 @@ class JetstreamServiceProvider extends ServiceProvider
                     if ($user) {
                         activity()
                             ->causedBy($user)
+                            ->event('login')
                             ->withProperties([
                                 'ip' => $request->ip(),
                                 'user_agent' => $request->header('User-Agent'),

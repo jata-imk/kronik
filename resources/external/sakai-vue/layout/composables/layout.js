@@ -9,10 +9,19 @@ const defaultConfig = {
     menuMode: "static",
 };
 
-const savedConfig =
-    JSON.parse(localStorage.getItem(storageKey)) || defaultConfig;
+let storedConfig = {};
+
+try {
+    storedConfig = JSON.parse(localStorage.getItem(storageKey) || "{}");
+} catch {
+    storedConfig = {};
+}
+
+const savedConfig = { ...defaultConfig, ...storedConfig };
 
 const layoutConfig = reactive(savedConfig);
+
+document.documentElement.classList.toggle("app-dark", layoutConfig.darkTheme);
 
 watch(
     () => layoutConfig,
@@ -49,7 +58,10 @@ export function useLayout() {
 
     const executeDarkModeToggle = () => {
         layoutConfig.darkTheme = !layoutConfig.darkTheme;
-        document.documentElement.classList.toggle("app-dark");
+        document.documentElement.classList.toggle(
+            "app-dark",
+            layoutConfig.darkTheme,
+        );
     };
 
     const toggleMenu = () => {
