@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Module;
+use App\Models\MenubarItemModule;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -18,15 +19,26 @@ class MenubarService
             return [];
         }
 
-        $module = Module::query()
+        $module = MenubarItemModule::query()
+            ->whereJsonContains('routes', $routeName)
+            ->with('module')
             ->get()
-            ->filter(fn (Module $candidate) => $routeName === $candidate->route_name || str_starts_with($routeName, $candidate->route_name.'.'))
-            ->sortByDesc(fn (Module $candidate) => strlen($candidate->route_name))
+            ->pluck('module')
+            ->filter()
+            ->sortByDesc(fn (Module $candidate) => strlen((string) $candidate->route_name))
+            ->first();
+
+        $module ??= Module::query()
+            ->get()
+            ->filter(fn (Module $candidate) => $routeName === $candidate->route_name || str_starts_with($routeName, (string) $candidate->route_name.'.'))
+            ->sortByDesc(fn (Module $candidate) => strlen((string) $candidate->route_name))
             ->first();
 
         if (!$module) {
             return [];
         }
+
+        $moduleIndexRoute = $this->resolveModuleIndexRoute($module, $routeName);
 
         $module->load([
             'menubarItems' => function ($query) use ($module) {
@@ -42,7 +54,7 @@ class MenubarService
         return array_values(array_filter(
             $this->buildMenu(
                 $routeName,
-                $module->route_name,
+                $moduleIndexRoute,
                 $module->menubarItems,
                 $request,
             ),
@@ -52,7 +64,7 @@ class MenubarService
 
     protected function buildMenu(
         string $currentRouteName,
-        string $moduleRouteName,
+        string $moduleIndexRoute,
         array|Collection $items,
         Request $request,
         mixed $parent = null,
@@ -60,7 +72,7 @@ class MenubarService
         $menu = [];
 
         if (!$parent) {
-            $menu[] = $currentRouteName === $moduleRouteName.'.index'
+            $menu[] = $currentRouteName === $moduleIndexRoute
                 ? [
                     'label' => 'Inicio',
                     'icon' => 'pi pi-fw pi-home',
@@ -70,14 +82,14 @@ class MenubarService
                     'label' => 'Regresar',
                     'icon' => 'pi pi-arrow-left',
                     'iconPos' => 'left',
-                    'url' => $request->headers->get('referer') ?? $this->buildRouteUrl($moduleRouteName.'.index', null, $request),
+                    'url' => $request->headers->get('referer') ?? $this->buildRouteUrl($moduleIndexRoute, null, $request),
                 ];
         }
 
         foreach ($items as $item) {
             $routes = $item->menubarItemModules->first()?->routes ?? [];
             $children = $item->children?->count()
-                ? $this->buildMenu($currentRouteName, $moduleRouteName, $item->children, $request, $item)
+                ? $this->buildMenu($currentRouteName, $moduleIndexRoute, $item->children, $request, $item)
                 : [];
 
             $isAvailableOnRoute = in_array($currentRouteName, $routes, true);
@@ -109,6 +121,26 @@ class MenubarService
         }
 
         return $menu;
+    }
+
+    private function resolveModuleIndexRoute(Module $module, string $currentRouteName): string
+    {
+        $configuredIndexRoute = $module->route_name ? $module->route_name.'.index' : null;
+
+        if ($configuredIndexRoute && Route::has($configuredIndexRoute)) {
+            return $configuredIndexRoute;
+        }
+
+        if (str_ends_with($currentRouteName, '.index')) {
+            return $currentRouteName;
+        }
+
+        return MenubarItemModule::query()
+            ->where('module_id', $module->id)
+            ->get()
+            ->flatMap(fn (MenubarItemModule $itemModule) => $itemModule->routes ?? [])
+            ->first(fn (string $routeName) => str_ends_with($routeName, '.index') && Route::has($routeName))
+            ?? $currentRouteName;
     }
 
     protected function resolveMenubarUrl($item, Request $request): ?string

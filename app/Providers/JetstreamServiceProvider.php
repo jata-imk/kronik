@@ -9,6 +9,7 @@ use App\Actions\Jetstream\DeleteUser;
 use App\Actions\Jetstream\InviteTeamMember;
 use App\Actions\Jetstream\RemoveTeamMember;
 use App\Actions\Jetstream\UpdateTeamName;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
@@ -67,14 +68,15 @@ class JetstreamServiceProvider extends ServiceProvider
                     $user = $request->user();
 
                     if ($user) {
-                        activity()
-                            ->causedBy($user)
-                            ->event('login')
-                            ->withProperties([
+                        app(ActivityLogService::class)->log(
+                            event: 'login',
+                            description: 'Inicio de sesion exitoso',
+                            properties: [
                                 'ip' => $request->ip(),
                                 'user_agent' => $request->header('User-Agent'),
-                            ])
-                            ->log('Inicio de sesion exitoso');
+                            ],
+                            causer: $user,
+                        );
                     }
 
                     return $next($request);
@@ -90,13 +92,15 @@ class JetstreamServiceProvider extends ServiceProvider
                 $user = $event->user;
 
                 if ($user) {
-                    activity()
-                        ->causedBy($user)
-                        ->withProperties([
+                    app(ActivityLogService::class)->log(
+                        event: 'login.2fa_completed',
+                        description: 'Autenticacion de dos factores completada',
+                        properties: [
                             'ip' => $request->ip(),
                             'user_agent' => $request->header('User-Agent'),
-                        ])
-                        ->log('Autenticacion de dos factores completada');
+                        ],
+                        causer: $user,
+                    );
                 }
             },
         );

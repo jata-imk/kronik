@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -115,7 +116,7 @@ class UserController extends Controller implements HasMiddleware
             $this->activityQuery($filters)->cursor()->each(function ($activity) use ($stream) {
                 $payload = $this->activityPayload($activity);
 
-                fputcsv($stream, [
+                fputcsv($stream, array_map($this->csvValue(...), [
                     $payload['id'],
                     $payload['created_at'],
                     $payload['event'],
@@ -125,8 +126,8 @@ class UserController extends Controller implements HasMiddleware
                     $payload['subject']['type'],
                     $payload['subject']['id'],
                     $payload['ip'],
-                    json_encode($payload['properties'], JSON_UNESCAPED_UNICODE),
-                ]);
+                    json_encode($payload['properties'], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE),
+                ]));
             });
 
             fclose($stream);
@@ -157,10 +158,9 @@ class UserController extends Controller implements HasMiddleware
         ];
     }
 
-    private function activityQuery(array $filters)
+    private function activityQuery(array $filters): Builder
     {
-        $activityModel = config('activitylog.activity_model');
-        $query = $activityModel::query()->with('causer')->latest();
+        $query = $this->scopedActivityQuery()->latest();
 
         if (! empty($filters['search'])) {
             $search = '%'.$filters['search'].'%';
@@ -195,6 +195,23 @@ class UserController extends Controller implements HasMiddleware
         return $query;
     }
 
+    private function scopedActivityQuery(): Builder
+    {
+        $activityModel = config('activitylog.activity_model');
+        $query = $activityModel::query()->with('causer');
+        $user = Auth::user();
+
+        if ($user?->hasRole('Super Admin')) {
+            return $query;
+        }
+
+        if (! $user?->current_team_id) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where('team_id', $user->current_team_id);
+    }
+
     private function activityPayload($activity): array
     {
         $properties = $activity->properties;
@@ -224,29 +241,47 @@ class UserController extends Controller implements HasMiddleware
 
     private function activityFilterOptions(): array
     {
-        $activityModel = config('activitylog.activity_model');
         $knownEvents = [
             'login' => 'Inicio de sesión',
+            'login.2fa_completed' => 'Autenticación de dos factores completada',
             'empresa.updated' => 'Empresa actualizada',
             'sucursal.created' => 'Sucursal creada',
             'sucursal.updated' => 'Sucursal actualizada',
             'sucursal.deactivated' => 'Sucursal desactivada',
         ];
 
+        $activityQuery = $this->scopedActivityQuery();
         $events = collect(array_keys($knownEvents))
-            ->merge($activityModel::query()->whereNotNull('event')->distinct()->pluck('event'))
+            ->merge((clone $activityQuery)->whereNotNull('event')->distinct()->pluck('event'))
             ->unique()
             ->sort()
             ->values();
 
+        $userIds = (clone $activityQuery)
+            ->where('causer_type', User::class)
+            ->whereNotNull('causer_id')
+            ->distinct()
+            ->pluck('causer_id');
+
         return [
-            'users' => User::query()->orderBy('name')->get(['id', 'name', 'email']),
+            'users' => User::query()->whereKey($userIds)->orderBy('name')->get(['id', 'name', 'email']),
             'events' => $events->map(fn ($event) => [
                 'value' => $event,
                 'label' => $knownEvents[$event] ?? $event,
             ])->values(),
-            'subjectTypes' => $activityModel::query()->whereNotNull('subject_type')->distinct()->pluck('subject_type')
+            'subjectTypes' => (clone $activityQuery)->whereNotNull('subject_type')->distinct()->pluck('subject_type')
                 ->map(fn ($type) => ['value' => $type, 'label' => class_basename($type)])->values(),
         ];
+    }
+
+    private function csvValue(mixed $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        $value = (string) $value;
+
+        return preg_match('/^[\\s\\x{FEFF}]*[=+\\-@]/u', $value) ? "'{$value}" : $value;
     }
 }

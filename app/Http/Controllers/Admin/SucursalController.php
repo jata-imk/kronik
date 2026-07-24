@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Sucursal;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -37,12 +38,13 @@ class SucursalController extends Controller implements HasMiddleware
         $fields = $this->validateSucursal($request);
         $sucursal = Sucursal::create($fields);
 
-        activity()
-            ->performedOn($sucursal)
-            ->causedBy(Auth::user())
-            ->event('sucursal.created')
-            ->withProperties(['attributes' => $sucursal->toArray()])
-            ->log('Sucursal creada');
+        app(ActivityLogService::class)->log(
+            event: 'sucursal.created',
+            description: 'Sucursal creada',
+            subject: $sucursal,
+            properties: ['attributes' => $sucursal->toArray()],
+            causer: Auth::user(),
+        );
 
         return redirect()->back()->with('success', 'Sucursal creada');
     }
@@ -53,15 +55,16 @@ class SucursalController extends Controller implements HasMiddleware
         $before = $sucursal->getOriginal();
         $sucursal->update($fields);
 
-        activity()
-            ->performedOn($sucursal)
-            ->causedBy(Auth::user())
-            ->event('sucursal.updated')
-            ->withProperties([
+        app(ActivityLogService::class)->log(
+            event: 'sucursal.updated',
+            description: 'Sucursal actualizada',
+            subject: $sucursal,
+            properties: [
                 'before' => $before,
                 'after' => $sucursal->fresh()->toArray(),
-            ])
-            ->log('Sucursal actualizada');
+            ],
+            causer: Auth::user(),
+        );
 
         return redirect()->back()->with('success', 'Sucursal actualizada');
     }
@@ -70,11 +73,12 @@ class SucursalController extends Controller implements HasMiddleware
     {
         $sucursal->update(['activa' => false]);
 
-        activity()
-            ->performedOn($sucursal)
-            ->causedBy(Auth::user())
-            ->event('sucursal.deactivated')
-            ->log('Sucursal desactivada');
+        app(ActivityLogService::class)->log(
+            event: 'sucursal.deactivated',
+            description: 'Sucursal desactivada',
+            subject: $sucursal,
+            causer: Auth::user(),
+        );
 
         return redirect()->back()->with('success', 'Sucursal desactivada');
     }

@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\UpdateEmpresaConfiguracionRequest;
 use App\Models\EmpresaConfiguracion;
 use App\Models\Pais;
 use App\Models\RegimenFiscal;
+use App\Services\ActivityLogService;
 use DateTimeZone;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -80,15 +81,16 @@ class EmpresaConfiguracionController extends Controller implements HasMiddleware
         $before = $this->auditPayload($configuracion);
         $configuracion->update($fields);
 
-        activity()
-            ->performedOn($configuracion)
-            ->causedBy(Auth::user())
-            ->event('empresa.updated')
-            ->withProperties([
+        app(ActivityLogService::class)->log(
+            event: 'empresa.updated',
+            description: 'Configuracion de empresa actualizada',
+            subject: $configuracion,
+            properties: [
                 'before' => $before,
                 'after' => $this->auditPayload($configuracion->fresh()),
-            ])
-            ->log('Configuracion de empresa actualizada');
+            ],
+            causer: Auth::user(),
+        );
 
         return redirect()->back()->with('success', 'Configuracion de empresa actualizada');
     }
