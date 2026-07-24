@@ -74,11 +74,18 @@ Comandos útiles:
 - `vendor/bin/pint`: formatea PHP.
 - `npm run format`: formatea archivos frontend con Biome.
 
-Dependencias externas del sistema cuando se requieran documentos:
+## Despliegue
 
-- LibreOffice
-- wkhtmltopdf
-- Pandoc
+La guía para una VPS Debian 12, incluyendo CloudPanel, Plesk, Nginx, MariaDB,
+TLS, workers, scheduler, respaldos y catálogos, está en
+[`docs/how-to/desplegar-vps-nuevo.md`](docs/how-to/desplegar-vps-nuevo.md).
+
+Dependencias externas:
+
+- LibreOffice Calc sin GUI: requerido actualmente para convertir el catálogo
+  SAT de XLS a XLSX.
+- wkhtmltopdf y Pandoc: opcionales hasta que un flujo de generación documental
+  los invoque.
 
 ## Roadmap Prioritario
 

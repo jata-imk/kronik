@@ -13,7 +13,15 @@ Use este procedimiento despues de `migrate:fresh` o cuando los conteos de catalo
 - Ejecutar desde la misma version del codigo que corresponde al esquema.
 - Tener acceso a MySQL.
 - Tener salida HTTP hacia SAT y Correos de Mexico si no existen archivos en `storage/app`.
-- Tener `libreoffice` disponible cuando el catalogo SAT solo este en formato XLS.
+- Tener `libreoffice` disponible cuando el catalogo SAT solo este en formato
+  XLS. En Debian 12 puede instalarse con:
+
+```bash
+sudo apt install libreoffice-calc-nogui fonts-dejavu-core fonts-liberation
+```
+
+Consulte [Desplegar Kronik en una VPS Debian 12](desplegar-vps-nuevo.md) para
+preparar CloudPanel, PHP, workers, respaldos y el resto de dependencias.
 
 ## Restauracion completa
 
