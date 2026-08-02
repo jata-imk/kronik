@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ActivityEvent;
 use App\Models\Permission;
 use App\Models\User;
 use App\Services\ActivityLogService;
@@ -36,11 +37,11 @@ function actingAsActivityAuditor(): User
 test('super admin can inspect and export real activity logs', function () {
     $user = actingAsSuperAdmin();
 
-    activity()
-        ->causedBy($user)
-        ->event('login')
-        ->withProperties(['ip' => '127.0.0.1'])
-        ->log('Inicio de sesion exitoso');
+    app(ActivityLogService::class)->log(
+        event: ActivityEvent::Login,
+        description: 'Inicio de sesion exitoso',
+        causer: $user,
+    );
 
     $this->actingAs($user)
         ->get(route('admin.users.activity', ['event' => 'login']))
@@ -52,11 +53,12 @@ test('super admin can inspect and export real activity logs', function () {
             ->where('activityLogs.data.0.ip', '127.0.0.1')
         );
 
-    $this->actingAs($user)
+    $export = $this->actingAs($user)
         ->get(route('admin.users.activity.export', ['event' => 'login']))
         ->assertOk()
-        ->assertHeader('content-type', 'text/csv; charset=UTF-8')
-        ->assertSee('Inicio de sesion exitoso');
+        ->assertHeader('content-type', 'text/csv; charset=UTF-8');
+
+    expect($export->streamedContent())->toContain('Inicio de sesion exitoso');
 });
 
 test('activity logs, filter options, and exports are limited to the current team', function () {
@@ -65,15 +67,13 @@ test('activity logs, filter options, and exports are limited to the current team
     $logger = app(ActivityLogService::class);
 
     $logger->log(
-        event: 'sucursal.created',
+        event: ActivityEvent::BranchCreated,
         description: 'Evento del equipo actual',
-        properties: ['ip' => '127.0.0.1'],
         causer: $auditor,
     );
     $logger->log(
-        event: 'sucursal.created',
+        event: ActivityEvent::BranchCreated,
         description: 'Evento de otro equipo',
-        properties: ['ip' => '127.0.0.2'],
         causer: $otherAuditor,
     );
     DB::table(config('activitylog.table_name'))->insert([
@@ -101,12 +101,14 @@ test('activity logs, filter options, and exports are limited to the current team
             ->where('filterOptions.users.0.id', $auditor->id)
         );
 
-    $this->actingAs($auditor)
+    $export = $this->actingAs($auditor)
         ->get(route('admin.users.activity.export'))
-        ->assertOk()
-        ->assertSee('Evento del equipo actual')
-        ->assertDontSee('Evento de otro equipo')
-        ->assertDontSee('Evento histórico sin equipo');
+        ->assertOk();
+
+    expect($export->streamedContent())
+        ->toContain('Evento del equipo actual')
+        ->not->toContain('Evento de otro equipo')
+        ->not->toContain('Evento histórico sin equipo');
 });
 
 test('super admins can inspect activity across teams, including historical records', function () {
@@ -115,7 +117,7 @@ test('super admins can inspect activity across teams, including historical recor
     $logger = app(ActivityLogService::class);
 
     $logger->log(
-        event: 'sucursal.created',
+        event: ActivityEvent::BranchCreated,
         description: 'Evento de otro equipo',
         causer: $auditor,
     );
@@ -124,7 +126,7 @@ test('super admins can inspect activity across teams, including historical recor
         'description' => 'Evento histórico sin equipo',
         'causer_type' => User::class,
         'causer_id' => $superAdmin->id,
-        'event' => 'legacy',
+        'event' => null,
         'properties' => json_encode([]),
         'created_at' => now(),
         'updated_at' => now(),
@@ -135,6 +137,17 @@ test('super admins can inspect activity across teams, including historical recor
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('activityLogs.total', 2)
+            ->where('filterOptions.events', fn ($events) => collect($events)
+                ->contains('value', 'legacy.unclassified'))
+        );
+
+    $this->actingAs($superAdmin)
+        ->get(route('admin.users.activity', ['event' => 'legacy.unclassified']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('activityLogs.total', 1)
+            ->where('activityLogs.data.0.event', 'legacy.unclassified')
+            ->where('activityLogs.data.0.event_label', 'Sin clasificar (histórico)')
         );
 });
 
@@ -142,13 +155,37 @@ test('activity CSV values that look like formulas are exported as text', functio
     $auditor = actingAsActivityAuditor();
 
     app(ActivityLogService::class)->log(
-        event: 'sucursal.updated',
+        event: ActivityEvent::BranchUpdated,
         description: '=HYPERLINK("https://example.test","abrir")',
         causer: $auditor,
     );
 
-    $this->actingAs($auditor)
+    $export = $this->actingAs($auditor)
         ->get(route('admin.users.activity.export'))
-        ->assertOk()
-        ->assertSee("'=HYPERLINK");
+        ->assertOk();
+
+    expect($export->streamedContent())->toContain("'=HYPERLINK");
+});
+
+test('activity metadata keeps field names and rejects sensitive values', function () {
+    $auditor = actingAsActivityAuditor();
+
+    $activity = app(ActivityLogService::class)->log(
+        event: ActivityEvent::ClientUpdated,
+        description: 'Cliente actualizado',
+        metadata: [
+            'changed_fields' => ['email', 'datos_fiscales.rfc'],
+            'related' => ['type' => 'cliente', 'id' => 25, 'name' => 'Dato privado'],
+            'result' => 'success',
+            'rfc' => 'XAXX010101000',
+            'email' => 'privado@example.test',
+        ],
+        causer: $auditor,
+    );
+
+    expect($activity->properties->toArray())
+        ->toHaveKey('changed_fields', ['email', 'datos_fiscales.rfc'])
+        ->toHaveKey('related', ['type' => 'cliente', 'id' => 25])
+        ->toHaveKey('result', 'success')
+        ->not->toHaveKeys(['rfc', 'email']);
 });

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ActivityEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Sucursal;
 use App\Services\ActivityLogService;
@@ -27,7 +28,7 @@ class SucursalController extends Controller implements HasMiddleware
     public function index()
     {
         return Inertia::render('Admin/Sucursales/Index', [
-            'sucursales' => fn() => Sucursal::orderByDesc('activa')
+            'sucursales' => fn () => Sucursal::orderByDesc('activa')
                 ->orderBy('nombre')
                 ->get(),
         ]);
@@ -38,11 +39,12 @@ class SucursalController extends Controller implements HasMiddleware
         $fields = $this->validateSucursal($request);
         $sucursal = Sucursal::create($fields);
 
-        app(ActivityLogService::class)->log(
-            event: 'sucursal.created',
+        $activityLog = app(ActivityLogService::class);
+        $activityLog->log(
+            event: ActivityEvent::BranchCreated,
             description: 'Sucursal creada',
             subject: $sucursal,
-            properties: ['attributes' => $sucursal->toArray()],
+            metadata: ['changed_fields' => $activityLog->fieldNames($fields)],
             causer: Auth::user(),
         );
 
@@ -52,17 +54,14 @@ class SucursalController extends Controller implements HasMiddleware
     public function update(Request $request, Sucursal $sucursal)
     {
         $fields = $this->validateSucursal($request, $sucursal);
-        $before = $sucursal->getOriginal();
         $sucursal->update($fields);
 
-        app(ActivityLogService::class)->log(
-            event: 'sucursal.updated',
+        $activityLog = app(ActivityLogService::class);
+        $activityLog->log(
+            event: ActivityEvent::BranchUpdated,
             description: 'Sucursal actualizada',
             subject: $sucursal,
-            properties: [
-                'before' => $before,
-                'after' => $sucursal->fresh()->toArray(),
-            ],
+            metadata: ['changed_fields' => $activityLog->fieldNames($fields)],
             causer: Auth::user(),
         );
 
@@ -74,9 +73,10 @@ class SucursalController extends Controller implements HasMiddleware
         $sucursal->update(['activa' => false]);
 
         app(ActivityLogService::class)->log(
-            event: 'sucursal.deactivated',
+            event: ActivityEvent::BranchDeactivated,
             description: 'Sucursal desactivada',
             subject: $sucursal,
+            metadata: ['changed_fields' => ['activa'], 'state' => 'inactiva'],
             causer: Auth::user(),
         );
 

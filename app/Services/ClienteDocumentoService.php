@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ActivityEvent;
 use App\Enums\ClienteDocumentoEstado;
 use App\Enums\ClienteDocumentoTipo;
 use App\Models\Cliente;
@@ -14,6 +15,10 @@ use Illuminate\Validation\ValidationException;
 
 class ClienteDocumentoService
 {
+    public function __construct(
+        private readonly ActivityLogService $activityLog,
+    ) {}
+
     public function upload(Cliente $cliente, array $data, UploadedFile $file): ClienteDocumento
     {
         $disk = 'local';
@@ -41,11 +46,16 @@ class ClienteDocumentoService
                     ]);
                 }
 
-                activity()
-                    ->performedOn($cliente)
-                    ->causedBy(auth()->user())
-                    ->withProperties(['documento_id' => $documento->id, 'tipo' => $tipo->value])
-                    ->log('Documento de cliente recibido');
+                $this->activityLog->log(
+                    event: ActivityEvent::ClientDocumentReceived,
+                    description: 'Documento de cliente recibido',
+                    subject: $cliente,
+                    metadata: [
+                        'related' => ['type' => 'cliente_documento', 'id' => $documento->id],
+                        'state' => ClienteDocumentoEstado::Recibido->value,
+                    ],
+                    causer: auth()->user(),
+                );
 
                 return $documento;
             });
@@ -82,11 +92,16 @@ class ClienteDocumentoService
             'motivo_rechazo' => $estado === ClienteDocumentoEstado::Rechazado ? $reason : null,
         ]);
 
-        activity()
-            ->performedOn($documento->cliente)
-            ->causedBy($reviewer)
-            ->withProperties(['documento_id' => $documento->id, 'estado' => $estado->value])
-            ->log('Estado documental actualizado');
+        $this->activityLog->log(
+            event: ActivityEvent::ClientDocumentStatusUpdated,
+            description: 'Estado documental actualizado',
+            subject: $documento->cliente,
+            metadata: [
+                'related' => ['type' => 'cliente_documento', 'id' => $documento->id],
+                'state' => $estado->value,
+            ],
+            causer: $reviewer,
+        );
 
         return $documento->refresh();
     }

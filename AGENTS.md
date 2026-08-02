@@ -31,3 +31,7 @@ Recent history uses Conventional Commit-style messages, often in Spanish: `feat(
 ## Security & Configuration Tips
 
 Do not commit secrets from `.env`; update `.env.example` for new required settings. Treat SIC, credit bureau, geocoding, and scraper integrations as sensitive surfaces. Prefer configuration in `config/` and environment variables over hardcoded credentials or endpoints.
+
+## Project Coordination
+
+The repository's Notion page is `https://app.notion.com/p/1a261db7db7f800c809bf96e22e0d05a`. When the user refers to "el Notion del repositorio", use this page as the project source of context. Current work is centered on Backlog 02 (Clientes, expediente y KYC), including post-implementation reviews and related corrections discovered during validation.

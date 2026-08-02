@@ -14,6 +14,7 @@ use App\Models\Direccion;
 use App\Models\DivisionAdministrativa;
 use App\Models\EmpresaConfiguracion;
 use App\Models\Pais;
+use App\Models\Permission;
 use App\Models\RegimenFiscal;
 use App\Models\Sic;
 use App\Models\SicApi;
@@ -205,7 +206,59 @@ class DevelopmentSeeder extends Seeder
 
         setPermissionsTeamId($team->id);
         $user->assignRole('Super Admin');
+
+        $this->seedPermissionTestUsers($team, $roleModel, $teamsKey);
         app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    private function seedPermissionTestUsers(Team $team, string $roleModel, string $teamsKey): void
+    {
+        $profiles = [
+            [
+                'name' => 'Consulta de Clientes',
+                'email' => 'consulta.clientes@example.test',
+                'role' => 'Consulta de clientes',
+                'permissions' => ['read clientes'],
+            ],
+            [
+                'name' => 'Editor de Expedientes',
+                'email' => 'editor.expedientes@example.test',
+                'role' => 'Edición de expedientes',
+                'permissions' => ['read clientes', 'update clientes'],
+            ],
+            [
+                'name' => 'Sin Acceso a Clientes',
+                'email' => 'sin.acceso.clientes@example.test',
+                'role' => 'Sin acceso a clientes',
+                'permissions' => [],
+            ],
+        ];
+
+        foreach ($profiles as $profile) {
+            $role = $roleModel::firstOrCreate([
+                'name' => $profile['role'],
+                'guard_name' => 'web',
+                $teamsKey => $team->id,
+            ]);
+            $role->syncPermissions(
+                Permission::whereIn('name', $profile['permissions'])->get(),
+            );
+
+            $demoUser = User::updateOrCreate(
+                ['email' => $profile['email']],
+                [
+                    'name' => $profile['name'],
+                    'password' => 'password',
+                    'email_verified_at' => now(),
+                    'current_team_id' => $team->id,
+                ],
+            );
+
+            $team->users()->syncWithoutDetaching([
+                $demoUser->id => ['role' => null],
+            ]);
+            $demoUser->syncRoles([$role]);
+        }
     }
 
     private function seedClientes(): void

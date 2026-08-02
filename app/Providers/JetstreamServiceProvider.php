@@ -9,6 +9,7 @@ use App\Actions\Jetstream\DeleteUser;
 use App\Actions\Jetstream\InviteTeamMember;
 use App\Actions\Jetstream\RemoveTeamMember;
 use App\Actions\Jetstream\UpdateTeamName;
+use App\Enums\ActivityEvent;
 use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
@@ -69,12 +70,8 @@ class JetstreamServiceProvider extends ServiceProvider
 
                     if ($user) {
                         app(ActivityLogService::class)->log(
-                            event: 'login',
+                            event: ActivityEvent::Login,
                             description: 'Inicio de sesion exitoso',
-                            properties: [
-                                'ip' => $request->ip(),
-                                'user_agent' => $request->header('User-Agent'),
-                            ],
                             causer: $user,
                         );
                     }
@@ -88,17 +85,12 @@ class JetstreamServiceProvider extends ServiceProvider
         Event::listen(
             ValidTwoFactorAuthenticationCodeProvided::class,
             function ($event) {
-                $request = request();
                 $user = $event->user;
 
                 if ($user) {
                     app(ActivityLogService::class)->log(
-                        event: 'login.2fa_completed',
+                        event: ActivityEvent::TwoFactorCompleted,
                         description: 'Autenticacion de dos factores completada',
-                        properties: [
-                            'ip' => $request->ip(),
-                            'user_agent' => $request->header('User-Agent'),
-                        ],
                         causer: $user,
                     );
                 }

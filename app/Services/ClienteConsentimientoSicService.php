@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ActivityEvent;
 use App\Models\Cliente;
 use App\Models\ClienteConsentimientoSic;
 use App\Models\User;
@@ -11,6 +12,10 @@ use Illuminate\Support\Facades\Storage;
 
 class ClienteConsentimientoSicService
 {
+    public function __construct(
+        private readonly ActivityLogService $activityLog,
+    ) {}
+
     public function store(Cliente $cliente, array $data, UploadedFile $file, User $user): ClienteConsentimientoSic
     {
         $disk = 'local';
@@ -28,11 +33,16 @@ class ClienteConsentimientoSicService
                     'evidencia_tamano_bytes' => $file->getSize(),
                 ]);
 
-                activity()
-                    ->performedOn($cliente)
-                    ->causedBy($user)
-                    ->withProperties(['consentimiento_id' => $consentimiento->id, 'medio' => $consentimiento->medio->value])
-                    ->log('Consentimiento SIC registrado');
+                $this->activityLog->log(
+                    event: ActivityEvent::ClientSicConsentCreated,
+                    description: 'Consentimiento SIC registrado',
+                    subject: $cliente,
+                    metadata: [
+                        'related' => ['type' => 'cliente_consentimiento_sic', 'id' => $consentimiento->id],
+                        'state' => 'vigente',
+                    ],
+                    causer: $user,
+                );
 
                 return $consentimiento;
             });
@@ -46,11 +56,16 @@ class ClienteConsentimientoSicService
     {
         $consentimiento->update(['revocado_en' => now()]);
 
-        activity()
-            ->performedOn($consentimiento->cliente)
-            ->causedBy($user)
-            ->withProperties(['consentimiento_id' => $consentimiento->id])
-            ->log('Consentimiento SIC revocado');
+        $this->activityLog->log(
+            event: ActivityEvent::ClientSicConsentRevoked,
+            description: 'Consentimiento SIC revocado',
+            subject: $consentimiento->cliente,
+            metadata: [
+                'related' => ['type' => 'cliente_consentimiento_sic', 'id' => $consentimiento->id],
+                'state' => 'revocado',
+            ],
+            causer: $user,
+        );
 
         return $consentimiento->refresh();
     }

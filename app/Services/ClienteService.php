@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ActivityEvent;
 use App\Models\Cliente;
 use App\Models\CodigoPostal;
 use Illuminate\Support\Facades\Auth;
@@ -13,6 +14,7 @@ class ClienteService
         private readonly ClienteExpedienteService $expedienteService,
         private readonly ClienteDocumentoService $documentoService,
         private readonly ClienteConsentimientoSicService $consentimientoService,
+        private readonly ActivityLogService $activityLog,
     ) {}
 
     public function readAll()
@@ -66,15 +68,13 @@ class ClienteService
                 $cliente->direcciones()->create($direccion);
             }
 
-            activity()
-                ->performedOn($cliente)
-                ->causedBy(Auth::user())
-                ->withProperties([
-                    'ip' => request()->ip(),
-                    'user_agent' => request()->header('User-Agent'),
-                    'attributes' => $data,
-                ])
-                ->log('Cliente creado');
+            $this->activityLog->log(
+                event: ActivityEvent::ClientCreated,
+                description: 'Cliente creado',
+                subject: $cliente,
+                metadata: ['changed_fields' => $this->activityLog->fieldNames($data)],
+                causer: Auth::user(),
+            );
 
             return $cliente;
         });
@@ -118,15 +118,13 @@ class ClienteService
                 }
             }
 
-            activity()
-                ->performedOn($cliente)
-                ->causedBy(Auth::user())
-                ->withProperties([
-                    'ip' => request()->ip(),
-                    'user_agent' => request()->header('User-Agent'),
-                    'attributes' => $data,
-                ])
-                ->log('Cliente actualizado');
+            $this->activityLog->log(
+                event: ActivityEvent::ClientUpdated,
+                description: 'Cliente actualizado',
+                subject: $cliente,
+                metadata: ['changed_fields' => $this->activityLog->fieldNames($data)],
+                causer: Auth::user(),
+            );
 
             return $cliente;
         });
@@ -141,14 +139,13 @@ class ClienteService
             $cliente->datosFiscales()->delete();
             $cliente->delete();
 
-            activity()
-                ->performedOn($cliente)
-                ->causedBy(Auth::user())
-                ->withProperties([
-                    'ip' => request()->ip(),
-                    'user_agent' => request()->header('User-Agent'),
-                ])
-                ->log('Cliente eliminado');
+            $this->activityLog->log(
+                event: ActivityEvent::ClientDeleted,
+                description: 'Cliente eliminado',
+                subject: $cliente,
+                metadata: ['result' => 'deleted'],
+                causer: Auth::user(),
+            );
         });
     }
 }

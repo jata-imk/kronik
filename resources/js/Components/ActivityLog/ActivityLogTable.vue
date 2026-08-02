@@ -11,36 +11,11 @@ const detailsVisible = ref(false);
 const propertiesVisible = ref(false);
 const logs = computed(() => props.logs);
 
-const eventLabels = {
-    login: "Inicio de sesión",
-    "empresa.updated": "Empresa actualizada",
-    "sucursal.created": "Sucursal creada",
-    "sucursal.updated": "Sucursal actualizada",
-    "sucursal.deactivated": "Sucursal desactivada",
-    sin_clasificar: "Sin clasificar",
-};
-
-const eventSeverity = {
-    login: "secondary",
-    "empresa.updated": "info",
-    "sucursal.created": "success",
-    "sucursal.updated": "info",
-    "sucursal.deactivated": "danger",
-};
-
-const eventIcon = {
-    login: "pi-sign-in",
-    "empresa.updated": "pi-building",
-    "sucursal.created": "pi-plus",
-    "sucursal.updated": "pi-pencil",
-    "sucursal.deactivated": "pi-ban",
-};
-
-const eventLabel = (event) => eventLabels[event] ?? event;
-const formatDate = (value) => new Date(value).toLocaleString("es-MX", {
-    dateStyle: "medium",
-    timeStyle: "short",
-});
+const formatDate = (value) =>
+    new Date(value).toLocaleString("es-MX", {
+        dateStyle: "medium",
+        timeStyle: "short",
+    });
 const openDetails = (log) => {
     selectedLog.value = log;
     detailsVisible.value = true;
@@ -72,7 +47,7 @@ const openProperties = (log) => {
                 </Column>
                 <Column header="Evento">
                     <template #body="{ data }">
-                        <Tag :value="eventLabel(data.event)" :severity="eventSeverity[data.event] ?? 'secondary'" :icon="`pi ${eventIcon[data.event] ?? 'pi-circle'}`" />
+                        <Tag :value="data.event_label" :severity="data.event_severity" :icon="`pi ${data.event_icon}`" />
                     </template>
                 </Column>
                 <Column field="description" header="Descripción">
@@ -97,7 +72,7 @@ const openProperties = (log) => {
     <Dialog v-model:visible="detailsVisible" header="Detalle de actividad" modal :style="{ width: '42rem' }">
         <dl v-if="selectedLog" class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div><dt class="font-medium">Usuario</dt><dd>{{ selectedLog.causer.name }}</dd></div>
-            <div><dt class="font-medium">Evento</dt><dd>{{ eventLabel(selectedLog.event) }}</dd></div>
+            <div><dt class="font-medium">Evento</dt><dd>{{ selectedLog.event_label }}</dd></div>
             <div><dt class="font-medium">Fecha</dt><dd>{{ formatDate(selectedLog.created_at) }}</dd></div>
             <div><dt class="font-medium">IP</dt><dd>{{ selectedLog.ip ?? "—" }}</dd></div>
             <div class="md:col-span-2"><dt class="font-medium">Descripción</dt><dd>{{ selectedLog.description }}</dd></div>

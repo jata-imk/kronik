@@ -89,8 +89,12 @@ Cada actualizacion de empresa registra actividad con descripcion:
 
 `Configuracion de empresa actualizada`
 
+El evento estable es `empresa.updated` y sus propiedades solo incluyen los nombres de los campos modificados.
+
 Las sucursales registran:
 
 - `Sucursal creada`
 - `Sucursal actualizada`
 - `Sucursal desactivada`
+
+Sus eventos estables son `sucursal.created`, `sucursal.updated` y `sucursal.deactivated`. No se almacenan valores fiscales, de contacto ni de domicilio dentro de las propiedades de auditoria.

@@ -32,6 +32,9 @@ El arranque inicial de `php artisan test` tampoco consulta permisos en la base d
 ## Datos creados
 
 - Usuario `test@example.com` con password de factory (`password`).
+- Usuario `consulta.clientes@example.test` con password `password` y acceso de solo lectura a clientes.
+- Usuario `editor.expedientes@example.test` con password `password` y acceso de lectura/edicion al expediente.
+- Usuario `sin.acceso.clientes@example.test` con password `password` y sin acceso al modulo de clientes.
 - Empresa demo en `empresa_configuraciones.singleton_key = default`.
 - Sucursal demo `MATRIZ`.
 - Dos clientes demo con datos fiscales, direccion y consultas SIC fake.

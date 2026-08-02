@@ -16,9 +16,7 @@ export function useCodigoPostal(cpInput, options = {}) {
     const loading = computed(
         () => cargandoSugerencias.value || cargandoBusqueda.value,
     );
-    const error = computed(
-        () => errorBusqueda.value ?? errorSugerencias.value,
-    );
+    const error = computed(() => errorBusqueda.value ?? errorSugerencias.value);
 
     let debounceTimeout = null;
     let sugerenciasController = null;
@@ -44,13 +42,22 @@ export function useCodigoPostal(cpInput, options = {}) {
             );
 
             if (!response.ok) {
-                throw new Error(`Error ${response.status}: ${response.statusText}`);
+                if (requestId !== requestState.request.value) {
+                    return null;
+                }
+
+                throw new Error(
+                    `Error ${response.status}: ${response.statusText}`,
+                );
             }
 
             const data = await response.json();
             return requestId === requestState.request.value ? data.data : null;
         } catch (err) {
-            if (err.name === "AbortError") {
+            if (
+                err.name === "AbortError" ||
+                requestId !== requestState.request.value
+            ) {
                 return null;
             }
 
@@ -68,14 +75,20 @@ export function useCodigoPostal(cpInput, options = {}) {
 
         if (!codigo) {
             sugerenciasController?.abort();
+            sugerenciasController = null;
+            sugerenciasRequest += 1;
             sugerenciasData.value = [];
+            errorSugerencias.value = null;
             cargandoSugerencias.value = false;
             return;
         }
 
         if (!shouldFetchSugerencias(codigo)) {
             sugerenciasController?.abort();
+            sugerenciasController = null;
+            sugerenciasRequest += 1;
             sugerenciasData.value = [];
+            errorSugerencias.value = null;
             cargandoSugerencias.value = false;
             return;
         }
@@ -112,7 +125,13 @@ export function useCodigoPostal(cpInput, options = {}) {
             }
         }, debounceMs);
 
-        onInvalidate(() => clearTimeout(debounceTimeout));
+        onInvalidate(() => {
+            clearTimeout(debounceTimeout);
+            sugerenciasController?.abort();
+            sugerenciasController = null;
+            sugerenciasRequest += 1;
+            cargandoSugerencias.value = false;
+        });
     });
 
     const busqueda = async () => {
@@ -120,6 +139,8 @@ export function useCodigoPostal(cpInput, options = {}) {
 
         if (!codigo || !shouldFetchBusqueda(codigo)) {
             busquedaController?.abort();
+            busquedaController = null;
+            busquedaRequest += 1;
             busquedaData.value = null;
             errorBusqueda.value = null;
             cargandoBusqueda.value = false;
@@ -153,7 +174,8 @@ export function useCodigoPostal(cpInput, options = {}) {
                 busquedaData.value = data;
             }
         } catch (err) {
-            errorBusqueda.value = err.message || "Error al buscar el código postal";
+            errorBusqueda.value =
+                err.message || "Error al buscar el código postal";
         }
     };
 
@@ -161,6 +183,8 @@ export function useCodigoPostal(cpInput, options = {}) {
         clearTimeout(debounceTimeout);
         sugerenciasController?.abort();
         busquedaController?.abort();
+        sugerenciasRequest += 1;
+        busquedaRequest += 1;
     });
 
     return {

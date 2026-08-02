@@ -47,6 +47,9 @@ it('resets development data and recreates demo records', function () {
 
     expect(User::where('email', 'discard@example.test')->exists())->toBeFalse()
         ->and(User::where('email', 'test@example.com')->exists())->toBeTrue()
+        ->and(User::where('email', 'consulta.clientes@example.test')->exists())->toBeTrue()
+        ->and(User::where('email', 'editor.expedientes@example.test')->exists())->toBeTrue()
+        ->and(User::where('email', 'sin.acceso.clientes@example.test')->exists())->toBeTrue()
         ->and(EmpresaConfiguracion::where('singleton_key', 'default')->exists())->toBeTrue()
         ->and(Sucursal::where('clave', 'MATRIZ')->exists())->toBeTrue()
         ->and(Sic::where('clave', 'circulo-credito')->count())->toBe(1)

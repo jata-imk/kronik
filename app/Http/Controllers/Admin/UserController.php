@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ActivityEvent;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -20,6 +21,7 @@ class UserController extends Controller implements HasMiddleware
             new Middleware('role_or_permission:Super Admin|read activity-log', only: ['usersActivity', 'exportActivity']),
         ];
     }
+
     /**
      * Display a listing of the resource.
      */
@@ -178,10 +180,14 @@ class UserController extends Controller implements HasMiddleware
             $query->where('causer_type', User::class)->where('causer_id', $filters['user_id']);
         }
 
-        foreach (['event', 'subject_type'] as $field) {
-            if (! empty($filters[$field])) {
-                $query->where($field, $filters[$field]);
-            }
+        if ($filters['event'] === 'legacy.unclassified') {
+            $query->whereNull('event');
+        } elseif (! empty($filters['event'])) {
+            $query->where('event', $filters['event']);
+        }
+
+        if (! empty($filters['subject_type'])) {
+            $query->where('subject_type', $filters['subject_type']);
         }
 
         if (! empty($filters['date_from'])) {
@@ -219,10 +225,19 @@ class UserController extends Controller implements HasMiddleware
             ? $properties->toArray()
             : (array) $properties;
         $causer = $activity->causer;
+        $event = $activity->event
+            ? ActivityEvent::tryFrom($activity->event)
+            : null;
+        $eventValue = $activity->event ?: 'legacy.unclassified';
 
         return [
             'id' => $activity->id,
-            'event' => $activity->event ?: 'sin_clasificar',
+            'event' => $eventValue,
+            'event_label' => $activity->event
+                ? ($event?->label() ?? $activity->event)
+                : 'Sin clasificar (histórico)',
+            'event_severity' => $event?->severity() ?? 'secondary',
+            'event_icon' => $event?->icon() ?? ($activity->event ? 'pi-circle' : 'pi-history'),
             'description' => $activity->description,
             'causer' => [
                 'id' => $causer?->id,
@@ -241,21 +256,24 @@ class UserController extends Controller implements HasMiddleware
 
     private function activityFilterOptions(): array
     {
-        $knownEvents = [
-            'login' => 'Inicio de sesión',
-            'login.2fa_completed' => 'Autenticación de dos factores completada',
-            'empresa.updated' => 'Empresa actualizada',
-            'sucursal.created' => 'Sucursal creada',
-            'sucursal.updated' => 'Sucursal actualizada',
-            'sucursal.deactivated' => 'Sucursal desactivada',
-        ];
-
         $activityQuery = $this->scopedActivityQuery();
-        $events = collect(array_keys($knownEvents))
-            ->merge((clone $activityQuery)->whereNotNull('event')->distinct()->pluck('event'))
-            ->unique()
-            ->sort()
-            ->values();
+        $events = collect(ActivityEvent::options())->keyBy('value');
+        $unknownEvents = (clone $activityQuery)
+            ->whereNotNull('event')
+            ->distinct()
+            ->pluck('event')
+            ->reject(fn ($event) => $events->has($event))
+            ->mapWithKeys(fn ($event) => [
+                $event => ['value' => $event, 'label' => $event],
+            ]);
+        $events = $events->merge($unknownEvents);
+
+        if ((clone $activityQuery)->whereNull('event')->exists()) {
+            $events->put('legacy.unclassified', [
+                'value' => 'legacy.unclassified',
+                'label' => 'Sin clasificar (histórico)',
+            ]);
+        }
 
         $userIds = (clone $activityQuery)
             ->where('causer_type', User::class)
@@ -265,10 +283,7 @@ class UserController extends Controller implements HasMiddleware
 
         return [
             'users' => User::query()->whereKey($userIds)->orderBy('name')->get(['id', 'name', 'email']),
-            'events' => $events->map(fn ($event) => [
-                'value' => $event,
-                'label' => $knownEvents[$event] ?? $event,
-            ])->values(),
+            'events' => $events->sortBy('label')->values(),
             'subjectTypes' => (clone $activityQuery)->whereNotNull('subject_type')->distinct()->pluck('subject_type')
                 ->map(fn ($type) => ['value' => $type, 'label' => class_basename($type)])->values(),
         ];

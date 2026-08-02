@@ -1,6 +1,7 @@
 # Referencia
 
 - [Automatizacion de documentacion](automatizacion-documentacion.md)
+- [Eventos de auditoría](auditoria-eventos.md)
 - [CI](ci.md)
 - [Comandos Artisan](comandos-artisan.md)
 - [Configuracion de empresa](configuracion-empresa.md)

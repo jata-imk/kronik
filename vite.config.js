@@ -1,5 +1,5 @@
 import { fileURLToPath, URL } from "node:url";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 
 import Components from "unplugin-vue-components/vite";
 import { PrimeVueResolver } from "@primevue/auto-import-resolver";
@@ -37,5 +37,9 @@ export default defineConfig({
                 new URL("./resources/external/sakai-vue", import.meta.url),
             ),
         },
+    },
+    test: {
+        environment: "jsdom",
+        setupFiles: ["resources/js/tests/setup.js"],
     },
 });
