@@ -7,12 +7,16 @@ import { PrimeVueResolver } from "@primevue/auto-import-resolver";
 import laravel from "laravel-vite-plugin";
 import vue from "@vitejs/plugin-vue";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
     plugins: [
-        laravel({
-            input: "resources/js/app.js",
-            refresh: true,
-        }),
+        ...(mode === "test"
+            ? []
+            : [
+                  laravel({
+                      input: "resources/js/app.js",
+                      refresh: true,
+                  }),
+              ]),
         vue({
             template: {
                 transformAssetUrls: {
@@ -42,4 +46,4 @@ export default defineConfig({
         environment: "jsdom",
         setupFiles: ["resources/js/tests/setup.js"],
     },
-});
+}));
