@@ -18,8 +18,8 @@ status: active
 2. Elegir si la empresa opera como persona fisica o moral.
 3. Capturar el RFC. El sistema comprueba longitud, fecha y digito verificador segun el tipo de persona.
 4. Elegir el regimen fiscal. La lista solo muestra regimenes compatibles.
-5. Capturar de tres a cuatro digitos del codigo postal para ver sugerencias y completar los cinco digitos o elegir una sugerencia.
-6. Elegir la colonia cuando el codigo postal tenga mas de un asentamiento. Estado, municipio y pais se completan desde el catalogo postal.
+5. Capturar de tres a cuatro digitos del codigo postal para ver sugerencias. Al completar los cinco digitos, confirmar el codigo mostrado con Enter o seleccionarlo; elegir una sugerencia tambien lo confirma.
+6. Elegir manualmente la colonia. Solo despues de confirmar el codigo se completan estado, municipio y pais y se cargan los asentamientos del catalogo postal.
 7. Capturar calle, numeros y datos de contacto.
 8. Elegir pais base y zona horaria en sus catalogos.
 9. Capturar el telefono con el selector de pais. Se guarda en formato E.164, por ejemplo `+525512345678`.

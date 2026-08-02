@@ -100,13 +100,22 @@ class SucursalController extends Controller implements HasMiddleware
             'domicilio.colonia' => ['nullable', 'string', 'max:127'],
             'domicilio.municipio' => ['nullable', 'string', 'max:127'],
             'domicilio.estado' => ['nullable', 'string', 'max:127'],
-            'domicilio.codigo_postal' => ['nullable', 'string', 'max:15'],
-            'domicilio.pais_id' => ['nullable', 'integer'],
+            'domicilio.codigo_postal' => ['nullable', 'string', 'regex:/^\d{5}$/'],
+            'domicilio.pais_id' => ['nullable', 'integer', 'exists:paises,id'],
             'domicilio.pais_codigo_iso' => ['nullable', 'string', 'max:3'],
-            'domicilio.codigo_postal_id' => ['nullable', 'integer'],
-            'domicilio.division_admin_uno_id' => ['nullable', 'integer'],
-            'domicilio.division_admin_dos_id' => ['nullable', 'integer'],
-            'domicilio.division_admin_tres_id' => ['nullable', 'integer'],
+            'domicilio.codigo_postal_id' => [
+                'nullable',
+                'required_with:domicilio.codigo_postal',
+                'integer',
+                Rule::exists('codigos_postales', 'id')->where(
+                    fn ($query) => $query
+                        ->where('codigo', $request->input('domicilio.codigo_postal'))
+                        ->where('division_admin_id', $request->input('domicilio.division_admin_tres_id')),
+                ),
+            ],
+            'domicilio.division_admin_uno_id' => ['nullable', 'integer', 'exists:divisiones_administrativas,id'],
+            'domicilio.division_admin_dos_id' => ['nullable', 'integer', 'exists:divisiones_administrativas,id'],
+            'domicilio.division_admin_tres_id' => ['nullable', 'required_with:domicilio.codigo_postal', 'integer', 'exists:divisiones_administrativas,id'],
             'domicilio.pais' => ['nullable', 'string', 'max:127'],
             'telefono' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:127'],

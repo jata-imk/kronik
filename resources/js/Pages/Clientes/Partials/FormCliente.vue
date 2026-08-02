@@ -1,13 +1,13 @@
 <script setup>
-import { nextTick, ref, watch, reactive } from "vue";
+import { Link, useForm, usePage } from "@inertiajs/vue3";
 import { useToast } from "primevue/usetoast";
-import { usePage, useForm, Link } from "@inertiajs/vue3";
+import { nextTick, reactive, ref, watch } from "vue";
 
 import "@css/flags.css";
-import IntlTelInput from "@components/IntlTelInput.vue";
-import MapLibreMap from "@components/MapLibre/MapLibreMap.vue";
 import FormularioDatosFiscales from "@/Components/FormularioDatosFiscales.vue";
 import FormularioDireccion from "@/Components/FormularioDireccion.vue";
+import IntlTelInput from "@components/IntlTelInput.vue";
+import MapLibreMap from "@components/MapLibre/MapLibreMap.vue";
 
 import { useDireccionMapConnector } from "@/Composables/MapLibre/useDireccionMapConnector";
 
@@ -31,6 +31,8 @@ const formDireccion = reactive({
     linea_dos: clienteDireccion.linea_dos ?? "",
     linea_tres: clienteDireccion.linea_tres ?? "",
     codigo_postal: clienteDireccion.codigo_postal?.codigo ?? "",
+    codigo_postal_id: clienteDireccion.codigo_postal_id ?? null,
+    pais_id: clienteDireccion.pais_id ?? null,
     division_admin_uno_id: clienteDireccion.division_admin_uno_id ?? null,
     division_admin_dos_id: clienteDireccion.division_admin_dos_id ?? null,
     division_admin_tres_id: clienteDireccion.division_admin_tres_id ?? null,
@@ -217,6 +219,8 @@ const initialLoadFormDireccion = ref({
                           .division_administrativa.nivel,
                       tipo: cliente.value?.direcciones[0].codigo_postal
                           .division_administrativa.tipo,
+                      codigoPostalId:
+                          cliente.value?.direcciones[0].codigo_postal.id,
                   },
               ]
             : [],

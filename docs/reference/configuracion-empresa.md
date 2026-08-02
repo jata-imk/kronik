@@ -48,11 +48,13 @@ El domicilio guarda ambos valores porque los IDs permiten consultar los catalogo
 
 ### Consulta de codigo postal
 
-La configuracion de empresa y el formulario de clientes comparten el composable `useCodigoPostal`.
+La configuracion de empresa, las sucursales y el formulario de clientes comparten `CodigoPostalAutocomplete`, respaldado por el composable `useCodigoPostal`.
 
 - Con cero, uno o dos digitos no se consulta el servidor.
 - Con tres o cuatro digitos se llama solamente a `codigos-postales/sugerencias`.
-- Con cinco digitos se llama solamente a `codigos-postales/buscar`.
+- Con cinco digitos se llama solamente a `codigos-postales/buscar` y el autocompletado presenta una unica opcion para el codigo exacto.
+- Estado, municipio, pais y las opciones de colonia solo se cargan al seleccionar el codigo o confirmarlo con Enter.
+- La colonia siempre se elige manualmente; su seleccion conserva el `codigo_postal_id` correspondiente al asentamiento.
 - Al cambiar la captura se cancela cualquier solicitud anterior y una respuesta atrasada no puede reemplazar la busqueda vigente.
 
 Antes ambos flujos se observaban al escribir porque las sugerencias reaccionaban al valor mientras el formulario invocaba tambien la busqueda detallada. Las condiciones ahora son mutuamente excluyentes: sugerencias sirven para completar el codigo y buscar carga asentamientos y divisiones solo con el codigo completo.

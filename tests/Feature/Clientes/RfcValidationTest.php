@@ -139,3 +139,16 @@ test('client creation rejects a fiscal regime incompatible with person type', fu
         ->assertRedirect(route('clientes.create'))
         ->assertSessionHasErrors('datos_fiscales.regimen_fiscal_id');
 });
+
+test('client creation rejects a postal code that does not match the locality', function () {
+    $catalogs = clienteFiscalCatalogs();
+    $user = actingAsSuperAdmin();
+    $payload = clientePayload($catalogs);
+    $payload['direcciones'][0]['codigo_postal'] = '97306';
+
+    $this->actingAs($user)
+        ->from(route('clientes.create'))
+        ->post(route('clientes.store'), $payload)
+        ->assertRedirect(route('clientes.create'))
+        ->assertSessionHasErrors('direcciones.0.codigo_postal_id');
+});

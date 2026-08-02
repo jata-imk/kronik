@@ -1,10 +1,10 @@
 <script setup>
-import { computed, ref, watch } from "vue";
-import { router, useForm } from "@inertiajs/vue3";
-import { useToast } from "primevue/usetoast";
-import AppLayout from "@sakai-vue/layout/AppLayout.vue";
+import CodigoPostalAutocomplete from "@/Components/CodigoPostalAutocomplete.vue";
 import IntlTelInput from "@/Components/IntlTelInput.vue";
-import { useCodigoPostal } from "@/Composables/useCodigoPostal";
+import { router, useForm } from "@inertiajs/vue3";
+import AppLayout from "@sakai-vue/layout/AppLayout.vue";
+import { useToast } from "primevue/usetoast";
+import { ref } from "vue";
 
 const props = defineProps({
     sucursales: Array,
@@ -50,49 +50,24 @@ const emptySucursal = () => ({
 
 const form = useForm(emptySucursal());
 
-const {
-    sugerenciasData: sugerenciasCodigosPostales,
-    busquedaData: resultadosCodigoPostal,
-    loading: buscandoCodigoPostal,
-    error: errorCodigoPostal,
-    busqueda: buscarCodigoPostal,
-} = useCodigoPostal(() => form.domicilio.codigo_postal, {
-    shouldFetchSugerencias: (codigo) =>
-        codigo?.length >= 3 && codigo.length < 5,
-    shouldFetchBusqueda: (codigo) => codigo?.length === 5,
-});
+const localidades = ref([]);
 
-const localidades = computed(() =>
-    (resultadosCodigoPostal.value ?? []).map((item) => ({
-        id: item.id,
-        label:
-            item.divisiones_administrativas?.nivel_tres?.nombre ??
-            item.datos_adicionales?.asentamiento ??
-            "Sin localidad",
-        item,
-    })),
-);
-
-const aplicarCodigoPostal = (item) => {
-    if (!item) return;
-
-    const nivelUno = item.divisiones_administrativas?.nivel_uno;
-    const nivelDos = item.divisiones_administrativas?.nivel_dos;
-    const nivelTres = item.divisiones_administrativas?.nivel_tres;
-
+const aplicarCodigoPostal = (contexto) => {
     Object.assign(form.domicilio, {
-        pais_id: item.pais?.id ?? null,
-        pais_codigo_iso: item.pais?.codigo_iso ?? "",
-        codigo_postal_id: item.id,
-        codigo_postal: item.codigo,
-        division_admin_uno_id: nivelUno?.id ?? null,
-        division_admin_dos_id: nivelDos?.id ?? null,
-        division_admin_tres_id: nivelTres?.id ?? null,
-        colonia: nivelTres?.nombre ?? item.datos_adicionales?.asentamiento ?? "",
-        municipio: nivelDos?.nombre ?? item.datos_adicionales?.municipio ?? "",
-        estado: nivelUno?.nombre ?? item.datos_adicionales?.estado ?? "",
-        pais: item.pais?.nombre_es ?? "",
+        pais_id: contexto.pais?.id ?? null,
+        pais_codigo_iso: contexto.pais?.codigo_iso ?? "",
+        codigo_postal_id: null,
+        codigo_postal: contexto.codigo,
+        division_admin_uno_id: contexto.divisionAdminUno?.id ?? null,
+        division_admin_dos_id: contexto.divisionAdminDos?.id ?? null,
+        division_admin_tres_id: null,
+        colonia: "",
+        municipio: contexto.divisionAdminDos?.nombre ?? "",
+        estado: contexto.divisionAdminUno?.nombre ?? "",
+        pais: contexto.pais?.nombre_es ?? "",
     });
+
+    localidades.value = contexto.localidades;
 };
 
 const limpiarUbicacionPostal = () => {
@@ -108,58 +83,28 @@ const limpiarUbicacionPostal = () => {
         estado: "",
         pais: "",
     });
-};
-
-watch(
-    () => form.domicilio.codigo_postal,
-    (codigo) => {
-        const normalized = String(codigo ?? "").replace(/\D/g, "").slice(0, 5);
-        if (normalized !== codigo) {
-            form.domicilio.codigo_postal = normalized;
-            return;
-        }
-
-        if (normalized.length === 5) {
-            buscarCodigoPostal();
-        } else {
-            limpiarUbicacionPostal();
-        }
-    },
-);
-
-watch(resultadosCodigoPostal, (resultados) => {
-    if (!resultados?.length) return;
-
-    aplicarCodigoPostal(
-        resultados.find((item) => item.id === form.domicilio.codigo_postal_id) ??
-            resultados[0],
-    );
-});
-
-watch(errorCodigoPostal, (error) => {
-    if (!error) return;
-
-    limpiarUbicacionPostal();
-    toast.add({
-        severity: "warn",
-        summary: "Código postal no encontrado",
-        detail: "Revise el código postal capturado.",
-        life: 4000,
-    });
-});
-
-const onCodigoPostalInput = (value) => {
-    form.domicilio.codigo_postal = value?.codigo ?? value ?? "";
+    localidades.value = [];
 };
 
 const onLocalidadChange = ({ value }) => {
-    aplicarCodigoPostal(
-        localidades.value.find((localidad) => localidad.id === value)?.item,
+    const localidad = localidades.value.find(
+        (item) => item.codigoPostalId === value,
     );
+
+    if (!localidad) {
+        return;
+    }
+
+    Object.assign(form.domicilio, {
+        codigo_postal_id: localidad.codigoPostalId,
+        division_admin_tres_id: localidad.divisionAdminTresId,
+        colonia: localidad.nombre,
+    });
 };
 
 const openCreate = () => {
     selectedSucursal.value = null;
+    localidades.value = [];
     form.defaults(emptySucursal());
     form.reset();
     form.clearErrors();
@@ -168,10 +113,14 @@ const openCreate = () => {
 
 const openEdit = (sucursal) => {
     selectedSucursal.value = sucursal;
+    localidades.value = [];
     form.defaults({
         ...emptySucursal(),
         ...sucursal,
-        domicilio: { ...emptySucursal().domicilio, ...(sucursal.domicilio ?? {}) },
+        domicilio: {
+            ...emptySucursal().domicilio,
+            ...(sucursal.domicilio ?? {}),
+        },
         horario: { ...emptySucursal().horario, ...(sucursal.horario ?? {}) },
     });
     form.reset();
@@ -190,7 +139,13 @@ const submit = () => {
         only: ["sucursales"],
         onSuccess: () => {
             visible.value = false;
-            toast.add({ severity: "success", summary: selectedSucursal.value ? "Sucursal actualizada" : "Sucursal creada", life: 3000 });
+            toast.add({
+                severity: "success",
+                summary: selectedSucursal.value
+                    ? "Sucursal actualizada"
+                    : "Sucursal creada",
+                life: 3000,
+            });
         },
         onError: () => {
             toast.add({
@@ -203,7 +158,10 @@ const submit = () => {
     };
 
     if (selectedSucursal.value) {
-        form.put(route("admin.sucursales.update", selectedSucursal.value.id), options);
+        form.put(
+            route("admin.sucursales.update", selectedSucursal.value.id),
+            options,
+        );
     } else {
         form.post(route("admin.sucursales.store"), options);
     }
@@ -214,7 +172,12 @@ const deactivate = (sucursal) => {
         router.delete(route("admin.sucursales.destroy", sucursal.id), {
             preserveScroll: true,
             only: ["sucursales"],
-            onSuccess: () => toast.add({ severity: "success", summary: "Sucursal desactivada", life: 3000 }),
+            onSuccess: () =>
+                toast.add({
+                    severity: "success",
+                    summary: "Sucursal desactivada",
+                    life: 3000,
+                }),
         });
     }
 };
@@ -228,7 +191,9 @@ const formatAddress = (domicilio) => {
         domicilio.municipio,
         domicilio.estado,
         domicilio.codigo_postal,
-    ].filter(Boolean).join(", ");
+    ]
+        .filter(Boolean)
+        .join(", ");
 };
 </script>
 
@@ -326,15 +291,12 @@ const formatAddress = (domicilio) => {
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-sm font-medium mb-1">Código postal</label>
-                                <AutoComplete
-                                    id="codigo_postal"
-                                    :model-value="form.domicilio.codigo_postal"
-                                    :suggestions="sugerenciasCodigosPostales"
-                                    option-label="codigo"
-                                    :loading="buscandoCodigoPostal"
+                                <CodigoPostalAutocomplete
+                                    v-model="form.domicilio.codigo_postal"
+                                    input-id="codigo_postal"
                                     :invalid="!!form.errors['domicilio.codigo_postal']"
-                                    fluid
-                                    @update:model-value="onCodigoPostalInput"
+                                    @changed="limpiarUbicacionPostal"
+                                    @confirmed="aplicarCodigoPostal"
                                 />
                                 <small v-if="form.errors['domicilio.codigo_postal']" class="text-red-500">{{ form.errors["domicilio.codigo_postal"] }}</small>
                             </div>
@@ -344,12 +306,25 @@ const formatAddress = (domicilio) => {
                                     v-if="localidades.length"
                                     v-model="form.domicilio.codigo_postal_id"
                                     :options="localidades"
-                                    option-label="label"
-                                    option-value="id"
+                                    option-label="nombre"
+                                    option-value="codigoPostalId"
+                                    :invalid="!!(form.errors['domicilio.codigo_postal_id'] || form.errors['domicilio.division_admin_tres_id'])"
                                     fluid
                                     @change="onLocalidadChange"
                                 />
-                                <InputText v-else v-model="form.domicilio.colonia" disabled fluid />
+                                <InputText
+                                    v-else
+                                    v-model="form.domicilio.colonia"
+                                    :invalid="!!(form.errors['domicilio.codigo_postal_id'] || form.errors['domicilio.division_admin_tres_id'])"
+                                    disabled
+                                    fluid
+                                />
+                                <small
+                                    v-if="form.errors['domicilio.codigo_postal_id'] || form.errors['domicilio.division_admin_tres_id']"
+                                    class="text-red-500"
+                                >
+                                    {{ form.errors["domicilio.codigo_postal_id"] ?? form.errors["domicilio.division_admin_tres_id"] }}
+                                </small>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-1">Municipio</label>

@@ -1,12 +1,14 @@
 <?php
 
+use App\Models\CodigoPostal;
+use App\Models\DivisionAdministrativa;
 use App\Models\EmpresaConfiguracion;
 use App\Models\Pais;
 use App\Models\RegimenFiscal;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
-    Pais::create([
+    $pais = Pais::create([
         'nombre_es' => 'México',
         'nombre_us' => 'Mexico',
         'codigo_iso' => 'MX',
@@ -22,6 +24,39 @@ beforeEach(function () {
         'fecha_inicio_vigencia' => '2022-01-01',
         'fecha_fin_vigencia' => '2099-12-31',
     ]);
+
+    $estado = DivisionAdministrativa::create([
+        'pais_id' => $pais->id,
+        'nombre' => 'Ciudad de México',
+        'codigo' => '09',
+        'nivel' => 1,
+        'tipo' => 'estado',
+    ]);
+    $municipio = DivisionAdministrativa::create([
+        'pais_id' => $pais->id,
+        'nombre' => 'Cuauhtémoc',
+        'codigo' => '015',
+        'nivel' => 2,
+        'division_padre_id' => $estado->id,
+        'tipo' => 'municipio',
+    ]);
+    $colonia = DivisionAdministrativa::create([
+        'pais_id' => $pais->id,
+        'nombre' => 'Centro',
+        'codigo' => '0001',
+        'nivel' => 3,
+        'division_padre_id' => $municipio->id,
+        'tipo' => 'colonia',
+    ]);
+
+    $this->codigoPostal = CodigoPostal::create([
+        'codigo' => '06000',
+        'pais_id' => $pais->id,
+        'division_admin_id' => $colonia->id,
+    ]);
+    $this->estado = $estado;
+    $this->municipio = $municipio;
+    $this->colonia = $colonia;
 });
 
 test('super admin can see singleton company configuration', function () {
@@ -55,6 +90,10 @@ test('super admin can update singleton company configuration without exposing ap
         'domicilio_fiscal' => [
             'calle' => 'Av. Paseo de la Reforma',
             'codigo_postal' => '06000',
+            'codigo_postal_id' => $this->codigoPostal->id,
+            'division_admin_uno_id' => $this->estado->id,
+            'division_admin_dos_id' => $this->municipio->id,
+            'division_admin_tres_id' => $this->colonia->id,
             'estado' => 'Ciudad de Mexico',
         ],
         'telefono' => '+525512345678',

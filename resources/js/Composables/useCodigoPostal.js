@@ -1,5 +1,46 @@
 import { computed, onScopeDispose, ref, toValue, watchEffect } from "vue";
 
+export const normalizarCodigoPostal = (value) =>
+    String(value?.codigo ?? value ?? "")
+        .replace(/\D/g, "")
+        .slice(0, 5);
+
+export const crearContextoCodigoPostal = (codigo, resultados = []) => {
+    const primero = resultados[0];
+
+    if (!primero) {
+        return null;
+    }
+
+    const localidades = new Map();
+
+    for (const item of resultados) {
+        const division = item.divisiones_administrativas?.nivel_tres;
+
+        if (!division?.id || localidades.has(division.id)) {
+            continue;
+        }
+
+        localidades.set(division.id, {
+            codigoPostalId: item.id,
+            divisionAdminTresId: division.id,
+            nombre:
+                division.nombre ??
+                item.datos_adicionales?.asentamiento ??
+                "Sin localidad",
+            tipo: division.tipo ?? null,
+        });
+    }
+
+    return {
+        codigo,
+        pais: primero.pais ?? null,
+        divisionAdminUno: primero.divisiones_administrativas?.nivel_uno ?? null,
+        divisionAdminDos: primero.divisiones_administrativas?.nivel_dos ?? null,
+        localidades: [...localidades.values()],
+    };
+};
+
 export function useCodigoPostal(cpInput, options = {}) {
     const {
         shouldFetchSugerencias = () => true,
@@ -9,6 +50,7 @@ export function useCodigoPostal(cpInput, options = {}) {
 
     const sugerenciasData = ref([]);
     const busquedaData = ref(null);
+    const busquedaCodigo = ref(null);
     const cargandoSugerencias = ref(false);
     const cargandoBusqueda = ref(false);
     const errorSugerencias = ref(null);
@@ -134,21 +176,25 @@ export function useCodigoPostal(cpInput, options = {}) {
         });
     });
 
-    const busqueda = async () => {
-        const codigo = toValue(cpInput);
+    const busqueda = async (codigoForzado = null) => {
+        const codigo = normalizarCodigoPostal(
+            codigoForzado ?? toValue(cpInput),
+        );
 
         if (!codigo || !shouldFetchBusqueda(codigo)) {
             busquedaController?.abort();
             busquedaController = null;
             busquedaRequest += 1;
             busquedaData.value = null;
+            busquedaCodigo.value = null;
             errorBusqueda.value = null;
             cargandoBusqueda.value = false;
-            return;
+            return null;
         }
 
         errorBusqueda.value = null;
         busquedaData.value = null;
+        busquedaCodigo.value = null;
 
         const state = {
             get controller() {
@@ -172,10 +218,14 @@ export function useCodigoPostal(cpInput, options = {}) {
             const data = await fetchData("buscar", codigo, state);
             if (data !== null) {
                 busquedaData.value = data;
+                busquedaCodigo.value = codigo;
             }
+
+            return data;
         } catch (err) {
             errorBusqueda.value =
                 err.message || "Error al buscar el código postal";
+            return null;
         }
     };
 
@@ -190,6 +240,7 @@ export function useCodigoPostal(cpInput, options = {}) {
     return {
         sugerenciasData,
         busquedaData,
+        busquedaCodigo,
         loading,
         error,
         errorSugerencias,
