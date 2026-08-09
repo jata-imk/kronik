@@ -254,12 +254,15 @@ const exportData = async () => {
                 <template #body="{ data }">
                     <div class="flex items-center gap-2">
                         <span>{{ data.nombre_completo }}</span>
-                        <Tag
+                        <span
                             v-if="data.relaciones_count"
-                            :value="`${data.relaciones_count} relación${data.relaciones_count === 1 ? '' : 'es'}`"
-                            severity="contrast"
-                            rounded
-                        />
+                            v-tooltip.top="`${data.relaciones_count} relación${data.relaciones_count === 1 ? '' : 'es'}`"
+                            class="relationship-count"
+                            :aria-label="`${data.relaciones_count} relación${data.relaciones_count === 1 ? '' : 'es'}`"
+                        >
+                            <i class="pi pi-link" aria-hidden="true" />
+                            <span>{{ data.relaciones_count }}</span>
+                        </span>
                     </div>
                 </template>
                 <template #filter="{ filterModel, filterCallback }">
@@ -376,3 +379,31 @@ const exportData = async () => {
         </Dialog>
     </div>
 </template>
+
+<style scoped>
+.relationship-count {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 2rem;
+    padding: 0.2rem 0.45rem;
+    color: var(--p-primary-700);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+    background: var(--p-primary-50);
+    border: 1px solid var(--p-primary-200);
+    border-radius: 999px;
+}
+
+.relationship-count .pi {
+    font-size: 0.7rem;
+}
+
+:global(.app-dark) .relationship-count {
+    color: var(--p-primary-200);
+    background: color-mix(in srgb, var(--p-primary-900) 55%, transparent);
+    border-color: var(--p-primary-700);
+}
+</style>

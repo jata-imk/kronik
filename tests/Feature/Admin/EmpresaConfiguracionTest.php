@@ -145,6 +145,7 @@ test('super admin can update singleton company configuration without exposing ap
         ->assertOk()
         ->assertDontSee('secret-api-key')
         ->assertInertia(fn (Assert $page) => $page
+            ->where('configuracion.telefono', '+525512345678')
             ->where('configuracion.integraciones.circulo_credito_api_key_configurada', true)
         );
 });

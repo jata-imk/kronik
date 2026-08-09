@@ -1,4 +1,4 @@
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 export const normalizarCodigoPaisTelefono = (value) =>
     String(value ?? "").replace(/\D/g, "");
@@ -23,7 +23,14 @@ export function useTelefonoInternacional(formSource, options = {}) {
             : construirTelefonoE164(form[countryCodeKey], form[numberKey]);
     };
 
-    const telefonoInternacional = ref(valueFromForm());
+    const telefonoInternacional = e164Key
+        ? computed({
+              get: valueFromForm,
+              set: (value) => {
+                  getForm()[e164Key] = String(value ?? "");
+              },
+          })
+        : ref(valueFromForm());
 
     const sincronizarDesdeFormulario = () => {
         telefonoInternacional.value = valueFromForm();

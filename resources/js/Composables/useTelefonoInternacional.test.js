@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { reactive } from "vue";
 import {
     construirTelefonoE164,
     normalizarCodigoPaisTelefono,
@@ -32,10 +33,15 @@ describe("useTelefonoInternacional", () => {
     });
 
     it("sincroniza campos E.164 de empresa y sucursal", () => {
-        const form = { telefono: "+525512345678" };
+        const form = reactive({ telefono: "+525512345678" });
         const telefono = useTelefonoInternacional(form, {
             e164Key: "telefono",
         });
+
+        expect(telefono.telefonoInternacional.value).toBe("+525512345678");
+
+        form.telefono = "+525500000000";
+        expect(telefono.telefonoInternacional.value).toBe("+525500000000");
 
         telefono.onChangeNumber({ number: "+529991234567" });
         expect(form.telefono).toBe("+529991234567");
