@@ -71,7 +71,7 @@ const updateValidity = () => {
 };
 
 const updateValue = () => {
-    if (!instance.value) {
+    if (!instance.value || synchronizing.value) {
         return;
     }
 
@@ -114,9 +114,10 @@ const setNumberSilently = (value) => {
         return;
     }
 
+    const wasSynchronizing = synchronizing.value;
     synchronizing.value = true;
     instance.value.setNumber(value ?? "");
-    synchronizing.value = false;
+    synchronizing.value = wasSynchronizing;
 };
 
 onMounted(() => {
@@ -133,14 +134,23 @@ onMounted(() => {
             instance.value.setDisabled(props.disabled);
         }
 
-        instance.value.promise
-            ?.then(() => {
-                if (instance.value) {
-                    setNumberSilently(props.modelValue);
-                    updateValidity();
-                }
-            })
-            .catch(() => undefined);
+        const initialization = instance.value.promise;
+
+        if (initialization) {
+            initialization
+                .then(() => {
+                    if (instance.value) {
+                        setNumberSilently(props.modelValue);
+                        updateValidity();
+                    }
+                })
+                .catch(() => undefined)
+                .finally(() => {
+                    synchronizing.value = false;
+                });
+        } else {
+            synchronizing.value = false;
+        }
 
         updateValidity();
     }
