@@ -60,6 +60,15 @@ test('development permission profiles enforce client dossier access', function (
     $denied = User::where('email', 'sin.acceso.clientes@example.test')->firstOrFail();
 
     $this->actingAs($reader)
+        ->get(route('clientes.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('can.create', false)
+            ->where('can.update', false)
+            ->where('can.delete', false)
+            ->has('clientes.0.relaciones_count'));
+
+    $this->actingAs($reader)
         ->get(route('clientes.expediente.show', $cliente))
         ->assertOk()
         ->assertInertia(fn ($page) => $page->where('can.update', false));

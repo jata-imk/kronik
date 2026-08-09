@@ -27,6 +27,7 @@ class ClienteExpedienteController extends Controller
             'documentos.revisor:id,name',
             'referencias',
             'vinculos.vinculado.datosFiscales',
+            'vinculosEntrantes.cliente.datosFiscales',
             'garantias.propietario.datosFiscales',
             'consentimientosSic.registrador:id,name',
         ]);
@@ -40,8 +41,28 @@ class ClienteExpedienteController extends Controller
             $cliente->origen_recursos,
         ])->filter(fn ($value) => filled($value))->count();
 
+        $relaciones = $cliente->vinculos
+            ->map(fn ($vinculo) => [
+                'id' => $vinculo->id,
+                'direccion' => 'saliente',
+                'rol' => $vinculo->rol->value,
+                'notas' => $vinculo->notas,
+                'cliente' => $vinculo->vinculado,
+                'puede_eliminar' => true,
+            ])
+            ->concat($cliente->vinculosEntrantes->map(fn ($vinculo) => [
+                'id' => $vinculo->id,
+                'direccion' => 'entrante',
+                'rol' => $vinculo->rol->value,
+                'notas' => $vinculo->notas,
+                'cliente' => $vinculo->cliente,
+                'puede_eliminar' => false,
+            ]))
+            ->values();
+
         return Inertia::render('Clientes/Expediente', [
             'cliente' => $cliente,
+            'relaciones' => $relaciones,
             'clientesDisponibles' => Cliente::query()
                 ->whereKeyNot($cliente->id)
                 ->with('datosFiscales:id,cliente_id,rfc')

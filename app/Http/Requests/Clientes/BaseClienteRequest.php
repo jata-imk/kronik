@@ -4,6 +4,7 @@ namespace App\Http\Requests\Clientes;
 
 use App\Models\CodigoPostal;
 use App\Rules\Rfc;
+use App\Services\CodigoPostalDireccionService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -18,6 +19,14 @@ abstract class BaseClienteRequest extends FormRequest
             $datosFiscales['rfc'] = mb_strtoupper(trim($datosFiscales['rfc']), 'UTF-8');
             $this->merge(['datos_fiscales' => $datosFiscales]);
         }
+
+        $direcciones = collect((array) $this->input('direcciones', []))
+            ->map(fn ($direccion) => is_array($direccion)
+                ? app(CodigoPostalDireccionService::class)->canonicalize($direccion, false)
+                : $direccion)
+            ->all();
+
+        $this->merge(['direcciones' => $direcciones]);
     }
 
     protected function baseRules(): array

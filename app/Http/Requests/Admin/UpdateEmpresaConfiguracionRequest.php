@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use App\Rules\Rfc;
+use App\Services\CodigoPostalDireccionService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -11,9 +12,14 @@ class UpdateEmpresaConfiguracionRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
+        $domicilio = $this->input('domicilio_fiscal', []);
+
         $this->merge([
             'rfc' => is_string($this->rfc) ? mb_strtoupper(trim($this->rfc), 'UTF-8') : $this->rfc,
             'pais_base' => is_string($this->pais_base) ? mb_strtoupper(trim($this->pais_base), 'UTF-8') : $this->pais_base,
+            'domicilio_fiscal' => is_array($domicilio)
+                ? app(CodigoPostalDireccionService::class)->canonicalize($domicilio)
+                : $domicilio,
         ]);
     }
 
@@ -107,6 +113,14 @@ class UpdateEmpresaConfiguracionRequest extends FormRequest
                     }
                 }
             },
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'domicilio_fiscal.codigo_postal_id.required_with' => 'Seleccione una colonia válida para el código postal fiscal.',
+            'domicilio_fiscal.division_admin_tres_id.required_with' => 'Seleccione una colonia válida para el domicilio fiscal.',
         ];
     }
 }

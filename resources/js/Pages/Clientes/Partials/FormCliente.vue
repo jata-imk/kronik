@@ -1,15 +1,17 @@
 <script setup>
-import { Link, useForm, usePage } from "@inertiajs/vue3";
+import { useForm, usePage } from "@inertiajs/vue3";
 import { useToast } from "primevue/usetoast";
 import { nextTick, reactive, ref, watch } from "vue";
 
-import "@css/flags.css";
 import FormularioDatosFiscales from "@/Components/FormularioDatosFiscales.vue";
 import FormularioDireccion from "@/Components/FormularioDireccion.vue";
+import PaisSelect from "@/Components/PaisSelect.vue";
 import IntlTelInput from "@components/IntlTelInput.vue";
 import MapLibreMap from "@components/MapLibre/MapLibreMap.vue";
 
 import { useDireccionMapConnector } from "@/Composables/MapLibre/useDireccionMapConnector";
+import { useTelefonoInternacional } from "@/Composables/useTelefonoInternacional";
+import { formatDateOnly, parseDateOnly } from "@/Utils/date";
 
 const toast = useToast();
 const page = usePage();
@@ -48,9 +50,7 @@ const form = useForm({
     segundo_nombre: cliente.value?.segundo_nombre ?? "",
     apellido_paterno: cliente.value?.apellido_paterno ?? "",
     apellido_materno: cliente.value?.apellido_materno ?? "",
-    fecha_nacimiento: cliente.value?.fecha_nacimiento
-        ? new Date(cliente.value?.fecha_nacimiento)
-        : null,
+    fecha_nacimiento: parseDateOnly(cliente.value?.fecha_nacimiento),
     pais_nacimiento_id: cliente.value?.pais_nacimiento_id ?? null,
     email: cliente.value?.email ?? "",
     sexo: cliente.value?.sexo ?? "",
@@ -61,49 +61,9 @@ const form = useForm({
 });
 
 const paises = ref(page.props.paises);
-const paisSeleccionado = ref(
-    cliente.value?.pais_nacimiento_id
-        ? {
-              id: form.pais_nacimiento_id,
-              nombre_es:
-                  paises.value.find(
-                      (pais) => pais.id === form.pais_nacimiento_id,
-                  ).nombre_es ?? "",
-          }
-        : null,
-);
-const paisesFiltrados = ref(paises);
 
-const filtrarPaises = (event) => {
-    setTimeout(() => {
-        if (!event.query.trim().length) {
-            paisesFiltrados.value = [...paises.value];
-        } else {
-            paisesFiltrados.value = paises.value.filter((pais) => {
-                return pais.nombre_es
-                    .toLowerCase()
-                    .startsWith(event.query.toLowerCase());
-            });
-        }
-    }, 250);
-};
-
-const onChangePaisNacimiento = (event) => {
-    const opcionSeleccionada = event.value;
-
-    if (opcionSeleccionada?.id === undefined) {
-        form.pais_nacimiento_id = null;
-        return;
-    }
-
-    form.pais_nacimiento_id = opcionSeleccionada.id;
-};
-
-const onChangePaisNumeroTelefono = ({ dialCode }) => {
-    if (dialCode) {
-        form.telefono_codigo_pais = dialCode.trim();
-    }
-};
+const { telefonoInternacional, onChangeNumber: onClienteTelefonoChange } =
+    useTelefonoInternacional(form);
 
 const sexos = page.props.sexos;
 const fechaHoy = new Date();
@@ -233,7 +193,12 @@ const initialLoadFormDatosFiscales = ref({
 });
 
 const onSubmit = () => {
-    form[page.props.action === "clientes.update" ? "patch" : "post"](
+    const updating = page.props.action === "clientes.update";
+    form.transform((data) => ({
+        ...data,
+        fecha_nacimiento: formatDateOnly(data.fecha_nacimiento),
+    }));
+    form[updating ? "patch" : "post"](
         route(
             page.props.action ?? "clientes.store",
             page.props.action === "clientes.store" ? null : cliente.value?.id,
@@ -241,10 +206,14 @@ const onSubmit = () => {
         {
             preserveScroll: true,
             onSuccess: () => {
-                form.reset();
+                if (updating) {
+                    form.defaults(form.data());
+                }
                 toast.add({
                     severity: "success",
-                    summary: "Cliente creado exitosamente",
+                    summary: updating
+                        ? "Cliente actualizado exitosamente"
+                        : "Cliente creado exitosamente",
                     life: 3000,
                 });
             },
@@ -335,6 +304,7 @@ const onSubmit = () => {
                             v-model="form.fecha_nacimiento" :disabled="readOnly"
                             fluid
                             :maxDate="fechaMinimaAdultos" :invalid="!!form.errors.fecha_nacimiento"
+                            dateFormat="dd-mm-yy"
                             showIcon iconDisplay="input" />
                         <Message v-if="form.errors.fecha_nacimiento" severity="error" size="small">
                             {{ form.errors.fecha_nacimiento }}
@@ -344,24 +314,13 @@ const onSubmit = () => {
 
                     <div>
                         <label class="block text-sm font-medium mb-1" for="pais_nacimiento_id">País de nacimiento</label>
-                        <AutoComplete 
-                            dropdown :suggestions="paisesFiltrados" @complete="filtrarPaises"
+                        <PaisSelect
                             id="pais_nacimiento_id" name="pais_nacimiento_id"
-                            v-model="paisSeleccionado" :disabled="readOnly"
-                            @change="onChangePaisNacimiento"
-                            optionLabel="nombre_es"
-                            optionValue="id"
+                            v-model="form.pais_nacimiento_id" :disabled="readOnly"
+                            :options="paises"
+                            option-value="id"
                             fluid :invalid="!!form.errors.pais_nacimiento_id" >
-                            <template #option="slotProps">
-                                <div class="flex items-center">
-                                    <img :alt="slotProps.option.nombre_es" src="https://primefaces.org/cdn/primevue/images/flag/flag_placeholder.png" :class="`mr-2 flag flag-${slotProps.option.codigo_iso.toLowerCase()}`" style="width: 18px" />
-                                    <div>{{ slotProps.option.nombre_es }}</div>
-                                </div>
-                            </template>
-                            <template #dropdownicon>
-                                <i class="pi pi-map" />
-                            </template>
-                        </AutoComplete>
+                        </PaisSelect>
                         <Message v-if="form.errors.pais_nacimiento_id" severity="error" size="small">
                             {{ form.errors.pais_nacimiento_id }}
                         </Message
@@ -402,8 +361,9 @@ const onSubmit = () => {
                         <label class="block text-sm font-medium mb-1" for="telefono">Número de teléfono</label>
                         <IntlTelInput
                             id="telefono" name="telefono"
-                            v-model="form.telefono" :disabled="readOnly"
-                            @changeCountry="onChangePaisNumeroTelefono"
+                            v-model="telefonoInternacional" :disabled="readOnly"
+                            emit-e164
+                            @change-number="onClienteTelefonoChange"
                             fluid :invalid="!!form.errors.telefono" />
                         <Message v-if="form.errors.telefono" severity="error" size="small">
                             {{ form.errors.telefono }}

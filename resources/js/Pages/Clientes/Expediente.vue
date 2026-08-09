@@ -26,6 +26,7 @@ import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 
 const props = defineProps({
     cliente: { type: Object, required: true },
+    relaciones: { type: Array, default: () => [] },
     clientesDisponibles: { type: Array, default: () => [] },
     resumen: { type: Object, required: true },
     opciones: { type: Object, required: true },
@@ -94,6 +95,30 @@ const candidateOptions = computed(() =>
         rfc: cliente.datos_fiscales?.rfc ?? "Sin RFC",
     })),
 );
+
+const relatedClientOptions = computed(() => {
+    const options = new Map();
+
+    for (const relacion of props.relaciones) {
+        const related = relacion.cliente;
+        if (!related || options.has(related.id)) continue;
+
+        options.set(related.id, {
+            id: related.id,
+            label: [
+                related.primer_nombre,
+                related.segundo_nombre,
+                related.apellido_paterno,
+                related.apellido_materno,
+            ]
+                .filter(Boolean)
+                .join(" "),
+            rfc: related.datos_fiscales?.rfc ?? "Sin RFC",
+        });
+    }
+
+    return [...options.values()];
+});
 
 const profileForm = useForm({
     ocupacion: props.cliente.ocupacion ?? "",
@@ -329,6 +354,15 @@ const confirmDelete = (message, url, success) => {
             router.delete(url, {
                 preserveScroll: true,
                 onSuccess: () => notify(success),
+                onError: (errors) =>
+                    toast.add({
+                        severity: "error",
+                        summary: "No se pudo completar el cambio",
+                        detail:
+                            Object.values(errors)[0] ??
+                            "Revise la información e intente nuevamente.",
+                        life: 4500,
+                    }),
             }),
     });
 };
@@ -378,6 +412,10 @@ function notify(detail) {
 
 function download(url) {
     window.location.assign(url);
+}
+
+function viewRelatedClient(id) {
+    router.visit(route("clientes.expediente.show", id));
 }
 
 function optionLabel(options, value) {
@@ -583,8 +621,8 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                                 <div><strong>{{ reference.nombre }}</strong><p>{{ optionLabel(opciones.referencias, reference.tipo) }} · {{ reference.relacion || reference.empresa }}</p></div>
                                 <div class="record-contact"><span v-if="reference.telefono_codigo_pais">+{{ String(reference.telefono_codigo_pais).replace(/^\+/, "") }} </span><span>{{ reference.telefono }}</span><small>{{ reference.email }}</small></div>
                                 <div class="row-actions">
-                                    <Button text rounded @click="openReference(reference)"><template #icon><Pencil :size="17" /></template></Button>
-                                    <Button text rounded severity="danger" @click="confirmDelete('Se eliminara esta referencia.', route('clientes.referencias.destroy', [cliente.id, reference.id]), 'Referencia eliminada')"><template #icon><Trash2 :size="17" /></template></Button>
+                                    <Button v-if="can.update" text rounded @click="openReference(reference)"><template #icon><Pencil :size="17" /></template></Button>
+                                    <Button v-if="can.update" text rounded severity="danger" @click="confirmDelete('Se eliminara esta referencia.', route('clientes.referencias.destroy', [cliente.id, reference.id]), 'Referencia eliminada')"><template #icon><Trash2 :size="17" /></template></Button>
                                 </div>
                             </div>
                         </div>
@@ -596,12 +634,18 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                             <div><p class="section-kicker">Responsabilidad compartida</p><h2>Avales y obligados solidarios</h2></div>
                             <Button label="Vincular cliente" @click="linkDialog = true" :disabled="!can.update"><template #icon><Link2 :size="18" /></template></Button>
                         </div>
-                        <div v-if="cliente.vinculos.length" class="records-table">
-                            <div v-for="link in cliente.vinculos" :key="link.id" class="record-row">
+                        <div v-if="relaciones.length" class="records-table">
+                            <div v-for="link in relaciones" :key="`${link.direccion}-${link.id}`" class="record-row">
                                 <div class="record-symbol coral"><Link2 :size="20" /></div>
-                                <div><strong>{{ [link.vinculado.primer_nombre, link.vinculado.segundo_nombre, link.vinculado.apellido_paterno, link.vinculado.apellido_materno].filter(Boolean).join(' ') }}</strong><p>{{ link.vinculado.datos_fiscales?.rfc || 'RFC pendiente' }}</p></div>
-                                <Tag :value="optionLabel(opciones.vinculos, link.rol)" severity="contrast" />
-                                <div class="row-actions"><Button text rounded severity="danger" @click="confirmDelete('Se retirara este vinculo del expediente.', route('clientes.vinculos.destroy', [cliente.id, link.id]), 'Vinculo eliminado')"><template #icon><Trash2 :size="17" /></template></Button></div>
+                                <div>
+                                    <button type="button" class="related-client-link" @click="viewRelatedClient(link.cliente.id)">{{ [link.cliente.primer_nombre, link.cliente.segundo_nombre, link.cliente.apellido_paterno, link.cliente.apellido_materno].filter(Boolean).join(' ') }}</button>
+                                    <p>{{ link.cliente.datos_fiscales?.rfc || 'RFC pendiente' }} · {{ link.direccion === 'saliente' ? 'Vinculado desde este expediente' : 'Este cliente está vinculado desde el expediente relacionado' }}</p>
+                                </div>
+                                <Tag :value="optionLabel(opciones.vinculos, link.rol)" :severity="link.direccion === 'saliente' ? 'contrast' : 'info'" />
+                                <div class="row-actions">
+                                    <Button text rounded v-tooltip.top="'Ver expediente'" @click="viewRelatedClient(link.cliente.id)"><template #icon><UserRound :size="17" /></template></Button>
+                                    <Button v-if="can.update && link.puede_eliminar" text rounded severity="danger" @click="confirmDelete('Se retirara este vinculo del expediente.', route('clientes.vinculos.destroy', [cliente.id, link.id]), 'Vinculo eliminado')"><template #icon><Trash2 :size="17" /></template></Button>
+                                </div>
                             </div>
                         </div>
                         <div v-else class="empty-state"><Link2 :size="30" /><strong>Sin personas vinculadas</strong></div>
@@ -619,8 +663,8 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                                 <strong class="guarantee-value">{{ formatCurrency(guarantee.valor_estimado, guarantee.moneda) }}</strong>
                                 <p>Propietario: {{ guarantee.propietario ? [guarantee.propietario.primer_nombre, guarantee.propietario.apellido_paterno].filter(Boolean).join(' ') : nombreCompleto }}</p>
                                 <div class="guarantee-actions">
-                                    <Button text label="Editar" @click="openGuarantee(guarantee)"><template #icon><Pencil :size="16" /></template></Button>
-                                    <Button text label="Eliminar" severity="danger" @click="confirmDelete('Se eliminara esta garantia.', route('clientes.garantias.destroy', [cliente.id, guarantee.id]), 'Garantia eliminada')"><template #icon><Trash2 :size="16" /></template></Button>
+                                    <Button v-if="can.update" text label="Editar" @click="openGuarantee(guarantee)"><template #icon><Pencil :size="16" /></template></Button>
+                                    <Button v-if="can.update" text label="Eliminar" severity="danger" @click="confirmDelete('Se eliminara esta garantia.', route('clientes.garantias.destroy', [cliente.id, guarantee.id]), 'Garantia eliminada')"><template #icon><Trash2 :size="16" /></template></Button>
                                 </div>
                             </article>
                         </div>
@@ -638,7 +682,7 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                                 <div class="consent-copy"><strong>{{ consent.revocado_en ? 'Consentimiento revocado' : 'Consentimiento registrado' }}</strong><p>{{ optionLabel(opciones.medios_consentimiento, consent.medio) }} · {{ formatDate(consent.otorgado_en) }} · {{ consent.registrador.name }}</p><small v-if="consent.vence_en">Vigencia declarada hasta {{ formatDate(consent.vence_en) }}</small></div>
                                 <div class="row-actions">
                                     <Button text rounded v-tooltip.top="'Descargar evidencia'" @click="download(route('clientes.consentimientos-sic.download', [cliente.id, consent.id]))"><template #icon><Download :size="18" /></template></Button>
-                                    <Button v-if="!consent.revocado_en" text rounded severity="danger" v-tooltip.top="'Revocar'" @click="revokeConsent(consent)"><template #icon><Trash2 :size="18" /></template></Button>
+                                    <Button v-if="can.update && !consent.revocado_en" text rounded severity="danger" v-tooltip.top="'Revocar'" @click="revokeConsent(consent)"><template #icon><Trash2 :size="18" /></template></Button>
                                 </div>
                             </article>
                         </div>
@@ -652,7 +696,7 @@ function formatCurrency(value, currency = props.opciones.moneda) {
             <form class="dialog-form" @submit.prevent="uploadDocument">
                 <div><label>Tipo</label><Select v-model="documentForm.tipo" :options="opciones.documentos" optionLabel="label" optionValue="value" fluid :disabled="selectedDocument !== null" /></div>
                 <div v-if="documentForm.tipo === 'adicional'"><label>Nombre del documento</label><InputText v-model="documentForm.nombre" fluid /></div>
-                <div><label>Fecha de vencimiento</label><DatePicker v-model="documentForm.vence_en" showIcon fluid /></div>
+                <div><label>Fecha de vencimiento</label><DatePicker v-model="documentForm.vence_en" dateFormat="dd-mm-yy" showIcon fluid /></div>
                 <div><label>Archivo privado</label><FileUpload mode="basic" customUpload accept=".pdf,.jpg,.jpeg,.png" :maxFileSize="10485760" chooseLabel="Seleccionar PDF o imagen" @select="onDocumentSelected" /></div>
                 <div><label>Notas</label><Textarea v-model="documentForm.notas" rows="3" fluid /></div>
                 <Message v-for="error in documentForm.errors" :key="error" severity="error" size="small">{{ error }}</Message>
@@ -696,7 +740,7 @@ function formatCurrency(value, currency = props.opciones.moneda) {
         <Dialog v-model:visible="guaranteeDialog" modal :header="editingGuarantee ? 'Editar garantía' : 'Registrar garantía'" class="responsive-dialog">
             <form class="dialog-form two-columns" @submit.prevent="saveGuarantee">
                 <div><label>Tipo</label><Select v-model="guaranteeForm.tipo" :options="opciones.garantias" optionLabel="label" optionValue="value" fluid /></div>
-                <div><label>Propietario</label><Select v-model="guaranteeForm.propietario_cliente_id" :options="candidateOptions" optionLabel="label" optionValue="id" showClear filter placeholder="El cliente titular" fluid /></div>
+                <div><label>Propietario</label><Select v-model="guaranteeForm.propietario_cliente_id" :options="relatedClientOptions" optionLabel="label" optionValue="id" showClear filter placeholder="El cliente titular" fluid /></div>
                 <div class="full-field"><label>Descripción</label><InputText v-model="guaranteeForm.descripcion" fluid /></div>
                 <div><label>Valor estimado</label><InputNumber v-model="guaranteeForm.valor_estimado" mode="currency" :currency="guaranteeForm.moneda" locale="es-MX" :min="0" fluid /></div>
                 <div><label>Moneda</label><InputText v-model="guaranteeForm.moneda" maxlength="3" fluid /></div>
@@ -709,8 +753,8 @@ function formatCurrency(value, currency = props.opciones.moneda) {
         <Dialog v-model:visible="consentDialog" modal header="Registrar consentimiento SIC" class="responsive-dialog">
             <form class="dialog-form two-columns" @submit.prevent="saveConsent">
                 <div><label>Medio</label><Select v-model="consentForm.medio" :options="opciones.medios_consentimiento" optionLabel="label" optionValue="value" fluid /></div>
-                <div><label>Fecha y hora</label><DatePicker v-model="consentForm.otorgado_en" showTime hourFormat="24" showIcon fluid /></div>
-                <div><label>Vigencia declarada</label><DatePicker v-model="consentForm.vence_en" showIcon fluid /></div>
+                <div><label>Fecha y hora</label><DatePicker v-model="consentForm.otorgado_en" dateFormat="dd-mm-yy" showTime hourFormat="24" showIcon fluid /></div>
+                <div><label>Vigencia declarada</label><DatePicker v-model="consentForm.vence_en" dateFormat="dd-mm-yy" showIcon fluid /></div>
                 <div><label>Evidencia privada</label><FileUpload mode="basic" customUpload accept=".pdf,.jpg,.jpeg,.png" :maxFileSize="10485760" chooseLabel="Seleccionar evidencia" @select="onConsentSelected" /></div>
                 <div class="full-field"><label>Notas</label><Textarea v-model="consentForm.notas" rows="3" fluid /></div>
                 <Message v-for="error in consentForm.errors" :key="error" severity="error" size="small" class="full-field">{{ error }}</Message>
@@ -776,6 +820,8 @@ function formatCurrency(value, currency = props.opciones.moneda) {
 .record-symbol.coral { background: #fde4dd; color: #a53d25; }
 .record-contact { display: flex; flex-direction: column; font-size: .8rem; }
 .record-contact small { color: #74746e; }
+.related-client-link { border: 0; padding: 0; background: transparent; color: #1f5f8b; font-weight: 750; text-align: left; cursor: pointer; }
+.related-client-link:hover { text-decoration: underline; }
 .guarantee-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1px; background: #deded8; border: 1px solid #deded8; }
 .guarantee-item { background: #fff; padding: 1.15rem; min-height: 205px; display: flex; flex-direction: column; }
 .guarantee-top { display: flex; justify-content: space-between; align-items: center; color: #7a5420; }

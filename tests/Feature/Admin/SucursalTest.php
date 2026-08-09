@@ -99,7 +99,7 @@ test('super admin can create and update branches', function () {
     $sucursal = Sucursal::where('clave', 'NORTE')->firstOrFail();
 
     expect($sucursal->nombre)->toBe('Sucursal Norte')
-        ->and($sucursal->domicilio['municipio'])->toBe('Merida')
+        ->and($sucursal->domicilio['municipio'])->toBe('Mérida')
         ->and($sucursal->domicilio['codigo_postal_id'])->toBe($codigoPostal->id)
         ->and($sucursal->domicilio['division_admin_tres_id'])->toBe($colonia->id);
 

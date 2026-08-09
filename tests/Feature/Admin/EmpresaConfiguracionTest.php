@@ -184,6 +184,35 @@ test('activation requires minimum legal data', function () {
         ]);
 });
 
+test('legacy fiscal address is resolved without retyping its postal code', function () {
+    $user = actingAsSuperAdmin();
+
+    $this->actingAs($user)
+        ->from(route('admin.configuracion-empresa.index'))
+        ->put(route('admin.configuracion-empresa.update'), [
+            'tipo_persona' => 'moral',
+            'domicilio_fiscal' => [
+                'calle' => 'República de Brasil',
+                'colonia' => 'Centro',
+                'municipio' => 'Cuauhtémoc',
+                'estado' => 'Ciudad de México',
+                'codigo_postal' => '06000',
+            ],
+            'moneda' => 'MXN',
+            'zona_horaria' => 'America/Mexico_City',
+            'pais_base' => 'MX',
+            'estatus' => 'borrador',
+        ])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('admin.configuracion-empresa.index'));
+
+    $domicilio = EmpresaConfiguracion::where('singleton_key', 'default')->firstOrFail()->domicilio_fiscal;
+
+    expect($domicilio['codigo_postal_id'])->toBe($this->codigoPostal->id)
+        ->and($domicilio['division_admin_tres_id'])->toBe($this->colonia->id)
+        ->and($domicilio['colonia'])->toBe('Centro');
+});
+
 test('user without admin permissions cannot access company configuration or branches', function () {
     $user = App\Models\User::factory()->withPersonalTeam()->create();
     $team = $user->ownedTeams()->first();

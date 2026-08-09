@@ -2,7 +2,7 @@
 import { router } from "@inertiajs/vue3";
 import { FilterMatchMode } from "@primevue/core/api";
 import { useToast } from "primevue/usetoast";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 // Props para recibir los datos del controlador
 const props = defineProps({
@@ -10,11 +10,16 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    can: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 
 const toast = useToast();
-const clientes = ref(props.clientes);
+const clientes = computed(() => props.clientes);
 const loading = ref(false);
+const deleteProcessing = ref(false);
 const deleteDialog = ref(false);
 const importDialog = ref(false);
 const clienteSeleccionado = ref(null);
@@ -109,29 +114,31 @@ const confirmDelete = (cliente) => {
 };
 
 const deleteCliente = () => {
-    try {
-        router.delete(route("clientes.destroy", clienteSeleccionado.value.id), {
-            preserveScroll: true,
-            preserveState: true,
-            onFinish: (visit) => {
-                toast.add({
-                    severity: "success",
-                    summary: "Éxito",
-                    detail: "Cliente eliminado correctamente",
-                    life: 3000,
-                });
-
-                deleteDialog.value = false;
-            },
-        });
-    } catch (error) {
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: `"No se pudo eliminar el cliente, detalles: ${error.message}"`,
-            life: 3000,
-        });
-    }
+    deleteProcessing.value = true;
+    router.delete(route("clientes.destroy", clienteSeleccionado.value.id), {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+            toast.add({
+                severity: "success",
+                summary: "Éxito",
+                detail: "Cliente eliminado correctamente",
+                life: 3000,
+            });
+            deleteDialog.value = false;
+        },
+        onError: () => {
+            toast.add({
+                severity: "error",
+                summary: "No se pudo eliminar el cliente",
+                detail: "Verifique sus permisos e intente nuevamente.",
+                life: 4000,
+            });
+        },
+        onFinish: () => {
+            deleteProcessing.value = false;
+        },
+    });
 };
 
 const showImportDialog = () => {
@@ -200,8 +207,8 @@ const exportData = async () => {
     <div class="card !p-0">
         <div class="flex flex-wrap gap-4 justify-content-between align-items-center mb-4">
             <div class="w-full flex gap-2">
-                <Button label="Nuevo Cliente" icon="pi pi-plus" class="p-button-success" @click="navigateToCreate" />
-                <Button label="Importar" icon="pi pi-upload" class="p-button-info" @click="showImportDialog" />
+                <Button v-if="can.create" label="Nuevo Cliente" icon="pi pi-plus" class="p-button-success" @click="navigateToCreate" />
+                <Button v-if="can.create" label="Importar" icon="pi pi-upload" class="p-button-info" @click="showImportDialog" />
                 <Button label="Exportar" icon="pi pi-download" class="p-button-help" @click="exportData" />
             </div>
         </div>
@@ -245,7 +252,15 @@ const exportData = async () => {
 
             <Column field="nombre_completo" header="Nombre" sortable>
                 <template #body="{ data }">
-                    {{ data.nombre_completo }}
+                    <div class="flex items-center gap-2">
+                        <span>{{ data.nombre_completo }}</span>
+                        <Tag
+                            v-if="data.relaciones_count"
+                            :value="`${data.relaciones_count} relación${data.relaciones_count === 1 ? '' : 'es'}`"
+                            severity="contrast"
+                            rounded
+                        />
+                    </div>
                 </template>
                 <template #filter="{ filterModel, filterCallback }">
                     <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter"
@@ -320,9 +335,9 @@ const exportData = async () => {
                             @click="viewExpediente(data.id)" />
                         <Button icon="pi pi-eye" class="p-button-rounded p-button-info p-button-sm"
                             @click="viewCliente(data.id)" />
-                        <Button icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-sm"
+                        <Button v-if="can.update" icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-sm"
                             @click="editCliente(data.id)" />
-                        <Button icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm"
+                        <Button v-if="can.delete" icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm"
                             @click="confirmDelete(data)" />
                     </div>
                 </template>
@@ -338,7 +353,7 @@ const exportData = async () => {
             </div>
             <template #footer>
                 <Button label="No" icon="pi pi-times" class="p-button-text" @click="deleteDialog = false" />
-                <Button label="Sí" icon="pi pi-check" class="p-button-danger" @click="deleteCliente" />
+                <Button label="Sí" icon="pi pi-check" class="p-button-danger" :loading="deleteProcessing" :disabled="deleteProcessing" @click="deleteCliente" />
             </template>
         </Dialog>
 

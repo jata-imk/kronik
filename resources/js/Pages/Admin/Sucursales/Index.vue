@@ -1,6 +1,8 @@
 <script setup>
 import CodigoPostalAutocomplete from "@/Components/CodigoPostalAutocomplete.vue";
 import IntlTelInput from "@/Components/IntlTelInput.vue";
+import { useDireccionCodigoPostal } from "@/Composables/useDireccionCodigoPostal";
+import { useTelefonoInternacional } from "@/Composables/useTelefonoInternacional";
 import { router, useForm } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { useToast } from "primevue/usetoast";
@@ -50,70 +52,45 @@ const emptySucursal = () => ({
 
 const form = useForm(emptySucursal());
 
-const localidades = ref([]);
+const {
+    localidades,
+    aplicarCodigoPostal,
+    limpiarUbicacionPostal,
+    onLocalidadChange,
+} = useDireccionCodigoPostal(() => form.domicilio);
 
-const aplicarCodigoPostal = (contexto) => {
-    Object.assign(form.domicilio, {
-        pais_id: contexto.pais?.id ?? null,
-        pais_codigo_iso: contexto.pais?.codigo_iso ?? "",
-        codigo_postal_id: null,
-        codigo_postal: contexto.codigo,
-        division_admin_uno_id: contexto.divisionAdminUno?.id ?? null,
-        division_admin_dos_id: contexto.divisionAdminDos?.id ?? null,
-        division_admin_tres_id: null,
-        colonia: "",
-        municipio: contexto.divisionAdminDos?.nombre ?? "",
-        estado: contexto.divisionAdminUno?.nombre ?? "",
-        pais: contexto.pais?.nombre_es ?? "",
-    });
-
-    localidades.value = contexto.localidades;
-};
-
-const limpiarUbicacionPostal = () => {
-    Object.assign(form.domicilio, {
-        pais_id: null,
-        pais_codigo_iso: "",
-        codigo_postal_id: null,
-        division_admin_uno_id: null,
-        division_admin_dos_id: null,
-        division_admin_tres_id: null,
-        colonia: "",
-        municipio: "",
-        estado: "",
-        pais: "",
-    });
-    localidades.value = [];
-};
-
-const onLocalidadChange = ({ value }) => {
-    const localidad = localidades.value.find(
-        (item) => item.codigoPostalId === value,
-    );
-
-    if (!localidad) {
-        return;
-    }
-
-    Object.assign(form.domicilio, {
-        codigo_postal_id: localidad.codigoPostalId,
-        division_admin_tres_id: localidad.divisionAdminTresId,
-        colonia: localidad.nombre,
-    });
-};
+const {
+    telefonoInternacional,
+    sincronizarDesdeFormulario: sincronizarTelefono,
+    onChangeNumber: onSucursalTelefonoChange,
+} = useTelefonoInternacional(form, { e164Key: "telefono" });
 
 const openCreate = () => {
     selectedSucursal.value = null;
     localidades.value = [];
     form.defaults(emptySucursal());
     form.reset();
+    sincronizarTelefono();
     form.clearErrors();
     visible.value = true;
 };
 
 const openEdit = (sucursal) => {
     selectedSucursal.value = sucursal;
-    localidades.value = [];
+    localidades.value =
+        sucursal.domicilio?.codigo_postal_id &&
+        sucursal.domicilio?.division_admin_tres_id
+            ? [
+                  {
+                      codigoPostalId: sucursal.domicilio.codigo_postal_id,
+                      divisionAdminTresId:
+                          sucursal.domicilio.division_admin_tres_id,
+                      nombre:
+                          sucursal.domicilio.colonia ?? "Localidad guardada",
+                      tipo: null,
+                  },
+              ]
+            : [];
     form.defaults({
         ...emptySucursal(),
         ...sucursal,
@@ -124,6 +101,7 @@ const openEdit = (sucursal) => {
         horario: { ...emptySucursal().horario, ...(sucursal.horario ?? {}) },
     });
     form.reset();
+    sincronizarTelefono();
     form.clearErrors();
     visible.value = true;
 };
@@ -263,8 +241,9 @@ const formatAddress = (domicilio) => {
                             <label class="block text-sm font-medium mb-1">Telefono</label>
                             <IntlTelInput
                                 id="telefono"
-                                v-model="form.telefono"
+                                v-model="telefonoInternacional"
                                 emit-e164
+                                @change-number="onSucursalTelefonoChange"
                                 :intl-tel-input-options="{ initialCountry: 'mx' }"
                                 :invalid="!!form.errors.telefono"
                                 fluid

@@ -152,3 +152,26 @@ test('client creation rejects a postal code that does not match the locality', f
         ->assertRedirect(route('clientes.create'))
         ->assertSessionHasErrors('direcciones.0.codigo_postal_id');
 });
+
+test('client validation messages are readable in Spanish', function () {
+    $catalogs = clienteFiscalCatalogs();
+    $user = actingAsSuperAdmin();
+    $payload = clientePayload($catalogs);
+    $payload['pais_nacimiento_id'] = 'desconocido';
+    $payload['sexo'] = 'otro';
+
+    $response = $this->actingAs($user)
+        ->from(route('clientes.create'))
+        ->post(route('clientes.store'), $payload)
+        ->assertRedirect(route('clientes.create'))
+        ->assertSessionHasErrors(['pais_nacimiento_id', 'sexo']);
+
+    $messages = collect($response->getSession()->get('errors')->all())
+        ->flatten()
+        ->implode(' ');
+
+    expect($messages)
+        ->not->toContain('validation.')
+        ->toContain('número entero')
+        ->toContain('no es válido');
+});

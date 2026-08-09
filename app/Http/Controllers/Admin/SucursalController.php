@@ -6,6 +6,7 @@ use App\Enums\ActivityEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Sucursal;
 use App\Services\ActivityLogService;
+use App\Services\CodigoPostalDireccionService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -85,6 +86,13 @@ class SucursalController extends Controller implements HasMiddleware
 
     private function validateSucursal(Request $request, ?Sucursal $sucursal = null): array
     {
+        $domicilio = $request->input('domicilio', []);
+        if (is_array($domicilio)) {
+            $request->merge([
+                'domicilio' => app(CodigoPostalDireccionService::class)->canonicalize($domicilio),
+            ]);
+        }
+
         return $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
             'clave' => [
@@ -131,6 +139,8 @@ class SucursalController extends Controller implements HasMiddleware
             'activa' => ['required', 'boolean'],
         ], [
             'clave.unique' => 'La clave de sucursal ya está en uso.',
+            'domicilio.codigo_postal_id.required_with' => 'Seleccione una colonia válida para el código postal.',
+            'domicilio.division_admin_tres_id.required_with' => 'Seleccione una colonia válida para la sucursal.',
         ]);
     }
 }

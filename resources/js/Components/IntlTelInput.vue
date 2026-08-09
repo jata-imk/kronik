@@ -40,6 +40,7 @@ const input = ref();
 const countryDropdown = ref();
 const instance = ref();
 const wasPreviouslyValid = ref(false);
+const synchronizing = ref(true);
 
 const isValid = () => {
     if (instance.value) {
@@ -81,12 +82,17 @@ const updateValue = () => {
     emit("changeNumber", {
         number,
         numberWithoutCountryCode: nationalNumber,
+        dialCode: instance.value.getSelectedCountryData()?.dialCode ?? "",
         isValid: isValid(),
     });
     updateValidity();
 };
 
 const updateCountry = () => {
+    if (synchronizing.value) {
+        return;
+    }
+
     emit(
         "changeCountry",
         instance.value?.getSelectedCountryData() ?? {
@@ -118,6 +124,9 @@ onMounted(() => {
         if (props.disabled) {
             instance.value.setDisabled(props.disabled);
         }
+
+        synchronizing.value = false;
+        updateValidity();
     }
 });
 
@@ -134,7 +143,9 @@ watch(
         }
 
         if (!newValue) {
+            synchronizing.value = true;
             instance.value.setNumber("");
+            synchronizing.value = false;
             return;
         }
 
@@ -142,7 +153,9 @@ watch(
             instance.value.getNumber() !== newValue &&
             input.value?.$el?.value !== newValue
         ) {
+            synchronizing.value = true;
             instance.value.setNumber(newValue);
+            synchronizing.value = false;
         }
     },
 );

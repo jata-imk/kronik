@@ -24,6 +24,10 @@ Use 4-space indentation, LF line endings, UTF-8, and final newlines as defined i
 
 Use Pest with Laravel helpers. Put HTTP, auth, team, and workflow coverage in `tests/Feature`; keep isolated logic tests in `tests/Unit`. Name tests after the behavior under test, for example `UpdateTeamNameTest.php`. Add or update tests when changing controllers, requests, policies, services, migrations, or user-visible Inertia flows.
 
+## Human-Readable Validation (VERY IMPORTANT)
+
+Every validation error exposed to users must be written in clear Spanish. Raw translation keys such as `validation.required`, `validation.integer`, or `validation.in` must never reach the UI. When adding or changing validation rules, update `lang/es/validation.php`, define domain-specific messages and attribute names where useful, and add a regression assertion for user-facing flows. See `docs/reference/validacion-formularios.md`.
+
 ## Commit & Pull Request Guidelines
 
 Recent history uses Conventional Commit-style messages, often in Spanish: `feat(menubar): ...`, `fix(menubar): ...`, `refactor: ...`, and `docs: ...`. Keep subjects imperative and scoped when useful. Pull requests should include a short problem/solution summary, linked issue or task when available, test results, migration or seed notes, and screenshots for UI changes.

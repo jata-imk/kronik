@@ -29,7 +29,7 @@ class ClienteService
                 'divisionAdministrativaDos',
                 'divisionAdministrativaTres',
             ],
-        ])->get();
+        ])->withCount(['vinculos', 'vinculosEntrantes'])->get();
     }
 
     public function store(array $data)

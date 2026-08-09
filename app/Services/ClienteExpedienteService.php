@@ -10,6 +10,7 @@ use App\Models\ClienteReferencia;
 use App\Models\ClienteVinculo;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ClienteExpedienteService
 {
@@ -87,6 +88,23 @@ class ClienteExpedienteService
     public function deleteVinculo(ClienteVinculo $vinculo): void
     {
         $cliente = $vinculo->cliente;
+        $vinculado = $vinculo->vinculado;
+
+        $usadoComoPropietario = ClienteGarantia::query()
+            ->where(fn ($query) => $query
+                ->where('cliente_id', $cliente->id)
+                ->where('propietario_cliente_id', $vinculado->id))
+            ->orWhere(fn ($query) => $query
+                ->where('cliente_id', $vinculado->id)
+                ->where('propietario_cliente_id', $cliente->id))
+            ->exists();
+
+        if ($usadoComoPropietario) {
+            throw ValidationException::withMessages([
+                'cliente_vinculado_id' => 'Reasigne las garantías de esta relación antes de eliminarla.',
+            ]);
+        }
+
         $id = $vinculo->id;
         $vinculo->delete();
         $this->log($cliente, ActivityEvent::ClientLinkDeleted, 'Persona desvinculada del expediente', [

@@ -3,6 +3,7 @@ import { useToast } from "primevue/usetoast";
 import { computed, onMounted, ref, watch } from "vue";
 
 import CodigoPostalAutocomplete from "@/Components/CodigoPostalAutocomplete.vue";
+import { useDireccionCodigoPostal } from "@/Composables/useDireccionCodigoPostal";
 import { useGeocoding } from "@/Composables/useGeocoding";
 
 const toast = useToast();
@@ -75,66 +76,59 @@ const tipoLocalidadSeleccionada = ref(
     existentRecord && initialLoad.divisionesAdministrativas?.tres[0]?.tipo,
 );
 
-const resetDivisionAdministrativaSelectOptionsAndValue = () => {
+const resetDivisionOptions = () => {
     divisionesAdminUno.value = [];
     divisionesAdminDos.value = [];
     divisionesAdminTres.value = [];
     divisionAdminUnoSeleccionada.value = null;
     divisionAdminDosSeleccionada.value = null;
     divisionAdminTresSeleccionada.value = null;
-    form.pais_id = null;
-    form.codigo_postal_id = null;
-    form.division_admin_uno_id = null;
-    form.division_admin_dos_id = null;
-    form.division_admin_tres_id = null;
     tipoLocalidadSeleccionada.value = null;
 };
 
-const aplicarCodigoPostal = (contexto) => {
-    const nivelUno = contexto.divisionAdminUno;
-    const nivelDos = contexto.divisionAdminDos;
+const initialLocality = initialLoad.divisionesAdministrativas?.tres?.[0]
+    ? {
+          codigoPostalId:
+              initialLoad.divisionesAdministrativas.tres[0].codigoPostalId,
+          divisionAdminTresId: initialLoad.divisionesAdministrativas.tres[0].id,
+          nombre: initialLoad.divisionesAdministrativas.tres[0].nombre,
+          tipo: initialLoad.divisionesAdministrativas.tres[0].tipo,
+      }
+    : null;
 
-    divisionesAdminUno.value = nivelUno ? [nivelUno] : [];
-    divisionesAdminDos.value = nivelDos ? [nivelDos] : [];
-    divisionesAdminTres.value = contexto.localidades.map((localidad) => ({
-        id: localidad.divisionAdminTresId,
-        nombre: localidad.nombre,
-        tipo: localidad.tipo,
-        codigoPostalId: localidad.codigoPostalId,
-    }));
-
-    divisionAdminUnoSeleccionada.value = nivelUno?.id ?? null;
-    divisionAdminDosSeleccionada.value = nivelDos?.id ?? null;
-    divisionAdminTresSeleccionada.value = null;
-
-    Object.assign(form, {
-        codigo_postal: contexto.codigo,
-        pais_id: contexto.pais?.id ?? null,
-        codigo_postal_id: null,
-        division_admin_uno_id: nivelUno?.id ?? null,
-        division_admin_dos_id: nivelDos?.id ?? null,
-        division_admin_tres_id: null,
+const { aplicarCodigoPostal, limpiarUbicacionPostal, seleccionarLocalidad } =
+    useDireccionCodigoPostal(form, {
+        initialLocality,
+        onApplied: (contexto) => {
+            const nivelUno = contexto.divisionAdminUno;
+            const nivelDos = contexto.divisionAdminDos;
+            divisionesAdminUno.value = nivelUno ? [nivelUno] : [];
+            divisionesAdminDos.value = nivelDos ? [nivelDos] : [];
+            divisionesAdminTres.value = contexto.localidades.map(
+                (localidad) => ({
+                    id: localidad.divisionAdminTresId,
+                    nombre: localidad.nombre,
+                    tipo: localidad.tipo,
+                    codigoPostalId: localidad.codigoPostalId,
+                }),
+            );
+            divisionAdminUnoSeleccionada.value = nivelUno?.id ?? null;
+            divisionAdminDosSeleccionada.value = nivelDos?.id ?? null;
+            divisionAdminTresSeleccionada.value = null;
+            tipoLocalidadSeleccionada.value = null;
+        },
+        onCleared: resetDivisionOptions,
+        onLocalitySelected: (localidad) => {
+            tipoLocalidadSeleccionada.value = localidad?.tipo ?? null;
+        },
     });
 
-    tipoLocalidadSeleccionada.value = null;
-};
+const resetDivisionAdministrativaSelectOptionsAndValue = () =>
+    limpiarUbicacionPostal();
 
-const onChangeLocalidad = (event) => {
-    let divisionNivelTresSeleccionada = null;
-    divisionNivelTresSeleccionada = divisionesAdminTres.value.find(
-        (item) => item.id === event.value,
-    );
-
-    if (!divisionNivelTresSeleccionada) {
-        form.codigo_postal_id = null;
-        form.division_admin_tres_id = null;
-        tipoLocalidadSeleccionada.value = null;
-        return;
-    }
-
-    tipoLocalidadSeleccionada.value = divisionNivelTresSeleccionada.tipo;
-    form.codigo_postal_id = divisionNivelTresSeleccionada.codigoPostalId;
-    form.division_admin_tres_id = divisionNivelTresSeleccionada.id;
+const onChangeLocalidad = ({ value }) => {
+    divisionAdminTresSeleccionada.value = value;
+    seleccionarLocalidad(value);
 };
 
 const queryGeocoding = computed(() => {

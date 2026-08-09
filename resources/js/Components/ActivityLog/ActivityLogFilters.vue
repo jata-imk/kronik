@@ -51,7 +51,7 @@ const updateDates = () => {
             </div>
             <div>
                 <label for="activity-dates" class="block text-sm font-medium mb-2">Periodo</label>
-                <DatePicker id="activity-dates" v-model="dateRange" selection-mode="range" show-icon class="w-full" @date-select="updateDates" />
+                <DatePicker id="activity-dates" v-model="dateRange" dateFormat="dd-mm-yy" selection-mode="range" show-icon class="w-full" @date-select="updateDates" />
             </div>
             <div>
                 <label for="activity-per-page" class="block text-sm font-medium mb-2">Por página</label>

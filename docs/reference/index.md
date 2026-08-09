@@ -7,6 +7,7 @@
 - [Configuracion de empresa](configuracion-empresa.md)
 - [Reglas de identidad fiscal](reglas-identidad-fiscal.md)
 - [Validador de RFC](validacion-rfc.md)
+- [Validacion de formularios](validacion-formularios.md)
 - [Definicion de terminado](definicion-terminado.md)
 - [Expediente de clientes](expediente-clientes.md)
 - [Flujo de tareas, pruebas y PR](flujo-tareas-pruebas-pr.md)

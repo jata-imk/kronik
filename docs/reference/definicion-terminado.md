@@ -11,6 +11,7 @@ Una tarea no se marca como completada si no tiene pruebas aplicables pasando y d
 - La documentacion Diataxis correspondiente esta actualizada.
 - Los datos demo o fixtures necesarios estan disponibles si el flujo se valida manualmente o con e2e.
 - Los permisos, migraciones, seeders, comandos y variables de entorno afectados estan documentados.
+- Todos los errores visibles usan mensajes claros en espanol; ninguna clave `validation.*` llega a la interfaz.
 - La tarea indica explicitamente si no requiere tests automatizados y por que.
 - La suite completa no debe quedar roja por pruebas existentes si el cambio agrega CI que la va a ejecutar.
 

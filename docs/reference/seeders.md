@@ -42,6 +42,8 @@ php artisan sepomex:update
 
 `DevelopmentSeeder` solo crea catalogos minimos de respaldo cuando falta Mexico, un regimen fisico/moral o cualquier codigo postal. No agrega divisiones demo cuando los catalogos completos ya existen.
 
+La empresa y la sucursal demo usan la localidad canonica `Centro (Area 1)` del codigo postal `06000` y guardan sus IDs de SEPOMEX. Al reejecutar el seeder se corrigen registros demo antiguos que conservaban solamente el texto `Centro`.
+
 Las pruebas locales usan SQLite `:memory:` mediante `phpunit.xml`. La migracion de direcciones conserva la columna de coordenadas y omite el indice espacial solo en SQLite; el modelo representa temporalmente el punto como texto WKT en ese motor. MySQL/MariaDB conservan `POINT`, `ST_GeomFromText` e indice espacial. El archivo `.env` nunca debe proporcionar la base de pruebas.
 
 Datos demo actuales:

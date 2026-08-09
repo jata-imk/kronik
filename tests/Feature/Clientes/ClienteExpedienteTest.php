@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\Cliente;
+use App\Models\ClienteGarantia;
+use App\Models\ClienteVinculo;
 use App\Services\ClienteExpedienteService;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -143,6 +145,82 @@ test('client links reject self references and duplicates', function () {
         'cliente_vinculado_id' => $vinculado->id,
         'rol' => 'aval',
     ])->assertSessionHasErrors('cliente_vinculado_id');
+});
+
+test('guarantee owner must be the holder or a client related in either direction', function () {
+    $user = actingAsSuperAdmin();
+    $cliente = Cliente::factory()->create();
+    $relacionado = Cliente::factory()->create();
+    $ajeno = Cliente::factory()->create();
+
+    ClienteVinculo::create([
+        'cliente_id' => $relacionado->id,
+        'cliente_vinculado_id' => $cliente->id,
+        'rol' => 'aval',
+    ]);
+
+    $payload = [
+        'tipo' => 'prendaria',
+        'descripcion' => 'Vehículo relacionado',
+        'valor_estimado' => 120000,
+        'moneda' => 'MXN',
+    ];
+
+    $this->actingAs($user)
+        ->post(route('clientes.garantias.store', $cliente), [
+            ...$payload,
+            'propietario_cliente_id' => $ajeno->id,
+        ])
+        ->assertSessionHasErrors([
+            'propietario_cliente_id' => 'El propietario debe ser el titular o un cliente relacionado.',
+        ]);
+
+    $this->actingAs($user)
+        ->post(route('clientes.garantias.store', $cliente), [
+            ...$payload,
+            'propietario_cliente_id' => $relacionado->id,
+        ])
+        ->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('cliente_garantias', [
+        'cliente_id' => $cliente->id,
+        'propietario_cliente_id' => $relacionado->id,
+    ]);
+});
+
+test('incoming relationships are visible and cannot be removed while used by a guarantee', function () {
+    $user = actingAsSuperAdmin();
+    $cliente = Cliente::factory()->create();
+    $relacionado = Cliente::factory()->create();
+    $vinculo = ClienteVinculo::create([
+        'cliente_id' => $relacionado->id,
+        'cliente_vinculado_id' => $cliente->id,
+        'rol' => 'aval',
+    ]);
+
+    ClienteGarantia::create([
+        'cliente_id' => $cliente->id,
+        'propietario_cliente_id' => $relacionado->id,
+        'tipo' => 'prendaria',
+        'descripcion' => 'Vehículo relacionado',
+        'moneda' => 'MXN',
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('clientes.expediente.show', $cliente))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('relaciones', 1)
+            ->where('relaciones.0.direccion', 'entrante')
+            ->where('relaciones.0.cliente.id', $relacionado->id)
+            ->where('relaciones.0.puede_eliminar', false));
+
+    $this->actingAs($user)
+        ->delete(route('clientes.vinculos.destroy', [$relacionado, $vinculo]))
+        ->assertSessionHasErrors([
+            'cliente_vinculado_id' => 'Reasigne las garantías de esta relación antes de eliminarla.',
+        ]);
+
+    expect($vinculo->fresh())->not->toBeNull();
 });
 
 test('users without client permissions cannot open the dossier', function () {

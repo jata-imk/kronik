@@ -1,10 +1,13 @@
 <script setup>
 import CodigoPostalAutocomplete from "@/Components/CodigoPostalAutocomplete.vue";
 import IntlTelInput from "@/Components/IntlTelInput.vue";
+import PaisSelect from "@/Components/PaisSelect.vue";
+import { useDireccionCodigoPostal } from "@/Composables/useDireccionCodigoPostal";
+import { useTelefonoInternacional } from "@/Composables/useTelefonoInternacional";
 import { useForm } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { useToast } from "primevue/usetoast";
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, watch } from "vue";
 
 const props = defineProps({
     configuracion: { type: Object, required: true },
@@ -99,57 +102,15 @@ watch(
     },
 );
 
-const localidades = ref([]);
+const {
+    localidades,
+    aplicarCodigoPostal,
+    limpiarUbicacionPostal,
+    onLocalidadChange,
+} = useDireccionCodigoPostal(() => form.domicilio_fiscal);
 
-const aplicarCodigoPostal = (contexto) => {
-    Object.assign(form.domicilio_fiscal, {
-        pais_id: contexto.pais?.id ?? null,
-        pais_codigo_iso: contexto.pais?.codigo_iso ?? "",
-        codigo_postal_id: null,
-        codigo_postal: contexto.codigo,
-        division_admin_uno_id: contexto.divisionAdminUno?.id ?? null,
-        division_admin_dos_id: contexto.divisionAdminDos?.id ?? null,
-        division_admin_tres_id: null,
-        colonia: "",
-        municipio: contexto.divisionAdminDos?.nombre ?? "",
-        estado: contexto.divisionAdminUno?.nombre ?? "",
-        pais: contexto.pais?.nombre_es ?? "",
-    });
-
-    localidades.value = contexto.localidades;
-};
-
-const limpiarUbicacionPostal = () => {
-    Object.assign(form.domicilio_fiscal, {
-        pais_id: null,
-        pais_codigo_iso: "",
-        codigo_postal_id: null,
-        division_admin_uno_id: null,
-        division_admin_dos_id: null,
-        division_admin_tres_id: null,
-        colonia: "",
-        municipio: "",
-        estado: "",
-        pais: "",
-    });
-    localidades.value = [];
-};
-
-const onLocalidadChange = ({ value }) => {
-    const localidad = localidades.value.find(
-        (item) => item.codigoPostalId === value,
-    );
-
-    if (!localidad) {
-        return;
-    }
-
-    Object.assign(form.domicilio_fiscal, {
-        codigo_postal_id: localidad.codigoPostalId,
-        division_admin_tres_id: localidad.divisionAdminTresId,
-        colonia: localidad.nombre,
-    });
-};
+const { telefonoInternacional, onChangeNumber: onEmpresaTelefonoChange } =
+    useTelefonoInternacional(form, { e164Key: "telefono" });
 
 const submit = () => {
     form.put(route("admin.configuracion-empresa.update"), {
@@ -422,8 +383,9 @@ const error = (field) => form.errors[field];
                         <label for="telefono" class="block text-sm font-medium mb-1">Teléfono</label>
                         <IntlTelInput
                             id="telefono"
-                            v-model="form.telefono"
+                            v-model="telefonoInternacional"
                             emit-e164
+                            @change-number="onEmpresaTelefonoChange"
                             :intl-tel-input-options="{
                                 initialCountry: form.pais_base.toLowerCase(),
                             }"
@@ -484,25 +446,14 @@ const error = (field) => form.errors[field];
 
                     <div>
                         <label for="pais_base" class="block text-sm font-medium mb-1">País base</label>
-                        <Select
+                        <PaisSelect
                             id="pais_base"
                             v-model="form.pais_base"
                             :options="paises"
                             option-value="codigo_iso"
-                            filter
                             :invalid="!!error('pais_base')"
                             fluid
-                        >
-                            <template #option="{ option }">
-                                {{ option.emoji }} {{ option.nombre_es }} ({{ option.codigo_iso }})
-                            </template>
-                            <template #value="{ value }">
-                                <span v-if="value">
-                                    {{ paises.find((pais) => pais.codigo_iso === value)?.emoji }}
-                                    {{ paises.find((pais) => pais.codigo_iso === value)?.nombre_es }}
-                                </span>
-                            </template>
-                        </Select>
+                        />
                         <Message v-if="error('pais_base')" severity="error" size="small">
                             {{ error("pais_base") }}
                         </Message>
