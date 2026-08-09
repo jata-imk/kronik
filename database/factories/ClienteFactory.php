@@ -18,7 +18,7 @@ class ClienteFactory extends Factory
             'apellido_materno' => null,
             'fecha_nacimiento' => fake()->dateTimeBetween('-65 years', '-18 years')->format('Y-m-d'),
             'pais_nacimiento_id' => 1,
-            'telefono_codigo_pais' => '+52',
+            'telefono_codigo_pais' => '52',
             'telefono' => fake()->numerify('55########'),
             'email' => fake()->unique()->safeEmail(),
             'sexo' => fake()->randomElement(['masculino', 'femenino']),

@@ -18,6 +18,13 @@ Completado en `feat/backlog-02-clientes-expediente-kyc` y publicado en la PR #10
 - [x] Registrar consentimiento SIC con fecha, usuario, medio y evidencia.
 - [x] Corregir la estrategia morph mediante un mapa global para el alias `clientes`.
 - [x] Agregar pruebas de creacion y actualizacion del expediente.
+- [x] Corregir la revision posterior: domicilio heredado, telefono internacional, fechas, paises, mensajes de validacion, permisos y confirmacion real de eliminacion.
+- [x] Mostrar relaciones entrantes y salientes, enlazar expedientes y limitar propietarios de garantias a clientes relacionados.
+
+## Pendiente relacionado
+
+- [ ] Incorporar visor privado de PDF, JPG y PNG desde la accion `Revisar`, sin exponer rutas fisicas ni URLs publicas persistentes.
+- [ ] Diseñar plantillas versionadas para consentimiento SIC, garantias y contratos; la generacion y firma quedan fuera de esta correccion.
 
 ## Decisiones
 

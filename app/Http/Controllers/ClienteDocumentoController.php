@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ActivityEvent;
 use App\Enums\ClienteDocumentoEstado;
 use App\Http\Requests\Clientes\StoreClienteDocumentoRequest;
 use App\Http\Requests\Clientes\UpdateClienteDocumentoEstadoRequest;
 use App\Models\Cliente;
 use App\Models\ClienteDocumento;
+use App\Services\ActivityLogService;
 use App\Services\ClienteDocumentoService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -43,11 +45,13 @@ class ClienteDocumentoController extends Controller
         Gate::authorize('view', $cliente);
         abort_unless($documento->path && Storage::disk($documento->disk)->exists($documento->path), 404);
 
-        activity()
-            ->performedOn($cliente)
-            ->causedBy(request()->user())
-            ->withProperties(['documento_id' => $documento->id])
-            ->log('Documento de cliente descargado');
+        app(ActivityLogService::class)->log(
+            event: ActivityEvent::ClientDocumentDownloaded,
+            description: 'Documento de cliente descargado',
+            subject: $cliente,
+            metadata: ['related' => ['type' => 'cliente_documento', 'id' => $documento->id]],
+            causer: request()->user(),
+        );
 
         return Storage::disk($documento->disk)->download($documento->path, $documento->nombre_original);
     }

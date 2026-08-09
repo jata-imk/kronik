@@ -27,4 +27,11 @@ class UpdateClienteDocumentoEstadoRequest extends FormRequest
             'motivo_rechazo' => ['nullable', 'required_if:estado,rechazado', 'string', 'max:2000'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'motivo_rechazo.required_if' => 'Indique el motivo por el que se rechaza el documento.',
+        ];
+    }
 }

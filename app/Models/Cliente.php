@@ -71,6 +71,11 @@ class Cliente extends Model
         return $this->hasMany(ClienteVinculo::class);
     }
 
+    public function vinculosEntrantes()
+    {
+        return $this->hasMany(ClienteVinculo::class, 'cliente_vinculado_id');
+    }
+
     public function garantias()
     {
         return $this->hasMany(ClienteGarantia::class);

@@ -39,6 +39,20 @@ Estados: `pendiente`, `recibido`, `validado`, `rechazado` y `vencido`.
 
 Los endpoints anidados validan que cada recurso pertenezca al cliente de la URL.
 
+La interfaz oculta todas las acciones de escritura a quienes solo tienen `read clientes`. Los mensajes de exito se muestran unicamente despues de que el backend confirma la operacion.
+
+## Relaciones y garantias
+
+- Una relacion es visible desde ambos clientes y el listado muestra el total de relaciones entrantes y salientes.
+- El nombre y la accion de cada cliente relacionado abren su expediente KYC.
+- El propietario de una garantia puede ser el titular o un cliente relacionado en cualquiera de las dos direcciones.
+- No se puede eliminar un vinculo mientras alguno de los dos clientes lo use como propietario de una garantia; primero debe reasignarse esa garantia.
+- Esta visibilidad no amplia permisos: abrir el expediente relacionado sigue sujeto a `read clientes`.
+
+## Fechas y validacion
+
+Los campos de fecha muestran `DD-MM-YYYY` y se envian al backend como `YYYY-MM-DD`, sin conversion UTC que cambie el dia. Los errores visibles deben cumplir [Validacion de formularios](validacion-formularios.md).
+
 ## Consentimiento SIC
 
 Registra fecha, usuario capturista, medio, evidencia, vencimiento opcional y revocacion. No autoriza por si solo una llamada externa: Backlog 05 debe aplicar la regla de consentimiento vigente antes de consultar una SIC.

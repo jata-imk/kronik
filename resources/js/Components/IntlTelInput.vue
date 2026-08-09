@@ -40,6 +40,7 @@ const input = ref();
 const countryDropdown = ref();
 const instance = ref();
 const wasPreviouslyValid = ref(false);
+const synchronizing = ref(true);
 
 const isValid = () => {
     if (instance.value) {
@@ -70,7 +71,7 @@ const updateValidity = () => {
 };
 
 const updateValue = () => {
-    if (!instance.value) {
+    if (!instance.value || synchronizing.value) {
         return;
     }
 
@@ -81,12 +82,17 @@ const updateValue = () => {
     emit("changeNumber", {
         number,
         numberWithoutCountryCode: nationalNumber,
+        dialCode: instance.value.getSelectedCountryData()?.dialCode ?? "",
         isValid: isValid(),
     });
     updateValidity();
 };
 
 const updateCountry = () => {
+    if (synchronizing.value) {
+        return;
+    }
+
     emit(
         "changeCountry",
         instance.value?.getSelectedCountryData() ?? {
@@ -103,6 +109,17 @@ const updateCountry = () => {
     updateValidity();
 };
 
+const setNumberSilently = (value) => {
+    if (!instance.value) {
+        return;
+    }
+
+    const wasSynchronizing = synchronizing.value;
+    synchronizing.value = true;
+    instance.value.setNumber(value ?? "");
+    synchronizing.value = wasSynchronizing;
+};
+
 onMounted(() => {
     if (input.value) {
         countryDropdown.value = input.value;
@@ -111,13 +128,31 @@ onMounted(() => {
             ...props.intlTelInputOptions,
         });
 
-        if (props.modelValue) {
-            instance.value.setNumber(props.modelValue);
-        }
+        setNumberSilently(props.modelValue);
 
         if (props.disabled) {
             instance.value.setDisabled(props.disabled);
         }
+
+        const initialization = instance.value.promise;
+
+        if (initialization) {
+            initialization
+                .then(() => {
+                    if (instance.value) {
+                        setNumberSilently(props.modelValue);
+                        updateValidity();
+                    }
+                })
+                .catch(() => undefined)
+                .finally(() => {
+                    synchronizing.value = false;
+                });
+        } else {
+            synchronizing.value = false;
+        }
+
+        updateValidity();
     }
 });
 
@@ -134,7 +169,7 @@ watch(
         }
 
         if (!newValue) {
-            instance.value.setNumber("");
+            setNumberSilently("");
             return;
         }
 
@@ -142,12 +177,15 @@ watch(
             instance.value.getNumber() !== newValue &&
             input.value?.$el?.value !== newValue
         ) {
-            instance.value.setNumber(newValue);
+            setNumberSilently(newValue);
         }
     },
 );
 
-onUnmounted(() => instance.value?.destroy());
+onUnmounted(() => {
+    instance.value?.destroy();
+    instance.value = null;
+});
 
 defineExpose({ instance, input });
 </script>

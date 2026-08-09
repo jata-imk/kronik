@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ActivityEvent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateEmpresaConfiguracionRequest;
 use App\Models\EmpresaConfiguracion;
 use App\Models\Pais;
 use App\Models\RegimenFiscal;
+use App\Services\ActivityLogService;
 use DateTimeZone;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -77,30 +79,17 @@ class EmpresaConfiguracionController extends Controller implements HasMiddleware
         $fields['integraciones'] = $integraciones;
         $fields['singleton_key'] = 'default';
 
-        $before = $this->auditPayload($configuracion);
         $configuracion->update($fields);
 
-        activity()
-            ->performedOn($configuracion)
-            ->causedBy(Auth::user())
-            ->withProperties([
-                'before' => $before,
-                'after' => $this->auditPayload($configuracion->fresh()),
-            ])
-            ->log('Configuracion de empresa actualizada');
+        $activityLog = app(ActivityLogService::class);
+        $activityLog->log(
+            event: ActivityEvent::CompanyUpdated,
+            description: 'Configuracion de empresa actualizada',
+            subject: $configuracion,
+            metadata: ['changed_fields' => $activityLog->fieldNames($fields)],
+            causer: Auth::user(),
+        );
 
         return redirect()->back()->with('success', 'Configuracion de empresa actualizada');
-    }
-
-    private function auditPayload(EmpresaConfiguracion $configuracion): array
-    {
-        $payload = $configuracion->toArray();
-        $payload['integraciones'] = [
-            'circulo_credito_host' => $configuracion->integraciones['circulo_credito_host'] ?? null,
-            'circulo_credito_sandbox' => $configuracion->integraciones['circulo_credito_sandbox'] ?? true,
-            'circulo_credito_api_key_configurada' => ! empty($configuracion->integraciones['circulo_credito_api_key'] ?? null),
-        ];
-
-        return $payload;
     }
 }

@@ -14,6 +14,7 @@ use App\Models\Direccion;
 use App\Models\DivisionAdministrativa;
 use App\Models\EmpresaConfiguracion;
 use App\Models\Pais;
+use App\Models\Permission;
 use App\Models\RegimenFiscal;
 use App\Models\Sic;
 use App\Models\SicApi;
@@ -22,6 +23,7 @@ use App\Models\SicQueryResult;
 use App\Models\Sucursal;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\CodigoPostalDireccionService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\PermissionRegistrar;
@@ -33,6 +35,7 @@ class DevelopmentSeeder extends Seeder
         DB::transaction(function () {
             $user = $this->seedUser();
 
+            $this->ensureCatalogs();
             $this->seedEmpresaConfiguracion();
             $this->seedSucursal();
             $this->seedClientes();
@@ -85,16 +88,16 @@ class DevelopmentSeeder extends Seeder
                 'email' => 'operaciones@example.test',
                 'telefono' => '+525512345678',
                 'sitio_web' => 'https://example.test',
-                'domicilio_fiscal' => [
+                'domicilio_fiscal' => $this->canonicalPostalAddress([
                     'calle' => 'Av. Paseo de la Reforma',
                     'numero_exterior' => '100',
                     'numero_interior' => 'Piso 4',
-                    'colonia' => 'Centro',
+                    'colonia' => 'Centro (Área 1)',
                     'municipio' => 'Cuauhtémoc',
                     'estado' => 'Ciudad de México',
                     'codigo_postal' => '06000',
                     'pais' => 'México',
-                ],
+                ]),
                 'moneda' => 'MXN',
                 'zona_horaria' => 'America/Mexico_City',
                 'pais_base' => 'MX',
@@ -152,15 +155,15 @@ class DevelopmentSeeder extends Seeder
             ['clave' => 'MATRIZ'],
             [
                 'nombre' => 'Matriz',
-                'domicilio' => [
+                'domicilio' => $this->canonicalPostalAddress([
                     'calle' => 'Av. Paseo de la Reforma',
                     'numero_exterior' => '100',
-                    'colonia' => 'Centro',
+                    'colonia' => 'Centro (Área 1)',
                     'municipio' => 'Cuauhtémoc',
                     'estado' => 'Ciudad de México',
                     'codigo_postal' => '06000',
                     'pais' => 'México',
-                ],
+                ]),
                 'telefono' => '+525512345678',
                 'email' => 'matriz@example.test',
                 'horario' => [
@@ -205,20 +208,63 @@ class DevelopmentSeeder extends Seeder
 
         setPermissionsTeamId($team->id);
         $user->assignRole('Super Admin');
+
+        $this->seedPermissionTestUsers($team, $roleModel, $teamsKey);
         app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    private function seedPermissionTestUsers(Team $team, string $roleModel, string $teamsKey): void
+    {
+        $profiles = [
+            [
+                'name' => 'Consulta de Clientes',
+                'email' => 'consulta.clientes@example.test',
+                'role' => 'Consulta de clientes',
+                'permissions' => ['read clientes'],
+            ],
+            [
+                'name' => 'Editor de Expedientes',
+                'email' => 'editor.expedientes@example.test',
+                'role' => 'Edición de expedientes',
+                'permissions' => ['read clientes', 'update clientes'],
+            ],
+            [
+                'name' => 'Sin Acceso a Clientes',
+                'email' => 'sin.acceso.clientes@example.test',
+                'role' => 'Sin acceso a clientes',
+                'permissions' => [],
+            ],
+        ];
+
+        foreach ($profiles as $profile) {
+            $role = $roleModel::firstOrCreate([
+                'name' => $profile['role'],
+                'guard_name' => 'web',
+                $teamsKey => $team->id,
+            ]);
+            $role->syncPermissions(
+                Permission::whereIn('name', $profile['permissions'])->get(),
+            );
+
+            $demoUser = User::updateOrCreate(
+                ['email' => $profile['email']],
+                [
+                    'name' => $profile['name'],
+                    'password' => 'password',
+                    'email_verified_at' => now(),
+                    'current_team_id' => $team->id,
+                ],
+            );
+
+            $team->users()->syncWithoutDetaching([
+                $demoUser->id => ['role' => null],
+            ]);
+            $demoUser->syncRoles([$role]);
+        }
     }
 
     private function seedClientes(): void
     {
-        if (
-            Pais::where('codigo_iso', 'MX')->doesntExist()
-            || RegimenFiscal::where('fisica', true)->doesntExist()
-            || RegimenFiscal::where('moral', true)->doesntExist()
-            || CodigoPostal::query()->doesntExist()
-        ) {
-            $this->seedFallbackCatalogs();
-        }
-
         $pais = Pais::where('codigo_iso', 'MX')->first();
         $regimenFisica = RegimenFiscal::where('fisica', true)->first();
         $regimenMoral = RegimenFiscal::where('moral', true)->first();
@@ -242,7 +288,7 @@ class DevelopmentSeeder extends Seeder
                     'apellido_materno' => 'Lopez',
                     'fecha_nacimiento' => '1991-04-18',
                     'pais_nacimiento_id' => $pais->id,
-                    'telefono_codigo_pais' => '+52',
+                    'telefono_codigo_pais' => '52',
                     'telefono' => '5512345678',
                     'email' => 'ana.garcia@example.test',
                     'sexo' => 'femenino',
@@ -276,7 +322,7 @@ class DevelopmentSeeder extends Seeder
                     'apellido_materno' => 'Ramos',
                     'fecha_nacimiento' => '1986-09-02',
                     'pais_nacimiento_id' => $pais->id,
-                    'telefono_codigo_pais' => '+52',
+                    'telefono_codigo_pais' => '52',
                     'telefono' => '5587654321',
                     'email' => 'carlos.martinez@example.test',
                     'sexo' => 'masculino',
@@ -388,7 +434,7 @@ class DevelopmentSeeder extends Seeder
             ],
         );
 
-        $localidad = DivisionAdministrativa::firstOrCreate(
+        $localidad = DivisionAdministrativa::updateOrCreate(
             [
                 'pais_id' => $pais->id,
                 'codigo' => 'CENTRO',
@@ -396,7 +442,7 @@ class DevelopmentSeeder extends Seeder
                 'division_padre_id' => $municipio->id,
             ],
             [
-                'nombre' => 'Centro',
+                'nombre' => 'Centro (Área 1)',
                 'tipo' => 'colonia',
             ],
         );
@@ -411,7 +457,7 @@ class DevelopmentSeeder extends Seeder
                 'datos_adicionales' => [
                     'estado' => 'Ciudad de México',
                     'municipio' => 'Cuauhtémoc',
-                    'asentamiento' => 'Centro',
+                    'asentamiento' => 'Centro (Área 1)',
                     'tipo_asentamiento' => 'Colonia',
                     'demo' => true,
                 ],
@@ -510,7 +556,7 @@ class DevelopmentSeeder extends Seeder
             [
                 'nombre' => 'Referencia Demo',
                 'relacion' => 'Amistad',
-                'telefono_codigo_pais' => '+52',
+                'telefono_codigo_pais' => '52',
                 'email' => 'referencia@example.test',
                 'notas' => 'Contacto disponible en horario laboral.',
             ],
@@ -538,12 +584,29 @@ class DevelopmentSeeder extends Seeder
         ClienteGarantia::updateOrCreate(
             ['cliente_id' => $titular->id, 'descripcion' => 'Vehiculo utilitario demo'],
             [
-                'propietario_cliente_id' => $titular->id,
+                'propietario_cliente_id' => null,
                 'tipo' => 'prendaria',
                 'valor_estimado' => 285000,
                 'moneda' => 'MXN',
                 'notas' => 'Valor declarado para datos de demostracion.',
             ],
         );
+    }
+
+    private function ensureCatalogs(): void
+    {
+        if (
+            Pais::where('codigo_iso', 'MX')->doesntExist()
+            || RegimenFiscal::where('fisica', true)->doesntExist()
+            || RegimenFiscal::where('moral', true)->doesntExist()
+            || CodigoPostal::query()->doesntExist()
+        ) {
+            $this->seedFallbackCatalogs();
+        }
+    }
+
+    private function canonicalPostalAddress(array $address): array
+    {
+        return app(CodigoPostalDireccionService::class)->canonicalize($address);
     }
 }

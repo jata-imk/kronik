@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ActivityEvent;
 use App\Http\Requests\Clientes\StoreClienteConsentimientoSicRequest;
 use App\Models\Cliente;
 use App\Models\ClienteConsentimientoSic;
+use App\Services\ActivityLogService;
 use App\Services\ClienteConsentimientoSicService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
@@ -39,11 +41,13 @@ class ClienteConsentimientoSicController extends Controller
         Gate::authorize('view', $cliente);
         abort_unless(Storage::disk($consentimiento->evidencia_disk)->exists($consentimiento->evidencia_path), 404);
 
-        activity()
-            ->performedOn($cliente)
-            ->causedBy(request()->user())
-            ->withProperties(['consentimiento_id' => $consentimiento->id])
-            ->log('Evidencia de consentimiento SIC descargada');
+        app(ActivityLogService::class)->log(
+            event: ActivityEvent::ClientSicConsentEvidenceDownloaded,
+            description: 'Evidencia de consentimiento SIC descargada',
+            subject: $cliente,
+            metadata: ['related' => ['type' => 'cliente_consentimiento_sic', 'id' => $consentimiento->id]],
+            causer: request()->user(),
+        );
 
         return Storage::disk($consentimiento->evidencia_disk)
             ->download($consentimiento->evidencia_path, $consentimiento->evidencia_nombre_original);

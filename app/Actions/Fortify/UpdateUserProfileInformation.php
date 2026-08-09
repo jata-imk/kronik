@@ -2,7 +2,9 @@
 
 namespace App\Actions\Fortify;
 
+use App\Enums\ActivityEvent;
 use App\Models\User;
+use App\Services\ActivityLogService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -40,14 +42,13 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             ])->save();
         }
 
-        activity()
-            ->performedOn($user)
-            ->causedBy(Auth::user())
-            ->withProperties([
-                'ip' => request()->ip(),
-                'user_agent' => request()->header('User-Agent'),
-            ])
-            ->log('Perfil actualizado');
+        app(ActivityLogService::class)->log(
+            event: ActivityEvent::UserProfileUpdated,
+            description: 'Perfil actualizado',
+            subject: $user,
+            metadata: ['changed_fields' => array_values(array_intersect(['name', 'email', 'photo'], array_keys($input)))],
+            causer: Auth::user(),
+        );
     }
 
     /**

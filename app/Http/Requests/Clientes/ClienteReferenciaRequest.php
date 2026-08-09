@@ -27,4 +27,14 @@ class ClienteReferenciaRequest extends FormRequest
             'notas' => ['nullable', 'string', 'max:2000'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'nombre.required' => 'Indique el nombre de la referencia.',
+            'relacion.required_if' => 'Indique la relación de la referencia personal con el cliente.',
+            'empresa.required_if' => 'Indique la empresa de la referencia laboral.',
+            'telefono.required' => 'Indique el teléfono de la referencia.',
+        ];
+    }
 }

@@ -2,6 +2,7 @@
 
 use App\Enums\ClienteDocumentoEstado;
 use App\Enums\ClienteDocumentoTipo;
+use App\Services\ActivityLogService;
 use App\Services\ClienteDocumentoService;
 
 test('required document checklist has the four KYC document types', function () {
@@ -15,7 +16,7 @@ test('required document checklist has the four KYC document types', function () 
 });
 
 test('document status transitions preserve the review workflow', function () {
-    $service = new ClienteDocumentoService;
+    $service = new ClienteDocumentoService(new ActivityLogService);
 
     expect($service->canTransition(ClienteDocumentoEstado::Recibido, ClienteDocumentoEstado::Validado))->toBeTrue()
         ->and($service->canTransition(ClienteDocumentoEstado::Recibido, ClienteDocumentoEstado::Rechazado))->toBeTrue()

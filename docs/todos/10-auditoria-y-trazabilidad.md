@@ -10,16 +10,18 @@ Sustituir el log demostrativo por una politica de eventos auditables que cubra s
 - Usuario interno: administrador o empleado autenticado.
 - Sistema: proceso programado, cola, integracion o API.
 
-## Matriz pendiente de eventos
+## Matriz de eventos
 
-- [ ] Autenticacion, cierre de sesion y fallos de acceso.
+- [x] Inicio de sesion y segundo factor.
+- [ ] Cierre de sesion y fallos de acceso.
 - [ ] Altas, cambios, bajas, roles y permisos de usuarios.
-- [ ] Configuracion de empresa y sucursales.
-- [ ] Datos personales, fiscales y domicilios.
-- [ ] KYC, referencias, garantias, documentos y consentimientos.
+- [x] Cambios de perfil de usuario.
+- [x] Configuracion de empresa y sucursales.
+- [x] Clientes y cambios de sus campos, sin copiar valores sensibles al log.
+- [x] KYC, referencias, garantias, documentos y consentimientos.
 - [ ] Creacion y transiciones de solicitudes de credito.
 - [ ] Decisiones, autorizaciones, rechazos y motivos.
-- [ ] Consultas SIC y recepcion de resultados, sin guardar credenciales.
+- [x] Consultas SIC realizadas, sin guardar credenciales ni respuestas.
 - [ ] Contratos, firmas, desembolsos, pagos y cancelaciones.
 
 ## Contrato minimo de evento
@@ -31,13 +33,15 @@ Sustituir el log demostrativo por una politica de eventos auditables que cubra s
 - Motivo operativo cuando la accion lo requiera.
 - Valores anteriores y posteriores con datos sensibles censurados.
 
-## Reglas por definir
+La matriz implementada y su contrato se documentan en [Eventos de auditoria](../reference/auditoria-eventos.md).
+
+## Reglas
 
 - [ ] Retencion y eliminacion.
-- [ ] Permisos de consulta y exportacion.
+- [x] Permisos de consulta y exportacion aislados por equipo, con acceso global para `Super Admin`.
 - [ ] Integridad y deteccion de alteraciones.
-- [ ] Busqueda por actor, sujeto, evento y periodo.
-- [ ] Tratamiento de datos personales y minimizacion.
+- [x] Busqueda por actor, sujeto, evento y periodo.
+- [x] Minimizacion tecnica: lista cerrada de metadatos y nombres de campos sin valores.
 - [ ] Alertas para eventos de seguridad.
 
 Nunca registrar contraseñas, tokens, API keys, secretos, respuestas SIC completas ni contenido completo de documentos.
@@ -49,4 +53,4 @@ Nunca registrar contraseñas, tokens, API keys, secretos, respuestas SIC complet
 - TODO 06: PLD y cumplimiento.
 - TODO 07: amortizacion, pagos y cobranza.
 
-El diseño de esta matriz debe aprobarse antes de reemplazar los mocks por eventos considerados definitivos.
+Los emisores existentes ya usan eventos tipados y la tabla administrativa consume el backend. La ampliacion a los modulos futuros debe seguir el contrato de referencia y actualizar esta matriz.

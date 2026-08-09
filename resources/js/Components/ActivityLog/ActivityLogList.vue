@@ -1,165 +1,113 @@
 <script setup>
-import { onMounted } from "vue";
-import ActivityLogTable from "./ActivityLogTable.vue";
+import { reactive, ref, watch } from "vue";
+import { router } from "@inertiajs/vue3";
+
 import ActivityLogFilters from "./ActivityLogFilters.vue";
-import { useActivityLogs } from "@/Composables/useActivityLogs";
+import ActivityLogTable from "./ActivityLogTable.vue";
 
 const props = defineProps({
-    paginatedActivityLogs: Object,
+    activityLogs: { type: Object, required: true },
+    filters: { type: Object, required: true },
+    filterOptions: { type: Object, required: true },
 });
 
-const {
-    logs,
-    loading,
-    pagination,
-    filters,
-    fetchLogs,
-    applyFilters,
-    clearFilters,
-    exportLogs,
-} = useActivityLogs();
+const loading = ref(false);
+const filters = reactive({ ...props.filters });
 
-const updateFilters = (newFilters) => {
-    Object.assign(filters, newFilters);
+watch(
+    () => props.filters,
+    (nextFilters) => Object.assign(filters, nextFilters),
+    { deep: true },
+);
+
+const visit = (overrides = {}) => {
+    Object.assign(filters, overrides);
+    loading.value = true;
+
+    router.get(route("admin.users.activity"), filters, {
+        preserveScroll: true,
+        preserveState: true,
+        only: ["activityLogs", "filters", "filterOptions"],
+        onFinish: () => {
+            loading.value = false;
+        },
+    });
 };
 
-const onPageChange = (event) => {
-    filters.page = event.page + 1;
-    filters.per_page = event.rows;
-    fetchLogs();
+const applyFilters = (nextFilters) => {
+    Object.assign(filters, nextFilters);
+    visit({ page: 1 });
 };
 
-onMounted(() => {
-    fetchLogs();
-});
+const clearFilters = () => {
+    Object.assign(filters, {
+        search: "",
+        user_id: null,
+        event: null,
+        subject_type: null,
+        date_from: "",
+        date_to: "",
+        page: 1,
+    });
+    visit();
+};
+
+const exportLogs = () => {
+    window.location.assign(route("admin.users.activity.export", filters));
+};
+
+const onPageChange = ({ first, rows }) => {
+    visit({
+        page: Math.floor(first / rows) + 1,
+        per_page: rows,
+    });
+};
 </script>
 
 <template>
-  <div>
-    <!-- Header -->
-    <div class="flex items-start">
-        <Button icon="pi pi-arrow-left"  as="a" :href="route('admin.dashboard')"></Button>
-
-        <div class="w-full flex align-items-center justify-between mb-4 ml-4">
-          <div>
-            <h2 class="text-2xl font-bold text-900 m-0 mb-2">Activity Logs</h2>
-            <p class="text-600 mt-1 mb-0">
-              Showing {{ pagination.from }}-{{ pagination.to }} of {{ pagination.total }} activities
-            </p>
-          </div>
-          <div class="flex items-center gap-2">
-            <Button
-              label="Refresh"
-              icon="pi pi-refresh"
-              :loading="loading"
-              outlined
-              size="large"
-              @click="fetchLogs"
-            />
-            <Button
-              label="Export"
-              icon="pi pi-download"
-              size="large"
-              @click="exportLogs"
-            />
-          </div>
+    <div>
+        <div class="flex items-start gap-4 mb-4">
+            <Button icon="pi pi-arrow-left" as="a" :href="route('admin.dashboard')" />
+            <div class="flex-1 flex items-start justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold m-0">Actividad</h2>
+                    <p class="text-surface-500 mt-1 mb-0">
+                        Mostrando {{ activityLogs.from ?? 0 }}–{{ activityLogs.to ?? 0 }} de {{ activityLogs.total }} eventos
+                    </p>
+                </div>
+                <div class="flex gap-2">
+                    <Button label="Actualizar" icon="pi pi-refresh" outlined :loading="loading" @click="visit()" />
+                    <Button label="Exportar CSV" icon="pi pi-download" @click="exportLogs" />
+                </div>
+            </div>
         </div>
+
+        <ActivityLogFilters
+            :filters="filters"
+            :filter-options="filterOptions"
+            @apply="applyFilters"
+            @clear="clearFilters"
+        />
+
+        <Card v-if="!loading && !activityLogs.data.length" class="text-center">
+            <template #content>
+                <i class="pi pi-inbox text-5xl text-surface-400" />
+                <h3 class="text-xl mt-4">Sin eventos</h3>
+                <p class="text-surface-500">No hay actividades que coincidan con los filtros actuales.</p>
+                <Button label="Limpiar filtros" outlined @click="clearFilters" />
+            </template>
+        </Card>
+
+        <ActivityLogTable v-else :logs="activityLogs.data" :loading="loading" />
+
+        <Paginator
+            v-if="activityLogs.last_page > 1"
+            class="mt-5"
+            :first="(activityLogs.current_page - 1) * activityLogs.per_page"
+            :rows="activityLogs.per_page"
+            :total-records="activityLogs.total"
+            :rows-per-page-options="[10, 20, 50, 100]"
+            @page="onPageChange"
+        />
     </div>
-
-    <!-- Filters -->
-    <ActivityLogFilters
-      :filters="filters"
-      @update:filters="updateFilters"
-      @apply="applyFilters"
-      @clear="clearFilters"
-    />
-
-    <!-- Empty State -->
-    <Card v-if="!loading && !logs.length" class="text-center p-6" :pt="{
-      root: '!shadow-none !border !border-gray-200 dark:!border-gray-700',
-    }">
-      <template #content>
-        <div class="empty-state">
-          <i class="pi pi-inbox text-6xl text-400 mb-4"></i>
-          <h3 class="text-2xl text-900 mb-3">No Activity Logs Found</h3>
-          <p class="text-600 mb-4 text-lg">
-            No activities match your current filters. Try adjusting your search criteria.
-          </p>
-          <Button
-            label="Clear Filters"
-            icon="pi pi-times"
-            outlined
-            size="large"
-            @click="clearFilters"
-          />
-        </div>
-      </template>
-    </Card>
-
-    <!-- Activity Log Table -->
-    <ActivityLogTable
-      v-else
-      :logs="logs"
-      :loading="loading"
-    />
-
-    <!-- Pagination -->
-    <div v-if="pagination.last_page > 1" class="flex justify-center mt-6">
-      <Paginator
-        :rows="pagination.per_page"
-        :total-records="pagination.total"
-        :current-page="pagination.current_page - 1"
-        template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        :rows-per-page-options="[10, 20, 50, 100]"
-        current-page-report-template="Showing {first} to {last} of {totalRecords} entries"
-        class="custom-paginator"
-        @page="onPageChange"
-      />
-    </div>
-  </div>
 </template>
-
-<style scoped>
-
-.empty-state {
-  padding: 3rem 2rem;
-}
-
-.custom-paginator :deep(.p-paginator) {
-  background: white;
-  border: 1px solid #e9ecef;
-  border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-
-.custom-paginator :deep(.p-paginator .p-paginator-pages .p-paginator-page) {
-  min-width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 8px;
-  margin: 0 0.25rem;
-  transition: all 0.2s ease;
-}
-
-.custom-paginator :deep(.p-paginator .p-paginator-pages .p-paginator-page:hover) {
-  background: #f8f9fa;
-  transform: translateY(-1px);
-}
-
-.custom-paginator :deep(.p-paginator .p-paginator-pages .p-paginator-page.p-highlight) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-color: transparent;
-  color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-@media (max-width: 768px) {
-  .activity-log-list {
-    padding: 1rem;
-  }
-  
-  .empty-state {
-    padding: 2rem 1rem;
-  }
-}
-</style>

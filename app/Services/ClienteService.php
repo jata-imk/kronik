@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ActivityEvent;
 use App\Models\Cliente;
 use App\Models\CodigoPostal;
 use Illuminate\Support\Facades\Auth;
@@ -13,6 +14,7 @@ class ClienteService
         private readonly ClienteExpedienteService $expedienteService,
         private readonly ClienteDocumentoService $documentoService,
         private readonly ClienteConsentimientoSicService $consentimientoService,
+        private readonly ActivityLogService $activityLog,
     ) {}
 
     public function readAll()
@@ -27,7 +29,7 @@ class ClienteService
                 'divisionAdministrativaDos',
                 'divisionAdministrativaTres',
             ],
-        ])->get();
+        ])->withCount(['vinculos', 'vinculosEntrantes'])->get();
     }
 
     public function store(array $data)
@@ -43,14 +45,7 @@ class ClienteService
                 $direccion['entidad_id'] = $cliente->id;
                 $direccion['entidad_tipo'] = 'clientes';
 
-                if (! isset($direccion['codigo_postal_id'])) {
-                    $codigoPostal = CodigoPostal::where('codigo', $direccion['codigo_postal'])
-                        ->where('division_admin_id', $direccion['division_admin_tres_id'])
-                        ->first();
-
-                    $direccion['codigo_postal_id'] = $codigoPostal->id;
-                    $direccion['pais_id'] = $codigoPostal->pais_id;
-                }
+                $direccion = $this->completePostalData($direccion);
 
                 if (! isset($direccion['tipo'])) {
                     $direccion['tipo'] = 'personal';
@@ -66,15 +61,13 @@ class ClienteService
                 $cliente->direcciones()->create($direccion);
             }
 
-            activity()
-                ->performedOn($cliente)
-                ->causedBy(Auth::user())
-                ->withProperties([
-                    'ip' => request()->ip(),
-                    'user_agent' => request()->header('User-Agent'),
-                    'attributes' => $data,
-                ])
-                ->log('Cliente creado');
+            $this->activityLog->log(
+                event: ActivityEvent::ClientCreated,
+                description: 'Cliente creado',
+                subject: $cliente,
+                metadata: ['changed_fields' => $this->activityLog->fieldNames($data)],
+                causer: Auth::user(),
+            );
 
             return $cliente;
         });
@@ -94,14 +87,7 @@ class ClienteService
                     $direccion['entidad_id'] = $cliente->id;
                     $direccion['entidad_tipo'] = 'clientes';
 
-                    if (! isset($direccion['codigo_postal_id'])) {
-                        $codigoPostal = CodigoPostal::where('codigo', $direccion['codigo_postal'])
-                            ->where('division_admin_id', $direccion['division_admin_tres_id'])
-                            ->first();
-
-                        $direccion['codigo_postal_id'] = $codigoPostal->id;
-                        $direccion['pais_id'] = $codigoPostal->pais_id;
-                    }
+                    $direccion = $this->completePostalData($direccion);
 
                     if (! isset($direccion['tipo'])) {
                         $direccion['tipo'] = 'personal';
@@ -118,15 +104,13 @@ class ClienteService
                 }
             }
 
-            activity()
-                ->performedOn($cliente)
-                ->causedBy(Auth::user())
-                ->withProperties([
-                    'ip' => request()->ip(),
-                    'user_agent' => request()->header('User-Agent'),
-                    'attributes' => $data,
-                ])
-                ->log('Cliente actualizado');
+            $this->activityLog->log(
+                event: ActivityEvent::ClientUpdated,
+                description: 'Cliente actualizado',
+                subject: $cliente,
+                metadata: ['changed_fields' => $this->activityLog->fieldNames($data)],
+                causer: Auth::user(),
+            );
 
             return $cliente;
         });
@@ -141,14 +125,40 @@ class ClienteService
             $cliente->datosFiscales()->delete();
             $cliente->delete();
 
-            activity()
-                ->performedOn($cliente)
-                ->causedBy(Auth::user())
-                ->withProperties([
-                    'ip' => request()->ip(),
-                    'user_agent' => request()->header('User-Agent'),
-                ])
-                ->log('Cliente eliminado');
+            $this->activityLog->log(
+                event: ActivityEvent::ClientDeleted,
+                description: 'Cliente eliminado',
+                subject: $cliente,
+                metadata: ['result' => 'deleted'],
+                causer: Auth::user(),
+            );
         });
+    }
+
+    private function completePostalData(array $direccion): array
+    {
+        if (blank($direccion['codigo_postal_id'] ?? null) && blank($direccion['codigo_postal'] ?? null)) {
+            return $direccion;
+        }
+
+        $codigoPostal = CodigoPostal::query()
+            ->when(
+                filled($direccion['codigo_postal_id'] ?? null),
+                fn ($query) => $query->whereKey($direccion['codigo_postal_id']),
+            )
+            ->when(
+                filled($direccion['codigo_postal'] ?? null),
+                fn ($query) => $query->where('codigo', $direccion['codigo_postal']),
+            )
+            ->when(
+                filled($direccion['division_admin_tres_id'] ?? null),
+                fn ($query) => $query->where('division_admin_id', $direccion['division_admin_tres_id']),
+            )
+            ->firstOrFail();
+
+        $direccion['codigo_postal_id'] = $codigoPostal->id;
+        $direccion['pais_id'] = $codigoPostal->pais_id;
+
+        return $direccion;
     }
 }

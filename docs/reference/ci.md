@@ -20,9 +20,12 @@ El proyecto debe tener CI real en GitHub Actions ademas de hooks locales.
 - `npm ci`.
 - Verificacion de documentacion para cambios de codigo/config/base de datos/frontend/tests.
 - `npm run build`.
+- `npm run test:unit` con Vitest, Vue Test Utils y jsdom.
 - `php artisan test`.
 
 El build frontend corre antes de los tests porque las pruebas HTTP que renderizan Inertia necesitan `public/build/manifest.json` en el runner limpio de GitHub Actions.
+
+Vitest carga `vite.config.js` en modo `test`. En ese modo se omite `laravel-vite-plugin` para que las pruebas unitarias no intenten iniciar ni validar el servidor HMR dentro de CI.
 
 ## Politica
 

@@ -1,8 +1,9 @@
 <script setup>
 import { useToast } from "primevue/usetoast";
-import { ref, watch, computed, onMounted } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
-import { useCodigoPostal } from "@composables/useCodigoPostal";
+import CodigoPostalAutocomplete from "@/Components/CodigoPostalAutocomplete.vue";
+import { useDireccionCodigoPostal } from "@/Composables/useDireccionCodigoPostal";
 import { useGeocoding } from "@/Composables/useGeocoding";
 
 const toast = useToast();
@@ -53,8 +54,6 @@ const readOnly = props.readOnly;
 const initialLoad = props.initialLoad;
 const isInitialLoadProccessActive = ref(true);
 
-const refAutocompleteCodigoPostal = ref(null);
-
 const divisionesAdminUno = ref(
     (existentRecord && initialLoad.divisionesAdministrativas?.uno) ?? [],
 );
@@ -77,147 +76,59 @@ const tipoLocalidadSeleccionada = ref(
     existentRecord && initialLoad.divisionesAdministrativas?.tres[0]?.tipo,
 );
 
-const DEBOUNCE_MS_CODIGO_POSTAL = 300;
-const MIN_LENGTH_CODIGO_POSTAL = 3;
-const MAX_LENGTH_CODIGO_POSTAL = 5;
-
-const shouldFetchSugerencias = (codigo) => {
-    if (!codigo || codigo.length < MIN_LENGTH_CODIGO_POSTAL) {
-        return false;
-    }
-
-    if (codigo.length === MAX_LENGTH_CODIGO_POSTAL) {
-        return false;
-    }
-
-    return true;
-};
-
-const shouldFetchBusqueda = (codigo) => {
-    if (codigo.length < MAX_LENGTH_CODIGO_POSTAL) {
-        return false;
-    }
-
-    return true;
-};
-
-const {
-    sugerenciasData: sugerenciasCodigosPostales,
-    busquedaData: busquedaCodigosPostales,
-    error: errorUseCodigoPostal,
-    busqueda: buscarCodigoPostal,
-} = useCodigoPostal(() => form.codigo_postal, {
-    shouldFetchSugerencias,
-    shouldFetchBusqueda,
-    debounceMs: DEBOUNCE_MS_CODIGO_POSTAL,
-});
-
-const hideResultsAutocomplete = (refAutocomplete) => {
-    if (!refAutocomplete.value) return;
-
-    refAutocomplete.value.hide();
-    const svgSpinner = refAutocomplete.value.$el.querySelector(
-        ".p-icon.p-icon-spin.p-autocomplete-loader",
-    );
-    if (svgSpinner) {
-        svgSpinner.parentElement.removeChild(svgSpinner);
-    }
-};
-
-const obtenerDivisionesAdministrativasPorNivel = (nivel, codigosPostales) => {
-    return [
-        ...new Set(
-            codigosPostales.map((cpItem) => {
-                return {
-                    id: cpItem.divisiones_administrativas[nivel].id,
-                    nombre: cpItem.divisiones_administrativas[nivel].nombre,
-                    tipo: cpItem.divisiones_administrativas[nivel].tipo,
-                };
-            }),
-        ),
-    ];
-};
-
-const setDivisionAdministrativaSelectOptionsAndValue = (
-    codigosPostales,
-    refDivisionesAdminOptions,
-    refDivisionAdminValue,
-    stringNivel,
-    selectedValue = undefined,
-) => {
-    const divisionesAdmin =
-        codigosPostales.length > 0 &&
-        codigosPostales[0].divisiones_administrativas;
-
-    refDivisionesAdminOptions.value = divisionesAdmin
-        ? obtenerDivisionesAdministrativasPorNivel(stringNivel, codigosPostales)
-        : [];
-
-    refDivisionAdminValue.value =
-        selectedValue === undefined
-            ? divisionesAdmin[stringNivel]?.id
-            : selectedValue;
-};
-
-const resetDivisionAdministrativaSelectOptionsAndValue = () => {
-    for (const [index, nivel] of Object.entries(["uno", "dos", "tres"])) {
-        const divisionesAdminOptions = [
-            divisionesAdminUno,
-            divisionesAdminDos,
-            divisionesAdminTres,
-        ][index];
-
-        const divisionAdminSeleccionada = [
-            divisionAdminUnoSeleccionada,
-            divisionAdminDosSeleccionada,
-            divisionAdminTresSeleccionada,
-        ][index];
-
-        setDivisionAdministrativaSelectOptionsAndValue(
-            [],
-            divisionesAdminOptions,
-            divisionAdminSeleccionada,
-            `nivel_${nivel}`,
-            null,
-        );
-
-        form[`division_admin_${nivel}_id`] = null;
-    }
-
+const resetDivisionOptions = () => {
+    divisionesAdminUno.value = [];
+    divisionesAdminDos.value = [];
+    divisionesAdminTres.value = [];
+    divisionAdminUnoSeleccionada.value = null;
+    divisionAdminDosSeleccionada.value = null;
+    divisionAdminTresSeleccionada.value = null;
     tipoLocalidadSeleccionada.value = null;
 };
 
-const handleCompleteCodigosPostales = () => {
-    if (form.codigo_postal?.length === MAX_LENGTH_CODIGO_POSTAL) {
-        hideResultsAutocomplete(refAutocompleteCodigoPostal);
-        return;
-    }
-};
+const initialLocality = initialLoad.divisionesAdministrativas?.tres?.[0]
+    ? {
+          codigoPostalId:
+              initialLoad.divisionesAdministrativas.tres[0].codigoPostalId,
+          divisionAdminTresId: initialLoad.divisionesAdministrativas.tres[0].id,
+          nombre: initialLoad.divisionesAdministrativas.tres[0].nombre,
+          tipo: initialLoad.divisionesAdministrativas.tres[0].tipo,
+      }
+    : null;
 
-watch(
-    () => form.codigo_postal,
-    () => {
-        if (form.codigo_postal?.length === 0) {
-            resetDivisionAdministrativaSelectOptionsAndValue();
-        }
+const { aplicarCodigoPostal, limpiarUbicacionPostal, seleccionarLocalidad } =
+    useDireccionCodigoPostal(form, {
+        initialLocality,
+        onApplied: (contexto) => {
+            const nivelUno = contexto.divisionAdminUno;
+            const nivelDos = contexto.divisionAdminDos;
+            divisionesAdminUno.value = nivelUno ? [nivelUno] : [];
+            divisionesAdminDos.value = nivelDos ? [nivelDos] : [];
+            divisionesAdminTres.value = contexto.localidades.map(
+                (localidad) => ({
+                    id: localidad.divisionAdminTresId,
+                    nombre: localidad.nombre,
+                    tipo: localidad.tipo,
+                    codigoPostalId: localidad.codigoPostalId,
+                }),
+            );
+            divisionAdminUnoSeleccionada.value = nivelUno?.id ?? null;
+            divisionAdminDosSeleccionada.value = nivelDos?.id ?? null;
+            divisionAdminTresSeleccionada.value = null;
+            tipoLocalidadSeleccionada.value = null;
+        },
+        onCleared: resetDivisionOptions,
+        onLocalitySelected: (localidad) => {
+            tipoLocalidadSeleccionada.value = localidad?.tipo ?? null;
+        },
+    });
 
-        if (existentRecord && isInitialLoadProccessActive.value) {
-            return;
-        }
+const resetDivisionAdministrativaSelectOptionsAndValue = () =>
+    limpiarUbicacionPostal();
 
-        buscarCodigoPostal();
-    },
-    { immediate: true },
-);
-
-const onChangeLocalidad = (event) => {
-    let divisionNivelTresSeleccionada = null;
-    divisionNivelTresSeleccionada = divisionesAdminTres.value.find(
-        (item) => item.id === event.value,
-    );
-
-    tipoLocalidadSeleccionada.value = divisionNivelTresSeleccionada.tipo;
-    form.division_admin_tres_id = divisionNivelTresSeleccionada.id;
+const onChangeLocalidad = ({ value }) => {
+    divisionAdminTresSeleccionada.value = value;
+    seleccionarLocalidad(value);
 };
 
 const queryGeocoding = computed(() => {
@@ -312,66 +223,6 @@ watch(
     },
 );
 
-watch(
-    () => refAutocompleteCodigoPostal.value,
-    () => {
-        refAutocompleteCodigoPostal.value?.$el
-            .querySelector("input")
-            .setAttribute("maxlength", MAX_LENGTH_CODIGO_POSTAL);
-    },
-);
-
-watch([busquedaCodigosPostales, errorUseCodigoPostal], () => {
-    if (existentRecord && isInitialLoadProccessActive.value) {
-        return;
-    }
-
-    if (errorUseCodigoPostal.value) {
-        toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: "No se encontraron resultados",
-        });
-
-        resetDivisionAdministrativaSelectOptionsAndValue();
-
-        return;
-    }
-
-    if (
-        busquedaCodigosPostales.value &&
-        busquedaCodigosPostales.value.length === 0
-    ) {
-        throw new Error("No se encontraron resultados");
-    }
-
-    for (const [index, nivel] of Object.entries(["uno", "dos", "tres"])) {
-        const divisionesAdminOptions = [
-            divisionesAdminUno,
-            divisionesAdminDos,
-            divisionesAdminTres,
-        ][index];
-
-        const divisionAdminSeleccionada = [
-            divisionAdminUnoSeleccionada,
-            divisionAdminDosSeleccionada,
-            divisionAdminTresSeleccionada,
-        ][index];
-
-        setDivisionAdministrativaSelectOptionsAndValue(
-            busquedaCodigosPostales.value ?? [],
-            divisionesAdminOptions,
-            divisionAdminSeleccionada,
-            `nivel_${nivel}`,
-            nivel === "tres" ? null : undefined,
-        );
-
-        form[`division_admin_${nivel}_id`] = divisionAdminSeleccionada.value;
-    }
-
-    hideResultsAutocomplete(refAutocompleteCodigoPostal);
-});
-
 onMounted(() => {
     if (!existentRecord || !props.direccionMapConnector) {
         isInitialLoadProccessActive.value = false;
@@ -414,14 +265,15 @@ onMounted(() => {
 
         <div class="col-span-2">
             <label class="block text-sm font-medium mb-1" for="codigo_postal">Código Postal</label>
-            <AutoComplete 
-                :suggestions="sugerenciasCodigosPostales" @complete="handleCompleteCodigosPostales"
-                id="codigo_postal" name="codigo_postal"
-                :modelValue="form.codigo_postal" :disabled="readOnly" ref="refAutocompleteCodigoPostal"
-                @update:modelValue="val => form.codigo_postal = val?.codigo || val"
-                optionLabel="codigo"
-                optionValue="codigo"
-                fluid :invalid="!!formErrors.codigo_postal" />
+            <CodigoPostalAutocomplete
+                v-model="form.codigo_postal"
+                input-id="codigo_postal"
+                input-name="codigo_postal"
+                :disabled="readOnly"
+                :invalid="!!formErrors.codigo_postal"
+                @changed="resetDivisionAdministrativaSelectOptionsAndValue"
+                @confirmed="aplicarCodigoPostal"
+            />
             <Message v-if="formErrors.codigo_postal" severity="error" size="small">
                 {{ formErrors.codigo_postal }}
             </Message
@@ -469,9 +321,9 @@ onMounted(() => {
                 :options="divisionesAdminTres"
                 optionLabel="nombre"
                 optionValue="id"
-                fluid :invalid="!!formErrors.division_admin_tres_id" />
-            <Message v-if="formErrors.division_admin_tres_id" severity="error" size="small">
-                {{ formErrors.division_admin_tres_id }}
+                fluid :invalid="!!(formErrors.division_admin_tres_id || formErrors.codigo_postal_id)" />
+            <Message v-if="formErrors.division_admin_tres_id || formErrors.codigo_postal_id" severity="error" size="small">
+                {{ formErrors.division_admin_tres_id ?? formErrors.codigo_postal_id }}
             </Message>
         </div>
 

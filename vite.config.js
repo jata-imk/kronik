@@ -1,5 +1,5 @@
 import { fileURLToPath, URL } from "node:url";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 
 import Components from "unplugin-vue-components/vite";
 import { PrimeVueResolver } from "@primevue/auto-import-resolver";
@@ -7,12 +7,16 @@ import { PrimeVueResolver } from "@primevue/auto-import-resolver";
 import laravel from "laravel-vite-plugin";
 import vue from "@vitejs/plugin-vue";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
     plugins: [
-        laravel({
-            input: "resources/js/app.js",
-            refresh: true,
-        }),
+        ...(mode === "test"
+            ? []
+            : [
+                  laravel({
+                      input: "resources/js/app.js",
+                      refresh: true,
+                  }),
+              ]),
         vue({
             template: {
                 transformAssetUrls: {
@@ -38,4 +42,8 @@ export default defineConfig({
             ),
         },
     },
-});
+    test: {
+        environment: "jsdom",
+        setupFiles: ["resources/js/tests/setup.js"],
+    },
+}));

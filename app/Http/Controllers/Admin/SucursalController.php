@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\ActivityEvent;
 use App\Http\Controllers\Controller;
 use App\Models\Sucursal;
+use App\Services\ActivityLogService;
+use App\Services\CodigoPostalDireccionService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -26,7 +29,7 @@ class SucursalController extends Controller implements HasMiddleware
     public function index()
     {
         return Inertia::render('Admin/Sucursales/Index', [
-            'sucursales' => fn() => Sucursal::orderByDesc('activa')
+            'sucursales' => fn () => Sucursal::orderByDesc('activa')
                 ->orderBy('nombre')
                 ->get(),
         ]);
@@ -37,11 +40,14 @@ class SucursalController extends Controller implements HasMiddleware
         $fields = $this->validateSucursal($request);
         $sucursal = Sucursal::create($fields);
 
-        activity()
-            ->performedOn($sucursal)
-            ->causedBy(Auth::user())
-            ->withProperties(['attributes' => $sucursal->toArray()])
-            ->log('Sucursal creada');
+        $activityLog = app(ActivityLogService::class);
+        $activityLog->log(
+            event: ActivityEvent::BranchCreated,
+            description: 'Sucursal creada',
+            subject: $sucursal,
+            metadata: ['changed_fields' => $activityLog->fieldNames($fields)],
+            causer: Auth::user(),
+        );
 
         return redirect()->back()->with('success', 'Sucursal creada');
     }
@@ -49,17 +55,16 @@ class SucursalController extends Controller implements HasMiddleware
     public function update(Request $request, Sucursal $sucursal)
     {
         $fields = $this->validateSucursal($request, $sucursal);
-        $before = $sucursal->getOriginal();
         $sucursal->update($fields);
 
-        activity()
-            ->performedOn($sucursal)
-            ->causedBy(Auth::user())
-            ->withProperties([
-                'before' => $before,
-                'after' => $sucursal->fresh()->toArray(),
-            ])
-            ->log('Sucursal actualizada');
+        $activityLog = app(ActivityLogService::class);
+        $activityLog->log(
+            event: ActivityEvent::BranchUpdated,
+            description: 'Sucursal actualizada',
+            subject: $sucursal,
+            metadata: ['changed_fields' => $activityLog->fieldNames($fields)],
+            causer: Auth::user(),
+        );
 
         return redirect()->back()->with('success', 'Sucursal actualizada');
     }
@@ -68,16 +73,26 @@ class SucursalController extends Controller implements HasMiddleware
     {
         $sucursal->update(['activa' => false]);
 
-        activity()
-            ->performedOn($sucursal)
-            ->causedBy(Auth::user())
-            ->log('Sucursal desactivada');
+        app(ActivityLogService::class)->log(
+            event: ActivityEvent::BranchDeactivated,
+            description: 'Sucursal desactivada',
+            subject: $sucursal,
+            metadata: ['changed_fields' => ['activa'], 'state' => 'inactiva'],
+            causer: Auth::user(),
+        );
 
         return redirect()->back()->with('success', 'Sucursal desactivada');
     }
 
     private function validateSucursal(Request $request, ?Sucursal $sucursal = null): array
     {
+        $domicilio = $request->input('domicilio', []);
+        if (is_array($domicilio)) {
+            $request->merge([
+                'domicilio' => app(CodigoPostalDireccionService::class)->canonicalize($domicilio),
+            ]);
+        }
+
         return $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
             'clave' => [
@@ -93,7 +108,23 @@ class SucursalController extends Controller implements HasMiddleware
             'domicilio.colonia' => ['nullable', 'string', 'max:127'],
             'domicilio.municipio' => ['nullable', 'string', 'max:127'],
             'domicilio.estado' => ['nullable', 'string', 'max:127'],
-            'domicilio.codigo_postal' => ['nullable', 'string', 'max:15'],
+            'domicilio.codigo_postal' => ['nullable', 'string', 'regex:/^\d{5}$/'],
+            'domicilio.pais_id' => ['nullable', 'integer', 'exists:paises,id'],
+            'domicilio.pais_codigo_iso' => ['nullable', 'string', 'max:3'],
+            'domicilio.codigo_postal_id' => [
+                'nullable',
+                'required_with:domicilio.codigo_postal',
+                'integer',
+                Rule::exists('codigos_postales', 'id')->where(
+                    fn ($query) => $query
+                        ->where('codigo', $request->input('domicilio.codigo_postal'))
+                        ->where('division_admin_id', $request->input('domicilio.division_admin_tres_id')),
+                ),
+            ],
+            'domicilio.division_admin_uno_id' => ['nullable', 'integer', 'exists:divisiones_administrativas,id'],
+            'domicilio.division_admin_dos_id' => ['nullable', 'integer', 'exists:divisiones_administrativas,id'],
+            'domicilio.division_admin_tres_id' => ['nullable', 'required_with:domicilio.codigo_postal', 'integer', 'exists:divisiones_administrativas,id'],
+            'domicilio.pais' => ['nullable', 'string', 'max:127'],
             'telefono' => ['nullable', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:127'],
             'horario' => ['nullable', 'array'],
@@ -106,6 +137,10 @@ class SucursalController extends Controller implements HasMiddleware
             'consecutivo_credito' => ['required', 'integer', 'min:1'],
             'consecutivo_recibo' => ['required', 'integer', 'min:1'],
             'activa' => ['required', 'boolean'],
+        ], [
+            'clave.unique' => 'La clave de sucursal ya está en uso.',
+            'domicilio.codigo_postal_id.required_with' => 'Seleccione una colonia válida para el código postal.',
+            'domicilio.division_admin_tres_id.required_with' => 'Seleccione una colonia válida para la sucursal.',
         ]);
     }
 }

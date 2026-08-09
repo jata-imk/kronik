@@ -1,6 +1,9 @@
 <script setup>
+import CodigoPostalAutocomplete from "@/Components/CodigoPostalAutocomplete.vue";
 import IntlTelInput from "@/Components/IntlTelInput.vue";
-import { useCodigoPostal } from "@/Composables/useCodigoPostal";
+import PaisSelect from "@/Components/PaisSelect.vue";
+import { useDireccionCodigoPostal } from "@/Composables/useDireccionCodigoPostal";
+import { useTelefonoInternacional } from "@/Composables/useTelefonoInternacional";
 import { useForm } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { useToast } from "primevue/usetoast";
@@ -48,9 +51,11 @@ const form = useForm({
     logotipo_path: props.configuracion?.logotipo_path ?? "",
     parametros_operativos: {
         dias_gracia_default:
-            props.configuracion?.parametros_operativos?.dias_gracia_default ?? 0,
+            props.configuracion?.parametros_operativos?.dias_gracia_default ??
+            0,
         hora_corte_operativo:
-            props.configuracion?.parametros_operativos?.hora_corte_operativo ?? "18:00",
+            props.configuracion?.parametros_operativos?.hora_corte_operativo ??
+            "18:00",
     },
     integraciones: {
         circulo_credito_host:
@@ -98,122 +103,14 @@ watch(
 );
 
 const {
-    sugerenciasData: sugerenciasCodigosPostales,
-    busquedaData: resultadosCodigoPostal,
-    loading: buscandoCodigoPostal,
-    error: errorCodigoPostal,
-    busqueda: buscarCodigoPostal,
-} = useCodigoPostal(() => form.domicilio_fiscal.codigo_postal, {
-    shouldFetchSugerencias: (codigo) =>
-        codigo?.length >= 3 && codigo.length < 5,
-    shouldFetchBusqueda: (codigo) => codigo?.length === 5,
-});
+    localidades,
+    aplicarCodigoPostal,
+    limpiarUbicacionPostal,
+    onLocalidadChange,
+} = useDireccionCodigoPostal(() => form.domicilio_fiscal);
 
-const localidades = computed(() =>
-    (resultadosCodigoPostal.value ?? []).map((item) => ({
-        id: item.id,
-        label:
-            item.divisiones_administrativas?.nivel_tres?.nombre ??
-            item.datos_adicionales?.asentamiento ??
-            "Sin localidad",
-        item,
-    })),
-);
-
-const aplicarCodigoPostal = (item) => {
-    if (!item) {
-        return;
-    }
-
-    const nivelUno = item.divisiones_administrativas?.nivel_uno;
-    const nivelDos = item.divisiones_administrativas?.nivel_dos;
-    const nivelTres = item.divisiones_administrativas?.nivel_tres;
-
-    Object.assign(form.domicilio_fiscal, {
-        pais_id: item.pais?.id ?? null,
-        pais_codigo_iso: item.pais?.codigo_iso ?? "",
-        codigo_postal_id: item.id,
-        codigo_postal: item.codigo,
-        division_admin_uno_id: nivelUno?.id ?? null,
-        division_admin_dos_id: nivelDos?.id ?? null,
-        division_admin_tres_id: nivelTres?.id ?? null,
-        colonia:
-            nivelTres?.nombre ?? item.datos_adicionales?.asentamiento ?? "",
-        municipio:
-            nivelDos?.nombre ?? item.datos_adicionales?.municipio ?? "",
-        estado: nivelUno?.nombre ?? item.datos_adicionales?.estado ?? "",
-        pais: item.pais?.nombre_es ?? "",
-    });
-};
-
-const limpiarUbicacionPostal = () => {
-    Object.assign(form.domicilio_fiscal, {
-        pais_id: null,
-        pais_codigo_iso: "",
-        codigo_postal_id: null,
-        division_admin_uno_id: null,
-        division_admin_dos_id: null,
-        division_admin_tres_id: null,
-        colonia: "",
-        municipio: "",
-        estado: "",
-        pais: "",
-    });
-};
-
-watch(
-    () => form.domicilio_fiscal.codigo_postal,
-    (codigo) => {
-        const normalized = String(codigo ?? "").replace(/\D/g, "").slice(0, 5);
-        if (normalized !== codigo) {
-            form.domicilio_fiscal.codigo_postal = normalized;
-            return;
-        }
-
-        if (normalized.length === 5) {
-            buscarCodigoPostal();
-        } else if (normalized !== domicilio.codigo_postal) {
-            limpiarUbicacionPostal();
-        }
-    },
-    { immediate: true },
-);
-
-watch(resultadosCodigoPostal, (resultados) => {
-    if (!resultados?.length) {
-        return;
-    }
-
-    aplicarCodigoPostal(
-        resultados.find(
-            (item) => item.id === form.domicilio_fiscal.codigo_postal_id,
-        ) ?? resultados[0],
-    );
-});
-
-watch(errorCodigoPostal, (error) => {
-    if (!error) {
-        return;
-    }
-
-    limpiarUbicacionPostal();
-    toast.add({
-        severity: "warn",
-        summary: "Código postal no encontrado",
-        detail: "Revise el código postal capturado.",
-        life: 4000,
-    });
-});
-
-const onCodigoPostalInput = (value) => {
-    form.domicilio_fiscal.codigo_postal = value?.codigo ?? value ?? "";
-};
-
-const onLocalidadChange = ({ value }) => {
-    aplicarCodigoPostal(
-        localidades.value.find((localidad) => localidad.id === value)?.item,
-    );
-};
+const { telefonoInternacional, onChangeNumber: onEmpresaTelefonoChange } =
+    useTelefonoInternacional(form, { e164Key: "telefono" });
 
 const submit = () => {
     form.put(route("admin.configuracion-empresa.update"), {
@@ -363,15 +260,12 @@ const error = (field) => form.errors[field];
                         <label for="codigo_postal" class="block text-sm font-medium mb-1">
                             Código postal
                         </label>
-                        <AutoComplete
-                            id="codigo_postal"
-                            :model-value="form.domicilio_fiscal.codigo_postal"
-                            :suggestions="sugerenciasCodigosPostales"
-                            option-label="codigo"
-                            :loading="buscandoCodigoPostal"
+                        <CodigoPostalAutocomplete
+                            v-model="form.domicilio_fiscal.codigo_postal"
+                            input-id="codigo_postal"
                             :invalid="!!error('domicilio_fiscal.codigo_postal')"
-                            fluid
-                            @update:model-value="onCodigoPostalInput"
+                            @changed="limpiarUbicacionPostal"
+                            @confirmed="aplicarCodigoPostal"
                         />
                         <Message
                             v-if="error('domicilio_fiscal.codigo_postal')"
@@ -389,8 +283,9 @@ const error = (field) => form.errors[field];
                             id="colonia"
                             v-model="form.domicilio_fiscal.codigo_postal_id"
                             :options="localidades"
-                            option-label="label"
-                            option-value="id"
+                            option-label="nombre"
+                            option-value="codigoPostalId"
+                            :invalid="!!(error('domicilio_fiscal.codigo_postal_id') || error('domicilio_fiscal.division_admin_tres_id'))"
                             fluid
                             @change="onLocalidadChange"
                         />
@@ -398,9 +293,17 @@ const error = (field) => form.errors[field];
                             v-else
                             id="colonia"
                             v-model="form.domicilio_fiscal.colonia"
+                            :invalid="!!(error('domicilio_fiscal.codigo_postal_id') || error('domicilio_fiscal.division_admin_tres_id'))"
                             disabled
                             fluid
                         />
+                        <Message
+                            v-if="error('domicilio_fiscal.codigo_postal_id') || error('domicilio_fiscal.division_admin_tres_id')"
+                            severity="error"
+                            size="small"
+                        >
+                            {{ error("domicilio_fiscal.codigo_postal_id") ?? error("domicilio_fiscal.division_admin_tres_id") }}
+                        </Message>
                     </div>
 
                     <div>
@@ -480,8 +383,9 @@ const error = (field) => form.errors[field];
                         <label for="telefono" class="block text-sm font-medium mb-1">Teléfono</label>
                         <IntlTelInput
                             id="telefono"
-                            v-model="form.telefono"
+                            v-model="telefonoInternacional"
                             emit-e164
+                            @change-number="onEmpresaTelefonoChange"
                             :intl-tel-input-options="{
                                 initialCountry: form.pais_base.toLowerCase(),
                             }"
@@ -542,25 +446,14 @@ const error = (field) => form.errors[field];
 
                     <div>
                         <label for="pais_base" class="block text-sm font-medium mb-1">País base</label>
-                        <Select
+                        <PaisSelect
                             id="pais_base"
                             v-model="form.pais_base"
                             :options="paises"
                             option-value="codigo_iso"
-                            filter
                             :invalid="!!error('pais_base')"
                             fluid
-                        >
-                            <template #option="{ option }">
-                                {{ option.emoji }} {{ option.nombre_es }} ({{ option.codigo_iso }})
-                            </template>
-                            <template #value="{ value }">
-                                <span v-if="value">
-                                    {{ paises.find((pais) => pais.codigo_iso === value)?.emoji }}
-                                    {{ paises.find((pais) => pais.codigo_iso === value)?.nombre_es }}
-                                </span>
-                            </template>
-                        </Select>
+                        />
                         <Message v-if="error('pais_base')" severity="error" size="small">
                             {{ error("pais_base") }}
                         </Message>

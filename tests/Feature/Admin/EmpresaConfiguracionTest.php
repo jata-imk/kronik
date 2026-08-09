@@ -1,12 +1,14 @@
 <?php
 
+use App\Models\CodigoPostal;
+use App\Models\DivisionAdministrativa;
 use App\Models\EmpresaConfiguracion;
 use App\Models\Pais;
 use App\Models\RegimenFiscal;
 use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
-    Pais::create([
+    $pais = Pais::create([
         'nombre_es' => 'México',
         'nombre_us' => 'Mexico',
         'codigo_iso' => 'MX',
@@ -22,6 +24,39 @@ beforeEach(function () {
         'fecha_inicio_vigencia' => '2022-01-01',
         'fecha_fin_vigencia' => '2099-12-31',
     ]);
+
+    $estado = DivisionAdministrativa::create([
+        'pais_id' => $pais->id,
+        'nombre' => 'Ciudad de México',
+        'codigo' => '09',
+        'nivel' => 1,
+        'tipo' => 'estado',
+    ]);
+    $municipio = DivisionAdministrativa::create([
+        'pais_id' => $pais->id,
+        'nombre' => 'Cuauhtémoc',
+        'codigo' => '015',
+        'nivel' => 2,
+        'division_padre_id' => $estado->id,
+        'tipo' => 'municipio',
+    ]);
+    $colonia = DivisionAdministrativa::create([
+        'pais_id' => $pais->id,
+        'nombre' => 'Centro',
+        'codigo' => '0001',
+        'nivel' => 3,
+        'division_padre_id' => $municipio->id,
+        'tipo' => 'colonia',
+    ]);
+
+    $this->codigoPostal = CodigoPostal::create([
+        'codigo' => '06000',
+        'pais_id' => $pais->id,
+        'division_admin_id' => $colonia->id,
+    ]);
+    $this->estado = $estado;
+    $this->municipio = $municipio;
+    $this->colonia = $colonia;
 });
 
 test('super admin can see singleton company configuration', function () {
@@ -55,6 +90,10 @@ test('super admin can update singleton company configuration without exposing ap
         'domicilio_fiscal' => [
             'calle' => 'Av. Paseo de la Reforma',
             'codigo_postal' => '06000',
+            'codigo_postal_id' => $this->codigoPostal->id,
+            'division_admin_uno_id' => $this->estado->id,
+            'division_admin_dos_id' => $this->municipio->id,
+            'division_admin_tres_id' => $this->colonia->id,
             'estado' => 'Ciudad de Mexico',
         ],
         'telefono' => '+525512345678',
@@ -97,6 +136,7 @@ test('super admin can update singleton company configuration without exposing ap
     $this->assertDatabaseHas(config('activitylog.table_name'), [
         'subject_type' => EmpresaConfiguracion::class,
         'subject_id' => $configuracion->id,
+        'event' => 'empresa.updated',
         'description' => 'Configuracion de empresa actualizada',
     ]);
 
@@ -105,6 +145,7 @@ test('super admin can update singleton company configuration without exposing ap
         ->assertOk()
         ->assertDontSee('secret-api-key')
         ->assertInertia(fn (Assert $page) => $page
+            ->where('configuracion.telefono', '+525512345678')
             ->where('configuracion.integraciones.circulo_credito_api_key_configurada', true)
         );
 });
@@ -142,6 +183,35 @@ test('activation requires minimum legal data', function () {
             'domicilio_fiscal.codigo_postal',
             'domicilio_fiscal.estado',
         ]);
+});
+
+test('legacy fiscal address is resolved without retyping its postal code', function () {
+    $user = actingAsSuperAdmin();
+
+    $this->actingAs($user)
+        ->from(route('admin.configuracion-empresa.index'))
+        ->put(route('admin.configuracion-empresa.update'), [
+            'tipo_persona' => 'moral',
+            'domicilio_fiscal' => [
+                'calle' => 'República de Brasil',
+                'colonia' => 'Centro',
+                'municipio' => 'Cuauhtémoc',
+                'estado' => 'Ciudad de México',
+                'codigo_postal' => '06000',
+            ],
+            'moneda' => 'MXN',
+            'zona_horaria' => 'America/Mexico_City',
+            'pais_base' => 'MX',
+            'estatus' => 'borrador',
+        ])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('admin.configuracion-empresa.index'));
+
+    $domicilio = EmpresaConfiguracion::where('singleton_key', 'default')->firstOrFail()->domicilio_fiscal;
+
+    expect($domicilio['codigo_postal_id'])->toBe($this->codigoPostal->id)
+        ->and($domicilio['division_admin_tres_id'])->toBe($this->colonia->id)
+        ->and($domicilio['colonia'])->toBe('Centro');
 });
 
 test('user without admin permissions cannot access company configuration or branches', function () {

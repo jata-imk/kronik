@@ -1,8 +1,12 @@
 <script setup>
-import { ref } from "vue";
+import CodigoPostalAutocomplete from "@/Components/CodigoPostalAutocomplete.vue";
+import IntlTelInput from "@/Components/IntlTelInput.vue";
+import { useDireccionCodigoPostal } from "@/Composables/useDireccionCodigoPostal";
+import { useTelefonoInternacional } from "@/Composables/useTelefonoInternacional";
 import { router, useForm } from "@inertiajs/vue3";
-import { useToast } from "primevue/usetoast";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
+import { useToast } from "primevue/usetoast";
+import { ref } from "vue";
 
 const props = defineProps({
     sucursales: Array,
@@ -23,6 +27,13 @@ const emptySucursal = () => ({
         municipio: "",
         estado: "",
         codigo_postal: "",
+        pais_id: null,
+        pais_codigo_iso: "",
+        codigo_postal_id: null,
+        division_admin_uno_id: null,
+        division_admin_dos_id: null,
+        division_admin_tres_id: null,
+        pais: "",
     },
     telefono: "",
     email: "",
@@ -41,23 +52,63 @@ const emptySucursal = () => ({
 
 const form = useForm(emptySucursal());
 
+const {
+    localidades,
+    aplicarCodigoPostal,
+    limpiarUbicacionPostal,
+    onLocalidadChange,
+} = useDireccionCodigoPostal(() => form.domicilio);
+
+const {
+    telefonoInternacional,
+    sincronizarDesdeFormulario: sincronizarTelefono,
+    onChangeNumber: onSucursalTelefonoChange,
+} = useTelefonoInternacional(form, { e164Key: "telefono" });
+
 const openCreate = () => {
     selectedSucursal.value = null;
+    localidades.value = [];
     form.defaults(emptySucursal());
     form.reset();
+    sincronizarTelefono();
+    form.clearErrors();
     visible.value = true;
 };
 
 const openEdit = (sucursal) => {
     selectedSucursal.value = sucursal;
+    localidades.value =
+        sucursal.domicilio?.codigo_postal_id &&
+        sucursal.domicilio?.division_admin_tres_id
+            ? [
+                  {
+                      codigoPostalId: sucursal.domicilio.codigo_postal_id,
+                      divisionAdminTresId:
+                          sucursal.domicilio.division_admin_tres_id,
+                      nombre:
+                          sucursal.domicilio.colonia ?? "Localidad guardada",
+                      tipo: null,
+                  },
+              ]
+            : [];
     form.defaults({
         ...emptySucursal(),
         ...sucursal,
-        domicilio: { ...emptySucursal().domicilio, ...(sucursal.domicilio ?? {}) },
+        domicilio: {
+            ...emptySucursal().domicilio,
+            ...(sucursal.domicilio ?? {}),
+        },
         horario: { ...emptySucursal().horario, ...(sucursal.horario ?? {}) },
     });
     form.reset();
+    sincronizarTelefono();
+    form.clearErrors();
     visible.value = true;
+};
+
+const closeDialog = () => {
+    form.clearErrors();
+    visible.value = false;
 };
 
 const submit = () => {
@@ -66,12 +117,29 @@ const submit = () => {
         only: ["sucursales"],
         onSuccess: () => {
             visible.value = false;
-            toast.add({ severity: "success", summary: selectedSucursal.value ? "Sucursal actualizada" : "Sucursal creada", life: 3000 });
+            toast.add({
+                severity: "success",
+                summary: selectedSucursal.value
+                    ? "Sucursal actualizada"
+                    : "Sucursal creada",
+                life: 3000,
+            });
+        },
+        onError: () => {
+            toast.add({
+                severity: "error",
+                summary: "No se pudo guardar la sucursal",
+                detail: "Revise los campos marcados.",
+                life: 5000,
+            });
         },
     };
 
     if (selectedSucursal.value) {
-        form.put(route("admin.sucursales.update", selectedSucursal.value.id), options);
+        form.put(
+            route("admin.sucursales.update", selectedSucursal.value.id),
+            options,
+        );
     } else {
         form.post(route("admin.sucursales.store"), options);
     }
@@ -82,7 +150,12 @@ const deactivate = (sucursal) => {
         router.delete(route("admin.sucursales.destroy", sucursal.id), {
             preserveScroll: true,
             only: ["sucursales"],
-            onSuccess: () => toast.add({ severity: "success", summary: "Sucursal desactivada", life: 3000 }),
+            onSuccess: () =>
+                toast.add({
+                    severity: "success",
+                    summary: "Sucursal desactivada",
+                    life: 3000,
+                }),
         });
     }
 };
@@ -96,7 +169,9 @@ const formatAddress = (domicilio) => {
         domicilio.municipio,
         domicilio.estado,
         domicilio.codigo_postal,
-    ].filter(Boolean).join(", ");
+    ]
+        .filter(Boolean)
+        .join(", ");
 };
 </script>
 
@@ -164,7 +239,16 @@ const formatAddress = (domicilio) => {
                         </div>
                         <div>
                             <label class="block text-sm font-medium mb-1">Telefono</label>
-                            <InputText v-model="form.telefono" fluid />
+                            <IntlTelInput
+                                id="telefono"
+                                v-model="telefonoInternacional"
+                                emit-e164
+                                @change-number="onSucursalTelefonoChange"
+                                :intl-tel-input-options="{ initialCountry: 'mx' }"
+                                :invalid="!!form.errors.telefono"
+                                fluid
+                            />
+                            <small v-if="form.errors.telefono" class="text-red-500">{{ form.errors.telefono }}</small>
                         </div>
                         <div>
                             <label class="block text-sm font-medium mb-1">Email</label>
@@ -184,9 +268,55 @@ const formatAddress = (domicilio) => {
                     <div>
                         <h3 class="text-base font-semibold mb-3">Domicilio</h3>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Código postal</label>
+                                <CodigoPostalAutocomplete
+                                    v-model="form.domicilio.codigo_postal"
+                                    input-id="codigo_postal"
+                                    :invalid="!!form.errors['domicilio.codigo_postal']"
+                                    @changed="limpiarUbicacionPostal"
+                                    @confirmed="aplicarCodigoPostal"
+                                />
+                                <small v-if="form.errors['domicilio.codigo_postal']" class="text-red-500">{{ form.errors["domicilio.codigo_postal"] }}</small>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Colonia</label>
+                                <Select
+                                    v-if="localidades.length"
+                                    v-model="form.domicilio.codigo_postal_id"
+                                    :options="localidades"
+                                    option-label="nombre"
+                                    option-value="codigoPostalId"
+                                    :invalid="!!(form.errors['domicilio.codigo_postal_id'] || form.errors['domicilio.division_admin_tres_id'])"
+                                    fluid
+                                    @change="onLocalidadChange"
+                                />
+                                <InputText
+                                    v-else
+                                    v-model="form.domicilio.colonia"
+                                    :invalid="!!(form.errors['domicilio.codigo_postal_id'] || form.errors['domicilio.division_admin_tres_id'])"
+                                    disabled
+                                    fluid
+                                />
+                                <small
+                                    v-if="form.errors['domicilio.codigo_postal_id'] || form.errors['domicilio.division_admin_tres_id']"
+                                    class="text-red-500"
+                                >
+                                    {{ form.errors["domicilio.codigo_postal_id"] ?? form.errors["domicilio.division_admin_tres_id"] }}
+                                </small>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Municipio</label>
+                                <InputText v-model="form.domicilio.municipio" disabled fluid />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Estado</label>
+                                <InputText v-model="form.domicilio.estado" disabled fluid />
+                            </div>
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium mb-1">Calle</label>
-                                <InputText v-model="form.domicilio.calle" fluid />
+                                <InputText v-model="form.domicilio.calle" :invalid="!!form.errors['domicilio.calle']" fluid />
+                                <small v-if="form.errors['domicilio.calle']" class="text-red-500">{{ form.errors["domicilio.calle"] }}</small>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-1">Numero exterior</label>
@@ -195,22 +325,6 @@ const formatAddress = (domicilio) => {
                             <div>
                                 <label class="block text-sm font-medium mb-1">Numero interior</label>
                                 <InputText v-model="form.domicilio.numero_interior" fluid />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Colonia</label>
-                                <InputText v-model="form.domicilio.colonia" fluid />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Municipio</label>
-                                <InputText v-model="form.domicilio.municipio" fluid />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Estado</label>
-                                <InputText v-model="form.domicilio.estado" fluid />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Codigo postal</label>
-                                <InputText v-model="form.domicilio.codigo_postal" fluid />
                             </div>
                         </div>
                     </div>
@@ -250,7 +364,7 @@ const formatAddress = (domicilio) => {
                     </div>
 
                     <div class="flex justify-end gap-2 pt-3 border-t border-surface-200 dark:border-surface-700">
-                        <Button label="Cancelar" severity="secondary" icon="pi pi-times" @click.prevent="visible = false" />
+                        <Button label="Cancelar" severity="secondary" icon="pi pi-times" @click.prevent="closeDialog" />
                         <Button label="Guardar" icon="pi pi-check" type="submit" :loading="form.processing" />
                     </div>
                 </form>

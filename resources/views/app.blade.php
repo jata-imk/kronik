@@ -21,14 +21,16 @@
         // It's used to prevent page load glitches.
         const html = document.querySelector('html');
 
-        const localStorageKey = "{{ env('JS_LOCAL_STORAGE_KEY', 'layoutConfig') }}";
-        const localStorageApp = JSON.parse(localStorage.getItem(localStorageKey) || '{}');
+        const localStorageKey = "{{ env('VITE_JS_LOCAL_STORAGE_KEY', 'layoutConfig') }}";
+        let localStorageApp = {};
 
-        const isLightOrAuto = !localStorageApp.darkTheme || (localStorageApp.darkTheme === undefined && !window.matchMedia('(prefers-color-scheme: dark)').matches);
-        const isDarkOrAuto = localStorageApp.darkTheme || (localStorageApp.darkTheme === undefined && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        try {
+            localStorageApp = JSON.parse(localStorage.getItem(localStorageKey) || '{}');
+        } catch {
+            localStorageApp = {};
+        }
 
-        if (isLightOrAuto && html.classList.contains('app-dark')) html.classList.remove('app-dark');
-        else if (isDarkOrAuto && !html.classList.contains('app-dark')) html.classList.add('app-dark');
+        html.classList.toggle('app-dark', localStorageApp.darkTheme === true);
     </script>
 </head>
 

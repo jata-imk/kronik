@@ -9,6 +9,8 @@ use App\Actions\Jetstream\DeleteUser;
 use App\Actions\Jetstream\InviteTeamMember;
 use App\Actions\Jetstream\RemoveTeamMember;
 use App\Actions\Jetstream\UpdateTeamName;
+use App\Enums\ActivityEvent;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
@@ -67,13 +69,11 @@ class JetstreamServiceProvider extends ServiceProvider
                     $user = $request->user();
 
                     if ($user) {
-                        activity()
-                            ->causedBy($user)
-                            ->withProperties([
-                                'ip' => $request->ip(),
-                                'user_agent' => $request->header('User-Agent'),
-                            ])
-                            ->log('Inicio de sesion exitoso');
+                        app(ActivityLogService::class)->log(
+                            event: ActivityEvent::Login,
+                            description: 'Inicio de sesion exitoso',
+                            causer: $user,
+                        );
                     }
 
                     return $next($request);
@@ -85,17 +85,14 @@ class JetstreamServiceProvider extends ServiceProvider
         Event::listen(
             ValidTwoFactorAuthenticationCodeProvided::class,
             function ($event) {
-                $request = request();
                 $user = $event->user;
 
                 if ($user) {
-                    activity()
-                        ->causedBy($user)
-                        ->withProperties([
-                            'ip' => $request->ip(),
-                            'user_agent' => $request->header('User-Agent'),
-                        ])
-                        ->log('Autenticacion de dos factores completada');
+                    app(ActivityLogService::class)->log(
+                        event: ActivityEvent::TwoFactorCompleted,
+                        description: 'Autenticacion de dos factores completada',
+                        causer: $user,
+                    );
                 }
             },
         );

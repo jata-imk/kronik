@@ -36,10 +36,18 @@ class ClienteController extends Controller implements HasMiddleware
                 $cliente['apellido_paterno'],
                 $cliente['apellido_materno'],
             ]));
+            $clientes[$key]['relaciones_count'] =
+                (int) $cliente['vinculos_count'] +
+                (int) $cliente['vinculos_entrantes_count'];
         }
 
         return Inertia::render('Clientes/Index', [
             'clientes' => $clientes,
+            'can' => [
+                'create' => $request->user()->can('create', Cliente::class),
+                'update' => $request->user()->can('update clientes'),
+                'delete' => $request->user()->can('delete clientes'),
+            ],
         ]);
     }
 
