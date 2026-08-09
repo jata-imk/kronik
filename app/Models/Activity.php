@@ -10,10 +10,6 @@ class Activity extends BaseActivity
     protected static function booted(): void
     {
         static::creating(function (self $activity): void {
-            if ($activity->team_id !== null) {
-                return;
-            }
-
             $user = Auth::user();
 
             if (! $user instanceof User && $activity->causer_type === (new User)->getMorphClass()) {
@@ -21,7 +17,8 @@ class Activity extends BaseActivity
             }
 
             if ($user instanceof User && $user->current_team_id) {
-                $activity->team_id = $user->current_team_id;
+                $activity->team_id ??= $user->current_team_id;
+                $activity->sucursal_id ??= $user->current_sucursal_id;
             }
         });
     }

@@ -17,24 +17,34 @@ class ClienteService
         private readonly ActivityLogService $activityLog,
     ) {}
 
-    public function readAll()
+    public function readAll(?int $sucursalId = null)
     {
-        return Cliente::with([
-            'paisNacimiento',
-            'datosFiscales.regimenFiscal',
-            'direcciones' => [
-                'pais',
-                'codigoPostal.divisionAdministrativa.padre.padre',
-                'divisionAdministrativaUno',
-                'divisionAdministrativaDos',
-                'divisionAdministrativaTres',
-            ],
-        ])->withCount(['vinculos', 'vinculosEntrantes'])->get();
+        return Cliente::query()
+            ->when($sucursalId, fn ($query) => $query->where('sucursal_id', $sucursalId))
+            ->with(['sucursal:id,nombre,clave',
+                'paisNacimiento',
+                'datosFiscales.regimenFiscal',
+                'direcciones' => [
+                    'pais',
+                    'codigoPostal.divisionAdministrativa.padre.padre',
+                    'divisionAdministrativaUno',
+                    'divisionAdministrativaDos',
+                    'divisionAdministrativaTres',
+                ],
+            ])->withCount(['vinculos', 'vinculosEntrantes'])->get();
     }
 
     public function store(array $data)
     {
         return DB::transaction(function () use ($data) {
+            $sucursalId = Auth::user()?->current_sucursal_id;
+            if (! $sucursalId) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'sucursal_id' => 'Selecciona una sucursal activa antes de crear un cliente.',
+                ]);
+            }
+
+            $data['sucursal_id'] = $sucursalId;
             $cliente = Cliente::create($data);
 
             $this->expedienteService->initializeChecklist($cliente);

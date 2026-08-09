@@ -127,10 +127,10 @@ class ModulesAndPermissionsSeeder extends Seeder
             'activity-log' => ['read'],
             'configuracion-empresa' => ['read', 'update'],
             'sucursales' => ['create', 'read', 'update', 'delete'],
-            'clientes' => ['create', 'read', 'update', 'delete'],
+            'clientes' => ['create', 'read', 'update', 'delete', 'transfer'],
             'historial-crediticio' => ['read'],
             'circulo-credito' => ['create', 'read'],
-            'teams' => ['add members', 'delete', 'remove members', 'update', 'update members', 'create'],
+            'teams' => ['read', 'add members', 'delete', 'remove members', 'update', 'update members', 'create'],
         ];
 
         foreach ([

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Module;
+use App\Models\Sucursal;
 use App\Services\MenubarService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -42,13 +43,20 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        if (!empty($request->user()) && function_exists('setPermissionsTeamId')) {
+        if (! empty($request->user()) && function_exists('setPermissionsTeamId')) {
             // set actual team_id to spatie/laravel-permission package
             setPermissionsTeamId($request->user()->current_team_id);
 
             $request->user()->setRelation('permissions', $request->user()->getAllPermissions());
             $request->user()->load(['roles.permissions']);
-        } else if (empty($request->user())) {
+            $request->user()->load(['sucursalPrincipal', 'currentSucursal']);
+            $request->user()->setRelation(
+                'sucursales',
+                $request->user()->is_super_admin
+                    ? Sucursal::query()->where('activa', true)->orderBy('nombre')->get()
+                    : $request->user()->sucursales()->where('activa', true)->orderBy('nombre')->get(),
+            );
+        } elseif (empty($request->user())) {
             return parent::share($request);
         }
 
@@ -65,7 +73,10 @@ class HandleInertiaRequests extends Middleware
                 }
             },
             'menubarAdmin' => function () use ($request) {
-                if (!$request->user()?->hasRole('Super Admin')) return null;
+                if (! $request->user()?->is_super_admin) {
+                    return null;
+                }
+
                 return [
                     'modules' => Module::select(['id', 'name', 'route_name'])->get(),
                     'currentRouteName' => Route::current()?->getName(),
@@ -89,11 +100,12 @@ class HandleInertiaRequests extends Middleware
                     'permissions' => [
                         ...$teamRolesPermissions->map(function ($permission) use ($request) {
                             return [
-                                "key" => str_replace(' ', '-', $permission->name),
-                                "value" => Gate::check($permission->name, $request->user()),
+                                'key' => str_replace(' ', '-', $permission->name),
+                                'value' => Gate::check($permission->name, $request->user()),
                             ];
-                        })->pluck("value", "key"),
+                        })->pluck('value', 'key'),
                     ],
+                    'is_super_admin' => (bool) $request->user()->is_super_admin,
                 ]
             ),
         ]);

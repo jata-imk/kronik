@@ -48,12 +48,14 @@ Las pruebas locales usan SQLite `:memory:` mediante `phpunit.xml`. La migracion 
 
 Datos demo actuales:
 
-- `test@example.com` con password de factory `password`.
+- `test@example.com` con password de factory `password`, Super Admin global y contexto `MATRIZ`.
 - `consulta.clientes@example.test` con password `password`: puede consultar clientes, expedientes y descargar archivos, pero no modificarlos.
 - `editor.expedientes@example.test` con password `password`: puede consultar y modificar el expediente, sin permisos de alta o baja de clientes.
 - `sin.acceso.clientes@example.test` con password `password`: permite comprobar la denegacion de acceso al modulo de clientes.
 - Empresa demo singleton.
 - Sucursal `MATRIZ`.
+- Todos los usuarios demo pertenecen a `MATRIZ`, que tambien es su sucursal principal y actual.
+- Todos los clientes demo pertenecen a `MATRIZ`.
 - Cliente persona fisica con score SIC exitoso.
 - Cliente tipo moral con consulta SIC pendiente.
 - Perfil economico KYC en ambos clientes demo.

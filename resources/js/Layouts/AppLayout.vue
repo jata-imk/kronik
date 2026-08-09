@@ -16,7 +16,7 @@ const showingNavigationDropdown = ref(false);
 
 const userCanCreateTeams = computed(() => {
     return (
-        $page.props.auth.user.roles.find((r) => r.name === "Super Admin") ||
+        $page.props.auth.is_super_admin ||
         $page.props.auth.user.permissions.find((p) => p.name === "create teams")
     );
 });

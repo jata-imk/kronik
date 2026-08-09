@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Laravel\Jetstream\Events\TeamCreated;
 use Laravel\Jetstream\Events\TeamDeleted;
 use Laravel\Jetstream\Events\TeamUpdated;
@@ -21,6 +22,7 @@ class Team extends JetstreamTeam
     protected $fillable = [
         'name',
         'personal_team',
+        'activo',
     ];
 
     /**
@@ -43,6 +45,17 @@ class Team extends JetstreamTeam
     {
         return [
             'personal_team' => 'boolean',
+            'activo' => 'boolean',
         ];
+    }
+
+    public function currentUsers(): HasMany
+    {
+        return $this->hasMany(User::class, 'current_team_id');
+    }
+
+    public function ownedRoles(): HasMany
+    {
+        return $this->hasMany(config('permission.models.role'), config('permission.column_names.team_foreign_key', 'team_id'));
     }
 }

@@ -41,10 +41,9 @@ class AppServiceProvider extends ServiceProvider
             'clientes' => Cliente::class,
         ]);
 
-        // Implicitly grant "Super Admin" role all permissions
-        // This works in the app by using gate-related functions like auth()->user->can() and @can()
+        // Global administrators bypass team-scoped permissions.
         Gate::before(function ($user, $ability) {
-            return $user->hasRole('Super Admin') ? true : null;
+            return $user->is_super_admin ? true : null;
         });
 
         // `artisan test` boots the application once before PHPUnit applies its

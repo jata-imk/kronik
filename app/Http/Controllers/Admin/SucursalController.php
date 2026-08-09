@@ -12,6 +12,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class SucursalController extends Controller implements HasMiddleware
@@ -19,10 +20,10 @@ class SucursalController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('role_or_permission:Super Admin|read sucursales', only: ['index']),
-            new Middleware('role_or_permission:Super Admin|create sucursales', only: ['store']),
-            new Middleware('role_or_permission:Super Admin|update sucursales', only: ['update']),
-            new Middleware('role_or_permission:Super Admin|delete sucursales', only: ['destroy']),
+            new Middleware('permission:read sucursales', only: ['index']),
+            new Middleware('permission:create sucursales', only: ['store']),
+            new Middleware('permission:update sucursales', only: ['update']),
+            new Middleware('permission:delete sucursales', only: ['destroy']),
         ];
     }
 
@@ -31,6 +32,7 @@ class SucursalController extends Controller implements HasMiddleware
         return Inertia::render('Admin/Sucursales/Index', [
             'sucursales' => fn () => Sucursal::orderByDesc('activa')
                 ->orderBy('nombre')
+                ->withCount(['users', 'clientes'])
                 ->get(),
         ]);
     }
@@ -71,6 +73,14 @@ class SucursalController extends Controller implements HasMiddleware
 
     public function destroy(Sucursal $sucursal)
     {
+        $activeUsers = $sucursal->users()->where('users.status', 'active')->count();
+        $clientes = $sucursal->clientes()->count();
+        if ($activeUsers > 0 || $clientes > 0) {
+            throw ValidationException::withMessages([
+                'sucursal' => "Reasigna {$activeUsers} usuario(s) activo(s) y {$clientes} cliente(s) antes de desactivar la sucursal.",
+            ]);
+        }
+
         $sucursal->update(['activa' => false]);
 
         app(ActivityLogService::class)->log(

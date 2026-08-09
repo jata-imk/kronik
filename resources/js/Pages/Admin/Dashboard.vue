@@ -14,6 +14,7 @@ import AppLayout from "@sakai-vue/layout/AppLayout.vue";
             <div class="pl-8 flex flex-col items-start justify-center gap-2">
                 <div class="flex gap-2 mb-3">
                     <Button label="Usuarios" as="a" :href="route('admin.users.index')" />
+                    <Button label="Equipos" as="a" :href="route('admin.teams.index')" />
                     <Button label="Logs de Actividades" as="a" :href="route('admin.users.activity')" />
                 </div>
                 <Button label="Configuracion de empresa" as="a" :href="route('admin.configuracion-empresa.index')" class="mb-3" />

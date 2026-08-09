@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\EmpresaConfiguracionController;
 use App\Http\Controllers\Admin\MenubarItemController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SucursalController;
+use App\Http\Controllers\Admin\TeamController as AdminTeamController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CirculoCreditoController;
 use App\Http\Controllers\ClienteConsentimientoSicController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\ClienteGarantiaController;
 use App\Http\Controllers\ClienteReferenciaController;
 use App\Http\Controllers\ClienteVinculoController;
 use App\Http\Controllers\CodigoPostalController;
+use App\Http\Controllers\CurrentSucursalController;
 use App\Http\Controllers\GeocodingController;
 use App\Http\Controllers\HistorialCrediticioController;
 use App\Http\Controllers\TeamController;
@@ -34,6 +36,7 @@ Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
     'verified',
+    'active',
 ])->group(function () {
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
@@ -71,6 +74,7 @@ Route::middleware([
     Route::post('clientes/{cliente}/consentimientos-sic', [ClienteConsentimientoSicController::class, 'store'])->name('clientes.consentimientos-sic.store');
     Route::patch('clientes/{cliente}/consentimientos-sic/{consentimiento}/revocar', [ClienteConsentimientoSicController::class, 'revoke'])->name('clientes.consentimientos-sic.revoke');
     Route::get('clientes/{cliente}/consentimientos-sic/{consentimiento}/evidencia', [ClienteConsentimientoSicController::class, 'download'])->name('clientes.consentimientos-sic.download');
+    Route::patch('clientes/{cliente}/sucursal', [ClienteController::class, 'transfer'])->name('clientes.sucursal.transfer');
 
     Route::resource('clientes', ClienteController::class)->names('clientes');
 
@@ -88,6 +92,7 @@ Route::middleware([
 
     Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');
     Route::post('/teams', [TeamController::class, 'store'])->name('teams.store');
+    Route::put('/current-sucursal', [CurrentSucursalController::class, 'update'])->name('current-sucursal.update');
 
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', function () {
@@ -96,12 +101,14 @@ Route::middleware([
 
         Route::get('users/activity', [UserController::class, 'usersActivity'])->name('users.activity');
         Route::get('users/activity/export', [UserController::class, 'exportActivity'])->name('users.activity.export');
-        Route::resource('users', UserController::class);
+        Route::post('users/{user}/invitation', [UserController::class, 'resendInvitation'])->name('users.invitation.resend');
+        Route::resource('users', UserController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::get('configuracion-empresa', [EmpresaConfiguracionController::class, 'index'])->name('configuracion-empresa.index');
         Route::put('configuracion-empresa', [EmpresaConfiguracionController::class, 'update'])->name('configuracion-empresa.update');
         Route::resource('sucursales', SucursalController::class)
             ->only(['index', 'store', 'update', 'destroy'])
             ->parameters(['sucursales' => 'sucursal']);
+        Route::resource('teams', AdminTeamController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::get('menubar-items/routes', [MenubarItemController::class, 'availableRoutes'])->name('menubar-items.available-routes');
         Route::resource('menubar-items', MenubarItemController::class);
         Route::resource('roles', RoleController::class);

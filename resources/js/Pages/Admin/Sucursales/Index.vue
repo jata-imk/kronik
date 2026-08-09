@@ -156,6 +156,13 @@ const deactivate = (sucursal) => {
                     summary: "Sucursal desactivada",
                     life: 3000,
                 }),
+            onError: (errors) =>
+                toast.add({
+                    severity: "error",
+                    summary: "No se puede desactivar",
+                    detail: errors.sucursal ?? "Reasigna primero sus dependencias activas.",
+                    life: 6000,
+                }),
         });
     }
 };
@@ -201,6 +208,8 @@ const formatAddress = (domicilio) => {
                         </template>
                     </Column>
                     <Column field="prefijo_folio" header="Prefijo" />
+                    <Column field="users_count" header="Usuarios" />
+                    <Column field="clientes_count" header="Clientes" />
                     <Column header="Folios">
                         <template #body="{ data }">
                             <div class="text-sm">

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserStatus;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Notification;
@@ -65,6 +66,35 @@ test('password can be reset with valid token', function () {
         ]);
 
         $response->assertSessionHasNoErrors();
+
+        return true;
+    });
+})->skip(function () {
+    return ! Features::enabled(Features::resetPasswords());
+}, 'Password updates are not enabled.');
+
+test('setting the invitation password activates and verifies a pending user', function () {
+    Notification::fake();
+    $user = User::factory()->create([
+        'status' => UserStatus::Pending,
+        'email_verified_at' => null,
+        'activated_at' => null,
+    ]);
+
+    $this->post('/forgot-password', ['email' => $user->email]);
+
+    Notification::assertSentTo($user, ResetPassword::class, function (object $notification) use ($user) {
+        $this->post('/reset-password', [
+            'token' => $notification->token,
+            'email' => $user->email,
+            'password' => 'new-secure-password',
+            'password_confirmation' => 'new-secure-password',
+        ])->assertSessionHasNoErrors();
+
+        $user->refresh();
+        expect($user->status)->toBe(UserStatus::Active)
+            ->and($user->activated_at)->not->toBeNull()
+            ->and($user->email_verified_at)->not->toBeNull();
 
         return true;
     });

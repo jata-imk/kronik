@@ -20,8 +20,8 @@ class EmpresaConfiguracionController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('role_or_permission:Super Admin|read configuracion-empresa', only: ['index']),
-            new Middleware('role_or_permission:Super Admin|update configuracion-empresa', only: ['update']),
+            new Middleware('permission:read configuracion-empresa', only: ['index']),
+            new Middleware('permission:update configuracion-empresa', only: ['update']),
         ];
     }
 

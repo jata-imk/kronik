@@ -14,6 +14,7 @@ enum ActivityEvent: string
     case ClientCreated = 'cliente.created';
     case ClientUpdated = 'cliente.updated';
     case ClientDeleted = 'cliente.deleted';
+    case ClientTransferred = 'cliente.sucursal.transferred';
     case ClientKycUpdated = 'cliente.kyc.updated';
     case ClientReferenceCreated = 'cliente.referencia.created';
     case ClientReferenceUpdated = 'cliente.referencia.updated';
@@ -46,6 +47,7 @@ enum ActivityEvent: string
             self::ClientCreated => 'Cliente creado',
             self::ClientUpdated => 'Cliente actualizado',
             self::ClientDeleted => 'Cliente eliminado',
+            self::ClientTransferred => 'Cliente trasladado de sucursal',
             self::ClientKycUpdated => 'Perfil KYC actualizado',
             self::ClientReferenceCreated => 'Referencia de cliente creada',
             self::ClientReferenceUpdated => 'Referencia de cliente actualizada',
@@ -101,6 +103,7 @@ enum ActivityEvent: string
             self::BranchDeactivated => 'pi-ban',
             self::ClientCreated => 'pi-user-plus',
             self::ClientDeleted => 'pi-user-minus',
+            self::ClientTransferred => 'pi-arrow-right-arrow-left',
             self::ClientDocumentReceived => 'pi-upload',
             self::ClientDocumentDownloaded,
             self::ClientSicConsentEvidenceDownloaded => 'pi-download',

@@ -20,7 +20,7 @@ test('super admin can see branches', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Admin/Sucursales/Index')
-            ->has('sucursales', 1)
+            ->has('sucursales', 2)
         );
 });
 

@@ -3,14 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
-use App\Services\SICs\CirculoDeCredito\FicoScorev2\FicoScorev2Service;
-use App\Services\SICs\CirculoDeCredito\FintechScore\FintechScoreService;
-
 use App\Services\SICs\CirculoDeCredito\FicoScorev2\FicoScorev2Repository;
+use App\Services\SICs\CirculoDeCredito\FicoScorev2\FicoScorev2Service;
 use App\Services\SICs\CirculoDeCredito\FintechScore\FintechScoreRepository;
+use App\Services\SICs\CirculoDeCredito\FintechScore\FintechScoreService;
 use App\Services\SICs\CirculoDeCredito\RCFicoScore\RCFicoScoreRepository;
 use App\Services\SICs\CirculoDeCredito\RCFicoScore\RCFicoScoreService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 class CirculoCreditoController extends Controller
@@ -26,11 +26,12 @@ class CirculoCreditoController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(Request $request, ?string $cliente = "")
+    public function create(Request $request, ?string $cliente = '')
     {
         $clientes = null;
         if ($cliente && is_numeric($cliente)) {
             $cliente = Cliente::findOrFail($cliente);
+            Gate::authorize('update', $cliente);
         } else {
             $cliente = null;
             $clientes = Cliente::all();
@@ -45,10 +46,10 @@ class CirculoCreditoController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request, ?string $cliente = "")
+    public function store(Request $request, ?string $cliente = '')
     {
         // Basic validation for cliente
-        if (!$cliente || !is_numeric($cliente)) {
+        if (! $cliente || ! is_numeric($cliente)) {
             $request->validate([
                 'cliente' => 'required|exists:clientes,id',
             ]);
@@ -129,11 +130,12 @@ class CirculoCreditoController extends Controller
 
         if ($repository == null) {
             return response()->redirectToRoute('historial-crediticio.index', [
-                'error' => 'API no soportada'
+                'error' => 'API no soportada',
             ]);
         }
 
-        $cliente = Cliente::findOrFail($cliente);
+        $cliente = Cliente::findOrFail($cliente ?: $request->integer('cliente'));
+        Gate::authorize('update', $cliente);
         $repository->consultaScore($cliente);
 
         return response()->redirectToRoute('clientes.historial-crediticio.show', [

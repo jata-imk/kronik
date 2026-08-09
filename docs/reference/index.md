@@ -1,5 +1,7 @@
 # Referencia
 
+- [Usuarios, equipos y sucursales](usuarios-equipos-sucursales.md)
+
 - [Automatizacion de documentacion](automatizacion-documentacion.md)
 - [Eventos de auditoría](auditoria-eventos.md)
 - [CI](ci.md)

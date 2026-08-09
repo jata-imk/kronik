@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserStatus;
 use App\Models\User;
 
 test('login screen can be rendered', function () {
@@ -27,6 +28,17 @@ test('users cannot authenticate with invalid password', function () {
         'email' => $user->email,
         'password' => 'wrong-password',
     ]);
+
+    $this->assertGuest();
+});
+
+test('inactive users cannot authenticate with a valid password', function () {
+    $user = User::factory()->create(['status' => UserStatus::Inactive]);
+
+    $this->post('/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ])->assertSessionHasErrors('email');
 
     $this->assertGuest();
 });

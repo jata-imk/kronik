@@ -28,8 +28,10 @@ class ActivityLogService
         array $metadata = [],
         ?User $causer = null,
         ?int $teamId = null,
+        ?int $sucursalId = null,
     ): ?ActivityContract {
         $teamId ??= $causer?->current_team_id;
+        $sucursalId ??= $causer?->current_sucursal_id;
         $properties = [
             ...$this->requestMetadata(),
             ...$this->sanitizeMetadata($metadata),
@@ -38,8 +40,9 @@ class ActivityLogService
         $logger = activity()
             ->event($event->value)
             ->withProperties($properties)
-            ->tap(function ($activity) use ($teamId): void {
+            ->tap(function ($activity) use ($teamId, $sucursalId): void {
                 $activity->team_id = $teamId;
+                $activity->sucursal_id = $sucursalId;
             });
 
         if ($subject) {

@@ -3,13 +3,22 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\ActivityEvent;
+use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreUserRequest;
+use App\Http\Requests\Admin\UpdateUserRequest;
+use App\Models\Sucursal;
+use App\Models\Team;
 use App\Models\User;
+use App\Services\UserManagementService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
@@ -18,7 +27,11 @@ class UserController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('role_or_permission:Super Admin|read activity-log', only: ['usersActivity', 'exportActivity']),
+            new Middleware('permission:read users', only: ['index']),
+            new Middleware('permission:create users', only: ['store', 'resendInvitation']),
+            new Middleware('permission:update users', only: ['update']),
+            new Middleware('permission:delete users', only: ['destroy']),
+            new Middleware('permission:read activity-log', only: ['usersActivity', 'exportActivity']),
         ];
     }
 
@@ -27,12 +40,24 @@ class UserController extends Controller implements HasMiddleware
      */
     public function index()
     {
-        $teamKey = config('permission.column_names.team_foreign_key', 'team_id');
-        $user = Auth::user();
-
         return Inertia::render('Admin/Users/Index', [
-            'users' => User::with('ownedTeams', 'roles')->get(),
-            'roles' => Role::where($teamKey, $user->currentTeam->id)->orWhere('name', 'Super Admin')->get(),
+            'users' => fn () => User::query()
+                ->with(['ownedTeams', 'teams', 'sucursales', 'sucursalPrincipal', 'currentSucursal'])
+                ->orderBy('name')
+                ->get()
+                ->map(fn (User $user) => $this->userPayload($user)),
+            'teams' => fn () => Team::query()->where('activo', true)->orderBy('name')->get(['id', 'name']),
+            'roles' => fn () => Role::query()
+                ->whereNotNull('team_id')
+                ->where('name', '!=', 'Super Admin')
+                ->orderBy('name')
+                ->get(['id', 'name', 'team_id']),
+            'sucursales' => fn () => Sucursal::query()->where('activa', true)->orderBy('nombre')->get(['id', 'nombre', 'clave']),
+            'statusOptions' => collect(UserStatus::cases())->map(fn (UserStatus $status) => [
+                'value' => $status->value,
+                'label' => $status->label(),
+            ]),
+            'canManageSuperAdmin' => (bool) Auth::user()->is_super_admin,
         ]);
     }
 
@@ -47,9 +72,18 @@ class UserController extends Controller implements HasMiddleware
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreUserRequest $request, UserManagementService $service)
     {
-        //
+        $user = $service->create($request->validated(), $request->user());
+        $status = Password::sendResetLink(['email' => $user->email]);
+
+        if ($status !== Password::RESET_LINK_SENT) {
+            throw ValidationException::withMessages([
+                'email' => 'La cuenta fue creada, pero no se pudo enviar la invitación. Puedes reenviarla desde el listado.',
+            ]);
+        }
+
+        return back()->with('success', 'Usuario creado e invitación enviada');
     }
 
     /**
@@ -71,11 +105,9 @@ class UserController extends Controller implements HasMiddleware
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user, UserManagementService $service)
     {
-        if ($request->has('roles')) {
-            $user->syncRoles($request->roles);
-        }
+        $service->update($user, $request->validated(), $request->user());
 
         return redirect()->back()->with('success', 'Usuario actualizado');
     }
@@ -83,9 +115,66 @@ class UserController extends Controller implements HasMiddleware
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, User $user)
     {
-        //
+        if ($user->is_super_admin && ! $request->user()->is_super_admin) {
+            abort(403, 'Solo un Super Admin global puede desactivar otra cuenta global.');
+        }
+
+        if ($request->user()->is($user)) {
+            throw ValidationException::withMessages([
+                'user' => 'No puedes desactivar tu propia cuenta.',
+            ]);
+        }
+
+        $user->forceFill(['status' => UserStatus::Inactive])->save();
+        $user->tokens()->delete();
+        DB::table('sessions')->where('user_id', $user->id)->delete();
+
+        return back()->with('success', 'Usuario desactivado');
+    }
+
+    public function resendInvitation(Request $request, User $user)
+    {
+        abort_unless($user->status === UserStatus::Pending, 422, 'Sólo se pueden reenviar invitaciones pendientes.');
+
+        $status = Password::sendResetLink(['email' => $user->email]);
+        throw_if($status !== Password::RESET_LINK_SENT, ValidationException::withMessages([
+            'email' => 'No se pudo enviar la invitación. Revisa la configuración de correo.',
+        ]));
+
+        $user->forceFill(['invited_at' => now()])->save();
+
+        return back()->with('success', 'Invitación reenviada');
+    }
+
+    private function userPayload(User $user): array
+    {
+        $teamRoles = DB::table('model_has_roles')
+            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->where('model_has_roles.model_type', $user->getMorphClass())
+            ->where('model_has_roles.model_id', $user->id)
+            ->where('roles.name', '!=', 'Super Admin')
+            ->get(['model_has_roles.team_id', 'roles.id as role_id'])
+            ->groupBy('team_id');
+
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'status' => $user->status->value,
+            'status_label' => $user->status->label(),
+            'is_super_admin' => (bool) $user->is_super_admin,
+            'current_team_id' => $user->current_team_id,
+            'sucursal_principal_id' => $user->sucursal_principal_id,
+            'current_sucursal_id' => $user->current_sucursal_id,
+            'sucursal_ids' => $user->sucursales->pluck('id')->all(),
+            'team_roles' => $user->allTeams()->map(fn (Team $team) => [
+                'team_id' => $team->id,
+                'role_ids' => $teamRoles->get($team->id, collect())->pluck('role_id')->all(),
+            ])->values(),
+            'invited_at' => $user->invited_at?->toIso8601String(),
+        ];
     }
 
     /**
@@ -207,7 +296,7 @@ class UserController extends Controller implements HasMiddleware
         $query = $activityModel::query()->with('causer');
         $user = Auth::user();
 
-        if ($user?->hasRole('Super Admin')) {
+        if ($user?->is_super_admin) {
             return $query;
         }
 

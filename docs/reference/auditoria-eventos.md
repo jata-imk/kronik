@@ -14,6 +14,7 @@ Cada evento nuevo debe declararse en `App\Enums\ActivityEvent` y registrarse med
 - `description`: explicación legible de la acción.
 - actor (`causer`) y sujeto (`subject`) cuando aplican.
 - `team_id` para aislar la consulta por equipo.
+- `sucursal_id` para conservar el contexto operativo en que ocurrio el evento.
 - `ip`, `user_agent` y `request_id` de la petición.
 
 Los metadatos funcionales permitidos son:
@@ -34,7 +35,7 @@ No se deben registrar nombres, correos, teléfonos, RFC, CURP, domicilios, conte
 | Usuario | `user.profile.updated` |
 | Empresa | `empresa.updated` |
 | Sucursales | `sucursal.created`, `sucursal.updated`, `sucursal.deactivated` |
-| Clientes | `cliente.created`, `cliente.updated`, `cliente.deleted`, `cliente.kyc.updated` |
+| Clientes | `cliente.created`, `cliente.updated`, `cliente.deleted`, `cliente.sucursal.transferred`, `cliente.kyc.updated` |
 | Referencias | `cliente.referencia.created`, `cliente.referencia.updated`, `cliente.referencia.deleted` |
 | Vínculos | `cliente.vinculo.created`, `cliente.vinculo.deleted` |
 | Garantías | `cliente.garantia.created`, `cliente.garantia.updated`, `cliente.garantia.deleted` |
@@ -48,7 +49,7 @@ Los registros antiguos cuyo campo `event` es nulo no se reescriben ni eliminan. 
 
 ## Consulta y exportación
 
-`Super Admin` puede consultar actividad de todos los equipos. Un usuario con permiso `read activity-log` solo puede consultar y exportar la actividad de su equipo actual. Los valores CSV que podrían interpretarse como fórmulas se prefijan para que la hoja de cálculo los trate como texto.
+Super Admin global puede consultar actividad de todos los equipos. Un usuario con permiso `read activity-log` solo puede consultar y exportar la actividad de su equipo actual. Backlog 02.5 definira el filtrado y la matriz de acceso por sucursal. Los valores CSV que podrian interpretarse como formulas se prefijan para que la hoja de calculo los trate como texto.
 
 ## Agregar un evento
 

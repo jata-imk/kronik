@@ -2,7 +2,7 @@
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import ListadoClientes from "./Partials/ListadoClientes.vue";
 
-const { confirmsTwoFactorAuthentication, sessions, clientes, can } = defineProps({
+const { clientes, can, filters, sucursales } = defineProps({
     confirmsTwoFactorAuthentication: Boolean,
     sessions: Array,
     clientes: {
@@ -13,6 +13,8 @@ const { confirmsTwoFactorAuthentication, sessions, clientes, can } = defineProps
         type: Object,
         default: () => ({}),
     },
+    filters: { type: Object, default: () => ({ scope: "current" }) },
+    sucursales: { type: Array, default: () => [] },
 });
 </script>
 
@@ -25,7 +27,7 @@ const { confirmsTwoFactorAuthentication, sessions, clientes, can } = defineProps
         </template>
 
         <template #card-content>
-            <ListadoClientes :clientes="clientes" :can="can" />
+            <ListadoClientes :clientes="clientes" :can="can" :filters="filters" :sucursales="sucursales" />
         </template>
     </AppLayout>
 </template>

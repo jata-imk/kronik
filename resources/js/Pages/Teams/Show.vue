@@ -1,8 +1,5 @@
 <script setup>
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
-import DeleteTeamForm from "@/Pages/Teams/Partials/DeleteTeamForm.vue";
-import SectionBorder from "@/Components/SectionBorder.vue";
-import TeamMemberManager from "@/Pages/Teams/Partials/TeamMemberManager.vue";
 import UpdateTeamNameForm from "@/Pages/Teams/Partials/UpdateTeamNameForm.vue";
 
 import { usePage } from "@inertiajs/vue3";
@@ -11,7 +8,6 @@ import { reactive } from "vue";
 const page = usePage();
 const auth = page.props.auth;
 const team = page.props.team;
-const availableRoles = auth.user.roles;
 const permissions = auth.permissions;
 </script>
 
@@ -27,18 +23,20 @@ const permissions = auth.permissions;
             <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
                 <UpdateTeamNameForm :team="team" :permissions="permissions" />
 
-                <TeamMemberManager
-                    class="mt-10 sm:mt-0"
-                    :team="team"
-                    :permissions="permissions"
-                    :available-roles="availableRoles"
-                />
-
-                <template v-if="permissions['delete-teams'] && ! team.personal_team">
-                    <SectionBorder />
-
-                    <DeleteTeamForm class="mt-10 sm:mt-0" :team="team" />
-                </template>
+                <div class="mt-8 rounded-lg border border-surface-200 p-5 dark:border-surface-700">
+                    <h3 class="mb-2 font-semibold">Miembros y roles</h3>
+                    <p class="text-sm text-surface-600 dark:text-surface-300">
+                        Las membresías, roles funcionales y sucursales se administran desde el módulo de usuarios.
+                    </p>
+                    <Button
+                        v-if="auth.permissions['update-users'] || auth.is_super_admin"
+                        class="mt-4"
+                        label="Administrar usuarios"
+                        icon="pi pi-users"
+                        as="a"
+                        :href="route('admin.users.index')"
+                    />
+                </div>
             </div>
         </div>
     </AppLayout>

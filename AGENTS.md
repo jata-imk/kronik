@@ -38,4 +38,8 @@ Do not commit secrets from `.env`; update `.env.example` for new required settin
 
 ## Project Coordination
 
-The repository's Notion page is `https://app.notion.com/p/1a261db7db7f800c809bf96e22e0d05a`. When the user refers to "el Notion del repositorio", use this page as the project source of context. Current work is centered on Backlog 02 (Clientes, expediente y KYC), including post-implementation reviews and related corrections discovered during validation.
+The repository's Notion page is `https://app.notion.com/p/1a261db7db7f800c809bf96e22e0d05a`. When the user refers to "el Notion del repositorio", use this page as the project source of context.
+
+Notion is the source of truth for backlog order, scope, and product priorities. Architectural decisions belong in `docs/explanation/adr-*.md`; durable operating and usage documentation belongs in the appropriate Diataxis section. Keep temporary execution context and handoffs in one file per backlog under `docs/agent-notes/`, following its template. Agent Notes must not contain secrets or duplicate the full specification from Notion.
+
+Backlog 02 and PR #11 are complete. Current work should start with Backlog 01.5 (user, team, and branch management), followed by Backlog 02.5 and then Backlog 03 unless Notion is reordered.
