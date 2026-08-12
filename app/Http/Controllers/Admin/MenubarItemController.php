@@ -7,16 +7,27 @@ use App\Http\Requests\MenubarItemRequest;
 use App\Models\MenubarItem;
 use App\Models\Module;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Route as LaravelRoute;
 use Inertia\Inertia;
 
-class MenubarItemController extends Controller
+class MenubarItemController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:read menubar-items', only: ['index', 'show', 'availableRoutes']),
+            new Middleware('permission:create menubar-items', only: ['create', 'store']),
+            new Middleware('permission:update menubar-items', only: ['edit', 'update']),
+            new Middleware('permission:delete menubar-items', only: ['destroy']),
+        ];
+    }
+
     public function availableRoutes(): JsonResponse
     {
         $routes = collect(LaravelRoute::getRoutes())
-            ->map(fn($r) => $r->getName())
+            ->map(fn ($r) => $r->getName())
             ->filter()
             ->sort()
             ->values();
@@ -27,12 +38,12 @@ class MenubarItemController extends Controller
     public function index()
     {
         return Inertia::render('Admin/MenubarItems/Index', [
-            'modules' => fn() => Module::with('menubarItems')->get(),
-            'menubarItems' => fn() => MenubarItem::with(
+            'modules' => fn () => Module::with('menubarItems')->get(),
+            'menubarItems' => fn () => MenubarItem::with(
                 [
                     'modules',
                     'children.modules',
-                    'children.children.modules'
+                    'children.children.modules',
                 ]
             )->whereNull('parent_id')->get(),
         ]);
@@ -57,7 +68,6 @@ class MenubarItemController extends Controller
 
         return redirect()->back()->with('success', 'Item creado');
     }
-
 
     public function update(MenubarItemRequest $request, MenubarItem $menubarItem)
     {

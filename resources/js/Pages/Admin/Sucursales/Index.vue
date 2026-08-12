@@ -3,18 +3,30 @@ import CodigoPostalAutocomplete from "@/Components/CodigoPostalAutocomplete.vue"
 import IntlTelInput from "@/Components/IntlTelInput.vue";
 import { useDireccionCodigoPostal } from "@/Composables/useDireccionCodigoPostal";
 import { useTelefonoInternacional } from "@/Composables/useTelefonoInternacional";
-import { router, useForm } from "@inertiajs/vue3";
+import { router, useForm, usePage } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { useToast } from "primevue/usetoast";
+import { useConfirm } from "primevue/useconfirm";
+import ConfirmDialog from "primevue/confirmdialog";
+import { FilterMatchMode } from "@primevue/core/api";
 import { ref } from "vue";
 
 const props = defineProps({
     sucursales: Array,
 });
 
+const page = usePage();
+const can = (permission) => page.props.auth.is_super_admin || page.props.auth.permissions?.[permission] === true;
 const toast = useToast();
+const confirm = useConfirm();
 const visible = ref(false);
 const selectedSucursal = ref(null);
+const filters = ref({
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    nombre: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    clave: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    activa: { value: true, matchMode: FilterMatchMode.EQUALS },
+});
 
 const emptySucursal = () => ({
     nombre: "",
@@ -146,8 +158,14 @@ const submit = () => {
 };
 
 const deactivate = (sucursal) => {
-    if (confirm(`Desactivar sucursal ${sucursal.nombre}?`)) {
-        router.delete(route("admin.sucursales.destroy", sucursal.id), {
+    confirm.require({
+        header: "Desactivar sucursal",
+        message: `¿Desactivar ${sucursal.nombre}? Su historial y folios se conservarán.`,
+        icon: "pi pi-exclamation-triangle",
+        rejectLabel: "Cancelar",
+        acceptLabel: "Desactivar",
+        acceptClass: "p-button-danger",
+        accept: () => router.delete(route("admin.sucursales.destroy", sucursal.id), {
             preserveScroll: true,
             only: ["sucursales"],
             onSuccess: () =>
@@ -163,8 +181,8 @@ const deactivate = (sucursal) => {
                     detail: errors.sucursal ?? "Reasigna primero sus dependencias activas.",
                     life: 6000,
                 }),
-        });
-    }
+        }),
+    });
 };
 
 const formatAddress = (domicilio) => {
@@ -192,29 +210,28 @@ const formatAddress = (domicilio) => {
         </template>
 
         <template #card-content>
+            <ConfirmDialog />
             <div class="p-4">
                 <div class="flex justify-end pb-6">
-                    <Button label="Crear sucursal" icon="pi pi-plus" @click="openCreate" />
+                    <Button v-if="can('create-sucursales')" label="Crear sucursal" icon="pi pi-plus" @click="openCreate" />
                 </div>
 
-                <DataTable :value="props.sucursales" paginator :rows="10" responsive-layout="scroll">
-                    <Column field="nombre" header="Nombre" sortable />
-                    <Column field="clave" header="Clave" sortable />
-                    <Column header="Domicilio">
+                <DataTable v-model:filters="filters" :value="props.sucursales" :global-filter-fields="['nombre', 'clave', 'email', 'telefono', 'prefijo_folio']" paginator :rows="10" striped-rows scrollable responsive-layout="scroll">
+                    <template #header><div class="flex flex-wrap items-center justify-between gap-3"><span class="text-sm text-surface-500">Se muestran activas por defecto; usa el filtro Estado para consultar el archivo.</span><IconField><InputIcon class="pi pi-search" /><InputText v-model="filters.global.value" placeholder="Buscar sucursales" /></IconField></div></template>
+                    <Column field="nombre" header="Sucursal" sortable>
+                        <template #body="{ data }"><div class="flex items-center gap-3"><Avatar icon="pi pi-building" shape="circle" /><div><div class="font-semibold">{{ data.nombre }}</div><div class="mt-1 flex gap-1"><Tag :value="data.clave" severity="contrast" /><Tag :value="data.activa ? 'Activa' : 'Inactiva'" :severity="data.activa ? 'success' : 'secondary'" /></div></div></div></template>
+                        <template #filter="{ filterModel, filterCallback }"><InputText v-model="filterModel.value" placeholder="Nombre" @input="filterCallback()" /></template>
+                    </Column>
+                    <Column field="clave" header="Clave" sortable><template #filter="{ filterModel, filterCallback }"><InputText v-model="filterModel.value" placeholder="Clave" @input="filterCallback()" /></template></Column>
+                    <Column header="Ubicación y contacto">
                         <template #body="{ data }">
-                            <span class="block max-w-96 truncate" :title="formatAddress(data.domicilio)">
-                                {{ formatAddress(data.domicilio) }}
-                            </span>
+                            <div class="max-w-80"><div class="truncate" :title="formatAddress(data.domicilio)"><i class="pi pi-map-marker mr-1 text-surface-500" />{{ formatAddress(data.domicilio) || "Sin domicilio" }}</div><small class="block truncate text-surface-500">{{ data.email || data.telefono || "Sin contacto" }}</small></div>
                         </template>
                     </Column>
-                    <Column field="prefijo_folio" header="Prefijo" />
-                    <Column field="users_count" header="Usuarios" />
-                    <Column field="clientes_count" header="Clientes" />
+                    <Column header="Operación"><template #body="{ data }"><div class="flex flex-wrap gap-1"><Chip :label="`${data.users_count} usuarios`" icon="pi pi-users" /><Chip :label="`${data.clientes_count} clientes`" icon="pi pi-id-card" /><Chip :label="`Prefijo ${data.prefijo_folio || '—'}`" /></div></template></Column>
                     <Column header="Folios">
                         <template #body="{ data }">
-                            <div class="text-sm">
-                                Sol {{ data.consecutivo_solicitud }} · Con {{ data.consecutivo_contrato }} · Cred {{ data.consecutivo_credito }} · Rec {{ data.consecutivo_recibo }}
-                            </div>
+                            <div class="grid grid-cols-2 gap-1 text-xs"><Tag :value="`SOL ${data.consecutivo_solicitud}`" severity="secondary" /><Tag :value="`CON ${data.consecutivo_contrato}`" severity="secondary" /><Tag :value="`CRE ${data.consecutivo_credito}`" severity="secondary" /><Tag :value="`REC ${data.consecutivo_recibo}`" severity="secondary" /></div>
                         </template>
                     </Column>
                     <Column field="activa" header="Estado">
@@ -223,11 +240,12 @@ const formatAddress = (domicilio) => {
                                 {{ data.activa ? "Activa" : "Inactiva" }}
                             </Tag>
                         </template>
+                        <template #filter="{ filterModel, filterCallback }"><Select v-model="filterModel.value" :options="[{ label: 'Activas', value: true }, { label: 'Inactivas', value: false }]" option-label="label" option-value="value" placeholder="Todas" show-clear @change="filterCallback()" /></template>
                     </Column>
-                    <Column header="Acciones">
+                    <Column header="Acciones" frozen align-frozen="right">
                         <template #body="{ data }">
-                            <Button icon="pi pi-pencil" text size="small" @click="openEdit(data)" />
-                            <Button v-if="data.activa" icon="pi pi-ban" text size="small" severity="danger" @click="deactivate(data)" />
+                            <Button v-if="can('update-sucursales')" :aria-label="`Editar ${data.nombre}`" icon="pi pi-pencil" text size="small" @click="openEdit(data)" />
+                            <Button v-if="can('delete-sucursales') && data.activa" :aria-label="`Desactivar ${data.nombre}`" icon="pi pi-ban" text size="small" severity="danger" @click="deactivate(data)" />
                         </template>
                     </Column>
                 </DataTable>

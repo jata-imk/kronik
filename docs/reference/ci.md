@@ -23,9 +23,48 @@ El proyecto debe tener CI real en GitHub Actions ademas de hooks locales.
 - `npm run test:unit` con Vitest, Vue Test Utils y jsdom.
 - `php artisan test`.
 
+Un segundo job `e2e` ejecuta los flujos reales en Chromium. Usa una base MariaDB
+independiente llamada exclusivamente `kronik_e2e`, construye los assets, instala
+Chromium y corre `npm run test:e2e`. Si falla, publica por siete dias el reporte
+HTML, las trazas, capturas y videos de Playwright.
+
 El build frontend corre antes de los tests porque las pruebas HTTP que renderizan Inertia necesitan `public/build/manifest.json` en el runner limpio de GitHub Actions.
 
 Vitest carga `vite.config.js` en modo `test`. En ese modo se omite `laravel-vite-plugin` para que las pruebas unitarias no intenten iniciar ni validar el servidor HMR dentro de CI.
+
+## Playwright local
+
+La primera vez se instala Chromium con:
+
+```bash
+npx playwright install chromium
+```
+
+Despues de construir el frontend, estan disponibles estos modos:
+
+```bash
+npm run build
+npm run test:e2e
+npm run test:e2e:headed
+npm run test:e2e:ui
+```
+
+El lanzador prepara la base, inicia un servidor PHP temporal en
+`http://127.0.0.1:8015`, ejecuta las pruebas en serie y detiene el servidor. Los
+recursos externos de mapas, geocodificacion, fuentes y Twemoji se sustituyen por
+respuestas deterministas; un fallo de esos proveedores no vuelve inestable la
+suite ni oculta errores internos de consola.
+
+### Proteccion de datos E2E
+
+Por defecto solo puede recrearse el archivo
+`storage/framework/testing/kronik-e2e.sqlite`. Para usar MySQL deben definirse
+las variables `E2E_DB_*` y la base debe llamarse exactamente `kronik_e2e`. El
+seeder exige simultaneamente `APP_ENV=e2e` y `E2E_DATABASE=true`; cualquier otra
+combinacion se rechaza antes de borrar o sembrar datos.
+
+Nunca se deben apuntar las variables E2E a la base de desarrollo, VPS o
+produccion. `migrate:fresh` forma parte deliberada de este entorno descartable.
 
 ## Politica
 

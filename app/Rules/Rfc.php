@@ -20,6 +20,12 @@ class Rfc implements ValidationRule
         }
 
         $rfc = mb_strtoupper(trim($value), 'UTF-8');
+
+        if (in_array($rfc, ['XAXX010101000', 'XEXX010101000'], true)) {
+            $fail('Kronik requiere el RFC propio del cliente; no se admiten RFC genéricos.');
+
+            return;
+        }
         $expectedLength = $this->tipoPersona === 'fisica' ? 13 : 12;
 
         if (! in_array($this->tipoPersona, ['fisica', 'moral'], true)) {

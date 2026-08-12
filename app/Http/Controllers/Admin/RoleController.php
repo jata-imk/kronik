@@ -4,15 +4,27 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Module;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Inertia\Inertia;
 use App\Models\Permission;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
 
-class RoleController extends Controller
+class RoleController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('permission:read roles', only: ['index', 'show']),
+            new Middleware('permission:create roles', only: ['create', 'store', 'createPermission', 'assignPermission']),
+            new Middleware('permission:update roles', only: ['edit', 'update']),
+            new Middleware('permission:delete roles', only: ['destroy']),
+        ];
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -22,7 +34,7 @@ class RoleController extends Controller
         $roles = config('permission.models.role')::where(config('permission.column_names.team_foreign_key', 'team_id'), $teamId)->with('permissions.module')->get();
 
         return Inertia::render('Admin/Roles/Index', [
-            'roles' => fn() => $roles,
+            'roles' => fn () => $roles,
             'permissions' => Permission::with('module')->get(),
             'modules' => Module::with('permissions')->get(),
         ]);
@@ -33,7 +45,7 @@ class RoleController extends Controller
      */
     public function create()
     {
-        // 
+        //
     }
 
     /**
@@ -124,6 +136,7 @@ class RoleController extends Controller
         ]);
 
         Permission::create(['name' => $fields['name'], 'guard_name' => $fields['guard_name']]);
+
         return redirect()->back()->with('success', 'Permiso creado');
     }
 
@@ -134,6 +147,7 @@ class RoleController extends Controller
         ]);
 
         $role->givePermissionTo($fields['permission_id']);
+
         return redirect()->back()->with('success', 'Permiso asignado');
     }
 }

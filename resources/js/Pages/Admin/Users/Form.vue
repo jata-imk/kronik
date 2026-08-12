@@ -10,13 +10,19 @@ const props = defineProps({
     sucursales: { type: Array, default: () => [] },
     statusOptions: { type: Array, default: () => [] },
     canManageSuperAdmin: Boolean,
+    prefill: { type: Object, default: () => ({}) },
 });
 const emit = defineEmits(["close"]);
 const toast = useToast();
 const visible = ref(true);
 
+const prefillTeam = props.teams.find((team) => team.id === Number(props.prefill.team_id));
+const prefillRole = props.roles.find((role) => role.id === Number(props.prefill.role_id) && role.team_id === prefillTeam?.id);
+const prefillBranch = props.sucursales.find((branch) => branch.id === Number(props.prefill.sucursal_id));
 const initialTeamRoles = props.user?.team_roles?.length
     ? props.user.team_roles.map((item) => ({ ...item, role_ids: [...item.role_ids] }))
+    : prefillTeam
+      ? [{ team_id: prefillTeam.id, role_ids: prefillRole ? [prefillRole.id] : [] }]
     : props.teams[0]
       ? [{ team_id: props.teams[0].id, role_ids: [] }]
       : [];
@@ -30,11 +36,13 @@ const form = useForm({
     team_roles: initialTeamRoles,
     sucursal_ids: props.user?.sucursal_ids?.length
         ? [...props.user.sucursal_ids]
-        : props.sucursales[0]
+        : prefillBranch
+          ? [prefillBranch.id]
+          : props.sucursales[0]
           ? [props.sucursales[0].id]
           : [],
     sucursal_principal_id:
-        props.user?.sucursal_principal_id ?? props.sucursales[0]?.id ?? null,
+        props.user?.sucursal_principal_id ?? prefillBranch?.id ?? props.sucursales[0]?.id ?? null,
 });
 
 watch(
@@ -74,6 +82,7 @@ const availableCurrentTeams = computed(() =>
 const availablePrincipalBranches = computed(() =>
     props.sucursales.filter((branch) => form.sucursal_ids.includes(branch.id)),
 );
+const errorMessages = computed(() => [...new Set(Object.values(form.errors).flat())]);
 
 const submit = () => {
     const options = {
@@ -86,6 +95,12 @@ const submit = () => {
             });
             emit("close");
         },
+        onError: (errors) => toast.add({
+            severity: "error",
+            summary: "No se pudo guardar el usuario",
+            detail: Object.values(errors).flat()[0] ?? "Revisa los campos marcados.",
+            life: 6000,
+        }),
     };
 
     if (props.user) {
@@ -105,8 +120,9 @@ const submit = () => {
         @hide="emit('close')"
     >
         <form class="flex flex-col gap-5" @submit.prevent="submit">
-            <Message v-if="Object.keys(form.errors).length" severity="error">
-                Revisa los campos marcados antes de guardar.
+            <Message v-if="errorMessages.length" severity="error">
+                <div class="font-medium">No se pudo guardar:</div>
+                <ul class="mt-1 list-disc pl-5"><li v-for="message in errorMessages" :key="message">{{ message }}</li></ul>
             </Message>
 
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -134,6 +150,7 @@ const submit = () => {
                 <div v-if="canManageSuperAdmin" class="flex items-center gap-2 pt-6">
                     <Checkbox v-model="form.is_super_admin" input-id="super-admin" binary />
                     <label for="super-admin">Super Admin global</label>
+                    <small v-if="form.errors.is_super_admin" class="text-red-500">{{ form.errors.is_super_admin }}</small>
                 </div>
             </div>
 
@@ -162,6 +179,7 @@ const submit = () => {
                         option-value="id"
                         display="chip"
                         placeholder="Sin roles funcionales"
+                        filter
                         fluid
                     />
                 </div>
@@ -180,6 +198,9 @@ const submit = () => {
 
             <Divider />
             <section class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <Message v-if="form.is_super_admin" severity="info" :closable="false" class="md:col-span-2">
+                    El selector del encabezado mostrará todas las sucursales activas por el acceso global. Las sucursales de este formulario son asignaciones explícitas y definen la principal inicial.
+                </Message>
                 <div>
                     <label class="mb-1 block text-sm font-medium">Sucursales asignadas *</label>
                     <MultiSelect

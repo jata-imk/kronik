@@ -45,3 +45,8 @@ test('requires the person type', function () {
     expect(rfcErrors('KDE260101AB1', null))
         ->toContain('Seleccione el tipo de persona antes de capturar el RFC.');
 });
+
+test('rejects generic national and foreign RFCs with a business message', function (string $rfc) {
+    expect(rfcErrors($rfc, 'fisica'))
+        ->toContain('Kronik requiere el RFC propio del cliente; no se admiten RFC genéricos.');
+})->with(['XAXX010101000', 'XEXX010101000']);

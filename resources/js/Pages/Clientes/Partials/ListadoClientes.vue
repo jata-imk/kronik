@@ -378,15 +378,15 @@ const exportData = async () => {
             <Column header="Acciones" :exportable="false" :frozen="true" align-frozen="right">
                 <template #body="{ data }">
                     <div class="flex gap-2">
-                        <Button icon="pi pi-folder-open" v-tooltip.top="'Expediente KYC'" class="p-button-rounded p-button-warning p-button-sm"
+                        <Button :aria-label="`Abrir expediente de ${data.nombre_completo}`" icon="pi pi-folder-open" v-tooltip.top="'Expediente KYC'" class="p-button-rounded p-button-warning p-button-sm"
                             @click="viewExpediente(data.id)" />
-                        <Button icon="pi pi-eye" class="p-button-rounded p-button-info p-button-sm"
+                        <Button :aria-label="`Ver ${data.nombre_completo}`" icon="pi pi-eye" class="p-button-rounded p-button-info p-button-sm"
                             @click="viewCliente(data.id)" />
-                        <Button v-if="data.can_update" icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-sm"
+                        <Button v-if="data.can_update" :aria-label="`Editar ${data.nombre_completo}`" icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-sm"
                             @click="editCliente(data.id)" />
-                        <Button v-if="data.can_transfer" icon="pi pi-arrow-right-arrow-left" v-tooltip.top="'Trasladar de sucursal'" text
+                        <Button v-if="data.can_transfer" :aria-label="`Trasladar ${data.nombre_completo}`" icon="pi pi-arrow-right-arrow-left" v-tooltip.top="'Trasladar de sucursal'" text
                             @click="openTransfer(data)" />
-                        <Button v-if="data.can_delete" icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm"
+                        <Button v-if="data.can_delete" :aria-label="`Eliminar ${data.nombre_completo}`" icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm"
                             @click="confirmDelete(data)" />
                     </div>
                 </template>

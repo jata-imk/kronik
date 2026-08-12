@@ -38,8 +38,24 @@ class UserController extends Controller implements HasMiddleware
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $prefill = $request->validate([
+            'team_id' => ['nullable', 'integer', 'exists:teams,id'],
+            'sucursal_id' => ['nullable', 'integer', 'exists:sucursales,id'],
+            'role_id' => ['nullable', 'integer', 'exists:roles,id'],
+            'edit_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'invite' => ['nullable', 'boolean'],
+        ]);
+        foreach (['team_id', 'sucursal_id', 'role_id', 'edit_user_id'] as $key) {
+            if (isset($prefill[$key])) {
+                $prefill[$key] = (int) $prefill[$key];
+            }
+        }
+        if (isset($prefill['invite'])) {
+            $prefill['invite'] = (bool) $prefill['invite'];
+        }
+
         return Inertia::render('Admin/Users/Index', [
             'users' => fn () => User::query()
                 ->with(['ownedTeams', 'teams', 'sucursales', 'sucursalPrincipal', 'currentSucursal'])
@@ -58,6 +74,7 @@ class UserController extends Controller implements HasMiddleware
                 'label' => $status->label(),
             ]),
             'canManageSuperAdmin' => (bool) Auth::user()->is_super_admin,
+            'prefill' => $prefill,
         ]);
     }
 
@@ -169,6 +186,10 @@ class UserController extends Controller implements HasMiddleware
             'sucursal_principal_id' => $user->sucursal_principal_id,
             'current_sucursal_id' => $user->current_sucursal_id,
             'sucursal_ids' => $user->sucursales->pluck('id')->all(),
+            'team_names' => $user->allTeams()->pluck('name')->values()->all(),
+            'sucursal_names' => $user->sucursales->pluck('nombre')->values()->all(),
+            'team_search' => $user->allTeams()->pluck('name')->join(' '),
+            'sucursal_search' => $user->sucursales->pluck('nombre')->join(' '),
             'team_roles' => $user->allTeams()->map(fn (Team $team) => [
                 'team_id' => $team->id,
                 'role_ids' => $teamRoles->get($team->id, collect())->pluck('role_id')->all(),
@@ -202,7 +223,7 @@ class UserController extends Controller implements HasMiddleware
 
         return response()->streamDownload(function () use ($filters) {
             $stream = fopen('php://output', 'w');
-            fputcsv($stream, ['ID', 'Fecha', 'Evento', 'Descripción', 'Usuario', 'Email', 'Sujeto', 'ID sujeto', 'IP', 'Propiedades']);
+            fputcsv($stream, ['ID', 'Fecha', 'Evento', 'Descripción', 'Usuario', 'Email', 'Equipo', 'Sucursal', 'Sujeto', 'ID sujeto', 'IP', 'Propiedades']);
 
             $this->activityQuery($filters)->cursor()->each(function ($activity) use ($stream) {
                 $payload = $this->activityPayload($activity);
@@ -214,6 +235,8 @@ class UserController extends Controller implements HasMiddleware
                     $payload['description'],
                     $payload['causer']['name'],
                     $payload['causer']['email'],
+                    $payload['team']['name'],
+                    $payload['sucursal']['name'],
                     $payload['subject']['type'],
                     $payload['subject']['id'],
                     $payload['ip'],
@@ -293,7 +316,7 @@ class UserController extends Controller implements HasMiddleware
     private function scopedActivityQuery(): Builder
     {
         $activityModel = config('activitylog.activity_model');
-        $query = $activityModel::query()->with('causer');
+        $query = $activityModel::query()->with(['causer', 'team:id,name', 'sucursal:id,nombre,clave']);
         $user = Auth::user();
 
         if ($user?->is_super_admin) {
@@ -336,6 +359,15 @@ class UserController extends Controller implements HasMiddleware
             'subject' => [
                 'type' => $activity->subject_type ? class_basename($activity->subject_type) : '—',
                 'id' => $activity->subject_id,
+            ],
+            'team' => [
+                'id' => $activity->team_id,
+                'name' => $activity->team?->name ?? 'Sin equipo',
+            ],
+            'sucursal' => [
+                'id' => $activity->sucursal_id,
+                'clave' => $activity->sucursal?->clave,
+                'name' => $activity->sucursal?->nombre ?? 'Sin sucursal',
             ],
             'ip' => $properties['ip'] ?? null,
             'properties' => $properties,

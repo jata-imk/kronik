@@ -2,11 +2,22 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Activitylog\Models\Activity as BaseActivity;
 
 class Activity extends BaseActivity
 {
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
+    }
+
+    public function sucursal(): BelongsTo
+    {
+        return $this->belongsTo(Sucursal::class);
+    }
+
     protected static function booted(): void
     {
         static::creating(function (self $activity): void {

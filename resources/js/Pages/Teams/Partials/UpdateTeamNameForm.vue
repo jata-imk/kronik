@@ -14,7 +14,7 @@ const form = useForm({
 });
 
 const updateTeamName = () => {
-    form.put(route("teams.update", props.team), {
+    form.put(route("admin.teams.update", props.team.id), {
         errorBag: "updateTeamName",
         preserveScroll: true,
     });

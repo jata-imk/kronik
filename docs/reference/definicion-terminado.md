@@ -14,6 +14,7 @@ Una tarea no se marca como completada si no tiene pruebas aplicables pasando y d
 - Todos los errores visibles usan mensajes claros en espanol; ninguna clave `validation.*` llega a la interfaz.
 - La tarea indica explicitamente si no requiere tests automatizados y por que.
 - La suite completa no debe quedar roja por pruebas existentes si el cambio agrega CI que la va a ejecutar.
+- Los E2E deben usar exclusivamente la base aislada y no depender de servicios externos para producir un resultado determinista.
 
 ## Matriz de Pruebas
 

@@ -104,6 +104,7 @@ watch(
                 v-model="form.rfc" :disabled="readOnly"
                 :maxlength="form.tipo_persona === 'fisica' ? 13 : 12"
                 fluid :invalid="!!formErrors.rfc" />
+            <small class="mt-1 block text-surface-500">Captura el RFC propio del cliente. No se admiten RFC genéricos nacionales ni extranjeros.</small>
             <Message v-if="formErrors.rfc" severity="error" size="small">
                 {{ formErrors.rfc }}
             </Message>

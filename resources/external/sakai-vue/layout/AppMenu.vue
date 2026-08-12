@@ -1,11 +1,12 @@
 <script setup>
-import { ref } from "vue";
+import { computed } from "vue";
 import { usePage } from "@inertiajs/vue3";
 
 import AppMenuItem from "./AppMenuItem.vue";
 
 const page = usePage();
-const model = ref([
+const can = (permission) => page.props.auth.permissions?.[permission] === true;
+const model = computed(() => [
     {
         label: "Inicio",
         items: [
@@ -24,7 +25,7 @@ const model = ref([
     {
         label: "Módulos",
         items: [
-            {
+            can("read-clientes") && {
                 label: "CRM",
                 icon: "pi pi-fw pi-users",
                 items: [
@@ -40,7 +41,7 @@ const model = ref([
                     },
                 ],
             },
-        ],
+        ].filter(Boolean),
     },
     {
         label: "Configuraciones",
@@ -56,9 +57,7 @@ const model = ref([
                 icon: "pi pi-fw pi-user-edit",
                 to: "profile.show",
             },
-            page.props.auth.user.roles.find(
-                (r) => r.name === "Super Admin",
-            ) && {
+            (page.props.auth.is_super_admin || can("access-admin")) && {
                 label: "Panel de superusuario",
                 icon: "pi pi-fw pi-cog",
                 to: "admin.dashboard",

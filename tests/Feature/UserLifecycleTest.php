@@ -5,6 +5,7 @@ use App\Models\Sucursal;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Notification;
+use Inertia\Testing\AssertableInertia as Assert;
 use Spatie\Permission\Models\Role;
 
 test('global administrator creates a pending user with team and branch assignments', function () {
@@ -51,4 +52,57 @@ test('a global administrator deactivates users without deleting their records', 
 
     expect($target->fresh()->status)->toBe(UserStatus::Inactive);
     $this->assertDatabaseHas('users', ['id' => $target->id]);
+});
+
+test('team hub links can prefill the central invitation form', function () {
+    $admin = actingAsSuperAdmin();
+    $role = Role::create(['name' => 'Promotor', 'guard_name' => 'web', 'team_id' => $admin->current_team_id]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.users.index', [
+            'invite' => 1,
+            'team_id' => $admin->current_team_id,
+            'sucursal_id' => $admin->current_sucursal_id,
+            'role_id' => $role->id,
+        ]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Users/Index')
+            ->where('prefill.invite', true)
+            ->where('prefill.team_id', $admin->current_team_id)
+            ->where('prefill.sucursal_id', $admin->current_sucursal_id)
+            ->where('prefill.role_id', $role->id));
+});
+
+test('a global administrator cannot remove their own global access', function () {
+    $admin = actingAsSuperAdmin();
+
+    $this->actingAs($admin)
+        ->put(route('admin.users.update', $admin), [
+            'name' => $admin->name,
+            'email' => $admin->email,
+            'status' => 'active',
+            'is_super_admin' => false,
+            'current_team_id' => $admin->current_team_id,
+            'team_roles' => [['team_id' => $admin->current_team_id, 'role_ids' => []]],
+            'sucursal_ids' => [$admin->current_sucursal_id],
+            'sucursal_principal_id' => $admin->current_sucursal_id,
+        ])
+        ->assertSessionHasErrors([
+            'is_super_admin' => 'No puedes retirar tu propio acceso de Super Admin.',
+        ]);
+
+    expect($admin->fresh()->is_super_admin)->toBeTrue();
+});
+
+test('an administrator cannot deactivate their own account', function () {
+    $admin = actingAsSuperAdmin();
+
+    $this->actingAs($admin)
+        ->delete(route('admin.users.destroy', $admin))
+        ->assertSessionHasErrors([
+            'user' => 'No puedes desactivar tu propia cuenta.',
+        ]);
+
+    expect($admin->fresh()->status)->toBe(\App\Enums\UserStatus::Active);
 });

@@ -9,6 +9,10 @@ class GeocodingService implements GeocodingServiceInterface
 {
     public function search(string $query): ?array
     {
+        if (! config('services.geocoding.enabled')) {
+            return null;
+        }
+
         $response = Http::withOptions([
             'verify' => false,
         ])->withHeaders([
@@ -22,7 +26,7 @@ class GeocodingService implements GeocodingServiceInterface
             'q' => $query,
         ]);
 
-        if (!$response->ok()) {
+        if (! $response->ok()) {
             return null;
         }
 

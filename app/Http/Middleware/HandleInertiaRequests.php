@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Module;
+use App\Models\Permission;
 use App\Models\Sucursal;
 use App\Services\MenubarService;
 use Illuminate\Http\Request;
@@ -60,9 +61,10 @@ class HandleInertiaRequests extends Middleware
             return parent::share($request);
         }
 
-        $roleModel = config('permission.models.role');
-        $teamsKey = config('permission.column_names.team_foreign_key', 'team_id');
-        $teamRolesPermissions = $roleModel::where($teamsKey, $request->user()->current_team_id)->with('permissions')->get()->pluck('permissions')->flatten();
+        // Evaluate the complete permission catalogue through Gate. Limiting the
+        // catalogue to roles in the current team made global administrators lose
+        // navigation entries after switching teams.
+        $permissions = Permission::query()->orderBy('name')->get();
 
         return array_merge(parent::share($request), [
             'menubarItems' => function () use ($request) {
@@ -98,7 +100,7 @@ class HandleInertiaRequests extends Middleware
                 Inertia::getShared()['auth'] ?? [],
                 [
                     'permissions' => [
-                        ...$teamRolesPermissions->map(function ($permission) use ($request) {
+                        ...$permissions->map(function ($permission) use ($request) {
                             return [
                                 'key' => str_replace(' ', '-', $permission->name),
                                 'value' => Gate::check($permission->name, $request->user()),

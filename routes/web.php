@@ -97,7 +97,7 @@ Route::middleware([
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', function () {
             return Inertia::render('Admin/Dashboard');
-        })->name('dashboard');
+        })->middleware('permission:access admin')->name('dashboard');
 
         Route::get('users/activity', [UserController::class, 'usersActivity'])->name('users.activity');
         Route::get('users/activity/export', [UserController::class, 'exportActivity'])->name('users.activity.export');
