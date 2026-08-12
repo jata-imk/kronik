@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Cliente extends Model
 {
@@ -28,6 +29,7 @@ class Cliente extends Model
         'ingresos_mensuales',
         'egresos_mensuales',
         'origen_recursos',
+        'sucursal_id',
     ];
 
     protected $casts = [
@@ -39,6 +41,11 @@ class Cliente extends Model
     public function paisNacimiento()
     {
         return $this->belongsTo(Pais::class, 'pais_nacimiento_id');
+    }
+
+    public function sucursal(): BelongsTo
+    {
+        return $this->belongsTo(Sucursal::class);
     }
 
     public function datosFiscales()

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Actions\Fortify\EnsureUserIsActive;
 use App\Actions\Jetstream\AddTeamMember;
 use App\Actions\Jetstream\CreateTeam;
 use App\Actions\Jetstream\DeleteTeam;
@@ -65,6 +66,7 @@ class JetstreamServiceProvider extends ServiceProvider
                 config('fortify.lowercase_usernames') ? CanonicalizeUsername::class : null,
                 Features::enabled(Features::twoFactorAuthentication()) ? RedirectIfTwoFactorAuthenticatable::class : null,
                 AttemptToAuthenticate::class,
+                EnsureUserIsActive::class,
                 function (Request $request, $next) {
                     $user = $request->user();
 

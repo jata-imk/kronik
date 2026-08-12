@@ -8,6 +8,7 @@ Documentacion interna del proyecto organizada con Diataxis.
 - [How-to](how-to/index.md): pasos operativos concretos.
 - [Referencia](reference/index.md): comandos, seeders, variables, CI y reglas exactas.
 - [Explicacion](explanation/index.md): decisiones tecnicas y contexto.
+- [Agent Notes](agent-notes/index.md): contexto operativo y entregas por backlog.
 - [Fuentes](fuentes/index.md): lecturas regulatorias y financieras.
 - [TODOs](todos/index.md): backlog funcional del producto.
 

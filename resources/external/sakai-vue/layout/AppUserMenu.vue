@@ -2,6 +2,7 @@
 import { markRaw, ref } from "vue";
 import { Link, usePage, router } from "@inertiajs/vue3";
 import TeamItemLink from "./UserAndTeamsConfigurator/TeamItemLink.vue";
+import SucursalItemLink from "./UserAndTeamsConfigurator/SucursalItemLink.vue";
 
 const toggleTeamsMenu = (event) => {
     teamMenu.value.toggle(event);
@@ -22,8 +23,17 @@ const switchToTeam = (team) => {
     );
 };
 
+const switchToSucursal = (sucursal) => {
+    router.put(
+        route("current-sucursal.update"),
+        { sucursal_id: sucursal.id },
+        { preserveState: false },
+    );
+};
+
 const page = usePage();
 const teamMenu = ref();
+const branchMenu = ref();
 const teamMenuItems = ref([
     {
         label: "Manejo de equipos",
@@ -72,6 +82,25 @@ if (page.props.auth.user.all_teams.length > 1) {
     }
 }
 
+const branchMenuItems = ref([
+    {
+        label: "Cambiar de sucursal",
+        items: (page.props.auth.user.sucursales ?? []).map((sucursal) => ({
+            label: sucursal.nombre,
+            customElements: [
+                {
+                    component: markRaw(SucursalItemLink),
+                    props: { sucursal, switchToSucursal },
+                },
+            ],
+        })),
+    },
+]);
+
+const toggleBranchMenu = (event) => {
+    branchMenu.value.toggle(event);
+};
+
 const userMenu = ref();
 const userMenuItems = ref([
     {
@@ -110,6 +139,30 @@ const userMenuItems = ref([
 
 
 <template>
+    <div v-if="$page.props.auth.user.current_sucursal" class="layout-menu-desktop-prime-vue">
+        <button
+            type="button"
+            class="inline-flex items-center rounded-md border border-transparent bg-surface-card px-2 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-200"
+            @click="toggleBranchMenu"
+        >
+            <i class="pi pi-map-marker mr-2" />
+            {{ $page.props.auth.user.current_sucursal.nombre }}
+            <i class="pi pi-angle-down ml-2" />
+        </button>
+        <Menu ref="branchMenu" :popup="true" :model="branchMenuItems" class="w-full md:w-64">
+            <template #submenulabel="{ item }">
+                <span class="font-bold text-primary">{{ item.label }}</span>
+            </template>
+            <template #item="{ item }">
+                <component
+                    v-if="item.customElements"
+                    :is="item.customElements[0].component"
+                    v-bind="item.customElements[0].props"
+                />
+            </template>
+        </Menu>
+    </div>
+
     <!-- Teams Dropdown -->
     <div v-if="$page.props.jetstream.hasTeamFeatures" class="layout-menu-desktop-prime-vue">
         <button type="button"
@@ -171,6 +224,19 @@ const userMenuItems = ref([
     </div>
 
     <div class="layout-menu-prime-vue">
+        <Menu v-if="$page.props.auth.user.current_sucursal" :model="branchMenuItems" style="border: none; border-radius: 0">
+            <template #submenulabel="{ item }">
+                <span class="font-bold text-primary">{{ item.label }}</span>
+            </template>
+            <template #item="{ item }">
+                <component
+                    v-if="item.customElements"
+                    :is="item.customElements[0].component"
+                    v-bind="item.customElements[0].props"
+                />
+            </template>
+        </Menu>
+        <Divider v-if="$page.props.auth.user.current_sucursal" />
         <Menu :model="teamMenuItems" style="border: none; border-radius: 0;">
         <template #submenulabel="{ item }">
             <span class="text-primary font-bold">{{ item.label }}</span>

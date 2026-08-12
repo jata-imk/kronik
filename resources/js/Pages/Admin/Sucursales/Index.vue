@@ -3,18 +3,87 @@ import CodigoPostalAutocomplete from "@/Components/CodigoPostalAutocomplete.vue"
 import IntlTelInput from "@/Components/IntlTelInput.vue";
 import { useDireccionCodigoPostal } from "@/Composables/useDireccionCodigoPostal";
 import { useTelefonoInternacional } from "@/Composables/useTelefonoInternacional";
-import { router, useForm } from "@inertiajs/vue3";
+import { router, useForm, usePage } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { useToast } from "primevue/usetoast";
-import { ref } from "vue";
+import { useConfirm } from "primevue/useconfirm";
+import ConfirmDialog from "primevue/confirmdialog";
+import { FilterMatchMode } from "@primevue/core/api";
+import { computed, ref } from "vue";
+import TruncatedText from "@/Components/DataTable/TruncatedText.vue";
 
 const props = defineProps({
     sucursales: Array,
 });
 
+const page = usePage();
+const can = (permission) =>
+    page.props.auth.is_super_admin ||
+    page.props.auth.permissions?.[permission] === true;
 const toast = useToast();
+const confirm = useConfirm();
 const visible = ref(false);
 const selectedSucursal = ref(null);
+const formatAddress = (domicilio) => {
+    if (!domicilio) return "";
+    return [
+        domicilio.calle,
+        domicilio.numero_exterior,
+        domicilio.colonia,
+        domicilio.municipio,
+        domicilio.estado,
+        domicilio.codigo_postal,
+    ]
+        .filter(Boolean)
+        .join(", ");
+};
+const formatAddressLines = (domicilio) => {
+    if (!domicilio) return ["Sin domicilio", "—", "—"];
+
+    return [
+        [domicilio.calle, domicilio.numero_exterior, domicilio.numero_interior]
+            .filter(Boolean)
+            .join(" ") || "Sin calle",
+        [
+            domicilio.colonia,
+            domicilio.codigo_postal ? `CP ${domicilio.codigo_postal}` : null,
+        ]
+            .filter(Boolean)
+            .join(" · ") || "Sin colonia ni CP",
+        [domicilio.municipio, domicilio.estado].filter(Boolean).join(", ") ||
+            "Sin municipio ni estado",
+    ];
+};
+const sucursales = computed(() =>
+    (props.sucursales ?? []).map((sucursal) => {
+        const addressLines = formatAddressLines(sucursal.domicilio);
+
+        return {
+            ...sucursal,
+            sucursal_search: `${sucursal.nombre} ${sucursal.telefono || ""} ${sucursal.email || ""}`,
+            domicilio_display:
+                formatAddress(sucursal.domicilio) || "Sin domicilio",
+            domicilio_lines: addressLines,
+            horario_semana_display:
+                sucursal.horario?.lunes_viernes || "Sin horario entre semana",
+            horario_sabado_display: sucursal.horario?.sabado || "—",
+            horario_domingo_display: sucursal.horario?.domingo || "—",
+            horario_search:
+                Object.values(sucursal.horario ?? {}).join(" ") ||
+                "Sin horario",
+            summary_search: `${sucursal.users_count} usuarios ${sucursal.clientes_count} clientes`,
+            estado_label: sucursal.activa ? "Activa" : "Inactiva",
+        };
+    }),
+);
+const filters = ref({
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    sucursal_search: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    domicilio_display: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    horario_search: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    summary_search: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    estado_label: { value: "Activa", matchMode: FilterMatchMode.EQUALS },
+});
 
 const emptySucursal = () => ({
     nombre: "",
@@ -146,32 +215,34 @@ const submit = () => {
 };
 
 const deactivate = (sucursal) => {
-    if (confirm(`Desactivar sucursal ${sucursal.nombre}?`)) {
-        router.delete(route("admin.sucursales.destroy", sucursal.id), {
-            preserveScroll: true,
-            only: ["sucursales"],
-            onSuccess: () =>
-                toast.add({
-                    severity: "success",
-                    summary: "Sucursal desactivada",
-                    life: 3000,
-                }),
-        });
-    }
-};
-
-const formatAddress = (domicilio) => {
-    if (!domicilio) return "";
-    return [
-        domicilio.calle,
-        domicilio.numero_exterior,
-        domicilio.colonia,
-        domicilio.municipio,
-        domicilio.estado,
-        domicilio.codigo_postal,
-    ]
-        .filter(Boolean)
-        .join(", ");
+    confirm.require({
+        header: "Desactivar sucursal",
+        message: `¿Desactivar ${sucursal.nombre}? Su historial y folios se conservarán.`,
+        icon: "pi pi-exclamation-triangle",
+        rejectLabel: "Cancelar",
+        acceptLabel: "Desactivar",
+        acceptClass: "p-button-danger",
+        accept: () =>
+            router.delete(route("admin.sucursales.destroy", sucursal.id), {
+                preserveScroll: true,
+                only: ["sucursales"],
+                onSuccess: () =>
+                    toast.add({
+                        severity: "success",
+                        summary: "Sucursal desactivada",
+                        life: 3000,
+                    }),
+                onError: (errors) =>
+                    toast.add({
+                        severity: "error",
+                        summary: "No se puede desactivar",
+                        detail:
+                            errors.sucursal ??
+                            "Reasigna primero sus dependencias activas.",
+                        life: 6000,
+                    }),
+            }),
+    });
 };
 </script>
 
@@ -185,40 +256,39 @@ const formatAddress = (domicilio) => {
         </template>
 
         <template #card-content>
-            <div class="p-4">
+            <ConfirmDialog />
+            <div>
                 <div class="flex justify-end pb-6">
-                    <Button label="Crear sucursal" icon="pi pi-plus" @click="openCreate" />
+                    <Button v-if="can('create-sucursales')" label="Crear sucursal" icon="pi pi-plus" @click="openCreate" />
                 </div>
 
-                <DataTable :value="props.sucursales" paginator :rows="10" responsive-layout="scroll">
-                    <Column field="nombre" header="Nombre" sortable />
-                    <Column field="clave" header="Clave" sortable />
-                    <Column header="Domicilio">
+                <DataTable v-model:filters="filters" :value="sucursales" :global-filter-fields="['nombre', 'domicilio_display', 'email', 'telefono', 'horario_search', 'summary_search', 'estado_label']" filter-display="row" paginator :rows="10" striped-rows scrollable responsive-layout="scroll" :table-style="{ tableLayout: 'fixed', minWidth: '60rem' }">
+                    <template #header><div class="flex flex-wrap items-center justify-between gap-3"><span class="text-sm text-surface-500">Se muestran activas por defecto; usa el filtro Estado para consultar el archivo.</span><div class="flex flex-wrap gap-2"><Select v-model="filters.estado_label.value" aria-label="Filtrar sucursales por estado" :options="['Activa', 'Inactiva']" placeholder="Todos los estados" show-clear class="w-44" /><IconField><InputIcon class="pi pi-search" /><InputText v-model="filters.global.value" placeholder="Buscar sucursales" /></IconField></div></div></template>
+                    <Column field="sucursal_search" header="Sucursal" sortable :show-filter-menu="false" style="width: 26%">
                         <template #body="{ data }">
-                            <span class="block max-w-96 truncate" :title="formatAddress(data.domicilio)">
-                                {{ formatAddress(data.domicilio) }}
-                            </span>
-                        </template>
-                    </Column>
-                    <Column field="prefijo_folio" header="Prefijo" />
-                    <Column header="Folios">
-                        <template #body="{ data }">
-                            <div class="text-sm">
-                                Sol {{ data.consecutivo_solicitud }} · Con {{ data.consecutivo_contrato }} · Cred {{ data.consecutivo_credito }} · Rec {{ data.consecutivo_recibo }}
+                            <div class="min-w-0 max-w-56">
+                                <div class="flex min-w-0 items-center gap-2"><span class="size-2.5 shrink-0 rounded-full" :class="data.activa ? 'bg-green-500' : 'bg-surface-400'" :aria-label="`Sucursal ${data.estado_label.toLowerCase()}`" /><TruncatedText class="font-semibold" :value="data.nombre" max-width="12rem" /></div>
+                                <TruncatedText class="text-sm text-surface-500" :value="data.telefono || 'Sin teléfono'" max-width="14rem" />
+                                <TruncatedText class="text-sm text-surface-500" :value="data.email || 'Sin correo'" max-width="14rem" />
                             </div>
                         </template>
+                        <template #filter="{ filterModel, filterCallback }"><InputText v-model="filterModel.value" class="w-full" placeholder="Nombre, teléfono o correo" @input="filterCallback()" /></template>
                     </Column>
-                    <Column field="activa" header="Estado">
-                        <template #body="{ data }">
-                            <Tag :severity="data.activa ? 'success' : 'secondary'">
-                                {{ data.activa ? "Activa" : "Inactiva" }}
-                            </Tag>
-                        </template>
+                    <Column field="domicilio_display" header="Domicilio" :show-filter-menu="false" style="width: 25%"><template #body="{ data }"><div class="max-w-60"><TruncatedText v-for="line in data.domicilio_lines" :key="line" class="text-sm" :value="line" max-width="15rem" /></div></template><template #filter="{ filterModel, filterCallback }"><InputText v-model="filterModel.value" class="w-full" placeholder="Domicilio" @input="filterCallback()" /></template></Column>
+                    <Column field="horario_search" header="Horario" :show-filter-menu="false" style="width: 22%">
+                        <template #body="{ data }"><div class="max-w-52 text-sm"><TruncatedText class="text-sm" :value="`L–V ${data.horario_semana_display}`" max-width="13rem" /><TruncatedText class="text-sm" :value="`Sáb ${data.horario_sabado_display}`" max-width="13rem" /><TruncatedText class="text-sm" :value="`Dom ${data.horario_domingo_display}`" max-width="13rem" /></div></template>
+                        <template #filter="{ filterModel, filterCallback }"><InputText v-model="filterModel.value" class="w-full" placeholder="Horario" @input="filterCallback()" /></template>
                     </Column>
-                    <Column header="Acciones">
+                    <Column field="summary_search" header="Resumen" :show-filter-menu="false" style="width: 20%">
+                        <template #body="{ data }"><div class="flex flex-nowrap gap-2 whitespace-nowrap"><Chip :label="`${data.users_count} usuarios`" icon="pi pi-users" /><Chip :label="`${data.clientes_count} clientes`" icon="pi pi-id-card" /></div></template>
+                        <template #filter="{ filterModel, filterCallback }"><InputText v-model="filterModel.value" class="w-full" placeholder="Resumen" @input="filterCallback()" /></template>
+                    </Column>
+                    <Column header="Acciones" :frozen="true" align-frozen="right" style="width: 7%">
                         <template #body="{ data }">
-                            <Button icon="pi pi-pencil" text size="small" @click="openEdit(data)" />
-                            <Button v-if="data.activa" icon="pi pi-ban" text size="small" severity="danger" @click="deactivate(data)" />
+                            <div class="flex flex-nowrap items-center gap-1 whitespace-nowrap">
+                                <Button v-if="can('update-sucursales')" :aria-label="`Editar ${data.nombre}`" icon="pi pi-pencil" text size="small" @click="openEdit(data)" />
+                                <Button v-if="can('delete-sucursales') && data.activa" :aria-label="`Desactivar ${data.nombre}`" icon="pi pi-ban" text size="small" severity="danger" @click="deactivate(data)" />
+                            </div>
                         </template>
                     </Column>
                 </DataTable>

@@ -28,6 +28,7 @@ class ClienteDocumentoController extends Controller
         ClienteDocumento $documento,
         ClienteDocumentoService $service,
     ) {
+        Gate::authorize('update', $cliente);
         $this->ensureOwnership($cliente, $documento);
         $service->changeStatus(
             $documento,

@@ -3,7 +3,9 @@
 use App\Models\User;
 
 test('teams can be created', function () {
-    $this->actingAs($user = User::factory()->withPersonalTeam()->create());
+    $user = User::factory()->withPersonalTeam()->create();
+    $user->forceFill(['is_super_admin' => true])->save();
+    $this->actingAs($user);
 
     $this->post('/teams', [
         'name' => 'Test Team',

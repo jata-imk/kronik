@@ -87,7 +87,9 @@ Permisos:
 - `update sucursales`
 - `delete sucursales`
 
-`Super Admin` conserva acceso implicito por `Gate::before`.
+Super Admin global conserva acceso implicito mediante `users.is_super_admin` y `Gate::before`.
+
+Las dependencias y reglas de desactivacion se documentan en [Usuarios, equipos y sucursales](usuarios-equipos-sucursales.md).
 
 ## Auditoria
 

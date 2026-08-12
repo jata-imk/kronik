@@ -3,6 +3,7 @@ import { router } from "@inertiajs/vue3";
 import { FilterMatchMode } from "@primevue/core/api";
 import { useToast } from "primevue/usetoast";
 import { computed, ref } from "vue";
+import TruncatedText from "@/Components/DataTable/TruncatedText.vue";
 
 // Props para recibir los datos del controlador
 const props = defineProps({
@@ -14,6 +15,8 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    filters: { type: Object, default: () => ({ scope: "current" }) },
+    sucursales: { type: Array, default: () => [] },
 });
 
 const toast = useToast();
@@ -23,6 +26,9 @@ const deleteProcessing = ref(false);
 const deleteDialog = ref(false);
 const importDialog = ref(false);
 const clienteSeleccionado = ref(null);
+const transferDialog = ref(false);
+const targetSucursalId = ref(null);
+const transferProcessing = ref(false);
 
 // Inicialización de filtros
 const filters = ref({
@@ -37,6 +43,7 @@ const filters = ref({
     },
     sexo: { value: null, matchMode: FilterMatchMode.EQUALS },
     "datos_fiscales.rfc": { value: null, matchMode: FilterMatchMode.CONTAINS },
+    "sucursal.nombre": { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
 
 /**
@@ -111,6 +118,42 @@ const viewExpediente = (id) => {
 const confirmDelete = (cliente) => {
     clienteSeleccionado.value = cliente;
     deleteDialog.value = true;
+};
+
+const changeScope = (scope) => {
+    router.get(
+        route("clientes.index"),
+        { scope },
+        { preserveState: true, replace: true },
+    );
+};
+
+const openTransfer = (cliente) => {
+    clienteSeleccionado.value = cliente;
+    targetSucursalId.value = null;
+    transferDialog.value = true;
+};
+
+const transferCliente = () => {
+    transferProcessing.value = true;
+    router.patch(
+        route("clientes.sucursal.transfer", clienteSeleccionado.value.id),
+        { sucursal_id: targetSucursalId.value },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                transferDialog.value = false;
+                toast.add({
+                    severity: "success",
+                    summary: "Cliente trasladado",
+                    life: 3000,
+                });
+            },
+            onFinish: () => {
+                transferProcessing.value = false;
+            },
+        },
+    );
 };
 
 const deleteCliente = () => {
@@ -210,6 +253,13 @@ const exportData = async () => {
                 <Button v-if="can.create" label="Nuevo Cliente" icon="pi pi-plus" class="p-button-success" @click="navigateToCreate" />
                 <Button v-if="can.create" label="Importar" icon="pi pi-upload" class="p-button-info" @click="showImportDialog" />
                 <Button label="Exportar" icon="pi pi-download" class="p-button-help" @click="exportData" />
+                <SelectButton
+                    :model-value="filters.scope"
+                    :options="[{ label: 'Sucursal actual', value: 'current' }, { label: 'Todas', value: 'all' }]"
+                    option-label="label"
+                    option-value="value"
+                    @update:model-value="changeScope"
+                />
             </div>
         </div>
 
@@ -219,7 +269,7 @@ const exportData = async () => {
             filter-display="row"
             :global-filter-fields="[
                 'id', 'nombre_completo', 'email', 'telefono', 
-                'pais_nacimiento.nombre_es', 'sexo', 'datos_fiscales.rfc'
+                'pais_nacimiento.nombre_es', 'sexo', 'datos_fiscales.rfc', 'sucursal.nombre'
             ]"
             :paginator="true"
             :rows="10"
@@ -252,11 +302,10 @@ const exportData = async () => {
 
             <Column field="nombre_completo" header="Nombre" sortable>
                 <template #body="{ data }">
-                    <div class="flex items-center gap-2">
-                        <span>{{ data.nombre_completo }}</span>
+                    <div class="flex max-w-80 min-w-0 items-center gap-2 whitespace-nowrap">
+                        <TruncatedText class="min-w-0 flex-1" :value="data.nombre_completo" max-width="18rem" />
                         <span
                             v-if="data.relaciones_count"
-                            v-tooltip.top="`${data.relaciones_count} relación${data.relaciones_count === 1 ? '' : 'es'}`"
                             class="relationship-count"
                             :aria-label="`${data.relaciones_count} relación${data.relaciones_count === 1 ? '' : 'es'}`"
                         >
@@ -300,9 +349,9 @@ const exportData = async () => {
 
             <Column field="pais_nacimiento.nombre_es" header="País" sortable>
                 <template #body="{ data }">
-                    <div class="flex align-items-center gap-2">
-                        <span v-twemoji >{{ data.pais_nacimiento?.emoji }}</span>
-                        <span>{{ data.pais_nacimiento?.nombre_es }}</span>
+                    <div class="flex max-w-56 min-w-0 items-center gap-2 whitespace-nowrap">
+                        <span v-twemoji class="shrink-0">{{ data.pais_nacimiento?.emoji }}</span>
+                        <TruncatedText class="min-w-0" :value="data.pais_nacimiento?.nombre_es" max-width="11rem" />
                     </div>
                 </template>
                 <template #filter="{ filterModel, filterCallback }">
@@ -315,6 +364,20 @@ const exportData = async () => {
                 <template #filter="{ filterModel, filterCallback }">
                     <InputText v-model="filterModel.value" type="text" @input="filterCallback()" class="p-column-filter"
                         placeholder="Buscar por RFC" />
+                </template>
+            </Column>
+
+            <Column field="sucursal.nombre" header="Sucursal" sortable>
+                <template #body="{ data }">
+                    <Tag
+                        :value="data.sucursal?.nombre ?? 'Sin asignar'"
+                        severity="secondary"
+                        class="max-w-40 whitespace-nowrap"
+                        :pt="{ label: { class: 'block truncate' } }"
+                    />
+                </template>
+                <template #filter="{ filterModel, filterCallback }">
+                    <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Buscar por sucursal" @input="filterCallback()" />
                 </template>
             </Column>
 
@@ -334,13 +397,15 @@ const exportData = async () => {
             <Column header="Acciones" :exportable="false" :frozen="true" align-frozen="right">
                 <template #body="{ data }">
                     <div class="flex gap-2">
-                        <Button icon="pi pi-folder-open" v-tooltip.top="'Expediente KYC'" class="p-button-rounded p-button-warning p-button-sm"
+                        <Button :aria-label="`Abrir expediente de ${data.nombre_completo}`" icon="pi pi-folder-open" class="p-button-rounded p-button-warning p-button-sm"
                             @click="viewExpediente(data.id)" />
-                        <Button icon="pi pi-eye" class="p-button-rounded p-button-info p-button-sm"
+                        <Button :aria-label="`Ver ${data.nombre_completo}`" icon="pi pi-eye" class="p-button-rounded p-button-info p-button-sm"
                             @click="viewCliente(data.id)" />
-                        <Button v-if="can.update" icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-sm"
+                        <Button v-if="data.can_update" :aria-label="`Editar ${data.nombre_completo}`" icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-sm"
                             @click="editCliente(data.id)" />
-                        <Button v-if="can.delete" icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm"
+                        <Button v-if="data.can_transfer" :aria-label="`Trasladar ${data.nombre_completo}`" icon="pi pi-arrow-right-arrow-left" text
+                            @click="openTransfer(data)" />
+                        <Button v-if="data.can_delete" :aria-label="`Eliminar ${data.nombre_completo}`" icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm"
                             @click="confirmDelete(data)" />
                     </div>
                 </template>
@@ -357,6 +422,17 @@ const exportData = async () => {
             <template #footer>
                 <Button label="No" icon="pi pi-times" class="p-button-text" @click="deleteDialog = false" />
                 <Button label="Sí" icon="pi pi-check" class="p-button-danger" :loading="deleteProcessing" :disabled="deleteProcessing" @click="deleteCliente" />
+            </template>
+        </Dialog>
+
+        <Dialog v-model:visible="transferDialog" header="Trasladar cliente" :style="{ width: '420px' }" modal>
+            <div class="flex flex-col gap-3">
+                <p>Selecciona la nueva sucursal responsable de <strong>{{ clienteSeleccionado?.nombre_completo }}</strong>.</p>
+                <Select v-model="targetSucursalId" :options="sucursales" option-label="nombre" option-value="id" placeholder="Sucursal de destino" fluid />
+            </div>
+            <template #footer>
+                <Button label="Cancelar" text @click="transferDialog = false" />
+                <Button label="Trasladar" :disabled="!targetSucursalId" :loading="transferProcessing" @click="transferCliente" />
             </template>
         </Dialog>
 

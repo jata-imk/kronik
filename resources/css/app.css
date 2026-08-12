@@ -16,3 +16,13 @@
     height: 1em;
     vertical-align: -0.1em;
 }
+
+/* Mantiene los chips de tablas en la misma escala tipografica que sus filas. */
+.p-datatable .p-chip .p-chip-label {
+    font-size: 0.75rem;
+    line-height: 1rem;
+}
+
+.p-datatable .p-chip .p-chip-icon {
+    font-size: 0.75rem;
+}

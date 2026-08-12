@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\ClienteDocumentoTipo;
+use App\Enums\UserStatus;
 use App\Models\Cliente;
 use App\Models\ClienteDatosFiscales;
 use App\Models\ClienteDocumento;
@@ -33,13 +34,13 @@ class DevelopmentSeeder extends Seeder
     public function run(): void
     {
         DB::transaction(function () {
-            $user = $this->seedUser();
-
             $this->ensureCatalogs();
             $this->seedEmpresaConfiguracion();
             $this->seedSucursal();
-            $this->seedClientes();
+            $user = $this->seedUser();
             $this->seedRolesForTeam($user, $user->currentTeam);
+            $this->assignSucursalContext();
+            $this->seedClientes();
         });
     }
 
@@ -54,16 +55,24 @@ class DevelopmentSeeder extends Seeder
             ]);
         }
 
-        $user->forceFill(['name' => 'Test User'])->save();
+        $user->forceFill([
+            'name' => 'Test User',
+            'status' => UserStatus::Active,
+            'is_super_admin' => true,
+            'activated_at' => $user->activated_at ?? now(),
+        ])->save();
 
-        $team = $user->ownedTeams()->where('personal_team', true)->first();
+        $team = $user->ownedTeams()->first();
 
         if (! $team) {
             $team = Team::forceCreate([
                 'user_id' => $user->id,
                 'name' => "{$user->name}'s Team",
-                'personal_team' => true,
+                'personal_team' => false,
+                'activo' => true,
             ]);
+        } else {
+            $team->forceFill(['personal_team' => false, 'activo' => true])->save();
         }
 
         if ((int) $user->current_team_id !== (int) $team->id) {
@@ -207,8 +216,6 @@ class DevelopmentSeeder extends Seeder
         }
 
         setPermissionsTeamId($team->id);
-        $user->assignRole('Super Admin');
-
         $this->seedPermissionTestUsers($team, $roleModel, $teamsKey);
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
@@ -253,6 +260,8 @@ class DevelopmentSeeder extends Seeder
                     'password' => 'password',
                     'email_verified_at' => now(),
                     'current_team_id' => $team->id,
+                    'status' => UserStatus::Active,
+                    'activated_at' => now(),
                 ],
             );
 
@@ -265,6 +274,7 @@ class DevelopmentSeeder extends Seeder
 
     private function seedClientes(): void
     {
+        $sucursal = Sucursal::where('clave', 'MATRIZ')->where('activa', true)->firstOrFail();
         $pais = Pais::where('codigo_iso', 'MX')->first();
         $regimenFisica = RegimenFiscal::where('fisica', true)->first();
         $regimenMoral = RegimenFiscal::where('moral', true)->first();
@@ -353,7 +363,7 @@ class DevelopmentSeeder extends Seeder
         foreach ($clientes as $record) {
             $cliente = Cliente::updateOrCreate(
                 ['email' => $record['cliente']['email']],
-                $record['cliente'],
+                [...$record['cliente'], 'sucursal_id' => $sucursal->id],
             );
 
             ClienteDatosFiscales::updateOrCreate(
@@ -367,6 +377,21 @@ class DevelopmentSeeder extends Seeder
         }
 
         $this->seedVinculosYGarantias();
+    }
+
+    private function assignSucursalContext(): void
+    {
+        $sucursal = Sucursal::where('clave', 'MATRIZ')->where('activa', true)->firstOrFail();
+
+        User::query()->whereNotNull('current_team_id')->each(function (User $user) use ($sucursal) {
+            $user->sucursales()->syncWithoutDetaching([$sucursal->id]);
+            $user->forceFill([
+                'sucursal_principal_id' => $sucursal->id,
+                'current_sucursal_id' => $sucursal->id,
+                'status' => UserStatus::Active,
+                'activated_at' => $user->activated_at ?? now(),
+            ])->save();
+        });
     }
 
     private function seedFallbackCatalogs(): void

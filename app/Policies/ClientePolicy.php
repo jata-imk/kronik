@@ -24,11 +24,17 @@ class ClientePolicy
 
     public function update(User $user, Cliente $cliente): bool
     {
-        return $user->can('update clientes');
+        return $user->can('update clientes')
+            && $user->current_sucursal_id !== null
+            && $cliente->sucursal_id !== null
+            && (int) $user->current_sucursal_id === (int) $cliente->sucursal_id;
     }
 
     public function delete(User $user, Cliente $cliente): bool
     {
-        return $user->can('delete clientes');
+        return $user->can('delete clientes')
+            && $user->current_sucursal_id !== null
+            && $cliente->sucursal_id !== null
+            && (int) $user->current_sucursal_id === (int) $cliente->sucursal_id;
     }
 }

@@ -10,7 +10,10 @@ const emit = defineEmits(["apply", "clear"]);
 const localFilters = reactive({ ...props.filters });
 const dateRange = ref(
     props.filters.date_from && props.filters.date_to
-        ? [new Date(`${props.filters.date_from}T00:00:00`), new Date(`${props.filters.date_to}T00:00:00`)]
+        ? [
+              new Date(`${props.filters.date_from}T00:00:00`),
+              new Date(`${props.filters.date_to}T00:00:00`),
+          ]
         : [],
 );
 
@@ -25,8 +28,10 @@ const apply = () => {
 };
 
 const updateDates = () => {
-    localFilters.date_from = dateRange.value?.[0]?.toISOString().slice(0, 10) ?? "";
-    localFilters.date_to = dateRange.value?.[1]?.toISOString().slice(0, 10) ?? "";
+    localFilters.date_from =
+        dateRange.value?.[0]?.toISOString().slice(0, 10) ?? "";
+    localFilters.date_to =
+        dateRange.value?.[1]?.toISOString().slice(0, 10) ?? "";
 };
 </script>
 
@@ -57,9 +62,12 @@ const updateDates = () => {
                 <label for="activity-per-page" class="block text-sm font-medium mb-2">Por página</label>
                 <Select id="activity-per-page" v-model="localFilters.per_page" :options="[10, 20, 50, 100]" class="w-full" />
             </div>
-            <div class="flex items-end gap-2">
-                <Button label="Aplicar" icon="pi pi-search" @click="apply" />
-                <Button label="Limpiar" severity="secondary" outlined @click="emit('clear')" />
+            <div>
+                <span class="mb-2 block text-sm font-medium">Acciones</span>
+                <div class="grid grid-cols-2 gap-2">
+                    <Button class="w-full" label="Aplicar" icon="pi pi-search" @click="apply" />
+                    <Button class="w-full" label="Limpiar" severity="secondary" outlined @click="emit('clear')" />
+                </div>
             </div>
         </div>
     </Panel>

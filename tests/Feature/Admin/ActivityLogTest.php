@@ -51,6 +51,8 @@ test('super admin can inspect and export real activity logs', function () {
             ->where('activityLogs.data.0.event', 'login')
             ->where('activityLogs.data.0.causer.id', $user->id)
             ->where('activityLogs.data.0.ip', '127.0.0.1')
+            ->where('activityLogs.data.0.team.id', $user->current_team_id)
+            ->where('activityLogs.data.0.sucursal.id', $user->current_sucursal_id)
         );
 
     $export = $this->actingAs($user)
@@ -58,7 +60,10 @@ test('super admin can inspect and export real activity logs', function () {
         ->assertOk()
         ->assertHeader('content-type', 'text/csv; charset=UTF-8');
 
-    expect($export->streamedContent())->toContain('Inicio de sesion exitoso');
+    expect($export->streamedContent())
+        ->toContain('Inicio de sesion exitoso')
+        ->toContain($user->currentTeam->name)
+        ->toContain($user->currentSucursal->nombre);
 });
 
 test('activity logs, filter options, and exports are limited to the current team', function () {

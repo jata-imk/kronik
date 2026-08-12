@@ -2,6 +2,7 @@
 
 namespace App\Actions\Fortify;
 
+use App\Enums\UserStatus;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -22,8 +23,14 @@ class ResetUserPassword implements ResetsUserPasswords
             'password' => $this->passwordRules(),
         ])->validate();
 
-        $user->forceFill([
-            'password' => Hash::make($input['password']),
-        ])->save();
+        $attributes = ['password' => Hash::make($input['password'])];
+
+        if ($user->status === UserStatus::Pending) {
+            $attributes['status'] = UserStatus::Active;
+            $attributes['activated_at'] = now();
+            $attributes['email_verified_at'] = $user->email_verified_at ?? now();
+        }
+
+        $user->forceFill($attributes)->save();
     }
 }

@@ -36,7 +36,7 @@ test('development users have the expected team roles and client permissions', fu
         ->and($editor->getAllPermissions()->pluck('name')->sort()->values()->all())->toBe(['read clientes', 'update clientes'])
         ->and($denied->getRoleNames()->all())->toBe(['Sin acceso a clientes'])
         ->and($denied->getAllPermissions()->pluck('name')->all())->toBe([])
-        ->and($owner->hasRole('Super Admin'))->toBeTrue();
+        ->and($owner->is_super_admin)->toBeTrue();
 });
 
 test('development permission profiles enforce client dossier access', function () {

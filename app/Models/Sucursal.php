@@ -2,10 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Sucursal extends Model
 {
+    use HasFactory;
+
     protected $table = 'sucursales';
 
     protected $fillable = [
@@ -28,4 +33,14 @@ class Sucursal extends Model
         'horario' => 'array',
         'activa' => 'boolean',
     ];
+
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)->withTimestamps();
+    }
+
+    public function clientes(): HasMany
+    {
+        return $this->hasMany(Cliente::class);
+    }
 }

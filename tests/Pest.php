@@ -50,20 +50,24 @@ function actingAsSuperAdmin(): App\Models\User
 {
     $user = App\Models\User::factory()->withPersonalTeam()->create();
     $team = $user->ownedTeams()->first();
+    $sucursal = App\Models\Sucursal::create([
+        'nombre' => 'Matriz de prueba',
+        'clave' => 'TEST-'.str()->random(8),
+        'activa' => true,
+    ]);
 
-    $user->forceFill(['current_team_id' => $team->id])->save();
+    $user->forceFill([
+        'current_team_id' => $team->id,
+        'sucursal_principal_id' => $sucursal->id,
+        'current_sucursal_id' => $sucursal->id,
+        'is_super_admin' => true,
+    ])->save();
+    $user->sucursales()->attach($sucursal);
 
     if (function_exists('setPermissionsTeamId')) {
         setPermissionsTeamId($team->id);
     }
 
-    $roleModel = config('permission.models.role');
-    $role = $roleModel::firstOrCreate([
-        'name' => 'Super Admin',
-        'guard_name' => 'web',
-    ]);
-
-    $user->assignRole($role);
     app(Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
 
     return $user;

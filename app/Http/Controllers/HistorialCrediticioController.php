@@ -7,6 +7,7 @@ use App\Models\Sic;
 use App\Models\SicApi;
 use App\Models\SicQuery;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 class HistorialCrediticioController extends Controller
@@ -16,6 +17,7 @@ class HistorialCrediticioController extends Controller
      */
     public function index(Request $request)
     {
+        Gate::authorize('viewAny', Cliente::class);
         $clientesCount = Cliente::count();
         $clientesUntilLastMonth = Cliente::where('created_at', '<=', now()->subMonth())->count();
 
@@ -31,7 +33,6 @@ class HistorialCrediticioController extends Controller
         $sicQueries = SicQuery::with(['sic', 'api', 'cliente'])
             ->orderBy('fecha_consulta', 'desc')
             ->paginate(5, ['id', 'cliente_id', 'sic_id', 'sic_api_id', 'fecha_consulta', 'status', 'mensaje_error', 'response_data']);
-
 
         return Inertia::render('HistorialCrediticio/Index', [
             'clientesCount' => $clientesCount,
@@ -67,6 +68,7 @@ class HistorialCrediticioController extends Controller
      */
     public function show(Request $request, Cliente $cliente)
     {
+        Gate::authorize('view', $cliente);
         $sics = Sic::all();
 
         $sicsQueries = SicQuery::where('cliente_id', $cliente->id)->get([
@@ -87,7 +89,7 @@ class HistorialCrediticioController extends Controller
                 'sic_api_id',
                 'fecha_consulta',
                 'status',
-                'response_data'
+                'response_data',
             ])->first();
         }
 
@@ -101,7 +103,7 @@ class HistorialCrediticioController extends Controller
                 'sic_api_id',
                 'fecha_consulta',
                 'status',
-                'response_data'
+                'response_data',
             ])
             ->first();
 

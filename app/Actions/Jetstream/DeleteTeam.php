@@ -3,6 +3,7 @@
 namespace App\Actions\Jetstream;
 
 use App\Models\Team;
+use Illuminate\Validation\ValidationException;
 use Laravel\Jetstream\Contracts\DeletesTeams;
 
 class DeleteTeam implements DeletesTeams
@@ -12,16 +13,12 @@ class DeleteTeam implements DeletesTeams
      */
     public function delete(Team $team): void
     {
-        // delete role and permissions related to the team
-        $roleModel = config('permission.models.role');
-
-        $rolesTeam = $roleModel::where(config('permission.column_names.team_foreign_key', 'team_id'), $team->id)->get();
-
-        foreach ($rolesTeam as $role) {
-            $role->permissions()->detach();
-            $role->delete();
+        if ($team->currentUsers()->exists()) {
+            throw ValidationException::withMessages([
+                'team' => 'Cambia el equipo actual de todos sus usuarios antes de desactivarlo.',
+            ]);
         }
 
-        $team->purge();
+        $team->update(['activo' => false]);
     }
 }
