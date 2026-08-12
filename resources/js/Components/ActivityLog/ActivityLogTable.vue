@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref } from "vue";
+import TruncatedText from "@/Components/DataTable/TruncatedText.vue";
 
 const props = defineProps({
     logs: { type: Array, default: () => [] },
@@ -30,47 +31,47 @@ const openProperties = (log) => {
     <Card>
         <template #content>
             <DataTable :value="logs" :loading="loading" striped-rows scrollable responsive-layout="scroll">
-                <Column field="id" header="#" />
+                <Column field="id" header="#"><template #body="{ data }"><TruncatedText :value="data.id" max-width="5rem" /></template></Column>
                 <Column header="Usuario">
                     <template #body="{ data }">
-                        <div class="flex items-center gap-2">
-                            <Avatar :label="data.causer.name.charAt(0)" shape="circle" />
-                            <div>
-                                <div class="font-medium">{{ data.causer.name }}</div>
-                                <small v-if="data.causer.email" class="text-surface-500">{{ data.causer.email }}</small>
-                            </div>
+                        <div class="max-w-60">
+                            <TruncatedText :value="data.causer.name" max-width="15rem" />
+                            <TruncatedText v-if="data.causer.email" class="text-sm text-surface-500" :value="data.causer.email" max-width="15rem" />
                         </div>
                     </template>
                 </Column>
                 <Column header="Fecha">
-                    <template #body="{ data }">{{ formatDate(data.created_at) }}</template>
+                    <template #body="{ data }">
+                        <div class="max-w-44">
+                            <TruncatedText :value="formatDate(data.created_at)" max-width="11rem" />
+                            <div class="mt-0.5 flex items-center text-xs text-surface-500">
+                                <TruncatedText :value="data.ip ?? '—'" max-width="9rem" />
+                            </div>
+                        </div>
+                    </template>
                 </Column>
                 <Column header="Evento">
                     <template #body="{ data }">
-                        <Tag :value="data.event_label" :severity="data.event_severity" :icon="`pi ${data.event_icon}`" />
-                    </template>
-                </Column>
-                <Column header="Contexto">
-                    <template #body="{ data }">
-                        <div class="flex flex-col items-start gap-1">
-                            <Tag :value="data.team.name" icon="pi pi-sitemap" severity="info" />
-                            <Tag :value="data.sucursal.clave ? `${data.sucursal.clave} · ${data.sucursal.name}` : data.sucursal.name" icon="pi pi-building" severity="secondary" />
-                        </div>
+                        <Tag
+                            :value="data.event_label"
+                            :severity="data.event_severity"
+                            :icon="`pi ${data.event_icon}`"
+                            class="max-w-40 whitespace-nowrap"
+                            :pt="{ label: { class: 'block truncate' } }"
+                        />
                     </template>
                 </Column>
                 <Column field="description" header="Descripción">
                     <template #body="{ data }">
-                        <div>{{ data.description }}</div>
-                        <small v-if="data.subject.id" class="text-surface-500">{{ data.subject.type }} #{{ data.subject.id }}</small>
+                        <TruncatedText :value="data.subject.id ? `${data.description} · ${data.subject.type} #${data.subject.id}` : data.description" max-width="19rem" />
                     </template>
                 </Column>
-                <Column header="IP">
-                    <template #body="{ data }">{{ data.ip ?? "—" }}</template>
-                </Column>
-                <Column header="">
+                <Column header="Acciones" :frozen="true" align-frozen="right" class="w-28" :pt="{ columnHeaderContent: { class: 'whitespace-nowrap' } }">
                     <template #body="{ data }">
-                        <Button :aria-label="`Ver detalle de actividad ${data.id}`" icon="pi pi-eye" text rounded v-tooltip.top="'Ver detalle'" @click="openDetails(data)" />
-                        <Button v-if="Object.keys(data.properties).length" :aria-label="`Ver propiedades de actividad ${data.id}`" icon="pi pi-code" text rounded v-tooltip.top="'Ver propiedades'" @click="openProperties(data)" />
+                        <div class="flex flex-nowrap items-center gap-1 whitespace-nowrap">
+                            <Button :aria-label="`Ver detalle de actividad ${data.id}`" icon="pi pi-eye" text rounded @click="openDetails(data)" />
+                            <Button v-if="Object.keys(data.properties).length" :aria-label="`Ver propiedades de actividad ${data.id}`" icon="pi pi-code" text rounded @click="openProperties(data)" />
+                        </div>
                     </template>
                 </Column>
             </DataTable>

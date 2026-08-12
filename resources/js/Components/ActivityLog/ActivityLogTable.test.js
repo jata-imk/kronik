@@ -38,7 +38,10 @@ const DialogStub = defineComponent({
     setup(props, { slots }) {
         return () =>
             props.visible
-                ? h("section", { role: "dialog" }, [h("h2", props.header), slots.default?.()])
+                ? h("section", { role: "dialog" }, [
+                      h("h2", props.header),
+                      slots.default?.(),
+                  ])
                 : null;
     },
 });
@@ -49,7 +52,10 @@ const ButtonStub = defineComponent({
         return () =>
             h(
                 "button",
-                { "aria-label": attrs["aria-label"], onClick: () => emit("click") },
+                {
+                    "aria-label": attrs["aria-label"],
+                    onClick: () => emit("click"),
+                },
                 attrs["aria-label"],
             );
     },
@@ -79,21 +85,37 @@ const renderTable = () =>
     });
 
 describe("ActivityLogTable", () => {
-    it("muestra equipo y sucursal como contexto de la actividad", () => {
+    it("reserva el equipo y la sucursal para el detalle", async () => {
         const wrapper = renderTable();
 
-        expect(wrapper.text()).toContain("Operaciones");
-        expect(wrapper.text()).toContain("MATRIZ · Matriz");
+        expect(wrapper.text()).not.toContain("Contexto");
+        expect(wrapper.text()).not.toContain("Operaciones");
+        expect(wrapper.text()).toContain("127.0.0.1");
+
+        await wrapper
+            .get('[aria-label="Ver detalle de actividad 17"]')
+            .trigger("click");
+        expect(wrapper.get('[role="dialog"]').text()).toContain("Operaciones");
+        expect(wrapper.get('[role="dialog"]').text()).toContain(
+            "MATRIZ · Matriz",
+        );
+        expect(wrapper.get('[role="dialog"]').text()).toContain("127.0.0.1");
     });
 
     it("abre los detalles y propiedades del registro seleccionado", async () => {
         const wrapper = renderTable();
 
-        await wrapper.get('[aria-label="Ver detalle de actividad 17"]').trigger("click");
+        await wrapper
+            .get('[aria-label="Ver detalle de actividad 17"]')
+            .trigger("click");
         expect(wrapper.get('[role="dialog"]').text()).toContain("Cliente");
         expect(wrapper.get('[role="dialog"]').text()).toContain("Matriz");
 
-        await wrapper.get('[aria-label="Ver propiedades de actividad 17"]').trigger("click");
-        expect(wrapper.findAll('[role="dialog"]')[1].text()).toContain('"status": "active"');
+        await wrapper
+            .get('[aria-label="Ver propiedades de actividad 17"]')
+            .trigger("click");
+        expect(wrapper.findAll('[role="dialog"]')[1].text()).toContain(
+            '"status": "active"',
+        );
     });
 });

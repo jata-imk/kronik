@@ -4,6 +4,8 @@ import { usePage } from "@inertiajs/vue3";
 import { FilterMatchMode } from "@primevue/core/api";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import UpdateTeamNameForm from "@/Pages/Teams/Partials/UpdateTeamNameForm.vue";
+import CollectionSummary from "@/Components/DataTable/CollectionSummary.vue";
+import TruncatedText from "@/Components/DataTable/TruncatedText.vue";
 
 const props = defineProps({
     team: Object,
@@ -14,13 +16,34 @@ const props = defineProps({
 });
 const page = usePage();
 const auth = computed(() => page.props.auth);
+const memberRoles = (member) =>
+    Array.from(
+        new Set([
+            ...(member.is_super_admin ? ["Super Admin"] : []),
+            ...member.roles.map((role) => role.name),
+        ]),
+    );
+const tableMembers = computed(() =>
+    props.members.map((member) => ({
+        ...member,
+        roles_names: memberRoles(member),
+        roles_search: memberRoles(member).join(", ") || "—",
+        sucursales_names: member.sucursales.map((branch) => branch.clave),
+        sucursales_search:
+            member.is_super_admin && !member.sucursales.length
+                ? "Acceso global"
+                : member.sucursales
+                      .map((branch) => `${branch.clave} · ${branch.nombre}`)
+                      .join(", ") || "—",
+    })),
+);
 const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
     name: { value: null, matchMode: FilterMatchMode.CONTAINS },
     email: { value: null, matchMode: FilterMatchMode.CONTAINS },
     status_label: { value: null, matchMode: FilterMatchMode.EQUALS },
-    "roles.name": { value: null, matchMode: FilterMatchMode.CONTAINS },
-    "sucursales.nombre": { value: null, matchMode: FilterMatchMode.CONTAINS },
+    roles_search: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    sucursales_search: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
 const statuses = ["Activo", "Pendiente", "Inactivo"];
 const userUrl = (params = {}) => route("admin.users.index", params);
@@ -40,9 +63,9 @@ const inviteParams = (extra = {}) => ({
                     <h2 class="text-xl font-semibold">Configuración del equipo</h2>
                     <p class="text-sm text-surface-500">Permisos, integrantes y contexto organizativo.</p>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex gap-2 whitespace-nowrap">
                     <Tag :value="team.activo ? 'Activo' : 'Inactivo'" :severity="team.activo ? 'success' : 'secondary'" />
-                    <Tag :value="team.personal_team ? 'Personal' : 'Institucional'" severity="info" icon="pi pi-building" />
+                    <Tag :value="team.personal_team ? 'Personal' : 'Institucional'" severity="info" />
                 </div>
             </div>
         </template>
@@ -53,10 +76,7 @@ const inviteParams = (extra = {}) => ({
             <Card class="mt-8">
                 <template #title>
                     <div class="flex flex-wrap items-center justify-between gap-3">
-                        <div class="flex items-center gap-3">
-                            <span>Miembros</span>
-                            <Badge :value="team.members_count" />
-                        </div>
+                        <div class="flex items-center gap-2"><span>Miembros</span><Badge :value="team.members_count" /></div>
                         <Button
                             v-if="canManageUsers && (auth.permissions['create-users'] || auth.is_super_admin)"
                             label="Invitar usuario"
@@ -74,8 +94,9 @@ const inviteParams = (extra = {}) => ({
                     <DataTable
                         v-else
                         v-model:filters="filters"
-                        :value="members"
-                        :global-filter-fields="['name', 'email', 'status_label', 'roles.name', 'sucursales.nombre']"
+                        :value="tableMembers"
+                        :global-filter-fields="['name', 'email', 'status_label', 'roles_search', 'sucursales_search']"
+                        filter-display="row"
                         paginator
                         :rows="10"
                         striped-rows
@@ -92,13 +113,19 @@ const inviteParams = (extra = {}) => ({
                         </template>
                         <Column field="name" header="Usuario" sortable>
                             <template #body="{ data }">
-                                <div class="flex items-center gap-2">
-                                    <Avatar :image="data.profile_photo_url" shape="circle" />
-                                    <div>
-                                        <div class="font-medium">{{ data.name }}</div>
-                                        <small class="text-surface-500">{{ data.email }}</small>
+                                <div class="max-w-80">
+                                    <div class="flex min-w-0 items-center gap-2">
+                                        <TruncatedText :value="data.name" max-width="18rem" />
+                                        <span
+                                            v-if="data.is_owner"
+                                            class="inline-flex shrink-0 text-amber-500"
+                                            aria-label="Responsable del equipo"
+                                            v-tooltip.top="'Responsable del equipo'"
+                                        >
+                                            <i class="pi pi-star-fill" aria-hidden="true" />
+                                        </span>
                                     </div>
-                                    <Tag v-if="data.is_owner" value="Responsable" severity="info" />
+                                    <TruncatedText class="text-sm text-surface-500" :value="data.email" max-width="20rem" />
                                 </div>
                             </template>
                             <template #filter="{ filterModel, filterCallback }">
@@ -113,36 +140,29 @@ const inviteParams = (extra = {}) => ({
                                 <Select v-model="filterModel.value" :options="statuses" placeholder="Todos" show-clear @change="filterCallback()" />
                             </template>
                         </Column>
-                        <Column field="roles.name" header="Roles">
+                        <Column field="roles_search" header="Roles">
                             <template #body="{ data }">
-                                <div class="flex flex-wrap gap-1">
-                                    <Tag v-if="data.is_super_admin" value="Super Admin" severity="danger" />
-                                    <Tag v-for="role in data.roles" :key="role.id" :value="role.name" severity="contrast" />
-                                    <span v-if="!data.is_super_admin && !data.roles.length">—</span>
-                                </div>
+                                <CollectionSummary :items="data.roles_names" appearance="contrast" max-width="18rem" />
                             </template>
                             <template #filter="{ filterModel, filterCallback }">
                                 <InputText v-model="filterModel.value" placeholder="Rol" @input="filterCallback()" />
                             </template>
                         </Column>
-                        <Column field="sucursales.nombre" header="Sucursales">
+                        <Column field="sucursales_search" header="Sucursales">
                             <template #body="{ data }">
-                                <div class="flex max-w-80 flex-wrap gap-1">
-                                    <Chip v-for="branch in data.sucursales" :key="branch.id" :label="branch.clave" v-tooltip.top="branch.nombre" />
-                                    <span v-if="!data.sucursales.length && data.is_super_admin" class="text-sm text-surface-500">Acceso global</span>
-                                </div>
+                                <Tag v-if="data.is_super_admin && !data.sucursales.length" value="Acceso global" severity="contrast" />
+                                <CollectionSummary v-else class="min-w-32" :items="data.sucursales_names" max-width="20rem" />
                             </template>
                             <template #filter="{ filterModel, filterCallback }">
                                 <InputText v-model="filterModel.value" placeholder="Sucursal" @input="filterCallback()" />
                             </template>
                         </Column>
-                        <Column header="Acciones" frozen align-frozen="right">
+                        <Column header="Acciones">
                             <template #body="{ data }">
                                 <Button
                                     v-if="auth.permissions['update-users'] || auth.is_super_admin"
                                     icon="pi pi-pencil"
                                     text
-                                    v-tooltip.top="'Editar asignaciones'"
                                     as="a"
                                     :href="userUrl({ edit_user_id: data.id })"
                                 />

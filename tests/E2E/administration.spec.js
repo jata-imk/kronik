@@ -28,7 +28,8 @@ test("muestra el centro completo del equipo y prellena una invitación", async (
     await page.getByRole("link", { name: /abrir configuración de test user's team/i }).click();
 
     await expect(page.getByText("Miembros", { exact: true })).toBeVisible();
-    await expect(page.getByRole("table").getByText("Test User", { exact: true })).toBeVisible();
+    await expect(page.getByRole("table").getByText("Test User", { exact: true }).first()).toBeVisible();
+    await expect(page.getByRole("table").getByLabel("Responsable del equipo")).toBeVisible();
     await page.getByRole("link", { name: /invitar usuario/i }).click();
 
     await expect(page.getByRole("dialog")).toBeVisible();
@@ -47,8 +48,11 @@ test("usa confirmación PrimeVue para desactivar una sucursal", async ({ page })
 
 test("muestra equipo y sucursal en actividad y permite exportar CSV", async ({ page }) => {
     await page.goto("/admin/users/activity");
-    await expect(page.getByText("Test User's Team").first()).toBeVisible();
-    await expect(page.getByText(/MATRIZ.*Matriz|Matriz/i).first()).toBeVisible();
+    await page.getByRole("button", { name: /ver detalle de actividad/i }).first().click();
+    const details = page.getByRole("dialog", { name: /detalle de actividad/i });
+    await expect(details).toContainText("Test User's Team");
+    await expect(details).toContainText(/MATRIZ.*Matriz|Matriz/i);
+    await page.keyboard.press("Escape");
 
     const downloadPromise = page.waitForEvent("download");
     await page.getByRole("button", { name: /exportar/i }).click();

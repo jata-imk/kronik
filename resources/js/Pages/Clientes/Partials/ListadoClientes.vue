@@ -3,6 +3,7 @@ import { router } from "@inertiajs/vue3";
 import { FilterMatchMode } from "@primevue/core/api";
 import { useToast } from "primevue/usetoast";
 import { computed, ref } from "vue";
+import TruncatedText from "@/Components/DataTable/TruncatedText.vue";
 
 // Props para recibir los datos del controlador
 const props = defineProps({
@@ -42,6 +43,7 @@ const filters = ref({
     },
     sexo: { value: null, matchMode: FilterMatchMode.EQUALS },
     "datos_fiscales.rfc": { value: null, matchMode: FilterMatchMode.CONTAINS },
+    "sucursal.nombre": { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
 
 /**
@@ -119,7 +121,11 @@ const confirmDelete = (cliente) => {
 };
 
 const changeScope = (scope) => {
-    router.get(route("clientes.index"), { scope }, { preserveState: true, replace: true });
+    router.get(
+        route("clientes.index"),
+        { scope },
+        { preserveState: true, replace: true },
+    );
 };
 
 const openTransfer = (cliente) => {
@@ -137,9 +143,15 @@ const transferCliente = () => {
             preserveScroll: true,
             onSuccess: () => {
                 transferDialog.value = false;
-                toast.add({ severity: "success", summary: "Cliente trasladado", life: 3000 });
+                toast.add({
+                    severity: "success",
+                    summary: "Cliente trasladado",
+                    life: 3000,
+                });
             },
-            onFinish: () => { transferProcessing.value = false; },
+            onFinish: () => {
+                transferProcessing.value = false;
+            },
         },
     );
 };
@@ -257,7 +269,7 @@ const exportData = async () => {
             filter-display="row"
             :global-filter-fields="[
                 'id', 'nombre_completo', 'email', 'telefono', 
-                'pais_nacimiento.nombre_es', 'sexo', 'datos_fiscales.rfc'
+                'pais_nacimiento.nombre_es', 'sexo', 'datos_fiscales.rfc', 'sucursal.nombre'
             ]"
             :paginator="true"
             :rows="10"
@@ -290,11 +302,10 @@ const exportData = async () => {
 
             <Column field="nombre_completo" header="Nombre" sortable>
                 <template #body="{ data }">
-                    <div class="flex items-center gap-2">
-                        <span>{{ data.nombre_completo }}</span>
+                    <div class="flex max-w-80 min-w-0 items-center gap-2 whitespace-nowrap">
+                        <TruncatedText class="min-w-0 flex-1" :value="data.nombre_completo" max-width="18rem" />
                         <span
                             v-if="data.relaciones_count"
-                            v-tooltip.top="`${data.relaciones_count} relación${data.relaciones_count === 1 ? '' : 'es'}`"
                             class="relationship-count"
                             :aria-label="`${data.relaciones_count} relación${data.relaciones_count === 1 ? '' : 'es'}`"
                         >
@@ -338,9 +349,9 @@ const exportData = async () => {
 
             <Column field="pais_nacimiento.nombre_es" header="País" sortable>
                 <template #body="{ data }">
-                    <div class="flex align-items-center gap-2">
-                        <span v-twemoji >{{ data.pais_nacimiento?.emoji }}</span>
-                        <span>{{ data.pais_nacimiento?.nombre_es }}</span>
+                    <div class="flex max-w-56 min-w-0 items-center gap-2 whitespace-nowrap">
+                        <span v-twemoji class="shrink-0">{{ data.pais_nacimiento?.emoji }}</span>
+                        <TruncatedText class="min-w-0" :value="data.pais_nacimiento?.nombre_es" max-width="11rem" />
                     </div>
                 </template>
                 <template #filter="{ filterModel, filterCallback }">
@@ -358,7 +369,15 @@ const exportData = async () => {
 
             <Column field="sucursal.nombre" header="Sucursal" sortable>
                 <template #body="{ data }">
-                    <Tag :value="data.sucursal?.nombre ?? 'Sin asignar'" severity="secondary" />
+                    <Tag
+                        :value="data.sucursal?.nombre ?? 'Sin asignar'"
+                        severity="secondary"
+                        class="max-w-40 whitespace-nowrap"
+                        :pt="{ label: { class: 'block truncate' } }"
+                    />
+                </template>
+                <template #filter="{ filterModel, filterCallback }">
+                    <InputText v-model="filterModel.value" type="text" class="p-column-filter" placeholder="Buscar por sucursal" @input="filterCallback()" />
                 </template>
             </Column>
 
@@ -378,13 +397,13 @@ const exportData = async () => {
             <Column header="Acciones" :exportable="false" :frozen="true" align-frozen="right">
                 <template #body="{ data }">
                     <div class="flex gap-2">
-                        <Button :aria-label="`Abrir expediente de ${data.nombre_completo}`" icon="pi pi-folder-open" v-tooltip.top="'Expediente KYC'" class="p-button-rounded p-button-warning p-button-sm"
+                        <Button :aria-label="`Abrir expediente de ${data.nombre_completo}`" icon="pi pi-folder-open" class="p-button-rounded p-button-warning p-button-sm"
                             @click="viewExpediente(data.id)" />
                         <Button :aria-label="`Ver ${data.nombre_completo}`" icon="pi pi-eye" class="p-button-rounded p-button-info p-button-sm"
                             @click="viewCliente(data.id)" />
                         <Button v-if="data.can_update" :aria-label="`Editar ${data.nombre_completo}`" icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-sm"
                             @click="editCliente(data.id)" />
-                        <Button v-if="data.can_transfer" :aria-label="`Trasladar ${data.nombre_completo}`" icon="pi pi-arrow-right-arrow-left" v-tooltip.top="'Trasladar de sucursal'" text
+                        <Button v-if="data.can_transfer" :aria-label="`Trasladar ${data.nombre_completo}`" icon="pi pi-arrow-right-arrow-left" text
                             @click="openTransfer(data)" />
                         <Button v-if="data.can_delete" :aria-label="`Eliminar ${data.nombre_completo}`" icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm"
                             @click="confirmDelete(data)" />

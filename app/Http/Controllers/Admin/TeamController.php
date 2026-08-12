@@ -29,7 +29,7 @@ class TeamController extends Controller implements HasMiddleware
     {
         return Inertia::render('Admin/Teams/Index', [
             'teams' => fn () => Team::query()
-                ->with('owner:id,name,email')
+                ->with('owner:id,name,email,profile_photo_path')
                 ->withCount(['users', 'ownedRoles'])
                 ->orderByDesc('activo')
                 ->orderBy('name')
