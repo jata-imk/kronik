@@ -23,16 +23,19 @@ El proyecto debe tener CI real en GitHub Actions ademas de hooks locales.
 - `npm run test:unit` con Vitest, Vue Test Utils y jsdom.
 - `php artisan test`.
 
-Un segundo job `e2e` ejecuta los flujos reales en Chromium. Usa una base MariaDB
-independiente llamada exclusivamente `kronik_e2e`, construye los assets, instala
-Chromium y corre `npm run test:e2e`. Si falla, publica por siete dias el reporte
-HTML, las trazas, capturas y videos de Playwright.
+Playwright no se ejecuta en GitHub Actions. Los recorridos E2E son una
+verificacion local deliberada porque requieren un navegador completo y se
+ejecutan bajo demanda en la computadora de desarrollo. CI conserva el build,
+Vitest y Pest como verificaciones obligatorias de cada PR.
 
 El build frontend corre antes de los tests porque las pruebas HTTP que renderizan Inertia necesitan `public/build/manifest.json` en el runner limpio de GitHub Actions.
 
 Vitest carga `vite.config.js` en modo `test`. En ese modo se omite `laravel-vite-plugin` para que las pruebas unitarias no intenten iniciar ni validar el servidor HMR dentro de CI.
 
 ## Playwright local
+
+Playwright es exclusivamente local: no debe ejecutarse en GitHub Actions ni en
+la VPS de QA/produccion.
 
 La primera vez se instala Chromium con:
 
