@@ -23,6 +23,7 @@ const can = (permission) => page.props.auth.is_super_admin || page.props.auth.pe
                 </div>
                 <Button v-if="can('read-configuracion-empresa')" label="Configuración de empresa" as="a" :href="route('admin.configuracion-empresa.index')" class="mb-3" />
                 <Button v-if="can('read-sucursales')" label="Sucursales" as="a" :href="route('admin.sucursales.index')" class="mb-3" />
+                <Button v-if="can('read-productos-crediticios')" label="Productos crediticios" as="a" :href="route('productos-crediticios.index')" class="mb-3" />
                 <Button v-if="can('read-menubar-items')" label="Configurar menubar" as="a" :href="route('admin.menubar-items.index')" class="mb-3" />
                 <Button v-if="can('read-roles')" label="Configurar roles" as="a" :href="route('admin.roles.index')" class="mb-3" />
             </div>

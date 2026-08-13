@@ -8,7 +8,7 @@ Definir los procesos necesarios para convertir el sistema actual en una platafor
 
 Ya existe una base funcional para usuarios, equipos, permisos, sucursales, clientes, datos fiscales, domicilios y consultas de historial crediticio. Los `teams` representan departamentos o contextos de permisos y las sucursales representan unidades operativas separadas. Un usuario puede operar en varias sucursales con una principal y una actual; cada cliente conserva una sucursal responsable. Los clientes ya tienen datos personales, fiscales, direcciones y relación con consultas SIC. Círculo de Crédito está parcialmente integrado mediante servicios, repositorios, seeders y vistas para seleccionar APIs.
 
-Faltan módulos centrales: expediente documental, solicitudes de crédito, productos, motor de amortización, autorización SIC formal, PLD, cobranza, pagos, reportes regulatorios/operativos y contabilidad.
+Ya existe expediente documental y crédito simple V1 con versiones inmutables, catálogo de comisiones, simulador y CAT informativo. Faltan solicitudes, operación contractual del motor de amortización, autorización SIC formal, PLD, cobranza, pagos, reportes regulatorios/operativos y contabilidad.
 
 ## Procesos Requeridos
 

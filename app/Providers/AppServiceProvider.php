@@ -6,6 +6,10 @@ use App\Interfaces\BrowserClientInterface;
 use App\Interfaces\GeocodingServiceInterface;
 use App\Models\Cliente;
 use App\Models\Permission;
+use App\Models\ProductoCrediticio;
+use App\Models\ProductoVersion;
+use App\Policies\ProductoCrediticioPolicy;
+use App\Policies\ProductoVersionPolicy;
 use App\Services\GeocodingService;
 use App\Services\Scrapers\BrowserClientService;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -37,6 +41,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(ProductoCrediticio::class, ProductoCrediticioPolicy::class);
+        Gate::policy(ProductoVersion::class, ProductoVersionPolicy::class);
         Relation::morphMap([
             'clientes' => Cliente::class,
         ]);
