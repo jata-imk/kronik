@@ -6,7 +6,7 @@ Definir los procesos necesarios para convertir el sistema actual en una platafor
 
 ## Estado Actual del Sistema
 
-Ya existe una base funcional para usuarios, equipos, permisos, clientes, datos fiscales, domicilios y consultas de historial crediticio. El modelo de `teams` debe representar departamentos, grupos de trabajo o contexto de permisos; las sucursales son una entidad de negocio separada. Los clientes ya tienen datos personales, fiscales, direcciones y relación con consultas SIC. Círculo de Crédito está parcialmente integrado mediante servicios, repositorios, seeders y vistas para seleccionar APIs.
+Ya existe una base funcional para usuarios, equipos, permisos, sucursales, clientes, datos fiscales, domicilios y consultas de historial crediticio. Los `teams` representan departamentos o contextos de permisos y las sucursales representan unidades operativas separadas. Un usuario puede operar en varias sucursales con una principal y una actual; cada cliente conserva una sucursal responsable. Los clientes ya tienen datos personales, fiscales, direcciones y relación con consultas SIC. Círculo de Crédito está parcialmente integrado mediante servicios, repositorios, seeders y vistas para seleccionar APIs.
 
 Faltan módulos centrales: expediente documental, solicitudes de crédito, productos, motor de amortización, autorización SIC formal, PLD, cobranza, pagos, reportes regulatorios/operativos y contabilidad.
 

@@ -10,9 +10,11 @@ La plataforma busca centralizar configuración de empresa, clientes, expedientes
 
 El repositorio ya cuenta con una base Laravel 11 + Inertia + Vue 3:
 
-- Autenticación, equipos Jetstream, roles y permisos Spatie por equipo.
+- Autenticación y administración central de usuarios, con invitaciones, estados y Super Admin global.
+- Equipos Jetstream como contexto de roles y permisos Spatie, separados de las sucursales operativas.
+- Asignación de usuarios a varias sucursales, con sucursal principal y actual.
 - Configuración global de empresa y sucursales operativas.
-- Alta, edición, consulta y eliminación de clientes.
+- Alta, edición, consulta, traslado y eliminación de clientes con sucursal responsable.
 - Datos fiscales, domicilios, catálogos de países, régimen fiscal y códigos postales.
 - Integración parcial con Círculo de Crédito para FICO Score, Fintech Score y reportes relacionados.
 - Dashboard de historial crediticio con consultas SIC almacenadas.
