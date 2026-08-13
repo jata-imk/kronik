@@ -4,7 +4,7 @@
 
 - Notion: https://app.notion.com/p/3a061db7db7f8123a76dc9e1b2271bac
 - Rama: `feat/backlog-03-productos-crediticios`
-- PR: pendiente
+- PR: https://github.com/jata-imk/kronik/pull/14
 - ADR relacionados: ADR 0001, ADR 0006
 
 ## Objetivo
@@ -33,5 +33,5 @@ Revisión manual del usuario y preparación de commit/PR. En Backlog 04, registr
 
 ## Cierre
 
-- Commit o merge: pendiente de solicitud del usuario
+- Commit o merge: `100dc06`; PR #14 abierto
 - Pendientes diferidos: Backlog 02.5; crédito revolvente V2; IVA; inhábiles; comisiones financiadas.
