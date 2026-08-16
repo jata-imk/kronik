@@ -83,6 +83,8 @@ test('validación visible es clara y rechaza comisión tardía junto con mora', 
     $response->assertSessionHasErrors(['version.monto_minimo', 'version.comisiones.0.concepto_comision_id']);
     expect(session('errors')->get('version.monto_minimo')[0])->not->toContain('validation.')
         ->and(session('errors')->get('version.comisiones.0.concepto_comision_id')[0])->toContain('tasa moratoria');
+    expect(collect(session('errors')->all())->implode(' '))->not->toContain('validation.')
+        ->and(session('errors')->get('version.monto_maximo')[0])->toBe('El monto máximo debe ser mayor o igual que el monto mínimo.');
 });
 
 test('simulador produce tabla sin residuos y CAT informativo', function () {
@@ -95,6 +97,113 @@ test('simulador produce tabla sin residuos y CAT informativo', function () {
         'metodo' => 'cuota_nivelada', 'fecha' => '2026-01-31',
     ])->assertOk();
 
-    $response->assertJsonPath('tabla.11.saldo', '0.00')->assertJsonPath('tabla.0.dias', 28);
+    $response->assertJsonPath('tabla.12.saldo', '0.00')
+        ->assertJsonPath('tabla.0.tipo', 'disposicion')
+        ->assertJsonPath('tabla.1.dias', 28);
     expect($response->json('cat'))->not->toBeNull();
+});
+
+test('simulador hace visible apertura y comisión porcentual de cada pago', function () {
+    $user = actingAsSuperAdmin();
+    $apertura = ConceptoComision::create(['clave' => 'APERTURA-TEST', 'nombre' => 'Apertura', 'activo' => true]);
+    $administracion = ConceptoComision::create(['clave' => 'ADMIN-TEST', 'nombre' => 'Administración', 'activo' => true]);
+    $producto = app(ProductoVersionService::class)->crear(productoPayload([
+        'monto_minimo' => '5000.00',
+        'comisiones' => [
+            [
+                'concepto_comision_id' => $apertura->id, 'tipo_importe' => 'fijo', 'importe' => '500',
+                'base_calculo' => 'no_aplica', 'momento_cobro' => 'inicio', 'modalidad_cobro' => 'pago_separado',
+                'obligatoria' => true, 'incluye_cat' => true,
+            ],
+            [
+                'concepto_comision_id' => $administracion->id, 'tipo_importe' => 'porcentaje', 'importe' => '1',
+                'base_calculo' => 'monto_credito', 'momento_cobro' => 'cada_pago', 'modalidad_cobro' => null,
+                'obligatoria' => true, 'incluye_cat' => true,
+            ],
+        ],
+    ]), $user->id);
+
+    $response = $this->actingAs($user)->postJson(route('productos-crediticios.simular', $producto->versiones()->first()), [
+        'monto' => '5000', 'periodicidad' => 'mensual', 'plazo' => 12,
+        'metodo' => 'cuota_nivelada', 'fecha' => '2026-08-16',
+    ])->assertOk();
+
+    $response
+        ->assertJsonPath('tabla.0.comisiones', '500.00')
+        ->assertJsonPath('tabla.1.saldo_inicial', '5000.00')
+        ->assertJsonPath('tabla.1.capital', '348.64')
+        ->assertJsonPath('tabla.1.interes', '155.00')
+        ->assertJsonPath('tabla.1.comisiones', '50.00')
+        ->assertJsonPath('tabla.1.pago_total', '553.64')
+        ->assertJsonPath('tabla.1.saldo_final', '4651.36')
+        ->assertJsonPath('tabla.12.saldo_final', '0.00')
+        ->assertJsonPath('total_intereses', '1043.68')
+        ->assertJsonPath('total_comisiones', '1100.00')
+        ->assertJsonPath('total_pagar', '7143.68');
+});
+
+test('comisión financiada consume el monto máximo del producto', function () {
+    $user = actingAsSuperAdmin();
+    $apertura = ConceptoComision::create(['clave' => 'APERTURA-FIN', 'nombre' => 'Apertura financiada', 'activo' => true]);
+    $producto = app(ProductoVersionService::class)->crear(productoPayload([
+        'monto_minimo' => '1000.00', 'monto_maximo' => '5000.00',
+        'comisiones' => [[
+            'concepto_comision_id' => $apertura->id, 'tipo_importe' => 'fijo', 'importe' => '500',
+            'base_calculo' => 'no_aplica', 'momento_cobro' => 'inicio', 'modalidad_cobro' => 'financiada',
+            'obligatoria' => true, 'incluye_cat' => true,
+        ]],
+    ]), $user->id);
+
+    $this->actingAs($user)->postJson(route('productos-crediticios.simular', $producto->versiones()->first()), [
+        'monto' => '4800', 'periodicidad' => 'mensual', 'plazo' => 12,
+        'metodo' => 'cuota_nivelada', 'fecha' => '2026-08-16',
+    ])->assertUnprocessable()->assertJsonValidationErrors('monto');
+});
+
+test('simulador distingue las tres modalidades de comisión inicial', function (string $modalidad, string $saldo, string $entregado, string $flujoNeto, string $pagoInicial) {
+    $user = actingAsSuperAdmin();
+    $concepto = ConceptoComision::create([
+        'clave' => 'INICIAL-'.strtoupper($modalidad),
+        'nombre' => 'Comisión inicial',
+        'activo' => true,
+    ]);
+    $producto = app(ProductoVersionService::class)->crear(productoPayload([
+        'comisiones' => [[
+            'concepto_comision_id' => $concepto->id,
+            'tipo_importe' => 'fijo',
+            'importe' => '500',
+            'base_calculo' => 'no_aplica',
+            'momento_cobro' => 'inicio',
+            'modalidad_cobro' => $modalidad,
+            'obligatoria' => true,
+            'incluye_cat' => true,
+        ]],
+    ]), $user->id);
+
+    $response = $this->actingAs($user)->postJson(route('productos-crediticios.simular', $producto->versiones()->first()), [
+        'monto' => '5000', 'periodicidad' => 'mensual', 'plazo' => 12,
+        'metodo' => 'cuota_nivelada', 'fecha' => '2026-08-16',
+    ])->assertOk();
+
+    $response
+        ->assertJsonPath('escenario.saldo_financiado', $saldo)
+        ->assertJsonPath('escenario.efectivo_entregado', $entregado)
+        ->assertJsonPath('escenario.flujo_neto_inicial', $flujoNeto)
+        ->assertJsonPath('tabla.0.pago_total', $pagoInicial)
+        ->assertJsonPath('tabla.0.comisiones_detalle.0.modalidad', $modalidad)
+        ->assertJsonPath('tabla.12.saldo_final', '0.00');
+})->with([
+    'pago separado' => ['pago_separado', '5000.00', '5000.00', '4500.00', '500.00'],
+    'descuento de disposición' => ['descuento_desembolso', '5000.00', '4500.00', '4500.00', '0.00'],
+    'financiada' => ['financiada', '5500.00', '5000.00', '5000.00', '0.00'],
+]);
+
+test('clave duplicada de concepto devuelve mensaje legible en español', function () {
+    $user = actingAsSuperAdmin();
+    ConceptoComision::create(['clave' => 'DUPLICADA', 'nombre' => 'Primera', 'activo' => true]);
+
+    $this->actingAs($user)->post(route('conceptos-comision.store'), [
+        'clave' => 'DUPLICADA', 'nombre' => 'Segunda', 'descripcion' => null, 'referencia_reco' => null,
+        'es_oficial_reco' => false, 'revisado' => false, 'activo' => true,
+    ])->assertSessionHasErrors(['clave' => 'La clave del concepto de comisión ya está en uso.']);
 });

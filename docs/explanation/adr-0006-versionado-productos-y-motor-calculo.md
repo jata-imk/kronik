@@ -2,6 +2,7 @@
 
 - Estado: aceptado
 - Fecha: 2026-08-12
+- Nota: la exclusión original de comisiones financiadas fue sustituida por ADR 0007.
 
 ## Contexto
 
@@ -22,7 +23,7 @@ Un producto conserva identidad comercial, pero sus tasas, montos, plazos, comisi
 - Cambiar condiciones exige duplicar una versión y activarla con vigencia explícita.
 - Originación debe registrar uso y snapshot antes de aceptar una solicitud.
 - Crédito revolvente puede agregar reglas y motor propios sin introducir funcionalidad V2 ahora.
-- V1 no financia comisiones, no agrega IVA ni ajusta días inhábiles.
+- V1 no agrega IVA ni ajusta días inhábiles. El tratamiento de comisiones iniciales se define en ADR 0007.
 
 ## Fuentes
 

@@ -7,117 +7,141 @@ use App\Enums\PeriodicidadCredito;
 use App\Models\ProductoVersion;
 use App\Support\Decimal;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 final class SimuladorCreditoSimple
 {
-    public function __construct(private readonly CatInformativoService $catService) {}
+    public function __construct(
+        private readonly CatInformativoService $catService,
+        private readonly CalendarioCreditoSimple $calendario,
+        private readonly TablaAmortizacionCreditoSimple $amortizacion,
+    ) {}
 
     /** @return array<string, mixed> */
-    public function simular(ProductoVersion $version, string $monto, PeriodicidadCredito $periodicidad, int $plazo, MetodoAmortizacion $metodo, CarbonImmutable $fecha): array
+    public function simular(ProductoVersion $version, string $monto, PeriodicidadCredito $periodicidad, int $plazo, MetodoAmortizacion $metodo, CarbonImmutable $fecha, bool $incluirFormula = false): array
     {
         $version->loadMissing(['periodicidades', 'reglas', 'comisiones.concepto']);
-        $this->validar($version, $monto, $periodicidad, $plazo, $metodo);
-        $tabla = $this->tabla($version, $monto, $fecha, $this->fechas($fecha, $periodicidad, $plazo), $metodo);
-        $inicial = '0';
+        $comisiones = $version->comisiones->where('obligatoria', true)->values();
+        $iniciales = $comisiones->filter->esInicial();
+        $financiadas = $this->totalPorModalidad($iniciales, $monto, 'financiada');
+        $saldoFinanciado = Decimal::round(Decimal::add($monto, $financiadas));
 
-        foreach ($version->comisiones->where('obligatoria', true) as $comision) {
-            $importe = $comision->calcular($monto);
-            if (in_array($comision->momento_cobro, ['firma', 'desembolso_descuento'], true)) {
-                $inicial = Decimal::add($inicial, $importe);
+        $this->validar($version, $saldoFinanciado, $periodicidad, $plazo, $metodo);
+
+        $fechas = $this->calendario->fechas($fecha, $periodicidad, $plazo);
+        $resultado = $this->amortizacion->calcular($saldoFinanciado, (string) $version->tasa_ordinaria_anual, $fecha, $fechas, $metodo);
+        $tabla = $resultado['tabla'];
+        $cadaPago = $comisiones->where('momento_cobro', 'cada_pago');
+        $acumulados = ['capital' => '0.00', 'interes' => '0.00', 'comisiones' => '0.00', 'pagado' => '0.00'];
+
+        $pagoSeparado = $this->totalPorModalidad($iniciales, $monto, 'pago_separado');
+        $retenidas = $this->totalPorModalidad($iniciales, $monto, 'descuento_desembolso');
+        $comisionesIniciales = Decimal::round(Decimal::add(Decimal::add($pagoSeparado, $retenidas), $financiadas));
+        $flujoNetoInicial = Decimal::round(Decimal::sub(Decimal::sub($monto, $pagoSeparado), $retenidas));
+        $efectivoEntregado = Decimal::round(Decimal::sub($monto, $retenidas));
+        $pagoInicial = $pagoSeparado;
+        $acumulados['comisiones'] = $comisionesIniciales;
+        $acumulados['pagado'] = $pagoSeparado;
+
+        $filaCero = [
+            'numero' => 0,
+            'tipo' => 'disposicion',
+            'fecha' => $fecha->toDateString(),
+            'dias' => 0,
+            'saldo_inicial' => '0.00',
+            'disposicion' => $saldoFinanciado,
+            'capital' => '0.00',
+            'interes' => '0.00',
+            'comisiones' => $comisionesIniciales,
+            'comisiones_detalle' => $this->detalle($iniciales, $monto),
+            'pago_total' => $pagoInicial,
+            'saldo_final' => $saldoFinanciado,
+            'saldo' => $saldoFinanciado,
+            'efectivo_entregado' => $efectivoEntregado,
+            'flujo_neto_cliente' => $flujoNetoInicial,
+            ...$this->camposAcumulados($acumulados),
+        ];
+
+        foreach ($tabla as &$fila) {
+            $detalle = $this->detalle($cadaPago, $monto);
+            $totalComisiones = array_reduce($detalle, fn (string $total, array $item) => Decimal::add($total, $item['importe']), '0');
+            $totalCat = array_reduce($detalle, fn (string $total, array $item) => $item['incluye_cat'] ? Decimal::add($total, $item['importe']) : $total, '0');
+            $fila['comisiones'] = Decimal::round($totalComisiones);
+            $fila['comisiones_detalle'] = $detalle;
+            $fila['pago_total'] = Decimal::round(Decimal::add($fila['pago_total'], $totalComisiones));
+            $fila['pago_cat'] = Decimal::round(Decimal::add($fila['pago_cat'], $totalCat));
+
+            foreach (['capital', 'interes', 'comisiones'] as $campo) {
+                $acumulados[$campo] = Decimal::round(Decimal::add($acumulados[$campo], $fila[$campo]));
             }
-            if ($comision->momento_cobro === 'cada_pago') {
-                foreach ($tabla as &$fila) {
-                    $fila['comisiones'] = Decimal::round(Decimal::add($fila['comisiones'], $importe));
-                    $fila['pago_total'] = Decimal::round(Decimal::add($fila['pago_total'], $importe));
-                }
-                unset($fila);
-            }
+            $acumulados['pagado'] = Decimal::round(Decimal::add($acumulados['pagado'], $fila['pago_total']));
+            $fila += $this->camposAcumulados($acumulados);
         }
+        unset($fila);
 
-        $recibido = Decimal::sub($monto, $inicial);
+        $inicialCat = array_reduce($iniciales->all(), function (string $total, $comision) use ($monto) {
+            return $comision->incluye_cat ? Decimal::add($total, $comision->calcular($monto)) : $total;
+        }, '0');
+        $montoRecibidoCat = Decimal::round(Decimal::sub($saldoFinanciado, $inicialCat));
         $cat = $version->cat_aplica
-            ? $this->catService->calcular($recibido, array_column($tabla, 'pago_total'), $periodicidad)
+            ? $this->catService->calcular($montoRecibidoCat, array_column($tabla, 'pago_cat'), $periodicidad)
             : null;
 
-        return [
+        $totalIntereses = $this->sumar($tabla, 'interes');
+        $totalPagosPeriodicos = $this->sumar($tabla, 'pago_total');
+        $totalPagar = Decimal::round(Decimal::add($totalPagosPeriodicos, $pagoInicial));
+        $totalComisiones = Decimal::round(Decimal::add($comisionesIniciales, $this->sumar($tabla, 'comisiones')));
+
+        $respuesta = [
             'monto' => Decimal::round($monto),
-            'monto_recibido_cat' => Decimal::round($recibido),
-            'comisiones_iniciales' => Decimal::round($inicial),
+            'monto_recibido_cat' => $montoRecibidoCat,
+            'comisiones_iniciales' => $comisionesIniciales,
             'periodicidad' => $periodicidad->value,
             'plazo' => $plazo,
             'metodo' => $metodo->value,
             'cat' => $cat,
             'cat_leyenda' => $cat === null ? $version->cat_no_aplica_motivo : 'CAT informativo. Sin IVA. Para fines informativos y de comparación exclusivamente.',
-            'total_intereses' => Decimal::round(array_reduce($tabla, fn (string $total, array $fila) => Decimal::add($total, $fila['interes']), '0')),
-            'total_pagar' => Decimal::round(array_reduce($tabla, fn (string $total, array $fila) => Decimal::add($total, $fila['pago_total']), '0')),
-            'tabla' => $tabla,
+            'total_intereses' => $totalIntereses,
+            'total_comisiones' => $totalComisiones,
+            'total_pagar' => $totalPagar,
+            'escenario' => [
+                'fecha_disposicion' => $fecha->toDateString(),
+                'monto_solicitado' => Decimal::round($monto),
+                'saldo_financiado' => $saldoFinanciado,
+                'efectivo_entregado' => $efectivoEntregado,
+                'flujo_neto_inicial' => $flujoNetoInicial,
+            ],
+            'totales' => [
+                'capital_financiado' => $saldoFinanciado,
+                'intereses' => $totalIntereses,
+                'comisiones' => $totalComisiones,
+                'pagos_periodicos' => $totalPagosPeriodicos,
+                'pago_separado_inicial' => $pagoSeparado,
+                'retenido_desembolso' => $retenidas,
+                'financiado_comisiones' => $financiadas,
+                'obligaciones' => $totalPagar,
+            ],
+            'comisiones_excluidas' => $version->comisiones->where('obligatoria', false)->map(fn ($item) => [
+                'concepto' => $item->concepto?->nombre,
+                'motivo' => 'Comisión opcional no incluida en el escenario base.',
+            ])->values()->all(),
+            'tabla' => [$filaCero, ...array_map(fn (array $fila) => collect($fila)->except('pago_cat')->all(), $tabla)],
         ];
-    }
 
-    /** @return array<int, CarbonImmutable> */
-    private function fechas(CarbonImmutable $inicio, PeriodicidadCredito $periodicidad, int $plazo): array
-    {
-        $fechas = [];
-        for ($i = 1; $i <= $plazo; $i++) {
-            $fechas[] = match ($periodicidad) {
-                PeriodicidadCredito::Semanal => $inicio->addDays(7 * $i),
-                PeriodicidadCredito::Quincenal => $inicio->addDays(15 * $i),
-                PeriodicidadCredito::Mensual => $inicio->isLastOfMonth() ? $inicio->addMonthsNoOverflow($i)->endOfMonth()->startOfDay() : $inicio->addMonthsNoOverflow($i),
-            };
+        if ($incluirFormula) {
+            $respuesta['formula_debug'] = $this->formula($version, $saldoFinanciado, $resultado, $tabla);
         }
 
-        return $fechas;
+        return $respuesta;
     }
 
-    /** @return array<int, array<string, string|int>> */
-    private function tabla(ProductoVersion $version, string $monto, CarbonImmutable $inicio, array $fechas, MetodoAmortizacion $metodo): array
-    {
-        $anterior = $inicio;
-        $factores = [];
-        $acumulado = '1';
-        foreach ($fechas as $fecha) {
-            $dias = (int) round($anterior->diffInDays($fecha));
-            $tasa = Decimal::mul(Decimal::div((string) $version->tasa_ordinaria_anual, '100'), Decimal::div((string) $dias, '360'));
-            $acumulado = Decimal::mul($acumulado, Decimal::add('1', $tasa));
-            $factores[] = ['fecha' => $fecha, 'dias' => $dias, 'tasa' => $tasa, 'descuento' => Decimal::div('1', $acumulado)];
-            $anterior = $fecha;
-        }
-        $cuota = $metodo === MetodoAmortizacion::CuotaNivelada
-            ? Decimal::div($monto, array_reduce($factores, fn (string $total, array $factor) => Decimal::add($total, $factor['descuento']), '0'))
-            : null;
-        $capitalFijo = Decimal::div($monto, (string) count($fechas));
-        $saldo = $monto;
-        $tabla = [];
-        foreach ($factores as $index => $factor) {
-            $interes = Decimal::mul($saldo, $factor['tasa']);
-            $capital = $metodo === MetodoAmortizacion::CuotaNivelada ? Decimal::sub((string) $cuota, $interes) : $capitalFijo;
-            if ($index === array_key_last($factores)) {
-                $capital = $saldo;
-            }
-            $pago = Decimal::add($capital, $interes);
-            $saldo = Decimal::sub($saldo, $capital);
-            $tabla[] = [
-                'numero' => $index + 1,
-                'fecha' => $factor['fecha']->toDateString(),
-                'dias' => $factor['dias'],
-                'capital' => Decimal::round($capital),
-                'interes' => Decimal::round($interes),
-                'comisiones' => '0.00',
-                'pago_total' => Decimal::round($pago),
-                'saldo' => Decimal::round($saldo),
-            ];
-        }
-
-        return $tabla;
-    }
-
-    private function validar(ProductoVersion $version, string $monto, PeriodicidadCredito $periodicidad, int $plazo, MetodoAmortizacion $metodo): void
+    private function validar(ProductoVersion $version, string $saldoFinanciado, PeriodicidadCredito $periodicidad, int $plazo, MetodoAmortizacion $metodo): void
     {
         $config = $version->periodicidades->firstWhere('periodicidad', $periodicidad->value);
         $errores = [];
-        if (Decimal::compare($monto, (string) $version->monto_minimo) < 0 || Decimal::compare($monto, (string) $version->monto_maximo) > 0) {
-            $errores['monto'] = 'El monto debe estar dentro del rango configurado para esta versión.';
+        if (Decimal::compare($saldoFinanciado, (string) $version->monto_minimo) < 0 || Decimal::compare($saldoFinanciado, (string) $version->monto_maximo) > 0) {
+            $errores['monto'] = 'El saldo total financiado, incluidas las comisiones financiadas, debe estar dentro del rango del producto.';
         }
         if (! $config || $plazo < $config->plazo_minimo || $plazo > $config->plazo_maximo) {
             $errores['plazo'] = 'El plazo no está permitido para la periodicidad seleccionada.';
@@ -128,5 +152,61 @@ final class SimuladorCreditoSimple
         if ($errores !== []) {
             throw ValidationException::withMessages($errores);
         }
+    }
+
+    private function totalPorModalidad(Collection $comisiones, string $monto, string $modalidad): string
+    {
+        return Decimal::round($comisiones->reduce(
+            fn (string $total, $comision) => $comision->modalidadInicial() === $modalidad ? Decimal::add($total, $comision->calcular($monto)) : $total,
+            '0',
+        ));
+    }
+
+    private function detalle(Collection $comisiones, string $monto): array
+    {
+        return $comisiones->map(fn ($comision) => [
+            'concepto' => $comision->concepto?->nombre ?? 'Comisión',
+            'clave' => $comision->concepto?->clave,
+            'importe' => Decimal::round($comision->calcular($monto)),
+            'momento' => $comision->esInicial() ? 'inicio' : $comision->momento_cobro,
+            'modalidad' => $comision->modalidadInicial(),
+            'incluye_cat' => (bool) $comision->incluye_cat,
+        ])->values()->all();
+    }
+
+    private function sumar(array $filas, string $campo): string
+    {
+        return Decimal::round(array_reduce($filas, fn (string $total, array $fila) => Decimal::add($total, $fila[$campo]), '0'));
+    }
+
+    private function camposAcumulados(array $acumulados): array
+    {
+        return [
+            'capital_acumulado' => $acumulados['capital'],
+            'interes_acumulado' => $acumulados['interes'],
+            'comisiones_acumuladas' => $acumulados['comisiones'],
+            'pagado_acumulado' => $acumulados['pagado'],
+        ];
+    }
+
+    private function formula(ProductoVersion $version, string $saldoFinanciado, array $resultado, array $tabla): array
+    {
+        return [
+            'convencion' => 'días reales / 360',
+            'metodo' => 'El interés de cada periodo usa el saldo inicial y sus días reales; la última cuota liquida el residuo.',
+            'interes' => 'Iₖ = Sₖ₋₁ × (tasa anual / 100) × (díasₖ / 360)',
+            'cuota_nivelada' => 'C = P ÷ Σ[1 ÷ Π(1 + iⱼ)]',
+            'capital_fijo' => 'A = P ÷ n; la última amortización toma el saldo restante.',
+            'saldo_financiado' => $saldoFinanciado,
+            'tasa_anual' => (string) $version->tasa_ordinaria_anual,
+            'cuota_exacta' => $resultado['cuota_exacta'],
+            'cuota_redondeada' => $resultado['cuota_redondeada'],
+            'redondeo' => 'Half-up a centavos en interés, capital, comisión, pago y saldo de cada fila.',
+            'periodos' => array_map(fn (array $fila) => [
+                'numero' => $fila['numero'],
+                'dias' => $fila['dias'],
+                'sustitucion_interes' => "{$fila['saldo_inicial']} × ".(string) $version->tasa_ordinaria_anual."% × {$fila['dias']}/360 = {$fila['interes']}",
+            ], $tabla),
+        ];
     }
 }

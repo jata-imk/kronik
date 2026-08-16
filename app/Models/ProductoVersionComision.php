@@ -29,4 +29,21 @@ class ProductoVersionComision extends Model
             ? Decimal::div(Decimal::mul($monto, (string) $this->importe), '100')
             : (string) $this->importe;
     }
+
+    public function esInicial(): bool
+    {
+        return in_array($this->momento_cobro, ['inicio', 'firma', 'desembolso_descuento'], true);
+    }
+
+    public function modalidadInicial(): ?string
+    {
+        if (! $this->esInicial()) {
+            return null;
+        }
+
+        return $this->modalidad_cobro ?: match ($this->momento_cobro) {
+            'desembolso_descuento' => 'descuento_desembolso',
+            default => 'pago_separado',
+        };
+    }
 }

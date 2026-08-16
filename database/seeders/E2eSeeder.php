@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\ActivityEvent;
+use App\Models\ConceptoComision;
 use App\Models\Sucursal;
 use App\Models\Team;
 use App\Models\User;
@@ -63,6 +64,9 @@ class E2eSeeder extends Seeder
                 causer: $admin,
             );
 
+            $apertura = ConceptoComision::where('clave', 'APERTURA')->firstOrFail();
+            $administracion = ConceptoComision::where('clave', 'ADMINISTRACION')->firstOrFail();
+
             $producto = app(ProductoVersionService::class)->crear([
                 'clave' => 'CS-ESENCIAL',
                 'nombre' => 'Crédito Simple Esencial',
@@ -81,7 +85,28 @@ class E2eSeeder extends Seeder
                         'permite_prepago_parcial' => true, 'permite_liquidacion_anticipada' => true,
                         'monto_minimo_prepago' => '500', 'aplicacion_prepago' => 'reducir_plazo',
                     ],
-                    'comisiones' => [],
+                    'comisiones' => [
+                        [
+                            'concepto_comision_id' => $apertura->id,
+                            'tipo_importe' => 'fijo',
+                            'importe' => '500',
+                            'base_calculo' => 'no_aplica',
+                            'momento_cobro' => 'inicio',
+                            'modalidad_cobro' => 'pago_separado',
+                            'obligatoria' => true,
+                            'incluye_cat' => true,
+                        ],
+                        [
+                            'concepto_comision_id' => $administracion->id,
+                            'tipo_importe' => 'porcentaje',
+                            'importe' => '1',
+                            'base_calculo' => 'monto_credito',
+                            'momento_cobro' => 'cada_pago',
+                            'modalidad_cobro' => null,
+                            'obligatoria' => true,
+                            'incluye_cat' => true,
+                        ],
+                    ],
                 ],
             ], $admin->id);
             app(ProductoVersionService::class)->activar($producto->versiones()->first(), today()->toDateString());

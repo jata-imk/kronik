@@ -8,6 +8,7 @@ use App\Enums\PeriodicidadCredito;
 use App\Http\Requests\GuardarProductoRequest;
 use App\Http\Requests\SimularCreditoRequest;
 use App\Models\ConceptoComision;
+use App\Models\EmpresaConfiguracion;
 use App\Models\ProductoCrediticio;
 use App\Models\ProductoVersion;
 use App\Services\ActivityLogService;
@@ -45,6 +46,9 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
         return Inertia::render('ProductosCrediticios/Index', [
             'productos' => fn () => ProductoCrediticio::query()->with(['versiones' => fn ($query) => $query->with(['periodicidades', 'reglas', 'comisiones.concepto'])->withCount('usos')->orderByDesc('numero')])->orderBy('nombre')->get(),
             'conceptosComision' => fn () => ConceptoComision::query()->where('activo', true)->orderBy('nombre')->get(),
+            'simuladorDefaults' => fn () => [
+                'fecha_disposicion' => now(EmpresaConfiguracion::query()->value('zona_horaria') ?? config('app.timezone'))->toDateString(),
+            ],
         ]);
     }
 
@@ -101,7 +105,17 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
         $this->authorize('simulate', $version);
         $data = $request->validated();
 
-        return response()->json($simulador->simular($version, $data['monto'], PeriodicidadCredito::from($data['periodicidad']), (int) $data['plazo'], MetodoAmortizacion::from($data['metodo']), CarbonImmutable::parse($data['fecha'])));
+        $incluirFormula = app()->environment('local') || (bool) $request->user()?->is_super_admin;
+
+        return response()->json($simulador->simular(
+            $version,
+            $data['monto'],
+            PeriodicidadCredito::from($data['periodicidad']),
+            (int) $data['plazo'],
+            MetodoAmortizacion::from($data['metodo']),
+            CarbonImmutable::parse($data['fecha']),
+            $incluirFormula,
+        ));
     }
 
     private function actividad(ActivityEvent $event, string $description, ProductoCrediticio $producto, array $campos): void

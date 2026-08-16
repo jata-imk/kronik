@@ -15,7 +15,14 @@ test("recorre catálogo, versiones y simulador de crédito simple", async ({ pag
 
     await expect(page.getByText("CAT informativo", { exact: true })).toBeVisible();
     await expect(page.getByText(/Para fines informativos y de comparación/)).toBeVisible();
-    await expect(page.getByRole("columnheader", { name: "Capital" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Saldo inicial" })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Comisiones", exact: true })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Pagado acum." })).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Disposición", exact: true })).toBeVisible();
+    await expect(page.getByText("Disposición", { exact: true }).last()).toBeVisible();
+    await expect(page.getByRole("listitem").filter({ hasText: /^Apertura · \$500\.00 · Pago separado al inicio$/ })).toBeVisible();
+    await expect(page.getByRole("listitem").filter({ hasText: /^Administración · \$50\.00$/ }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Ver fórmula y sustitución de desarrollo" })).toBeVisible();
 });
 
 test("catálogo es utilizable en una pantalla móvil", async ({ page }) => {

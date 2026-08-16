@@ -48,7 +48,8 @@ class GuardarProductoRequest extends FormRequest
             'version.comisiones.*.tipo_importe' => ['required', Rule::in(['fijo', 'porcentaje'])],
             'version.comisiones.*.importe' => ['required', 'decimal:0,8', 'min:0'],
             'version.comisiones.*.base_calculo' => ['required', Rule::in(['no_aplica', 'monto_credito'])],
-            'version.comisiones.*.momento_cobro' => ['required', Rule::in(['firma', 'desembolso_descuento', 'cada_pago', 'evento', 'liquidacion'])],
+            'version.comisiones.*.momento_cobro' => ['required', Rule::in(['inicio', 'firma', 'desembolso_descuento', 'cada_pago', 'evento', 'liquidacion'])],
+            'version.comisiones.*.modalidad_cobro' => ['nullable', Rule::in(['pago_separado', 'descuento_desembolso', 'financiada'])],
             'version.comisiones.*.obligatoria' => ['required', 'boolean'],
             'version.comisiones.*.incluye_cat' => ['required', 'boolean'],
         ];
@@ -74,6 +75,16 @@ class GuardarProductoRequest extends FormRequest
                 if (($comision['tipo_importe'] ?? null) === 'porcentaje' && ($comision['base_calculo'] ?? null) !== 'monto_credito') {
                     $validator->errors()->add("version.comisiones.$index.base_calculo", 'Seleccione el monto del crédito como base de una comisión porcentual.');
                 }
+                $inicial = in_array($comision['momento_cobro'] ?? null, ['inicio', 'firma', 'desembolso_descuento'], true);
+                if ($inicial && empty($comision['modalidad_cobro']) && ($comision['momento_cobro'] ?? null) === 'inicio') {
+                    $validator->errors()->add("version.comisiones.$index.modalidad_cobro", 'Seleccione cómo se cobrará la comisión inicial.');
+                }
+                if (! $inicial && ! empty($comision['modalidad_cobro'])) {
+                    $validator->errors()->add("version.comisiones.$index.modalidad_cobro", 'La modalidad inicial solo aplica a comisiones cobradas al inicio.');
+                }
+                if (($comision['incluye_cat'] ?? false) && ! ($comision['obligatoria'] ?? false)) {
+                    $validator->errors()->add("version.comisiones.$index.incluye_cat", 'Una comisión opcional no puede incluirse automáticamente en el CAT del escenario base.');
+                }
             }
         }];
     }
@@ -85,6 +96,15 @@ class GuardarProductoRequest extends FormRequest
             'version.monto_maximo' => 'monto máximo', 'version.tasa_ordinaria_anual' => 'tasa ordinaria anual',
             'version.tasa_moratoria_anual' => 'tasa moratoria anual', 'version.periodicidades' => 'periodicidades',
             'version.reglas.metodos_amortizacion' => 'métodos de amortización',
+            'version.comisiones.*.modalidad_cobro' => 'modalidad de cobro inicial',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'version.monto_maximo.gte' => 'El monto máximo debe ser mayor o igual que el monto mínimo.',
+            'version.periodicidades.*.plazo_maximo.gte' => 'El plazo máximo debe ser mayor o igual que el plazo mínimo.',
         ];
     }
 }
