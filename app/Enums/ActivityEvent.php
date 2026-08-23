@@ -33,6 +33,11 @@ enum ActivityEvent: string
     case ClientSicFicoScoreV2Queried = 'cliente.sic.fico_score_v2.queried';
     case ClientSicFintechScoreQueried = 'cliente.sic.fintech_score.queried';
     case ClientSicCreditReportFicoQueried = 'cliente.sic.credit_report_fico.queried';
+    case CreditProductCreated = 'producto_crediticio.created';
+    case CreditProductUpdated = 'producto_crediticio.updated';
+    case CreditProductVersioned = 'producto_crediticio.versioned';
+    case CreditProductActivated = 'producto_crediticio.activated';
+    case CreditProductRetired = 'producto_crediticio.retired';
 
     public function label(): string
     {
@@ -66,6 +71,11 @@ enum ActivityEvent: string
             self::ClientSicFicoScoreV2Queried => 'Consulta SIC FICO Score v2',
             self::ClientSicFintechScoreQueried => 'Consulta SIC Fintech Score',
             self::ClientSicCreditReportFicoQueried => 'Consulta de reporte de crédito con FICO Score',
+            self::CreditProductCreated => 'Producto crediticio creado',
+            self::CreditProductUpdated => 'Producto crediticio actualizado',
+            self::CreditProductVersioned => 'Producto crediticio versionado',
+            self::CreditProductActivated => 'Versión de producto activada',
+            self::CreditProductRetired => 'Versión de producto retirada',
         };
     }
 
@@ -110,6 +120,11 @@ enum ActivityEvent: string
             self::ClientSicFicoScoreV2Queried,
             self::ClientSicFintechScoreQueried,
             self::ClientSicCreditReportFicoQueried => 'pi-search',
+            self::CreditProductCreated => 'pi-plus',
+            self::CreditProductUpdated => 'pi-pencil',
+            self::CreditProductVersioned => 'pi-copy',
+            self::CreditProductActivated => 'pi-check-circle',
+            self::CreditProductRetired => 'pi-ban',
             default => 'pi-circle',
         };
     }

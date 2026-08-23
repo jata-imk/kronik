@@ -30,10 +30,10 @@ Crear productos configurables para que cada financiera adapte su oferta.
 
 ## TODO
 
-- [ ] Diseñar tablas de productos y versiones de producto.
-- [ ] Separar parámetros comerciales de reglas de cálculo.
-- [ ] Crear CRUD de productos por financiera.
-- [ ] Crear simulador de crédito simple.
-- [ ] Calcular CAT informativo para productos donde aplique.
-- [ ] Validar comisiones contra catálogo configurado.
-- [ ] Bloquear edición destructiva de productos ya usados; usar versionado.
+- [x] Diseñar tablas de productos y versiones de producto.
+- [x] Separar parámetros comerciales de reglas de cálculo.
+- [x] Crear CRUD de productos por financiera.
+- [x] Crear simulador de crédito simple.
+- [x] Calcular CAT informativo para productos donde aplique.
+- [x] Validar comisiones contra catálogo configurado.
+- [x] Bloquear edición destructiva de productos ya usados; usar versionado.

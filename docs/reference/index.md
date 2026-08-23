@@ -1,5 +1,7 @@
 # Referencia
 
+- [Productos crediticios](productos-crediticios.md)
+
 - [Usuarios, equipos y sucursales](usuarios-equipos-sucursales.md)
 
 - [Automatizacion de documentacion](automatizacion-documentacion.md)

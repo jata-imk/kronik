@@ -15,9 +15,11 @@ use App\Http\Controllers\ClienteGarantiaController;
 use App\Http\Controllers\ClienteReferenciaController;
 use App\Http\Controllers\ClienteVinculoController;
 use App\Http\Controllers\CodigoPostalController;
+use App\Http\Controllers\ConceptoComisionController;
 use App\Http\Controllers\CurrentSucursalController;
 use App\Http\Controllers\GeocodingController;
 use App\Http\Controllers\HistorialCrediticioController;
+use App\Http\Controllers\ProductoCrediticioController;
 use App\Http\Controllers\TeamController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -77,6 +79,17 @@ Route::middleware([
     Route::patch('clientes/{cliente}/sucursal', [ClienteController::class, 'transfer'])->name('clientes.sucursal.transfer');
 
     Route::resource('clientes', ClienteController::class)->names('clientes');
+
+    Route::get('productos-crediticios', [ProductoCrediticioController::class, 'index'])->name('productos-crediticios.index');
+    Route::post('productos-crediticios', [ProductoCrediticioController::class, 'store'])->name('productos-crediticios.store');
+    Route::put('productos-crediticios/{producto}/versiones/{version}', [ProductoCrediticioController::class, 'update'])->name('productos-crediticios.update');
+    Route::post('productos-crediticios/{producto}/versiones/{version}/duplicar', [ProductoCrediticioController::class, 'versionar'])->name('productos-crediticios.versionar');
+    Route::post('producto-versiones/{version}/activar', [ProductoCrediticioController::class, 'activar'])->name('productos-crediticios.activar');
+    Route::post('producto-versiones/{version}/retirar', [ProductoCrediticioController::class, 'retirar'])->name('productos-crediticios.retirar');
+    Route::post('producto-versiones/{version}/simular', [ProductoCrediticioController::class, 'simular'])->name('productos-crediticios.simular');
+    Route::post('conceptos-comision', [ConceptoComisionController::class, 'store'])->name('conceptos-comision.store');
+    Route::put('conceptos-comision/{concepto}', [ConceptoComisionController::class, 'update'])->name('conceptos-comision.update');
+    Route::delete('conceptos-comision/{concepto}', [ConceptoComisionController::class, 'destroy'])->name('conceptos-comision.destroy');
 
     Route::get('/codigos-postales/sugerencias', [CodigoPostalController::class, 'sugerencias'])->name('codigos-postales.sugerencias');
     Route::get('/codigos-postales/buscar', [CodigoPostalController::class, 'buscar'])->name('codigos-postales.buscar');

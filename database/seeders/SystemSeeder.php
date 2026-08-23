@@ -12,5 +12,6 @@ class SystemSeeder extends Seeder
         $this->call(RolesSeeder::class);
         $this->call(MenubarItemsSeeder::class);
         $this->call(SicsSeeder::class);
+        $this->call(ConceptosComisionSeeder::class);
     }
 }

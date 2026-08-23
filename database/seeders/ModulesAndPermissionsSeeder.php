@@ -91,6 +91,15 @@ class ModulesAndPermissionsSeeder extends Seeder
             ],
         );
 
+        $productosCrediticios = Module::updateOrCreate(
+            ['name' => 'productos-crediticios'],
+            [
+                'icon' => 'pi-wallet',
+                'route_name' => 'productos-crediticios.index',
+                'parent_id' => null,
+            ],
+        );
+
         $historial = Module::updateOrCreate(
             ['name' => 'historial-crediticio'],
             [
@@ -128,6 +137,7 @@ class ModulesAndPermissionsSeeder extends Seeder
             'configuracion-empresa' => ['read', 'update'],
             'sucursales' => ['create', 'read', 'update', 'delete'],
             'clientes' => ['create', 'read', 'update', 'delete', 'transfer'],
+            'productos-crediticios' => ['create', 'read', 'update', 'activate', 'retire', 'version', 'simulate', 'manage commissions'],
             'historial-crediticio' => ['read'],
             'circulo-credito' => ['create', 'read'],
             'teams' => ['read', 'add members', 'delete', 'remove members', 'update', 'update members', 'create'],
@@ -143,6 +153,7 @@ class ModulesAndPermissionsSeeder extends Seeder
             $configuracionEmpresa,
             $sucursales,
             $clientes,
+            $productosCrediticios,
             $historial,
             $circuloCredito,
             $teams,
