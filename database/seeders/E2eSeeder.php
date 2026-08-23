@@ -66,6 +66,10 @@ class E2eSeeder extends Seeder
 
             $apertura = ConceptoComision::where('clave', 'APERTURA')->firstOrFail();
             $administracion = ConceptoComision::where('clave', 'ADMINISTRACION')->firstOrFail();
+            $asistencia = ConceptoComision::firstOrCreate(
+                ['clave' => 'ASISTENCIA_OPCIONAL'],
+                ['nombre' => 'Asistencia opcional', 'descripcion' => 'Servicio elegible para escenarios E2E.', 'activo' => true],
+            );
 
             $producto = app(ProductoVersionService::class)->crear([
                 'clave' => 'CS-ESENCIAL',
@@ -106,10 +110,23 @@ class E2eSeeder extends Seeder
                             'obligatoria' => true,
                             'incluye_cat' => true,
                         ],
+                        [
+                            'concepto_comision_id' => $asistencia->id,
+                            'tipo_importe' => 'fijo',
+                            'importe' => '250',
+                            'base_calculo' => 'no_aplica',
+                            'momento_cobro' => 'inicio',
+                            'modalidad_cobro' => 'pago_separado',
+                            'obligatoria' => false,
+                            'incluye_cat' => true,
+                        ],
                     ],
                 ],
             ], $admin->id);
-            app(ProductoVersionService::class)->activar($producto->versiones()->first(), today()->toDateString());
+            app(ProductoVersionService::class)->activar(
+                $producto->versiones()->first(),
+                app(\App\Services\FechaEmpresa::class)->hoy()->toDateString(),
+            );
         });
     }
 }

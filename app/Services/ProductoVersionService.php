@@ -5,12 +5,15 @@ namespace App\Services;
 use App\Enums\ProductoVersionEstado;
 use App\Models\ProductoCrediticio;
 use App\Models\ProductoVersion;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ProductoVersionService
 {
+    public function __construct(private readonly FechaEmpresa $fechaEmpresa) {}
+
     public function registrarUso(ProductoVersion $version, string $tipo, int $id): \App\Models\ProductoVersionUso
     {
         $snapshot = $version->snapshot ?? $this->snapshot($version);
@@ -42,7 +45,7 @@ class ProductoVersionService
             $version->periodicidades()->createMany($data['version']['periodicidades']);
             $version->reglas()->updateOrCreate([], $this->camposReglas($data['version']['reglas']));
             $version->comisiones()->delete();
-            $version->comisiones()->createMany($data['version']['comisiones']);
+            $version->comisiones()->createMany($this->normalizarComisiones($data['version']['comisiones']));
 
             return $producto;
         });
@@ -56,7 +59,7 @@ class ProductoVersionService
             'vigente_desde' => null,
             'periodicidades' => $origen->periodicidades->map->only(['periodicidad', 'plazo_minimo', 'plazo_maximo', 'plazo_predeterminado'])->all(),
             'reglas' => $origen->reglas->only(['metodos_amortizacion', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago']),
-            'comisiones' => $origen->comisiones->map->only(['concepto_comision_id', 'tipo_importe', 'importe', 'base_calculo', 'momento_cobro', 'modalidad_cobro', 'obligatoria', 'incluye_cat'])->all(),
+            'comisiones' => $origen->comisiones->map->only(['concepto_comision_id', 'tipo_importe', 'importe', 'base_calculo', 'momento_cobro', 'modalidad_cobro', 'obligatoria'])->all(),
         ];
 
         return DB::transaction(fn () => $this->crearVersion($producto, $data, $userId));
@@ -68,13 +71,14 @@ class ProductoVersionService
             $version = ProductoVersion::query()->lockForUpdate()->findOrFail($version->id);
             $this->asegurarEditable($version);
             $snapshot = $this->snapshot($version);
-            $programada = now()->startOfDay()->lt($vigenteDesde);
+            $fechaVigencia = CarbonImmutable::parse($vigenteDesde, $this->fechaEmpresa->zonaHoraria())->startOfDay();
+            $programada = $this->fechaEmpresa->hoy()->lt($fechaVigencia);
             if (! $programada) {
                 $this->retirarActivaAnterior($version);
             }
             $version->update([
                 'estado' => $programada ? ProductoVersionEstado::Programada : ProductoVersionEstado::Activa,
-                'vigente_desde' => $vigenteDesde,
+                'vigente_desde' => $fechaVigencia->toDateString(),
                 'activada_en' => $programada ? null : now(),
                 'snapshot' => $snapshot,
                 'snapshot_hash' => hash('sha256', json_encode($snapshot, JSON_THROW_ON_ERROR)),
@@ -97,7 +101,7 @@ class ProductoVersionService
     public function activarProgramadas(): int
     {
         $count = 0;
-        ProductoVersion::query()->where('estado', ProductoVersionEstado::Programada)->whereDate('vigente_desde', '<=', today())->orderBy('vigente_desde')->each(function ($version) use (&$count) {
+        ProductoVersion::query()->where('estado', ProductoVersionEstado::Programada)->whereDate('vigente_desde', '<=', $this->fechaEmpresa->hoy()->toDateString())->orderBy('vigente_desde')->each(function ($version) use (&$count) {
             DB::transaction(function () use ($version, &$count) {
                 $this->retirarActivaAnterior($version);
                 $version->update(['estado' => ProductoVersionEstado::Activa, 'activada_en' => now()]);
@@ -114,7 +118,7 @@ class ProductoVersionService
         $version = $producto->versiones()->create([...$this->camposVersion($data), 'numero' => $numero, 'creada_por' => $userId]);
         $version->periodicidades()->createMany($data['periodicidades']);
         $version->reglas()->create($this->camposReglas($data['reglas']));
-        $version->comisiones()->createMany($data['comisiones'] ?? []);
+        $version->comisiones()->createMany($this->normalizarComisiones($data['comisiones'] ?? []));
 
         return $version;
     }
@@ -122,6 +126,17 @@ class ProductoVersionService
     private function camposVersion(array $data): array
     {
         return Arr::only($data, ['moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual', 'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica', 'cat_no_aplica_motivo', 'vigente_desde']);
+    }
+
+    /** @param array<int, array<string, mixed>> $comisiones */
+    private function normalizarComisiones(array $comisiones): array
+    {
+        return array_map(function (array $comision): array {
+            $momentoNormal = in_array($comision['momento_cobro'] ?? null, ['inicio', 'firma', 'desembolso_descuento', 'cada_pago'], true);
+            $comision['incluye_cat'] = (bool) ($comision['obligatoria'] ?? false) && $momentoNormal;
+
+            return $comision;
+        }, $comisiones);
     }
 
     private function camposReglas(array $data): array

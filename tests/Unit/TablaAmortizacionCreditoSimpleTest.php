@@ -14,6 +14,9 @@ test('calendario mantiene intervalos y ancla de fin de mes', function (Periodici
     'semanal' => [PeriodicidadCredito::Semanal, '2026-01-01', ['2026-01-08', '2026-01-15']],
     'quincenal' => [PeriodicidadCredito::Quincenal, '2026-01-01', ['2026-01-16', '2026-01-31']],
     'mensual fin de mes' => [PeriodicidadCredito::Mensual, '2026-01-31', ['2026-02-28', '2026-03-31']],
+    'mensual recupera día ancla' => [PeriodicidadCredito::Mensual, '2026-01-30', ['2026-02-28', '2026-03-30', '2026-04-30']],
+    'mensual febrero bisiesto' => [PeriodicidadCredito::Mensual, '2028-01-31', ['2028-02-29', '2028-03-31']],
+    'mensual fin de abril' => [PeriodicidadCredito::Mensual, '2026-04-30', ['2026-05-31', '2026-06-30']],
 ]);
 
 test('cuota nivelada cierra cada fila a centavos', function () {

@@ -5,18 +5,18 @@ namespace App\Http\Controllers;
 use App\Enums\ActivityEvent;
 use App\Enums\MetodoAmortizacion;
 use App\Enums\PeriodicidadCredito;
+use App\Http\Requests\ActivarProductoVersionRequest;
 use App\Http\Requests\GuardarProductoRequest;
 use App\Http\Requests\SimularCreditoRequest;
 use App\Models\ConceptoComision;
-use App\Models\EmpresaConfiguracion;
 use App\Models\ProductoCrediticio;
 use App\Models\ProductoVersion;
 use App\Services\ActivityLogService;
 use App\Services\Credito\SimuladorCreditoSimple;
+use App\Services\FechaEmpresa;
 use App\Services\ProductoVersionService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
@@ -39,7 +39,7 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index()
+    public function index(FechaEmpresa $fechaEmpresa)
     {
         $this->authorize('viewAny', ProductoCrediticio::class);
 
@@ -47,7 +47,11 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
             'productos' => fn () => ProductoCrediticio::query()->with(['versiones' => fn ($query) => $query->with(['periodicidades', 'reglas', 'comisiones.concepto'])->withCount('usos')->orderByDesc('numero')])->orderBy('nombre')->get(),
             'conceptosComision' => fn () => ConceptoComision::query()->where('activo', true)->orderBy('nombre')->get(),
             'simuladorDefaults' => fn () => [
-                'fecha_disposicion' => now(EmpresaConfiguracion::query()->value('zona_horaria') ?? config('app.timezone'))->toDateString(),
+                'fecha_disposicion' => $fechaEmpresa->hoy()->toDateString(),
+            ],
+            'activacionDefaults' => fn () => [
+                'hoy' => $fechaEmpresa->hoy()->toDateString(),
+                'zona_horaria' => $fechaEmpresa->zonaHoraria(),
             ],
         ]);
     }
@@ -81,10 +85,10 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
         return back()->with('success', "Versión {$nueva->numero} creada como borrador.");
     }
 
-    public function activar(Request $request, ProductoVersion $version, ProductoVersionService $service)
+    public function activar(ActivarProductoVersionRequest $request, ProductoVersion $version, ProductoVersionService $service)
     {
         $this->authorize('activate', $version);
-        $data = $request->validate(['vigente_desde' => ['required', 'date']], [], ['vigente_desde' => 'fecha de vigencia']);
+        $data = $request->validated();
         $version = $service->activar($version, $data['vigente_desde']);
         $this->actividad(ActivityEvent::CreditProductActivated, 'Versión de producto activada o programada', $version->producto, ['estado', 'vigente_desde']);
 
@@ -114,6 +118,7 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
             (int) $data['plazo'],
             MetodoAmortizacion::from($data['metodo']),
             CarbonImmutable::parse($data['fecha']),
+            $data['comisiones_opcionales'] ?? [],
             $incluirFormula,
         ));
     }

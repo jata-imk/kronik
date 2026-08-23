@@ -20,11 +20,13 @@ class SimularCreditoRequest extends FormRequest
             'plazo' => ['required', 'integer', 'min:1', 'max:600'],
             'metodo' => ['required', Rule::in(['cuota_nivelada', 'capital_fijo'])],
             'fecha' => ['required', 'date'],
+            'comisiones_opcionales' => ['sometimes', 'array'],
+            'comisiones_opcionales.*' => ['integer', 'distinct'],
         ];
     }
 
     public function attributes(): array
     {
-        return ['monto' => 'monto', 'periodicidad' => 'periodicidad', 'plazo' => 'plazo', 'metodo' => 'método de amortización', 'fecha' => 'fecha de disposición'];
+        return ['monto' => 'monto', 'periodicidad' => 'periodicidad', 'plazo' => 'plazo', 'metodo' => 'método de amortización', 'fecha' => 'fecha de disposición', 'comisiones_opcionales' => 'comisiones opcionales'];
     }
 }

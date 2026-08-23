@@ -1,12 +1,19 @@
 <script setup>
-import AppLayout from "@sakai-vue/layout/AppLayout.vue";
-import { router, useForm, usePage } from "@inertiajs/vue3";
-import axios from "axios";
 import FinancialFieldHelp from "@/Components/Products/FinancialFieldHelp.vue";
 import ProductVersionStatus from "@/Components/Products/ProductVersionStatus.vue";
-import { computed, nextTick, ref, watch } from "vue";
+import { router, useForm, usePage } from "@inertiajs/vue3";
+import AppLayout from "@sakai-vue/layout/AppLayout.vue";
+import axios from "axios";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
+import { computed, nextTick, ref, watch } from "vue";
+import { dateInTimeZone } from "./activationDate";
+import {
+    commissionCatReason,
+    commissionIncludesCat,
+    isConditionalCommission,
+    isSelectableOptionalCommission,
+} from "./commissionRules";
 import {
     countProductTabErrors,
     formatMoneyWithCents,
@@ -17,6 +24,7 @@ const props = defineProps({
     productos: { type: Array, default: () => [] },
     conceptosComision: { type: Array, default: () => [] },
     simuladorDefaults: { type: Object, default: () => ({}) },
+    activacionDefaults: { type: Object, default: () => ({}) },
 });
 const page = usePage();
 const toast = useToast();
@@ -31,6 +39,8 @@ const editingVersion = ref(null);
 const activeEditorTab = ref("general");
 const simulation = ref(null);
 const simulating = ref(false);
+const activationVisible = ref(false);
+const activatingVersion = ref(null);
 
 const can = (permission) =>
     page.props.auth.is_super_admin ||
@@ -253,7 +263,7 @@ const normalizeCommission = (item) => {
         momento_cobro: initial ? "inicio" : item.momento_cobro,
         modalidad_cobro: initial ? (item.modalidad_cobro ?? legacyMode) : null,
         obligatoria: item.obligatoria,
-        incluye_cat: item.incluye_cat,
+        incluye_cat: commissionIncludesCat(item),
     };
 };
 const openCreate = () => {
@@ -366,6 +376,30 @@ const changeCommissionMoment = (item) => {
         item.momento_cobro === "inicio"
             ? (item.modalidad_cobro ?? "pago_separado")
             : null;
+    updateCommissionCat(item);
+};
+const updateCommissionCat = (item) => {
+    item.incluye_cat = commissionIncludesCat(item);
+};
+const catReason = commissionCatReason;
+const unhandledCommissionErrors = (index) => {
+    const visible = [
+        "concepto_comision_id",
+        "tipo_importe",
+        "importe",
+        "momento_cobro",
+        "modalidad_cobro",
+        "obligatoria",
+    ];
+    const prefix = `version.comisiones.${index}.`;
+
+    return Object.entries(form.errors)
+        .filter(
+            ([key]) =>
+                key.startsWith(prefix) &&
+                !visible.includes(key.slice(prefix.length)),
+        )
+        .map(([, message]) => message);
 };
 
 const versionCopy = (version) =>
@@ -386,31 +420,41 @@ const versionCopy = (version) =>
                 }),
         },
     );
+const companyToday = () =>
+    dateInTimeZone(new Date(), props.activacionDefaults.zona_horaria);
+const activationForm = useForm({ vigente_desde: "" });
+const activationIsScheduled = computed(
+    () => activationForm.vigente_desde > companyToday(),
+);
 const activate = (version) => {
-    const date =
-        version.vigente_desde ?? props.simuladorDefaults.fecha_disposicion;
-    confirm.require({
-        header: "Activar versión",
-        message: `La versión ${version.numero} quedará inmutable desde ${date}.`,
-        icon: "pi pi-lock",
-        acceptLabel: "Activar",
-        rejectLabel: "Cancelar",
-        accept: () =>
-            router.post(
-                route("productos-crediticios.activar", version.id),
-                { vigente_desde: date },
-                {
-                    preserveScroll: true,
-                    only: ["productos"],
-                    onSuccess: () =>
-                        toast.add({
-                            severity: "success",
-                            summary: "Versión activada",
-                            life: 3000,
-                        }),
-                },
-            ),
-    });
+    activatingVersion.value = version;
+    activationForm.defaults({ vigente_desde: companyToday() });
+    activationForm.reset();
+    activationForm.clearErrors();
+    activationVisible.value = true;
+};
+const submitActivation = () => {
+    activationForm.post(
+        route("productos-crediticios.activar", activatingVersion.value.id),
+        {
+            preserveScroll: true,
+            errorBag: "activarProductoVersion",
+            only: ["productos"],
+            onSuccess: () => {
+                activationVisible.value = false;
+                toast.add({
+                    severity: "success",
+                    summary: activationIsScheduled.value
+                        ? "Activación programada"
+                        : "Versión activada",
+                    detail: activationIsScheduled.value
+                        ? `Entrará en vigor el ${activationForm.vigente_desde}.`
+                        : "Ya está disponible para nuevas operaciones.",
+                    life: 3500,
+                });
+            },
+        },
+    );
 };
 const retire = (version) =>
     confirm.require({
@@ -444,6 +488,7 @@ const simForm = ref({
     plazo: 12,
     metodo: "cuota_nivelada",
     fecha: props.simuladorDefaults.fecha_disposicion,
+    comisiones_opcionales: [],
 });
 const simulatorVersion = ref(null);
 const simulatorPeriodOptions = computed(() =>
@@ -457,6 +502,14 @@ const simulatorMethodOptions = computed(() =>
         (value) => ({ label: methodLabel[value], value }),
     ),
 );
+const simulatorOptionalCommissions = computed(() =>
+    (simulatorVersion.value?.comisiones ?? []).filter(
+        isSelectableOptionalCommission,
+    ),
+);
+const simulatorConditionalCommissions = computed(() =>
+    (simulatorVersion.value?.comisiones ?? []).filter(isConditionalCommission),
+);
 const openSimulator = (version) => {
     simulatorVersion.value = version;
     const period = version.periodicidades[0];
@@ -466,6 +519,7 @@ const openSimulator = (version) => {
         plazo: period?.plazo_predeterminado ?? 12,
         metodo: version.reglas?.metodos_amortizacion?.[0] ?? "cuota_nivelada",
         fecha: props.simuladorDefaults.fecha_disposicion,
+        comisiones_opcionales: [],
     };
     simulation.value = null;
     simulatorVisible.value = true;
@@ -570,7 +624,19 @@ watch(
                             </TabPanel>
                             <TabPanel value="reglas"><div class="grid gap-5 pt-3 md:grid-cols-2"><div><div class="flex items-center"><label class="text-sm font-medium">Métodos de amortización *</label><FinancialFieldHelp :title="help.method[0]" :description="help.method[1]" :example="help.method[2]" /></div><div class="mt-2 flex flex-col gap-3 rounded-xl border border-surface-200 p-4"><div v-for="method in Object.keys(methodLabel)" :key="method" class="flex items-center gap-2"><Checkbox v-model="form.version.reglas.metodos_amortizacion" :input-id="method" :value="method" /><label :for="method">{{ methodLabel[method] }}</label></div></div><Message v-if="error('version.reglas.metodos_amortizacion')" severity="error" size="small">{{ error('version.reglas.metodos_amortizacion') }}</Message></div><div class="rounded-xl border border-surface-200 p-4"><p class="font-medium">Convenciones V1</p><ul class="mt-3 space-y-2 text-sm text-surface-600"><li>Interés por días reales / 360</li><li>Mora sobre capital vencido</li><li>Redondeo half-up a centavos</li><li>Sin ajuste por inhábiles ni IVA</li></ul></div><div class="space-y-4"><div class="flex items-center gap-3"><Checkbox v-model="form.version.reglas.permite_prepago_parcial" input-id="partial-prepay" binary /><label for="partial-prepay">Permitir prepago parcial</label></div><div class="flex items-center gap-3"><Checkbox v-model="form.version.reglas.permite_liquidacion_anticipada" input-id="full-prepay" binary /><label for="full-prepay">Permitir liquidación anticipada</label></div></div><div><div class="flex items-center"><label class="text-sm font-medium">Aplicar prepago para</label><FinancialFieldHelp :title="help.prepay[0]" :description="help.prepay[1]" :example="help.prepay[2]" /></div><Select v-model="form.version.reglas.aplicacion_prepago" :options="[{label:'Reducir plazo',value:'reducir_plazo'},{label:'Reducir pago',value:'reducir_pago'}]" option-label="label" option-value="value" fluid /><label class="mb-1 mt-3 block text-sm font-medium">Monto mínimo de prepago</label><InputNumber v-model="form.version.reglas.monto_minimo_prepago" mode="currency" currency="MXN" locale="es-MX" :invalid="!!error('version.reglas.monto_minimo_prepago')" :aria-invalid="!!error('version.reglas.monto_minimo_prepago')" fluid /><Message v-if="error('version.reglas.monto_minimo_prepago')" severity="error" size="small">{{ error('version.reglas.monto_minimo_prepago') }}</Message></div></div></TabPanel>
                             <TabPanel value="comisiones"><div class="mb-3 flex items-center justify-between pt-3"><div><div class="flex items-center"><h4 class="font-semibold">Comisiones configurables</h4><FinancialFieldHelp :title="help.commission[0]" :description="help.commission[1]" :example="help.commission[2]" /></div><p class="text-sm text-surface-500">El cobro, saldo y CAT dependen de su modalidad.</p></div><Button type="button" label="Agregar comisión" icon="pi pi-plus" text @click="addCommission" /></div><div v-if="!form.version.comisiones.length" class="rounded-xl border border-dashed border-surface-300 p-8 text-center text-sm text-surface-500">Este producto no tiene comisiones.</div>
-                                <div v-for="(item,index) in form.version.comisiones" :key="index" class="mb-4 rounded-xl border border-surface-200 p-4"><div class="grid items-start gap-3 md:grid-cols-2 lg:grid-cols-4"><div><label class="mb-1 block text-xs font-medium">Concepto *</label><Select v-model="item.concepto_comision_id" :options="conceptosComision" option-label="nombre" option-value="id" :invalid="!!error(`version.comisiones.${index}.concepto_comision_id`)" :aria-invalid="!!error(`version.comisiones.${index}.concepto_comision_id`)" fluid /><Message v-if="error(`version.comisiones.${index}.concepto_comision_id`)" severity="error" size="small">{{ error(`version.comisiones.${index}.concepto_comision_id`) }}</Message></div><div><label class="mb-1 block text-xs font-medium">Tipo *</label><Select v-model="item.tipo_importe" :options="[{label:'Importe fijo',value:'fijo'},{label:'Porcentaje del monto solicitado',value:'porcentaje'}]" option-label="label" option-value="value" fluid @change="changeCommissionType(item)" /></div><div><label class="mb-1 block text-xs font-medium">Importe *</label><InputNumber v-model="item.importe" :suffix="item.tipo_importe === 'porcentaje' ? ' %' : ''" :mode="item.tipo_importe === 'fijo' ? 'currency' : 'decimal'" currency="MXN" locale="es-MX" :invalid="!!error(`version.comisiones.${index}.importe`)" :aria-invalid="!!error(`version.comisiones.${index}.importe`)" fluid /><Message v-if="error(`version.comisiones.${index}.importe`)" severity="error" size="small">{{ error(`version.comisiones.${index}.importe`) }}</Message></div><div><label class="mb-1 block text-xs font-medium">Momento *</label><Select v-model="item.momento_cobro" :options="momentOptions" option-label="label" option-value="value" fluid @change="changeCommissionMoment(item)" /></div><div v-if="item.momento_cobro === 'inicio'" class="md:col-span-2"><label class="mb-1 block text-xs font-medium">Modalidad inicial *</label><Select v-model="item.modalidad_cobro" :options="modalityOptions" option-label="label" option-value="value" :invalid="!!error(`version.comisiones.${index}.modalidad_cobro`)" :aria-invalid="!!error(`version.comisiones.${index}.modalidad_cobro`)" fluid /><Message v-if="error(`version.comisiones.${index}.modalidad_cobro`)" severity="error" size="small">{{ error(`version.comisiones.${index}.modalidad_cobro`) }}</Message></div><div class="flex items-center gap-2 pt-6"><Checkbox v-model="item.obligatoria" :input-id="`required-${index}`" binary /><label :for="`required-${index}`">Obligatoria</label></div><div class="flex items-center gap-2 pt-6"><Checkbox v-model="item.incluye_cat" :input-id="`cat-${index}`" binary :disabled="!item.obligatoria" /><label :for="`cat-${index}`">Incluir en CAT</label></div></div><div class="mt-3 flex justify-end"><Button type="button" label="Quitar" icon="pi pi-trash" text severity="danger" @click="form.version.comisiones.splice(index,1)" /></div></div>
+                                <div v-for="(item,index) in form.version.comisiones" :key="index" class="mb-4 rounded-xl border border-surface-200 p-4">
+                                    <div class="grid items-start gap-3 md:grid-cols-2 lg:grid-cols-4">
+                                        <div><label class="mb-1 block text-xs font-medium">Concepto *</label><Select v-model="item.concepto_comision_id" :options="conceptosComision" option-label="nombre" option-value="id" :invalid="!!error(`version.comisiones.${index}.concepto_comision_id`)" :aria-invalid="!!error(`version.comisiones.${index}.concepto_comision_id`)" fluid /><Message v-if="error(`version.comisiones.${index}.concepto_comision_id`)" severity="error" size="small">{{ error(`version.comisiones.${index}.concepto_comision_id`) }}</Message></div>
+                                        <div><label class="mb-1 block text-xs font-medium">Tipo *</label><Select v-model="item.tipo_importe" :options="[{label:'Importe fijo',value:'fijo'},{label:'Porcentaje del monto solicitado',value:'porcentaje'}]" option-label="label" option-value="value" :invalid="!!error(`version.comisiones.${index}.tipo_importe`)" :aria-invalid="!!error(`version.comisiones.${index}.tipo_importe`)" fluid @change="changeCommissionType(item)" /><Message v-if="error(`version.comisiones.${index}.tipo_importe`)" severity="error" size="small">{{ error(`version.comisiones.${index}.tipo_importe`) }}</Message></div>
+                                        <div><label class="mb-1 block text-xs font-medium">Importe *</label><InputNumber v-model="item.importe" :suffix="item.tipo_importe === 'porcentaje' ? ' %' : ''" :mode="item.tipo_importe === 'fijo' ? 'currency' : 'decimal'" currency="MXN" locale="es-MX" :invalid="!!error(`version.comisiones.${index}.importe`)" :aria-invalid="!!error(`version.comisiones.${index}.importe`)" fluid /><Message v-if="error(`version.comisiones.${index}.importe`)" severity="error" size="small">{{ error(`version.comisiones.${index}.importe`) }}</Message></div>
+                                        <div><label class="mb-1 block text-xs font-medium">Momento *</label><Select v-model="item.momento_cobro" :options="momentOptions" option-label="label" option-value="value" :invalid="!!error(`version.comisiones.${index}.momento_cobro`)" :aria-invalid="!!error(`version.comisiones.${index}.momento_cobro`)" fluid @change="changeCommissionMoment(item)" /><Message v-if="error(`version.comisiones.${index}.momento_cobro`)" severity="error" size="small">{{ error(`version.comisiones.${index}.momento_cobro`) }}</Message></div>
+                                        <div v-if="item.momento_cobro === 'inicio'" class="md:col-span-2"><label class="mb-1 block text-xs font-medium">Modalidad inicial *</label><Select v-model="item.modalidad_cobro" :options="modalityOptions" option-label="label" option-value="value" :invalid="!!error(`version.comisiones.${index}.modalidad_cobro`)" :aria-invalid="!!error(`version.comisiones.${index}.modalidad_cobro`)" fluid /><Message v-if="error(`version.comisiones.${index}.modalidad_cobro`)" severity="error" size="small">{{ error(`version.comisiones.${index}.modalidad_cobro`) }}</Message></div>
+                                        <div class="pt-6"><div class="flex items-center gap-2"><Checkbox v-model="item.obligatoria" :input-id="`required-${index}`" binary @change="updateCommissionCat(item)" /><label :for="`required-${index}`">Obligatoria</label></div><p class="mt-1 text-xs text-surface-500">{{ item.obligatoria ? 'Se cobra sin contratar un servicio adicional.' : 'El cliente decide si contrata este cargo adicional.' }}</p><Message v-if="error(`version.comisiones.${index}.obligatoria`)" severity="error" size="small">{{ error(`version.comisiones.${index}.obligatoria`) }}</Message></div>
+                                        <div class="pt-6"><div class="flex items-center gap-2"><Checkbox v-model="item.incluye_cat" :input-id="`cat-${index}`" binary disabled /><label :for="`cat-${index}`">Incluir en CAT base</label></div><p class="mt-1 text-xs" :class="item.incluye_cat ? 'text-green-700 dark:text-green-400' : 'text-surface-500'">{{ catReason(item) }}</p></div>
+                                    </div>
+                                    <Message v-for="message in unhandledCommissionErrors(index)" :key="message" class="mt-3" severity="error" size="small">{{ message }}</Message>
+                                    <div class="mt-3 flex justify-end"><Button type="button" label="Quitar" icon="pi pi-trash" text severity="danger" @click="form.version.comisiones.splice(index,1)" /></div>
+                                </div>
                             </TabPanel>
                         </TabPanels>
                     </Tabs>
@@ -579,14 +645,24 @@ watch(
                 </form>
             </Dialog>
 
-            <Drawer v-model:visible="helpGuideVisible" header="Guía de configuración financiera" position="right" class="!w-full md:!w-[36rem]"><div class="space-y-5 text-sm leading-relaxed"><Message severity="info" :closable="false">Estas explicaciones describen el comportamiento de Kronik. No sustituyen una revisión legal o contractual.</Message><section><h3 class="font-semibold">Días reales / 360</h3><p class="mt-1 text-surface-600">Cada interés usa los días naturales del periodo: saldo × tasa anual × días / 360. Por eso febrero y un mes de 31 días pueden generar intereses diferentes.</p></section><section><h3 class="font-semibold">Cuota nivelada</h3><p class="mt-1 text-surface-600">Busca un pago base constante considerando los factores de cada periodo. La última cuota absorbe únicamente el residuo de centavos.</p></section><section><h3 class="font-semibold">Comisión inicial</h3><p class="mt-1 text-surface-600">Puede pagarse separadamente, retenerse del desembolso o financiarse. Financiarla aumenta el saldo, los intereses y consume el límite máximo del producto.</p></section><section><h3 class="font-semibold">CAT</h3><p class="mt-1 text-surface-600">Se obtiene de los flujos que el cliente recibe y paga, incluyendo costos obligatorios configurados para el escenario. Se presenta sin IVA y con un decimal.</p></section></div></Drawer>
+            <Dialog v-model:visible="activationVisible" :header="`Activar versión ${activatingVersion?.numero ?? ''}`" modal :style="{ width: 'min(34rem, 94vw)' }">
+                <form class="space-y-4" @submit.prevent="submitActivation">
+                    <Message severity="info" :closable="false">La versión quedará inmutable desde que confirmes. La fecha define cuándo podrá utilizarse en nuevas operaciones.</Message>
+                    <div><label for="activation-date" class="mb-1 block text-sm font-medium">Fecha de vigencia *</label><DatePicker id="activation-date" v-model="activationForm.vigente_desde" date-format="yy-mm-dd" update-model-type="string" :min-date="new Date(`${companyToday()}T00:00:00`)" :invalid="!!activationForm.errors.vigente_desde" :aria-invalid="!!activationForm.errors.vigente_desde" fluid /><Message v-if="activationForm.errors.vigente_desde" severity="error" size="small">{{ activationForm.errors.vigente_desde }}</Message><p class="mt-1 text-xs text-surface-500">Zona horaria: {{ activacionDefaults.zona_horaria }}</p></div>
+                    <div class="rounded-xl border border-surface-200 p-3 text-sm"><p class="font-medium">{{ activationIsScheduled ? 'Activación programada' : 'Activación inmediata' }}</p><p class="mt-1 text-surface-600 dark:text-surface-300">{{ activationIsScheduled ? `La versión activa actual continuará disponible hasta ${activationForm.vigente_desde}; después se retirará automáticamente.` : 'Esta versión sustituirá ahora a la versión activa para nuevas operaciones.' }}</p><p class="mt-2 text-xs text-surface-500">Los créditos existentes conservarán la versión y el snapshot con los que fueron originados.</p></div>
+                    <div class="flex justify-end gap-2"><Button type="button" label="Cancelar" severity="secondary" @click="activationVisible = false" /><Button type="submit" :label="activationIsScheduled ? 'Programar activación' : 'Activar ahora'" icon="pi pi-lock" :loading="activationForm.processing" /></div>
+                </form>
+            </Dialog>
+
+            <Drawer v-model:visible="helpGuideVisible" header="Guía de configuración financiera" position="right" class="!w-full md:!w-[36rem]"><div class="space-y-5 text-sm leading-relaxed"><Message severity="info" :closable="false">Estas explicaciones describen el comportamiento de Kronik. No sustituyen una revisión legal o contractual.</Message><section><h3 class="font-semibold">Días reales / 360</h3><p class="mt-1 text-surface-600">Cada interés usa los días naturales del periodo: saldo × tasa anual × días / 360. Por eso febrero y un mes de 31 días pueden generar intereses diferentes.</p></section><section><h3 class="font-semibold">Fechas mensuales</h3><p class="mt-1 text-surface-600">Se conserva el día de la disposición. Si ese día no existe, se usa el último del mes sin perder el ancla: 30-ene → 28-feb → 30-mar. Si la disposición fue al cierre del mes, todos los pagos permanecen al cierre: 31-ene → 28-feb → 31-mar.</p></section><section><h3 class="font-semibold">Cuota nivelada</h3><p class="mt-1 text-surface-600">Busca un pago base constante considerando los factores de cada periodo. La última cuota absorbe únicamente el residuo de centavos.</p></section><section><h3 class="font-semibold">Comisión inicial</h3><p class="mt-1 text-surface-600">Puede pagarse separadamente, retenerse del desembolso o financiarse. Financiarla aumenta el saldo, los intereses y consume el límite máximo del producto.</p></section><section><h3 class="font-semibold">CAT base</h3><p class="mt-1 text-surface-600">Incluye cargos obligatorios de inicio y de cada pago. Excluye IVA, servicios opcionales, mora, incumplimiento y prepago. Las opcionales seleccionadas sí cambian la tabla y el costo total del escenario.</p></section></div></Drawer>
 
             <Dialog v-model:visible="catalogVisible" header="Catálogo de comisiones" modal :style="{ width: 'min(820px, 96vw)' }"><div class="grid gap-5 md:grid-cols-[1fr_1.15fr]"><form class="space-y-3 rounded-xl border border-surface-200 p-4" @submit.prevent="saveCommissionConcept"><h4 class="font-semibold">Nuevo concepto</h4><div><label for="commission-key" class="mb-1 block text-sm font-medium">Clave *</label><InputText id="commission-key" v-model="commissionForm.clave" :invalid="!!commissionError('clave')" :aria-invalid="!!commissionError('clave')" fluid /><Message v-if="commissionError('clave')" severity="error" size="small">{{ commissionError('clave') }}</Message></div><div><label for="commission-name" class="mb-1 block text-sm font-medium">Nombre *</label><InputText id="commission-name" v-model="commissionForm.nombre" :invalid="!!commissionError('nombre')" :aria-invalid="!!commissionError('nombre')" fluid /><Message v-if="commissionError('nombre')" severity="error" size="small">{{ commissionError('nombre') }}</Message></div><div><label class="mb-1 block text-sm font-medium">Descripción</label><Textarea v-model="commissionForm.descripcion" rows="3" fluid /></div><div><label class="mb-1 block text-sm font-medium">Referencia RECO</label><InputText v-model="commissionForm.referencia_reco" fluid /></div><div class="flex items-center gap-2"><Checkbox v-model="commissionForm.es_oficial_reco" input-id="reco-official" binary /><label for="reco-official">Concepto tomado de RECO</label></div><div class="flex items-center gap-2"><Checkbox v-model="commissionForm.revisado" input-id="reco-reviewed" binary /><label for="reco-reviewed">Revisión documental completada</label></div><Button type="submit" label="Agregar concepto" icon="pi pi-plus" :loading="commissionForm.processing" fluid /></form><div><h4 class="mb-3 font-semibold">Conceptos disponibles</h4><div class="max-h-[32rem] space-y-2 overflow-auto"><div v-for="concept in conceptosComision" :key="concept.id" class="flex items-center justify-between gap-3 rounded-xl bg-surface-50 p-3 dark:bg-surface-800"><div class="min-w-0"><p class="truncate font-medium">{{ concept.nombre }}</p><p class="truncate text-xs text-surface-500">{{ concept.clave }}<span v-if="concept.es_oficial_reco"> · RECO</span><span v-if="concept.revisado"> · revisado</span></p></div><Button icon="pi pi-ban" text rounded severity="danger" :aria-label="`Retirar ${concept.nombre}`" @click="retireCommissionConcept(concept)" /></div></div></div></div></Dialog>
 
-            <Drawer v-model:visible="simulatorVisible" header="Simulador de crédito simple" position="right" class="!w-full lg:!w-[min(92vw,88rem)]"><div class="space-y-5"><div class="rounded-xl bg-primary-50 p-4 dark:bg-primary-950/30"><p class="text-sm text-surface-500">Simulando</p><p class="font-semibold">{{ selected?.nombre }} · versión {{ simulatorVersion?.numero }}</p></div><div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-6"><div><div class="flex items-center"><label class="text-sm font-medium">Monto solicitado</label><FinancialFieldHelp :title="help.amount[0]" :description="help.amount[1]" :example="help.amount[2]" /></div><InputNumber v-model="simForm.monto" mode="currency" currency="MXN" locale="es-MX" fluid /></div><div><label class="mb-1 block text-sm font-medium">Fecha de disposición</label><DatePicker v-model="simForm.fecha" date-format="yy-mm-dd" update-model-type="string" fluid /></div><div><label class="mb-1 block text-sm font-medium">Periodicidad</label><Select v-model="simForm.periodicidad" :options="simulatorPeriodOptions" option-label="label" option-value="value" fluid /></div><div><label class="mb-1 block text-sm font-medium">Número de pagos</label><InputNumber v-model="simForm.plazo" :min="1" fluid /></div><div><label class="mb-1 block text-sm font-medium">Amortización</label><Select v-model="simForm.metodo" :options="simulatorMethodOptions" option-label="label" option-value="value" fluid /></div><div class="flex items-end"><Button label="Calcular escenario" icon="pi pi-calculator" :loading="simulating" fluid @click="simulate" /></div></div>
-                    <div v-if="simulation" class="space-y-4"><div class="grid grid-cols-2 gap-3 lg:grid-cols-6"><div class="rounded-xl border border-surface-200 p-3"><p class="text-xs text-surface-500">Saldo financiado</p><p class="mt-1 font-bold">{{ money(simulation.escenario.saldo_financiado) }}</p></div><div class="rounded-xl border border-surface-200 p-3"><p class="text-xs text-surface-500">Efectivo entregado</p><p class="mt-1 font-bold">{{ money(simulation.escenario.efectivo_entregado) }}</p></div><div class="rounded-xl border border-surface-200 p-3"><p class="text-xs text-surface-500">Obligaciones</p><p class="mt-1 font-bold">{{ money(simulation.total_pagar) }}</p></div><div class="rounded-xl border border-surface-200 p-3"><p class="text-xs text-surface-500">Intereses</p><p class="mt-1 font-bold">{{ money(simulation.total_intereses) }}</p></div><div class="rounded-xl border border-surface-200 p-3"><p class="text-xs text-surface-500">Comisiones</p><p class="mt-1 font-bold">{{ money(simulation.total_comisiones) }}</p></div><div class="rounded-xl bg-primary p-3 text-primary-contrast"><p class="text-xs opacity-75">CAT informativo</p><p class="mt-1 text-xl font-bold">{{ simulation.cat ? `${simulation.cat}%` : 'N/A' }}</p></div></div><Message severity="secondary" :closable="false">{{ simulation.cat_leyenda }}</Message>
+            <Drawer v-model:visible="simulatorVisible" header="Simulador de crédito simple" position="right" class="!w-full lg:!w-[min(92vw,88rem)]"><div class="space-y-5"><div class="rounded-xl bg-primary-50 p-4 dark:bg-primary-950/30"><p class="text-sm text-surface-500">Simulando</p><p class="font-semibold">{{ selected?.nombre }} · versión {{ simulatorVersion?.numero }}</p></div><div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-6"><div><div class="flex items-center"><label class="text-sm font-medium">Monto solicitado</label><FinancialFieldHelp :title="help.amount[0]" :description="help.amount[1]" :example="help.amount[2]" /></div><InputNumber v-model="simForm.monto" mode="currency" currency="MXN" locale="es-MX" fluid /></div><div><div class="flex items-center"><label class="text-sm font-medium">Fecha de disposición</label><FinancialFieldHelp title="Calendario mensual" description="Conserva el día original; si no existe en un mes, usa su último día y después recupera el ancla." example="30-ene → 28-feb → 30-mar" /></div><DatePicker v-model="simForm.fecha" date-format="yy-mm-dd" update-model-type="string" fluid /></div><div><label class="mb-1 block text-sm font-medium">Periodicidad</label><Select v-model="simForm.periodicidad" :options="simulatorPeriodOptions" option-label="label" option-value="value" fluid /></div><div><label class="mb-1 block text-sm font-medium">Número de pagos</label><InputNumber v-model="simForm.plazo" :min="1" fluid /></div><div><label class="mb-1 block text-sm font-medium">Amortización</label><Select v-model="simForm.metodo" :options="simulatorMethodOptions" option-label="label" option-value="value" fluid /></div><div class="flex items-end"><Button label="Calcular escenario" icon="pi pi-calculator" :loading="simulating" fluid @click="simulate" /></div></div>
+                    <section v-if="simulatorOptionalCommissions.length || simulatorConditionalCommissions.length" class="rounded-xl border border-surface-200 p-4"><div class="mb-3"><h3 class="font-semibold">Comisiones del escenario</h3><p class="text-sm text-surface-500">Las opcionales modifican la tabla y los totales, pero no el CAT base del producto.</p></div><div v-if="simulatorOptionalCommissions.length" class="grid gap-2 md:grid-cols-2"><label v-for="item in simulatorOptionalCommissions" :key="item.id" :for="`sim-commission-${item.id}`" class="flex cursor-pointer items-start gap-3 rounded-lg bg-surface-50 p-3 dark:bg-surface-800"><Checkbox v-model="simForm.comisiones_opcionales" :input-id="`sim-commission-${item.id}`" :value="item.id" /><span class="min-w-0"><span class="block truncate font-medium">{{ item.concepto?.nombre ?? 'Comisión opcional' }}</span><span class="block text-xs text-surface-500">{{ item.momento_cobro === 'cada_pago' ? 'En cada pago' : 'Al inicio' }} · {{ item.tipo_importe === 'porcentaje' ? `${Number(item.importe)}%` : money(item.importe) }}</span></span></label></div><Message v-if="simulatorConditionalCommissions.length" class="mt-3" severity="secondary" :closable="false">{{ simulatorConditionalCommissions.map(item => item.concepto?.nombre ?? 'Comisión por evento').join(', ') }} requieren simular el evento o la liquidación y no se aplican en esta tabla base.</Message></section>
+                    <div v-if="simulation" class="space-y-4"><div class="grid grid-cols-2 gap-3 lg:grid-cols-6"><div class="rounded-xl border border-surface-200 p-3"><p class="text-xs text-surface-500">Saldo financiado</p><p class="mt-1 font-bold">{{ money(simulation.escenario.saldo_financiado) }}</p></div><div class="rounded-xl border border-surface-200 p-3"><p class="text-xs text-surface-500">Efectivo entregado</p><p class="mt-1 font-bold">{{ money(simulation.escenario.efectivo_entregado) }}</p></div><div class="rounded-xl border border-surface-200 p-3"><p class="text-xs text-surface-500">Obligaciones</p><p class="mt-1 font-bold">{{ money(simulation.total_pagar) }}</p></div><div class="rounded-xl border border-surface-200 p-3"><p class="text-xs text-surface-500">Intereses</p><p class="mt-1 font-bold">{{ money(simulation.total_intereses) }}</p></div><div class="rounded-xl border border-surface-200 p-3"><p class="text-xs text-surface-500">Comisiones</p><p class="mt-1 font-bold">{{ money(simulation.total_comisiones) }}</p></div><div class="rounded-xl bg-primary p-3 text-primary-contrast"><p class="text-xs opacity-75">CAT base del producto</p><p class="mt-1 text-xl font-bold">{{ simulation.cat ? `${simulation.cat}%` : 'N/A' }}</p></div></div><Message :severity="simulation.comisiones_opcionales_seleccionadas?.length ? 'warn' : 'secondary'" :closable="false">{{ simulation.cat_leyenda }}<span v-if="simulation.comisiones_opcionales_seleccionadas?.length"> La tabla incluye {{ simulation.comisiones_opcionales_seleccionadas.length }} comisión(es) opcional(es) que no forman parte de este CAT.</span></Message>
                         <DataTable :value="simulation.tabla" size="small" paginator :rows="8" scrollable striped-rows :table-style="{ minWidth: '96rem' }"><Column field="numero" header="#" frozen /><Column field="tipo" header="Movimiento"><template #body="{data}"><Tag :value="data.tipo === 'disposicion' ? 'Disposición' : 'Pago'" :severity="data.tipo === 'disposicion' ? 'info' : 'secondary'" /></template></Column><Column field="fecha" header="Fecha" /><Column field="dias" header="Días" /><Column field="saldo_inicial" header="Saldo inicial"><template #body="{data}">{{ money(data.saldo_inicial) }}</template></Column><Column field="disposicion" header="Disposición"><template #body="{data}">{{ money(data.disposicion) }}</template></Column><Column field="capital" header="Capital"><template #body="{data}">{{ money(data.capital) }}</template></Column><Column field="interes" header="Interés"><template #body="{data}">{{ money(data.interes) }}</template></Column><Column field="comisiones" header="Comisiones"><template #body="{data}"><span class="font-medium">{{ money(data.comisiones) }}</span><span v-if="data.comisiones_detalle?.length > 1" class="ml-1 text-xs text-primary">+{{ data.comisiones_detalle.length - 1 }}</span><ul v-if="data.comisiones_detalle?.length" class="mt-1 text-xs text-surface-500"><li v-for="item in data.comisiones_detalle" :key="`${item.clave}-${item.modalidad}`" class="whitespace-nowrap">{{ item.concepto }} · {{ money(item.importe) }}<span v-if="item.modalidad"> · {{ modalityLabel(item.modalidad) }}</span></li></ul></template></Column><Column field="pago_total" header="Pago total"><template #body="{data}"><strong>{{ money(data.pago_total) }}</strong></template></Column><Column field="saldo_final" header="Saldo final"><template #body="{data}">{{ money(data.saldo_final) }}</template></Column><Column field="capital_acumulado" header="Capital acum."><template #body="{data}">{{ money(data.capital_acumulado) }}</template></Column><Column field="interes_acumulado" header="Interés acum."><template #body="{data}">{{ money(data.interes_acumulado) }}</template></Column><Column field="comisiones_acumuladas" header="Comisiones acum."><template #body="{data}">{{ money(data.comisiones_acumuladas) }}</template></Column><Column field="pagado_acumulado" header="Pagado acum."><template #body="{data}">{{ money(data.pagado_acumulado) }}</template></Column></DataTable>
-                        <Accordion v-if="simulation.formula_debug"><AccordionPanel value="formula"><AccordionHeader>Ver fórmula y sustitución de desarrollo</AccordionHeader><AccordionContent><div class="space-y-3 text-sm"><Message severity="warn" :closable="false">Diagnóstico disponible en local o para Super Admin. Los cálculos operativos usan decimales; no dependen de los valores redondeados del navegador.</Message><p><strong>Convención:</strong> {{ simulation.formula_debug.convencion }}</p><code class="block rounded-lg bg-surface-900 p-3 text-surface-0">{{ simulation.formula_debug.interes }}</code><code class="block rounded-lg bg-surface-900 p-3 text-surface-0">{{ simulation.formula_debug[simForm.metodo] }}</code><p><strong>Cuota exacta:</strong> {{ simulation.formula_debug.cuota_exacta ?? 'No aplica' }} · <strong>redondeada:</strong> {{ simulation.formula_debug.cuota_redondeada ?? 'No aplica' }}</p><DataTable :value="simulation.formula_debug.periodos" size="small" paginator :rows="6"><Column field="numero" header="#" /><Column field="dias" header="Días" /><Column field="sustitucion_interes" header="Sustitución" /></DataTable></div></AccordionContent></AccordionPanel></Accordion>
+                        <Accordion v-if="simulation.formula_debug"><AccordionPanel value="formula"><AccordionHeader>Ver fórmula y sustitución de desarrollo</AccordionHeader><AccordionContent><div class="space-y-4 text-sm"><Message severity="warn" :closable="false">Diagnóstico disponible en local o para Super Admin. Los cálculos operativos usan decimales; no dependen de los valores redondeados del navegador.</Message><div><p><strong>Convención:</strong> {{ simulation.formula_debug.convencion }}</p><p class="mt-1 text-surface-600 dark:text-surface-300">{{ simulation.formula_debug.calendario }}</p></div><code class="block overflow-x-auto rounded-lg bg-surface-900 p-3 text-surface-0">{{ simulation.formula_debug.interes }}</code><code class="block overflow-x-auto rounded-lg bg-surface-900 p-3 text-surface-0">{{ simulation.formula_debug[simForm.metodo] }}</code><div><h4 class="mb-2 font-semibold">Significado de los símbolos</h4><div class="grid gap-2 md:grid-cols-2"><div v-for="item in simulation.formula_debug.simbolos" :key="item.simbolo" class="flex gap-3 rounded-lg border border-surface-200 p-3"><code class="min-w-12 font-bold text-primary">{{ item.simbolo }}</code><span class="text-surface-600 dark:text-surface-300">{{ item.significado }}</span></div></div></div><p><strong>Cuota exacta:</strong> {{ simulation.formula_debug.cuota_exacta ?? 'No aplica' }} · <strong>redondeada:</strong> {{ simulation.formula_debug.cuota_redondeada ?? 'No aplica' }}</p><DataTable :value="simulation.formula_debug.periodos" size="small" paginator :rows="6" scrollable><Column field="numero" header="#" /><Column field="dias" header="Días" /><Column field="sustitucion_interes" header="Sustitución" /></DataTable></div></AccordionContent></AccordionPanel></Accordion>
                     </div>
                 </div></Drawer>
         </template>

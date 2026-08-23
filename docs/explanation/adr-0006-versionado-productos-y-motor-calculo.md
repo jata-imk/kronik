@@ -14,6 +14,8 @@ Un producto conserva identidad comercial, pero sus tasas, montos, plazos, comisi
 - Solo un borrador sin usos puede editar condiciones. Activar genera snapshot y hash; una versión activada, programada o utilizada no permite cambios financieros ni eliminación.
 - Una solicitud o crédito futuro debe invocar `ProductoVersionService::registrarUso()` y conservar su snapshot.
 - La activación puede ser inmediata o programada. Al entrar en vigor, la versión activa anterior se retira sin borrarse.
+- La fecha de activación se interpreta con la zona horaria de la financiera. Programar genera el snapshot y vuelve inmutable la versión inmediatamente; la versión activa anterior permanece disponible hasta la fecha programada.
+- Retirar solo impide originaciones nuevas. Solicitudes y créditos existentes conservan su relación y snapshot; las consultas de originación deben usar `disponiblesParaOriginacion()`.
 - Montos, tasas y resultados usan decimales. Las tasas son porcentaje anual; V1 usa días reales/360 y redondeo half-up.
 - Periodicidades y comisiones son filas normalizadas. Las reglas viven separadas de parámetros comerciales.
 - CAT es un servicio separado que resuelve la ecuación de valor presente de la Circular 21/2009 y se identifica como informativo.
@@ -22,6 +24,7 @@ Un producto conserva identidad comercial, pero sus tasas, montos, plazos, comisi
 
 - Cambiar condiciones exige duplicar una versión y activarla con vigencia explícita.
 - Originación debe registrar uso y snapshot antes de aceptar una solicitud.
+- El proceso de activación revisa cada cinco minutos la fecha empresarial para no depender de la zona horaria del servidor.
 - Crédito revolvente puede agregar reglas y motor propios sin introducir funcionalidad V2 ahora.
 - V1 no agrega IVA ni ajusta días inhábiles. El tratamiento de comisiones iniciales se define en ADR 0007.
 

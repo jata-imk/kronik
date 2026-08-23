@@ -51,7 +51,6 @@ class GuardarProductoRequest extends FormRequest
             'version.comisiones.*.momento_cobro' => ['required', Rule::in(['inicio', 'firma', 'desembolso_descuento', 'cada_pago', 'evento', 'liquidacion'])],
             'version.comisiones.*.modalidad_cobro' => ['nullable', Rule::in(['pago_separado', 'descuento_desembolso', 'financiada'])],
             'version.comisiones.*.obligatoria' => ['required', 'boolean'],
-            'version.comisiones.*.incluye_cat' => ['required', 'boolean'],
         ];
     }
 
@@ -81,9 +80,6 @@ class GuardarProductoRequest extends FormRequest
                 }
                 if (! $inicial && ! empty($comision['modalidad_cobro'])) {
                     $validator->errors()->add("version.comisiones.$index.modalidad_cobro", 'La modalidad inicial solo aplica a comisiones cobradas al inicio.');
-                }
-                if (($comision['incluye_cat'] ?? false) && ! ($comision['obligatoria'] ?? false)) {
-                    $validator->errors()->add("version.comisiones.$index.incluye_cat", 'Una comisión opcional no puede incluirse automáticamente en el CAT del escenario base.');
                 }
             }
         }];

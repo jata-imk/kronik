@@ -13,9 +13,9 @@ Implementar crédito simple V1 configurable, versionado, simulable y protegido c
 
 ## Estado actual
 
-- Estado: correcciones de revisión manual terminadas
-- Última actualización: 2026-08-16
-- Último punto estable: implementación completa verificada en backend, frontend, build, E2E y navegador real.
+- Estado: ajustes finales de revisión manual implementados y validados
+- Última actualización: 2026-08-22
+- Último punto estable: reglas de CAT/opcionales, activación empresarial y explicación matemática implementadas; suite completa, E2E y recorrido visual correctos.
 
 ## Decisiones
 
@@ -24,6 +24,9 @@ Implementar crédito simple V1 configurable, versionado, simulable y protegido c
 - Las comisiones iniciales admiten pago separado, descuento de disposición o financiamiento. La modalidad queda en el snapshot.
 - El límite del producto se aplica al saldo total financiado; los porcentajes se calculan sobre el monto solicitado.
 - El detalle de fórmulas es visible en local o para Super Admin.
+- `Incluir en CAT base` se conserva visible, pero es derivado por backend según obligatoriedad y momento; no es un parámetro manipulable.
+- Las opcionales determinísticas pueden incluirse en el simulador sin alterar el CAT base. Evento y liquidación requieren escenarios futuros.
+- Programar congela la versión al confirmar; su entrada en vigor usa fecha y zona horaria empresarial. Retirar no afecta créditos existentes.
 
 ## Evidencia
 
@@ -31,8 +34,10 @@ Implementar crédito simple V1 configurable, versionado, simulable y protegido c
 - El motor puro cubre calendario, cuota nivelada, capital fijo, redondeo por periodo y residual final.
 - Las tres modalidades iniciales tienen regresiones separadas para saldo financiado, efectivo entregado, flujo neto y pago inicial.
 - La interfaz muestra errores por pestaña/campo, toasts del catálogo, ayudas financieras, fila cero, saldos, desglose de comisiones y acumulados.
-- Pruebas: Laravel 131/131 (683 aserciones); Vitest 31/31; E2E específico 2/2; build Vite, Pint y `git diff --check` correctos.
+- Pruebas: Laravel 139/139 (713 aserciones); Vitest 38/38; E2E específico 2/2; build Vite, Pint, Biome y `git diff --check` correctos.
 - Migración aditiva `2026_08_16_120000_add_modalidad_cobro_to_producto_version_comisiones.php` aplicada en desarrollo sin seeders generales.
+- Regresiones nuevas: matriz CAT derivada, payload manipulado, opcional financiada con CAT base estable, selección inválida, fechas 28/29/30/31, activación programada y filtro de originación.
+- Verificación final 2026-08-22: suite Laravel 139/139 (713 aserciones), Vitest 38/38, E2E Chromium escritorio/móvil 2/2 y build Vite correcto.
 
 ## Hallazgos visuales
 
@@ -47,7 +52,7 @@ Implementar crédito simple V1 configurable, versionado, simulable y protegido c
 
 ## Siguiente paso
 
-Crear el commit de correcciones, actualizar el PR #14 y continuar la revisión manual.
+Actualizar el PR #14 con estos ajustes cuando se solicite el commit y push.
 
 ## Cierre
 

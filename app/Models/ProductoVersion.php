@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\ProductoVersionEstado;
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
 
@@ -48,6 +50,14 @@ class ProductoVersion extends Model
     public function usos()
     {
         return $this->hasMany(ProductoVersionUso::class);
+    }
+
+    public function scopeDisponiblesParaOriginacion(Builder $query, CarbonImmutable $fecha): Builder
+    {
+        return $query
+            ->where('estado', ProductoVersionEstado::Activa)
+            ->whereDate('vigente_desde', '<=', $fecha->toDateString())
+            ->whereNull('retirada_en');
     }
 
     public function esEditable(): bool

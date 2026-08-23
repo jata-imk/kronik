@@ -11,10 +11,12 @@ test("recorre catálogo, versiones y simulador de crédito simple", async ({ pag
 
     await page.getByRole("button", { name: "Simular", exact: true }).click();
     await expect(page.getByText("Simulador de crédito simple", { exact: true })).toBeVisible();
+    await expect(page.getByText("Comisiones del escenario", { exact: true })).toBeVisible();
+    await page.getByText("Asistencia opcional", { exact: true }).click();
     await page.getByRole("button", { name: "Calcular escenario" }).click();
 
-    await expect(page.getByText("CAT informativo", { exact: true })).toBeVisible();
-    await expect(page.getByText(/Para fines informativos y de comparación/)).toBeVisible();
+    await expect(page.getByText("CAT base del producto", { exact: true })).toBeVisible();
+    await expect(page.getByText(/La tabla incluye 1 comisión\(es\) opcional/)).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Saldo inicial" })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Comisiones", exact: true })).toBeVisible();
     await expect(page.getByRole("columnheader", { name: "Pagado acum." })).toBeVisible();
@@ -22,7 +24,10 @@ test("recorre catálogo, versiones y simulador de crédito simple", async ({ pag
     await expect(page.getByText("Disposición", { exact: true }).last()).toBeVisible();
     await expect(page.getByRole("listitem").filter({ hasText: /^Apertura · \$500\.00 · Pago separado al inicio$/ })).toBeVisible();
     await expect(page.getByRole("listitem").filter({ hasText: /^Administración · \$50\.00$/ }).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: "Ver fórmula y sustitución de desarrollo" })).toBeVisible();
+    await expect(page.getByRole("listitem").filter({ hasText: /^Asistencia opcional · \$250\.00 · Pago separado al inicio$/ })).toBeVisible();
+    await page.getByRole("button", { name: "Ver fórmula y sustitución de desarrollo" }).click();
+    await expect(page.getByText("Significado de los símbolos", { exact: true })).toBeVisible();
+    await expect(page.getByText("Saldo insoluto al inicio del periodo k.", { exact: true })).toBeVisible();
 });
 
 test("catálogo es utilizable en una pantalla móvil", async ({ page }) => {

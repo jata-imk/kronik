@@ -2,7 +2,9 @@
 
 use App\Enums\ProductoVersionEstado;
 use App\Models\ConceptoComision;
+use App\Models\ProductoVersion;
 use App\Services\ProductoVersionService;
+use Carbon\CarbonImmutable;
 use Inertia\Testing\AssertableInertia as Assert;
 
 function productoPayload(array $version = []): array
@@ -206,4 +208,106 @@ test('clave duplicada de concepto devuelve mensaje legible en español', functio
         'clave' => 'DUPLICADA', 'nombre' => 'Segunda', 'descripcion' => null, 'referencia_reco' => null,
         'es_oficial_reco' => false, 'revisado' => false, 'activo' => true,
     ])->assertSessionHasErrors(['clave' => 'La clave del concepto de comisión ya está en uso.']);
+});
+
+test('tratamiento CAT se deriva de obligatoriedad y momento de cobro', function () {
+    $user = actingAsSuperAdmin();
+    $apertura = ConceptoComision::create(['clave' => 'CAT-APERTURA', 'nombre' => 'Apertura', 'activo' => true]);
+    $opcional = ConceptoComision::create(['clave' => 'CAT-OPCIONAL', 'nombre' => 'Servicio opcional', 'activo' => true]);
+    $evento = ConceptoComision::create(['clave' => 'CAT-EVENTO', 'nombre' => 'Evento', 'activo' => true]);
+    $producto = app(ProductoVersionService::class)->crear(productoPayload([
+        'comisiones' => [
+            ['concepto_comision_id' => $apertura->id, 'tipo_importe' => 'fijo', 'importe' => '100', 'base_calculo' => 'no_aplica', 'momento_cobro' => 'inicio', 'modalidad_cobro' => 'pago_separado', 'obligatoria' => true, 'incluye_cat' => false],
+            ['concepto_comision_id' => $opcional->id, 'tipo_importe' => 'fijo', 'importe' => '100', 'base_calculo' => 'no_aplica', 'momento_cobro' => 'cada_pago', 'modalidad_cobro' => null, 'obligatoria' => false, 'incluye_cat' => true],
+            ['concepto_comision_id' => $evento->id, 'tipo_importe' => 'fijo', 'importe' => '100', 'base_calculo' => 'no_aplica', 'momento_cobro' => 'evento', 'modalidad_cobro' => null, 'obligatoria' => true, 'incluye_cat' => true],
+        ],
+    ]), $user->id);
+
+    $comisiones = $producto->versiones()->first()->comisiones()->get()->keyBy('concepto_comision_id');
+    expect($comisiones[$apertura->id]->incluye_cat)->toBeTrue()
+        ->and($comisiones[$opcional->id]->incluye_cat)->toBeFalse()
+        ->and($comisiones[$evento->id]->incluye_cat)->toBeFalse();
+});
+
+test('simulador permite opcionales determinísticas sin alterar el CAT base', function () {
+    $user = actingAsSuperAdmin();
+    $apertura = ConceptoComision::create(['clave' => 'SIM-BASE', 'nombre' => 'Apertura base', 'activo' => true]);
+    $opcional = ConceptoComision::create(['clave' => 'SIM-OPCIONAL', 'nombre' => 'Asistencia opcional', 'activo' => true]);
+    $producto = app(ProductoVersionService::class)->crear(productoPayload([
+        'comisiones' => [
+            ['concepto_comision_id' => $apertura->id, 'tipo_importe' => 'fijo', 'importe' => '100', 'base_calculo' => 'no_aplica', 'momento_cobro' => 'inicio', 'modalidad_cobro' => 'pago_separado', 'obligatoria' => true],
+            ['concepto_comision_id' => $opcional->id, 'tipo_importe' => 'fijo', 'importe' => '500', 'base_calculo' => 'no_aplica', 'momento_cobro' => 'inicio', 'modalidad_cobro' => 'financiada', 'obligatoria' => false],
+        ],
+    ]), $user->id);
+    $version = $producto->versiones()->first();
+    $opcionalId = $version->comisiones()->where('concepto_comision_id', $opcional->id)->value('id');
+    $payload = ['monto' => '5000', 'periodicidad' => 'mensual', 'plazo' => 12, 'metodo' => 'cuota_nivelada', 'fecha' => '2026-08-16'];
+
+    $base = $this->actingAs($user)->postJson(route('productos-crediticios.simular', $version), $payload)->assertOk();
+    $seleccionada = $this->actingAs($user)->postJson(route('productos-crediticios.simular', $version), [...$payload, 'comisiones_opcionales' => [$opcionalId]])->assertOk();
+
+    expect($seleccionada->json('cat'))->toBe($base->json('cat'))
+        ->and($seleccionada->json('cat_contexto'))->toBe('base_obligatorio')
+        ->and($seleccionada->json('escenario.saldo_financiado'))->toBe('5500.00')
+        ->and($seleccionada->json('total_intereses'))->not->toBe($base->json('total_intereses'))
+        ->and($seleccionada->json('comisiones_opcionales_seleccionadas.0.id'))->toBe($opcionalId)
+        ->and($seleccionada->json('tabla.0.comisiones_detalle.1.obligatoria'))->toBeFalse();
+});
+
+test('simulador rechaza comisiones ajenas o condicionadas con mensaje en español', function () {
+    $user = actingAsSuperAdmin();
+    $evento = ConceptoComision::create(['clave' => 'SIM-EVENTO', 'nombre' => 'Liquidación', 'activo' => true]);
+    $producto = app(ProductoVersionService::class)->crear(productoPayload([
+        'comisiones' => [[
+            'concepto_comision_id' => $evento->id, 'tipo_importe' => 'fijo', 'importe' => '100', 'base_calculo' => 'no_aplica',
+            'momento_cobro' => 'liquidacion', 'modalidad_cobro' => null, 'obligatoria' => false,
+        ]],
+    ]), $user->id);
+    $version = $producto->versiones()->first();
+
+    $this->actingAs($user)->postJson(route('productos-crediticios.simular', $version), [
+        'monto' => '5000', 'periodicidad' => 'mensual', 'plazo' => 12, 'metodo' => 'cuota_nivelada',
+        'fecha' => '2026-08-16', 'comisiones_opcionales' => [$version->comisiones()->value('id')],
+    ])->assertUnprocessable()->assertJsonValidationErrors(['comisiones_opcionales'])
+        ->assertJsonPath('errors.comisiones_opcionales.0', 'Seleccione únicamente comisiones opcionales de inicio o de cada pago pertenecientes a esta versión.');
+});
+
+test('programación usa fecha empresarial y conserva activa anterior hasta la vigencia', function () {
+    CarbonImmutable::setTestNow('2026-08-22 12:00:00');
+    $user = actingAsSuperAdmin();
+    $service = app(ProductoVersionService::class);
+    $producto = $service->crear(productoPayload(), $user->id);
+    $primera = $producto->versiones()->first();
+    $service->activar($primera, '2026-08-22');
+    $segunda = $service->nuevaVersion($producto, $primera, $user->id);
+
+    $this->actingAs($user)->post(route('productos-crediticios.activar', $segunda), ['vigente_desde' => '2026-08-24'])->assertSessionHasNoErrors();
+    expect($segunda->refresh()->estado)->toBe(ProductoVersionEstado::Programada)
+        ->and($segunda->snapshot_hash)->toHaveLength(64)
+        ->and($primera->refresh()->estado)->toBe(ProductoVersionEstado::Activa);
+
+    CarbonImmutable::setTestNow('2026-08-24 00:01:00');
+    expect($service->activarProgramadas())->toBe(1)
+        ->and($segunda->refresh()->estado)->toBe(ProductoVersionEstado::Activa)
+        ->and($primera->refresh()->estado)->toBe(ProductoVersionEstado::Retirada);
+    CarbonImmutable::setTestNow();
+});
+
+test('activación rechaza fechas pasadas y retiro excluye nuevas originaciones', function () {
+    CarbonImmutable::setTestNow('2026-08-22 12:00:00');
+    $user = actingAsSuperAdmin();
+    $producto = app(ProductoVersionService::class)->crear(productoPayload(), $user->id);
+    $version = $producto->versiones()->first();
+
+    $this->actingAs($user)->post(route('productos-crediticios.activar', $version), ['vigente_desde' => '2026-08-21'])
+        ->assertSessionHasErrors(['vigente_desde' => 'La fecha de vigencia debe ser hoy o una fecha futura según la zona horaria de la empresa.']);
+    app(ProductoVersionService::class)->activar($version, '2026-08-22');
+    $version->refresh();
+    expect(ProductoVersion::query()->disponiblesParaOriginacion(CarbonImmutable::parse('2026-08-22'))->pluck('id'))->toContain($version->id);
+
+    app(ProductoVersionService::class)->registrarUso($version, 'creditos', 99);
+    app(ProductoVersionService::class)->retirar($version);
+    expect(ProductoVersion::query()->disponiblesParaOriginacion(CarbonImmutable::parse('2026-08-22'))->pluck('id'))->not->toContain($version->id)
+        ->and($version->usos()->first()->snapshot)->not->toBeEmpty();
+    CarbonImmutable::setTestNow();
 });

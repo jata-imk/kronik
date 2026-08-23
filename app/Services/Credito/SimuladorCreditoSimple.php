@@ -16,13 +16,15 @@ final class SimuladorCreditoSimple
         private readonly CatInformativoService $catService,
         private readonly CalendarioCreditoSimple $calendario,
         private readonly TablaAmortizacionCreditoSimple $amortizacion,
+        private readonly ResolverComisionesCreditoSimple $resolverComisiones,
     ) {}
 
     /** @return array<string, mixed> */
-    public function simular(ProductoVersion $version, string $monto, PeriodicidadCredito $periodicidad, int $plazo, MetodoAmortizacion $metodo, CarbonImmutable $fecha, bool $incluirFormula = false): array
+    public function simular(ProductoVersion $version, string $monto, PeriodicidadCredito $periodicidad, int $plazo, MetodoAmortizacion $metodo, CarbonImmutable $fecha, array $comisionesOpcionales = [], bool $incluirFormula = false): array
     {
         $version->loadMissing(['periodicidades', 'reglas', 'comisiones.concepto']);
-        $comisiones = $version->comisiones->where('obligatoria', true)->values();
+        $resolucion = $this->resolverComisiones->resolver($version, $comisionesOpcionales);
+        $comisiones = $resolucion['aplicadas'];
         $iniciales = $comisiones->filter->esInicial();
         $financiadas = $this->totalPorModalidad($iniciales, $monto, 'financiada');
         $saldoFinanciado = Decimal::round(Decimal::add($monto, $financiadas));
@@ -80,12 +82,9 @@ final class SimuladorCreditoSimple
         }
         unset($fila);
 
-        $inicialCat = array_reduce($iniciales->all(), function (string $total, $comision) use ($monto) {
-            return $comision->incluye_cat ? Decimal::add($total, $comision->calcular($monto)) : $total;
-        }, '0');
-        $montoRecibidoCat = Decimal::round(Decimal::sub($saldoFinanciado, $inicialCat));
+        [$montoRecibidoCat, $pagosCat] = $this->flujosCatBase($version, $monto, $periodicidad, $plazo, $metodo, $fecha, $resolucion['obligatorias']);
         $cat = $version->cat_aplica
-            ? $this->catService->calcular($montoRecibidoCat, array_column($tabla, 'pago_cat'), $periodicidad)
+            ? $this->catService->calcular($montoRecibidoCat, $pagosCat, $periodicidad)
             : null;
 
         $totalIntereses = $this->sumar($tabla, 'interes');
@@ -101,7 +100,8 @@ final class SimuladorCreditoSimple
             'plazo' => $plazo,
             'metodo' => $metodo->value,
             'cat' => $cat,
-            'cat_leyenda' => $cat === null ? $version->cat_no_aplica_motivo : 'CAT informativo. Sin IVA. Para fines informativos y de comparación exclusivamente.',
+            'cat_contexto' => 'base_obligatorio',
+            'cat_leyenda' => $cat === null ? $version->cat_no_aplica_motivo : 'CAT base informativo del producto. Incluye únicamente cargos obligatorios del curso normal, sin IVA.',
             'total_intereses' => $totalIntereses,
             'total_comisiones' => $totalComisiones,
             'total_pagar' => $totalPagar,
@@ -122,10 +122,13 @@ final class SimuladorCreditoSimple
                 'financiado_comisiones' => $financiadas,
                 'obligaciones' => $totalPagar,
             ],
-            'comisiones_excluidas' => $version->comisiones->where('obligatoria', false)->map(fn ($item) => [
+            'comisiones_opcionales_seleccionadas' => $resolucion['opcionalesSeleccionadas']->map(fn ($item) => [
+                'id' => $item->id,
                 'concepto' => $item->concepto?->nombre,
-                'motivo' => 'Comisión opcional no incluida en el escenario base.',
+                'momento' => $item->esInicial() ? 'inicio' : $item->momento_cobro,
+                'importe' => Decimal::round($item->calcular($monto)),
             ])->values()->all(),
+            'comisiones_excluidas' => $resolucion['excluidas'],
             'tabla' => [$filaCero, ...array_map(fn (array $fila) => collect($fila)->except('pago_cat')->all(), $tabla)],
         ];
 
@@ -165,13 +168,40 @@ final class SimuladorCreditoSimple
     private function detalle(Collection $comisiones, string $monto): array
     {
         return $comisiones->map(fn ($comision) => [
+            'id' => $comision->id,
             'concepto' => $comision->concepto?->nombre ?? 'Comisión',
             'clave' => $comision->concepto?->clave,
             'importe' => Decimal::round($comision->calcular($monto)),
             'momento' => $comision->esInicial() ? 'inicio' : $comision->momento_cobro,
             'modalidad' => $comision->modalidadInicial(),
             'incluye_cat' => (bool) $comision->incluye_cat,
+            'obligatoria' => (bool) $comision->obligatoria,
         ])->values()->all();
+    }
+
+    /** @return array{0: string, 1: array<int, string>} */
+    private function flujosCatBase(ProductoVersion $version, string $monto, PeriodicidadCredito $periodicidad, int $plazo, MetodoAmortizacion $metodo, CarbonImmutable $fecha, Collection $comisiones): array
+    {
+        $iniciales = $comisiones->filter->esInicial();
+        $financiadas = $this->totalPorModalidad($iniciales, $monto, 'financiada');
+        $saldo = Decimal::round(Decimal::add($monto, $financiadas));
+        $fechas = $this->calendario->fechas($fecha, $periodicidad, $plazo);
+        $resultado = $this->amortizacion->calcular($saldo, (string) $version->tasa_ordinaria_anual, $fecha, $fechas, $metodo);
+        $cadaPago = $comisiones->where('momento_cobro', 'cada_pago');
+        $pagos = array_map(function (array $fila) use ($cadaPago, $monto): string {
+            $comisionesCat = $cadaPago->reduce(
+                fn (string $total, $comision) => $comision->incluye_cat ? Decimal::add($total, $comision->calcular($monto)) : $total,
+                '0',
+            );
+
+            return Decimal::round(Decimal::add($fila['pago_cat'], $comisionesCat));
+        }, $resultado['tabla']);
+        $inicialCat = $iniciales->reduce(
+            fn (string $total, $comision) => $comision->incluye_cat ? Decimal::add($total, $comision->calcular($monto)) : $total,
+            '0',
+        );
+
+        return [Decimal::round(Decimal::sub($saldo, $inicialCat)), $pagos];
     }
 
     private function sumar(array $filas, string $campo): string
@@ -193,6 +223,7 @@ final class SimuladorCreditoSimple
     {
         return [
             'convencion' => 'días reales / 360',
+            'calendario' => 'Semanal suma 7 días; quincenal suma 15 días; mensual conserva el día de la disposición. Si la disposición es fin de mes, todos los vencimientos permanecen en fin de mes; un día inexistente se ajusta solo para ese mes.',
             'metodo' => 'El interés de cada periodo usa el saldo inicial y sus días reales; la última cuota liquida el residuo.',
             'interes' => 'Iₖ = Sₖ₋₁ × (tasa anual / 100) × (díasₖ / 360)',
             'cuota_nivelada' => 'C = P ÷ Σ[1 ÷ Π(1 + iⱼ)]',
@@ -202,6 +233,18 @@ final class SimuladorCreditoSimple
             'cuota_exacta' => $resultado['cuota_exacta'],
             'cuota_redondeada' => $resultado['cuota_redondeada'],
             'redondeo' => 'Half-up a centavos en interés, capital, comisión, pago y saldo de cada fila.',
+            'simbolos' => [
+                ['simbolo' => 'Iₖ', 'significado' => 'Interés ordinario generado durante el periodo k.'],
+                ['simbolo' => 'Sₖ₋₁', 'significado' => 'Saldo insoluto al inicio del periodo k.'],
+                ['simbolo' => 'dₖ', 'significado' => 'Días naturales transcurridos durante el periodo k.'],
+                ['simbolo' => 'P', 'significado' => 'Principal o saldo total financiado al inicio.'],
+                ['simbolo' => 'C', 'significado' => 'Cuota base nivelada, antes de sumar comisiones.'],
+                ['simbolo' => 'A', 'significado' => 'Amortización fija de capital por periodo.'],
+                ['simbolo' => 'n', 'significado' => 'Número total de pagos.'],
+                ['simbolo' => 'iⱼ', 'significado' => 'Factor de interés del periodo j: tasa anual × días del periodo ÷ 360.'],
+                ['simbolo' => 'Σ', 'significado' => 'Suma de todos los factores indicados.'],
+                ['simbolo' => 'Π', 'significado' => 'Producto acumulado de los factores indicados.'],
+            ],
             'periodos' => array_map(fn (array $fila) => [
                 'numero' => $fila['numero'],
                 'dias' => $fila['dias'],
