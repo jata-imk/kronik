@@ -8,8 +8,8 @@ use App\Models\Cliente;
 use App\Models\ClienteConsentimientoSic;
 use App\Services\ActivityLogService;
 use App\Services\ClienteConsentimientoSicService;
+use App\Services\Documentos\RespuestaArchivoPrivado;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 
 class ClienteConsentimientoSicController extends Controller
 {
@@ -35,11 +35,26 @@ class ClienteConsentimientoSicController extends Controller
         return back()->with('success', 'Consentimiento SIC revocado');
     }
 
-    public function download(Cliente $cliente, ClienteConsentimientoSic $consentimiento)
+    public function view(Cliente $cliente, ClienteConsentimientoSic $consentimiento, RespuestaArchivoPrivado $files)
     {
         $this->ensureOwnership($cliente, $consentimiento);
         Gate::authorize('view', $cliente);
-        abort_unless(Storage::disk($consentimiento->evidencia_disk)->exists($consentimiento->evidencia_path), 404);
+
+        app(ActivityLogService::class)->log(
+            event: ActivityEvent::ClientSicConsentEvidenceViewed,
+            description: 'Evidencia de consentimiento SIC visualizada',
+            subject: $cliente,
+            metadata: ['related' => ['type' => 'cliente_consentimiento_sic', 'id' => $consentimiento->id]],
+            causer: request()->user(),
+        );
+
+        return $files->make($consentimiento->evidencia_disk, $consentimiento->evidencia_path, $consentimiento->evidencia_nombre_original);
+    }
+
+    public function download(Cliente $cliente, ClienteConsentimientoSic $consentimiento, RespuestaArchivoPrivado $files)
+    {
+        $this->ensureOwnership($cliente, $consentimiento);
+        Gate::authorize('view', $cliente);
 
         app(ActivityLogService::class)->log(
             event: ActivityEvent::ClientSicConsentEvidenceDownloaded,
@@ -49,8 +64,7 @@ class ClienteConsentimientoSicController extends Controller
             causer: request()->user(),
         );
 
-        return Storage::disk($consentimiento->evidencia_disk)
-            ->download($consentimiento->evidencia_path, $consentimiento->evidencia_nombre_original);
+        return $files->make($consentimiento->evidencia_disk, $consentimiento->evidencia_path, $consentimiento->evidencia_nombre_original, true);
     }
 
     private function ensureOwnership(Cliente $cliente, ClienteConsentimientoSic $consentimiento): void

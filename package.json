@@ -41,6 +41,8 @@
         "maplibre-gl": "^5.4.0",
         "primeicons": "^7.0.0",
         "primevue": "^4.2.5",
+        "puppeteer": "^25.8.0",
+        "quill": "2.0.2",
         "twemoji": "^14.0.2",
         "typewriter-effect": "^2.21.0",
         "vue-typewriter-effect": "^1.0.1"

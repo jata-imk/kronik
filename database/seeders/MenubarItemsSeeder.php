@@ -25,6 +25,7 @@ class MenubarItemsSeeder extends Seeder
             $configuracionEmpresa = Module::where('name', 'configuracion-empresa')->firstOrFail();
             $sucursales = Module::where('name', 'sucursales')->firstOrFail();
             $productosCrediticios = Module::where('name', 'productos-crediticios')->firstOrFail();
+            $plantillasDocumentos = Module::where('name', 'plantillas-documentos')->firstOrFail();
 
             $items = [
                 [
@@ -217,6 +218,16 @@ class MenubarItemsSeeder extends Seeder
                     'parent_id' => null,
                     'sort_order' => 20,
                 ],
+                [
+                    'id' => 20,
+                    'label' => 'Documentos y plantillas',
+                    'icon' => 'pi pi-fw pi-file-edit',
+                    'type' => 'route:name',
+                    'value' => 'plantillas-documentos.index',
+                    'params' => null,
+                    'parent_id' => null,
+                    'sort_order' => 21,
+                ],
             ];
 
             foreach ($items as $item) {
@@ -228,6 +239,7 @@ class MenubarItemsSeeder extends Seeder
 
             $links = [
                 ['menubar_item_id' => 19, 'module_id' => $productosCrediticios->id, 'routes' => ['productos-crediticios.index']],
+                ['menubar_item_id' => 20, 'module_id' => $plantillasDocumentos->id, 'routes' => ['plantillas-documentos.index']],
                 ['menubar_item_id' => 1, 'module_id' => $clientes->id,  'routes' => ['clientes.edit', 'clientes.show']],
                 ['menubar_item_id' => 18, 'module_id' => $clientes->id, 'routes' => ['clientes.edit', 'clientes.show', 'clientes.expediente.show']],
                 ['menubar_item_id' => 2, 'module_id' => $clientes->id,  'routes' => ['clientes.edit']],

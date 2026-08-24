@@ -14,7 +14,7 @@ test('SIC consent stores user date medium and private evidence then can be revok
             'medio' => 'firma_autografa',
             'otorgado_en' => now()->subMinute()->toIso8601String(),
             'vence_en' => now()->addYear()->format('Y-m-d'),
-            'evidencia' => UploadedFile::fake()->create('consentimiento.pdf', 80, 'application/pdf'),
+            'evidencia' => UploadedFile::fake()->createWithContent('consentimiento.pdf', "%PDF-1.4\n% consentimiento\n%%EOF"),
             'notas' => 'Documento firmado en sucursal.',
         ])
         ->assertRedirect();

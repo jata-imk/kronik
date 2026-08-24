@@ -313,16 +313,26 @@ Si el comando `sat-cfdi-v4:update` encuentra un XLS y LibreOffice no está
 disponible, la restauración de regímenes fiscales fallará. No hace falta una
 interfaz gráfica.
 
-### 6.2 wkhtmltopdf y Pandoc: opcionales hoy
+### 6.2 Chromium/Puppeteer para documentos PDF
 
-El código actual no ejecuta `wkhtmltopdf` ni `pandoc`. Instálelos cuando se
-habilite la generación de contratos o documentos que los use:
+Backlog 03.5 genera PDF con Chromium mediante Puppeteer y Browsershot.
+`npm ci` instala Puppeteer; asegure que su Chromium y las bibliotecas del
+sistema estén disponibles para el mismo usuario que ejecuta el worker:
 
 ```bash
-sudo apt install wkhtmltopdf pandoc
+cd ~/htdocs/kronik.example.com
+npx puppeteer browsers install chrome
+php artisan documentos:benchmark-pdf --runs=5
 ```
 
-No deben bloquear el primer despliegue de la funcionalidad actual.
+Si Node, los módulos o Chrome no están en rutas estándar, configure
+`DOCUMENTOS_NODE_BINARY`, `DOCUMENTOS_NPM_BINARY`,
+`DOCUMENTOS_NODE_MODULES_PATH` y `DOCUMENTOS_CHROME_PATH`. Mantenga el sandbox
+de Chromium habilitado. El benchmark debe quedar debajo de 10 segundos por PDF
+y sirve para decidir la concurrencia del worker según la memoria de la VPS.
+
+`wkhtmltopdf` está descartado y Pandoc no se instala mientras DOCX siga fuera
+del alcance confirmado.
 
 ### 6.3 Verificar PHP, Composer y Node
 

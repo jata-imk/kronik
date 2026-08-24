@@ -38,6 +38,18 @@ enum ActivityEvent: string
     case CreditProductVersioned = 'producto_crediticio.versioned';
     case CreditProductActivated = 'producto_crediticio.activated';
     case CreditProductRetired = 'producto_crediticio.retired';
+    case DocumentTemplateCreated = 'documento_plantilla.created';
+    case DocumentTemplateUpdated = 'documento_plantilla.updated';
+    case DocumentTemplateVersioned = 'documento_plantilla.versioned';
+    case DocumentTemplateActivated = 'documento_plantilla.activated';
+    case DocumentTemplateRetired = 'documento_plantilla.retired';
+    case DocumentGenerationRequested = 'documento.generacion.requested';
+    case DocumentGenerated = 'documento.generated';
+    case DocumentGenerationFailed = 'documento.generacion.failed';
+    case DocumentViewed = 'documento.viewed';
+    case DocumentDownloaded = 'documento.downloaded';
+    case ClientDocumentViewed = 'cliente.documento.viewed';
+    case ClientSicConsentEvidenceViewed = 'cliente.consentimiento_sic.evidence_viewed';
 
     public function label(): string
     {
@@ -76,6 +88,18 @@ enum ActivityEvent: string
             self::CreditProductVersioned => 'Producto crediticio versionado',
             self::CreditProductActivated => 'Versión de producto activada',
             self::CreditProductRetired => 'Versión de producto retirada',
+            self::DocumentTemplateCreated => 'Plantilla documental creada',
+            self::DocumentTemplateUpdated => 'Borrador de plantilla actualizado',
+            self::DocumentTemplateVersioned => 'Plantilla documental versionada',
+            self::DocumentTemplateActivated => 'Versión de plantilla activada',
+            self::DocumentTemplateRetired => 'Versión de plantilla retirada',
+            self::DocumentGenerationRequested => 'Generación de documento solicitada',
+            self::DocumentGenerated => 'Documento generado',
+            self::DocumentGenerationFailed => 'Generación de documento fallida',
+            self::DocumentViewed => 'Documento visualizado',
+            self::DocumentDownloaded => 'Documento descargado',
+            self::ClientDocumentViewed => 'Documento de cliente visualizado',
+            self::ClientSicConsentEvidenceViewed => 'Evidencia SIC visualizada',
         };
     }
 
@@ -88,13 +112,17 @@ enum ActivityEvent: string
             self::ClientLinkCreated,
             self::ClientGuaranteeCreated,
             self::ClientDocumentReceived,
-            self::ClientSicConsentCreated => 'success',
+            self::ClientSicConsentCreated,
+            self::DocumentTemplateCreated,
+            self::DocumentTemplateActivated,
+            self::DocumentGenerated => 'success',
             self::BranchDeactivated,
             self::ClientDeleted,
             self::ClientReferenceDeleted,
             self::ClientLinkDeleted,
             self::ClientGuaranteeDeleted,
-            self::ClientSicConsentRevoked => 'danger',
+            self::ClientSicConsentRevoked,
+            self::DocumentGenerationFailed => 'danger',
             self::Login,
             self::TwoFactorCompleted => 'secondary',
             default => 'info',
@@ -125,6 +153,18 @@ enum ActivityEvent: string
             self::CreditProductVersioned => 'pi-copy',
             self::CreditProductActivated => 'pi-check-circle',
             self::CreditProductRetired => 'pi-ban',
+            self::DocumentTemplateCreated => 'pi-file-plus',
+            self::DocumentTemplateUpdated => 'pi-pencil',
+            self::DocumentTemplateVersioned => 'pi-copy',
+            self::DocumentTemplateActivated => 'pi-check-circle',
+            self::DocumentTemplateRetired => 'pi-ban',
+            self::DocumentGenerationRequested => 'pi-clock',
+            self::DocumentGenerated => 'pi-file-pdf',
+            self::DocumentGenerationFailed => 'pi-exclamation-triangle',
+            self::DocumentViewed,
+            self::ClientDocumentViewed,
+            self::ClientSicConsentEvidenceViewed => 'pi-eye',
+            self::DocumentDownloaded => 'pi-download',
             default => 'pi-circle',
         };
     }

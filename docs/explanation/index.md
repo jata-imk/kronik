@@ -7,3 +7,5 @@
 - [ADR 0005: contextos de equipo y sucursal](adr-0005-contextos-equipo-sucursal.md)
 - [ADR 0006: versionado de productos y motor de cálculo](adr-0006-versionado-productos-y-motor-calculo.md)
 - [ADR 0007: flujos de comisiones y redondeo de crédito simple](adr-0007-flujos-comisiones-y-redondeo-creditos.md)
+- [ADR 0008: arquitectura de documentos y plantillas](adr-0008-arquitectura-documentos-y-plantillas.md)
+- [ADR 0009: motor de renderizado de documentos](adr-0009-motor-renderizado-documentos.md)
