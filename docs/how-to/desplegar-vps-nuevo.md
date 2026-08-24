@@ -321,9 +321,16 @@ sistema estén disponibles para el mismo usuario que ejecuta el worker:
 
 ```bash
 cd ~/htdocs/kronik.example.com
-npx puppeteer browsers install chrome
+sudo env "PATH=$PATH" ./node_modules/.bin/puppeteer browsers install chrome --install-deps
+./node_modules/.bin/puppeteer browsers install chrome
+./node_modules/.bin/puppeteer browsers list
 php artisan documentos:benchmark-pdf --runs=5
 ```
+
+La variante `--install-deps` es exclusiva de Debian/Ubuntu y requiere
+privilegios para instalar paquetes del sistema. El segundo comando garantiza
+que Chrome también quede en la caché del usuario del sitio; no ejecute el
+worker como `root`.
 
 Si Node, los módulos o Chrome no están en rutas estándar, configure
 `DOCUMENTOS_NODE_BINARY`, `DOCUMENTOS_NPM_BINARY`,
@@ -598,12 +605,21 @@ git pull --ff-only origin main
 php8.3 /usr/local/bin/composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 npm ci
 npm run build
+php8.3 artisan migrate:status
 php8.3 artisan migrate --force
+php8.3 artisan db:seed --class=ModulesAndPermissionsSeeder --force
+php8.3 artisan db:seed --class=MenubarItemsSeeder --force
+php8.3 artisan permission:cache-reset
 php8.3 artisan optimize:clear
 php8.3 artisan optimize
 php8.3 artisan queue:restart
 php8.3 artisan up
 ```
+
+Los dos seeders son idempotentes y deben ejecutarse cuando una versión agrega
+módulos, permisos o entradas canónicas del menú. Crean los permisos de
+documentos, pero no los conceden automáticamente a roles personalizados;
+revise esos roles desde la administración después del despliegue.
 
 Si el despliegue falla mientras está en mantenimiento, corrija o restaure la
 versión y el respaldo antes de ejecutar `artisan up`. No use
