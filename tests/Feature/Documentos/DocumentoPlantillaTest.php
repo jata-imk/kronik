@@ -90,6 +90,10 @@ test('generación es idempotente trazable y produce un PDF privado', function ()
     Queue::assertPushed(GenerarDocumentoPdf::class);
 
     $document = $client->documentosGenerados()->firstOrFail();
+    $this->actingAs($user)
+        ->getJson(route('documentos-generados.status', $document))
+        ->assertOk()
+        ->assertJsonPath('estado', DocumentoGeneradoEstado::Pendiente->value);
     app()->instance(DocumentoPdfRenderer::class, new class implements DocumentoPdfRenderer
     {
         public function render(string $bodyHtml, ?string $headerHtml = null, ?string $footerHtml = null): string
@@ -108,8 +112,13 @@ test('generación es idempotente trazable y produce un PDF privado', function ()
     Storage::disk('local')->assertExists($document->path);
     $response = $this->actingAs($user)->get(route('documentos-generados.view', $document))->assertOk();
     expect($response->headers->get('Cache-Control'))->toContain('private')->toContain('no-store');
+    $this->actingAs($user)
+        ->getJson(route('documentos-generados.status', $document))
+        ->assertOk()
+        ->assertJsonPath('estado', DocumentoGeneradoEstado::Generado->value);
 
     $unauthorized = User::factory()->withPersonalTeam()->create();
+    $this->actingAs($unauthorized)->getJson(route('documentos-generados.status', $document))->assertForbidden();
     $this->actingAs($unauthorized)->get(route('documentos-generados.view', $document))->assertForbidden();
     $this->actingAs($unauthorized)->get(route('documentos-generados.download', $document))->assertForbidden();
 });

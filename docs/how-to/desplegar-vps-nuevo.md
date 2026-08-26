@@ -516,7 +516,7 @@ ruta:
 [program:kronik-worker]
 process_name=%(program_name)s_%(process_num)02d
 directory=/home/kronik/htdocs/kronik.example.com
-command=/usr/bin/php8.3 artisan queue:work database --sleep=3 --tries=3 --timeout=60 --max-time=3600
+command=/usr/bin/php8.3 artisan queue:work database --sleep=3 --tries=3 --timeout=60 --max-jobs=100
 autostart=true
 autorestart=true
 stopasgroup=true
@@ -539,7 +539,15 @@ sudo supervisorctl status kronik-worker:*
 El `stopwaitsecs` debe superar la duración del trabajo de cola más largo.
 `--timeout` debe permanecer por debajo de `DB_QUEUE_RETRY_AFTER`, cuyo valor
 predeterminado es 90 segundos, para evitar que un trabajo sea procesado dos
-veces.
+veces. `--max-jobs=100` recicla el proceso después de trabajo real sin provocar
+reinicios continuos cuando Laravel está en mantenimiento; `--sleep=5` es una
+alternativa válida para instalaciones de prueba o bajo volumen que prefieran
+menos consultas a la tabla `jobs` a cambio de hasta cinco segundos de espera.
+
+En Debian también puede usarse una unidad nativa de `systemd` en lugar de
+Supervisor. Mantenga `RestartSec=5` aunque use `--sleep=3` o `--sleep=5`: el
+primero espera antes de reiniciar un proceso que terminó, mientras el segundo
+solo controla la consulta de una cola vacía.
 
 ### 9.2 Scheduler
 

@@ -1,5 +1,6 @@
 <script setup>
 import { router, useForm } from "@inertiajs/vue3";
+import axios from "axios";
 import {
     BadgeCheck,
     Download,
@@ -21,10 +22,11 @@ import {
 } from "lucide-vue-next";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 
 import DocumentVersionStatus from "@/Components/Documents/DocumentVersionStatus.vue";
 import PrivateDocumentViewer from "@/Components/Documents/PrivateDocumentViewer.vue";
+import { useAsyncPolling } from "@/Composables/useAsyncPolling";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 
 const props = defineProps({
@@ -136,6 +138,94 @@ function generateDocument() {
                 life: 5000,
             }),
     });
+}
+
+const activeGenerationStates = new Set(["pendiente", "procesando"]);
+const pendingGenerationIds = computed(() =>
+    props.can.read_documents
+        ? (props.cliente.documentos_generados ?? [])
+              .filter((document) => activeGenerationStates.has(document.estado))
+              .map((document) => document.id)
+        : [],
+);
+const pendingGenerationKey = computed(() =>
+    [...pendingGenerationIds.value].sort().join(","),
+);
+
+function reloadGeneratedDocuments() {
+    return new Promise((resolve) => {
+        router.reload({
+            only: ["cliente"],
+            preserveScroll: true,
+            preserveState: true,
+            onFinish: resolve,
+        });
+    });
+}
+
+const {
+    isPolling: isGenerationPolling,
+    timedOut: generationPollingTimedOut,
+    lastError: generationPollingError,
+    start: startGenerationPolling,
+    reset: resetGenerationPolling,
+} = useAsyncPolling(
+    async () => {
+        const ids = pendingGenerationIds.value;
+        if (!ids.length) return false;
+
+        const responses = await Promise.all(
+            ids.map((id) =>
+                axios.get(route("documentos-generados.status", id)),
+            ),
+        );
+        const hasFinished = responses.some(
+            ({ data }) => !activeGenerationStates.has(data.estado),
+        );
+
+        if (hasFinished) await reloadGeneratedDocuments();
+
+        return pendingGenerationIds.value.length > 0;
+    },
+    {
+        intervalMs: 2000,
+        timeoutMs: 90000,
+        maxConsecutiveErrors: 3,
+        onTimeout: () =>
+            toast.add({
+                severity: "warn",
+                summary: "Seguimiento pausado",
+                detail: "La generación puede continuar en segundo plano. Actualiza el estado cuando quieras comprobarla.",
+                life: 6500,
+            }),
+        onError: () =>
+            toast.add({
+                severity: "error",
+                summary: "Sin actualización automática",
+                detail: "No fue posible consultar el estado. La generación no fue cancelada.",
+                life: 6500,
+            }),
+    },
+);
+
+watch(
+    pendingGenerationKey,
+    (current, previous) => {
+        if (!current) {
+            resetGenerationPolling();
+            return;
+        }
+
+        startGenerationPolling({ restart: current !== previous });
+    },
+    { immediate: true },
+);
+
+async function retryGenerationPolling() {
+    await reloadGeneratedDocuments();
+    if (pendingGenerationIds.value.length) {
+        startGenerationPolling({ restart: true });
+    }
 }
 
 function openViewer(url, downloadUrl, name) {
@@ -675,7 +765,8 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                             </div>
                         </details>
                         <div class="mt-6 border-t border-surface-200 pt-5">
-                            <div class="mb-3 flex items-center justify-between gap-3"><div><p class="section-kicker">Generados por Kronik</p><h3 class="text-lg font-semibold">Documentos finales</h3></div><Tag :value="`${cliente.documentos_generados?.length ?? 0} registros`" severity="secondary" /></div>
+                            <div class="mb-3 flex flex-wrap items-center justify-between gap-3"><div><p class="section-kicker">Generados por Kronik</p><h3 class="text-lg font-semibold">Documentos finales</h3></div><div class="flex flex-wrap items-center justify-end gap-2"><Tag v-if="isGenerationPolling" value="Actualizando" icon="pi pi-spin pi-spinner" severity="info" /><Tag :value="`${cliente.documentos_generados?.length ?? 0} registros`" severity="secondary" /></div></div>
+                            <div v-if="generationPollingTimedOut || generationPollingError" class="mb-3 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100"><span>{{ generationPollingTimedOut ? 'La comprobación automática terminó por tiempo. El servidor puede continuar generando el documento.' : 'No fue posible comprobar el estado automáticamente. La generación no fue cancelada.' }}</span><Button label="Actualizar estado" icon="pi pi-refresh" size="small" severity="warn" outlined @click="retryGenerationPolling" /></div>
                             <div v-if="cliente.documentos_generados?.length" class="document-list">
                                 <article v-for="generated in cliente.documentos_generados" :key="generated.id" class="document-row">
                                     <div class="document-icon" :class="generated.estado"><FileText :size="22" /></div>
