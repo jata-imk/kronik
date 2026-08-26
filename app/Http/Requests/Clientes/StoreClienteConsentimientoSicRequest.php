@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Clientes;
 
 use App\Enums\ConsentimientoSicMedio;
+use App\Rules\ArchivoDocumentoSeguro;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,7 +20,7 @@ class StoreClienteConsentimientoSicRequest extends FormRequest
             'medio' => ['required', Rule::enum(ConsentimientoSicMedio::class)],
             'otorgado_en' => ['required', 'date', 'before_or_equal:now'],
             'vence_en' => ['nullable', 'date', 'after_or_equal:otorgado_en'],
-            'evidencia' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:10240'],
+            'evidencia' => ['required', 'file', new ArchivoDocumentoSeguro, 'max:'.config('documentos.max_upload_kb', 10240)],
             'notas' => ['nullable', 'string', 'max:2000'],
         ];
     }

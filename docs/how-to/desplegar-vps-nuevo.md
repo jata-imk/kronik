@@ -313,16 +313,33 @@ Si el comando `sat-cfdi-v4:update` encuentra un XLS y LibreOffice no está
 disponible, la restauración de regímenes fiscales fallará. No hace falta una
 interfaz gráfica.
 
-### 6.2 wkhtmltopdf y Pandoc: opcionales hoy
+### 6.2 Chromium/Puppeteer para documentos PDF
 
-El código actual no ejecuta `wkhtmltopdf` ni `pandoc`. Instálelos cuando se
-habilite la generación de contratos o documentos que los use:
+Backlog 03.5 genera PDF con Chromium mediante Puppeteer y Browsershot.
+`npm ci` instala Puppeteer; asegure que su Chromium y las bibliotecas del
+sistema estén disponibles para el mismo usuario que ejecuta el worker:
 
 ```bash
-sudo apt install wkhtmltopdf pandoc
+cd ~/htdocs/kronik.example.com
+sudo env "PATH=$PATH" ./node_modules/.bin/puppeteer browsers install chrome --install-deps
+./node_modules/.bin/puppeteer browsers install chrome
+./node_modules/.bin/puppeteer browsers list
+php artisan documentos:benchmark-pdf --runs=5
 ```
 
-No deben bloquear el primer despliegue de la funcionalidad actual.
+La variante `--install-deps` es exclusiva de Debian/Ubuntu y requiere
+privilegios para instalar paquetes del sistema. El segundo comando garantiza
+que Chrome también quede en la caché del usuario del sitio; no ejecute el
+worker como `root`.
+
+Si Node, los módulos o Chrome no están en rutas estándar, configure
+`DOCUMENTOS_NODE_BINARY`, `DOCUMENTOS_NPM_BINARY`,
+`DOCUMENTOS_NODE_MODULES_PATH` y `DOCUMENTOS_CHROME_PATH`. Mantenga el sandbox
+de Chromium habilitado. El benchmark debe quedar debajo de 10 segundos por PDF
+y sirve para decidir la concurrencia del worker según la memoria de la VPS.
+
+`wkhtmltopdf` está descartado y Pandoc no se instala mientras DOCX siga fuera
+del alcance confirmado.
 
 ### 6.3 Verificar PHP, Composer y Node
 
@@ -499,7 +516,7 @@ ruta:
 [program:kronik-worker]
 process_name=%(program_name)s_%(process_num)02d
 directory=/home/kronik/htdocs/kronik.example.com
-command=/usr/bin/php8.3 artisan queue:work database --sleep=3 --tries=3 --timeout=60 --max-time=3600
+command=/usr/bin/php8.3 artisan queue:work database --sleep=3 --tries=3 --timeout=60 --max-jobs=100
 autostart=true
 autorestart=true
 stopasgroup=true
@@ -522,7 +539,15 @@ sudo supervisorctl status kronik-worker:*
 El `stopwaitsecs` debe superar la duración del trabajo de cola más largo.
 `--timeout` debe permanecer por debajo de `DB_QUEUE_RETRY_AFTER`, cuyo valor
 predeterminado es 90 segundos, para evitar que un trabajo sea procesado dos
-veces.
+veces. `--max-jobs=100` recicla el proceso después de trabajo real sin provocar
+reinicios continuos cuando Laravel está en mantenimiento; `--sleep=5` es una
+alternativa válida para instalaciones de prueba o bajo volumen que prefieran
+menos consultas a la tabla `jobs` a cambio de hasta cinco segundos de espera.
+
+En Debian también puede usarse una unidad nativa de `systemd` en lugar de
+Supervisor. Mantenga `RestartSec=5` aunque use `--sleep=3` o `--sleep=5`: el
+primero espera antes de reiniciar un proceso que terminó, mientras el segundo
+solo controla la consulta de una cola vacía.
 
 ### 9.2 Scheduler
 
@@ -588,12 +613,21 @@ git pull --ff-only origin main
 php8.3 /usr/local/bin/composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 npm ci
 npm run build
+php8.3 artisan migrate:status
 php8.3 artisan migrate --force
+php8.3 artisan db:seed --class=ModulesAndPermissionsSeeder --force
+php8.3 artisan db:seed --class=MenubarItemsSeeder --force
+php8.3 artisan permission:cache-reset
 php8.3 artisan optimize:clear
 php8.3 artisan optimize
 php8.3 artisan queue:restart
 php8.3 artisan up
 ```
+
+Los dos seeders son idempotentes y deben ejecutarse cuando una versión agrega
+módulos, permisos o entradas canónicas del menú. Crean los permisos de
+documentos, pero no los conceden automáticamente a roles personalizados;
+revise esos roles desde la administración después del despliegue.
 
 Si el despliegue falla mientras está en mantenimiento, corrija o restaure la
 versión y el respaldo antes de ejecutar `artisan up`. No use

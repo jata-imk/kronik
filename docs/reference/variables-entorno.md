@@ -32,6 +32,20 @@ Use un usuario exclusivo por instancia y no exponga MariaDB a Internet.
 Las tablas para sesiones, cache, jobs y jobs fallidos están incluidas en las
 migraciones.
 
+## Documentos privados y generación PDF
+
+- `DOCUMENTOS_DISK`: disco privado; normalmente `local`.
+- `DOCUMENTOS_PDF_RENDERER`: use `browsershot`.
+- `DOCUMENTOS_PDF_TIMEOUT`: límite por render, 55 segundos por defecto.
+- `DOCUMENTOS_MAX_UPLOAD_KB`: máximo para PDF, JPG y PNG cargados.
+- `DOCUMENTOS_NODE_BINARY`, `DOCUMENTOS_NPM_BINARY`,
+  `DOCUMENTOS_NODE_MODULES_PATH` y `DOCUMENTOS_CHROME_PATH`: rutas opcionales
+  cuando los binarios no están en el `PATH` del worker.
+
+El usuario del worker debe poder leer `node_modules`, ejecutar Node y Chromium y
+escribir en `storage/app/private`; no use `--no-sandbox` como configuración
+normal de producción.
+
 ## Testing/CI
 
 CI usa PHP 8.3 y MariaDB 11 con:

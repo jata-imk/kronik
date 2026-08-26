@@ -100,6 +100,24 @@ class ModulesAndPermissionsSeeder extends Seeder
             ],
         );
 
+        $plantillasDocumentos = Module::updateOrCreate(
+            ['name' => 'plantillas-documentos'],
+            [
+                'icon' => 'pi-file-edit',
+                'route_name' => 'plantillas-documentos.index',
+                'parent_id' => null,
+            ],
+        );
+
+        $documentos = Module::updateOrCreate(
+            ['name' => 'documentos'],
+            [
+                'icon' => 'pi-file-pdf',
+                'route_name' => 'plantillas-documentos.index',
+                'parent_id' => $plantillasDocumentos->id,
+            ],
+        );
+
         $historial = Module::updateOrCreate(
             ['name' => 'historial-crediticio'],
             [
@@ -138,6 +156,8 @@ class ModulesAndPermissionsSeeder extends Seeder
             'sucursales' => ['create', 'read', 'update', 'delete'],
             'clientes' => ['create', 'read', 'update', 'delete', 'transfer'],
             'productos-crediticios' => ['create', 'read', 'update', 'activate', 'retire', 'version', 'simulate', 'manage commissions'],
+            'plantillas-documentos' => ['create', 'read', 'update', 'activate', 'retire', 'version'],
+            'documentos' => ['read', 'generate', 'download'],
             'historial-crediticio' => ['read'],
             'circulo-credito' => ['create', 'read'],
             'teams' => ['read', 'add members', 'delete', 'remove members', 'update', 'update members', 'create'],
@@ -154,6 +174,8 @@ class ModulesAndPermissionsSeeder extends Seeder
             $sucursales,
             $clientes,
             $productosCrediticios,
+            $plantillasDocumentos,
+            $documentos,
             $historial,
             $circuloCredito,
             $teams,

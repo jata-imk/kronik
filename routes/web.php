@@ -17,6 +17,8 @@ use App\Http\Controllers\ClienteVinculoController;
 use App\Http\Controllers\CodigoPostalController;
 use App\Http\Controllers\ConceptoComisionController;
 use App\Http\Controllers\CurrentSucursalController;
+use App\Http\Controllers\DocumentoGeneradoController;
+use App\Http\Controllers\DocumentoPlantillaController;
 use App\Http\Controllers\GeocodingController;
 use App\Http\Controllers\HistorialCrediticioController;
 use App\Http\Controllers\ProductoCrediticioController;
@@ -61,6 +63,7 @@ Route::middleware([
     Route::post('clientes/{cliente}/documentos', [ClienteDocumentoController::class, 'store'])->name('clientes.documentos.store');
     Route::patch('clientes/{cliente}/documentos/{documento}/estado', [ClienteDocumentoController::class, 'updateStatus'])->name('clientes.documentos.estado.update');
     Route::get('clientes/{cliente}/documentos/{documento}/descargar', [ClienteDocumentoController::class, 'download'])->name('clientes.documentos.download');
+    Route::get('clientes/{cliente}/documentos/{documento}/ver', [ClienteDocumentoController::class, 'view'])->name('clientes.documentos.view');
 
     Route::post('clientes/{cliente}/referencias', [ClienteReferenciaController::class, 'store'])->name('clientes.referencias.store');
     Route::put('clientes/{cliente}/referencias/{referencia}', [ClienteReferenciaController::class, 'update'])->name('clientes.referencias.update');
@@ -76,6 +79,7 @@ Route::middleware([
     Route::post('clientes/{cliente}/consentimientos-sic', [ClienteConsentimientoSicController::class, 'store'])->name('clientes.consentimientos-sic.store');
     Route::patch('clientes/{cliente}/consentimientos-sic/{consentimiento}/revocar', [ClienteConsentimientoSicController::class, 'revoke'])->name('clientes.consentimientos-sic.revoke');
     Route::get('clientes/{cliente}/consentimientos-sic/{consentimiento}/evidencia', [ClienteConsentimientoSicController::class, 'download'])->name('clientes.consentimientos-sic.download');
+    Route::get('clientes/{cliente}/consentimientos-sic/{consentimiento}/evidencia/ver', [ClienteConsentimientoSicController::class, 'view'])->name('clientes.consentimientos-sic.view');
     Route::patch('clientes/{cliente}/sucursal', [ClienteController::class, 'transfer'])->name('clientes.sucursal.transfer');
 
     Route::resource('clientes', ClienteController::class)->names('clientes');
@@ -90,6 +94,19 @@ Route::middleware([
     Route::post('conceptos-comision', [ConceptoComisionController::class, 'store'])->name('conceptos-comision.store');
     Route::put('conceptos-comision/{concepto}', [ConceptoComisionController::class, 'update'])->name('conceptos-comision.update');
     Route::delete('conceptos-comision/{concepto}', [ConceptoComisionController::class, 'destroy'])->name('conceptos-comision.destroy');
+
+    Route::get('plantillas-documentos', [DocumentoPlantillaController::class, 'index'])->name('plantillas-documentos.index');
+    Route::post('plantillas-documentos', [DocumentoPlantillaController::class, 'store'])->name('plantillas-documentos.store');
+    Route::put('plantillas-documentos/{plantilla}/versiones/{version}', [DocumentoPlantillaController::class, 'update'])->name('plantillas-documentos.update');
+    Route::post('plantillas-documentos/{plantilla}/versiones/{version}/duplicar', [DocumentoPlantillaController::class, 'versionar'])->name('plantillas-documentos.versionar');
+    Route::post('plantilla-documento-versiones/{version}/activar', [DocumentoPlantillaController::class, 'activar'])->name('plantillas-documentos.activar');
+    Route::post('plantilla-documento-versiones/{version}/retirar', [DocumentoPlantillaController::class, 'retirar'])->name('plantillas-documentos.retirar');
+    Route::get('plantilla-documento-versiones/{version}/previsualizar', [DocumentoPlantillaController::class, 'preview'])->name('plantillas-documentos.preview');
+
+    Route::post('clientes/{cliente}/documentos-generados', [DocumentoGeneradoController::class, 'store'])->name('documentos-generados.store');
+    Route::get('documentos-generados/{documento}/estado', [DocumentoGeneradoController::class, 'status'])->name('documentos-generados.status');
+    Route::get('documentos-generados/{documento}/ver', [DocumentoGeneradoController::class, 'view'])->name('documentos-generados.view');
+    Route::get('documentos-generados/{documento}/descargar', [DocumentoGeneradoController::class, 'download'])->name('documentos-generados.download');
 
     Route::get('/codigos-postales/sugerencias', [CodigoPostalController::class, 'sugerencias'])->name('codigos-postales.sugerencias');
     Route::get('/codigos-postales/buscar', [CodigoPostalController::class, 'buscar'])->name('codigos-postales.buscar');

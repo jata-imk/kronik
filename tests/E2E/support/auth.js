@@ -58,7 +58,7 @@ export async function failOnConsoleErrors(page) {
             errors.push(message.text());
         }
     });
-    page.on("pageerror", (error) => errors.push(error.message));
+    page.on("pageerror", (error) => errors.push(error.stack ?? error.message));
 
     return () => expect(errors, "La consola del navegador contiene errores").toEqual([]);
 }
