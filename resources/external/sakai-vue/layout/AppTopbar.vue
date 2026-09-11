@@ -12,7 +12,7 @@ const appName = import.meta.env.VITE_APP_NAME;
 <template>
     <div class="layout-topbar">
         <div class="layout-topbar-logo-container">
-            <button class="layout-menu-button layout-topbar-action" @click="toggleMenu">
+            <button aria-label="Mostrar u ocultar menú" v-tooltip.bottom="'Mostrar u ocultar menú'" class="layout-menu-button layout-topbar-action" @click="toggleMenu">
                 <i class="pi pi-bars"></i>
             </button>
             <Link :href="route('dashboard')" class="layout-topbar-logo">
@@ -40,7 +40,7 @@ const appName = import.meta.env.VITE_APP_NAME;
 
         <div class="layout-topbar-actions">
             <div class="layout-config-menu">
-                <button type="button" class="layout-topbar-action" @click="toggleDarkMode">
+                <button type="button" class="layout-topbar-action" aria-label="Cambiar tema" v-tooltip.bottom="'Cambiar tema'" @click="toggleDarkMode">
                     <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>
                 </button>
                 <div class="relative">
@@ -48,6 +48,8 @@ const appName = import.meta.env.VITE_APP_NAME;
                         v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
                         type="button"
                         class="layout-topbar-action layout-topbar-action-highlight"
+                        aria-label="Personalizar apariencia"
+                        v-tooltip.bottom="'Personalizar apariencia'"
                     >
                         <i class="pi pi-palette"></i>
                     </button>
@@ -56,7 +58,7 @@ const appName = import.meta.env.VITE_APP_NAME;
             </div>
 
             <button
-                class="layout-topbar-menu-button layout-topbar-action"
+                aria-label="Opciones de usuario" v-tooltip.bottom="'Opciones de usuario'" class="layout-topbar-menu-button layout-topbar-action"
                 v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
             >
                 <i class="pi pi-ellipsis-v"></i>
@@ -64,11 +66,11 @@ const appName = import.meta.env.VITE_APP_NAME;
 
             <div class="layout-topbar-menu hidden lg:block">
                 <div class="layout-topbar-menu-content">
-                    <button type="button" class="layout-topbar-action">
+                    <button type="button" class="layout-topbar-action" aria-label="Calendario" v-tooltip.bottom="'Calendario'">
                         <i class="pi pi-calendar"></i>
                         <span>Calendario</span>
                     </button>
-                    <button type="button" class="layout-topbar-action">
+                    <button type="button" class="layout-topbar-action" aria-label="Notificaciones" v-tooltip.bottom="'Notificaciones'">
                         <i class="pi pi-inbox"></i>
                         <span>Notificaciones</span>
                     </button>

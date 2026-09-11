@@ -5,7 +5,7 @@ test("inicia y cierra sesión con una cuenta activa", async ({ page }) => {
     await login(page);
     await expect(page.getByText("Panel de superusuario", { exact: true })).toBeVisible();
 
-    await page.getByRole("button", { name: "Test User", exact: true }).click();
+    await page.getByRole("button", { name: "Opciones de usuario", exact: true }).click();
     await page.getByRole("menuitem", { name: /Cerrar sesión/i }).click();
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole("button", { name: /iniciar sesión/i })).toBeVisible();

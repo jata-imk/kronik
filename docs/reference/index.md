@@ -1,5 +1,6 @@
 # Referencia
 
+- [Documentos digitales y plantillas](documentos-y-plantillas.md)
 - [Productos crediticios](productos-crediticios.md)
 
 - [Usuarios, equipos y sucursales](usuarios-equipos-sucursales.md)

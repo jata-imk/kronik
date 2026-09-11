@@ -8,6 +8,7 @@ use App\Models\Sucursal;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\ActivityLogService;
+use App\Services\Documentos\DocumentoPlantillaVersionService;
 use App\Services\ProductoVersionService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -127,6 +128,32 @@ class E2eSeeder extends Seeder
                 $producto->versiones()->first(),
                 app(\App\Services\FechaEmpresa::class)->hoy()->toDateString(),
             );
+
+            foreach ([
+                [
+                    'clave' => 'sic-muestra', 'nombre' => 'Consentimiento SIC de muestra', 'tipo' => 'consentimiento_sic',
+                    'descripcion' => 'Plantilla sintética para comprobar el flujo documental E2E.',
+                    'contenido_html' => '<h1>Consentimiento SIC</h1><p><strong>Muestra sin valor jurídico.</strong></p><p>Yo, {{cliente.nombre_completo}}, autorizo una consulta de prueba.</p>',
+                ],
+                [
+                    'clave' => 'garantia-muestra', 'nombre' => 'Constancia de garantía de muestra', 'tipo' => 'garantia',
+                    'descripcion' => 'Documento sintético para garantías del expediente.',
+                    'contenido_html' => '<h1>Constancia de garantía</h1><p><strong>Muestra sin valor jurídico.</strong></p><p>{{garantia.descripcion}} por {{garantia.valor_estimado}}.</p>',
+                ],
+                [
+                    'clave' => 'contrato-muestra', 'nombre' => 'Contrato de muestra', 'tipo' => 'contrato',
+                    'descripcion' => 'Solo edición y previsualización hasta Backlog 04.',
+                    'contenido_html' => '<h1>Contrato de crédito</h1><p><strong>Muestra sin valor jurídico.</strong></p><p>Preparado para {{cliente.nombre_completo}}.</p>',
+                ],
+            ] as $documentTemplate) {
+                $template = app(DocumentoPlantillaVersionService::class)->create([
+                    ...$documentTemplate,
+                    'encabezado_html' => '<p>{{empresa.razon_social}}</p>',
+                    'pie_html' => '<p>Generado el {{documento.fecha_generacion}}</p>',
+                    'resumen_cambios' => 'Fixture sintético inicial',
+                ], $admin->id);
+                app(DocumentoPlantillaVersionService::class)->activate($template->versiones()->first());
+            }
         });
     }
 }

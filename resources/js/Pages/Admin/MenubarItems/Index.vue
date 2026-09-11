@@ -13,9 +13,9 @@ const modules = ref(page.props.modules);
 const menubarItems = ref(null);
 
 watch(
-    () => page.props.menubarItems,
+    () => page.props.menubarCatalogo,
     () => {
-        menubarItems.value = page.props.menubarItems;
+        menubarItems.value = page.props.menubarCatalogo;
         items.value = NodeService.toTreeNodes(menubarItems.value);
     },
     {
@@ -38,7 +38,7 @@ const editItem = (item) => {
 const deleteItem = (item) => {
     if (confirm("¿Seguro que deseas eliminar este item?")) {
         router.delete(route("admin.menubar-items.destroy", item.id), {
-            only: ["menubarItems"],
+            only: ["menubarCatalogo", "menubarItems"],
         });
     }
 };

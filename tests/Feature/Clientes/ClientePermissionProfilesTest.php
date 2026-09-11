@@ -45,7 +45,7 @@ test('development permission profiles enforce client dossier access', function (
     $cliente = Cliente::firstOrFail();
     $documento = ClienteDocumento::where('cliente_id', $cliente->id)->firstOrFail();
     $path = "clientes/{$cliente->id}/documentos/demo.pdf";
-    Storage::disk('local')->put($path, 'documento demo');
+    Storage::disk('local')->put($path, "%PDF-1.4\n% documento demo\n%%EOF");
     $documento->update([
         'disk' => 'local',
         'path' => $path,

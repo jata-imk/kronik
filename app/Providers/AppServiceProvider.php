@@ -2,14 +2,22 @@
 
 namespace App\Providers;
 
+use App\Contracts\DocumentoPdfRenderer;
 use App\Interfaces\BrowserClientInterface;
 use App\Interfaces\GeocodingServiceInterface;
 use App\Models\Cliente;
+use App\Models\ClienteGarantia;
+use App\Models\DocumentoGenerado;
+use App\Models\DocumentoPlantilla;
+use App\Models\DocumentoPlantillaVersion;
 use App\Models\Permission;
 use App\Models\ProductoCrediticio;
 use App\Models\ProductoVersion;
+use App\Policies\DocumentoGeneradoPolicy;
+use App\Policies\DocumentoPlantillaPolicy;
 use App\Policies\ProductoCrediticioPolicy;
 use App\Policies\ProductoVersionPolicy;
+use App\Services\Documentos\BrowsershotDocumentoPdfRenderer;
 use App\Services\GeocodingService;
 use App\Services\Scrapers\BrowserClientService;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -34,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
         });
         $this->app->bind(BrowserClientInterface::class, BrowserClientService::class);
         $this->app->bind(GeocodingServiceInterface::class, GeocodingService::class);
+        $this->app->bind(DocumentoPdfRenderer::class, BrowsershotDocumentoPdfRenderer::class);
     }
 
     /**
@@ -41,10 +50,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        foreach (['document-preview', 'document-resources'] as $limiter) {
+            \Illuminate\Support\Facades\RateLimiter::for($limiter, fn ($request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(10)->by($request->user()?->id ?? $request->ip())
+                ->response(fn ($request, $headers) => response()->json(['message' => 'Ha realizado demasiadas solicitudes. Espere un minuto e inténtelo nuevamente.'], 429, $headers)));
+        }
         Gate::policy(ProductoCrediticio::class, ProductoCrediticioPolicy::class);
         Gate::policy(ProductoVersion::class, ProductoVersionPolicy::class);
+        Gate::policy(DocumentoPlantilla::class, DocumentoPlantillaPolicy::class);
+        Gate::policy(DocumentoPlantillaVersion::class, DocumentoPlantillaPolicy::class);
+        Gate::policy(DocumentoGenerado::class, DocumentoGeneradoPolicy::class);
         Relation::morphMap([
             'clientes' => Cliente::class,
+            'cliente_garantias' => ClienteGarantia::class,
         ]);
 
         // Global administrators bypass team-scoped permissions.

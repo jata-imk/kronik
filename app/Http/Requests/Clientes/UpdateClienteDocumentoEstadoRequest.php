@@ -24,14 +24,15 @@ class UpdateClienteDocumentoEstadoRequest extends FormRequest
                     ClienteDocumentoEstado::Vencido->value,
                 ]),
             ],
-            'motivo_rechazo' => ['nullable', 'required_if:estado,rechazado', 'string', 'max:2000'],
+            'motivo_rechazo' => ['exclude_unless:estado,rechazado', 'required', 'string', 'min:10', 'max:2000'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'motivo_rechazo.required_if' => 'Indique el motivo por el que se rechaza el documento.',
+            'motivo_rechazo.required' => 'Indique el motivo por el que se rechaza el documento.',
+            'motivo_rechazo.min' => 'El motivo de rechazo debe tener al menos 10 caracteres.',
         ];
     }
 }

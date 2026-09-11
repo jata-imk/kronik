@@ -8,6 +8,7 @@ use App\Models\Cliente;
 use App\Models\ClienteGarantia;
 use App\Models\ClienteReferencia;
 use App\Models\ClienteVinculo;
+use App\Models\DocumentoGenerado;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -135,6 +136,11 @@ class ClienteExpedienteService
 
     public function deleteGarantia(ClienteGarantia $garantia): void
     {
+        if (DocumentoGenerado::query()->where('documentable_type', 'cliente_garantias')->where('documentable_id', $garantia->id)->exists()) {
+            throw ValidationException::withMessages([
+                'garantia' => 'La garantía tiene documentos generados y debe conservarse para mantener su trazabilidad.',
+            ]);
+        }
         $cliente = $garantia->cliente;
         $id = $garantia->id;
         $garantia->delete();

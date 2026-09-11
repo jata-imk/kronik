@@ -25,6 +25,11 @@ const model = computed(() => [
     {
         label: "Módulos",
         items: [
+            (page.props.auth.is_super_admin || can("read-plantillas-documentos")) && {
+                label: "Documentos y plantillas",
+                icon: "pi pi-fw pi-file-edit",
+                to: "plantillas-documentos.index",
+            },
             can("read-clientes") && {
                 label: "CRM",
                 icon: "pi pi-fw pi-users",

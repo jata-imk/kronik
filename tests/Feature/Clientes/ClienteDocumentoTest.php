@@ -16,7 +16,7 @@ test('a private document can be received reviewed and versioned', function () {
         ->post(route('clientes.documentos.store', $cliente), [
             'tipo' => 'ine',
             'reemplaza_documento_id' => $pending->id,
-            'archivo' => UploadedFile::fake()->create('ine.pdf', 120, 'application/pdf'),
+            'archivo' => UploadedFile::fake()->createWithContent('ine.pdf', "%PDF-1.4\n% test\n%%EOF"),
             'vence_en' => now()->addYear()->format('Y-m-d'),
         ])
         ->assertRedirect();
@@ -40,7 +40,7 @@ test('a private document can be received reviewed and versioned', function () {
         ->post(route('clientes.documentos.store', $cliente), [
             'tipo' => 'ine',
             'reemplaza_documento_id' => $received->id,
-            'archivo' => UploadedFile::fake()->create('ine-nueva.pdf', 90, 'application/pdf'),
+            'archivo' => UploadedFile::fake()->createWithContent('ine-nueva.pdf', "%PDF-1.4\n% nueva\n%%EOF"),
         ])
         ->assertRedirect();
 
@@ -61,7 +61,7 @@ test('a private document can be received reviewed and versioned', function () {
         ->post(route('clientes.documentos.store', $cliente), [
             'tipo' => 'ine',
             'reemplaza_documento_id' => $otroTipo->id,
-            'archivo' => UploadedFile::fake()->create('tipo-incorrecto.pdf', 20, 'application/pdf'),
+            'archivo' => UploadedFile::fake()->createWithContent('tipo-incorrecto.pdf', "%PDF-1.4\n% tipo\n%%EOF"),
         ])
         ->assertNotFound();
 });
@@ -76,6 +76,22 @@ test('document upload validates type and rejection reason', function () {
         ->post(route('clientes.documentos.store', $cliente), [
             'tipo' => 'ine',
             'archivo' => UploadedFile::fake()->create('malware.exe', 20, 'application/octet-stream'),
+        ])
+        ->assertSessionHasErrors('archivo');
+
+    $falsePdf = $this->actingAs($user)
+        ->post(route('clientes.documentos.store', $cliente), [
+            'tipo' => 'ine',
+            'archivo' => UploadedFile::fake()->createWithContent('documento.pdf', '<html><script>alert(1)</script></html>'),
+        ]);
+    $falsePdf->assertSessionHasErrors('archivo');
+    expect($falsePdf->getSession()->get('errors')->first('archivo'))
+        ->toContain('contenido no coincide con la extensión');
+
+    $this->actingAs($user)
+        ->post(route('clientes.documentos.store', $cliente), [
+            'tipo' => 'ine',
+            'archivo' => UploadedFile::fake()->createWithContent('activo.svg', '<svg onload="alert(1)"/>'),
         ])
         ->assertSessionHasErrors('archivo');
 
@@ -96,7 +112,7 @@ test('document download is private and scoped to its client', function () {
     $otro = Cliente::factory()->create();
     app(ClienteExpedienteService::class)->initializeChecklist($cliente);
     $documento = $cliente->documentos()->where('tipo', 'ine')->firstOrFail();
-    Storage::disk('local')->put('clientes/test/ine.pdf', 'pdf-content');
+    Storage::disk('local')->put('clientes/test/ine.pdf', "%PDF-1.4\n% test\n%%EOF");
     $documento->update([
         'estado' => 'recibido',
         'disk' => 'local',
@@ -116,4 +132,25 @@ test('document download is private and scoped to its client', function () {
     $this->actingAs($user)
         ->get(route('clientes.documentos.download', [$cliente, $documento]))
         ->assertOk();
+});
+
+test('rechazo exige un motivo útil en español y validar elimina el motivo previo', function () {
+    $user = actingAsSuperAdmin();
+    $cliente = Cliente::factory()->create();
+    app(ClienteExpedienteService::class)->initializeChecklist($cliente);
+    $documento = $cliente->documentos()->where('tipo', 'ine')->firstOrFail();
+    $documento->update(['estado' => 'recibido']);
+    $url = route('clientes.documentos.estado.update', [$cliente, $documento]);
+
+    foreach (['', '   ', 'Corto', '  123456789  ', str_repeat('x', 2001)] as $reason) {
+        $response = $this->actingAs($user)->patchJson($url, ['estado' => 'rechazado', 'motivo_rechazo' => $reason]);
+        $response->assertUnprocessable()->assertJsonValidationErrors('motivo_rechazo');
+        expect($response->json('errors.motivo_rechazo.0'))->not->toContain('validation.');
+    }
+    $this->patch($url, ['estado' => 'rechazado', 'motivo_rechazo' => '  La imagen es ilegible.  '])->assertRedirect()->assertSessionHasNoErrors();
+    expect($documento->fresh()->motivo_rechazo)->toBe('La imagen es ilegible.');
+    // A rejected file must be received again before validation is allowed.
+    $documento->refresh()->update(['estado' => 'recibido']);
+    $this->patch($url, ['estado' => 'validado', 'motivo_rechazo' => 'x'])->assertRedirect()->assertSessionHasNoErrors();
+    expect($documento->fresh()->motivo_rechazo)->toBeNull();
 });
