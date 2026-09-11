@@ -24,6 +24,8 @@ import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 import { computed, ref, watch } from "vue";
 
+import DocumentFileInput from "@/Components/Documents/DocumentFileInput.vue";
+import { documentVersionChain } from "@/Composables/documentHistory";
 import DocumentVersionStatus from "@/Components/Documents/DocumentVersionStatus.vue";
 import PrivateDocumentViewer from "@/Components/Documents/PrivateDocumentViewer.vue";
 import { useAsyncPolling } from "@/Composables/useAsyncPolling";
@@ -86,6 +88,10 @@ const currentDocuments = computed(() =>
     props.cliente.documentos.filter((documento) => documento.es_actual),
 );
 
+const historyDocument = ref(null);
+const historyDialog = ref(false);
+const selectedHistory = computed(() => documentVersionChain(props.cliente.documentos, historyDocument.value));
+const openHistory = (documento) => { historyDocument.value = documento; historyDialog.value = true; };
 const documentHistory = computed(() =>
     props.cliente.documentos.filter((documento) => !documento.es_actual),
 );
@@ -343,6 +349,12 @@ const consentForm = useForm({
     evidencia: null,
     notas: "",
 });
+watch(consentDialog, (visible) => {
+    if (!visible) return;
+    consentForm.defaults({ medio: "firma_autografa", otorgado_en: new Date(), vence_en: null, evidencia: null, notas: "" });
+    consentForm.reset();
+    consentForm.clearErrors();
+});
 
 const saveProfile = () => {
     profileForm.patch(
@@ -353,6 +365,7 @@ const saveProfile = () => {
 
 const openDocumentUpload = (documento = null) => {
     selectedDocument.value = documento;
+    documentForm.defaults({ tipo: "adicional", nombre: "", archivo: null, reemplaza_documento_id: null, vence_en: null, notas: "" });
     documentForm.reset();
     documentForm.clearErrors();
     documentForm.tipo = documento?.tipo ?? "adicional";
@@ -360,11 +373,6 @@ const openDocumentUpload = (documento = null) => {
     documentForm.reemplaza_documento_id = documento?.id ?? null;
     documentDialog.value = true;
 };
-
-const onDocumentSelected = (event) => {
-    documentForm.archivo = event.files?.[0] ?? null;
-};
-
 const uploadDocument = () => {
     documentForm.post(route("clientes.documentos.store", props.cliente.id), {
         ...formOptions("Documento recibido", () => {
@@ -377,6 +385,7 @@ const uploadDocument = () => {
 
 const openReview = (documento) => {
     selectedDocument.value = documento;
+    reviewForm.defaults({ estado: "validado", motivo_rechazo: "" });
     reviewForm.reset();
     reviewForm.clearErrors();
     reviewDialog.value = true;
@@ -474,10 +483,6 @@ const saveGuarantee = () => {
             guaranteeDialog.value = false;
         }),
     );
-};
-
-const onConsentSelected = (event) => {
-    consentForm.evidencia = event.files?.[0] ?? null;
 };
 
 const saveConsent = () => {
@@ -741,16 +746,17 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                                     <p v-if="documento.motivo_rechazo" class="rejection-copy">{{ documento.motivo_rechazo }}</p>
                                 </div>
                                 <div class="row-actions">
+                                    <Button v-if="documento.reemplaza_documento_id" label="Historial" icon="pi pi-history" text @click="openHistory(documento)" />
                                     <Button v-if="documento.nombre_original" v-tooltip.top="'Ver de forma segura'" text rounded severity="secondary" :aria-label="`Ver ${documento.nombre_original}`" @click="openViewer(route('clientes.documentos.view', [cliente.id, documento.id]), route('clientes.documentos.download', [cliente.id, documento.id]), documento.nombre_original)">
                                         <template #icon><Eye :size="18" /></template>
                                     </Button>
-                                    <Button v-if="documento.nombre_original" v-tooltip.top="'Descargar'" text rounded severity="secondary" @click="download(route('clientes.documentos.download', [cliente.id, documento.id]))">
+                                    <Button v-if="documento.nombre_original" v-tooltip.top="'Descargar'" text rounded severity="secondary" aria-label="Descargar documento" @click="download(route('clientes.documentos.download', [cliente.id, documento.id]))">
                                         <template #icon><Download :size="18" /></template>
                                     </Button>
-                                    <Button v-if="documento.estado === 'recibido' || documento.estado === 'validado'" v-tooltip.top="'Revisar'" text rounded severity="secondary" @click="openReview(documento)" :disabled="!can.update">
+                                    <Button v-if="documento.estado === 'recibido' || documento.estado === 'validado'" v-tooltip.top="'Revisar'" aria-label="Revisar documento" text rounded severity="secondary" @click="openReview(documento)" :disabled="!can.update">
                                         <template #icon><FileCheck2 :size="18" /></template>
                                     </Button>
-                                    <Button v-tooltip.top="documento.nombre_original ? 'Sustituir' : 'Cargar'" rounded @click="openDocumentUpload(documento)" :disabled="!can.update">
+                                    <Button v-tooltip.top="documento.nombre_original ? 'Sustituir' : 'Cargar'" :aria-label="documento.nombre_original ? 'Sustituir documento' : 'Cargar documento'" rounded @click="openDocumentUpload(documento)" :disabled="!can.update">
                                         <template #icon><Upload :size="18" /></template>
                                     </Button>
                                 </div>
@@ -866,9 +872,9 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                 <div><label>Tipo</label><Select v-model="documentForm.tipo" :options="opciones.documentos" optionLabel="label" optionValue="value" fluid :disabled="selectedDocument !== null" /></div>
                 <div v-if="documentForm.tipo === 'adicional'"><label>Nombre del documento</label><InputText v-model="documentForm.nombre" fluid /></div>
                 <div><label>Fecha de vencimiento</label><DatePicker v-model="documentForm.vence_en" dateFormat="dd-mm-yy" showIcon fluid /></div>
-                <div><label>Archivo privado</label><FileUpload mode="basic" customUpload accept=".pdf,.jpg,.jpeg,.png" :maxFileSize="10485760" chooseLabel="Seleccionar PDF o imagen" @select="onDocumentSelected" /></div>
+                <div><label>Archivo privado</label><DocumentFileInput v-model="documentForm.archivo" :error="documentForm.errors.archivo" @clear-error="documentForm.clearErrors('archivo')" /></div>
                 <div><label>Notas</label><Textarea v-model="documentForm.notas" rows="3" fluid /></div>
-                <Message v-for="error in documentForm.errors" :key="error" severity="error" size="small">{{ error }}</Message>
+                <Message v-for="error in Object.fromEntries(Object.entries(documentForm.errors).filter(([key]) => key !== 'archivo'))" :key="error" severity="error" size="small">{{ error }}</Message>
                 <div class="dialog-actions"><Button type="button" label="Cancelar" text @click="documentDialog = false" /><Button type="submit" label="Guardar archivo" :loading="documentForm.processing"><template #icon><Upload :size="17" /></template></Button></div>
             </form>
         </Dialog>
@@ -903,12 +909,13 @@ function formatCurrency(value, currency = props.opciones.moneda) {
             </form>
         </Dialog>
 
+        <Dialog v-model:visible="historyDialog" modal :header="`Historial: ${historyDocument?.nombre || 'Documento'}`" :style="{width:'min(760px,96vw)'}"><div v-for="documento in selectedHistory" :key="documento.id" class="my-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3"><div class="min-w-0"><strong>Versión {{ documento.version }}</strong><p class="break-all">{{ documento.nombre_original }}</p><p>{{ formatDate(documento.recibido_en) }}</p><p v-if="documento.motivo_rechazo">{{ documento.motivo_rechazo }}</p></div><div class="flex gap-2"><Button label="Ver" text @click="openViewer(route('clientes.documentos.view', [cliente.id, documento.id]), route('clientes.documentos.download', [cliente.id, documento.id]), documento.nombre_original)" /><Button label="Descargar" text @click="download(route('clientes.documentos.download', [cliente.id, documento.id]))" /></div></div></Dialog>
         <PrivateDocumentViewer v-model:visible="viewerVisible" :url="viewer.url" :download-url="viewer.downloadUrl" :name="viewer.name" />
 
         <Dialog v-model:visible="reviewDialog" modal header="Revisión documental" class="responsive-dialog narrow-dialog">
             <form class="dialog-form" @submit.prevent="updateDocumentStatus">
                 <SelectButton v-model="reviewForm.estado" :options="[{ label: 'Validar', value: 'validado' }, { label: 'Rechazar', value: 'rechazado' }, { label: 'Vencido', value: 'vencido' }]" optionLabel="label" optionValue="value" :allowEmpty="false" />
-                <div v-if="reviewForm.estado === 'rechazado'"><label>Motivo de rechazo</label><Textarea v-model="reviewForm.motivo_rechazo" rows="4" fluid /></div>
+                <div v-if="reviewForm.estado === 'rechazado'"><label for="document-rejection-reason">Motivo de rechazo</label><Textarea id="document-rejection-reason" v-model="reviewForm.motivo_rechazo" rows="4" maxlength="2000" fluid /><small class="text-surface-500">Entre 10 y 2000 caracteres.</small></div>
                 <Message v-for="error in reviewForm.errors" :key="error" severity="error" size="small">{{ error }}</Message>
                 <div class="dialog-actions"><Button type="button" label="Cancelar" text @click="reviewDialog = false" /><Button type="submit" label="Aplicar estado" :loading="reviewForm.processing" /></div>
             </form>
@@ -956,9 +963,9 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                 <div><label>Medio</label><Select v-model="consentForm.medio" :options="opciones.medios_consentimiento" optionLabel="label" optionValue="value" fluid /></div>
                 <div><label>Fecha y hora</label><DatePicker v-model="consentForm.otorgado_en" dateFormat="dd-mm-yy" showTime hourFormat="24" showIcon fluid /></div>
                 <div><label>Vigencia declarada</label><DatePicker v-model="consentForm.vence_en" dateFormat="dd-mm-yy" showIcon fluid /></div>
-                <div><label>Evidencia privada</label><FileUpload mode="basic" customUpload accept=".pdf,.jpg,.jpeg,.png" :maxFileSize="10485760" chooseLabel="Seleccionar evidencia" @select="onConsentSelected" /></div>
+                <div><label>Evidencia privada</label><DocumentFileInput v-model="consentForm.evidencia" :error="consentForm.errors.evidencia" @clear-error="consentForm.clearErrors('evidencia')" /></div>
                 <div class="full-field"><label>Notas</label><Textarea v-model="consentForm.notas" rows="3" fluid /></div>
-                <Message v-for="error in consentForm.errors" :key="error" severity="error" size="small" class="full-field">{{ error }}</Message>
+                <Message v-for="error in Object.fromEntries(Object.entries(consentForm.errors).filter(([key]) => key !== 'evidencia'))" :key="error" severity="error" size="small" class="full-field">{{ error }}</Message>
                 <div class="dialog-actions full-field"><Button type="button" label="Cancelar" text @click="consentDialog = false" /><Button type="submit" label="Registrar consentimiento" :loading="consentForm.processing"><template #icon><ShieldCheck :size="17" /></template></Button></div>
             </form>
         </Dialog>

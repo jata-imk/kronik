@@ -167,7 +167,7 @@ const userMenuItems = ref([
     <div v-if="$page.props.jetstream.hasTeamFeatures" class="layout-menu-desktop-prime-vue">
         <button type="button"
             class="inline-flex items-center px-2 py-3 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-300 bg-surface-card hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-600 active:bg-gray-50 dark:active:bg-gray-600 transition ease-in-out duration-150"
-            @click="toggleTeamsMenu">
+            v-tooltip.bottom="'Cambiar equipo'" aria-label="Cambiar equipo" @click="toggleTeamsMenu">
             {{ $page.props.auth.user.current_team.name }}
 
             <svg class="ms-2 -me-0.5 size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -199,8 +199,8 @@ const userMenuItems = ref([
     <div class="layout-menu-desktop-prime-vue">
         <button type="button"
             class="inline-flex items-center px-2 py-3 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-300 bg-surface-card hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-600 active:bg-gray-50 dark:active:bg-gray-600 transition ease-in-out duration-150"
-            @click="toggleUserMenu" aria-haspopup="true" aria-controls="overlay_menu">
-            {{ $page.props.auth.user.name }}
+            v-tooltip.bottom="'Opciones de usuario'" aria-label="Opciones de usuario" @click="toggleUserMenu" aria-haspopup="true" aria-controls="overlay_menu">
+            <span class="mr-2 flex size-7 items-center justify-center rounded-full bg-primary-100 font-semibold text-primary-800" aria-hidden="true">{{ $page.props.auth.user.name?.slice(0, 2).toUpperCase() }}</span>{{ $page.props.auth.user.name }}
             <svg class="ms-2 -me-0.5 size-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                 stroke-width="1.5" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />

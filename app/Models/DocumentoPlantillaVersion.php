@@ -9,7 +9,7 @@ use Illuminate\Validation\ValidationException;
 class DocumentoPlantillaVersion extends Model
 {
     private const IMMUTABLE_FIELDS = [
-        'encabezado_html', 'contenido_html', 'pie_html', 'contenido_hash',
+        'encabezado_html', 'contenido_html', 'pie_html', 'contenido_hash', 'presentacion',
     ];
 
     protected $table = 'documento_plantilla_versiones';
@@ -17,6 +17,7 @@ class DocumentoPlantillaVersion extends Model
     protected $guarded = [];
 
     protected $casts = [
+        'presentacion' => 'array',
         'estado' => DocumentoPlantillaVersionEstado::class,
         'activada_en' => 'datetime',
         'retirada_en' => 'datetime',
@@ -30,6 +31,11 @@ class DocumentoPlantillaVersion extends Model
     public function documentosGenerados()
     {
         return $this->hasMany(DocumentoGenerado::class, 'documento_plantilla_version_id');
+    }
+
+    public function recursos()
+    {
+        return $this->belongsToMany(DocumentoRecurso::class, 'documento_version_recursos', 'version_id', 'recurso_id');
     }
 
     public function esEditable(): bool

@@ -3,69 +3,63 @@
 namespace App\Services\Documentos;
 
 use App\Contracts\DocumentoPdfRenderer;
+use Illuminate\Validation\ValidationException;
 use Spatie\Browsershot\Browsershot;
 
 final class BrowsershotDocumentoPdfRenderer implements DocumentoPdfRenderer
 {
-    public function render(string $bodyHtml, ?string $headerHtml = null, ?string $footerHtml = null): string
+    public function render(string $bodyHtml, ?string $headerHtml = null, ?string $footerHtml = null, array $options = []): string
     {
-        $html = <<<'HTML'
-<!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8">
-<style>
-    @page { size: A4; margin: 26mm 18mm 24mm; }
-    * { box-sizing: border-box; }
-    body { color: #172033; font: 11pt/1.55 Arial, Helvetica, sans-serif; margin: 0; }
-    h1 { color: #13213c; font-size: 20pt; line-height: 1.2; margin: 0 0 16pt; }
-    h2 { color: #243553; font-size: 15pt; margin: 18pt 0 8pt; }
-    h3 { font-size: 12pt; margin: 14pt 0 6pt; }
-    p { margin: 0 0 9pt; orphans: 3; widows: 3; }
-    ul, ol { margin: 0 0 9pt 20pt; }
-    blockquote { border-left: 3px solid #f47b5f; color: #475569; margin: 12pt 0; padding: 4pt 12pt; }
-    .ql-align-center { text-align: center; } .ql-align-right { text-align: right; }
-    .ql-align-justify { text-align: justify; } .ql-size-small { font-size: 9pt; }
-    .ql-size-large { font-size: 14pt; } .ql-size-huge { font-size: 18pt; }
-</style>
-</head>
-<body>{{BODY}}</body>
-</html>
-HTML;
-        $html = str_replace('{{BODY}}', $bodyHtml, $html);
-        $browser = Browsershot::html($html)
-            ->format('A4')
-            ->showBackground()
-            ->timeout((int) config('documentos.renderer_timeout', 55))
-            ->setOption('args', ['--host-resolver-rules=MAP * 0.0.0.0, EXCLUDE localhost']);
-
-        if (filled(config('documentos.node_binary'))) {
-            $browser->setNodeBinary(config('documentos.node_binary'));
+        $css = $this->styles();
+        $header = $this->section($headerHtml ?? '', $css);
+        $footer = $this->section($footerHtml ?? '', $css, true);
+        $measure = '<style>'.$css.'.section{width:174mm;display:flow-root}</style><div class="section document-content" id="header">'.($headerHtml ?? '').'</div><div class="section document-content" id="footer">'.($footerHtml ?? '').'<div style="font-size:8pt">1 / 1</div></div>';
+        $sizes = json_decode($this->browser($measure)->timeout(10)->evaluate('(async () => { await document.fonts.ready; await Promise.all(Array.from(document.images).map(i => i.decode().catch(() => {}))); return JSON.stringify(["header", "footer"].map(id => document.getElementById(id).getBoundingClientRect().height * 25.4 / 96)); })()'), true, flags: JSON_THROW_ON_ERROR);
+        if (max($sizes) > 60) {
+            throw ValidationException::withMessages(['encabezado_html' => 'El encabezado o el pie supera 60 mm de altura. Reduzca el texto o el tamaño de las imágenes.']);
         }
+        $watermark = e($options['marca_agua'] ?? '');
+        $html = '<!doctype html><html lang="es"><head><meta charset="utf-8"><style>'.$css.'
+            *{box-sizing:border-box} body{margin:0} @page{size:A4}
+            .watermark{position:fixed;top:40%;left:0;width:100%;text-align:center;transform:rotate(-35deg);font:48pt "Document Sans";color:rgba(100,116,139,.10);overflow-wrap:anywhere;z-index:0;pointer-events:none}
+            .document-content{position:relative;z-index:1}
+        </style></head><body><div class="watermark">'.$watermark.'</div><main class="document-content">'.$bodyHtml.'</main></body></html>';
 
-        if (filled(config('documentos.npm_binary'))) {
-            $browser->setNpmBinary(config('documentos.npm_binary'));
-        }
-
-        if (filled(config('documentos.node_modules_path'))) {
-            $browser->setNodeModulePath(config('documentos.node_modules_path'));
-        }
-
-        if (filled(config('documentos.chrome_path'))) {
-            $browser->setChromePath(config('documentos.chrome_path'));
-        }
-
-        if (filled($headerHtml) || filled($footerHtml)) {
-            $browser->showBrowserHeaderAndFooter()
-                ->headerHtml($this->chromeSection($headerHtml ?? ''))
-                ->footerHtml($this->chromeSection(($footerHtml ?? '').'<span class="paginacion"><span class="pageNumber"></span> / <span class="totalPages"></span></span>'));
-        }
-
-        return $browser->pdf();
+        return $this->browser($html)->format('A4')->showBackground()
+            ->margins(max(26, $sizes[0] + 12), 18, max(24, $sizes[1] + 12), 18)
+            ->showBrowserHeaderAndFooter()->headerHtml($header)->footerHtml($footer)->pdf();
     }
 
-    private function chromeSection(string $html): string
+    private function browser(string $html): Browsershot
     {
-        return '<style>body{width:100%;margin:0 18mm;color:#64748b;font:8px Arial,sans-serif}.paginacion{float:right}</style><div style="width:100%">'.$html.'</div>';
+        $browser = Browsershot::html($html)->writeOptionsToFile()->timeout(min(35, (int) config('documentos.renderer_timeout', 55)))
+            // Header/footer fonts may not occur in the body. Load all local faces before printing.
+            ->waitForFunction('Promise.all(Array.from(document.fonts, font => font.load())).then(() => true)', timeout: 10000)
+            ->setOption('args', ['--host-resolver-rules=MAP * 0.0.0.0, EXCLUDE localhost']);
+        foreach (['node_binary' => 'setNodeBinary', 'npm_binary' => 'setNpmBinary', 'node_modules_path' => 'setNodeModulePath', 'chrome_path' => 'setChromePath'] as $key => $method) {
+            if (filled(config('documentos.'.$key))) {
+                $browser->$method(config('documentos.'.$key));
+            }
+        }
+
+        return $browser;
+    }
+
+    private function styles(): string
+    {
+        $css = file_get_contents(resource_path('css/document-content.css'));
+        foreach (['Sans', 'Serif', 'Mono'] as $family) {
+            foreach (['Regular' => [400, 'normal'], 'Bold' => [700, 'normal'], 'Italic' => [400, 'italic'], 'BoldItalic' => [700, 'italic']] as $variant => [$weight, $style]) {
+                $font = file_get_contents(public_path("fonts/liberation/Liberation{$family}-{$variant}.ttf"));
+                $css .= '@font-face{font-family:"Document '.$family.'";font-weight:'.$weight.';font-style:'.$style.';src:url(data:font/ttf;base64,'.base64_encode($font).')}';
+            }
+        }
+
+        return $css;
+    }
+
+    private function section(string $html, string $css, bool $footer = false): string
+    {
+        return '<style>'.$css.'</style><div class="document-content" style="width:174mm;margin:0 auto">'.$html.($footer ? '<div style="font-size:8pt;text-align:right"><span class="pageNumber"></span> / <span class="totalPages"></span></div>' : '').'</div>';
     }
 }

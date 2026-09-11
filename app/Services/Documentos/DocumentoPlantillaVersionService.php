@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 
 final class DocumentoPlantillaVersionService
 {
-    public function __construct(private readonly CompiladorPlantillaDocumento $compiler) {}
+    public function __construct(private readonly CompiladorPlantillaDocumento $compiler, private readonly DocumentoRecursoService $resources) {}
 
     public function create(array $data, ?int $userId): DocumentoPlantilla
     {
@@ -36,6 +36,7 @@ final class DocumentoPlantillaVersionService
             $plantilla->update(Arr::only($data, ['clave', 'nombre', 'descripcion']));
             $content = $this->content($plantilla->tipo, $data);
             $version->update([...$content, 'resumen_cambios' => $data['resumen_cambios'] ?? null]);
+            $version->recursos()->sync(array_keys($this->resources->references($content['encabezado_html'] ?? '', $content['contenido_html'], $content['pie_html'] ?? '')));
 
             return $plantilla->refresh();
         });
@@ -53,6 +54,7 @@ final class DocumentoPlantillaVersionService
                 'encabezado_html' => $source->encabezado_html,
                 'contenido_html' => $source->contenido_html,
                 'pie_html' => $source->pie_html,
+                'presentacion' => $source->presentacion,
                 'resumen_cambios' => "Duplicada desde la versión {$source->numero}",
             ], $userId, $next);
         });
@@ -62,6 +64,7 @@ final class DocumentoPlantillaVersionService
     {
         $this->ensureEditable($version);
         $version->loadMissing('plantilla');
+        $this->content($version->plantilla->tipo, $version->toArray());
         $this->compiler->validateForType(
             $version->plantilla->tipo,
             $version->encabezado_html ?? '',
@@ -99,28 +102,40 @@ final class DocumentoPlantillaVersionService
 
     private function createVersion(DocumentoPlantilla $plantilla, array $data, ?int $userId, int $number): DocumentoPlantillaVersion
     {
-        return $plantilla->versiones()->create([
+        $version = $plantilla->versiones()->create([
             ...$this->content($plantilla->tipo, $data),
             'numero' => $number,
             'estado' => DocumentoPlantillaVersionEstado::Borrador,
             'resumen_cambios' => $data['resumen_cambios'] ?? null,
             'creada_por' => $userId,
         ]);
+        $version->recursos()->sync(array_keys($this->resources->references($version->encabezado_html ?? '', $version->contenido_html, $version->pie_html ?? '')));
+
+        return $version;
     }
 
-    private function content(DocumentoPlantillaTipo $type, array $data): array
+    public function content(DocumentoPlantillaTipo $type, array $data): array
     {
         $header = $this->compiler->sanitize($data['encabezado_html'] ?? '');
         $body = $this->compiler->sanitize($data['contenido_html']);
         $footer = $this->compiler->sanitize($data['pie_html'] ?? '');
+        if (trim(str_replace(["\xc2\xa0", "\xe2\x80\x8b"], '', html_entity_decode(strip_tags($body), ENT_QUOTES | ENT_HTML5, 'UTF-8'))) === '') {
+            throw ValidationException::withMessages(['contenido_html' => 'Escriba el contenido de la plantilla. No puede contener solamente espacios, imágenes o saltos de página.']);
+        }
+        $watermark = trim((string) ($data['presentacion']['marca_agua'] ?? ''));
+        if (mb_strlen($watermark) > 80 || str_contains($watermark, '{{')) {
+            throw ValidationException::withMessages(['presentacion.marca_agua' => 'La marca de agua admite hasta 80 caracteres de texto, sin variables.']);
+        }
+        $presentation = ['formato' => 2, 'marca_agua' => $watermark];
         $this->compiler->validateForType($type, $header, $body, $footer);
-        $canonical = json_encode(['header' => $header, 'body' => $body, 'footer' => $footer], JSON_THROW_ON_ERROR);
+        $canonical = json_encode(['header' => $header, 'body' => $body, 'footer' => $footer, 'presentacion' => $presentation, 'recursos' => $this->resources->references($header, $body, $footer)], JSON_THROW_ON_ERROR);
 
         return [
             'encabezado_html' => $header ?: null,
             'contenido_html' => $body,
             'pie_html' => $footer ?: null,
             'contenido_hash' => hash('sha256', $canonical),
+            'presentacion' => $presentation,
         ];
     }
 

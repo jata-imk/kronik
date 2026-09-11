@@ -50,6 +50,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        foreach (['document-preview', 'document-resources'] as $limiter) {
+            \Illuminate\Support\Facades\RateLimiter::for($limiter, fn ($request) => \Illuminate\Cache\RateLimiting\Limit::perMinute(10)->by($request->user()?->id ?? $request->ip())
+                ->response(fn ($request, $headers) => response()->json(['message' => 'Ha realizado demasiadas solicitudes. Espere un minuto e inténtelo nuevamente.'], 429, $headers)));
+        }
         Gate::policy(ProductoCrediticio::class, ProductoCrediticioPolicy::class);
         Gate::policy(ProductoVersion::class, ProductoVersionPolicy::class);
         Gate::policy(DocumentoPlantilla::class, DocumentoPlantillaPolicy::class);

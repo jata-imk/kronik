@@ -105,7 +105,7 @@ class DocumentoPlantillaController extends Controller implements HasMiddleware
         ], 200, ['Cache-Control' => 'private, no-store']);
     }
 
-    private function previewValues(): array
+    public static function previewValues(): array
     {
         return [
             'documento.fecha_generacion' => '23/08/2026', 'empresa.razon_social' => 'Financiera Ejemplo, S.A. de C.V.',

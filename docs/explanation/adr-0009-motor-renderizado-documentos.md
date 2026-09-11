@@ -32,7 +32,7 @@ El benchmark local en Windows 11, Node 22, Puppeteer 25.8.0 y Browsershot 4.4.0 
 
 La memoria pico del proceso PHP fue 30 MiB. Las salidas conservaron encabezado, pie, numeración y saltos de página, y quedaron por debajo del umbral de 10 segundos. El RSS de Chromium debe medirse nuevamente en la VPS antes de fijar la concurrencia del worker; no cambia la elección del adaptador.
 
-El HTML se sanea antes de persistir, las variables se escapan, no se permiten imágenes o enlaces aportados por el editor y Chromium recibe reglas para impedir resolución de destinos externos. El job tiene timeout inferior al `retry_after`, exclusión por documento e idempotencia en base de datos.
+El HTML se sanea antes de persistir, las variables se escapan y no se permiten enlaces ni imágenes externas aportados por el editor. La ampliación del 2026-09-10 admite exclusivamente imágenes privadas normalizadas de la biblioteca (ver más abajo). Chromium recibe reglas para impedir resolución de destinos externos. El job tiene timeout inferior al `retry_after`, exclusión por documento e idempotencia en base de datos.
 
 DOCX no se simula convirtiendo el mismo HTML. Si aparece el requisito se escribirá otro adaptador y se evaluará Pandoc con `reference.docx`.
 
@@ -42,3 +42,15 @@ DOCX no se simula convirtiendo el mismo HTML. Si aparece el requisito se escribi
 - Las pruebas de dominio usan un renderer falso y determinístico; una prueba de humo separada valida el binario real.
 - Gotenberg puede sustituir el adaptador sin cambiar plantillas, generaciones ni UI.
 - El comando `php artisan documentos:benchmark-pdf --runs=5` sirve como prueba de humo y línea base de capacidad en cada entorno.
+
+## Ampliación tras QA — 2026-09-10
+
+La previsualización guardada y la de cambios sin guardar producen PDF mediante el mismo `DocumentoRenderService` que el job, usando valores sintéticos y sin crear documentos ni versiones. PDF.js muestra páginas, zoom y texto seleccionable; las respuestas son privadas y no cacheables. Los endpoints de preview y carga de imágenes tienen límite de 10 solicitudes por minuto y usuario, además de autorización documental.
+
+Se mantiene A4 vertical. Se mide encabezado/pie con Chromium antes de imprimir y se reservan márgenes según su altura, con límite de 60 mm por sección. Se repiten numeración y marca de agua textual opcional. La medición y el render son procesos acotados; el nuevo coste debe medirse de nuevo en la VPS, no extrapolar el benchmark previo a fuentes/imágenes.
+
+Editor y PDF comparten `resources/css/document-content.css` y fuentes Liberation 2.1.5 (SIL OFL), incluidas localmente con las variantes normal/negrita/cursiva. El PDF incrusta fuentes y recursos como datos, sin depender de rutas HTTP privadas. El HTML permitido conserva estilos discretos, listas, alineación, tamaños, colores, referencias de imagen y saltos explícitos; descarta URLs, estilos arbitrarios y contenido activo.
+
+Cada imagen tiene UUID, hash SHA-256 y archivo privado inmutable. GD valida dimensiones/formato y recodifica PNG/JPEG a PNG. El HTML persistido guarda `data-recurso-id`, ancho y texto alternativo, nunca una URL pública. El hash de las versiones nuevas incluye presentación (formato 2) y los hashes ordenados de sus recursos. Una tabla de referencias mantiene su relación con la versión. No se reescriben hashes ni archivos antiguos; duplicar genera un nuevo borrador con la representación actual.
+
+Se conserva Quill 2 con configuración controlada en lugar de incorporar un procesador de texto completo. Tablas, DOCX, firma, orientación horizontal y marcas de agua gráficas quedan fuera del alcance. La guía operativa está en [Editar plantillas documentales](../how-to/editar-plantillas-documentales.md).

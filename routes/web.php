@@ -96,6 +96,11 @@ Route::middleware([
     Route::delete('conceptos-comision/{concepto}', [ConceptoComisionController::class, 'destroy'])->name('conceptos-comision.destroy');
 
     Route::get('plantillas-documentos', [DocumentoPlantillaController::class, 'index'])->name('plantillas-documentos.index');
+    Route::get('documento-recursos', [\App\Http\Controllers\DocumentoRecursoController::class, 'index'])->name('documento-recursos.index');
+    Route::post('documento-recursos', [\App\Http\Controllers\DocumentoRecursoController::class, 'store'])->middleware('throttle:document-resources')->name('documento-recursos.store');
+    Route::get('documento-recursos/{recurso}', [\App\Http\Controllers\DocumentoRecursoController::class, 'show'])->name('documento-recursos.show');
+    Route::get('plantilla-documento-versiones/{version}/previsualizar-pdf', [\App\Http\Controllers\DocumentoPreviewController::class, 'show'])->middleware('throttle:document-preview')->name('plantillas-documentos.preview-pdf');
+    Route::post('plantillas-documentos/previsualizar-pdf', [\App\Http\Controllers\DocumentoPreviewController::class, 'store'])->middleware('throttle:document-preview')->name('plantillas-documentos.preview-draft');
     Route::post('plantillas-documentos', [DocumentoPlantillaController::class, 'store'])->name('plantillas-documentos.store');
     Route::put('plantillas-documentos/{plantilla}/versiones/{version}', [DocumentoPlantillaController::class, 'update'])->name('plantillas-documentos.update');
     Route::post('plantillas-documentos/{plantilla}/versiones/{version}/duplicar', [DocumentoPlantillaController::class, 'versionar'])->name('plantillas-documentos.versionar');

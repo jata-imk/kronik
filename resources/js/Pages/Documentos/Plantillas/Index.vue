@@ -1,8 +1,9 @@
 <script setup>
+import DocumentEditor from "@/Components/Documents/DocumentEditor.vue";
+import DocumentPdfPreview from "@/Components/Documents/DocumentPdfPreview.vue";
 import DocumentVersionStatus from "@/Components/Documents/DocumentVersionStatus.vue";
 import { router, useForm, usePage } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
-import axios from "axios";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 import { computed, nextTick, ref, watch } from "vue";
@@ -24,15 +25,16 @@ const typeFilters = computed(() => [
         label: tipo.value === "consentimiento_sic" ? "SIC" : tipo.label,
     })),
 ]);
+const preferredVersion = (item) => item?.versiones?.find(v => v.estado === "activa") ?? item?.versiones?.[0];
 const selectedId = ref(props.plantillas[0]?.id ?? null);
-const selectedVersionId = ref(props.plantillas[0]?.versiones?.[0]?.id ?? null);
+const selectedVersionId = ref(preferredVersion(props.plantillas[0])?.id ?? null);
 const editorVisible = ref(false);
 const previewVisible = ref(false);
-const previewLoading = ref(false);
-const preview = ref(null);
+const previewSource = ref(null);
 const section = ref("contenido_html");
 const editingVersion = ref(null);
-const editorRef = ref(null);
+const editorRefs = {};
+const sections = [{label:"Encabezado",value:"encabezado_html"},{label:"Contenido",value:"contenido_html"},{label:"Pie de página",value:"pie_html"}];
 
 const can = (permission) =>
     page.props.auth.is_super_admin ||
@@ -58,7 +60,7 @@ const selectedVersion = computed(
         selected.value?.versiones?.find(
             (item) => item.id === selectedVersionId.value,
         ) ??
-        selected.value?.versiones?.[0] ??
+        preferredVersion(selected.value) ??
         null,
 );
 const typeLabel = (value) =>
@@ -116,12 +118,13 @@ const emptyForm = () => ({
         "<h1>Título del documento</h1><p>Documento preparado para {{cliente.nombre_completo}}.</p>",
     pie_html: "<p>Generado el {{documento.fecha_generacion}}</p>",
     resumen_cambios: "Versión inicial",
+    presentacion: { marca_agua: "" },
 });
 const form = useForm(emptyForm());
 
 const selectTemplate = (item) => {
     selectedId.value = item.id;
-    selectedVersionId.value = item.versiones?.[0]?.id ?? null;
+    selectedVersionId.value = preferredVersion(item)?.id ?? null;
 };
 const openCreate = () => {
     editingVersion.value = null;
@@ -147,25 +150,20 @@ const openEdit = (version) => {
         contenido_html: version.contenido_html,
         pie_html: version.pie_html ?? "",
         resumen_cambios: version.resumen_cambios ?? "",
+        presentacion: { marca_agua: version.presentacion?.marca_agua ?? "" },
     });
     form.reset();
     form.clearErrors();
     section.value = "contenido_html";
     editorVisible.value = true;
 };
-const closeEditor = async () => {
-    const quill = editorRef.value?.quill;
-    quill?.off("text-change");
-    quill?.off("selection-change");
-    quill?.blur();
-    document.activeElement?.blur();
-    await nextTick();
-    editorVisible.value = false;
-};
+const closeEditor = async () => { document.activeElement?.blur(); editorVisible.value = false; };
 const submit = () => {
     const options = {
         preserveScroll: true,
         onSuccess: async () => {
+            const target = props.plantillas.find(item => item.clave === form.clave);
+            if (target) { selectedId.value = target.id; selectedVersionId.value = editingVersion.value?.id ?? target.versiones[0]?.id; }
             await closeEditor();
             toast.add({
                 severity: "success",
@@ -202,38 +200,16 @@ const submit = () => {
         form.post(route("plantillas-documentos.store"), options);
     }
 };
-const insertVariable = (variable) => {
-    const token = `{{${variable.clave}}}`;
-    form[section.value] = `${form[section.value] ?? ""}<p>${token}</p>`;
-    toast.add({
-        severity: "secondary",
-        summary: "Variable insertada",
-        detail: variable.nombre,
-        life: 1800,
-    });
-};
-const showPreview = async (version) => {
+const insertVariable = (variable) => editorRefs[section.value]?.insertVariable(variable);
+const showPreview = (version) => {
+    previewSource.value = { method: "get", url: route("plantillas-documentos.preview-pdf", version.id) };
     previewVisible.value = true;
-    previewLoading.value = true;
-    preview.value = null;
-    try {
-        const response = await axios.get(
-            route("plantillas-documentos.preview", version.id),
-        );
-        preview.value = response.data;
-    } catch (_error) {
-        toast.add({
-            severity: "error",
-            summary: "Vista previa no disponible",
-            detail: "No fue posible preparar la versión seleccionada.",
-            life: 4500,
-        });
-        previewVisible.value = false;
-    } finally {
-        previewLoading.value = false;
-    }
 };
-const action = (message, url, success) =>
+const previewDraft = () => {
+    previewSource.value = { method: "post", url: route("plantillas-documentos.preview-draft"), data: JSON.parse(JSON.stringify(form.data())) };
+    previewVisible.value = true;
+};
+const action = (message, url, success, after = () => {}) =>
     confirm.require({
         header: message.header,
         message: message.body,
@@ -247,12 +223,14 @@ const action = (message, url, success) =>
                 {},
                 {
                     preserveScroll: true,
-                    onSuccess: () =>
+                    onSuccess: () => {
+                        after();
                         toast.add({
                             severity: "success",
                             summary: success,
                             life: 3200,
-                        }),
+                        });
+                    },
                 },
             ),
     });
@@ -269,6 +247,7 @@ const duplicate = (version) =>
             version.id,
         ]),
         "Nueva versión creada",
+        () => { selectedVersionId.value = selected.value?.versiones?.[0]?.id; },
     );
 const activate = (version) =>
     action(
@@ -300,7 +279,7 @@ watch(selected, (item) => {
             (version) => version.id === selectedVersionId.value,
         )
     )
-        selectedVersionId.value = item.versiones[0]?.id ?? null;
+        selectedVersionId.value = preferredVersion(item)?.id ?? null;
 });
 </script>
 
@@ -309,7 +288,7 @@ watch(selected, (item) => {
         <template #card-header>
             <div class="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <div class="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.16em] text-primary"><i class="pi pi-sparkles" />Centro documental</div>
+                    <div class="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.16em] text-primary"><i class="pi pi-file-edit" />Centro documental</div>
                     <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0">Documentos y plantillas</h1>
                     <p class="mt-1 text-sm text-surface-500">Redacciones versionadas, generación trazable y archivos siempre privados.</p>
                 </div>
@@ -352,45 +331,45 @@ watch(selected, (item) => {
                         <div class="mt-6 grid gap-3 sm:grid-cols-3">
                             <div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/60">Versión seleccionada</p><p class="mt-1 text-lg font-semibold">v{{ selectedVersion?.numero ?? '—' }}</p></div>
                             <div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/60">Estado</p><div class="mt-1"><DocumentVersionStatus v-if="selectedVersion" :status="selectedVersion.estado" /></div></div>
-                            <div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/60">Uso registrado</p><p class="mt-1 text-lg font-semibold">{{ selectedVersion?.documentos_generados_count ?? 0 }} documentos</p></div>
+                            <div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/60">Uso de esta versión</p><p class="mt-1 text-lg font-semibold">{{ selectedVersion?.documentos_generados_count ?? 0 }} documentos</p></div>
                         </div>
                     </section>
 
                     <section class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
-                        <div class="rounded-2xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-700 dark:bg-surface-900">
-                            <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h3 class="font-semibold">Contenido de la versión</h3><p class="text-sm text-surface-500">El historial activo y retirado es de solo lectura.</p></div><div v-if="selectedVersion" class="flex flex-wrap gap-1"><Button v-if="selectedVersion.estado === 'borrador' && !selectedVersion.documentos_generados_count && can('update plantillas-documentos')" label="Editar" icon="pi pi-pencil" size="small" @click="openEdit(selectedVersion)" /><Button v-if="can('version plantillas-documentos')" label="Duplicar" icon="pi pi-copy" size="small" severity="secondary" @click="duplicate(selectedVersion)" /><Button v-if="selectedVersion.estado === 'borrador' && can('activate plantillas-documentos')" icon="pi pi-check-circle" aria-label="Activar versión" size="small" severity="success" @click="activate(selectedVersion)" /><Button v-if="selectedVersion.estado === 'activa' && can('retire plantillas-documentos')" icon="pi pi-ban" aria-label="Retirar versión" size="small" severity="danger" @click="retire(selectedVersion)" /></div></div>
+                        <div class="min-w-0 rounded-2xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-700 dark:bg-surface-900">
+                            <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h3 class="font-semibold">Contenido de la versión</h3><p class="text-sm text-surface-500">El historial activo y retirado es de solo lectura.</p></div><div v-if="selectedVersion" class="flex flex-wrap gap-1"><Button v-if="selectedVersion.estado === 'borrador' && !selectedVersion.documentos_generados_count && can('update plantillas-documentos')" label="Editar" icon="pi pi-pencil" size="small" @click="openEdit(selectedVersion)" /><Button v-if="can('version plantillas-documentos')" label="Duplicar" icon="pi pi-copy" size="small" severity="secondary" @click="duplicate(selectedVersion)" /><Button v-if="selectedVersion.estado === 'borrador' && can('activate plantillas-documentos')" label="Activar" icon="pi pi-check-circle" aria-label="Activar versión" size="small" severity="success" @click="activate(selectedVersion)" /><Button v-if="selectedVersion.estado === 'activa' && can('retire plantillas-documentos')" label="Retirar" icon="pi pi-ban" aria-label="Retirar versión" size="small" severity="danger" @click="retire(selectedVersion)" /></div></div>
                             <Message v-if="selectedVersion?.estado !== 'borrador'" severity="secondary" :closable="false"><i class="pi pi-lock mr-2" />Versión histórica protegida. Duplica para proponer cambios.</Message>
                             <div v-if="selectedVersion" class="mt-4 grid gap-3 sm:grid-cols-3"><div class="content-summary"><span>Encabezado</span><strong>{{ selectedVersion.encabezado_html ? 'Configurado' : 'Vacío' }}</strong></div><div class="content-summary"><span>Contenido</span><strong>{{ Math.round(selectedVersion.contenido_html.length / 10) * 10 }} caracteres</strong></div><div class="content-summary"><span>Pie</span><strong>{{ selectedVersion.pie_html ? 'Configurado' : 'Vacío' }}</strong></div></div>
                             <Divider />
-                            <div class="flex items-center gap-2 text-xs text-surface-500"><i class="pi pi-hashtag" /><span class="truncate font-mono">{{ selectedVersion?.contenido_hash }}</span></div>
+                            <div class="flex items-center gap-2 text-xs text-surface-500"><i class="pi pi-hashtag" /><span class="min-w-0 break-all font-mono">{{ selectedVersion?.contenido_hash }}</span></div>
                         </div>
 
                         <aside class="rounded-2xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-700 dark:bg-surface-900">
                             <h3 class="font-semibold">Historial</h3><p class="mb-4 text-sm text-surface-500">Selecciona una versión.</p>
                             <ol class="space-y-1" aria-label="Versiones de la plantilla">
-                                <li v-for="version in selected.versiones" :key="version.id"><button type="button" class="version-row" :class="selectedVersion?.id === version.id && 'version-row-active'" @click="selectedVersionId = version.id"><span class="version-dot" :class="version.estado === 'activa' ? 'bg-emerald-500' : version.estado === 'borrador' ? 'bg-amber-500' : 'bg-surface-400'" /><span class="min-w-0 flex-1"><span class="flex items-center justify-between gap-2"><strong>Versión {{ version.numero }}</strong><span class="text-xs text-surface-500">{{ new Date(version.created_at).toLocaleDateString('es-MX') }}</span></span><span class="mt-1 block truncate text-xs text-surface-500">{{ version.resumen_cambios || 'Sin resumen de cambios' }}</span></span></button></li>
+                                <li v-for="version in selected.versiones" :key="version.id"><button type="button" class="version-row" :class="selectedVersion?.id === version.id && 'version-row-active'" @click="selectedVersionId = version.id"><span class="version-dot" :class="version.estado === 'activa' ? 'bg-emerald-500' : version.estado === 'borrador' ? 'bg-amber-500' : 'bg-surface-400'" /><span class="min-w-0 flex-1"><span class="flex items-center justify-between gap-2"><strong>Versión {{ version.numero }}</strong><DocumentVersionStatus :status="version.estado" /><span class="text-xs text-surface-500">{{ new Date(version.created_at).toLocaleDateString('es-MX') }}</span></span><span class="mt-1 block truncate text-xs text-surface-500">{{ version.resumen_cambios || 'Sin resumen de cambios' }} · {{ version.documentos_generados_count ?? 0 }} usos</span></span></button></li>
                             </ol>
                         </aside>
                     </section>
                 </main>
 
-                <div v-else class="flex min-h-[30rem] items-center justify-center rounded-2xl border border-dashed border-surface-300"><div class="max-w-sm text-center"><span class="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary-50 text-2xl text-primary"><i class="pi pi-file-plus" /></span><h2 class="mt-4 text-xl font-semibold">Crea una biblioteca documental</h2><p class="mt-2 text-sm text-surface-500">Empieza con el tipo de documento y agrega solo el texto jurídico aprobado.</p><Button v-if="can('create plantillas-documentos')" class="mt-4" label="Nueva plantilla" icon="pi pi-plus" @click="openCreate" /></div></div>
+                <div v-else class="flex min-h-[30rem] items-center justify-center rounded-2xl border border-dashed border-surface-300"><div class="max-w-sm text-center"><span class="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary-50 text-2xl text-primary"><i class="pi pi-file-plus" /></span><h2 class="mt-4 text-xl font-semibold">Crea una biblioteca documental</h2><p class="mt-2 text-sm text-surface-500">Empieza con el tipo de documento y agrega solo el texto jurídico aprobado.</p></div></div>
             </div>
 
-            <Dialog id="template-editor" :visible="editorVisible" modal maximizable :draggable="false" :style="{ width: 'min(1180px, 97vw)' }" @update:visible="$event ? (editorVisible = true) : closeEditor()">
-                <template #header><div><div class="flex items-center gap-2"><span class="font-semibold">{{ editingVersion ? `Editar versión ${editingVersion.numero}` : 'Nueva plantilla' }}</span><Tag value="Borrador" severity="secondary" rounded /></div><p class="mt-1 text-sm text-surface-500">El contenido se sanea al guardar y se congela al activar.</p></div></template>
-                <form class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]" @submit.prevent="submit">
+            <Dialog id="template-editor" :visible="editorVisible" :closeOnEscape="false" modal maximizable :draggable="false" :style="{ width: 'min(1180px, 97vw)' }" @update:visible="$event ? (editorVisible = true) : closeEditor()">
+                <template #header><div><div class="flex items-center gap-2"><span class="text-xl font-semibold">{{ editingVersion ? `Editar versión ${editingVersion.numero}` : 'Nueva plantilla' }}</span><Tag value="Borrador" severity="secondary" rounded /></div><p class="mt-1 text-sm text-surface-500">El contenido se sanea al guardar y se congela al activar.</p></div></template>
+                <form v-if="editorVisible" class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]" @submit.prevent="submit">
                     <div class="min-w-0 space-y-5">
-                        <div class="grid gap-4 md:grid-cols-2"><div><label for="template-name" class="field-label">Nombre *</label><InputText id="template-name" v-model="form.nombre" :invalid="!!form.errors.nombre" :aria-invalid="!!form.errors.nombre" fluid /><Message v-if="form.errors.nombre" severity="error" size="small">{{ form.errors.nombre }}</Message></div><div><label for="template-key" class="field-label">Clave *</label><InputText id="template-key" v-model="form.clave" :disabled="!!editingVersion" :invalid="!!form.errors.clave" :aria-invalid="!!form.errors.clave" fluid /><Message v-if="form.errors.clave" severity="error" size="small">{{ form.errors.clave }}</Message></div><div><span class="field-label">Tipo *</span><SelectButton v-model="form.tipo" :options="tipos" option-label="label" option-value="value" :disabled="!!editingVersion" :allow-empty="false" aria-label="Tipo de plantilla" /></div><div><label for="change-summary" class="field-label">Resumen de cambios</label><InputText id="change-summary" v-model="form.resumen_cambios" fluid /></div><div class="md:col-span-2"><label for="template-description" class="field-label">Descripción comercial</label><Textarea id="template-description" v-model="form.descripcion" rows="2" fluid /></div></div>
-                        <div class="overflow-hidden rounded-2xl border border-surface-200 dark:border-surface-700"><div class="flex flex-wrap items-center justify-between gap-2 bg-surface-50 px-3 py-2 dark:bg-surface-800"><SelectButton v-model="section" :options="[{label:'Encabezado',value:'encabezado_html'},{label:'Contenido',value:'contenido_html'},{label:'Pie de página',value:'pie_html'}]" option-label="label" option-value="value" aria-label="Sección de la plantilla" /><span class="text-xs text-surface-500">Editando: {{ sectionLabel }}</span></div><Editor ref="editorRef" v-model="form[section]" editor-style="height: 24rem" aria-label="Editor de contenido documental"><template #toolbar><span class="ql-formats"><button class="ql-bold" aria-label="Negrita" /><button class="ql-italic" aria-label="Cursiva" /><button class="ql-underline" aria-label="Subrayado" /></span><span class="ql-formats"><button class="ql-list" value="ordered" aria-label="Lista numerada" /><button class="ql-list" value="bullet" aria-label="Lista con viñetas" /><button class="ql-blockquote" aria-label="Cita" /></span><span class="ql-formats"><button class="ql-clean" aria-label="Limpiar formato" /></span></template></Editor></div>
+                        <div class="grid gap-4 md:grid-cols-2"><div><label for="template-name" class="field-label">Nombre *</label><InputText id="template-name" v-model="form.nombre" :invalid="!!form.errors.nombre" :aria-invalid="!!form.errors.nombre" fluid /><Message v-if="form.errors.nombre" severity="error" size="small">{{ form.errors.nombre }}</Message></div><div><label for="template-key" class="field-label">Clave *</label><InputText id="template-key" v-model="form.clave" :disabled="!!editingVersion" :invalid="!!form.errors.clave" :aria-invalid="!!form.errors.clave" fluid /><small class="mt-1 block text-surface-500">Minúsculas, números, guiones y guiones bajos. Ejemplo: consentimiento-sic.</small><Message v-if="form.errors.clave" severity="error" size="small">{{ form.errors.clave }}</Message></div><div><span class="field-label">Tipo *</span><SelectButton v-model="form.tipo" :options="tipos" option-label="label" option-value="value" :disabled="!!editingVersion" :allow-empty="false" aria-label="Tipo de plantilla" /></div><div><label for="change-summary" class="field-label">Resumen de cambios</label><InputText id="change-summary" v-model="form.resumen_cambios" fluid /></div><div class="md:col-span-2"><label for="template-description" class="field-label">Descripción comercial</label><Textarea id="template-description" v-model="form.descripcion" rows="2" fluid /></div></div>
+                        <div class="overflow-hidden rounded-2xl border border-surface-200 dark:border-surface-700"><div class="flex flex-wrap items-center justify-between gap-2 bg-surface-50 px-3 py-2 dark:bg-surface-800"><SelectButton v-model="section" :options="[{label:'Encabezado',value:'encabezado_html'},{label:'Contenido',value:'contenido_html'},{label:'Pie de página',value:'pie_html'}]" option-label="label" option-value="value" :allow-empty="false" aria-label="Sección de la plantilla" /><span class="text-xs text-surface-500">Editando: {{ sectionLabel }}</span></div><DocumentEditor v-for="field in sections" v-show="section === field.value" :key="field.value" :ref="el => { editorRefs[field.value] = el; }" v-model="form[field.value]" :section="field.value" /></div>
                         <Message v-if="form.errors[section] || form.errors.contenido_html" severity="error" :closable="false">{{ form.errors[section] || form.errors.contenido_html }}</Message>
-                        <div class="flex flex-col-reverse gap-2 border-t border-surface-200 pt-4 sm:flex-row sm:justify-end"><Button type="button" label="Cancelar" severity="secondary" @click="closeEditor" /><Button type="submit" label="Guardar borrador" icon="pi pi-save" :loading="form.processing" /></div>
+                        <div><label for="watermark" class="field-label">Marca de agua (opcional)</label><InputText id="watermark" v-model="form.presentacion.marca_agua" maxlength="80" placeholder="Ejemplo: BORRADOR" fluid /><small class="block text-surface-500">Texto tenue en todas las páginas. Déjalo vacío para desactivarlo.</small><Message v-if="form.errors['presentacion.marca_agua']" severity="error">{{ form.errors['presentacion.marca_agua'] }}</Message></div><div class="flex flex-col-reverse gap-2 border-t border-surface-200 pt-4 sm:flex-row sm:justify-end"><Button type="button" label="Cancelar" severity="secondary" @click="closeEditor" /><Button type="button" label="Previsualizar cambios" icon="pi pi-eye" severity="secondary" @click="previewDraft" /><Button type="submit" label="Guardar borrador" icon="pi pi-save" :loading="form.processing" /></div>
                     </div>
-                    <aside class="rounded-2xl border border-primary-100 bg-primary-50/70 p-4 dark:border-primary-900 dark:bg-primary-950/20"><div class="flex items-center gap-2"><span class="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-contrast"><i class="pi pi-code" /></span><div><h3 class="font-semibold">Variables permitidas</h3><p class="text-xs text-surface-500">Insertan texto escapado.</p></div></div><div class="mt-4 max-h-[36rem] space-y-2 overflow-auto pr-1"><button v-for="variable in availableVariables" :key="variable.clave" type="button" class="w-full rounded-xl border border-transparent bg-surface-0 p-3 text-left transition hover:border-primary-300 hover:shadow-sm dark:bg-surface-900" @click="insertVariable(variable)"><span class="block text-sm font-medium">{{ variable.nombre }} <span v-if="variable.requerida" class="text-red-500">*</span></span><code class="mt-1 block truncate text-xs text-primary">{{ tokenLabel(variable.clave) }}</code><span class="mt-1 block truncate text-xs text-surface-500">{{ variable.origen }} · {{ variable.formato }}</span></button></div><Message class="mt-3" severity="info" size="small" :closable="false">No se admite código, HTML libre en variables ni acceso a otros datos.</Message></aside>
+                    <aside class="rounded-2xl border border-primary-100 bg-primary-50/70 p-4 dark:border-primary-900 dark:bg-primary-950/20"><div class="flex items-center gap-2"><span class="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-contrast"><i class="pi pi-code" /></span><div><h3 class="font-semibold">Variables permitidas</h3><p class="text-xs text-surface-500">Coloca el cursor y selecciona una variable para insertarla.</p></div></div><div class="mt-4 max-h-[36rem] space-y-2 overflow-auto pr-1"><button v-for="variable in availableVariables" :key="variable.clave" type="button" class="w-full rounded-xl border border-transparent bg-surface-0 p-3 text-left transition hover:border-primary-300 hover:shadow-sm dark:bg-surface-900" @mousedown.prevent @click="insertVariable(variable)"><span class="block text-sm font-medium">{{ variable.nombre }} <span v-if="variable.requerida" class="block text-xs text-surface-500">Dato obligatorio si se utiliza</span></span><code class="mt-1 block truncate text-xs text-primary">{{ tokenLabel(variable.clave) }}</code><span class="mt-1 block truncate text-xs text-surface-500">{{ variable.origen }} · {{ variable.formato }}</span></button></div><Message class="mt-3" severity="info" size="small" :closable="false">No se admite código HTML libre en las variables ni el acceso a otros datos.</Message></aside>
                 </form>
             </Dialog>
 
-            <Dialog v-model:visible="previewVisible" modal maximizable :draggable="false" header="Previsualización de plantilla" :style="{ width: 'min(1050px, 96vw)' }"><Message severity="warn" :closable="false"><strong>Vista previa con datos sintéticos.</strong> No es el PDF regulatorio definitivo.</Message><div class="mt-3 min-h-[65vh] rounded-xl bg-surface-200 p-2 sm:p-5"><div v-if="previewLoading" class="space-y-3"><Skeleton height="2rem" /><Skeleton height="36rem" /></div><article v-else class="document-preview" aria-label="Previsualización segura de la plantilla"><header v-html="preview?.header" /><main v-html="preview?.body" /><footer v-html="preview?.footer" /></article></div></Dialog>
+            <DocumentPdfPreview v-model:visible="previewVisible" :source="previewSource" />
         </template>
     </AppLayout>
 </template>
@@ -408,12 +387,5 @@ watch(selected, (item) => {
 .version-row-active { @apply bg-primary-50 text-primary-900 dark:bg-primary-950/30 dark:text-primary-100; }
 .version-dot { @apply mt-1.5 size-2.5 shrink-0 rounded-full ring-4 ring-surface-100 dark:ring-surface-700; }
 .field-label { @apply mb-1 block text-sm font-medium; }
-.document-preview { @apply mx-auto min-h-[68vh] max-w-[820px] rounded-lg bg-white px-8 py-7 text-slate-800 shadow-xl sm:px-12; font: 15px/1.6 Arial, sans-serif; }
-.document-preview header { @apply min-h-12 border-b border-slate-200 text-xs text-slate-500; }
-.document-preview main { @apply min-h-[34rem] py-7; }
-.document-preview footer { @apply border-t border-slate-200 pt-3 text-xs text-slate-500; }
-.document-preview :deep(h1) { @apply mb-4 text-2xl font-bold text-slate-900; }
-.document-preview :deep(h2) { @apply mb-3 mt-5 text-xl font-semibold text-slate-800; }
-.document-preview :deep(p) { @apply mb-3; }
 @media (max-width: 640px) { :deep(#template-editor) { width: 100vw !important; height: 100dvh; max-height: 100dvh; margin: 0; border-radius: 0; } }
 </style>

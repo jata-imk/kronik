@@ -6,7 +6,7 @@ status: active
 
 # Desplegar Kronik en una VPS Debian 12
 
-Última revisión operativa: 2026-07-24.
+Última revisión documental: 2026-09-10. La ampliación del editor requiere las comprobaciones adicionales de la sección 12.1.
 
 Esta guía instala una instancia de Kronik para una financiera. Cubre una VPS
 vacía y una VPS que ya administra sitios con CloudPanel o Plesk.
@@ -96,8 +96,9 @@ npm --version
 Agregue la carga de `~/.nvm/nvm.sh` al perfil shell del usuario y revise la
 versión vigente de NVM antes de repetir esta instalación en el futuro.
 
-No se necesita Node.js para atender peticiones después de generar
-`public/build`, pero sí para cada compilación realizada en la VPS.
+Node.js se necesita para compilar el frontend y, desde Backlog 03.5, para
+renderizar PDF mediante Puppeteer: tanto el worker como PHP web (vista previa)
+deben poder ejecutarlo incluso después de generar `public/build`.
 
 ### 2.3 Crear base de datos
 
@@ -327,6 +328,12 @@ sudo env "PATH=$PATH" ./node_modules/.bin/puppeteer browsers install chrome --in
 php artisan documentos:benchmark-pdf --runs=5
 ```
 
+Compruebe también el usuario de PHP-FPM: la previsualización PDF se ejecuta
+desde la aplicación web, no desde la cola. Ambos procesos necesitan acceso a
+Node, Chromium, las fuentes locales y el almacenamiento privado. En un panel
+puede ser el mismo usuario del sitio; no dé por hecho que FPM hereda el PATH
+de una sesión SSH con NVM. Use las rutas absolutas `DOCUMENTOS_*` existentes.
+
 La variante `--install-deps` es exclusiva de Debian/Ubuntu y requiere
 privilegios para instalar paquetes del sistema. El segundo comando garantiza
 que Chrome también quede en la caché del usuario del sitio; no ejecute el
@@ -358,6 +365,12 @@ Se requieren, como mínimo, las extensiones `ctype`, `curl`, `dom`, `fileinfo`,
 `filter`, `hash`, `mbstring`, `openssl`, `pdo`, `pdo_mysql`, `session`,
 `tokenizer` y `xml`. Kronik también usa en CI `zip`, `pcntl`, `bcmath`, `soap`,
 `intl` y `gd`.
+
+GD es un requisito explícito de Composer para la biblioteca de imágenes.
+Habilítelo en CLI, FPM y el worker. Las fuentes Liberation incluidas en
+`public/fonts/liberation/` deben publicarse junto con su licencia; no se
+descargan durante el renderizado ni requieren un enlace de almacenamiento
+público para las imágenes, que permanecen privadas.
 
 Si Node no está disponible para el usuario del sitio, instale Node 22 con NVM
 como se describe en 2.2.
@@ -637,6 +650,42 @@ datos y requerir un procedimiento específico.
 Para despliegues atómicos y rollback por releases, CloudPanel ofrece `dploy`.
 Adóptelo como una mejora posterior; el primer despliegue puede operar con el
 flujo directo anterior.
+
+### 12.1 Actualizar la revisión QA del PR #15
+
+Para probar antes del merge, use la rama
+`feat/backlog-03-5-documentos-plantillas`, no `main`. Confirme primero la rama
+y un árbol limpio con `git status`; no descarte cambios locales del servidor.
+Use el procedimiento anterior de respaldo y mantenimiento, sustituyendo el
+pull por `git pull --ff-only origin feat/backlog-03-5-documentos-plantillas`
+cuando ya esté en esa rama.
+
+Además de `composer install`, `npm ci`, build y reinicio del worker:
+
+- Verifique GD con `php8.3 --ri gd` y en la configuración PHP del sitio. Si
+  faltara, instale/habilite la extensión de la versión PHP del panel; no
+  cambie la versión PHP ni instale otro FPM sin revisar su configuración.
+- Aplique `2026_09_10_000000_add_document_resources_and_presentation` con
+  `php8.3 artisan migrate --force`. Es aditiva: recursos privados, referencias
+  por versión y presentación. No reescribe hashes, versiones ni PDF anteriores.
+- Si ya estaban instalados los permisos y el menú del PR #15, esta revisión
+  no requiere nuevos seeders ni permisos. No use `migrate:fresh` o seeders de
+  desarrollo para probarla.
+- Conserve `DOCUMENTOS_NODE_BINARY`, `DOCUMENTOS_NPM_BINARY`,
+  `DOCUMENTOS_NODE_MODULES_PATH` y `DOCUMENTOS_CHROME_PATH` propios de su VPS;
+  no copie rutas Windows de las pruebas.
+- Mantenga el worker `systemd` existente si ya se configuró. No agregue otro
+  worker Supervisor. `php8.3 artisan queue:restart` pide su salida después
+  del trabajo actual; compruebe que el administrador de procesos lo reinicia.
+- Compruebe `public/fonts/liberation/`, permisos del disco privado y la vista
+  previa desde el navegador: el benchmark CLI no valida el entorno de FPM.
+- Pruebe un borrador con logotipo, dos páginas, encabezado, pie y marca de
+  agua; cierre la vista previa y continúe editando. Active/genere solo una
+  plantilla de prueba apropiada, revise el visor y abra un archivo histórico.
+
+Los controles, límites y guion del editor se detallan en
+[Editar plantillas documentales](editar-plantillas-documentales.md). No se
+incluyen firma, DOCX ni tabla dinámica de amortización.
 
 ## Fuentes operativas
 

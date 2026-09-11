@@ -26,6 +26,8 @@ class GuardarDocumentoPlantillaRequest extends FormRequest
             'contenido_html' => ['required', 'string', 'max:200000'],
             'pie_html' => ['nullable', 'string', 'max:50000'],
             'resumen_cambios' => ['nullable', 'string', 'max:500'],
+            'presentacion' => ['nullable', 'array:marca_agua,formato'],
+            'presentacion.marca_agua' => ['nullable', 'string', 'max:80'],
         ];
     }
 
@@ -45,6 +47,7 @@ class GuardarDocumentoPlantillaRequest extends FormRequest
             'clave' => 'clave', 'nombre' => 'nombre', 'tipo' => 'tipo de documento',
             'descripcion' => 'descripción', 'contenido_html' => 'contenido',
             'resumen_cambios' => 'resumen de cambios',
+            'presentacion.marca_agua' => 'marca de agua',
         ];
     }
 }

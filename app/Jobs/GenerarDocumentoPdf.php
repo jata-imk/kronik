@@ -2,13 +2,12 @@
 
 namespace App\Jobs;
 
-use App\Contracts\DocumentoPdfRenderer;
 use App\Enums\ActivityEvent;
 use App\Enums\DocumentoGeneradoEstado;
 use App\Models\DocumentoGenerado;
 use App\Models\User;
 use App\Services\ActivityLogService;
-use App\Services\Documentos\CompiladorPlantillaDocumento;
+use App\Services\Documentos\DocumentoRenderService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -39,7 +38,7 @@ class GenerarDocumentoPdf implements ShouldQueue
         return [10, 30];
     }
 
-    public function handle(DocumentoPdfRenderer $renderer, CompiladorPlantillaDocumento $compiler, ActivityLogService $activity): void
+    public function handle(DocumentoRenderService $renderer, ActivityLogService $activity): void
     {
         $document = DocumentoGenerado::query()->with(['version.plantilla', 'cliente'])->findOrFail($this->documentoId);
         if ($document->estado === DocumentoGeneradoEstado::Generado && $document->path && Storage::disk($document->disk)->exists($document->path)) {
@@ -48,10 +47,7 @@ class GenerarDocumentoPdf implements ShouldQueue
 
         $document->update(['estado' => DocumentoGeneradoEstado::Procesando, 'error_codigo' => null, 'error_mensaje' => null]);
         $values = $document->datos_utilizados;
-        $body = $compiler->render($document->version->contenido_html, $values);
-        $header = $compiler->render($document->version->encabezado_html ?? '', $values);
-        $footer = $compiler->render($document->version->pie_html ?? '', $values);
-        $pdf = $renderer->render($body, $header, $footer);
+        $pdf = $renderer->render($document->version->toArray(), $values);
         if (! str_starts_with($pdf, '%PDF-')) {
             throw new \RuntimeException('El motor no produjo un PDF válido.');
         }

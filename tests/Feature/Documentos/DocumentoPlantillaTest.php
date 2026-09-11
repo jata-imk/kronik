@@ -96,7 +96,7 @@ test('generación es idempotente trazable y produce un PDF privado', function ()
         ->assertJsonPath('estado', DocumentoGeneradoEstado::Pendiente->value);
     app()->instance(DocumentoPdfRenderer::class, new class implements DocumentoPdfRenderer
     {
-        public function render(string $bodyHtml, ?string $headerHtml = null, ?string $footerHtml = null): string
+        public function render(string $bodyHtml, ?string $headerHtml = null, ?string $footerHtml = null, array $options = []): string
         {
             expect($bodyHtml)->toContain('María Prueba')->not->toContain('{{');
 

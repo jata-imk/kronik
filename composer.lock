@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7ce4c004639074b1d13f00ea33f5ace2",
+    "content-hash": "656f51f88801c18ab95e71b726eb9df7",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -7300,12 +7300,12 @@
             "version": "v3.15.4",
             "source": {
                 "type": "git",
-                "url": "https://github.com/barryvdh/laravel-debugbar.git",
+                "url": "https://github.com/fruitcake/laravel-debugbar.git",
                 "reference": "c0667ea91f7185f1e074402c5788195e96bf8106"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/barryvdh/laravel-debugbar/zipball/c0667ea91f7185f1e074402c5788195e96bf8106",
+                "url": "https://api.github.com/repos/fruitcake/laravel-debugbar/zipball/c0667ea91f7185f1e074402c5788195e96bf8106",
                 "reference": "c0667ea91f7185f1e074402c5788195e96bf8106",
                 "shasum": ""
             },
@@ -10687,7 +10687,8 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.2"
+        "php": "^8.2",
+        "ext-gd": "*"
     },
     "platform-dev": {},
     "plugin-api-version": "2.6.0"

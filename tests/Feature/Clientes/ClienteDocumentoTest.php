@@ -133,3 +133,24 @@ test('document download is private and scoped to its client', function () {
         ->get(route('clientes.documentos.download', [$cliente, $documento]))
         ->assertOk();
 });
+
+test('rechazo exige un motivo útil en español y validar elimina el motivo previo', function () {
+    $user = actingAsSuperAdmin();
+    $cliente = Cliente::factory()->create();
+    app(ClienteExpedienteService::class)->initializeChecklist($cliente);
+    $documento = $cliente->documentos()->where('tipo', 'ine')->firstOrFail();
+    $documento->update(['estado' => 'recibido']);
+    $url = route('clientes.documentos.estado.update', [$cliente, $documento]);
+
+    foreach (['', '   ', 'Corto', '  123456789  ', str_repeat('x', 2001)] as $reason) {
+        $response = $this->actingAs($user)->patchJson($url, ['estado' => 'rechazado', 'motivo_rechazo' => $reason]);
+        $response->assertUnprocessable()->assertJsonValidationErrors('motivo_rechazo');
+        expect($response->json('errors.motivo_rechazo.0'))->not->toContain('validation.');
+    }
+    $this->patch($url, ['estado' => 'rechazado', 'motivo_rechazo' => '  La imagen es ilegible.  '])->assertRedirect()->assertSessionHasNoErrors();
+    expect($documento->fresh()->motivo_rechazo)->toBe('La imagen es ilegible.');
+    // A rejected file must be received again before validation is allowed.
+    $documento->refresh()->update(['estado' => 'recibido']);
+    $this->patch($url, ['estado' => 'validado', 'motivo_rechazo' => 'x'])->assertRedirect()->assertSessionHasNoErrors();
+    expect($documento->fresh()->motivo_rechazo)->toBeNull();
+});

@@ -39,6 +39,7 @@ enum ActivityEvent: string
     case CreditProductActivated = 'producto_crediticio.activated';
     case CreditProductRetired = 'producto_crediticio.retired';
     case DocumentTemplateCreated = 'documento_plantilla.created';
+    case DocumentResourceCreated = 'documento_recurso.created';
     case DocumentTemplateUpdated = 'documento_plantilla.updated';
     case DocumentTemplateVersioned = 'documento_plantilla.versioned';
     case DocumentTemplateActivated = 'documento_plantilla.activated';
@@ -89,6 +90,7 @@ enum ActivityEvent: string
             self::CreditProductActivated => 'Versión de producto activada',
             self::CreditProductRetired => 'Versión de producto retirada',
             self::DocumentTemplateCreated => 'Plantilla documental creada',
+            self::DocumentResourceCreated => 'Imagen documental incorporada',
             self::DocumentTemplateUpdated => 'Borrador de plantilla actualizado',
             self::DocumentTemplateVersioned => 'Plantilla documental versionada',
             self::DocumentTemplateActivated => 'Versión de plantilla activada',
@@ -154,6 +156,7 @@ enum ActivityEvent: string
             self::CreditProductActivated => 'pi-check-circle',
             self::CreditProductRetired => 'pi-ban',
             self::DocumentTemplateCreated => 'pi-file-plus',
+            self::DocumentResourceCreated => 'pi-image',
             self::DocumentTemplateUpdated => 'pi-pencil',
             self::DocumentTemplateVersioned => 'pi-copy',
             self::DocumentTemplateActivated => 'pi-check-circle',

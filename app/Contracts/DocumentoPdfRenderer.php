@@ -4,5 +4,5 @@ namespace App\Contracts;
 
 interface DocumentoPdfRenderer
 {
-    public function render(string $bodyHtml, ?string $headerHtml = null, ?string $footerHtml = null): string;
+    public function render(string $bodyHtml, ?string $headerHtml = null, ?string $footerHtml = null, array $options = []): string;
 }

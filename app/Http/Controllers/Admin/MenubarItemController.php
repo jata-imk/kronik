@@ -39,7 +39,7 @@ class MenubarItemController extends Controller implements HasMiddleware
     {
         return Inertia::render('Admin/MenubarItems/Index', [
             'modules' => fn () => Module::with('menubarItems')->get(),
-            'menubarItems' => fn () => MenubarItem::with(
+            'menubarCatalogo' => fn () => MenubarItem::with(
                 [
                     'modules',
                     'children.modules',

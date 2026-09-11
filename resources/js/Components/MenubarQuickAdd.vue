@@ -128,7 +128,7 @@ defineExpose({ open });
 const submit = () => {
     form.modules = buildModules();
     form.post(route("admin.menubar-items.store"), {
-        only: ["menubarItems"],
+        only: ["menubarCatalogo", "menubarItems"],
         onSuccess: () => {
             toast.add({
                 severity: "success",

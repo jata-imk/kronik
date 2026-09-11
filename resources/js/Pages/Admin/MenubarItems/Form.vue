@@ -228,7 +228,7 @@ const submit = () => {
     if (form.type === "route:dynamic") form.value = buildDynamicValue();
     if (item?.id) {
         form.put(route("admin.menubar-items.update", item.id), {
-            only: ["menubarItems"],
+            only: ["menubarCatalogo", "menubarItems"],
             onSuccess: () => {
                 toast.add({ severity: "success", summary: "Item actualizado", life: 3000 });
                 emit("close");
@@ -236,7 +236,7 @@ const submit = () => {
         });
     } else {
         form.post(route("admin.menubar-items.store"), {
-            only: ["menubarItems"],
+            only: ["menubarCatalogo", "menubarItems"],
             onSuccess: () => {
                 toast.add({ severity: "success", summary: "Item creado", life: 3000 });
                 emit("close");

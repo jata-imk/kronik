@@ -39,6 +39,7 @@
         "intl-tel-input": "^25.3.1",
         "lucide-vue-next": "^0.511.0",
         "maplibre-gl": "^5.4.0",
+        "pdfjs-dist": "^5.4.149",
         "primeicons": "^7.0.0",
         "primevue": "^4.2.5",
         "puppeteer": "^25.8.0",

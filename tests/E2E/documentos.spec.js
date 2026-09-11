@@ -13,7 +13,7 @@ test("administra, versiona y previsualiza una plantilla documental", async ({ pa
     await page.getByRole("button", { name: "Nueva plantilla" }).click();
     await page.getByLabel("Nombre *").fill("Aviso documental E2E");
     await page.getByLabel("Clave *").fill("aviso-documental-e2e");
-    await page.locator(".ql-editor").fill("Documento sintético para {{cliente.nombre_completo}}.");
+    await page.locator(".ql-editor:visible").fill("Documento sintético para {{cliente.nombre_completo}}.");
     await expect(page.getByText("Variables permitidas")).toBeVisible();
     await page.getByRole("button", { name: "Guardar borrador" }).click();
     await expect(page.getByText("Plantilla creada", { exact: true })).toBeVisible();
@@ -27,7 +27,7 @@ test("administra, versiona y previsualiza una plantilla documental", async ({ pa
 
     await page.getByRole("button", { name: "Previsualizar" }).click();
     await expect(page.getByText("Vista previa con datos sintéticos.")).toBeVisible();
-    await expect(page.getByLabel("Previsualización segura de la plantilla")).toContainText("Documento sintético");
+    await expect(page.getByLabel("Previsualización segura de la plantilla")).toContainText("Documento sintético", { timeout: 30_000 });
 
     await page.keyboard.press("Escape");
 
