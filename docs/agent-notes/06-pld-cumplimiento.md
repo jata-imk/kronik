@@ -5,6 +5,7 @@
 - Notion: https://app.notion.com/p/3a061db7db7f8157b516e7f47aabb241
 - Rama: feat/solicitudes-aprobacion (continuación sobre feat/solicitudes-resolucion)
 - PR: [#19](https://github.com/jata-imk/kronik/pull/19), borrador sobre #18.
+- Continuación: [#20](https://github.com/jata-imk/kronik/pull/20), comprobaciones para aprobación sobre #19.
 - ADR relacionados: 0010 y 0013.
 
 ## Objetivo
@@ -31,6 +32,7 @@ Conectar revisión humana reservada al expediente de solicitud. Alcance completo
 
 - Pruebas: 18 de solicitudes / 250 aserciones; suite backend 188 / 1240; frontend 56.
 - E2E: 9 aprobados, incluyendo evaluación/PLD y obsolescencia tras nueva revisión.
+- Aprobación e573a37: 196 backend / 1341 aserciones, 60 frontend y 9 E2E aprobados.
 - Revisión manual: Notion y ADR 0013 cotejados; ver referencia de solicitudes.
 - Migraciones: solicitud_resoluciones y solicitud_dictamenes, aditivas, solo BD aisladas.
 - Seeder: nuevos permisos sin asignación automática de roles.

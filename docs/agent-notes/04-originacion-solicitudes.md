@@ -7,6 +7,7 @@
 - Rama: feat/solicitudes-aprobacion (base feat/solicitudes-resolucion)
 - PR: [P0 #17](https://github.com/jata-imk/kronik/pull/17), [P1 #16](https://github.com/jata-imk/kronik/pull/16), [P2 #18](https://github.com/jata-imk/kronik/pull/18).
 - P3 parcial: [PR #19](https://github.com/jata-imk/kronik/pull/19), base #18, borrador.
+- P3 aprobación: [PR #20](https://github.com/jata-imk/kronik/pull/20), base #19, borrador.
 - ADR relacionados: 0010–0014, 0005–0009
 
 ## Objetivo
@@ -53,10 +54,10 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 ## Siguiente paso
 
-Terminar verificación/publicación del incremento de aprobación. Después P4 formalización,
-revalidando vigencia/evidencia y manteniendo operación real cerrada.
+Continuar P4 formalización, revalidando vigencia/evidencia y manteniendo operación real cerrada.
 
 ## Cierre
 
 - Commit o merge: P3 parcial c8cff6f y corrección visual 2c401ad; PR apilados 17 → 16 → 18 → 19, sin merge.
+- Aprobación: e573a37, PR #20 apilado sobre #19, sin merge.
 - Pendientes diferidos: 02.5 sigue diferido; producción SIC en P7.
