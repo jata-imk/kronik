@@ -1,5 +1,6 @@
 # Agent Notes
 
+- [Backlog 03.5: documentos digitales y plantillas](03.5-documentos-digitales-y-plantillas.md)
 - [Backlog 03: productos crediticios](03-productos-crediticios.md)
 
 Contexto operativo para continuar trabajo entre sesiones o equipos sin depender del historial de una conversacion.

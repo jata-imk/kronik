@@ -1,8 +1,10 @@
 <script setup>
 import { router, useForm } from "@inertiajs/vue3";
+import axios from "axios";
 import {
     BadgeCheck,
     Download,
+    Eye,
     FileArchive,
     FileCheck2,
     FileClock,
@@ -20,8 +22,13 @@ import {
 } from "lucide-vue-next";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
-import { computed, ref } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 
+import DocumentFileInput from "@/Components/Documents/DocumentFileInput.vue";
+import DocumentVersionStatus from "@/Components/Documents/DocumentVersionStatus.vue";
+import PrivateDocumentViewer from "@/Components/Documents/PrivateDocumentViewer.vue";
+import { documentVersionChain } from "@/Composables/documentHistory";
+import { useAsyncPolling } from "@/Composables/useAsyncPolling";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 
 const props = defineProps({
@@ -31,11 +38,19 @@ const props = defineProps({
     resumen: { type: Object, required: true },
     opciones: { type: Object, required: true },
     can: { type: Object, required: true },
+    plantillasDocumentos: { type: Array, default: () => [] },
+    documentosGenerados: {
+        type: Object,
+        default: () => ({ data: [], current_page: 1, per_page: 10, total: 0 }),
+    },
 });
 
 const toast = useToast();
 const confirm = useConfirm();
 const activeTab = ref("perfil");
+const viewerVisible = ref(false);
+const viewer = ref({ url: "", downloadUrl: "", name: "" });
+const generationDialog = ref(false);
 
 const nombreCompleto = computed(() =>
     [
@@ -77,9 +92,246 @@ const currentDocuments = computed(() =>
     props.cliente.documentos.filter((documento) => documento.es_actual),
 );
 
-const documentHistory = computed(() =>
-    props.cliente.documentos.filter((documento) => !documento.es_actual),
+const historyFor = (documento) =>
+    documentVersionChain(props.cliente.documentos, documento);
+
+const generationOptions = computed(() =>
+    props.plantillasDocumentos.flatMap((template) =>
+        template.versiones.map((version) => ({
+            label: `${template.nombre} · v${version.numero}`,
+            value: version.id,
+            tipo: template.tipo,
+        })),
+    ),
 );
+
+const selectedGeneration = computed(() =>
+    generationOptions.value.find(
+        (option) => option.value === generationForm.version_id,
+    ),
+);
+
+const generationForm = useForm({
+    version_id: null,
+    garantia_id: null,
+    idempotency_key: crypto.randomUUID(),
+    confirm_duplicate: false,
+});
+
+const generationMatch = ref(null);
+const generationCheckLoading = ref(false);
+let generationCheckRequest;
+
+function openGeneration() {
+    generationForm.reset();
+    generationForm.idempotency_key = crypto.randomUUID();
+    generationForm.confirm_duplicate = false;
+    generationMatch.value = null;
+    generationDialog.value = true;
+}
+
+async function checkExistingGeneration() {
+    generationCheckRequest?.abort();
+    generationMatch.value = null;
+    generationForm.confirm_duplicate = false;
+    generationForm.clearErrors("confirm_duplicate", "version_id");
+
+    if (
+        !generationDialog.value ||
+        !generationForm.version_id ||
+        (selectedGeneration.value?.tipo === "garantia" &&
+            !generationForm.garantia_id)
+    ) {
+        generationCheckLoading.value = false;
+        return;
+    }
+
+    const controller = new AbortController();
+    generationCheckRequest = controller;
+    generationCheckLoading.value = true;
+    try {
+        const { data } = await axios.get(
+            route("documentos-generados.existing", props.cliente.id),
+            {
+                params: {
+                    version_id: generationForm.version_id,
+                    garantia_id: generationForm.garantia_id || undefined,
+                },
+                signal: controller.signal,
+            },
+        );
+        generationMatch.value = data.documento;
+    } catch (error) {
+        if (!axios.isCancel(error)) {
+            toast.add({
+                severity: "error",
+                summary: "No se pudo comprobar el historial",
+                detail: "Inténtalo nuevamente antes de generar el documento.",
+                life: 4000,
+            });
+        }
+    } finally {
+        if (generationCheckRequest === controller)
+            generationCheckLoading.value = false;
+    }
+}
+
+watch(
+    () => generationForm.version_id,
+    () => {
+        if (selectedGeneration.value?.tipo !== "garantia")
+            generationForm.garantia_id = null;
+    },
+);
+
+watch(
+    () => [
+        generationDialog.value,
+        generationForm.version_id,
+        generationForm.garantia_id,
+    ],
+    checkExistingGeneration,
+);
+
+onBeforeUnmount(() => generationCheckRequest?.abort());
+
+function generateDocument() {
+    generationForm.post(route("documentos-generados.store", props.cliente.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            generationDialog.value = false;
+            toast.add({
+                severity: "success",
+                summary: "Generación solicitada",
+                detail: "El PDF se está preparando de forma segura.",
+                life: 4000,
+            });
+            router.get(
+                route("clientes.expediente.show", props.cliente.id),
+                { documentos_page: 1 },
+                {
+                    only: ["documentosGenerados"],
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                },
+            );
+        },
+        onError: (errors) =>
+            toast.add({
+                severity: "error",
+                summary: "No se pudo generar",
+                detail: Object.values(errors)[0] ?? "Revisa los datos.",
+                life: 5000,
+            }),
+    });
+}
+
+const activeGenerationStates = new Set(["pendiente", "procesando"]);
+const pendingGenerationIds = computed(() =>
+    props.can.read_documents
+        ? (props.documentosGenerados.data ?? [])
+              .filter((document) => activeGenerationStates.has(document.estado))
+              .map((document) => document.id)
+        : [],
+);
+const pendingGenerationKey = computed(() =>
+    [...pendingGenerationIds.value].sort().join(","),
+);
+
+function reloadGeneratedDocuments() {
+    return new Promise((resolve) => {
+        router.reload({
+            only: ["documentosGenerados"],
+            preserveScroll: true,
+            preserveState: true,
+            onFinish: resolve,
+        });
+    });
+}
+
+function changeGeneratedPage({ page }) {
+    router.get(
+        route("clientes.expediente.show", props.cliente.id),
+        { documentos_page: page + 1 },
+        {
+            only: ["documentosGenerados"],
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        },
+    );
+}
+
+const {
+    isPolling: isGenerationPolling,
+    timedOut: generationPollingTimedOut,
+    lastError: generationPollingError,
+    start: startGenerationPolling,
+    reset: resetGenerationPolling,
+} = useAsyncPolling(
+    async () => {
+        const ids = pendingGenerationIds.value;
+        if (!ids.length) return false;
+
+        const responses = await Promise.all(
+            ids.map((id) =>
+                axios.get(route("documentos-generados.status", id)),
+            ),
+        );
+        const hasFinished = responses.some(
+            ({ data }) => !activeGenerationStates.has(data.estado),
+        );
+
+        if (hasFinished) await reloadGeneratedDocuments();
+
+        return pendingGenerationIds.value.length > 0;
+    },
+    {
+        intervalMs: 2000,
+        timeoutMs: 90000,
+        maxConsecutiveErrors: 3,
+        onTimeout: () =>
+            toast.add({
+                severity: "warn",
+                summary: "Seguimiento pausado",
+                detail: "La generación puede continuar en segundo plano. Actualiza el estado cuando quieras comprobarla.",
+                life: 6500,
+            }),
+        onError: () =>
+            toast.add({
+                severity: "error",
+                summary: "Sin actualización automática",
+                detail: "No fue posible consultar el estado. La generación no fue cancelada.",
+                life: 6500,
+            }),
+    },
+);
+
+watch(
+    pendingGenerationKey,
+    (current, previous) => {
+        if (!current) {
+            resetGenerationPolling();
+            return;
+        }
+
+        startGenerationPolling({ restart: current !== previous });
+    },
+    { immediate: true },
+);
+
+async function retryGenerationPolling() {
+    await reloadGeneratedDocuments();
+    if (pendingGenerationIds.value.length) {
+        startGenerationPolling({ restart: true });
+    }
+}
+
+function openViewer(url, downloadUrl, name) {
+    viewer.value = { url, downloadUrl, name };
+    viewerVisible.value = true;
+}
 
 const candidateOptions = computed(() =>
     props.clientesDisponibles.map((cliente) => ({
@@ -191,6 +443,12 @@ const consentForm = useForm({
     evidencia: null,
     notas: "",
 });
+watch(consentDialog, (visible) => {
+    if (!visible) return;
+    consentForm.defaults({ medio: "firma_autografa", otorgado_en: new Date(), vence_en: null, evidencia: null, notas: "" });
+    consentForm.reset();
+    consentForm.clearErrors();
+});
 
 const saveProfile = () => {
     profileForm.patch(
@@ -201,6 +459,7 @@ const saveProfile = () => {
 
 const openDocumentUpload = (documento = null) => {
     selectedDocument.value = documento;
+    documentForm.defaults({ tipo: "adicional", nombre: "", archivo: null, reemplaza_documento_id: null, vence_en: null, notas: "" });
     documentForm.reset();
     documentForm.clearErrors();
     documentForm.tipo = documento?.tipo ?? "adicional";
@@ -208,11 +467,6 @@ const openDocumentUpload = (documento = null) => {
     documentForm.reemplaza_documento_id = documento?.id ?? null;
     documentDialog.value = true;
 };
-
-const onDocumentSelected = (event) => {
-    documentForm.archivo = event.files?.[0] ?? null;
-};
-
 const uploadDocument = () => {
     documentForm.post(route("clientes.documentos.store", props.cliente.id), {
         ...formOptions("Documento recibido", () => {
@@ -225,6 +479,7 @@ const uploadDocument = () => {
 
 const openReview = (documento) => {
     selectedDocument.value = documento;
+    reviewForm.defaults({ estado: "validado", motivo_rechazo: "" });
     reviewForm.reset();
     reviewForm.clearErrors();
     reviewDialog.value = true;
@@ -322,10 +577,6 @@ const saveGuarantee = () => {
             guaranteeDialog.value = false;
         }),
     );
-};
-
-const onConsentSelected = (event) => {
-    consentForm.evidencia = event.files?.[0] ?? null;
 };
 
 const saveConsent = () => {
@@ -429,6 +680,16 @@ function statusSeverity(status) {
         validado: "success",
         rechazado: "danger",
         vencido: "warn",
+    }[status];
+}
+
+function statusIcon(status) {
+    return {
+        pendiente: "pi pi-clock",
+        recibido: "pi pi-inbox",
+        validado: "pi pi-check-circle",
+        rechazado: "pi pi-times-circle",
+        vencido: "pi pi-calendar-times",
     }[status];
 }
 
@@ -570,9 +831,10 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                     <section v-show="activeTab === 'documentos'" class="workspace-section">
                         <div class="section-heading">
                             <div><p class="section-kicker">Control documental</p><h2>Documentos del cliente</h2></div>
-                            <Button label="Documento adicional" outlined @click="openDocumentUpload()" :disabled="!can.update">
-                                <template #icon><Plus :size="18" /></template>
-                            </Button>
+                            <div class="flex flex-wrap gap-2">
+                                <Button v-if="can.generate_document" label="Generar documento" @click="openGeneration"><template #icon><FileText :size="18" /></template></Button>
+                                <Button label="Documento adicional" outlined @click="openDocumentUpload()" :disabled="!can.update"><template #icon><Plus :size="18" /></template></Button>
+                            </div>
                         </div>
                         <div class="document-list">
                             <article v-for="documento in currentDocuments" :key="documento.id" class="document-row">
@@ -588,26 +850,52 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                                     <p v-if="documento.motivo_rechazo" class="rejection-copy">{{ documento.motivo_rechazo }}</p>
                                 </div>
                                 <div class="row-actions">
-                                    <Button v-if="documento.nombre_original" v-tooltip.top="'Descargar'" text rounded severity="secondary" @click="download(route('clientes.documentos.download', [cliente.id, documento.id]))">
+                                    <Button v-if="documento.nombre_original" v-tooltip.top="'Ver de forma segura'" text rounded severity="secondary" :aria-label="`Ver ${documento.nombre_original}`" @click="openViewer(route('clientes.documentos.view', [cliente.id, documento.id]), route('clientes.documentos.download', [cliente.id, documento.id]), documento.nombre_original)">
+                                        <template #icon><Eye :size="18" /></template>
+                                    </Button>
+                                    <Button v-if="documento.nombre_original" v-tooltip.top="'Descargar'" text rounded severity="secondary" aria-label="Descargar documento" @click="download(route('clientes.documentos.download', [cliente.id, documento.id]))">
                                         <template #icon><Download :size="18" /></template>
                                     </Button>
-                                    <Button v-if="documento.estado === 'recibido' || documento.estado === 'validado'" v-tooltip.top="'Revisar'" text rounded severity="secondary" @click="openReview(documento)" :disabled="!can.update">
+                                    <Button v-if="documento.estado === 'recibido' || documento.estado === 'validado'" v-tooltip.top="'Revisar'" aria-label="Revisar documento" text rounded severity="secondary" @click="openReview(documento)" :disabled="!can.update">
                                         <template #icon><FileCheck2 :size="18" /></template>
                                     </Button>
-                                    <Button v-tooltip.top="documento.nombre_original ? 'Sustituir' : 'Cargar'" rounded @click="openDocumentUpload(documento)" :disabled="!can.update">
+                                    <Button v-tooltip.top="documento.nombre_original ? 'Sustituir' : 'Cargar'" :aria-label="documento.nombre_original ? 'Sustituir documento' : 'Cargar documento'" rounded @click="openDocumentUpload(documento)" :disabled="!can.update">
                                         <template #icon><Upload :size="18" /></template>
                                     </Button>
                                 </div>
+                                <details v-if="historyFor(documento).length" class="document-history">
+                                    <summary><FileClock :size="17" /> Historial ({{ historyFor(documento).length }})</summary>
+                                    <div v-for="historical in historyFor(documento)" :key="historical.id" class="history-row">
+                                        <div class="min-w-0">
+                                            <div class="document-title-line">
+                                                <strong>V{{ historical.version }}</strong>
+                                                <Tag :value="optionLabel(opciones.estados_documento, historical.estado)" :severity="statusSeverity(historical.estado)" :icon="statusIcon(historical.estado)" />
+                                            </div>
+                                            <p class="break-all">{{ historical.nombre_original }}</p>
+                                            <p>{{ formatDate(historical.recibido_en) }}<span v-if="historical.revisor"> · Revisó {{ historical.revisor.name }}</span><span v-if="historical.revisado_en"> · {{ formatDate(historical.revisado_en) }}</span></p>
+                                            <p v-if="historical.motivo_rechazo" class="rejection-copy"><i class="pi pi-exclamation-circle mr-1" />{{ historical.motivo_rechazo }}</p>
+                                        </div>
+                                        <div class="row-actions">
+                                            <Button v-if="historical.nombre_original" v-tooltip.top="'Ver versión'" text rounded severity="secondary" :aria-label="`Ver versión ${historical.version}`" @click="openViewer(route('clientes.documentos.view', [cliente.id, historical.id]), route('clientes.documentos.download', [cliente.id, historical.id]), historical.nombre_original)"><template #icon><Eye :size="17" /></template></Button>
+                                            <Button v-if="historical.nombre_original" v-tooltip.top="'Descargar versión'" text rounded severity="secondary" :aria-label="`Descargar versión ${historical.version}`" @click="download(route('clientes.documentos.download', [cliente.id, historical.id]))"><template #icon><Download :size="17" /></template></Button>
+                                        </div>
+                                    </div>
+                                </details>
                             </article>
                         </div>
-                        <details v-if="documentHistory.length" class="history-block">
-                            <summary><FileClock :size="17" /> Historial de versiones ({{ documentHistory.length }})</summary>
-                            <div v-for="documento in documentHistory" :key="documento.id" class="history-row">
-                                <span>{{ optionLabel(opciones.documentos, documento.tipo) }} · v{{ documento.version }}</span>
-                                <Tag :value="documento.estado" :severity="statusSeverity(documento.estado)" />
-                                <Button text size="small" label="Descargar" @click="download(route('clientes.documentos.download', [cliente.id, documento.id]))" />
+                        <div class="mt-6 border-t border-surface-200 pt-5">
+                            <div class="mb-3 flex flex-wrap items-center justify-between gap-3"><div><p class="section-kicker">Generados por Kronik</p><h3 class="text-lg font-semibold">Documentos finales</h3></div><div class="flex flex-wrap items-center justify-end gap-2"><Tag v-if="isGenerationPolling" value="Actualizando" icon="pi pi-spin pi-spinner" severity="info" /><Tag :value="`${documentosGenerados.total ?? 0} registros`" severity="secondary" /></div></div>
+                            <div v-if="generationPollingTimedOut || generationPollingError" class="mb-3 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100"><span>{{ generationPollingTimedOut ? 'La comprobación automática terminó por tiempo. El servidor puede continuar generando el documento.' : 'No fue posible comprobar el estado automáticamente. La generación no fue cancelada.' }}</span><Button label="Actualizar estado" icon="pi pi-refresh" size="small" severity="warn" outlined @click="retryGenerationPolling" /></div>
+                            <div v-if="documentosGenerados.data?.length" class="document-list">
+                                <article v-for="generated in documentosGenerados.data" :key="generated.id" class="document-row">
+                                    <div class="document-icon" :class="generated.estado"><FileText :size="22" /></div>
+                                    <div class="document-main"><div class="document-title-line"><strong>{{ generated.version?.plantilla?.nombre }}</strong><DocumentVersionStatus :status="generated.estado" /><span class="version-label">v{{ generated.version?.numero }}</span></div><p>{{ generated.nombre_archivo || 'Archivo en preparación' }} · {{ formatDate(generated.solicitado_en) }}</p><p v-if="generated.error_mensaje" class="rejection-copy">{{ generated.error_mensaje }}</p></div>
+                                    <div v-if="generated.estado === 'generado'" class="row-actions"><Button v-if="can.read_documents" v-tooltip.top="'Ver documento final'" text rounded :aria-label="`Ver ${generated.nombre_archivo}`" @click="openViewer(route('documentos-generados.view', generated.id), can.download_documents ? route('documentos-generados.download', generated.id) : '', generated.nombre_archivo)"><template #icon><Eye :size="18" /></template></Button><Button v-if="can.download_documents" v-tooltip.top="'Descargar'" text rounded @click="download(route('documentos-generados.download', generated.id))"><template #icon><Download :size="18" /></template></Button></div>
+                                </article>
                             </div>
-                        </details>
+                            <div v-else class="empty-state"><FileText :size="30" /><strong>Aún no hay documentos generados</strong><span class="text-sm text-surface-500">Los archivos cargados arriba se conservan sin cambios.</span></div>
+                            <Paginator v-if="documentosGenerados.last_page > 1" class="mt-4" :first="(documentosGenerados.current_page - 1) * documentosGenerados.per_page" :rows="documentosGenerados.per_page" :total-records="documentosGenerados.total" @page="changeGeneratedPage" />
+                        </div>
                     </section>
 
                     <section v-show="activeTab === 'referencias'" class="workspace-section">
@@ -681,6 +969,7 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                                 <div class="timeline-dot" :class="{ revoked: consent.revocado_en }"><ShieldCheck :size="18" /></div>
                                 <div class="consent-copy"><strong>{{ consent.revocado_en ? 'Consentimiento revocado' : 'Consentimiento registrado' }}</strong><p>{{ optionLabel(opciones.medios_consentimiento, consent.medio) }} · {{ formatDate(consent.otorgado_en) }} · {{ consent.registrador.name }}</p><small v-if="consent.vence_en">Vigencia declarada hasta {{ formatDate(consent.vence_en) }}</small></div>
                                 <div class="row-actions">
+                                    <Button text rounded v-tooltip.top="'Ver evidencia segura'" @click="openViewer(route('clientes.consentimientos-sic.view', [cliente.id, consent.id]), route('clientes.consentimientos-sic.download', [cliente.id, consent.id]), consent.evidencia_nombre_original)"><template #icon><Eye :size="18" /></template></Button>
                                     <Button text rounded v-tooltip.top="'Descargar evidencia'" @click="download(route('clientes.consentimientos-sic.download', [cliente.id, consent.id]))"><template #icon><Download :size="18" /></template></Button>
                                     <Button v-if="can.update && !consent.revocado_en" text rounded severity="danger" v-tooltip.top="'Revocar'" @click="revokeConsent(consent)"><template #icon><Trash2 :size="18" /></template></Button>
                                 </div>
@@ -697,17 +986,60 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                 <div><label>Tipo</label><Select v-model="documentForm.tipo" :options="opciones.documentos" optionLabel="label" optionValue="value" fluid :disabled="selectedDocument !== null" /></div>
                 <div v-if="documentForm.tipo === 'adicional'"><label>Nombre del documento</label><InputText v-model="documentForm.nombre" fluid /></div>
                 <div><label>Fecha de vencimiento</label><DatePicker v-model="documentForm.vence_en" dateFormat="dd-mm-yy" showIcon fluid /></div>
-                <div><label>Archivo privado</label><FileUpload mode="basic" customUpload accept=".pdf,.jpg,.jpeg,.png" :maxFileSize="10485760" chooseLabel="Seleccionar PDF o imagen" @select="onDocumentSelected" /></div>
+                <div><label>Archivo privado</label><DocumentFileInput v-model="documentForm.archivo" :error="documentForm.errors.archivo" @clear-error="documentForm.clearErrors('archivo')" /></div>
                 <div><label>Notas</label><Textarea v-model="documentForm.notas" rows="3" fluid /></div>
-                <Message v-for="error in documentForm.errors" :key="error" severity="error" size="small">{{ error }}</Message>
+                <Message v-for="error in Object.fromEntries(Object.entries(documentForm.errors).filter(([key]) => key !== 'archivo'))" :key="error" severity="error" size="small">{{ error }}</Message>
                 <div class="dialog-actions"><Button type="button" label="Cancelar" text @click="documentDialog = false" /><Button type="submit" label="Guardar archivo" :loading="documentForm.processing"><template #icon><Upload :size="17" /></template></Button></div>
             </form>
         </Dialog>
 
+        <Dialog v-model:visible="generationDialog" modal header="Generar documento final" class="responsive-dialog">
+            <form class="dialog-form" @submit.prevent="generateDocument">
+                <Message severity="info" :closable="false">El PDF usará la versión activa exacta y una copia cifrada de los valores utilizados. No representa una firma.</Message>
+                <fieldset>
+                    <legend class="mb-1 text-sm font-medium">Plantilla activa</legend>
+                    <div class="max-h-48 space-y-2 overflow-auto rounded-xl border border-surface-200 p-2 dark:border-surface-700">
+                        <label v-for="option in generationOptions" :key="option.value" :for="`generation-template-${option.value}`" class="flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition" :class="generationForm.version_id === option.value ? 'border-primary bg-primary-50 dark:bg-primary-950/30' : 'border-transparent hover:bg-surface-50 dark:hover:bg-surface-800'">
+                            <RadioButton v-model="generationForm.version_id" :input-id="`generation-template-${option.value}`" name="generation-template" :value="option.value" class="mr-3 shrink-0" />
+                            <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ option.label }}</span>
+                        </label>
+                        <p v-if="!generationOptions.length" class="p-3 text-sm text-surface-500">No hay plantillas activas</p>
+                    </div>
+                    <Message v-if="generationForm.errors.version_id" severity="error" size="small">{{ generationForm.errors.version_id }}</Message>
+                </fieldset>
+                <fieldset v-if="selectedGeneration?.tipo === 'garantia'">
+                    <legend class="mb-1 text-sm font-medium">Garantía</legend>
+                    <div class="max-h-48 space-y-2 overflow-auto rounded-xl border border-surface-200 p-2 dark:border-surface-700">
+                        <label v-for="guarantee in cliente.garantias" :key="guarantee.id" :for="`generation-guarantee-${guarantee.id}`" class="flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition" :class="generationForm.garantia_id === guarantee.id ? 'border-primary bg-primary-50 dark:bg-primary-950/30' : 'border-transparent hover:bg-surface-50 dark:hover:bg-surface-800'">
+                            <RadioButton v-model="generationForm.garantia_id" :input-id="`generation-guarantee-${guarantee.id}`" name="generation-guarantee" :value="guarantee.id" class="mr-3 shrink-0" />
+                            <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ guarantee.descripcion }}</span>
+                        </label>
+                        <p v-if="!cliente.garantias.length" class="p-3 text-sm text-surface-500">No hay garantías disponibles</p>
+                    </div>
+                    <Message v-if="generationForm.errors.garantia_id" severity="error" size="small">{{ generationForm.errors.garantia_id }}</Message>
+                </fieldset>
+                <div v-if="generationCheckLoading" class="flex items-center gap-2 text-sm text-surface-500" role="status"><i class="pi pi-spin pi-spinner" /> Comprobando generaciones anteriores…</div>
+                <Message v-else-if="generationMatch?.bloquea" severity="warn" :closable="false">
+                    Ya hay una generación {{ generationMatch.estado }} para esta plantilla y contexto. Espera a que termine antes de solicitar otra.
+                </Message>
+                <div v-else-if="generationMatch?.estado === 'generado'" class="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-800 dark:bg-amber-950/30">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div><strong>Ya existe un PDF equivalente</strong><p class="mt-1 text-surface-600 dark:text-surface-300">{{ generationMatch.nombre_archivo }} · {{ formatDate(generationMatch.generado_en || generationMatch.solicitado_en) }}</p></div>
+                        <div class="flex gap-1"><Button v-if="generationMatch.view_url" type="button" label="Ver existente" icon="pi pi-eye" size="small" text @click="openViewer(generationMatch.view_url, generationMatch.download_url || '', generationMatch.nombre_archivo)" /><Button v-if="generationMatch.download_url" type="button" label="Descargar" icon="pi pi-download" size="small" text @click="download(generationMatch.download_url)" /></div>
+                    </div>
+                    <label for="confirm-duplicate" class="mt-3 !flex cursor-pointer items-start gap-3 !text-sm !font-medium"><Checkbox v-model="generationForm.confirm_duplicate" input-id="confirm-duplicate" binary class="mt-0.5 shrink-0" /><span>Confirmo que deseo crear otra copia trazable.</span></label>
+                    <Message v-if="generationForm.errors.confirm_duplicate" severity="error" size="small" class="mt-2">{{ generationForm.errors.confirm_duplicate }}</Message>
+                </div>
+                <Message v-if="!generationOptions.length" severity="warn" :closable="false">No hay versiones activas disponibles. Activa una plantilla desde el Centro documental.</Message>
+                <div class="dialog-actions"><Button type="button" label="Cancelar" text @click="generationDialog = false" /><Button type="submit" :label="generationMatch?.estado === 'generado' ? 'Generar otra copia' : 'Generar PDF'" icon="pi pi-file-pdf" :loading="generationForm.processing" :disabled="generationCheckLoading || generationMatch?.bloquea || (generationMatch?.estado === 'generado' && !generationForm.confirm_duplicate) || !generationOptions.length || !generationForm.version_id || (selectedGeneration?.tipo === 'garantia' && !generationForm.garantia_id)" /></div>
+            </form>
+        </Dialog>
+        <PrivateDocumentViewer v-model:visible="viewerVisible" :url="viewer.url" :download-url="viewer.downloadUrl" :name="viewer.name" />
+
         <Dialog v-model:visible="reviewDialog" modal header="Revisión documental" class="responsive-dialog narrow-dialog">
             <form class="dialog-form" @submit.prevent="updateDocumentStatus">
                 <SelectButton v-model="reviewForm.estado" :options="[{ label: 'Validar', value: 'validado' }, { label: 'Rechazar', value: 'rechazado' }, { label: 'Vencido', value: 'vencido' }]" optionLabel="label" optionValue="value" :allowEmpty="false" />
-                <div v-if="reviewForm.estado === 'rechazado'"><label>Motivo de rechazo</label><Textarea v-model="reviewForm.motivo_rechazo" rows="4" fluid /></div>
+                <div v-if="reviewForm.estado === 'rechazado'"><label for="document-rejection-reason">Motivo de rechazo</label><Textarea id="document-rejection-reason" v-model="reviewForm.motivo_rechazo" rows="4" maxlength="2000" fluid /><small class="text-surface-500">Entre 10 y 2000 caracteres.</small></div>
                 <Message v-for="error in reviewForm.errors" :key="error" severity="error" size="small">{{ error }}</Message>
                 <div class="dialog-actions"><Button type="button" label="Cancelar" text @click="reviewDialog = false" /><Button type="submit" label="Aplicar estado" :loading="reviewForm.processing" /></div>
             </form>
@@ -755,9 +1087,9 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                 <div><label>Medio</label><Select v-model="consentForm.medio" :options="opciones.medios_consentimiento" optionLabel="label" optionValue="value" fluid /></div>
                 <div><label>Fecha y hora</label><DatePicker v-model="consentForm.otorgado_en" dateFormat="dd-mm-yy" showTime hourFormat="24" showIcon fluid /></div>
                 <div><label>Vigencia declarada</label><DatePicker v-model="consentForm.vence_en" dateFormat="dd-mm-yy" showIcon fluid /></div>
-                <div><label>Evidencia privada</label><FileUpload mode="basic" customUpload accept=".pdf,.jpg,.jpeg,.png" :maxFileSize="10485760" chooseLabel="Seleccionar evidencia" @select="onConsentSelected" /></div>
+                <div><label>Evidencia privada</label><DocumentFileInput v-model="consentForm.evidencia" :error="consentForm.errors.evidencia" @clear-error="consentForm.clearErrors('evidencia')" /></div>
                 <div class="full-field"><label>Notas</label><Textarea v-model="consentForm.notas" rows="3" fluid /></div>
-                <Message v-for="error in consentForm.errors" :key="error" severity="error" size="small" class="full-field">{{ error }}</Message>
+                <Message v-for="error in Object.fromEntries(Object.entries(consentForm.errors).filter(([key]) => key !== 'evidencia'))" :key="error" severity="error" size="small" class="full-field">{{ error }}</Message>
                 <div class="dialog-actions full-field"><Button type="button" label="Cancelar" text @click="consentDialog = false" /><Button type="submit" label="Registrar consentimiento" :loading="consentForm.processing"><template #icon><ShieldCheck :size="17" /></template></Button></div>
             </form>
         </Dialog>
@@ -813,9 +1145,9 @@ function formatCurrency(value, currency = props.opciones.moneda) {
 .rejection-copy { color: #a8273b !important; }
 .version-label { font-size: .7rem; color: #777770; font-weight: 700; }
 .row-actions { display: flex; align-items: center; justify-content: flex-end; gap: .15rem; }
-.history-block { margin-top: 1.2rem; border: 1px solid #deded8; }
-.history-block summary { padding: .85rem 1rem; display: flex; align-items: center; gap: .5rem; cursor: pointer; font-weight: 700; }
-.history-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .75rem; align-items: center; padding: .7rem 1rem; border-top: 1px solid #e8e8e3; font-size: .8rem; }
+.document-history { grid-column: 1 / -1; margin-top: .25rem; border: 1px solid #deded8; border-radius: .5rem; background: #fafaf8; }
+.document-history summary { padding: .7rem .85rem; display: flex; align-items: center; gap: .5rem; cursor: pointer; font-size: .8rem; font-weight: 700; }
+.history-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .75rem; align-items: center; padding: .75rem .85rem; border-top: 1px solid #e8e8e3; font-size: .8rem; }
 .record-row { grid-template-columns: 44px minmax(0, 1.2fr) minmax(150px, .8fr) auto; }
 .record-symbol.coral { background: #fde4dd; color: #a53d25; }
 .record-contact { display: flex; flex-direction: column; font-size: .8rem; }

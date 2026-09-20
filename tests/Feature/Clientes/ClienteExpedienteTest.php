@@ -3,6 +3,8 @@
 use App\Models\Cliente;
 use App\Models\ClienteGarantia;
 use App\Models\ClienteVinculo;
+use App\Models\DocumentoPlantilla;
+use App\Models\DocumentoPlantillaVersion;
 use App\Services\ClienteExpedienteService;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -37,6 +39,47 @@ test('super admin can view and update a client KYC profile', function () {
         'ingresos_mensuales' => 52000.50,
         'egresos_mensuales' => 21750,
     ]);
+});
+
+test('generated documents are paginated newest first in the dossier', function () {
+    $user = actingAsSuperAdmin();
+    $cliente = Cliente::factory()->create();
+    $template = DocumentoPlantilla::create([
+        'clave' => 'paginacion-documental',
+        'nombre' => 'Paginación documental',
+        'tipo' => 'consentimiento_sic',
+        'creada_por' => $user->id,
+    ]);
+    $version = DocumentoPlantillaVersion::create([
+        'documento_plantilla_id' => $template->id,
+        'numero' => 1,
+        'estado' => 'activa',
+        'contenido_html' => '<p>Documento</p>',
+        'contenido_hash' => str_repeat('a', 64),
+    ]);
+
+    $latestId = null;
+    foreach (range(1, 12) as $number) {
+        $document = $cliente->documentosGenerados()->create([
+            'documento_plantilla_version_id' => $version->id,
+            'documentable_type' => 'clientes',
+            'documentable_id' => $cliente->id,
+            'estado' => 'generado',
+            'idempotency_key' => str()->uuid(),
+            'datos_utilizados' => [],
+            'solicitado_en' => now()->addMinutes($number),
+        ]);
+        $latestId = $document->id;
+    }
+
+    $this->actingAs($user)
+        ->get(route('clientes.expediente.show', $cliente))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('documentosGenerados.data', 10)
+            ->where('documentosGenerados.total', 12)
+            ->where('documentosGenerados.current_page', 1)
+            ->where('documentosGenerados.data.0.id', $latestId)
+        );
 });
 
 test('KYC profile rejects negative declared amounts', function () {

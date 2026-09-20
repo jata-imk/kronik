@@ -92,4 +92,9 @@ class Cliente extends Model
     {
         return $this->hasMany(ClienteConsentimientoSic::class);
     }
+
+    public function documentosGenerados()
+    {
+        return $this->hasMany(DocumentoGenerado::class);
+    }
 }

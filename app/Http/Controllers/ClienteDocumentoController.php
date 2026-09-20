@@ -10,8 +10,8 @@ use App\Models\Cliente;
 use App\Models\ClienteDocumento;
 use App\Services\ActivityLogService;
 use App\Services\ClienteDocumentoService;
+use App\Services\Documentos\RespuestaArchivoPrivado;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 
 class ClienteDocumentoController extends Controller
 {
@@ -40,11 +40,28 @@ class ClienteDocumentoController extends Controller
         return back()->with('success', 'Estado documental actualizado');
     }
 
-    public function download(Cliente $cliente, ClienteDocumento $documento)
+    public function view(Cliente $cliente, ClienteDocumento $documento, RespuestaArchivoPrivado $files)
     {
         $this->ensureOwnership($cliente, $documento);
         Gate::authorize('view', $cliente);
-        abort_unless($documento->path && Storage::disk($documento->disk)->exists($documento->path), 404);
+        abort_unless($documento->path, 404);
+
+        app(ActivityLogService::class)->log(
+            event: ActivityEvent::ClientDocumentViewed,
+            description: 'Documento de cliente visualizado',
+            subject: $cliente,
+            metadata: ['related' => ['type' => 'cliente_documento', 'id' => $documento->id]],
+            causer: request()->user(),
+        );
+
+        return $files->make($documento->disk, $documento->path, $documento->nombre_original);
+    }
+
+    public function download(Cliente $cliente, ClienteDocumento $documento, RespuestaArchivoPrivado $files)
+    {
+        $this->ensureOwnership($cliente, $documento);
+        Gate::authorize('view', $cliente);
+        abort_unless($documento->path, 404);
 
         app(ActivityLogService::class)->log(
             event: ActivityEvent::ClientDocumentDownloaded,
@@ -54,7 +71,7 @@ class ClienteDocumentoController extends Controller
             causer: request()->user(),
         );
 
-        return Storage::disk($documento->disk)->download($documento->path, $documento->nombre_original);
+        return $files->make($documento->disk, $documento->path, $documento->nombre_original, true);
     }
 
     private function ensureOwnership(Cliente $cliente, ClienteDocumento $documento): void

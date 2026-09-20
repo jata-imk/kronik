@@ -19,6 +19,18 @@ test('credit history routes resolve their configured menubar module', function (
         );
 });
 
+test('el catálogo administrativo no sobrescribe las rutas del menú compartido', function () {
+    $this->seed(ModulesAndPermissionsSeeder::class);
+    $this->seed(MenubarItemsSeeder::class);
+    $user = actingAsSuperAdmin();
+    $this->actingAs($user)->get(route('admin.menubar-items.index'))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('menubarCatalogo')
+            ->where('menubarItems.0.label', 'Inicio')
+            ->where('menubarItems.0.url', route('dashboard'))
+        );
+});
+
 test('client menubar actions resolve the current client URLs', function () {
     $this->seed(ModulesAndPermissionsSeeder::class);
     $this->seed(MenubarItemsSeeder::class);

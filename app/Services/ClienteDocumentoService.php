@@ -79,9 +79,10 @@ class ClienteDocumentoService
             ]);
         }
 
-        if ($estado === ClienteDocumentoEstado::Rechazado && blank($reason)) {
+        $reason = trim($reason ?? '');
+        if ($estado === ClienteDocumentoEstado::Rechazado && (mb_strlen($reason) < 10 || mb_strlen($reason) > 2000)) {
             throw ValidationException::withMessages([
-                'motivo_rechazo' => 'El motivo de rechazo es obligatorio.',
+                'motivo_rechazo' => 'El motivo de rechazo debe tener entre 10 y 2000 caracteres.',
             ]);
         }
 

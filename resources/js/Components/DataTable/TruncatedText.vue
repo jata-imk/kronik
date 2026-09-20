@@ -9,6 +9,7 @@ defineProps({
     <span
         class="-my-px block overflow-hidden text-ellipsis whitespace-nowrap py-px leading-normal"
         :style="{ maxWidth }"
+        :title="String(value ?? '—')"
     >
         {{ value ?? "—" }}
     </span>
