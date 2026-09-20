@@ -16,6 +16,8 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class SolicitudService
@@ -67,7 +69,7 @@ class SolicitudService
     {
         return DB::transaction(function () use ($solicitud, $data, $actor) {
             $solicitud = $this->bloquear($solicitud, $actor, 'update', $data['lock_version']);
-            if ($solicitud->estado !== SolicitudEstado::Borrador) {
+            if (! $solicitud->estado->editable()) {
                 $this->error('solicitud', 'La solicitud enviada no admite cambios de condiciones.');
             }
             $this->productoDisponible(array_key_exists('producto_version_id', $data) ? $data['producto_version_id'] : $solicitud->producto_version_id);
@@ -84,7 +86,7 @@ class SolicitudService
     {
         return DB::transaction(function () use ($solicitud, $version, $actor) {
             $solicitud = $this->bloquear($solicitud, $actor, 'update', $version);
-            if ($solicitud->estado !== SolicitudEstado::Borrador) {
+            if (! $solicitud->estado->editable()) {
                 $this->error('solicitud', 'Esta solicitud ya fue enviada a revisión.');
             }
             foreach (self::CAMPOS as $field) {
@@ -116,7 +118,7 @@ class SolicitudService
                 'simulacion_informativa' => $simulacion,
             ];
             $revision = $solicitud->revisiones()->create([
-                'numero' => 1, 'producto_version_id' => $producto->id, 'creada_por' => $actor->id,
+                'numero' => ($solicitud->revisiones()->max('numero') ?? 0) + 1, 'producto_version_id' => $producto->id, 'creada_por' => $actor->id,
                 'snapshot' => $snapshot, 'snapshot_hash' => hash('sha256', json_encode($snapshot, JSON_THROW_ON_ERROR)),
             ]);
             $this->productos->registrarUso($producto, 'solicitud_revisiones', $revision->id);
@@ -131,6 +133,9 @@ class SolicitudService
     {
         return DB::transaction(function () use ($solicitud, $version, $responsableId, $actor) {
             $solicitud = $this->bloquear($solicitud, $actor, 'assign', $version);
+            if (in_array($solicitud->estado, [SolicitudEstado::Rechazada, SolicitudEstado::Cancelada], true)) {
+                $this->error('solicitud', 'La solicitud está cerrada y no admite reasignaciones.');
+            }
             $responsable = User::findOrFail($responsableId);
             if ($responsable->status !== UserStatus::Active
                 || ! $responsable->sucursales()->whereKey($solicitud->sucursal_id)->exists()
@@ -139,6 +144,98 @@ class SolicitudService
             }
             $solicitud->update(['responsable_id' => $responsable->id, 'lock_version' => $solicitud->lock_version + 1]);
             $this->evento($solicitud, $actor, 'asignada', ActivityEvent::ApplicationAssigned, ['responsable_id' => $responsable->id]);
+
+            return $solicitud;
+        });
+    }
+
+    public function resolver(Solicitud $solicitud, array $data, User $actor): Solicitud
+    {
+        Gate::forUser($actor)->authorize(($data['accion'] ?? null) === 'cancelar' ? 'cancel' : 'review', $solicitud);
+        if (is_string($data['motivo'] ?? null)) {
+            $data['motivo'] = trim($data['motivo']);
+        }
+        $data = Validator::make($data, [
+            'lock_version' => 'required|integer|min:0',
+            'accion' => ['required', Rule::in(['devolver', 'rechazar', 'cancelar'])],
+            'motivo' => ['required', 'string', 'min:10', 'max:2000', 'regex:/\S/u'],
+            'responsable_id' => 'required_if:accion,devolver|nullable|integer|exists:users,id',
+        ])->validate();
+
+        return DB::transaction(function () use ($solicitud, $data, $actor) {
+            $solicitud = $this->bloquear($solicitud, $actor, $data['accion'] === 'cancelar' ? 'cancel' : 'review', $data['lock_version']);
+            $permitido = $data['accion'] === 'cancelar'
+                ? in_array($solicitud->estado, [SolicitudEstado::Borrador, SolicitudEstado::Devuelta, SolicitudEstado::EnRevision], true)
+                : $solicitud->estado === SolicitudEstado::EnRevision;
+            if (! $permitido) {
+                $this->error('solicitud', 'Esta acción no está disponible en el estado actual de la solicitud. Actualiza la página.');
+            }
+            $responsableId = $solicitud->responsable_id;
+            if ($data['accion'] === 'devolver') {
+                $responsable = User::findOrFail($data['responsable_id']);
+                if ($responsable->status !== UserStatus::Active
+                    || ! $responsable->sucursales()->whereKey($solicitud->sucursal_id)->exists()
+                    || ! Gate::forUser($responsable)->allows('viewAny', Solicitud::class)
+                    || ! $responsable->can('update solicitudes')) {
+                    $this->error('responsable_id', 'Selecciona una persona activa de esta sucursal con acceso para corregir solicitudes.');
+                }
+                $responsableId = $responsable->id;
+            }
+            [$estado, $event, $tipo] = match ($data['accion']) {
+                'devolver' => [SolicitudEstado::Devuelta, ActivityEvent::ApplicationReturned, 'devuelta'],
+                'rechazar' => [SolicitudEstado::Rechazada, ActivityEvent::ApplicationRejected, 'rechazada'],
+                'cancelar' => [SolicitudEstado::Cancelada, ActivityEvent::ApplicationCancelled, 'cancelada'],
+            };
+            $revision = $solicitud->revisiones()->latest('numero')->first();
+            $resolucion = $solicitud->resoluciones()->create([
+                'solicitud_revision_id' => $revision?->id, 'actor_id' => $actor->id,
+                'responsable_id' => $responsableId, 'accion' => $data['accion'], 'motivo' => trim($data['motivo']),
+            ]);
+            $solicitud->update(['estado' => $estado, 'responsable_id' => $responsableId, 'lock_version' => $solicitud->lock_version + 1]);
+            // Only identifiers in the shared timeline; never copy reasons into technical logs.
+            $this->evento($solicitud, $actor, $tipo, $event, ['resolucion_id' => $resolucion->id, 'revision' => $revision?->numero]);
+
+            return $solicitud;
+        });
+    }
+
+    public function dictaminar(Solicitud $solicitud, array $data, User $actor): Solicitud
+    {
+        $pld = ($data['tipo_dictamen'] ?? null) === 'pld';
+        $ability = $pld ? 'compliance' : 'evaluate';
+        Gate::forUser($actor)->authorize($ability, $solicitud);
+        foreach (['fundamento', 'fuentes', 'metodologia'] as $field) {
+            if (is_string($data[$field] ?? null)) {
+                $data[$field] = trim($data[$field]);
+            }
+        }
+        $data = Validator::make($data, [
+            'lock_version' => 'required|integer|min:0',
+            'tipo_dictamen' => ['required', Rule::in(['evaluacion', 'pld'])],
+            'resultado' => ['required', Rule::in($pld ? ['sin_observaciones', 'pendiente', 'bloqueada'] : ['favorable', 'pendiente', 'desfavorable'])],
+            'fundamento' => 'required|string|min:20|max:4000',
+            'fuentes' => 'required|string|min:10|max:2000',
+            'metodologia' => 'required|string|min:5|max:500',
+            'nivel_riesgo' => $pld ? ['required', Rule::in(['bajo', 'medio', 'alto', 'sin_determinar'])] : ['prohibited'],
+        ], ['nivel_riesgo.prohibited' => 'El nivel de riesgo se registra únicamente en la revisión PLD.'])->validate();
+        if ($pld && $data['resultado'] === 'sin_observaciones' && $data['nivel_riesgo'] === 'sin_determinar') {
+            $this->error('nivel_riesgo', 'Determina el nivel de riesgo antes de concluir sin observaciones.');
+        }
+
+        return DB::transaction(function () use ($solicitud, $data, $actor, $ability) {
+            $solicitud = $this->bloquear($solicitud, $actor, $ability, $data['lock_version']);
+            if ($solicitud->estado !== SolicitudEstado::EnRevision) {
+                $this->error('solicitud', 'Solo puedes registrar dictámenes cuando la solicitud está en revisión.');
+            }
+            $revision = $solicitud->revisiones()->latest('numero')->firstOrFail();
+            $dictamen = $solicitud->dictamenes()->create([
+                'solicitud_revision_id' => $revision->id, 'actor_id' => $actor->id,
+                'tipo' => $data['tipo_dictamen'], 'resultado' => $data['resultado'],
+                'contenido' => Arr::only($data, ['fundamento', 'fuentes', 'metodologia', 'nivel_riesgo']),
+            ]);
+            $solicitud->update(['lock_version' => $solicitud->lock_version + 1]);
+            $this->evento($solicitud, $actor, 'dictamen_registrado', ActivityEvent::ApplicationAssessmentRecorded,
+                ['dictamen_id' => $dictamen->id, 'revision' => $revision->numero]);
 
             return $solicitud;
         });

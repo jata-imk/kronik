@@ -5,6 +5,10 @@
 La tabla `activity_log` contiene eventos reales emitidos por autenticación, perfil de usuario, configuración de empresa, sucursales y el expediente de clientes. La interfaz administrativa consulta estos registros con filtros, paginación y exportación CSV.
 
 Originación P2 registra creación, actualización, envío y asignación de solicitudes.
+P3 agrega `solicitud.returned`, `solicitud.rejected`, `solicitud.cancelled` y
+`solicitud.assessment_recorded`. El log técnico no contiene motivos, fundamentos,
+fuentes ni riesgo; el timeline comparte solo identificadores de evidencia/revisión.
+Los dictámenes reservados se leen con permisos de la especialidad, no de auditoría.
 Decisiones, contratos, desembolsos, pagos y cobranza se incorporan en los siguientes
 incrementos coordinados 04–07; los reportes posteriores no sustituyen esos eventos.
 

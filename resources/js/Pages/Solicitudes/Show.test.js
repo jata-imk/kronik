@@ -46,4 +46,17 @@ describe("Detalle de solicitud", () => {
         expect(wrapper.text()).not.toContain("Completar borrador");
         expect(wrapper.text()).toContain("no hay aprobación ni autorización de desembolso");
     });
+    it("orienta la corrección de una devolución", () => {
+        const wrapper = render({ estado: "devuelta" });
+        expect(wrapper.text()).toContain("Devuelta para corrección");
+        expect(wrapper.text()).toContain("Corregir solicitud");
+        expect(wrapper.text()).toContain("Enviar a revisión");
+    });
+    it("oculta mutaciones en una solicitud cerrada incluso con permisos", () => {
+        const wrapper = render({ estado: "rechazada" }, { update: true, assign: true, review: true, cancel: true });
+        expect(wrapper.text()).toContain("Rechazada");
+        expect(wrapper.text()).not.toContain("Enviar a revisión");
+        expect(wrapper.text()).not.toContain("Asignar responsable");
+        expect(wrapper.text()).not.toContain("Devolución o cierre");
+    });
 });
