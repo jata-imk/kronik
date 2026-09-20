@@ -109,6 +109,7 @@ Route::middleware([
     Route::get('plantilla-documento-versiones/{version}/previsualizar', [DocumentoPlantillaController::class, 'preview'])->name('plantillas-documentos.preview');
 
     Route::post('clientes/{cliente}/documentos-generados', [DocumentoGeneradoController::class, 'store'])->name('documentos-generados.store');
+    Route::get('clientes/{cliente}/documentos-generados/existente', [DocumentoGeneradoController::class, 'existing'])->name('documentos-generados.existing');
     Route::get('documentos-generados/{documento}/estado', [DocumentoGeneradoController::class, 'status'])->name('documentos-generados.status');
     Route::get('documentos-generados/{documento}/ver', [DocumentoGeneradoController::class, 'view'])->name('documentos-generados.view');
     Route::get('documentos-generados/{documento}/descargar', [DocumentoGeneradoController::class, 'download'])->name('documentos-generados.download');

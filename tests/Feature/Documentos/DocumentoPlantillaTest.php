@@ -123,6 +123,59 @@ test('generación es idempotente trazable y produce un PDF privado', function ()
     $this->actingAs($unauthorized)->get(route('documentos-generados.download', $document))->assertForbidden();
 });
 
+test('regeneración bloquea trabajos activos y exige confirmar una nueva copia', function () {
+    Queue::fake();
+    $user = actingAsSuperAdmin();
+    EmpresaConfiguracion::create(['singleton_key' => 'default', 'razon_social' => 'Financiera de prueba', 'zona_horaria' => 'America/Mexico_City']);
+    $client = Cliente::factory()->create();
+    $template = app(DocumentoPlantillaVersionService::class)->create(plantillaDocumentoPayload(), $user->id);
+    $version = app(DocumentoPlantillaVersionService::class)->activate($template->versiones()->firstOrFail());
+
+    $this->actingAs($user)->post(route('documentos-generados.store', $client), [
+        'version_id' => $version->id,
+        'idempotency_key' => (string) str()->uuid(),
+    ])->assertSessionHasNoErrors();
+
+    $this->actingAs($user)->post(route('documentos-generados.store', $client), [
+        'version_id' => $version->id,
+        'idempotency_key' => (string) str()->uuid(),
+    ])->assertSessionHasErrors([
+        'version_id' => 'Ya existe una generación en curso para esta plantilla y contexto. Espere a que termine antes de solicitar otra.',
+    ]);
+
+    $existing = $client->documentosGenerados()->firstOrFail();
+    $existing->update([
+        'estado' => DocumentoGeneradoEstado::Generado,
+        'disk' => 'local',
+        'path' => "documentos-generados/{$existing->id}.pdf",
+        'nombre_archivo' => 'consentimiento.pdf',
+        'mime_type' => 'application/pdf',
+        'generado_en' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->getJson(route('documentos-generados.existing', $client).'?version_id='.$version->id)
+        ->assertOk()
+        ->assertJsonPath('documento.id', $existing->id)
+        ->assertJsonPath('documento.estado', 'generado')
+        ->assertJsonPath('documento.bloquea', false);
+
+    $this->actingAs($user)->post(route('documentos-generados.store', $client), [
+        'version_id' => $version->id,
+        'idempotency_key' => (string) str()->uuid(),
+    ])->assertSessionHasErrors([
+        'confirm_duplicate' => 'Ya existe un PDF generado para esta plantilla y contexto. Confirme que desea crear otra copia trazable.',
+    ]);
+
+    $this->actingAs($user)->post(route('documentos-generados.store', $client), [
+        'version_id' => $version->id,
+        'idempotency_key' => (string) str()->uuid(),
+        'confirm_duplicate' => true,
+    ])->assertSessionHasNoErrors();
+
+    expect($client->documentosGenerados()->count())->toBe(2);
+});
+
 test('contratos no se generan antes de originación', function () {
     Queue::fake();
     $user = actingAsSuperAdmin();

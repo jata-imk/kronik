@@ -1,9 +1,9 @@
 <script setup>
+import TruncatedText from "@/Components/DataTable/TruncatedText.vue";
 import { router } from "@inertiajs/vue3";
 import { FilterMatchMode } from "@primevue/core/api";
 import { useToast } from "primevue/usetoast";
-import { computed, ref } from "vue";
-import TruncatedText from "@/Components/DataTable/TruncatedText.vue";
+import { computed, ref, watch } from "vue";
 
 // Props para recibir los datos del controlador
 const props = defineProps({
@@ -29,6 +29,14 @@ const clienteSeleccionado = ref(null);
 const transferDialog = ref(false);
 const targetSucursalId = ref(null);
 const transferProcessing = ref(false);
+const scope = ref(props.filters.scope ?? "current");
+
+watch(
+    () => props.filters.scope,
+    (value) => {
+        scope.value = value ?? "current";
+    },
+);
 
 // Inicialización de filtros
 const filters = ref({
@@ -120,11 +128,22 @@ const confirmDelete = (cliente) => {
     deleteDialog.value = true;
 };
 
-const changeScope = (scope) => {
+const changeScope = (nextScope) => {
+    if (!nextScope) return;
+    const previous = props.filters.scope ?? "current";
+    // Refleja la selección de inmediato mientras Inertia actualiza los datos.
+    // Si la visita falla, el filtro recibido del servidor vuelve a sincronizarla.
+    scope.value = nextScope;
     router.get(
         route("clientes.index"),
-        { scope },
-        { preserveState: true, replace: true },
+        { scope: nextScope },
+        {
+            preserveState: true,
+            replace: true,
+            onError: () => {
+                scope.value = previous;
+            },
+        },
     );
 };
 
@@ -254,7 +273,7 @@ const exportData = async () => {
                 <Button v-if="can.create" label="Importar" icon="pi pi-upload" class="p-button-info" @click="showImportDialog" />
                 <Button label="Exportar" icon="pi pi-download" class="p-button-help" @click="exportData" />
                 <SelectButton
-                    :model-value="filters.scope"
+                    :model-value="scope"
                     :options="[{ label: 'Sucursal actual', value: 'current' }, { label: 'Todas', value: 'all' }]"
                     option-label="label"
                     option-value="value"
@@ -397,15 +416,15 @@ const exportData = async () => {
             <Column header="Acciones" :exportable="false" :frozen="true" align-frozen="right">
                 <template #body="{ data }">
                     <div class="flex gap-2">
-                        <Button :aria-label="`Abrir expediente de ${data.nombre_completo}`" icon="pi pi-folder-open" class="p-button-rounded p-button-warning p-button-sm"
+                        <Button v-tooltip.top="'Abrir expediente'" :aria-label="`Abrir expediente de ${data.nombre_completo}`" icon="pi pi-folder-open" class="p-button-rounded p-button-warning p-button-sm"
                             @click="viewExpediente(data.id)" />
-                        <Button :aria-label="`Ver ${data.nombre_completo}`" icon="pi pi-eye" class="p-button-rounded p-button-info p-button-sm"
+                        <Button v-tooltip.top="'Ver cliente'" :aria-label="`Ver ${data.nombre_completo}`" icon="pi pi-eye" class="p-button-rounded p-button-info p-button-sm"
                             @click="viewCliente(data.id)" />
-                        <Button v-if="data.can_update" :aria-label="`Editar ${data.nombre_completo}`" icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-sm"
+                        <Button v-if="data.can_update" v-tooltip.top="'Editar cliente'" :aria-label="`Editar ${data.nombre_completo}`" icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-sm"
                             @click="editCliente(data.id)" />
-                        <Button v-if="data.can_transfer" :aria-label="`Trasladar ${data.nombre_completo}`" icon="pi pi-arrow-right-arrow-left" text
+                        <Button v-if="data.can_transfer" v-tooltip.top="'Trasladar cliente'" :aria-label="`Trasladar ${data.nombre_completo}`" icon="pi pi-arrow-right-arrow-left" text
                             @click="openTransfer(data)" />
-                        <Button v-if="data.can_delete" :aria-label="`Eliminar ${data.nombre_completo}`" icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm"
+                        <Button v-if="data.can_delete" v-tooltip.top="'Eliminar cliente'" :aria-label="`Eliminar ${data.nombre_completo}`" icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm"
                             @click="confirmDelete(data)" />
                     </div>
                 </template>

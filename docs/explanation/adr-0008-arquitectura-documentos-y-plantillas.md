@@ -22,6 +22,8 @@ Las plantillas son globales para la instancia. El cliente y la sucursal son cont
 
 La generación es idempotente y se ejecuta en cola. La generación de consentimientos SIC se vincula al cliente y la de garantías a `ClienteGarantia`. Las plantillas de contratos pueden editarse y previsualizarse, pero el documento final esperará la solicitud o crédito introducido por Backlog 04.
 
+La segunda revisión funcional aclara la retención: cada generación confirmada se conserva como evidencia independiente. Para una misma combinación de cliente, versión y entidad vinculada, un trabajo pendiente o en proceso bloquea otro; si ya existe un PDF terminado, la interfaz lo muestra y exige confirmación para crear una copia adicional. La paginación limita la carga de la interfaz, no la historia almacenada.
+
 La firma queda detrás de la frontera del documento generado. Este backlog no agrega proveedor, evidencia, estado ni interfaz de firma.
 
 ## Consecuencias
@@ -29,4 +31,5 @@ La firma queda detrás de la frontera del documento generado. Este backlog no ag
 - Los cambios históricos destructivos fallan también en el modelo, no solamente en la UI.
 - Se duplica únicamente el conjunto mínimo de valores necesario para explicar el documento, cifrado en base de datos; el activity log no recibe estos valores.
 - Las entidades vinculadas a documentos generados no pueden eliminarse sin preservar primero la trazabilidad.
+- Una regeneración no sobrescribe ni reutiliza el archivo previo: crea snapshot, hash, archivo y evento de auditoría nuevos.
 - Agregar una variable requiere código y pruebas, lo cual evita capacidades implícitas o inseguras.

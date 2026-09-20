@@ -1,7 +1,10 @@
 <script setup>
 import { computed } from "vue";
 
-const props = defineProps({ status: { type: String, required: true } });
+const props = defineProps({
+    status: { type: String, required: true },
+    compact: { type: Boolean, default: false },
+});
 const meta = computed(
     () =>
         ({
@@ -49,8 +52,14 @@ const meta = computed(
 </script>
 
 <template>
-    <Tag :severity="meta.severity" rounded>
+    <Tag :severity="meta.severity" rounded :class="compact ? 'document-status-compact' : ''">
         <span :class="meta.icon" aria-hidden="true" />
         <span>{{ meta.label }}</span>
     </Tag>
 </template>
+
+<style scoped>
+.document-status-compact { font-size: .68rem; line-height: 1; white-space: nowrap; }
+.document-status-compact :deep(.p-tag-icon),
+.document-status-compact .pi { font-size: .65rem; }
+</style>

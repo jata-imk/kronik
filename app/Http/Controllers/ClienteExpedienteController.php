@@ -12,6 +12,7 @@ use App\Enums\DocumentoPlantillaTipo;
 use App\Enums\DocumentoPlantillaVersionEstado;
 use App\Http\Requests\Clientes\UpdateClienteKycRequest;
 use App\Models\Cliente;
+use App\Models\DocumentoGenerado;
 use App\Models\DocumentoPlantilla;
 use App\Models\EmpresaConfiguracion;
 use App\Services\ClienteExpedienteService;
@@ -33,7 +34,6 @@ class ClienteExpedienteController extends Controller
             'vinculosEntrantes.cliente.datosFiscales',
             'garantias.propietario.datosFiscales',
             'consentimientosSic.registrador:id,name',
-            'documentosGenerados.version.plantilla',
         ]);
 
         $actuales = $cliente->documentos->where('es_actual', true);
@@ -100,6 +100,15 @@ class ClienteExpedienteController extends Controller
                 'read_documents' => request()->user()->can('read documentos'),
                 'download_documents' => request()->user()->can('download documentos'),
             ],
+            'documentosGenerados' => fn () => request()->user()->can('read documentos')
+                ? $cliente->documentosGenerados()
+                    ->with('version.plantilla')
+                    ->latest('solicitado_en')
+                    ->paginate(10, ['*'], 'documentos_page')
+                    ->withQueryString()
+                : DocumentoGenerado::query()
+                    ->whereRaw('1 = 0')
+                    ->paginate(10, ['*'], 'documentos_page'),
             'plantillasDocumentos' => fn () => request()->user()->can('generate documentos')
                 ? DocumentoPlantilla::query()
                     ->whereIn('tipo', [DocumentoPlantillaTipo::ConsentimientoSic->value, DocumentoPlantillaTipo::Garantia->value])

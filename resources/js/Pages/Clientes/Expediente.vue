@@ -22,12 +22,12 @@ import {
 } from "lucide-vue-next";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 
 import DocumentFileInput from "@/Components/Documents/DocumentFileInput.vue";
-import { documentVersionChain } from "@/Composables/documentHistory";
 import DocumentVersionStatus from "@/Components/Documents/DocumentVersionStatus.vue";
 import PrivateDocumentViewer from "@/Components/Documents/PrivateDocumentViewer.vue";
+import { documentVersionChain } from "@/Composables/documentHistory";
 import { useAsyncPolling } from "@/Composables/useAsyncPolling";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 
@@ -39,6 +39,10 @@ const props = defineProps({
     opciones: { type: Object, required: true },
     can: { type: Object, required: true },
     plantillasDocumentos: { type: Array, default: () => [] },
+    documentosGenerados: {
+        type: Object,
+        default: () => ({ data: [], current_page: 1, per_page: 10, total: 0 }),
+    },
 });
 
 const toast = useToast();
@@ -88,13 +92,8 @@ const currentDocuments = computed(() =>
     props.cliente.documentos.filter((documento) => documento.es_actual),
 );
 
-const historyDocument = ref(null);
-const historyDialog = ref(false);
-const selectedHistory = computed(() => documentVersionChain(props.cliente.documentos, historyDocument.value));
-const openHistory = (documento) => { historyDocument.value = documento; historyDialog.value = true; };
-const documentHistory = computed(() =>
-    props.cliente.documentos.filter((documento) => !documento.es_actual),
-);
+const historyFor = (documento) =>
+    documentVersionChain(props.cliente.documentos, documento);
 
 const generationOptions = computed(() =>
     props.plantillasDocumentos.flatMap((template) =>
@@ -116,13 +115,85 @@ const generationForm = useForm({
     version_id: null,
     garantia_id: null,
     idempotency_key: crypto.randomUUID(),
+    confirm_duplicate: false,
 });
+
+const generationMatch = ref(null);
+const generationCheckLoading = ref(false);
+let generationCheckRequest;
 
 function openGeneration() {
     generationForm.reset();
     generationForm.idempotency_key = crypto.randomUUID();
+    generationForm.confirm_duplicate = false;
+    generationMatch.value = null;
     generationDialog.value = true;
 }
+
+async function checkExistingGeneration() {
+    generationCheckRequest?.abort();
+    generationMatch.value = null;
+    generationForm.confirm_duplicate = false;
+    generationForm.clearErrors("confirm_duplicate", "version_id");
+
+    if (
+        !generationDialog.value ||
+        !generationForm.version_id ||
+        (selectedGeneration.value?.tipo === "garantia" &&
+            !generationForm.garantia_id)
+    ) {
+        generationCheckLoading.value = false;
+        return;
+    }
+
+    const controller = new AbortController();
+    generationCheckRequest = controller;
+    generationCheckLoading.value = true;
+    try {
+        const { data } = await axios.get(
+            route("documentos-generados.existing", props.cliente.id),
+            {
+                params: {
+                    version_id: generationForm.version_id,
+                    garantia_id: generationForm.garantia_id || undefined,
+                },
+                signal: controller.signal,
+            },
+        );
+        generationMatch.value = data.documento;
+    } catch (error) {
+        if (!axios.isCancel(error)) {
+            toast.add({
+                severity: "error",
+                summary: "No se pudo comprobar el historial",
+                detail: "Inténtalo nuevamente antes de generar el documento.",
+                life: 4000,
+            });
+        }
+    } finally {
+        if (generationCheckRequest === controller)
+            generationCheckLoading.value = false;
+    }
+}
+
+watch(
+    () => generationForm.version_id,
+    () => {
+        if (selectedGeneration.value?.tipo !== "garantia")
+            generationForm.garantia_id = null;
+    },
+);
+
+watch(
+    () => [
+        generationDialog.value,
+        generationForm.version_id,
+        generationForm.garantia_id,
+    ],
+    checkExistingGeneration,
+);
+
+onBeforeUnmount(() => generationCheckRequest?.abort());
 
 function generateDocument() {
     generationForm.post(route("documentos-generados.store", props.cliente.id), {
@@ -135,6 +206,16 @@ function generateDocument() {
                 detail: "El PDF se está preparando de forma segura.",
                 life: 4000,
             });
+            router.get(
+                route("clientes.expediente.show", props.cliente.id),
+                { documentos_page: 1 },
+                {
+                    only: ["documentosGenerados"],
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                },
+            );
         },
         onError: (errors) =>
             toast.add({
@@ -149,7 +230,7 @@ function generateDocument() {
 const activeGenerationStates = new Set(["pendiente", "procesando"]);
 const pendingGenerationIds = computed(() =>
     props.can.read_documents
-        ? (props.cliente.documentos_generados ?? [])
+        ? (props.documentosGenerados.data ?? [])
               .filter((document) => activeGenerationStates.has(document.estado))
               .map((document) => document.id)
         : [],
@@ -161,12 +242,25 @@ const pendingGenerationKey = computed(() =>
 function reloadGeneratedDocuments() {
     return new Promise((resolve) => {
         router.reload({
-            only: ["cliente"],
+            only: ["documentosGenerados"],
             preserveScroll: true,
             preserveState: true,
             onFinish: resolve,
         });
     });
+}
+
+function changeGeneratedPage({ page }) {
+    router.get(
+        route("clientes.expediente.show", props.cliente.id),
+        { documentos_page: page + 1 },
+        {
+            only: ["documentosGenerados"],
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        },
+    );
 }
 
 const {
@@ -589,6 +683,16 @@ function statusSeverity(status) {
     }[status];
 }
 
+function statusIcon(status) {
+    return {
+        pendiente: "pi pi-clock",
+        recibido: "pi pi-inbox",
+        validado: "pi pi-check-circle",
+        rechazado: "pi pi-times-circle",
+        vencido: "pi pi-calendar-times",
+    }[status];
+}
+
 function formatDate(value) {
     if (!value) return "Sin fecha";
     return new Intl.DateTimeFormat("es-MX", { dateStyle: "medium" }).format(
@@ -746,7 +850,6 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                                     <p v-if="documento.motivo_rechazo" class="rejection-copy">{{ documento.motivo_rechazo }}</p>
                                 </div>
                                 <div class="row-actions">
-                                    <Button v-if="documento.reemplaza_documento_id" label="Historial" icon="pi pi-history" text @click="openHistory(documento)" />
                                     <Button v-if="documento.nombre_original" v-tooltip.top="'Ver de forma segura'" text rounded severity="secondary" :aria-label="`Ver ${documento.nombre_original}`" @click="openViewer(route('clientes.documentos.view', [cliente.id, documento.id]), route('clientes.documentos.download', [cliente.id, documento.id]), documento.nombre_original)">
                                         <template #icon><Eye :size="18" /></template>
                                     </Button>
@@ -760,27 +863,38 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                                         <template #icon><Upload :size="18" /></template>
                                     </Button>
                                 </div>
+                                <details v-if="historyFor(documento).length" class="document-history">
+                                    <summary><FileClock :size="17" /> Historial ({{ historyFor(documento).length }})</summary>
+                                    <div v-for="historical in historyFor(documento)" :key="historical.id" class="history-row">
+                                        <div class="min-w-0">
+                                            <div class="document-title-line">
+                                                <strong>V{{ historical.version }}</strong>
+                                                <Tag :value="optionLabel(opciones.estados_documento, historical.estado)" :severity="statusSeverity(historical.estado)" :icon="statusIcon(historical.estado)" />
+                                            </div>
+                                            <p class="break-all">{{ historical.nombre_original }}</p>
+                                            <p>{{ formatDate(historical.recibido_en) }}<span v-if="historical.revisor"> · Revisó {{ historical.revisor.name }}</span><span v-if="historical.revisado_en"> · {{ formatDate(historical.revisado_en) }}</span></p>
+                                            <p v-if="historical.motivo_rechazo" class="rejection-copy"><i class="pi pi-exclamation-circle mr-1" />{{ historical.motivo_rechazo }}</p>
+                                        </div>
+                                        <div class="row-actions">
+                                            <Button v-if="historical.nombre_original" v-tooltip.top="'Ver versión'" text rounded severity="secondary" :aria-label="`Ver versión ${historical.version}`" @click="openViewer(route('clientes.documentos.view', [cliente.id, historical.id]), route('clientes.documentos.download', [cliente.id, historical.id]), historical.nombre_original)"><template #icon><Eye :size="17" /></template></Button>
+                                            <Button v-if="historical.nombre_original" v-tooltip.top="'Descargar versión'" text rounded severity="secondary" :aria-label="`Descargar versión ${historical.version}`" @click="download(route('clientes.documentos.download', [cliente.id, historical.id]))"><template #icon><Download :size="17" /></template></Button>
+                                        </div>
+                                    </div>
+                                </details>
                             </article>
                         </div>
-                        <details v-if="documentHistory.length" class="history-block">
-                            <summary><FileClock :size="17" /> Historial de versiones ({{ documentHistory.length }})</summary>
-                            <div v-for="documento in documentHistory" :key="documento.id" class="history-row">
-                                <span>{{ optionLabel(opciones.documentos, documento.tipo) }} · v{{ documento.version }}</span>
-                                <Tag :value="documento.estado" :severity="statusSeverity(documento.estado)" />
-                                <div class="flex gap-1"><Button text size="small" label="Ver" @click="openViewer(route('clientes.documentos.view', [cliente.id, documento.id]), route('clientes.documentos.download', [cliente.id, documento.id]), documento.nombre_original)" /><Button text size="small" label="Descargar" @click="download(route('clientes.documentos.download', [cliente.id, documento.id]))" /></div>
-                            </div>
-                        </details>
                         <div class="mt-6 border-t border-surface-200 pt-5">
-                            <div class="mb-3 flex flex-wrap items-center justify-between gap-3"><div><p class="section-kicker">Generados por Kronik</p><h3 class="text-lg font-semibold">Documentos finales</h3></div><div class="flex flex-wrap items-center justify-end gap-2"><Tag v-if="isGenerationPolling" value="Actualizando" icon="pi pi-spin pi-spinner" severity="info" /><Tag :value="`${cliente.documentos_generados?.length ?? 0} registros`" severity="secondary" /></div></div>
+                            <div class="mb-3 flex flex-wrap items-center justify-between gap-3"><div><p class="section-kicker">Generados por Kronik</p><h3 class="text-lg font-semibold">Documentos finales</h3></div><div class="flex flex-wrap items-center justify-end gap-2"><Tag v-if="isGenerationPolling" value="Actualizando" icon="pi pi-spin pi-spinner" severity="info" /><Tag :value="`${documentosGenerados.total ?? 0} registros`" severity="secondary" /></div></div>
                             <div v-if="generationPollingTimedOut || generationPollingError" class="mb-3 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 sm:flex-row sm:items-center sm:justify-between dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100"><span>{{ generationPollingTimedOut ? 'La comprobación automática terminó por tiempo. El servidor puede continuar generando el documento.' : 'No fue posible comprobar el estado automáticamente. La generación no fue cancelada.' }}</span><Button label="Actualizar estado" icon="pi pi-refresh" size="small" severity="warn" outlined @click="retryGenerationPolling" /></div>
-                            <div v-if="cliente.documentos_generados?.length" class="document-list">
-                                <article v-for="generated in cliente.documentos_generados" :key="generated.id" class="document-row">
+                            <div v-if="documentosGenerados.data?.length" class="document-list">
+                                <article v-for="generated in documentosGenerados.data" :key="generated.id" class="document-row">
                                     <div class="document-icon" :class="generated.estado"><FileText :size="22" /></div>
                                     <div class="document-main"><div class="document-title-line"><strong>{{ generated.version?.plantilla?.nombre }}</strong><DocumentVersionStatus :status="generated.estado" /><span class="version-label">v{{ generated.version?.numero }}</span></div><p>{{ generated.nombre_archivo || 'Archivo en preparación' }} · {{ formatDate(generated.solicitado_en) }}</p><p v-if="generated.error_mensaje" class="rejection-copy">{{ generated.error_mensaje }}</p></div>
                                     <div v-if="generated.estado === 'generado'" class="row-actions"><Button v-if="can.read_documents" v-tooltip.top="'Ver documento final'" text rounded :aria-label="`Ver ${generated.nombre_archivo}`" @click="openViewer(route('documentos-generados.view', generated.id), can.download_documents ? route('documentos-generados.download', generated.id) : '', generated.nombre_archivo)"><template #icon><Eye :size="18" /></template></Button><Button v-if="can.download_documents" v-tooltip.top="'Descargar'" text rounded @click="download(route('documentos-generados.download', generated.id))"><template #icon><Download :size="18" /></template></Button></div>
                                 </article>
                             </div>
                             <div v-else class="empty-state"><FileText :size="30" /><strong>Aún no hay documentos generados</strong><span class="text-sm text-surface-500">Los archivos cargados arriba se conservan sin cambios.</span></div>
+                            <Paginator v-if="documentosGenerados.last_page > 1" class="mt-4" :first="(documentosGenerados.current_page - 1) * documentosGenerados.per_page" :rows="documentosGenerados.per_page" :total-records="documentosGenerados.total" @page="changeGeneratedPage" />
                         </div>
                     </section>
 
@@ -886,7 +1000,7 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                     <legend class="mb-1 text-sm font-medium">Plantilla activa</legend>
                     <div class="max-h-48 space-y-2 overflow-auto rounded-xl border border-surface-200 p-2 dark:border-surface-700">
                         <label v-for="option in generationOptions" :key="option.value" :for="`generation-template-${option.value}`" class="flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition" :class="generationForm.version_id === option.value ? 'border-primary bg-primary-50 dark:bg-primary-950/30' : 'border-transparent hover:bg-surface-50 dark:hover:bg-surface-800'">
-                            <RadioButton v-model="generationForm.version_id" :input-id="`generation-template-${option.value}`" name="generation-template" :value="option.value" />
+                            <RadioButton v-model="generationForm.version_id" :input-id="`generation-template-${option.value}`" name="generation-template" :value="option.value" class="mr-3 shrink-0" />
                             <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ option.label }}</span>
                         </label>
                         <p v-if="!generationOptions.length" class="p-3 text-sm text-surface-500">No hay plantillas activas</p>
@@ -897,19 +1011,29 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                     <legend class="mb-1 text-sm font-medium">Garantía</legend>
                     <div class="max-h-48 space-y-2 overflow-auto rounded-xl border border-surface-200 p-2 dark:border-surface-700">
                         <label v-for="guarantee in cliente.garantias" :key="guarantee.id" :for="`generation-guarantee-${guarantee.id}`" class="flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition" :class="generationForm.garantia_id === guarantee.id ? 'border-primary bg-primary-50 dark:bg-primary-950/30' : 'border-transparent hover:bg-surface-50 dark:hover:bg-surface-800'">
-                            <RadioButton v-model="generationForm.garantia_id" :input-id="`generation-guarantee-${guarantee.id}`" name="generation-guarantee" :value="guarantee.id" />
+                            <RadioButton v-model="generationForm.garantia_id" :input-id="`generation-guarantee-${guarantee.id}`" name="generation-guarantee" :value="guarantee.id" class="mr-3 shrink-0" />
                             <span class="min-w-0 flex-1 truncate text-sm font-medium">{{ guarantee.descripcion }}</span>
                         </label>
                         <p v-if="!cliente.garantias.length" class="p-3 text-sm text-surface-500">No hay garantías disponibles</p>
                     </div>
                     <Message v-if="generationForm.errors.garantia_id" severity="error" size="small">{{ generationForm.errors.garantia_id }}</Message>
                 </fieldset>
+                <div v-if="generationCheckLoading" class="flex items-center gap-2 text-sm text-surface-500" role="status"><i class="pi pi-spin pi-spinner" /> Comprobando generaciones anteriores…</div>
+                <Message v-else-if="generationMatch?.bloquea" severity="warn" :closable="false">
+                    Ya hay una generación {{ generationMatch.estado }} para esta plantilla y contexto. Espera a que termine antes de solicitar otra.
+                </Message>
+                <div v-else-if="generationMatch?.estado === 'generado'" class="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-800 dark:bg-amber-950/30">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div><strong>Ya existe un PDF equivalente</strong><p class="mt-1 text-surface-600 dark:text-surface-300">{{ generationMatch.nombre_archivo }} · {{ formatDate(generationMatch.generado_en || generationMatch.solicitado_en) }}</p></div>
+                        <div class="flex gap-1"><Button v-if="generationMatch.view_url" type="button" label="Ver existente" icon="pi pi-eye" size="small" text @click="openViewer(generationMatch.view_url, generationMatch.download_url || '', generationMatch.nombre_archivo)" /><Button v-if="generationMatch.download_url" type="button" label="Descargar" icon="pi pi-download" size="small" text @click="download(generationMatch.download_url)" /></div>
+                    </div>
+                    <label for="confirm-duplicate" class="mt-3 !flex cursor-pointer items-start gap-3 !text-sm !font-medium"><Checkbox v-model="generationForm.confirm_duplicate" input-id="confirm-duplicate" binary class="mt-0.5 shrink-0" /><span>Confirmo que deseo crear otra copia trazable.</span></label>
+                    <Message v-if="generationForm.errors.confirm_duplicate" severity="error" size="small" class="mt-2">{{ generationForm.errors.confirm_duplicate }}</Message>
+                </div>
                 <Message v-if="!generationOptions.length" severity="warn" :closable="false">No hay versiones activas disponibles. Activa una plantilla desde el Centro documental.</Message>
-                <div class="dialog-actions"><Button type="button" label="Cancelar" text @click="generationDialog = false" /><Button type="submit" label="Generar PDF" icon="pi pi-file-pdf" :loading="generationForm.processing" :disabled="!generationOptions.length || !generationForm.version_id || (selectedGeneration?.tipo === 'garantia' && !generationForm.garantia_id)" /></div>
+                <div class="dialog-actions"><Button type="button" label="Cancelar" text @click="generationDialog = false" /><Button type="submit" :label="generationMatch?.estado === 'generado' ? 'Generar otra copia' : 'Generar PDF'" icon="pi pi-file-pdf" :loading="generationForm.processing" :disabled="generationCheckLoading || generationMatch?.bloquea || (generationMatch?.estado === 'generado' && !generationForm.confirm_duplicate) || !generationOptions.length || !generationForm.version_id || (selectedGeneration?.tipo === 'garantia' && !generationForm.garantia_id)" /></div>
             </form>
         </Dialog>
-
-        <Dialog v-model:visible="historyDialog" modal :header="`Historial: ${historyDocument?.nombre || 'Documento'}`" :style="{width:'min(760px,96vw)'}"><div v-for="documento in selectedHistory" :key="documento.id" class="my-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3"><div class="min-w-0"><strong>Versión {{ documento.version }}</strong><p class="break-all">{{ documento.nombre_original }}</p><p>{{ formatDate(documento.recibido_en) }}</p><p v-if="documento.motivo_rechazo">{{ documento.motivo_rechazo }}</p></div><div class="flex gap-2"><Button label="Ver" text @click="openViewer(route('clientes.documentos.view', [cliente.id, documento.id]), route('clientes.documentos.download', [cliente.id, documento.id]), documento.nombre_original)" /><Button label="Descargar" text @click="download(route('clientes.documentos.download', [cliente.id, documento.id]))" /></div></div></Dialog>
         <PrivateDocumentViewer v-model:visible="viewerVisible" :url="viewer.url" :download-url="viewer.downloadUrl" :name="viewer.name" />
 
         <Dialog v-model:visible="reviewDialog" modal header="Revisión documental" class="responsive-dialog narrow-dialog">
@@ -1021,9 +1145,9 @@ function formatCurrency(value, currency = props.opciones.moneda) {
 .rejection-copy { color: #a8273b !important; }
 .version-label { font-size: .7rem; color: #777770; font-weight: 700; }
 .row-actions { display: flex; align-items: center; justify-content: flex-end; gap: .15rem; }
-.history-block { margin-top: 1.2rem; border: 1px solid #deded8; }
-.history-block summary { padding: .85rem 1rem; display: flex; align-items: center; gap: .5rem; cursor: pointer; font-weight: 700; }
-.history-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .75rem; align-items: center; padding: .7rem 1rem; border-top: 1px solid #e8e8e3; font-size: .8rem; }
+.document-history { grid-column: 1 / -1; margin-top: .25rem; border: 1px solid #deded8; border-radius: .5rem; background: #fafaf8; }
+.document-history summary { padding: .7rem .85rem; display: flex; align-items: center; gap: .5rem; cursor: pointer; font-size: .8rem; font-weight: 700; }
+.history-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .75rem; align-items: center; padding: .75rem .85rem; border-top: 1px solid #e8e8e3; font-size: .8rem; }
 .record-row { grid-template-columns: 44px minmax(0, 1.2fr) minmax(150px, .8fr) auto; }
 .record-symbol.coral { background: #fde4dd; color: #a53d25; }
 .record-contact { display: flex; flex-direction: column; font-size: .8rem; }

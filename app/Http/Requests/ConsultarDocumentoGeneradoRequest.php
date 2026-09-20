@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class GenerarDocumentoRequest extends FormRequest
+class ConsultarDocumentoGeneradoRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -16,8 +16,6 @@ class GenerarDocumentoRequest extends FormRequest
         return [
             'version_id' => ['required', 'integer', 'exists:documento_plantilla_versiones,id'],
             'garantia_id' => ['nullable', 'integer', 'exists:cliente_garantias,id'],
-            'idempotency_key' => ['required', 'uuid'],
-            'confirm_duplicate' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -26,8 +24,6 @@ class GenerarDocumentoRequest extends FormRequest
         return [
             'version_id' => 'versión de plantilla',
             'garantia_id' => 'garantía',
-            'idempotency_key' => 'identificador de la solicitud',
-            'confirm_duplicate' => 'confirmación de nueva copia',
         ];
     }
 }

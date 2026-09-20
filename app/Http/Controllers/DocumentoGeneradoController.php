@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Enums\ActivityEvent;
 use App\Enums\DocumentoGeneradoEstado;
+use App\Enums\DocumentoPlantillaTipo;
+use App\Http\Requests\ConsultarDocumentoGeneradoRequest;
 use App\Http\Requests\GenerarDocumentoRequest;
 use App\Models\Cliente;
 use App\Models\ClienteGarantia;
@@ -24,9 +26,45 @@ class DocumentoGeneradoController extends Controller
         $version = DocumentoPlantillaVersion::query()->findOrFail($data['version_id']);
         $this->authorize('generate', $version);
         $guarantee = isset($data['garantia_id']) ? ClienteGarantia::query()->findOrFail($data['garantia_id']) : null;
-        $document = $service->request($cliente, $version, $guarantee, $data['idempotency_key'], $request->user());
+        $document = $service->request($cliente, $version, $guarantee, $data['idempotency_key'], $request->user(), (bool) ($data['confirm_duplicate'] ?? false));
 
         return back()->with('success', $document->estado === DocumentoGeneradoEstado::Generado ? 'El documento ya estaba generado.' : 'Documento enviado a generación.');
+    }
+
+    public function existing(ConsultarDocumentoGeneradoRequest $request, Cliente $cliente, DocumentoGeneracionService $service)
+    {
+        $data = $request->validated();
+        $version = DocumentoPlantillaVersion::query()->findOrFail($data['version_id']);
+        $this->authorize('generate', $version);
+        $guarantee = isset($data['garantia_id']) ? ClienteGarantia::query()->findOrFail($data['garantia_id']) : null;
+
+        if ($version->plantilla()->value('tipo') !== DocumentoPlantillaTipo::Garantia->value) {
+            $guarantee = null;
+        }
+
+        if ($guarantee && $guarantee->cliente_id !== $cliente->id) {
+            abort(404);
+        }
+
+        $document = $service->findExisting($cliente, $version, $guarantee);
+
+        if (! $document) {
+            return response()->json(['documento' => null]);
+        }
+
+        $canView = $document->estado === DocumentoGeneradoEstado::Generado
+            && $request->user()->can('view', $document);
+
+        return response()->json(['documento' => [
+            'id' => $document->id,
+            'estado' => $document->estado->value,
+            'nombre_archivo' => $document->nombre_archivo,
+            'solicitado_en' => $document->solicitado_en,
+            'generado_en' => $document->generado_en,
+            'bloquea' => in_array($document->estado, [DocumentoGeneradoEstado::Pendiente, DocumentoGeneradoEstado::Procesando], true),
+            'view_url' => $canView ? route('documentos-generados.view', $document) : null,
+            'download_url' => $canView && $request->user()->can('download', $document) ? route('documentos-generados.download', $document) : null,
+        ]]);
     }
 
     public function status(DocumentoGenerado $documento)

@@ -2,6 +2,7 @@
 import DocumentEditor from "@/Components/Documents/DocumentEditor.vue";
 import DocumentPdfPreview from "@/Components/Documents/DocumentPdfPreview.vue";
 import DocumentVersionStatus from "@/Components/Documents/DocumentVersionStatus.vue";
+import { normalizeTemplateKey } from "@/Utils/templateKey";
 import { router, useForm, usePage } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { useConfirm } from "primevue/useconfirm";
@@ -18,6 +19,9 @@ const toast = useToast();
 const confirm = useConfirm();
 const query = ref("");
 const typeFilter = ref(null);
+const variableQuery = ref("");
+const keyWasEdited = ref(false);
+const lastGeneratedKey = ref("");
 const typeFilters = computed(() => [
     { label: "Todos", value: null },
     ...props.tipos.map((tipo) => ({
@@ -100,6 +104,38 @@ const usedCount = computed(() =>
     ),
 );
 const availableVariables = computed(() => props.variables[form.tipo] ?? []);
+const normalizedVariableQuery = computed(() =>
+    variableQuery.value.trim().toLocaleLowerCase("es-MX"),
+);
+const groupedVariables = computed(() => {
+    const groups = new Map();
+    const labels = {
+        documento: "Documento",
+        empresa: "Empresa",
+        cliente: "Cliente",
+        garantia: "Garantía",
+    };
+
+    for (const variable of availableVariables.value) {
+        const haystack = `${variable.nombre} ${variable.clave} ${variable.origen}`.toLocaleLowerCase("es-MX");
+        if (
+            normalizedVariableQuery.value &&
+            !haystack.includes(normalizedVariableQuery.value)
+        )
+            continue;
+
+        const namespace = variable.clave.split(".")[0];
+        if (!groups.has(namespace))
+            groups.set(namespace, {
+                key: namespace,
+                label: labels[namespace] ?? namespace,
+                variables: [],
+            });
+        groups.get(namespace).variables.push(variable);
+    }
+
+    return [...groups.values()];
+});
 const sectionLabel = computed(
     () =>
         ({
@@ -122,12 +158,35 @@ const emptyForm = () => ({
 });
 const form = useForm(emptyForm());
 
+watch(
+    () => form.nombre,
+    (name) => {
+        if (editingVersion.value || keyWasEdited.value) return;
+        const generated = normalizeTemplateKey(name);
+        form.clave = generated;
+        lastGeneratedKey.value = generated;
+    },
+);
+
+const handleKeyInput = (event) => {
+    const value = event.target.value;
+    keyWasEdited.value = Boolean(value && value !== lastGeneratedKey.value);
+    if (!value) {
+        const generated = normalizeTemplateKey(form.nombre);
+        form.clave = generated;
+        lastGeneratedKey.value = generated;
+    }
+};
+
 const selectTemplate = (item) => {
     selectedId.value = item.id;
     selectedVersionId.value = preferredVersion(item)?.id ?? null;
 };
 const openCreate = () => {
     editingVersion.value = null;
+    keyWasEdited.value = false;
+    lastGeneratedKey.value = "";
+    variableQuery.value = "";
     form.defaults(emptyForm());
     form.reset();
     form.clearErrors();
@@ -141,6 +200,8 @@ const openEdit = (version) => {
     )
         return;
     editingVersion.value = version;
+    keyWasEdited.value = true;
+    variableQuery.value = "";
     form.defaults({
         clave: selected.value.clave,
         nombre: selected.value.nombre,
@@ -329,7 +390,7 @@ watch(selected, (item) => {
                             <Button v-if="selectedVersion" label="Previsualizar" icon="pi pi-eye" severity="secondary" @click="showPreview(selectedVersion)" />
                         </div>
                         <div class="mt-6 grid gap-3 sm:grid-cols-3">
-                            <div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/60">Versión seleccionada</p><p class="mt-1 text-lg font-semibold">v{{ selectedVersion?.numero ?? '—' }}</p></div>
+                            <div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/60">Versión seleccionada</p><p class="mt-1 text-lg font-semibold">V{{ selectedVersion?.numero ?? '—' }}</p></div>
                             <div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/60">Estado</p><div class="mt-1"><DocumentVersionStatus v-if="selectedVersion" :status="selectedVersion.estado" /></div></div>
                             <div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/60">Uso de esta versión</p><p class="mt-1 text-lg font-semibold">{{ selectedVersion?.documentos_generados_count ?? 0 }} documentos</p></div>
                         </div>
@@ -347,7 +408,7 @@ watch(selected, (item) => {
                         <aside class="rounded-2xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-700 dark:bg-surface-900">
                             <h3 class="font-semibold">Historial</h3><p class="mb-4 text-sm text-surface-500">Selecciona una versión.</p>
                             <ol class="space-y-1" aria-label="Versiones de la plantilla">
-                                <li v-for="version in selected.versiones" :key="version.id"><button type="button" class="version-row" :class="selectedVersion?.id === version.id && 'version-row-active'" @click="selectedVersionId = version.id"><span class="version-dot" :class="version.estado === 'activa' ? 'bg-emerald-500' : version.estado === 'borrador' ? 'bg-amber-500' : 'bg-surface-400'" /><span class="min-w-0 flex-1"><span class="flex items-center justify-between gap-2"><strong>Versión {{ version.numero }}</strong><DocumentVersionStatus :status="version.estado" /><span class="text-xs text-surface-500">{{ new Date(version.created_at).toLocaleDateString('es-MX') }}</span></span><span class="mt-1 block truncate text-xs text-surface-500">{{ version.resumen_cambios || 'Sin resumen de cambios' }} · {{ version.documentos_generados_count ?? 0 }} usos</span></span></button></li>
+                                <li v-for="version in selected.versiones" :key="version.id"><button type="button" class="version-row" :class="selectedVersion?.id === version.id && 'version-row-active'" @click="selectedVersionId = version.id"><span class="version-dot" :class="version.estado === 'activa' ? 'bg-emerald-500' : version.estado === 'borrador' ? 'bg-amber-500' : 'bg-surface-400'" /><span class="min-w-0 flex-1"><span class="flex flex-wrap items-center gap-1.5"><strong class="shrink-0 text-sm">V{{ version.numero }}</strong><DocumentVersionStatus :status="version.estado" compact /><span class="ml-auto shrink-0 text-[.68rem] text-surface-500">{{ new Date(version.created_at).toLocaleDateString('es-MX') }}</span></span><span class="mt-1 block truncate text-xs text-surface-500">{{ version.resumen_cambios || 'Sin resumen de cambios' }} · {{ version.documentos_generados_count ?? 0 }} usos</span></span></button></li>
                             </ol>
                         </aside>
                     </section>
@@ -360,12 +421,12 @@ watch(selected, (item) => {
                 <template #header><div><div class="flex items-center gap-2"><span class="text-xl font-semibold">{{ editingVersion ? `Editar versión ${editingVersion.numero}` : 'Nueva plantilla' }}</span><Tag value="Borrador" severity="secondary" rounded /></div><p class="mt-1 text-sm text-surface-500">El contenido se sanea al guardar y se congela al activar.</p></div></template>
                 <form v-if="editorVisible" class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]" @submit.prevent="submit">
                     <div class="min-w-0 space-y-5">
-                        <div class="grid gap-4 md:grid-cols-2"><div><label for="template-name" class="field-label">Nombre *</label><InputText id="template-name" v-model="form.nombre" :invalid="!!form.errors.nombre" :aria-invalid="!!form.errors.nombre" fluid /><Message v-if="form.errors.nombre" severity="error" size="small">{{ form.errors.nombre }}</Message></div><div><label for="template-key" class="field-label">Clave *</label><InputText id="template-key" v-model="form.clave" :disabled="!!editingVersion" :invalid="!!form.errors.clave" :aria-invalid="!!form.errors.clave" fluid /><small class="mt-1 block text-surface-500">Minúsculas, números, guiones y guiones bajos. Ejemplo: consentimiento-sic.</small><Message v-if="form.errors.clave" severity="error" size="small">{{ form.errors.clave }}</Message></div><div><span class="field-label">Tipo *</span><SelectButton v-model="form.tipo" :options="tipos" option-label="label" option-value="value" :disabled="!!editingVersion" :allow-empty="false" aria-label="Tipo de plantilla" /></div><div><label for="change-summary" class="field-label">Resumen de cambios</label><InputText id="change-summary" v-model="form.resumen_cambios" fluid /></div><div class="md:col-span-2"><label for="template-description" class="field-label">Descripción comercial</label><Textarea id="template-description" v-model="form.descripcion" rows="2" fluid /></div></div>
+                        <div class="grid gap-4 md:grid-cols-2"><div><label for="template-name" class="field-label">Nombre *</label><InputText id="template-name" v-model="form.nombre" :invalid="!!form.errors.nombre" :aria-invalid="!!form.errors.nombre" fluid /><Message v-if="form.errors.nombre" severity="error" size="small">{{ form.errors.nombre }}</Message></div><div><label for="template-key" class="field-label">Clave *</label><InputText id="template-key" v-model="form.clave" :disabled="!!editingVersion" :invalid="!!form.errors.clave" :aria-invalid="!!form.errors.clave" fluid @input="handleKeyInput" /><small class="mt-1 block text-surface-500">Se genera desde el nombre y puedes editarla. No admite espacios; usa minúsculas, números, guiones o guiones bajos.</small><Message v-if="form.errors.clave" severity="error" size="small">{{ form.errors.clave }}</Message></div><div><span class="field-label">Tipo *</span><SelectButton v-model="form.tipo" :options="tipos" option-label="label" option-value="value" :disabled="!!editingVersion" :allow-empty="false" aria-label="Tipo de plantilla" /></div><div><label for="change-summary" class="field-label">Resumen de cambios</label><InputText id="change-summary" v-model="form.resumen_cambios" fluid /></div><div class="md:col-span-2"><label for="template-description" class="field-label">Descripción comercial</label><Textarea id="template-description" v-model="form.descripcion" rows="2" fluid /></div></div>
                         <div class="overflow-hidden rounded-2xl border border-surface-200 dark:border-surface-700"><div class="flex flex-wrap items-center justify-between gap-2 bg-surface-50 px-3 py-2 dark:bg-surface-800"><SelectButton v-model="section" :options="[{label:'Encabezado',value:'encabezado_html'},{label:'Contenido',value:'contenido_html'},{label:'Pie de página',value:'pie_html'}]" option-label="label" option-value="value" :allow-empty="false" aria-label="Sección de la plantilla" /><span class="text-xs text-surface-500">Editando: {{ sectionLabel }}</span></div><DocumentEditor v-for="field in sections" v-show="section === field.value" :key="field.value" :ref="el => { editorRefs[field.value] = el; }" v-model="form[field.value]" :section="field.value" /></div>
                         <Message v-if="form.errors[section] || form.errors.contenido_html" severity="error" :closable="false">{{ form.errors[section] || form.errors.contenido_html }}</Message>
                         <div><label for="watermark" class="field-label">Marca de agua (opcional)</label><InputText id="watermark" v-model="form.presentacion.marca_agua" maxlength="80" placeholder="Ejemplo: BORRADOR" fluid /><small class="block text-surface-500">Texto tenue en todas las páginas. Déjalo vacío para desactivarlo.</small><Message v-if="form.errors['presentacion.marca_agua']" severity="error">{{ form.errors['presentacion.marca_agua'] }}</Message></div><div class="flex flex-col-reverse gap-2 border-t border-surface-200 pt-4 sm:flex-row sm:justify-end"><Button type="button" label="Cancelar" severity="secondary" @click="closeEditor" /><Button type="button" label="Previsualizar cambios" icon="pi pi-eye" severity="secondary" @click="previewDraft" /><Button type="submit" label="Guardar borrador" icon="pi pi-save" :loading="form.processing" /></div>
                     </div>
-                    <aside class="rounded-2xl border border-primary-100 bg-primary-50/70 p-4 dark:border-primary-900 dark:bg-primary-950/20"><div class="flex items-center gap-2"><span class="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-contrast"><i class="pi pi-code" /></span><div><h3 class="font-semibold">Variables permitidas</h3><p class="text-xs text-surface-500">Coloca el cursor y selecciona una variable para insertarla.</p></div></div><div class="mt-4 max-h-[36rem] space-y-2 overflow-auto pr-1"><button v-for="variable in availableVariables" :key="variable.clave" type="button" class="w-full rounded-xl border border-transparent bg-surface-0 p-3 text-left transition hover:border-primary-300 hover:shadow-sm dark:bg-surface-900" @mousedown.prevent @click="insertVariable(variable)"><span class="block text-sm font-medium">{{ variable.nombre }} <span v-if="variable.requerida" class="block text-xs text-surface-500">Dato obligatorio si se utiliza</span></span><code class="mt-1 block truncate text-xs text-primary">{{ tokenLabel(variable.clave) }}</code><span class="mt-1 block truncate text-xs text-surface-500">{{ variable.origen }} · {{ variable.formato }}</span></button></div><Message class="mt-3" severity="info" size="small" :closable="false">No se admite código HTML libre en las variables ni el acceso a otros datos.</Message></aside>
+                    <aside class="variable-panel rounded-2xl border border-primary-100 bg-primary-50/70 p-4 dark:border-primary-900 dark:bg-primary-950/20"><div class="flex items-center gap-2"><span class="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-contrast"><i class="pi pi-code" /></span><div><h3 class="font-semibold">Variables permitidas</h3><p class="text-xs text-surface-500">Coloca el cursor y selecciona una variable para insertarla.</p></div></div><IconField class="mt-4"><InputIcon class="pi pi-search" /><InputText v-model="variableQuery" aria-label="Buscar variables" placeholder="Buscar variable" fluid /></IconField><div class="mt-3 max-h-[calc(100dvh-19rem)] space-y-4 overflow-auto pr-1"><section v-for="group in groupedVariables" :key="group.key"><h4 class="mb-2 text-xs font-bold uppercase tracking-wide text-surface-500">{{ group.label }}</h4><div class="space-y-2"><button v-for="variable in group.variables" :key="variable.clave" type="button" class="w-full rounded-xl border border-transparent bg-surface-0 p-3 text-left transition hover:border-primary-300 hover:shadow-sm dark:bg-surface-900" @mousedown.prevent @click="insertVariable(variable)"><span class="block text-sm font-medium">{{ variable.nombre }} <span v-if="variable.requerida" class="mt-1 block text-xs font-normal text-amber-700 dark:text-amber-300">Requerida para generar: si falta este dato en el expediente, no podrá generarse el PDF.</span></span><code class="mt-1 block truncate text-xs text-primary">{{ tokenLabel(variable.clave) }}</code><span class="mt-1 block truncate text-xs text-surface-500">{{ variable.origen }} · {{ variable.formato }}</span></button></div></section><p v-if="!groupedVariables.length" class="py-8 text-center text-sm text-surface-500">No hay variables que coincidan con la búsqueda.</p></div><Message class="mt-3" severity="info" size="small" :closable="false">No se admite código HTML libre en las variables ni el acceso a otros datos.</Message></aside>
                 </form>
             </Dialog>
 
@@ -387,5 +448,7 @@ watch(selected, (item) => {
 .version-row-active { @apply bg-primary-50 text-primary-900 dark:bg-primary-950/30 dark:text-primary-100; }
 .version-dot { @apply mt-1.5 size-2.5 shrink-0 rounded-full ring-4 ring-surface-100 dark:ring-surface-700; }
 .field-label { @apply mb-1 block text-sm font-medium; }
+.variable-panel { align-self: start; }
+@media (min-width: 1280px) { .variable-panel { position: sticky; top: 0; } }
 @media (max-width: 640px) { :deep(#template-editor) { width: 100vw !important; height: 100dvh; max-height: 100dvh; margin: 0; border-radius: 0; } }
 </style>

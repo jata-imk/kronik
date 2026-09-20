@@ -8,6 +8,7 @@ test("editor conserva listas, cursor, recursos y PDF multipágina", async ({ pag
     await page.goto("/plantillas-documentos");
     await page.getByRole("button", {name: "Nueva plantilla"}).click();
     await page.getByLabel("Nombre *").fill("Editor ampliado QA");
+    await expect(page.getByLabel("Clave *")).toHaveValue("editor-ampliado-qa");
     await page.getByLabel("Clave *").fill("editor-ampliado-qa");
     const editor = page.locator(".ql-editor:visible");
     await editor.fill("Primero\nSegundo");
@@ -16,7 +17,10 @@ test("editor conserva listas, cursor, recursos y PDF multipágina", async ({ pag
     await expect(editor.locator('li[data-list="bullet"]')).toHaveCount(2);
     await editor.click();
     await editor.press("ControlOrMeta+Home");
+    await page.getByLabel("Buscar variables").fill("Correo de la empresa");
+    await expect(page.getByRole("heading", {name: "Empresa", exact: true})).toBeVisible();
     await page.getByRole("button", {name: /Correo de la empresa/}).click();
+    await page.getByLabel("Buscar variables").fill("");
     await expect(editor).toContainText("{{empresa.email}}Primero");
     await page.getByRole("button", {name: "Deshacer", exact: true}).click();
     await expect(editor).not.toContainText("{{empresa.email}}");
@@ -58,7 +62,8 @@ test("editor conserva listas, cursor, recursos y PDF multipágina", async ({ pag
     await page.getByRole("button", {name: "Previsualizar cambios"}).click();
     await expect(page.getByLabel("Previsualización segura de la plantilla")).toBeVisible({timeout: 40_000});
     await expect(page.getByText("Página 1 / 2", {exact:true})).toBeVisible();
-    await page.getByRole("button", {name: "Página siguiente", exact: true}).click();
+    await page.getByLabel("Página 2 de 2").scrollIntoViewIfNeeded();
+    await expect(page.getByText("Página 2 / 2", {exact:true})).toBeVisible();
     await expect(page.getByLabel("Previsualización segura de la plantilla")).toContainText("María Ejemplo López", {timeout: 10_000});
     await expect(page.getByLabel("Previsualización segura de la plantilla")).toContainText("PRUEBA QA");
     await expect(page.getByLabel("Previsualización segura de la plantilla")).toContainText("Empresa sintética");

@@ -41,8 +41,11 @@ test("revisión y carga empiezan limpias entre documentos", async ({ page }) => 
     await expect(dialog.getByText("Sin archivo seleccionado.", {exact:false})).toBeVisible();
     await dialog.getByRole("button", {name:"Cancelar", exact:true}).click();
     await upload(rows.nth(0), "qa-reemplazo.pdf");
-    await rows.nth(0).getByRole("button", {name:"Historial", exact:true}).click();
-    await expect(page.getByRole("dialog")).toContainText("qa-primero.pdf");
-    await expect(page.getByRole("dialog")).not.toContainText("qa-segundo.pdf");
+    const history = rows.nth(0).locator(".document-history");
+    await history.locator("summary").click();
+    await expect(history).toContainText("qa-primero.pdf");
+    await expect(history).toContainText("Rechazado");
+    await expect(history).toContainText("La imagen recibida resulta ilegible.");
+    await expect(history).not.toContainText("qa-segundo.pdf");
     assertConsole();
 });

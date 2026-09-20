@@ -7,8 +7,12 @@ test("recorre clientes, expediente e historial crediticio sin errores de consola
     const assertNoConsoleErrors = await failOnConsoleErrors(page);
     await page.goto("/clientes");
     await expect(page.getByText("Ana", { exact: false }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: "Sucursal actual", exact: true })).toHaveAttribute("aria-pressed", "true");
 
-    await page.getByRole("button", { name: /Ver Ana Lucia Garcia Lopez/i }).click();
+    const viewButton = page.getByRole("button", { name: /Ver Ana Lucia Garcia Lopez/i });
+    await viewButton.hover();
+    await expect(page.getByText("Ver cliente", { exact: true })).toBeVisible();
+    await viewButton.click();
     await expect(page).toHaveURL(/\/clientes\/\d+/);
 
     const clientId = page.url().match(/\/clientes\/(\d+)/)?.[1];
