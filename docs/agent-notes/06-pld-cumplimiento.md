@@ -4,7 +4,7 @@
 
 - Notion: https://app.notion.com/p/3a061db7db7f8157b516e7f47aabb241
 - Rama: feat/solicitudes-resolucion
-- PR: incremento P3 parcial, pendiente de publicación.
+- PR: [#19](https://github.com/jata-imk/kronik/pull/19), borrador sobre #18.
 - ADR relacionados: 0010 y 0013.
 
 ## Objetivo
@@ -39,5 +39,5 @@ Completar gates de aprobación y requisitos, conservando notas reservadas fuera 
 
 ## Cierre
 
-- Commit o merge: pendiente; no integrado en main.
+- Commit o merge: c8cff6f y 2c401ad; no integrado en main.
 - Pendientes diferidos: listas/proveedor, seguimiento periódico, avisos y perfiles regulatorios específicos.

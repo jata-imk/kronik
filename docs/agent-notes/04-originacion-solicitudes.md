@@ -6,6 +6,7 @@
 - Coordinación: https://app.notion.com/p/3e161db7db7f817a8c89ec30767d4666
 - Rama: feat/solicitudes-resolucion (base feat/originacion-incrementos)
 - PR: [P0 #17](https://github.com/jata-imk/kronik/pull/17), [P1 #16](https://github.com/jata-imk/kronik/pull/16), [P2 #18](https://github.com/jata-imk/kronik/pull/18).
+- P3 parcial: [PR #19](https://github.com/jata-imk/kronik/pull/19), base #18, borrador.
 - ADR relacionados: 0010–0013, 0005–0009
 
 ## Objetivo
@@ -51,5 +52,5 @@ mantener habilitación real cerrada. Después continuar P4 formalización.
 
 ## Cierre
 
-- Commit o merge: commits publicados; PR apilados 17 → 16 → 18, sin merge.
+- Commit o merge: P3 parcial c8cff6f y corrección visual 2c401ad; PR apilados 17 → 16 → 18 → 19, sin merge.
 - Pendientes diferidos: 02.5 sigue diferido; producción SIC en P7.
