@@ -1,84 +1,14 @@
 <script setup>
 import { computed } from "vue";
 import { usePage } from "@inertiajs/vue3";
-
 import AppMenuItem from "./AppMenuItem.vue";
 
 const page = usePage();
-const can = (permission) => page.props.auth.permissions?.[permission] === true;
-const model = computed(() => [
-    {
-        label: "Inicio",
-        items: [
-            {
-                label: "Tablero general",
-                icon: "pi pi-fw pi-home",
-                to: "dashboard",
-            },
-            {
-                label: "Ejemplos",
-                icon: "pi pi-fw pi-bolt",
-                to: "sakai",
-            },
-        ],
-    },
-    {
-        label: "Módulos",
-        items: [
-            (page.props.auth.is_super_admin || can("read-plantillas-documentos")) && {
-                label: "Documentos y plantillas",
-                icon: "pi pi-fw pi-file-edit",
-                to: "plantillas-documentos.index",
-            },
-            can("read-clientes") && {
-                label: "CRM",
-                icon: "pi pi-fw pi-users",
-                items: [
-                    {
-                        label: "Clientes",
-                        icon: "pi pi-fw pi-users",
-                        to: "clientes.index",
-                    },
-                    {
-                        label: "Historial crediticio",
-                        icon: "pi pi-credit-card",
-                        to: "clientes.historial-crediticio.index",
-                    },
-                ],
-            },
-        ].filter(Boolean),
-    },
-    {
-        label: "Configuraciones",
-        items: [
-            {
-                label: "Configurar equipo actual",
-                icon: "pi pi-fw pi-users",
-                to: "teams.show",
-                toParams: { team: page.props.auth.user.current_team },
-            },
-            {
-                label: "Editar perfil",
-                icon: "pi pi-fw pi-user-edit",
-                to: "profile.show",
-            },
-            (page.props.auth.is_super_admin || can("access-admin")) && {
-                label: "Panel de superusuario",
-                icon: "pi pi-fw pi-cog",
-                to: "admin.dashboard",
-            },
-        ].filter(Boolean),
-    },
-]);
+const model = computed(() => page.props.navigation ?? []);
 </script>
 
 <template>
     <ul class="layout-menu">
-        <template v-for="(item, i) in model" :key="item">
-            <app-menu-item v-if="!item.separator" :item="item" :index="i"></app-menu-item>
-            <li v-if="item.separator" class="menu-separator"></li>
-        </template>
+        <app-menu-item v-for="(item, i) in model" :key="item.label" :item="item" :index="i" />
     </ul>
 </template>
-
-<style lang="scss" scoped></style>

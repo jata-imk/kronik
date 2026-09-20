@@ -7,10 +7,10 @@ const can = (permission) => page.props.auth.is_super_admin || page.props.auth.pe
 </script>
 
 <template>
-    <AppLayout title="Opciones de Super Usuario">
+    <AppLayout title="Administración">
         <template #card-header>
             <div class="flex justify-between items-center pl-8 pt-4">
-                <h2 class="text-2xl font-bold mb-4">Configuraciones del Super Admin</h2>
+                <h2 class="text-2xl font-bold mb-4">Administración</h2>
             </div>
         </template>
 

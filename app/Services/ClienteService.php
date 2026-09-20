@@ -129,6 +129,12 @@ class ClienteService
     public function destroy(Cliente $cliente)
     {
         return DB::transaction(function () use ($cliente) {
+            $cliente = Cliente::query()->lockForUpdate()->findOrFail($cliente->id);
+            if ($cliente->sicQueries()->exists()) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'cliente' => 'No se puede eliminar un cliente con consultas SIC. Su evidencia debe conservarse.',
+                ]);
+            }
             $this->documentoService->deleteFilesFor($cliente);
             $this->consentimientoService->deleteFilesFor($cliente);
             $cliente->direcciones()->delete();

@@ -1,5 +1,5 @@
 <script setup>
-import { router, useForm } from "@inertiajs/vue3";
+import { router, useForm, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import {
     BadgeCheck,
@@ -46,6 +46,7 @@ const props = defineProps({
 });
 
 const toast = useToast();
+const page = usePage();
 const confirm = useConfirm();
 const activeTab = ref("perfil");
 const viewerVisible = ref(false);
@@ -736,6 +737,7 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                         <template #icon><Pencil :size="17" /></template>
                     </Button>
                     <Button
+                        v-if="page.props.auth.is_super_admin || page.props.auth.permissions?.['read-historial-crediticio']"
                         label="Historial SIC"
                         severity="secondary"
                         @click="router.visit(route('clientes.historial-crediticio.show', cliente.id))"

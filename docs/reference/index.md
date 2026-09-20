@@ -1,5 +1,7 @@
 # Referencia
 
+- [Estado de integración SIC y acceso](sic-estado-integracion.md)
+
 - [Documentos digitales y plantillas](documentos-y-plantillas.md)
 - [Productos crediticios](productos-crediticios.md)
 
