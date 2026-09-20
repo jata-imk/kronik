@@ -4,10 +4,10 @@
 
 - Notion: https://app.notion.com/p/3a061db7db7f81948d4ae8fa9118ac1d
 - Coordinación: https://app.notion.com/p/3e161db7db7f817a8c89ec30767d4666
-- Rama: feat/solicitudes-resolucion (base feat/originacion-incrementos)
+- Rama: feat/solicitudes-aprobacion (base feat/solicitudes-resolucion)
 - PR: [P0 #17](https://github.com/jata-imk/kronik/pull/17), [P1 #16](https://github.com/jata-imk/kronik/pull/16), [P2 #18](https://github.com/jata-imk/kronik/pull/18).
 - P3 parcial: [PR #19](https://github.com/jata-imk/kronik/pull/19), base #18, borrador.
-- ADR relacionados: 0010–0013, 0005–0009
+- ADR relacionados: 0010–0014, 0005–0009
 
 ## Objetivo
 
@@ -24,7 +24,9 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 - P2: borrador/revisión/asignación implementados y verificados (`c4b5770` más seguimiento); PR #18 borrador.
 - P3 parcial: devolución/reenvío, cierres y dictámenes humanos por revisión;
   bandejas de Evaluación y Cumplimiento reutilizan el detalle de solicitud.
-- P3 aprobación configurable y P4–P9 pendientes. Sin operación monetaria habilitada.
+- P3 siguiente incremento: políticas versionadas, requisitos y aprobación individual/dual;
+  huellas de identidad/documentos, vigencia y evidencia. Habilitación por defecto cerrada.
+- P4–P9 pendientes. Sin operación monetaria habilitada.
 - Se preserva `.playwright-mcp/` local ajeno.
 
 ## Decisiones pendientes
@@ -36,6 +38,8 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 - P2 final: 181 pruebas / 1092 aserciones, CI 35498852504 aprobado.
 - P3 parcial: 188 backend / 1240 aserciones / 1 omitida; 56 frontend; build y Pint aprobados.
+- Continuación aprobación: 196 backend / 1341 aserciones / 1 omitida; 60 frontend;
+  build y Pint aprobados. Regresión E2E de 9 aprobada, incluyendo política y bloqueos.
 - E2E ampliado con dictámenes, devolución, revisión 2 y rechazo: 9 aprobados.
 - QA encontró y corrigió etiquetas accesibles, sincronización del plazo y fallo
   de orientación en Select de PrimeVue 4.3.1; guard temporal documentado y probado.
@@ -44,11 +48,13 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 - Revisión manual: fuentes Notion y arquitectura existente inspeccionadas.
 - Migraciones o seeders: 2026_09_20_000000_create_solicitudes_tables; ModulesAndPermissionsSeeder
   agrega cuatro permisos, sin asignarlos a roles. Solo se ejecutó en BD de pruebas aisladas.
+- Continuación: 000300 agrega políticas/evidencia/vigencia; permisos `approve solicitudes`
+  y `manage origination productos-crediticios`. `.env` real no modificado; bandera false por defecto.
 
 ## Siguiente paso
 
-Completar P3 con política explícita/versionada de aprobación y sus requisitos;
-mantener habilitación real cerrada. Después continuar P4 formalización.
+Terminar verificación/publicación del incremento de aprobación. Después P4 formalización,
+revalidando vigencia/evidencia y manteniendo operación real cerrada.
 
 ## Cierre
 

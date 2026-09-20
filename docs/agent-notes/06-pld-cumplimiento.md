@@ -3,7 +3,7 @@
 ## Referencias
 
 - Notion: https://app.notion.com/p/3a061db7db7f8157b516e7f47aabb241
-- Rama: feat/solicitudes-resolucion
+- Rama: feat/solicitudes-aprobacion (continuación sobre feat/solicitudes-resolucion)
 - PR: [#19](https://github.com/jata-imk/kronik/pull/19), borrador sobre #18.
 - ADR relacionados: 0010 y 0013.
 
@@ -18,7 +18,9 @@ Conectar revisión humana reservada al expediente de solicitud. Alcance completo
 - Dictámenes cifrados/inmutables por revisión, lectura/escritura diferenciadas.
 - Bandeja de Cumplimiento conduce al mismo detalle. No consulta listas automáticamente.
 - Reenvío conserva dictámenes anteriores como históricos, no aplicables a nueva revisión.
-- No aprobación, certificación legal, notificación externa ni operación monetaria.
+- La aprobación condicionada requiere el último PLD sin observaciones, evidencia
+  vigente y política explícita. Dictámenes sin huella o con expediente cambiado bloquean.
+- Habilitación de aprobación cerrada por defecto; sin certificación legal, notificación externa ni dinero.
 
 ## Decisiones pendientes
 
@@ -35,7 +37,7 @@ Conectar revisión humana reservada al expediente de solicitud. Alcance completo
 
 ## Siguiente paso
 
-Completar gates de aprobación y requisitos, conservando notas reservadas fuera de logs y props operativos.
+Verificar controles de aprobación y continuar P4 con revalidación de evidencia antes de formalizar.
 
 ## Cierre
 

@@ -53,6 +53,145 @@ function solicitudDictamenDatos(int $lockVersion, string $tipo = 'evaluacion'): 
     ];
 }
 
+function politicaSolicitudDatos(string $modalidad = 'individual', string $sic = 'manual_permitido'): array
+{
+    return ['version_anterior' => 0, 'modalidad' => $modalidad, 'sic' => $sic, 'monto_maximo' => '50000.00',
+        'vigencia_dias' => 15, 'documentos' => ['ine'], 'referencia_validacion' => 'Validación interna de pruebas, no para producción.',
+        'criterio_capacidad' => 'Revisar ingresos y egresos y fundamentar capacidad manualmente.', 'confirmacion' => true];
+}
+
+function prepararSolicitudAprobable($test, string $modalidad = 'individual', string $sic = 'manual_permitido'): array
+{
+    \Illuminate\Support\Facades\Storage::fake('local');
+    config(['originacion.aprobaciones_habilitadas' => true]);
+    $user = actingAsSuperAdmin();
+    $cliente = Cliente::factory()->create(['sucursal_id' => $user->current_sucursal_id]);
+    $regimen = \App\Models\RegimenFiscal::create(['clave' => '612', 'descripcion' => 'Régimen de prueba', 'fisica' => true,
+        'moral' => false, 'fecha_inicio_vigencia' => '2020-01-01', 'fecha_fin_vigencia' => '2099-12-31']);
+    $cliente->datosFiscales()->create(['tipo_persona' => 'fisica', 'regimen_fiscal_id' => $regimen->id,
+        'curp' => 'GODE561231HDFRRN09', 'rfc' => 'GODE561231GR8', 'razon_social' => 'Persona de prueba']);
+    $version = solicitudProducto($user->id);
+    app(\App\Services\OriginacionPoliticaService::class)->crear($version, politicaSolicitudDatos($modalidad, $sic), $user);
+    $doc = $cliente->documentos()->create(['tipo' => 'ine', 'version' => 1, 'estado' => 'validado', 'es_actual' => true,
+        'disk' => 'local', 'path' => 'prueba/ine.pdf', 'mime_type' => 'application/pdf', 'nombre_original' => 'ine.pdf',
+        'tamano_bytes' => 10, 'revisado_en' => now(), 'revisado_por' => $user->id]);
+    \Illuminate\Support\Facades\Storage::disk('local')->put('prueba/ine.pdf', 'fixture');
+    $test->actingAs($user)->post(route('solicitudes.store'), solicitudDatos($cliente, $version))->assertSessionHasNoErrors();
+    $solicitud = Solicitud::firstOrFail();
+    $test->post(route('solicitudes.enviar', $solicitud), ['lock_version' => 0])->assertSessionHasNoErrors();
+    $test->post(route('solicitudes.dictaminar', $solicitud), solicitudDictamenDatos(1))->assertSessionHasNoErrors();
+    $test->post(route('solicitudes.dictaminar', $solicitud), [...solicitudDictamenDatos(2, 'pld'), 'resultado' => 'sin_observaciones', 'nivel_riesgo' => 'bajo'])->assertSessionHasNoErrors();
+
+    return [$user, $solicitud->fresh(), $cliente, $version, $doc];
+}
+
+test('aprobación individual conserva evidencia política y vigencia sin duplicarse', function () {
+    [$user, $solicitud] = prepararSolicitudAprobable($this);
+    $requisitos = app(\App\Services\SolicitudRequisitosService::class)->evaluar($solicitud, $user);
+    expect(collect($requisitos['requisitos'])->where('cumplido', false)->all())->toBe([]);
+    $data = ['lock_version' => 3, 'motivo' => 'Aprobación fundamentada de prueba.'];
+    $this->post(route('solicitudes.aprobar', $solicitud), $data)->assertSessionHasNoErrors();
+    expect($solicitud->fresh()->estado)->toBe(SolicitudEstado::Aprobada);
+    $resolucion = $solicitud->resoluciones()->firstOrFail();
+    expect($resolucion->evidencia['politica']['condiciones']['modalidad'])->toBe('individual')
+        ->and($resolucion->evidencia['documentos'])->toHaveCount(1)
+        ->and($resolucion->vigente_hasta->toDateString())->toBe(app(FechaEmpresa::class)->hoy()->addDays(14)->toDateString());
+    $this->travel(16)->days();
+    $this->get(route('solicitudes.show', $solicitud))->assertInertia(fn (Assert $page) => $page->where('aprobacionVencida', true));
+    $this->travelBack();
+    $this->post(route('solicitudes.aprobar', $solicitud), $data)->assertSessionHasErrors('solicitud');
+    $this->post(route('solicitudes.aprobar', $solicitud), [...$data, 'lock_version' => 4])->assertSessionHasErrors('aprobacion');
+    $this->assertDatabaseCount('solicitud_resoluciones', 1);
+    $this->put(route('solicitudes.update', $solicitud), ['lock_version' => 4, 'monto' => '11000.00'])->assertSessionHasErrors('solicitud');
+    $this->post(route('solicitudes.resolver', $solicitud), ['lock_version' => 4, 'accion' => 'devolver', 'motivo' => 'Actualizar condiciones para nueva revisión.', 'responsable_id' => $user->id])->assertSessionHasNoErrors();
+    expect($solicitud->fresh()->estado)->toBe(SolicitudEstado::Devuelta);
+    $this->assertDatabaseCount('solicitud_resoluciones', 2);
+});
+
+test('dual impide autoaprobación incluso superadmin y admite otro aprobador', function () {
+    [$capturista, $solicitud] = prepararSolicitudAprobable($this, 'dual');
+    $data = ['lock_version' => 3, 'motivo' => 'Resolución dual de prueba documentada.'];
+    $this->post(route('solicitudes.aprobar', $solicitud), $data)->assertSessionHasErrors('aprobacion');
+    $aprobador = actingAsSuperAdmin();
+    $aprobador->sucursales()->attach($capturista->current_sucursal_id);
+    $aprobador->update(['current_sucursal_id' => $capturista->current_sucursal_id]);
+    $this->actingAs($aprobador)->post(route('solicitudes.aprobar', $solicitud), $data)->assertSessionHasNoErrors();
+    expect($solicitud->fresh()->estado)->toBe(SolicitudEstado::Aprobada);
+});
+
+test('bloqueos de habilitación SIC documentos y dictámenes no pueden saltarse por URL', function () {
+    [$user, $solicitud, $cliente, $version, $doc] = prepararSolicitudAprobable($this, 'individual', 'requerido');
+    $data = ['lock_version' => 3, 'motivo' => 'Intento de aprobación bloqueada.'];
+    $this->post(route('solicitudes.aprobar', $solicitud), $data)->assertSessionHasErrors('aprobacion');
+    expect(session('errors')->first('aprobacion'))->toContain('SIC integrado');
+    $this->assertDatabaseCount('solicitud_resoluciones', 0);
+    $this->assertDatabaseCount('sic_queries', 0);
+});
+
+test('expediente cambiado exige renovar dictamen y política nueva exige reenviar', function () {
+    [$user, $solicitud, $cliente, $version, $doc] = prepararSolicitudAprobable($this);
+    $data = ['lock_version' => 3, 'motivo' => 'Intento de aprobación con expediente cambiado.'];
+    config(['originacion.aprobaciones_habilitadas' => false]);
+    $this->post(route('solicitudes.aprobar', $solicitud), $data)->assertSessionHasErrors('aprobacion');
+    config(['originacion.aprobaciones_habilitadas' => true]);
+    $doc->update(['vence_en' => app(FechaEmpresa::class)->hoy()->subDay()]);
+    $this->post(route('solicitudes.aprobar', $solicitud), $data)->assertSessionHasErrors('aprobacion');
+    expect(session('errors')->first('aprobacion'))->toContain('Renueva la revisión especializada')->toContain('Documento requerido');
+    app(\App\Services\OriginacionPoliticaService::class)->crear($version, [...politicaSolicitudDatos(), 'version_anterior' => 1], $user);
+    $this->post(route('solicitudes.aprobar', $solicitud), $data)->assertSessionHasErrors('aprobacion');
+    expect(session('errors')->first('aprobacion'))->toContain('La política cambió');
+    $this->assertDatabaseCount('solicitud_resoluciones', 0);
+});
+
+test('política requiere permisos confirmación datos explícitos y preserva historia', function () {
+    $this->seed(ModulesAndPermissionsSeeder::class);
+    $user = actingAsSuperAdmin();
+    $version = solicitudProducto($user->id);
+    $this->actingAs($user)->post(route('originacion-politicas.store', $version), [])->assertSessionHasErrors(['modalidad', 'sic', 'vigencia_dias', 'referencia_validacion']);
+    expect(session('errors')->first('modalidad'))->toBe('El campo modalidad de aprobación es obligatorio.');
+    $this->post(route('originacion-politicas.store', $version), politicaSolicitudDatos())->assertSessionHasNoErrors();
+    $politica = \App\Models\OriginacionPolitica::firstOrFail();
+    expect(fn () => $politica->delete())->toThrow(ValidationException::class);
+    $this->post(route('originacion-politicas.store', $version), politicaSolicitudDatos())->assertSessionHasErrors('politica');
+    $user->forceFill(['is_super_admin' => false])->save();
+    $user->givePermissionTo('read productos-crediticios');
+    $this->get(route('originacion-politicas.show', $version))->assertForbidden();
+    $this->post(route('originacion-politicas.store', $version), [...politicaSolicitudDatos(), 'version_anterior' => 1])->assertForbidden();
+});
+
+test('aprobar exige permiso explícito y sucursal incluso cuando los requisitos están completos', function () {
+    $this->seed(ModulesAndPermissionsSeeder::class);
+    [$user, $solicitud] = prepararSolicitudAprobable($this);
+    $data = ['lock_version' => 3, 'motivo' => 'Comprobación de autorización de aprobación.'];
+    $user->forceFill(['is_super_admin' => false])->save();
+    $user->givePermissionTo(['read clientes', 'read solicitudes', 'review solicitudes']);
+    $this->post(route('solicitudes.aprobar', $solicitud), $data)->assertForbidden();
+    $user->forceFill(['is_super_admin' => true, 'current_sucursal_id' => null])->save();
+    $this->post(route('solicitudes.aprobar', $solicitud), $data)->assertSessionHasErrors('sucursal');
+    $this->assertDatabaseCount('solicitud_resoluciones', 0);
+});
+
+test('último dictamen prevalece y cambios de cliente o pérdida del archivo bloquean', function () {
+    [$user, $solicitud, $cliente] = prepararSolicitudAprobable($this);
+    $this->post(route('solicitudes.dictaminar', $solicitud), [...solicitudDictamenDatos(3), 'resultado' => 'desfavorable'])->assertSessionHasNoErrors();
+    $data = ['lock_version' => 4, 'motivo' => 'Intento con último dictamen desfavorable.'];
+    $this->post(route('solicitudes.aprobar', $solicitud), $data)->assertSessionHasErrors('aprobacion');
+    expect(session('errors')->first('aprobacion'))->toContain('Falta evaluación favorable');
+    $cliente->update(['origen_recursos' => 'Cambió el origen declarado']);
+    \Illuminate\Support\Facades\Storage::disk('local')->delete('prueba/ine.pdf');
+    $this->post(route('solicitudes.aprobar', $solicitud), $data)->assertSessionHasErrors('aprobacion');
+    expect(session('errors')->first('aprobacion'))->toContain('Los datos evaluados del cliente cambiaron')->toContain('Documento requerido');
+    $this->assertDatabaseCount('solicitud_resoluciones', 0);
+});
+
+test('cambiar identidad fiscal invalida revisión y no permite aprobar persona moral', function () {
+    [$user, $solicitud, $cliente] = prepararSolicitudAprobable($this);
+    $cliente->datosFiscales()->update(['tipo_persona' => 'moral']);
+    $this->post(route('solicitudes.aprobar', $solicitud), ['lock_version' => 3, 'motivo' => 'Intento con cambio de identidad fiscal.'])->assertSessionHasErrors('aprobacion');
+    expect(session('errors')->first('aprobacion'))->toContain('solo permite aprobar personas físicas')->toContain('Los datos evaluados del cliente cambiaron');
+    $this->assertDatabaseCount('solicitud_resoluciones', 0);
+});
+
 test('dictámenes son inmutables cifrados y ligados a revisión sin aprobación implícita', function () {
     $user = actingAsSuperAdmin();
     $cliente = Cliente::factory()->create(['sucursal_id' => $user->current_sucursal_id]);

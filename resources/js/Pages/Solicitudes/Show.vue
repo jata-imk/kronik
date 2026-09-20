@@ -5,12 +5,13 @@ import { computed } from "vue";
 import { solicitudEstados, solicitudEditable } from "@/Utils/solicitudEstados";
 import SolicitudResolucionForm from "@/Components/Solicitudes/SolicitudResolucionForm.vue";
 import SolicitudDictamenPanel from "@/Components/Solicitudes/SolicitudDictamenPanel.vue";
-const props = defineProps({ solicitud: Object, revision: { type: Object, default: null }, can: Object, responsables: Array, resoluciones: { type: Array, default: () => [] }, dictamenes: { type: Object, default: () => ({ evaluacion: null, pld: null }) } });
+import SolicitudAprobacion from "@/Components/Solicitudes/SolicitudAprobacion.vue";
+const props = defineProps({ solicitud: Object, revision: { type: Object, default: null }, can: Object, responsables: Array, resoluciones: { type: Array, default: () => [] }, dictamenes: { type: Object, default: () => ({ evaluacion: null, pld: null }) }, aprobacion: { type: Object, default: null }, aprobacionVencida: Boolean });
 const envio = useForm({ lock_version: props.solicitud.lock_version });
 const assignment = useForm({ lock_version: props.solicitud.lock_version, responsable_id: props.solicitud.responsable_id });
 const campos = { producto_version_id: "Producto y versión", monto: "Monto", plazo: "Número de pagos", periodicidad: "Periodicidad", metodo: "Amortización", destino: "Destino", fecha_estimada: "Fecha estimada" };
 const completos = computed(() => Object.keys(campos).filter((k) => props.solicitud[k] !== null && props.solicitud[k] !== "").length);
-const eventos = { creada: "Solicitud creada", borrador_actualizado: "Captura actualizada", enviada: "Enviada a revisión", asignada: "Responsable asignado", devuelta: "Devuelta para corrección", rechazada: "Solicitud rechazada", cancelada: "Solicitud cancelada", dictamen_registrado: "Revisión especializada registrada" };
+const eventos = { creada: "Solicitud creada", borrador_actualizado: "Captura actualizada", enviada: "Enviada a revisión", asignada: "Responsable asignado", devuelta: "Devuelta para corrección", rechazada: "Solicitud rechazada", cancelada: "Solicitud cancelada", dictamen_registrado: "Revisión especializada registrada", aprobada: "Solicitud aprobada" };
 function enviar() {
     envio.lock_version = props.solicitud.lock_version;
     envio.post(route("solicitudes.enviar", props.solicitud.id), { preserveScroll: true });
@@ -31,7 +32,8 @@ function asignar() {
         </template>
         <template #card-content>
             <div class="space-y-6 p-6">
-                <Message severity="info" :closable="false">Captura y dictámenes humanos preliminares disponibles. Aprobación, consultas SIC productivas, formalización y desembolso aún no están habilitados.</Message>
+                <Message severity="info" :closable="false">La aprobación requiere políticas y habilitación explícitas. Las consultas SIC productivas, formalización y desembolso aún no están disponibles.</Message>
+                <Message v-if="aprobacionVencida" severity="warn" :closable="false">La aprobación venció. Devuelve y reenvía para obtener nuevos dictámenes y resolución antes de formalizar.</Message>
                 <section class="rounded border border-surface-200 p-4 dark:border-surface-700">
                     <h2 class="text-lg font-semibold">{{ solicitudEstados[solicitud.estado]?.label }}</h2>
                     <p>Responsable: {{ solicitud.responsable.name }}</p>
@@ -42,6 +44,7 @@ function asignar() {
                 <div class="flex flex-wrap gap-4">
                     <Link :href="route('clientes.expediente.show', solicitud.cliente_id)" class="text-primary underline">Expediente y documentos del cliente</Link>
                     <Link v-if="can.sic" :href="route('clientes.historial-crediticio.show', solicitud.cliente_id)" class="text-primary underline">Historial SIC</Link>
+                    <Link v-if="can.politica && solicitud.producto_version_id" :href="route('originacion-politicas.show', solicitud.producto_version_id)" class="text-primary underline">Configurar política de originación</Link>
                     <Link v-if="can.update && solicitudEditable(solicitud.estado)" :href="route('solicitudes.edit', solicitud.id)" class="text-primary underline">{{ solicitud.estado === 'devuelta' ? 'Corregir solicitud' : 'Completar borrador' }}</Link>
                 </div>
                 <section>
@@ -62,12 +65,14 @@ function asignar() {
                 </form>
                 <SolicitudDictamenPanel v-if="dictamenes.evaluacion !== null" tipo="evaluacion" :solicitud="solicitud" :registros="dictamenes.evaluacion" :puede-registrar="can.evaluate" />
                 <SolicitudDictamenPanel v-if="dictamenes.pld !== null" tipo="pld" :solicitud="solicitud" :registros="dictamenes.pld" :puede-registrar="can.compliance" />
+                <SolicitudAprobacion :solicitud="solicitud" :estado="aprobacion" :puede-aprobar="can.approve" />
                 <SolicitudResolucionForm :solicitud="solicitud" :can="can" :responsables="responsables" />
                 <section v-if="resoluciones.length">
-                    <h2 class="text-lg font-semibold">Devoluciones y cierres recientes</h2>
+                    <h2 class="text-lg font-semibold">Resoluciones recientes</h2>
                     <p class="text-sm">Últimas 30 operaciones. Las revisiones anteriores se conservan aunque corrijas la captura.</p>
                     <article v-for="item in resoluciones" :key="item.id" class="mt-3 border-l-2 pl-3">
-                        <p>{{ { devolver: 'Devolución', rechazar: 'Rechazo', cancelar: 'Cancelación' }[item.accion] }} · {{ item.actor.name }} · {{ new Date(item.created_at).toLocaleString('es-MX') }}</p>
+                        <p>{{ { devolver: 'Devolución', rechazar: 'Rechazo', cancelar: 'Cancelación', aprobar: 'Aprobación' }[item.accion] }} · {{ item.actor.name }} · {{ new Date(item.created_at).toLocaleString('es-MX') }}</p>
+                        <p v-if="item.vigente_hasta">Vigencia registrada: hasta {{ item.vigente_hasta }} inclusive. Una devolución o cambio de evidencia exige nueva revisión; no autoriza desembolso.</p>
                         <p class="whitespace-pre-wrap">{{ item.motivo }}</p>
                     </article>
                 </section>

@@ -46,6 +46,12 @@ class SolicitudPolicy
             && (int) $user->current_sucursal_id === (int) $solicitud->sucursal_id;
     }
 
+    public function approve(User $user, Solicitud $solicitud): bool
+    {
+        return $this->view($user, $solicitud) && $user->can('approve solicitudes')
+            && (int) $user->current_sucursal_id === (int) $solicitud->sucursal_id;
+    }
+
     public function viewEvaluation(User $user, Solicitud $solicitud): bool
     {
         return $this->view($user, $solicitud) && $user->can('read evaluacion-solicitudes');

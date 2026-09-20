@@ -13,7 +13,7 @@ class SolicitudResolucion extends Model
 
     protected $hidden = ['motivo'];
 
-    protected $casts = ['motivo' => 'encrypted'];
+    protected $casts = ['motivo' => 'encrypted', 'evidencia' => 'array', 'vigente_hasta' => 'date:Y-m-d'];
 
     public function actor()
     {

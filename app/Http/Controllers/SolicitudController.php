@@ -93,6 +93,8 @@ class SolicitudController extends Controller
         $solicitud->load($this->relations());
         $solicitud->load(['eventos' => fn ($q) => $q->latest('id')->limit(30)->with('actor:id,name')]);
         $revision = $solicitud->revisiones()->latest('numero')->first();
+        $ultimaAprobacion = $solicitud->estado === SolicitudEstado::Aprobada
+            ? $solicitud->resoluciones()->where('accion', 'aprobar')->latest('id')->first() : null;
         $dictamenes = [];
         foreach (['evaluacion' => 'viewEvaluation', 'pld' => 'viewCompliance'] as $tipo => $ability) {
             $dictamenes[$tipo] = Gate::allows($ability, $solicitud)
@@ -106,6 +108,8 @@ class SolicitudController extends Controller
             'solicitud' => $solicitud,
             'revision' => $revision,
             'dictamenes' => $dictamenes,
+            'aprobacionVencida' => $ultimaAprobacion && $ultimaAprobacion->vigente_hasta->toDateString() < app(FechaEmpresa::class)->hoy()->toDateString(),
+            'aprobacion' => collect(app(\App\Services\SolicitudRequisitosService::class)->evaluar($solicitud, auth()->user()))->only(['requisitos', 'puede_aprobar', 'politica']),
             'resoluciones' => $solicitud->resoluciones()->with('actor:id,name')->latest('id')->limit(30)->get()
                 ->map(fn ($item) => [...$item->toArray(), 'motivo' => $item->motivo]),
             'can' => [
@@ -116,6 +120,8 @@ class SolicitudController extends Controller
                 'cancel' => Gate::allows('cancel', $solicitud),
                 'evaluate' => Gate::allows('evaluate', $solicitud),
                 'compliance' => Gate::allows('compliance', $solicitud),
+                'approve' => Gate::allows('approve', $solicitud),
+                'politica' => Gate::check(['read productos-crediticios', 'manage origination productos-crediticios']),
             ],
             'responsables' => (Gate::allows('assign', $solicitud) || Gate::allows('review', $solicitud)) ? User::query()->where('status', UserStatus::Active)
                 ->whereHas('sucursales', fn ($q) => $q->whereKey($solicitud->sucursal_id))
@@ -172,6 +178,15 @@ class SolicitudController extends Controller
     public function dictaminar(Request $request, Solicitud $solicitud, SolicitudService $service)
     {
         $service->dictaminar($solicitud, $request->only(['tipo_dictamen', 'resultado', 'fundamento', 'fuentes', 'metodologia', 'nivel_riesgo', 'lock_version']), $request->user());
+
+        return back();
+    }
+
+    public function aprobar(Request $request, Solicitud $solicitud, SolicitudService $service)
+    {
+        Gate::authorize('approve', $solicitud);
+        $data = $request->validate(['lock_version' => 'required|integer|min:0', 'motivo' => 'required|string|min:10|max:2000']);
+        $service->aprobar($solicitud, $data['lock_version'], $data['motivo'], $request->user());
 
         return back();
     }

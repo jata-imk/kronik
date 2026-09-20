@@ -106,8 +106,11 @@ class SolicitudService
             $simulacion = $this->simulador->simular($producto, $solicitud->monto,
                 PeriodicidadCredito::from($solicitud->periodicidad), $solicitud->plazo,
                 MetodoAmortizacion::from($solicitud->metodo), $fecha);
+            $politica = app(OriginacionPoliticaService::class)->vigente($producto->id);
             $snapshot = [
                 'formato' => 1,
+                'politica_originacion' => $politica?->only(['id', 'numero', 'condiciones', 'snapshot_hash']),
+                'identidad_cliente' => app(SolicitudExpedienteService::class)->identidad($cliente),
                 'condiciones' => $solicitud->only(self::CAMPOS),
                 'cliente_id' => $solicitud->cliente_id,
                 'cliente' => $cliente
@@ -165,8 +168,8 @@ class SolicitudService
         return DB::transaction(function () use ($solicitud, $data, $actor) {
             $solicitud = $this->bloquear($solicitud, $actor, $data['accion'] === 'cancelar' ? 'cancel' : 'review', $data['lock_version']);
             $permitido = $data['accion'] === 'cancelar'
-                ? in_array($solicitud->estado, [SolicitudEstado::Borrador, SolicitudEstado::Devuelta, SolicitudEstado::EnRevision], true)
-                : $solicitud->estado === SolicitudEstado::EnRevision;
+                ? in_array($solicitud->estado, [SolicitudEstado::Borrador, SolicitudEstado::Devuelta, SolicitudEstado::EnRevision, SolicitudEstado::Aprobada], true)
+                : ($solicitud->estado === SolicitudEstado::EnRevision || ($data['accion'] === 'devolver' && $solicitud->estado === SolicitudEstado::Aprobada));
             if (! $permitido) {
                 $this->error('solicitud', 'Esta acción no está disponible en el estado actual de la solicitud. Actualiza la página.');
             }
@@ -228,14 +231,45 @@ class SolicitudService
                 $this->error('solicitud', 'Solo puedes registrar dictámenes cuando la solicitud está en revisión.');
             }
             $revision = $solicitud->revisiones()->latest('numero')->firstOrFail();
+            $cliente = Cliente::query()->lockForUpdate()->findOrFail($solicitud->cliente_id);
             $dictamen = $solicitud->dictamenes()->create([
                 'solicitud_revision_id' => $revision->id, 'actor_id' => $actor->id,
                 'tipo' => $data['tipo_dictamen'], 'resultado' => $data['resultado'],
-                'contenido' => Arr::only($data, ['fundamento', 'fuentes', 'metodologia', 'nivel_riesgo']),
+                'contenido' => [...Arr::only($data, ['fundamento', 'fuentes', 'metodologia', 'nivel_riesgo']),
+                    'expediente_hash' => app(SolicitudExpedienteService::class)->huella($cliente)],
             ]);
             $solicitud->update(['lock_version' => $solicitud->lock_version + 1]);
             $this->evento($solicitud, $actor, 'dictamen_registrado', ActivityEvent::ApplicationAssessmentRecorded,
                 ['dictamen_id' => $dictamen->id, 'revision' => $revision->numero]);
+
+            return $solicitud;
+        });
+    }
+
+    public function aprobar(Solicitud $solicitud, int $version, string $motivo, User $actor): Solicitud
+    {
+        Gate::forUser($actor)->authorize('approve', $solicitud);
+        $motivo = trim($motivo);
+        Validator::make(['motivo' => $motivo], ['motivo' => 'required|string|min:10|max:2000'])->validate();
+
+        return DB::transaction(function () use ($solicitud, $version, $motivo, $actor) {
+            $solicitud = $this->bloquear($solicitud, $actor, 'approve', $version);
+            Cliente::query()->lockForUpdate()->findOrFail($solicitud->cliente_id);
+            if ($solicitud->producto_version_id) {
+                ProductoVersion::query()->lockForUpdate()->findOrFail($solicitud->producto_version_id);
+            }
+            $resultado = app(SolicitudRequisitosService::class)->evaluar($solicitud, $actor);
+            if (! $resultado['puede_aprobar']) {
+                $this->error('aprobacion', collect($resultado['requisitos'])->where('cumplido', false)->pluck('mensaje')->implode(' '));
+            }
+            $resolucion = $solicitud->resoluciones()->create([
+                'solicitud_revision_id' => $resultado['evidencia']['revision_id'], 'actor_id' => $actor->id,
+                'responsable_id' => $solicitud->responsable_id, 'accion' => 'aprobar', 'motivo' => $motivo,
+                'evidencia' => $resultado['evidencia'],
+                'vigente_hasta' => $this->fecha->hoy()->addDays($resultado['politica']['condiciones']['vigencia_dias'] - 1)->toDateString(),
+            ]);
+            $solicitud->update(['estado' => SolicitudEstado::Aprobada, 'lock_version' => $solicitud->lock_version + 1]);
+            $this->evento($solicitud, $actor, 'aprobada', ActivityEvent::ApplicationApproved, ['resolucion_id' => $resolucion->id]);
 
             return $solicitud;
         });

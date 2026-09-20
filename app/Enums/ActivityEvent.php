@@ -13,6 +13,8 @@ enum ActivityEvent: string
     case ApplicationRejected = 'solicitud.rejected';
     case ApplicationCancelled = 'solicitud.cancelled';
     case ApplicationAssessmentRecorded = 'solicitud.assessment_recorded';
+    case OriginationPolicyCreated = 'originacion.politica_created';
+    case ApplicationApproved = 'solicitud.approved';
     case TwoFactorCompleted = 'login.2fa_completed';
     case UserProfileUpdated = 'user.profile.updated';
     case CompanyUpdated = 'empresa.updated';
@@ -71,6 +73,8 @@ enum ActivityEvent: string
             self::ApplicationRejected => 'Solicitud rechazada',
             self::ApplicationCancelled => 'Solicitud cancelada',
             self::ApplicationAssessmentRecorded => 'Revisión especializada registrada',
+            self::OriginationPolicyCreated => 'Política de originación versionada',
+            self::ApplicationApproved => 'Solicitud aprobada',
             self::Login => 'Inicio de sesión',
             self::TwoFactorCompleted => 'Autenticación de dos factores completada',
             self::UserProfileUpdated => 'Perfil de usuario actualizado',

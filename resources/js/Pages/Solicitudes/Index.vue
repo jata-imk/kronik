@@ -30,7 +30,7 @@ function buscar(page = 1) {
         <template #card-content>
             <div class="space-y-5 p-6">
                 <Message v-if="bandeja" severity="info" :closable="false">Abre la solicitud para registrar tu dictamen sobre la revisión actual. Esta bandeja no sustituye la política de aprobación ni acredita cumplimiento legal por sí sola.</Message>
-                <p>{{ miTrabajo ? "Pendientes bajo tu responsabilidad. Las solicitudes cerradas se consultan con el filtro de estado." : "Captura, revisión, devoluciones y cierres. Aprobación y desembolso aún no están habilitados." }}</p>
+                <p>{{ miTrabajo ? "Pendientes bajo tu responsabilidad. Las solicitudes cerradas se consultan con el filtro de estado." : "Captura, revisión, devoluciones y resolución. Aprobar exige políticas y habilitación explícitas; no permite desembolsar." }}</p>
                 <form class="flex flex-wrap items-end gap-3" @submit.prevent="buscar()">
                     <div class="flex flex-col gap-1"><label for="buscar">Cliente</label><InputText id="buscar" v-model="filters.buscar" maxlength="100" /></div>
                     <div class="flex flex-col gap-1"><label for="estado">Estado</label><Select input-id="estado" aria-label="Estado" v-model="filters.estado" :options="estados" option-label="label" option-value="value" /></div>

@@ -1,11 +1,12 @@
-# Solicitudes, evaluación y cumplimiento — P2/P3 parcial
+# Solicitudes, evaluación y aprobación — P2/P3
 
 ## Alcance disponible
 
 Crear borrador PF/MXN, reanudar captura, asignar responsable y enviar a revisión.
 También permite devolver, corregir, reenviar, rechazar, cancelar y registrar
-dictámenes humanos preliminares de evaluación y PLD. No habilita aprobación,
-validación automática de cumplimiento, contratos ni dinero real. P3–P6 completarán la primera vertical. Alcance aprobado
+dictámenes humanos de evaluación y PLD, y aprobación condicionada por política.
+La aprobación se entrega deshabilitada por configuración. No habilita validación
+automática de cumplimiento, contratos ni dinero real. P4–P6 completarán la primera vertical. Alcance aprobado
 en [Notion](https://app.notion.com/p/3e161db7db7f817a8c89ec30767d4666).
 
 ## Operación
@@ -30,6 +31,26 @@ en [Notion](https://app.notion.com/p/3e161db7db7f817a8c89ec30767d4666).
    Cierres conservan evidencia, impiden edición/reasignación/reenvío y salen de
    Mi trabajo por defecto. Se recuperan mediante filtro de estado, no se reabren.
    Un cierre no muestra los dictámenes históricos como tareas pendientes.
+9. En **Productos → versión → Política**, configurar modalidad, SIC, límite,
+   vigencia, documentos, criterio de capacidad y referencia de validación interna.
+   No modifica las condiciones financieras ni revisiones anteriores. Requiere
+   `read productos-crediticios` + `manage origination productos-crediticios`.
+10. En la solicitud, consultar **Requisitos para aprobación**. Cuando se habilite
+    expresamente la instalación y todos se cumplan, un usuario con `approve solicitudes`
+    podrá confirmar con motivo operativo. En dual no puede haber capturado/enviado.
+    La acción guarda evidencias y fecha de vigencia; no transfiere dinero.
+
+Solo se aprueban personas físicas con identidad fiscal registrada. La política
+debe existir al enviar: solicitudes previas necesitan devolución/reenvío. La
+evaluación manual solo satisface SIC cuando la política la permite expresamente;
+`requerido` permanece bloqueado hasta P7. Dictámenes nuevos sustituyen operativamente
+los anteriores; el último desfavorable/pendiente/bloqueado impide aprobar.
+
+Cambiar identidad, fiscalidad o domicilio exige nueva revisión; cambiar documentos
+exige nuevos dictámenes. El servidor verifica documento validado, versión actual,
+fecha no vencida y archivo disponible. Si el almacén falla, se bloquea sin revelar rutas.
+La huella es de metadatos, no una firma del contenido binario: conservar controles
+de escritura del almacén. La aprobación vencida se señala; debe devolverse/reenviarse.
 
 La captura 0/7–7/7 no representa aprobación ni cumplimiento documental. El
 expediente y las consultas SIC tienen enlaces propios. La tabla de revisión es
@@ -65,6 +86,9 @@ informativa, sin IVA; no constituye formalización ni saldo real.
 responsable y motivo cifrado; inmutable.
 `solicitud_dictamenes`: especialidad, resultado, revisión, actor y contenido cifrado;
 inmutable. El nuevo dictamen reemplaza operativamente al previo, sin borrarlo.
+`originacion_politicas`: versiones inmutables por versión de producto.
+La resolución de aprobación añade `evidencia` y `vigente_hasta`; preserva referencias
+a política, revisión, dictámenes y documentos sin copiar notas reservadas.
 La pantalla muestra últimos 20 por especialidad y últimas 30 resoluciones.
 Respaldar la clave de cifrado de Laravel de forma segura: cambiarla sin estrategia
 de rotación vuelve ilegibles las evidencias cifradas. No copiarla a documentación.
@@ -108,12 +132,13 @@ simultánea multi-conexión de contención queda pendiente; no inferirla de SQLi
 
 ## Límites siguientes
 
-La aprobación sigue pendiente en P3: configuración explícita y versionada de
-separación de funciones, política SIC por producto, requisitos documentales,
-vigencia/límites y validación del perfil del operador. No hay valores por defecto
-que autoricen aprobación. Un dictamen favorable es preliminar, no habilita SIC
-manual por producto ni certifica cumplimiento. Las fuentes son referencias
-documentadas por el revisor, todavía no adjuntos nuevos ligados al dictamen.
+La mecánica de aprobación está implementada, no habilitada en la instalación real.
+`ORIGINACION_APROBACIONES_HABILITADAS=false` debe conservarse hasta validar perfil,
+políticas y documentos del operador. La referencia escrita en un formulario no
+acredita por sí misma validación jurídica. P4 debe revalidar aprobación/expediente
+antes de formalizar. No existe aún esa operación ni desembolso/pago.
+El criterio de capacidad se evalúa por una persona; no hay cálculo automático de
+umbral ni score. Las fuentes son referencias documentadas, no nuevos adjuntos del dictamen.
 Pendientes: tareas por especialidad/asignación independiente, requisitos calculados,
 consulta paginada de toda la historia y prueba concurrente multi-conexión.
 Sin SIC productivo, selección de comisiones opcionales, exportación, acción masiva,

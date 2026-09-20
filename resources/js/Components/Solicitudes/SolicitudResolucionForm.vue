@@ -6,7 +6,8 @@ const props = defineProps({ solicitud: Object, can: Object, responsables: Array 
 const form = useForm({ accion: null, motivo: "", responsable_id: props.solicitud.responsable_id, lock_version: props.solicitud.lock_version });
 const opciones = computed(() => [
     ...(props.can.review && props.solicitud.estado === "en_revision" ? [{ label: "Devolver para corrección", value: "devolver" }, { label: "Rechazar solicitud", value: "rechazar" }] : []),
-    ...(props.can.cancel && ["borrador", "devuelta", "en_revision"].includes(props.solicitud.estado) ? [{ label: "Cancelar solicitud", value: "cancelar" }] : []),
+    ...(props.can.review && props.solicitud.estado === "aprobada" ? [{ label: "Devolver para nueva revisión (invalida aprobación)", value: "devolver" }] : []),
+    ...(props.can.cancel && ["borrador", "devuelta", "en_revision", "aprobada"].includes(props.solicitud.estado) ? [{ label: "Cancelar solicitud", value: "cancelar" }] : []),
 ]);
 function guardar() {
     form.lock_version = props.solicitud.lock_version;

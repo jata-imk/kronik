@@ -1,7 +1,7 @@
 <script setup>
 import FinancialFieldHelp from "@/Components/Products/FinancialFieldHelp.vue";
 import ProductVersionStatus from "@/Components/Products/ProductVersionStatus.vue";
-import { router, useForm, usePage } from "@inertiajs/vue3";
+import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import axios from "axios";
 import { useConfirm } from "primevue/useconfirm";
@@ -589,6 +589,7 @@ watch(
                     <section class="rounded-2xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-700 dark:bg-surface-900">
                         <div class="mb-4"><h3 class="font-semibold">Versiones y vigencia</h3><p class="text-sm text-surface-500">Las versiones activadas son históricas e inmutables.</p></div>
                         <DataTable :value="selected.versiones" striped-rows responsive-layout="scroll" :table-style="{ minWidth: '52rem' }">
+                            <Column v-if="can('manage origination productos-crediticios')" header="Originación"><template #body="{ data }"><Link :href="route('originacion-politicas.show', data.id)" class="text-primary underline">Política v{{ data.numero }}</Link></template></Column>
                             <Column header="Versión" style="width:16%"><template #body="{ data }"><div class="flex items-center gap-2"><Avatar :label="`v${data.numero}`" shape="circle" class="bg-primary-100 font-bold text-primary-700" /><ProductVersionStatus :state="data.estado" :used="data.usos_count > 0" /></div></template></Column>
                             <Column header="Condiciones"><template #body="{ data }"><p class="font-medium">{{ moneyCompact(data.monto_minimo) }} – {{ moneyCompact(data.monto_maximo) }}</p><p class="text-sm text-surface-500">{{ percent(data.tasa_ordinaria_anual) }} ordinaria · {{ data.dias_gracia_mora }} días de gracia</p></template></Column>
                             <Column header="Periodicidad"><template #body="{ data }"><div class="flex flex-wrap gap-1"><Chip v-for="item in data.periodicidades" :key="item.id" :label="`${periodicityLabel[item.periodicidad]} ${item.plazo_minimo}–${item.plazo_maximo}`" /></div></template></Column>

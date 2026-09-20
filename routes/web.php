@@ -53,6 +53,9 @@ Route::middleware([
     Route::post('solicitudes/{solicitud}/enviar', [\App\Http\Controllers\SolicitudController::class, 'enviar'])->name('solicitudes.enviar');
     Route::post('solicitudes/{solicitud}/resolver', [\App\Http\Controllers\SolicitudController::class, 'resolver'])->name('solicitudes.resolver');
     Route::post('solicitudes/{solicitud}/dictaminar', [\App\Http\Controllers\SolicitudController::class, 'dictaminar'])->name('solicitudes.dictaminar');
+    Route::post('solicitudes/{solicitud}/aprobar', [\App\Http\Controllers\SolicitudController::class, 'aprobar'])->name('solicitudes.aprobar');
+    Route::get('producto-versiones/{version}/politica-originacion', [\App\Http\Controllers\OriginacionPoliticaController::class, 'show'])->name('originacion-politicas.show');
+    Route::post('producto-versiones/{version}/politica-originacion', [\App\Http\Controllers\OriginacionPoliticaController::class, 'store'])->name('originacion-politicas.store');
     Route::patch('solicitudes/{solicitud}/responsable', [\App\Http\Controllers\SolicitudController::class, 'asignar'])->name('solicitudes.asignar');
     Route::resource('solicitudes', \App\Http\Controllers\SolicitudController::class)->except('destroy')->parameters(['solicitudes' => 'solicitud']);
 
