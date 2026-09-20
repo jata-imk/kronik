@@ -29,6 +29,7 @@ en [Notion](https://app.notion.com/p/3e161db7db7f817a8c89ec30767d4666).
 8. Rechazar únicamente durante revisión; cancelar borrador, devolución o revisión.
    Cierres conservan evidencia, impiden edición/reasignación/reenvío y salen de
    Mi trabajo por defecto. Se recuperan mediante filtro de estado, no se reabren.
+   Un cierre no muestra los dictámenes históricos como tareas pendientes.
 
 La captura 0/7–7/7 no representa aprobación ni cumplimiento documental. El
 expediente y las consultas SIC tienen enlaces propios. La tabla de revisión es
