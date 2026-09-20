@@ -5,6 +5,8 @@ import { ZiggyVue } from "../../vendor/tightenco/ziggy";
 
 import Aura from "@primevue/themes/aura";
 import PrimeVue from "primevue/config";
+import Select from "primevue/select";
+import { guardPrimeVueSelectOverlay } from "./Utils/primeVueSelectOverlay";
 import AnimateOnScroll from "primevue/animateonscroll";
 
 import ConfirmationService from "primevue/confirmationservice";
@@ -16,6 +18,7 @@ import "../css/app.css";
 import "@sakai-vue/assets/styles.scss";
 
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
+guardPrimeVueSelectOverlay(Select);
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,

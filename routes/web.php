@@ -46,6 +46,12 @@ Route::middleware([
         return Inertia::render('Dashboard');
     })->name('dashboard');
 
+    Route::get('mi-trabajo', [\App\Http\Controllers\SolicitudController::class, 'index'])->name('solicitudes.trabajo');
+    Route::get('solicitudes/clientes', [\App\Http\Controllers\SolicitudController::class, 'clientes'])->name('solicitudes.clientes');
+    Route::post('solicitudes/{solicitud}/enviar', [\App\Http\Controllers\SolicitudController::class, 'enviar'])->name('solicitudes.enviar');
+    Route::patch('solicitudes/{solicitud}/responsable', [\App\Http\Controllers\SolicitudController::class, 'asignar'])->name('solicitudes.asignar');
+    Route::resource('solicitudes', \App\Http\Controllers\SolicitudController::class)->except('destroy')->parameters(['solicitudes' => 'solicitud']);
+
     // Importante: Las rutas de clientes.historial-crediticio deben ir antes de la ruta de clientes
     Route::get('clientes/historial-crediticio', [HistorialCrediticioController::class, 'index'])->name('clientes.historial-crediticio.index');
     Route::get('clientes/{cliente}/historial-crediticio', [HistorialCrediticioController::class, 'show'])->name('clientes.historial-crediticio.show');

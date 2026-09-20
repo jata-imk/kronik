@@ -18,7 +18,10 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 - Estado: en progreso
 - Última actualización: 2026-09-20
 - Último punto estable: main 002ca0d (PR #15), igual a remoto al iniciar.
-- P0: Notion ampliado y ADR registrados. P1 en preparación; P2–P9 pendientes.
+- P0: Notion ampliado y ADR registrados (6359c99).
+- P1: SIC saneado/navegación (c29af31), rama fix/sic-navegacion-segura.
+- P2: borrador/revisión/asignación implementados y verificados; preparado para revisión.
+- P3–P9 pendientes. No aprobación ni operación monetaria habilitada.
 - Se preserva `.playwright-mcp/` local ajeno.
 
 ## Decisiones pendientes
@@ -28,13 +31,18 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 ## Evidencia
 
-- Pruebas: pendientes del nuevo incremento.
+- Pruebas: suite backend 180 aprobadas / 1089 aserciones / 1 omitida tras P2.
+- Frontend: 54 pruebas aprobadas. Build aprobado.
+- E2E: 9 aprobados (solicitud, SIC, autenticación y administración).
+- QA encontró y corrigió etiquetas accesibles, sincronización del plazo y fallo
+  de orientación en Select de PrimeVue 4.3.1; guard temporal documentado y probado.
 - Revisión manual: fuentes Notion y arquitectura existente inspeccionadas.
-- Migraciones o seeders: ninguna todavía.
+- Migraciones o seeders: 2026_09_20_000000_create_solicitudes_tables; ModulesAndPermissionsSeeder
+  agrega cuatro permisos, sin asignarlos a roles. Solo se ejecutó en BD de pruebas aisladas.
 
 ## Siguiente paso
 
-Completar P1 (SIC seguro y navegación), después P2 (borradores y bandeja).
+Revisar PR de P2; después P3 evaluación manual, cumplimiento y resolución.
 
 ## Cierre
 

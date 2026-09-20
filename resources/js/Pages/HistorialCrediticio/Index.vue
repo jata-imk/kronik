@@ -61,7 +61,7 @@ function buscar(page = 1) {
                     </div>
                     <div class="flex flex-col gap-1">
                         <label for="sic-estado">Estado registrado</label>
-                        <Select input-id="sic-estado" v-model="filters.estado" :options="estados" option-label="label" option-value="value" />
+                        <Select input-id="sic-estado" aria-label="Estado registrado" v-model="filters.estado" :options="estados" option-label="label" option-value="value" />
                     </div>
                     <Button type="submit" label="Buscar" :loading="loading" />
                 </form>

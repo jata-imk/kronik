@@ -5,6 +5,10 @@ namespace App\Enums;
 enum ActivityEvent: string
 {
     case Login = 'login';
+    case ApplicationCreated = 'solicitud.created';
+    case ApplicationUpdated = 'solicitud.updated';
+    case ApplicationSubmitted = 'solicitud.submitted';
+    case ApplicationAssigned = 'solicitud.assigned';
     case TwoFactorCompleted = 'login.2fa_completed';
     case UserProfileUpdated = 'user.profile.updated';
     case CompanyUpdated = 'empresa.updated';
@@ -55,6 +59,10 @@ enum ActivityEvent: string
     public function label(): string
     {
         return match ($this) {
+            self::ApplicationCreated => 'Solicitud creada',
+            self::ApplicationUpdated => 'Borrador de solicitud actualizado',
+            self::ApplicationSubmitted => 'Solicitud enviada a revisión',
+            self::ApplicationAssigned => 'Responsable de solicitud asignado',
             self::Login => 'Inicio de sesión',
             self::TwoFactorCompleted => 'Autenticación de dos factores completada',
             self::UserProfileUpdated => 'Perfil de usuario actualizado',
