@@ -181,3 +181,16 @@ test('un borrador permite quitar un producto retirado para recuperarse', functio
         ->assertSessionHasNoErrors();
     expect($solicitud->fresh()->producto_version_id)->toBeNull();
 });
+
+test('la fecha estimada de hoy se interpreta como fecha empresarial no como instante UTC', function () {
+    config(['app.timezone' => 'America/Mexico_City']);
+    $user = actingAsSuperAdmin();
+    $cliente = Cliente::factory()->create(['sucursal_id' => $user->current_sucursal_id]);
+    $version = solicitudProducto($user->id);
+    $data = solicitudDatos($cliente, $version);
+    $data['fecha_estimada'] = app(FechaEmpresa::class)->hoy()->toDateString();
+    $this->actingAs($user)->post(route('solicitudes.store'), $data)->assertSessionHasNoErrors();
+    $this->post(route('solicitudes.enviar', Solicitud::firstOrFail()), ['lock_version' => 0])->assertSessionHasNoErrors();
+    expect(SolicitudRevision::firstOrFail()->snapshot['simulacion_informativa']['escenario']['fecha_disposicion'])
+        ->toBe($data['fecha_estimada']);
+});

@@ -95,7 +95,9 @@ class SolicitudService
             // Same client -> product lock order as creation and deletion flows.
             $cliente = Cliente::query()->lockForUpdate()->findOrFail($solicitud->cliente_id);
             $producto = $this->productoDisponible($solicitud->producto_version_id);
-            $fecha = CarbonImmutable::parse($solicitud->fecha_estimada, $this->fecha->zonaHoraria())->startOfDay();
+            // A contractual date is not a UTC instant. Rebuild it in the
+            // lender's zone instead of converting Eloquent's midnight cast.
+            $fecha = CarbonImmutable::parse($solicitud->fecha_estimada->toDateString(), $this->fecha->zonaHoraria())->startOfDay();
             if ($fecha->lt($this->fecha->hoy())) {
                 $this->error('fecha_estimada', 'La fecha estimada no puede ser anterior a hoy.');
             }
