@@ -1,5 +1,10 @@
 # Explicacion
 
+- [ADR 0010: originación integrada](adr-0010-originacion-integrada.md)
+- [ADR 0011: integración SIC segura](adr-0011-integracion-sic-segura.md)
+- [ADR 0012: movimientos y devengo](adr-0012-movimientos-y-devengo.md)
+- [ADR 0013: perfiles de cumplimiento](adr-0013-perfiles-cumplimiento.md)
+
 - [ADR 0001: configuracion por instalacion](adr-0001-configuracion-por-instalacion.md)
 - [ADR 0002: CI con GitHub Actions](adr-0002-ci-github-actions.md)
 - [ADR 0003: expediente de cliente y KYC](adr-0003-expediente-cliente-kyc.md)

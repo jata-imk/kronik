@@ -42,4 +42,4 @@ The repository's Notion page is `https://app.notion.com/p/1a261db7db7f800c809bf9
 
 Notion is the source of truth for backlog order, scope, and product priorities. Architectural decisions belong in `docs/explanation/adr-*.md`; durable operating and usage documentation belongs in the appropriate Diataxis section. Keep temporary execution context and handoffs in one file per backlog under `docs/agent-notes/`, following its template. Agent Notes must not contain secrets or duplicate the full specification from Notion.
 
-Backlog 02 (PR #11) and Backlog 01.5 (PR #12) are complete. Current work should start with Backlog 03 (credit products). Backlog 02.5 (audit and activity matrix) is intentionally deferred unless Notion is reordered again.
+Backlogs 02 (PR #11), 01.5 (PR #12), 03 (PR #14), and 03.5 (PR #15) are complete. Current work follows the coordinated Backlogs 04–07 initiative in Notion, delivered incrementally from origination to first payment. Backlog 02.5 (audit and activity matrix) remains intentionally deferred. Never enable production SIC or real-money operations with unvalidated provider, financial, tax, or compliance policies.
