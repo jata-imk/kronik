@@ -124,6 +124,8 @@ class ClienteController extends Controller implements HasMiddleware
         $regimenesFiscales = $regimenFiscalService->readAll(['id', 'clave', 'descripcion', 'fisica', 'moral']);
 
         return Inertia::render('Clientes/Show', [
+            'puedeCrearSolicitud' => Gate::allows('create', \App\Models\Solicitud::class)
+                && (int) $request->user()->current_sucursal_id === (int) $cliente->sucursal_id,
             'readOnly' => true,
             'cliente' => $cliente->load(['datosFiscales', 'direcciones.pais', 'direcciones.codigoPostal.divisionAdministrativa.padre.padre']),
             'paises' => $paises,
@@ -150,6 +152,8 @@ class ClienteController extends Controller implements HasMiddleware
         $regimenesFiscales = $regimenFiscalService->readAll(['id', 'clave', 'descripcion', 'fisica', 'moral']);
 
         return Inertia::render('Clientes/Update', [
+            'puedeCrearSolicitud' => Gate::allows('create', \App\Models\Solicitud::class)
+                && (int) $request->user()->current_sucursal_id === (int) $cliente->sucursal_id,
             'action' => 'clientes.update',
             'readOnly' => false,
             'cliente' => $cliente->load(['datosFiscales', 'direcciones.pais', 'direcciones.codigoPostal.divisionAdministrativa.padre.padre']),

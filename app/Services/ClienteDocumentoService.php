@@ -26,6 +26,7 @@ class ClienteDocumentoService
 
         try {
             return DB::transaction(function () use ($cliente, $data, $file, $disk, $path) {
+                $cliente = Cliente::query()->lockForUpdate()->findOrFail($cliente->id);
                 $tipo = ClienteDocumentoTipo::from($data['tipo']);
                 $reemplaza = $this->findReplacement($cliente, $tipo, $data['reemplaza_documento_id'] ?? null);
 
@@ -66,6 +67,16 @@ class ClienteDocumentoService
     }
 
     public function changeStatus(ClienteDocumento $documento, ClienteDocumentoEstado $estado, User $reviewer, ?string $reason = null): ClienteDocumento
+    {
+        return DB::transaction(function () use ($documento, $estado, $reviewer, $reason) {
+            Cliente::query()->lockForUpdate()->findOrFail($documento->cliente_id);
+            $documento = ClienteDocumento::query()->lockForUpdate()->findOrFail($documento->id);
+
+            return $this->changeLockedStatus($documento, $estado, $reviewer, $reason);
+        });
+    }
+
+    private function changeLockedStatus(ClienteDocumento $documento, ClienteDocumentoEstado $estado, User $reviewer, ?string $reason): ClienteDocumento
     {
         if (! $documento->es_actual) {
             throw ValidationException::withMessages([

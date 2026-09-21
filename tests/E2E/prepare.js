@@ -15,6 +15,8 @@ export function e2eEnvironment() {
         DEBUGBAR_ENABLED: "false",
         APP_KEY: "base64:VdUXfE4mVbQd4D4QnS2SGdlx1DsFJsPhlfLCMyn5LIk=",
         E2E_DATABASE: "true",
+        E2E_ORIGINACION_DUAL: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
+        ORIGINACION_APROBACIONES_HABILITADAS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
         GEOCODING_ENABLED: "false",
         DB_CONNECTION: process.env.E2E_DB_CONNECTION ?? "sqlite",
         DB_DATABASE: process.env.E2E_DB_DATABASE ?? localDatabase,

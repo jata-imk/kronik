@@ -1,16 +1,31 @@
 <script setup>
 import { Link, router, useForm } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { solicitudEstados, solicitudEditable } from "@/Utils/solicitudEstados";
 import SolicitudResolucionForm from "@/Components/Solicitudes/SolicitudResolucionForm.vue";
 import SolicitudDictamenPanel from "@/Components/Solicitudes/SolicitudDictamenPanel.vue";
-const props = defineProps({ solicitud: Object, revision: { type: Object, default: null }, can: Object, responsables: Array, resoluciones: { type: Array, default: () => [] }, dictamenes: { type: Object, default: () => ({ evaluacion: null, pld: null }) } });
+import SolicitudAprobacion from "@/Components/Solicitudes/SolicitudAprobacion.vue";
+import "../../../css/originacion.css";
+import { formatMoneyWithCents as money } from "@/Pages/ProductosCrediticios/productValidation";
+const props = defineProps({ solicitud: Object, revision: { type: Object, default: null }, can: Object, responsables: Array, resoluciones: { type: Array, default: () => [] }, dictamenes: { type: Object, default: () => ({ evaluacion: null, pld: null }) }, aprobacion: { type: Object, default: null }, aprobacionVencida: Boolean });
 const envio = useForm({ lock_version: props.solicitud.lock_version });
 const assignment = useForm({ lock_version: props.solicitud.lock_version, responsable_id: props.solicitud.responsable_id });
 const campos = { producto_version_id: "Producto y versión", monto: "Monto", plazo: "Número de pagos", periodicidad: "Periodicidad", metodo: "Amortización", destino: "Destino", fecha_estimada: "Fecha estimada" };
 const completos = computed(() => Object.keys(campos).filter((k) => props.solicitud[k] !== null && props.solicitud[k] !== "").length);
-const eventos = { creada: "Solicitud creada", borrador_actualizado: "Captura actualizada", enviada: "Enviada a revisión", asignada: "Responsable asignado", devuelta: "Devuelta para corrección", rechazada: "Solicitud rechazada", cancelada: "Solicitud cancelada", dictamen_registrado: "Revisión especializada registrada" };
+const actualizando = ref(false);
+const actualizacion = ref("");
+function actualizar() {
+    if (actualizando.value) return;
+    actualizando.value = true;
+    actualizacion.value = "";
+    router.reload({
+        onSuccess: () => { actualizacion.value = "Información actualizada. Se volvieron a comprobar los requisitos; recargar no modifica ni renueva dictámenes."; },
+        onError: () => { actualizacion.value = "No se pudo actualizar. Intenta nuevamente."; },
+        onFinish: () => { actualizando.value = false; if (!actualizacion.value) actualizacion.value = "La actualización no se completó. Intenta nuevamente."; },
+    });
+}
+const eventos = { creada: "Solicitud creada", borrador_actualizado: "Captura actualizada", enviada: "Enviada a revisión", asignada: "Responsable asignado", devuelta: "Devuelta para corrección", rechazada: "Solicitud rechazada", cancelada: "Solicitud cancelada", dictamen_registrado: "Revisión especializada registrada", aprobada: "Solicitud aprobada" };
 function enviar() {
     envio.lock_version = props.solicitud.lock_version;
     envio.post(route("solicitudes.enviar", props.solicitud.id), { preserveScroll: true });
@@ -24,29 +39,31 @@ function asignar() {
 <template>
     <AppLayout :title="`Solicitud SOL-${solicitud.id}`">
         <template #card-header>
-            <div class="flex flex-wrap items-center justify-between gap-3 p-6">
+            <div class="originacion-heading flex flex-wrap items-center justify-between gap-3 p-6">
                 <div><h1 class="text-2xl font-semibold">Solicitud SOL-{{ solicitud.id }}</h1><p>{{ solicitud.cliente.primer_nombre }} {{ solicitud.cliente.apellido_paterno }} · {{ solicitud.sucursal.nombre }}</p></div>
                 <Link :href="route('solicitudes.index')" class="text-primary underline">Volver a solicitudes</Link>
             </div>
         </template>
         <template #card-content>
-            <div class="space-y-6 p-6">
-                <Message severity="info" :closable="false">Captura y dictámenes humanos preliminares disponibles. Aprobación, consultas SIC productivas, formalización y desembolso aún no están habilitados.</Message>
+            <div class="originacion-content space-y-6 p-4 md:p-6">
+                <Message severity="info" :closable="false">{{ solicitudEditable(solicitud.estado) ? 'Siguiente paso: completa la captura y envía a revisión. Guardar el borrador todavía no habilita Evaluación ni PLD.' : 'Revisa los pendientes antes de resolver. Las consultas SIC productivas, formalización y desembolso aún no están disponibles.' }}</Message>
+                <Message v-if="aprobacionVencida" severity="warn" :closable="false">La aprobación venció. Devuelve y reenvía para obtener nuevos dictámenes y resolución antes de formalizar.</Message>
                 <section class="rounded border border-surface-200 p-4 dark:border-surface-700">
                     <h2 class="text-lg font-semibold">{{ solicitudEstados[solicitud.estado]?.label }}</h2>
                     <p>Responsable: {{ solicitud.responsable.name }}</p>
                     <p>Siguiente paso: {{ solicitudEstados[solicitud.estado]?.siguiente }}</p>
                     <p class="mt-3">Captura: {{ completos }}/7 datos. No representa avance de aprobación.</p>
-                    <ul class="mt-2 grid gap-1 md:grid-cols-2"><li v-for="(label, field) in campos" :key="field">{{ solicitud[field] !== null && solicitud[field] !== "" ? "✓" : "Pendiente:" }} {{ label }}</li></ul>
+                    <ul class="mt-3 grid gap-2 md:grid-cols-2"><li v-for="(label, field) in campos" :key="field" class="flex items-center gap-2"><i :class="solicitud[field] !== null && solicitud[field] !== '' ? 'pi pi-check-circle text-green-600' : 'pi pi-clock text-amber-600'" aria-hidden="true" /><span><span class="sr-only">{{ solicitud[field] !== null && solicitud[field] !== '' ? 'Completo:' : 'Pendiente:' }}</span> {{ label }}</span></li></ul>
                 </section>
                 <div class="flex flex-wrap gap-4">
                     <Link :href="route('clientes.expediente.show', solicitud.cliente_id)" class="text-primary underline">Expediente y documentos del cliente</Link>
                     <Link v-if="can.sic" :href="route('clientes.historial-crediticio.show', solicitud.cliente_id)" class="text-primary underline">Historial SIC</Link>
+                    <Link v-if="can.politica && solicitud.producto_version_id" :href="route('originacion-politicas.show', solicitud.producto_version_id)" class="text-primary underline">Configurar política de originación</Link>
                     <Link v-if="can.update && solicitudEditable(solicitud.estado)" :href="route('solicitudes.edit', solicitud.id)" class="text-primary underline">{{ solicitud.estado === 'devuelta' ? 'Corregir solicitud' : 'Completar borrador' }}</Link>
                 </div>
                 <section>
                     <h2 class="text-lg font-semibold">Condiciones solicitadas</h2>
-                    <p>Producto: {{ solicitud.producto_version?.producto?.nombre ?? "Pendiente" }} · Monto: {{ solicitud.monto ?? "Pendiente" }} MXN</p>
+                    <p>Producto: {{ solicitud.producto_version?.producto?.nombre ?? "Pendiente" }} · Monto: {{ solicitud.monto == null ? "Pendiente" : money(solicitud.monto) }} MXN</p>
                     <p>{{ solicitud.plazo ?? "—" }} pagos · {{ solicitud.periodicidad ?? "Periodicidad pendiente" }} · Fecha estimada: {{ solicitud.fecha_estimada ?? "Pendiente" }}</p>
                     <p class="whitespace-pre-wrap">{{ solicitud.destino }}</p>
                 </section>
@@ -56,18 +73,22 @@ function asignar() {
                     <p class="mt-2 text-sm">Al enviar se congela la revisión y se validan las condiciones contra el producto vigente. No genera consultas SIC ni movimientos monetarios.</p>
                 </section>
                 <form v-if="can.assign && !['rechazada', 'cancelada'].includes(solicitud.estado)" class="flex flex-wrap items-end gap-3" @submit.prevent="asignar">
-                    <div class="flex flex-col gap-1"><label for="sol-responsable">Responsable</label><Select input-id="sol-responsable" aria-label="Responsable" v-model="assignment.responsable_id" :options="responsables" option-label="name" option-value="id" /></div>
+                    <div class="flex flex-col gap-1"><label for="sol-responsable">Responsable</label><Select input-id="sol-responsable" aria-label="Responsable" v-model="assignment.responsable_id" :options="responsables" option-label="name" option-value="id" filter filter-placeholder="Buscar por nombre" empty-filter-message="No hay responsables con ese nombre." /><small>Usuarios activos autorizados de esta sucursal.</small></div>
                     <Button type="submit" label="Asignar responsable" :loading="assignment.processing" />
                     <Message v-for="(error, key) in assignment.errors" :key="key" severity="error" :closable="false">{{ error }}</Message>
                 </form>
-                <SolicitudDictamenPanel v-if="dictamenes.evaluacion !== null" tipo="evaluacion" :solicitud="solicitud" :registros="dictamenes.evaluacion" :puede-registrar="can.evaluate" />
-                <SolicitudDictamenPanel v-if="dictamenes.pld !== null" tipo="pld" :solicitud="solicitud" :registros="dictamenes.pld" :puede-registrar="can.compliance" />
+                <div class="originacion-dictamenes grid items-start gap-4 xl:grid-cols-2">
+                    <SolicitudDictamenPanel v-if="dictamenes.evaluacion !== null" tipo="evaluacion" :solicitud="solicitud" :registros="dictamenes.evaluacion" :puede-registrar="can.evaluate" />
+                    <SolicitudDictamenPanel v-if="dictamenes.pld !== null" tipo="pld" :solicitud="solicitud" :registros="dictamenes.pld" :puede-registrar="can.compliance" />
+                </div>
+                <SolicitudAprobacion :solicitud="solicitud" :estado="aprobacion" :puede-aprobar="can.approve" />
                 <SolicitudResolucionForm :solicitud="solicitud" :can="can" :responsables="responsables" />
                 <section v-if="resoluciones.length">
-                    <h2 class="text-lg font-semibold">Devoluciones y cierres recientes</h2>
+                    <h2 class="text-lg font-semibold">Resoluciones recientes</h2>
                     <p class="text-sm">Últimas 30 operaciones. Las revisiones anteriores se conservan aunque corrijas la captura.</p>
                     <article v-for="item in resoluciones" :key="item.id" class="mt-3 border-l-2 pl-3">
-                        <p>{{ { devolver: 'Devolución', rechazar: 'Rechazo', cancelar: 'Cancelación' }[item.accion] }} · {{ item.actor.name }} · {{ new Date(item.created_at).toLocaleString('es-MX') }}</p>
+                        <p>{{ { devolver: 'Devolución', rechazar: 'Rechazo', cancelar: 'Cancelación', aprobar: 'Aprobación' }[item.accion] }} · {{ item.actor.name }} · {{ new Date(item.created_at).toLocaleString('es-MX') }}</p>
+                        <p v-if="item.vigente_hasta">Vigencia registrada: hasta {{ item.vigente_hasta }} inclusive. Una devolución o cambio de evidencia exige nueva revisión; no autoriza desembolso.</p>
                         <p class="whitespace-pre-wrap">{{ item.motivo }}</p>
                     </article>
                 </section>
@@ -84,7 +105,7 @@ function asignar() {
                     <p class="text-sm">Últimos 30 eventos, del más reciente al más antiguo.</p>
                     <ol class="mt-3 space-y-2"><li v-for="evento in solicitud.eventos" :key="evento.id">{{ eventos[evento.tipo] ?? evento.tipo }} · {{ evento.actor.name }} · {{ new Date(evento.created_at).toLocaleString("es-MX") }}</li></ol>
                 </section>
-                <Button text label="Actualizar datos de la solicitud" @click="router.reload()" />
+                <div class="space-y-2"><Button outlined icon="pi pi-refresh" label="Actualizar datos de la solicitud" :loading="actualizando" :disabled="actualizando" @click="actualizar" /><p class="text-sm text-surface-500">Recarga la información del servidor; no edita la captura ni renueva dictámenes.</p><p role="status" aria-live="polite">{{ actualizacion }}</p></div>
             </div>
         </template>
     </AppLayout>

@@ -9,6 +9,9 @@ P3 agrega `solicitud.returned`, `solicitud.rejected`, `solicitud.cancelled` y
 `solicitud.assessment_recorded`. El log técnico no contiene motivos, fundamentos,
 fuentes ni riesgo; el timeline comparte solo identificadores de evidencia/revisión.
 Los dictámenes reservados se leen con permisos de la especialidad, no de auditoría.
+P3 aprobación añade `originacion.politica_created` y `solicitud.approved`.
+La política conserva autor y condiciones; la resolución conserva sus evidencias.
+Los logs técnicos continúan sin copiar motivos ni contenido reservado.
 Decisiones, contratos, desembolsos, pagos y cobranza se incorporan en los siguientes
 incrementos coordinados 04–07; los reportes posteriores no sustituyen esos eventos.
 

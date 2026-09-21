@@ -3,8 +3,9 @@
 ## Referencias
 
 - Notion: https://app.notion.com/p/3a061db7db7f8157b516e7f47aabb241
-- Rama: feat/solicitudes-resolucion
+- Rama: feat/solicitudes-aprobacion (continuación sobre feat/solicitudes-resolucion)
 - PR: [#19](https://github.com/jata-imk/kronik/pull/19), borrador sobre #18.
+- Continuación: [#20](https://github.com/jata-imk/kronik/pull/20), comprobaciones para aprobación sobre #19.
 - ADR relacionados: 0010 y 0013.
 
 ## Objetivo
@@ -18,7 +19,9 @@ Conectar revisión humana reservada al expediente de solicitud. Alcance completo
 - Dictámenes cifrados/inmutables por revisión, lectura/escritura diferenciadas.
 - Bandeja de Cumplimiento conduce al mismo detalle. No consulta listas automáticamente.
 - Reenvío conserva dictámenes anteriores como históricos, no aplicables a nueva revisión.
-- No aprobación, certificación legal, notificación externa ni operación monetaria.
+- La aprobación condicionada requiere el último PLD sin observaciones, evidencia
+  vigente y política explícita. Dictámenes sin huella o con expediente cambiado bloquean.
+- Habilitación de aprobación cerrada por defecto; sin certificación legal, notificación externa ni dinero.
 
 ## Decisiones pendientes
 
@@ -29,13 +32,14 @@ Conectar revisión humana reservada al expediente de solicitud. Alcance completo
 
 - Pruebas: 18 de solicitudes / 250 aserciones; suite backend 188 / 1240; frontend 56.
 - E2E: 9 aprobados, incluyendo evaluación/PLD y obsolescencia tras nueva revisión.
+- Aprobación e573a37: 196 backend / 1341 aserciones, 60 frontend y 9 E2E aprobados.
 - Revisión manual: Notion y ADR 0013 cotejados; ver referencia de solicitudes.
 - Migraciones: solicitud_resoluciones y solicitud_dictamenes, aditivas, solo BD aisladas.
 - Seeder: nuevos permisos sin asignación automática de roles.
 
 ## Siguiente paso
 
-Completar gates de aprobación y requisitos, conservando notas reservadas fuera de logs y props operativos.
+Verificar controles de aprobación y continuar P4 con revalidación de evidencia antes de formalizar.
 
 ## Cierre
 

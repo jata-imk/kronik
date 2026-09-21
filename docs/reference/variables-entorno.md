@@ -59,7 +59,15 @@ CI usa PHP 8.3 y MariaDB 11 con:
 `php artisan test`. GitHub Actions declara explícitamente MariaDB y reemplaza
 esa configuración con las variables del workflow.
 
-## Integraciones
+## Originación
+
+- `ORIGINACION_APROBACIONES_HABILITADAS`: `false` por defecto. Mantener cerrada hasta
+  validar al operador y sus políticas. Solo `true` explícito satisface esta barrera;
+  no omite permisos, separación de funciones, SIC, documentos ni dictámenes.
+- No habilita formalización, desembolso ni pagos. Las pruebas positivas usan
+  configuración aislada, nunca cambian la instalación real.
+
+## Integraciones SIC
 
 Las credenciales de infraestructura y Círculo de Crédito viven en `.env`.
 `empresa_configuraciones.integraciones` usa un cast cifrado y la interfaz nunca

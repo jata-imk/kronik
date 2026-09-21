@@ -86,6 +86,7 @@ class ClienteService
     public function update(Cliente $cliente, array $data)
     {
         return DB::transaction(function () use ($cliente, $data) {
+            $cliente = Cliente::query()->lockForUpdate()->findOrFail($cliente->id);
             $cliente->update($data);
 
             if (isset($data['datos_fiscales'])) {

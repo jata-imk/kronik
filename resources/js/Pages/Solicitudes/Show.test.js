@@ -1,6 +1,7 @@
 import { mount } from "@vue/test-utils";
 import { describe, expect, it, vi } from "vitest";
 import Show from "./Show.vue";
+import { router } from "@inertiajs/vue3";
 
 vi.mock("@inertiajs/vue3", () => ({
     Link: { template: "<a><slot /></a>" },
@@ -26,6 +27,25 @@ function render(overrides = {}, can = { update: true, assign: true, sic: true })
 }
 
 describe("Detalle de solicitud", () => {
+    it("recarga requisitos y confirma el resultado sin confundirlo con edición", async () => {
+        const wrapper = render();
+        await wrapper.findAll("button").find(button => button.text() === "Actualizar datos de la solicitud").trigger("click");
+        const options = router.reload.mock.lastCall[0];
+        options.onSuccess();
+        options.onFinish();
+        await wrapper.vm.$nextTick();
+        expect(wrapper.get('[role="status"]').text()).toContain("Información actualizada");
+        expect(wrapper.text()).toContain("recargar no modifica ni renueva dictámenes");
+    });
+    it("permite reintentar una recarga fallida", async () => {
+        const wrapper = render();
+        await wrapper.findAll("button").find(button => button.text() === "Actualizar datos de la solicitud").trigger("click");
+        const options = router.reload.mock.lastCall[0];
+        options.onError();
+        options.onFinish();
+        await wrapper.vm.$nextTick();
+        expect(wrapper.get('[role="status"]').text()).toContain("No se pudo actualizar");
+    });
     it("orienta la captura sin representar aprobación", () => {
         const wrapper = render();
         expect(wrapper.text()).toContain("Captura: 0/7 datos");
