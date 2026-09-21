@@ -61,13 +61,16 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 ## Siguiente paso
 
-Cerrar correcciones del QA P3 antes de P4. Usuario confirma que VPS es solo QA,
-con datos de prueba, y autoriza integrar la ronda de PR en orden tras verificar.
-Correcciones en curso: tarjetas/contexto de captura, importes MXN, accesos desde
-cliente, búsqueda de responsables, dictámenes resumidos, pendientes explicados
-y recarga con confirmación. Separación dual se verifica con usuarios normales
-en E2E aislado; no modificar la solicitud manual de la VPS.
-Después continuar P4 formalización, revalidando vigencia/evidencia y manteniendo operación real cerrada.
+Continuar P4 formalización desde main una vez completada la integración de #20,
+revalidando vigencia/evidencia antes de contrato/anexo y firma. P5 desembolso y P6
+primer pago completarán después la primera vertical. No avanzar SIC real ni dinero
+sin políticas validadas. VPS exclusivamente QA; no modificar la solicitud manual.
+
+QA P3 corregido en 7933920: tarjetas/contexto, importes MXN, accesos desde cliente,
+búsqueda de responsables, dictámenes resumidos, pendientes explicados y recarga
+con confirmación. CI aprobado (35550769722, MariaDB/build/backend/frontend).
+Usuario autoriza integrar esta ronda; #17, #16, #18 y #19 ya están en main.
+#20 queda como último PR de integración; verificar su estado remoto al retomar.
 
 ## Cierre
 
