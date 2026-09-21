@@ -50,12 +50,13 @@ Route::middleware([
     Route::get('clientes/historial-crediticio', [HistorialCrediticioController::class, 'index'])->name('clientes.historial-crediticio.index');
     Route::get('clientes/{cliente}/historial-crediticio', [HistorialCrediticioController::class, 'show'])->name('clientes.historial-crediticio.show');
 
-    Route::resource('clientes/{cliente?}/circulo-credito', CirculoCreditoController::class)->only([
-        'index',
-        'create',
-        'store',
-        'show',
-    ])->names('circulo-credito');
+    // Optional parameters must be trailing: the legacy optional middle segment
+    // silently produced 404s for the global entry point.
+    Route::get('consultas-sic/nueva/{cliente?}', [CirculoCreditoController::class, 'create'])->whereNumber('cliente')->name('circulo-credito.create');
+    Route::get('consultas-sic', [CirculoCreditoController::class, 'create'])->name('circulo-credito.index');
+    Route::post('consultas-sic/{cliente?}', [CirculoCreditoController::class, 'store'])->whereNumber('cliente')->name('circulo-credito.store');
+    Route::get('clientes/{cliente}/circulo-credito/create', [CirculoCreditoController::class, 'create'])->whereNumber('cliente');
+    Route::post('clientes/{cliente}/circulo-credito', [CirculoCreditoController::class, 'store'])->whereNumber('cliente');
 
     Route::get('clientes/{cliente}/expediente', [ClienteExpedienteController::class, 'show'])->name('clientes.expediente.show');
     Route::patch('clientes/{cliente}/expediente/perfil', [ClienteExpedienteController::class, 'updateProfile'])->name('clientes.expediente.perfil.update');

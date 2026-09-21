@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Module;
 use App\Models\MenubarItemModule;
+use App\Models\Module;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -15,7 +15,7 @@ class MenubarService
         $route = Route::current();
         $routeName = $route?->getName();
 
-        if (!$routeName) {
+        if (! $routeName) {
             return [];
         }
 
@@ -34,7 +34,7 @@ class MenubarService
             ->sortByDesc(fn (Module $candidate) => strlen((string) $candidate->route_name))
             ->first();
 
-        if (!$module) {
+        if (! $module) {
             return [];
         }
 
@@ -71,7 +71,7 @@ class MenubarService
     ): array {
         $menu = [];
 
-        if (!$parent) {
+        if (! $parent) {
             $menu[] = $currentRouteName === $moduleIndexRoute
                 ? [
                     'label' => 'Inicio',
@@ -87,6 +87,14 @@ class MenubarService
         }
 
         foreach ($items as $item) {
+            // Preserve editable menus, but never advertise SIC actions the
+            // current profile cannot use (including existing seeded entries).
+            if ($item->type === 'route:name' && (
+                (str_starts_with((string) $item->value, 'circulo-credito.') && ! $request->user()?->can('create circulo-credito'))
+                || (str_starts_with((string) $item->value, 'clientes.historial-crediticio.') && ! $request->user()?->can('read historial-crediticio'))
+            )) {
+                continue;
+            }
             $routes = $item->menubarItemModules->first()?->routes ?? [];
             $children = $item->children?->count()
                 ? $this->buildMenu($currentRouteName, $moduleIndexRoute, $item->children, $request, $item)
@@ -94,7 +102,7 @@ class MenubarService
 
             $isAvailableOnRoute = in_array($currentRouteName, $routes, true);
 
-            if (!$isAvailableOnRoute && !$children) {
+            if (! $isAvailableOnRoute && ! $children) {
                 continue;
             }
 
@@ -102,7 +110,7 @@ class MenubarService
                 ? $this->resolveMenubarUrl($item, $request)
                 : null;
 
-            if (!$url && !$children) {
+            if (! $url && ! $children) {
                 continue;
             }
 
@@ -149,7 +157,7 @@ class MenubarService
             $conditions = json_decode($item->value);
             $default = collect($conditions)->firstWhere('condition_type', 'default');
 
-            if (!$default) {
+            if (! $default) {
                 return null;
             }
 
@@ -159,7 +167,7 @@ class MenubarService
                 }
 
                 $triggerRoute = Route::getRoutes()->getByName($condition->condition_value->route_name);
-                if (!$triggerRoute) {
+                if (! $triggerRoute) {
                     continue;
                 }
 
@@ -190,7 +198,7 @@ class MenubarService
 
     private function buildRouteUrl(string $routeName, mixed $rawParams, Request $request): ?string
     {
-        if (!Route::has($routeName)) {
+        if (! Route::has($routeName)) {
             return null;
         }
 

@@ -3,140 +3,62 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
-use App\Models\Sic;
-use App\Models\SicApi;
 use App\Models\SicQuery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class HistorialCrediticioController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
+        Gate::authorize('read historial-crediticio');
         Gate::authorize('viewAny', Cliente::class);
-        $clientesCount = Cliente::count();
-        $clientesUntilLastMonth = Cliente::where('created_at', '<=', now()->subMonth())->count();
 
-        $clientesWithSicQueryCount = SicQuery::distinct('cliente_id')->count('cliente_id');
-        $clientesWithSicQueryUntilLastMonthCount = SicQuery::where('fecha_consulta', '<=', now()->subMonth())->distinct('cliente_id')->count('cliente_id');
-
-        $sics = Sic::all();
-
-        $sicsQueriesCount = SicQuery::count();
-        $sicsQueriesCountUntilLastMonth = SicQuery::where('fecha_consulta', '<=', now()->subMonth())->count();
-
-        $sicApis = SicApi::all();
-        $sicQueries = SicQuery::with(['sic', 'api', 'cliente'])
-            ->orderBy('fecha_consulta', 'desc')
-            ->paginate(5, ['id', 'cliente_id', 'sic_id', 'sic_api_id', 'fecha_consulta', 'status', 'mensaje_error', 'response_data']);
-
-        return Inertia::render('HistorialCrediticio/Index', [
-            'clientesCount' => $clientesCount,
-            'clientesUntilLastMonth' => $clientesUntilLastMonth,
-            'clientesWithSicQueryCount' => $clientesWithSicQueryCount,
-            'clientesWithSicQueryUntilLastMonthCount' => $clientesWithSicQueryUntilLastMonthCount,
-            'sics' => $sics,
-            'sicsQueriesCount' => $sicsQueriesCount,
-            'sicsQueriesCountUntilLastMonth' => $sicsQueriesCountUntilLastMonth,
-            'sicApis' => $sicApis,
-            'sicQueriesPaginated' => $sicQueries,
-        ]);
+        return $this->render($request);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
     public function show(Request $request, Cliente $cliente)
     {
+        Gate::authorize('read historial-crediticio');
         Gate::authorize('view', $cliente);
-        $sics = Sic::all();
 
-        $sicsQueries = SicQuery::where('cliente_id', $cliente->id)->get([
-            'id',
-            'cliente_id',
-            'sic_id',
-            'sic_api_id',
-            'fecha_consulta',
-            'status',
+        return $this->render($request, $cliente);
+    }
+
+    private function render(Request $request, ?Cliente $cliente = null)
+    {
+        $filters = $request->validate([
+            'buscar' => 'nullable|string|max:100',
+            'estado' => ['nullable', Rule::in(['pending', 'success', 'error'])],
+            'por_pagina' => ['nullable', 'integer', Rule::in([10, 25, 50])],
+        ], [
+            'estado.in' => 'Selecciona un estado de consulta válido.',
+            'por_pagina.in' => 'Selecciona 10, 25 o 50 registros por página.',
         ]);
-
-        $lastSicQuery = $sicsQueries->last();
-        if ($lastSicQuery) {
-            $lastSicQuery = SicQuery::where('id', $lastSicQuery->id)->get([
-                'id',
-                'cliente_id',
-                'sic_id',
-                'sic_api_id',
-                'fecha_consulta',
-                'status',
-                'response_data',
-            ])->first();
-        }
-
-        $antepenultimateSicQuery = SicQuery::where('cliente_id', $cliente->id)
-            ->where('id', '<', $lastSicQuery->id ?? 0)
-            ->orderBy('fecha_consulta', 'desc')
-            ->get([
-                'id',
-                'cliente_id',
-                'sic_id',
-                'sic_api_id',
-                'fecha_consulta',
-                'status',
-                'response_data',
+        $queries = SicQuery::query()
+            ->select(['id', 'cliente_id', 'sic_id', 'sic_api_id', 'fecha_consulta', 'status'])
+            ->with([
+                'cliente:id,primer_nombre,apellido_paterno,apellido_materno',
+                'sic:id,nombre',
+                'api:id,nombre',
             ])
-            ->first();
+            ->when($cliente, fn ($q) => $q->where('cliente_id', $cliente->id))
+            ->when($filters['estado'] ?? null, fn ($q, $estado) => $q->where('status', $estado))
+            ->when($filters['buscar'] ?? null, fn ($q, $buscar) => $q->whereHas('cliente', fn ($c) => $c
+                ->where(fn ($names) => $names->where('primer_nombre', 'like', '%'.$buscar.'%')
+                    ->orWhere('apellido_paterno', 'like', '%'.$buscar.'%')
+                    ->orWhere('apellido_materno', 'like', '%'.$buscar.'%'))))
+            ->orderByDesc('fecha_consulta')->orderByDesc('id')
+            ->paginate($filters['por_pagina'] ?? 25)->withQueryString();
 
-        return Inertia::render('HistorialCrediticio/Show', [
-            'sics' => $sics,
-            'cliente' => $cliente,
-            'sicsQueries' => $sicsQueries,
-            'lastSicQuery' => $lastSicQuery,
-            'antepenultimateSicQuery' => $antepenultimateSicQuery,
+        return Inertia::render('HistorialCrediticio/Index', [
+            'cliente' => $cliente?->only(['id', 'primer_nombre', 'apellido_paterno', 'apellido_materno']),
+            'consultas' => $queries,
+            'filters' => $filters,
+            'puedeConsultar' => Gate::allows('create circulo-credito')
+                && (! $cliente || Gate::allows('update', $cliente)),
         ]);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
     }
 }

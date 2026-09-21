@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => login(page));
 test("recorre las superficies administrativas actuales", async ({ page }) => {
     const assertNoConsoleErrors = await failOnConsoleErrors(page);
     const pages = [
-        ["/admin", /Configuraciones del Super Admin/i],
+        ["/admin", /^Administración$/i],
         ["/admin/users", /Gestión de usuarios/i],
         ["/admin/teams", /Equipos y departamentos/i],
         ["/admin/sucursales", /^Sucursales$/i],

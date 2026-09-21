@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class SicQuery extends Model
 {
     use HasFactory;
 
     protected $table = 'sic_queries';
+
+    protected $hidden = ['response_data', 'mensaje_error'];
+
     protected $fillable = [
         'cliente_id',
         'sic_id',

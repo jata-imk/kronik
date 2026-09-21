@@ -77,6 +77,8 @@ return [
     'custom' => [],
 
     'attributes' => [
+        'buscar' => 'búsqueda',
+        'por_pagina' => 'registros por página',
         'primer_nombre' => 'primer nombre',
         'apellido_paterno' => 'primer apellido',
         'fecha_nacimiento' => 'fecha de nacimiento',

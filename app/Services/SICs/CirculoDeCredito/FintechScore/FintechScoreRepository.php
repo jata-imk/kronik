@@ -2,72 +2,21 @@
 
 namespace App\Services\SICs\CirculoDeCredito\FintechScore;
 
-use App\Enums\ActivityEvent;
 use App\Models\Cliente;
-use App\Models\Sic;
-use App\Models\SicApi;
-use App\Models\SicQuery;
 use App\Services\ActivityLogService;
-use Illuminate\Support\Facades\Auth;
+use App\Services\SICs\ConsultaSicNoDisponible;
 
+/** @deprecated Replace with a validated adapter under ADR 0011. */
 class FintechScoreRepository
 {
-    protected $service;
-
     public function __construct(
         FintechScoreService $service,
-        private readonly ActivityLogService $activityLog
-    ) {
-        $this->service = $service;
-    }
+        ActivityLogService $activityLog
+    ) {}
 
-    /**
-     * Realiza la consulta de FINTECH Score y almacena el resultado.
-     *
-     * @param  object  $requestData  Objeto Peticion para la consulta.
-     * @return object Respuesta de la API.
-     */
-    public function consultaScore(Cliente $cliente, $requestData = null)
+    public function consultaScore(Cliente $cliente, $requestData = null): never
     {
-        try {
-            $result = $this->service->getReporte($requestData);
-
-            $sicQuery = SicQuery::create([
-                'cliente_id' => $cliente->id,
-                'sic_id' => Sic::where('clave', 'circulo-credito')->first()->id,
-                'sic_api_id' => SicApi::where('clave', 'fintech')->first()->id,
-                'fecha_consulta' => now(),
-                'status' => 'success',
-                'mensaje_error' => null,
-                'response_data' => json_decode($result->__toString()),
-            ]);
-
-            $this->activityLog->log(
-                event: ActivityEvent::ClientSicFintechScoreQueried,
-                description: 'Realizó una consulta de Reporte de Crédito con Fintech Score',
-                subject: $cliente,
-                metadata: [
-                    'related' => ['type' => 'sic_query', 'id' => $sicQuery->id],
-                    'provider' => 'circulo-credito',
-                    'product' => 'fintech',
-                    'result' => 'success',
-                ],
-                causer: Auth::user(),
-            );
-
-            return $result;
-        } catch (\Exception $e) {
-            SicQuery::create([
-                'cliente_id' => $cliente->id,
-                'sic_id' => Sic::where('clave', 'circulo-credito')->first()->id,
-                'sic_api_id' => SicApi::where('clave', 'fintech')->first()->id,
-                'fecha_consulta' => now(),
-                'status' => 'error',
-                'mensaje_error' => $e->getMessage(),
-                'response_data' => null,
-            ]);
-
-            throw $e;
-        }
+        // A disabled call is not a provider query and must not create false history.
+        ConsultaSicNoDisponible::rechazar();
     }
 }
