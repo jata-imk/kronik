@@ -155,5 +155,8 @@ class E2eSeeder extends Seeder
                 app(DocumentoPlantillaVersionService::class)->activate($template->versiones()->first());
             }
         });
+        if (filter_var(env('E2E_ORIGINACION_DUAL'), FILTER_VALIDATE_BOOL)) {
+            $this->call(E2eSolicitudDualSeeder::class);
+        }
     }
 }

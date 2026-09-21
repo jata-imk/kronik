@@ -26,7 +26,7 @@ class SolicitudRequisitosService
         };
         $revision = $solicitud->revisiones()->latest('numero')->first();
         $politica = $revision?->snapshot['politica_originacion'] ?? null;
-        $add('habilitacion', config('originacion.aprobaciones_habilitadas') === true, 'Habilitación de aprobación pendiente de validación del operador.');
+        $add('habilitacion', config('originacion.aprobaciones_habilitadas') === true, 'La aprobación está desactivada para toda la instalación. No se resuelve modificando documentos o dictámenes. Solicita al administrador técnico revisar ORIGINACION_APROBACIONES_HABILITADAS y reconstruir la caché de configuración. En QA puede habilitarla para pruebas; en operación real requiere validación del operador.');
         $add('estado', $solicitud->estado === SolicitudEstado::EnRevision && $revision !== null, 'La solicitud debe estar en revisión.');
         $add('permiso', Gate::forUser($actor)->allows('approve', $solicitud), 'Se requiere permiso de aprobación y la sucursal responsable seleccionada.');
         $add('politica', $politica !== null, 'Configura la política del producto y envía una nueva revisión.');
@@ -55,8 +55,13 @@ class SolicitudRequisitosService
         foreach (['evaluacion' => 'favorable', 'pld' => 'sin_observaciones'] as $tipo => $resultado) {
             $dictamen = $solicitud->dictamenes()->where('solicitud_revision_id', $revision->id)->where('tipo', $tipo)->latest('id')->first();
             $add($tipo, $dictamen?->resultado === $resultado, $tipo === 'pld' ? 'Cumplimiento debe concluir la revisión aplicable sin bloqueos pendientes.' : 'Falta evaluación favorable de la revisión actual.');
-            $add($tipo.'_vigente', $dictamen !== null && ($dictamen->contenido['expediente_hash'] ?? null) === $huella,
-                'El expediente cambió o el dictamen no tiene huella de evidencia. Renueva la revisión especializada.');
+            $equipo = $tipo === 'pld' ? 'Cumplimiento' : 'Evaluación';
+            $mensajeVigencia = ! $dictamen
+                ? 'Primero registra el dictamen de '.$equipo.' de esta revisión. Todavía no hay una evaluación que comprobar.'
+                : (empty($dictamen->contenido['expediente_hash'])
+                    ? 'El dictamen anterior no conserva la referencia del expediente evaluado. '.$equipo.' debe revisar la evidencia actual y registrar un nuevo dictamen.'
+                    : 'El expediente cambió después del dictamen (datos, domicilio o documentos, incluida su validación). '.$equipo.' debe revisar la evidencia actual y registrar un nuevo dictamen. Recargar la pantalla no lo renueva.');
+            $add($tipo.'_vigente', $dictamen !== null && ($dictamen->contenido['expediente_hash'] ?? null) === $huella, $mensajeVigencia);
             $evidencia[$tipo.'_id'] = $dictamen?->id;
         }
         foreach ($reglas['documentos'] as $tipo) {

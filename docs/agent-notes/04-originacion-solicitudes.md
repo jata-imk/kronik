@@ -51,10 +51,23 @@ El alcance completo y las decisiones de producto permanecen en Notion.
   agrega cuatro permisos, sin asignarlos a roles. Solo se ejecutó en BD de pruebas aisladas.
 - Continuación: 000300 agrega políticas/evidencia/vigencia; permisos `approve solicitudes`
   y `manage origination productos-crediticios`. `.env` real no modificado; bandera false por defecto.
+- Correcciones de QA: 197 backend / 1385 aserciones / 1 omitida; 65 frontend;
+  build, Pint y diff-check aprobados. 9 E2E de regresión aprobados y 1 escenario
+  dual separado aprobado con capturista/aprobador normales y notas reservadas ocultas.
+  Capturas de captura, política, detalle escritorio/móvil y aprobación inspeccionadas.
+  Ejecutar backend y E2E secuencialmente: una ejecución simultánea tuvo fallos
+  transitorios de render/login; repetición aislada completa pasó sin cambios de aplicación.
+  Sin migraciones nuevas ni cambios en la VPS. Seeder dual exclusivo del runner E2E.
 
 ## Siguiente paso
 
-Continuar P4 formalización, revalidando vigencia/evidencia y manteniendo operación real cerrada.
+Cerrar correcciones del QA P3 antes de P4. Usuario confirma que VPS es solo QA,
+con datos de prueba, y autoriza integrar la ronda de PR en orden tras verificar.
+Correcciones en curso: tarjetas/contexto de captura, importes MXN, accesos desde
+cliente, búsqueda de responsables, dictámenes resumidos, pendientes explicados
+y recarga con confirmación. Separación dual se verifica con usuarios normales
+en E2E aislado; no modificar la solicitud manual de la VPS.
+Después continuar P4 formalización, revalidando vigencia/evidencia y manteniendo operación real cerrada.
 
 ## Cierre
 

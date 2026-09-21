@@ -30,6 +30,12 @@ return [
 
     'disks' => [
 
+        ...(env('APP_ENV') === 'e2e' ? ['e2e_dual' => [
+            'driver' => 'local',
+            'root' => storage_path('framework/testing/dual'),
+            'throw' => true,
+        ]] : []),
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),

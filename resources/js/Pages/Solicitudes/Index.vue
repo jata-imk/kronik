@@ -3,6 +3,7 @@ import { Link, router } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { reactive, ref } from "vue";
 import { solicitudEstados } from "@/Utils/solicitudEstados";
+import "../../../css/originacion.css";
 
 const props = defineProps({ solicitudes: Object, filters: Object, miTrabajo: Boolean, puedeCrear: Boolean, bandeja: String, rutaBandeja: String });
 const filters = reactive({ buscar: props.filters.buscar ?? "", estado: props.filters.estado ?? null, orden: props.filters.orden ?? "recientes", por_pagina: Number(props.filters.por_pagina ?? 25) });
@@ -19,8 +20,8 @@ function buscar(page = 1) {
 <template>
     <AppLayout :title="bandeja ?? (miTrabajo ? 'Mi trabajo' : 'Solicitudes')">
         <template #card-header>
-            <div class="flex flex-wrap items-center justify-between gap-3 p-6">
-                <h1 class="text-2xl font-semibold">{{ bandeja ?? (miTrabajo ? "Mi trabajo" : "Solicitudes") }}</h1>
+            <div class="originacion-heading flex flex-wrap items-center justify-between gap-3 p-6">
+                <div><p class="mb-1 text-sm text-surface-500">Originación · Bandeja de trabajo</p><h1 class="text-2xl font-semibold"><i class="pi pi-folder-open mr-2 text-primary" aria-hidden="true" />{{ bandeja ?? (miTrabajo ? "Mi trabajo" : "Solicitudes") }}</h1></div>
                 <div class="flex gap-4">
                     <Link :href="route(miTrabajo ? 'solicitudes.index' : 'solicitudes.trabajo')" class="text-primary underline">{{ miTrabajo ? "Todas las solicitudes" : "Mis pendientes" }}</Link>
                     <Link v-if="puedeCrear" :href="route('solicitudes.create')" class="text-primary underline">Nueva solicitud</Link>
@@ -28,7 +29,7 @@ function buscar(page = 1) {
             </div>
         </template>
         <template #card-content>
-            <div class="space-y-5 p-6">
+            <div class="originacion-content space-y-5 p-4 md:p-6">
                 <Message v-if="bandeja" severity="info" :closable="false">Abre la solicitud para registrar tu dictamen sobre la revisión actual. Esta bandeja no sustituye la política de aprobación ni acredita cumplimiento legal por sí sola.</Message>
                 <p>{{ miTrabajo ? "Pendientes bajo tu responsabilidad. Las solicitudes cerradas se consultan con el filtro de estado." : "Captura, revisión, devoluciones y resolución. Aprobar exige políticas y habilitación explícitas; no permite desembolsar." }}</p>
                 <form class="flex flex-wrap items-end gap-3" @submit.prevent="buscar()">

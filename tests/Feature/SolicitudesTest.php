@@ -85,6 +85,21 @@ function prepararSolicitudAprobable($test, string $modalidad = 'individual', str
     return [$user, $solicitud->fresh(), $cliente, $version, $doc];
 }
 
+test('accesos del cliente precargan solicitud y respetan permiso y sucursal', function () {
+    $this->seed(ModulesAndPermissionsSeeder::class);
+    $user = actingAsSuperAdmin();
+    $cliente = Cliente::factory()->create(['sucursal_id' => $user->current_sucursal_id]);
+    $this->actingAs($user)->get(route('clientes.show', $cliente))->assertInertia(fn (Assert $page) => $page->where('puedeCrearSolicitud', true));
+    $this->get(route('clientes.edit', $cliente))->assertInertia(fn (Assert $page) => $page->where('puedeCrearSolicitud', true));
+    $this->get(route('solicitudes.create', ['cliente_id' => $cliente->id]))->assertInertia(fn (Assert $page) => $page->where('clienteInicial.id', $cliente->id));
+    $user->forceFill(['current_sucursal_id' => null])->save();
+    $this->get(route('clientes.show', $cliente))->assertInertia(fn (Assert $page) => $page->where('puedeCrearSolicitud', false));
+    $user->forceFill(['is_super_admin' => false, 'current_sucursal_id' => $cliente->sucursal_id])->save();
+    $user->givePermissionTo('read clientes');
+    $this->get(route('clientes.show', $cliente))->assertInertia(fn (Assert $page) => $page->where('puedeCrearSolicitud', false));
+    $this->get(route('solicitudes.create', ['cliente_id' => $cliente->id]))->assertForbidden();
+});
+
 test('aprobación individual conserva evidencia política y vigencia sin duplicarse', function () {
     [$user, $solicitud] = prepararSolicitudAprobable($this);
     $requisitos = app(\App\Services\SolicitudRequisitosService::class)->evaluar($solicitud, $user);
@@ -136,7 +151,7 @@ test('expediente cambiado exige renovar dictamen y política nueva exige reenvia
     config(['originacion.aprobaciones_habilitadas' => true]);
     $doc->update(['vence_en' => app(FechaEmpresa::class)->hoy()->subDay()]);
     $this->post(route('solicitudes.aprobar', $solicitud), $data)->assertSessionHasErrors('aprobacion');
-    expect(session('errors')->first('aprobacion'))->toContain('Renueva la revisión especializada')->toContain('Documento requerido');
+    expect(session('errors')->first('aprobacion'))->toContain('El expediente cambió después del dictamen')->toContain('incluida su validación')->toContain('Evaluación debe revisar')->toContain('Cumplimiento debe revisar')->toContain('Documento requerido');
     app(\App\Services\OriginacionPoliticaService::class)->crear($version, [...politicaSolicitudDatos(), 'version_anterior' => 1], $user);
     $this->post(route('solicitudes.aprobar', $solicitud), $data)->assertSessionHasErrors('aprobacion');
     expect(session('errors')->first('aprobacion'))->toContain('La política cambió');

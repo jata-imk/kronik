@@ -58,6 +58,41 @@ informativa, sin IVA; no constituye formalización ni saldo real.
 
 ## Acceso
 
+### Retroalimentación y navegación de QA
+
+La URL canónica `/solicitudes/create?cliente_id=ID` precarga el cliente. Hay
+accesos desde expediente, detalle y edición del cliente para perfiles autorizados;
+detalle y edición requieren además tener seleccionada su sucursal.
+El cliente se busca por AJAX (mínimo dos letras, sugerencias y error recuperable);
+los responsables disponibles tienen filtro por nombre sobre la lista autorizada.
+Los importes reutilizan InputNumber MXN/es-MX y se envían como decimales sin máscara.
+
+Guardar borrador no habilita Evaluación/PLD: primero se envía a revisión. Después
+de registrar un dictamen se muestra su resumen y el formulario se abre mediante
+«Registrar nuevo dictamen»; no se modifica ni elimina el registro anterior.
+Los requisitos distinguen ausencia de dictamen, evidencia antigua y expediente
+modificado, e indican quién resuelve cada pendiente. Validar un documento también
+cambia la evidencia: conviene validar documentos antes de emitir ambos dictámenes.
+
+«Actualizar datos de la solicitud» recarga y comprueba requisitos, muestra carga
+y confirma el resultado; no edita captura ni renueva dictámenes. La habilitación
+operativa corresponde al administrador técnico: no se resuelve cambiando PLD.
+La VPS actual es exclusivamente QA con datos ficticios, según confirmación del
+usuario. Allí puede probarse expresamente la bandera de aprobación; esto no
+habilita SIC, dinero ni acredita políticas aptas para operación real.
+
+La prueba de navegador de separación dual utiliza usuarios normales dedicados y
+una base E2E desechable, sin modificar usuarios o solicitudes de la VPS:
+
+```powershell
+$env:E2E_ORIGINACION_DUAL = 'true'
+try { npm run test:e2e -- solicitudes-dual.spec.js } finally { Remove-Item Env:\E2E_ORIGINACION_DUAL }
+```
+
+El ejecutor normal fuerza aprobación deshabilitada. Solo el escenario dual
+explícito la habilita y añade sus fixtures; el almacén de evidencia sintética
+queda bajo `storage/framework/testing/dual`, disponible únicamente en entorno E2E.
+
 - `read solicitudes` + `read clientes`: bandeja, detalle e historial operativo.
 - `create solicitudes`: crear, además de lectura anterior.
 - `update solicitudes`: editar/enviar en la sucursal actual responsable.

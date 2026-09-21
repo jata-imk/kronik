@@ -1,0 +1,43 @@
+/* Shared, scoped visual language for origination screens; Sakai tokens retain themes. */
+.originacion-heading {
+    background: var(--p-primary-50);
+    border-radius: 1rem 1rem 0 0;
+    border-bottom: 1px solid var(--p-content-border-color);
+}
+.app-dark .originacion-heading {
+    background: var(--p-surface-900);
+}
+.originacion-content > section,
+.originacion-content > form:not(.originacion-captura),
+.originacion-content > .originacion-dictamenes > section {
+    border: 1px solid var(--p-content-border-color);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    background: var(--p-content-background);
+}
+.originacion-content a.text-primary,
+.originacion-heading a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    gap: .5rem;
+    border: 1px solid var(--p-primary-color);
+    border-radius: var(--p-border-radius-md);
+    padding: .5rem .85rem;
+    text-decoration: none;
+    font-weight: 600;
+    text-align: center;
+}
+.originacion-content .p-datatable a.text-primary {
+    white-space: nowrap;
+}
+.originacion-content a.text-primary:hover,
+.originacion-heading a:hover {
+    background: var(--p-content-hover-background);
+}
+.originacion-content a:focus-visible,
+.originacion-heading a:focus-visible {
+    outline: 2px solid var(--p-primary-color);
+    outline-offset: 3px;
+}
