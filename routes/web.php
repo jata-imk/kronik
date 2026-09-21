@@ -47,8 +47,12 @@ Route::middleware([
     })->name('dashboard');
 
     Route::get('mi-trabajo', [\App\Http\Controllers\SolicitudController::class, 'index'])->name('solicitudes.trabajo');
+    Route::get('evaluacion-solicitudes', [\App\Http\Controllers\SolicitudController::class, 'index'])->name('evaluacion-solicitudes.index');
+    Route::get('cumplimiento', [\App\Http\Controllers\SolicitudController::class, 'index'])->name('cumplimiento.index');
     Route::get('solicitudes/clientes', [\App\Http\Controllers\SolicitudController::class, 'clientes'])->name('solicitudes.clientes');
     Route::post('solicitudes/{solicitud}/enviar', [\App\Http\Controllers\SolicitudController::class, 'enviar'])->name('solicitudes.enviar');
+    Route::post('solicitudes/{solicitud}/resolver', [\App\Http\Controllers\SolicitudController::class, 'resolver'])->name('solicitudes.resolver');
+    Route::post('solicitudes/{solicitud}/dictaminar', [\App\Http\Controllers\SolicitudController::class, 'dictaminar'])->name('solicitudes.dictaminar');
     Route::patch('solicitudes/{solicitud}/responsable', [\App\Http\Controllers\SolicitudController::class, 'asignar'])->name('solicitudes.asignar');
     Route::resource('solicitudes', \App\Http\Controllers\SolicitudController::class)->except('destroy')->parameters(['solicitudes' => 'solicitud']);
 

@@ -146,7 +146,9 @@ class ModulesAndPermissionsSeeder extends Seeder
         );
 
         $actionsPerModule = [
-            'solicitudes' => ['create', 'read', 'update', 'assign'],
+            'solicitudes' => ['create', 'read', 'update', 'assign', 'review', 'cancel'],
+            'evaluacion-solicitudes' => ['create', 'read'],
+            'cumplimiento' => ['create', 'read'],
             'dashboard' => ['read'],
             'admin' => ['access'],
             'users' => ['create', 'read', 'update', 'delete'],
@@ -166,6 +168,8 @@ class ModulesAndPermissionsSeeder extends Seeder
 
         foreach ([
             Module::updateOrCreate(['name' => 'solicitudes'], ['icon' => 'pi-folder-open', 'route_name' => 'solicitudes', 'parent_id' => null]),
+            Module::updateOrCreate(['name' => 'evaluacion-solicitudes'], ['icon' => 'pi-chart-bar', 'route_name' => 'evaluacion-solicitudes', 'parent_id' => null]),
+            Module::updateOrCreate(['name' => 'cumplimiento'], ['icon' => 'pi-shield', 'route_name' => 'cumplimiento', 'parent_id' => null]),
             $dashboard,
             $admin,
             $users,

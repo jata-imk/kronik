@@ -41,6 +41,162 @@ function solicitudDatos(Cliente $cliente, ProductoVersion $producto): array
     ];
 }
 
+function solicitudDictamenDatos(int $lockVersion, string $tipo = 'evaluacion'): array
+{
+    return [
+        'lock_version' => $lockVersion, 'tipo_dictamen' => $tipo,
+        'resultado' => $tipo === 'pld' ? 'bloqueada' : 'favorable',
+        'fundamento' => 'Dictamen reservado sustentado en las evidencias revisadas.',
+        'fuentes' => 'Expediente y evidencia documental identificada por el revisor.',
+        'metodologia' => 'Manual interno de pruebas versión 1',
+        ...($tipo === 'pld' ? ['nivel_riesgo' => 'alto'] : []),
+    ];
+}
+
+test('dictámenes son inmutables cifrados y ligados a revisión sin aprobación implícita', function () {
+    $user = actingAsSuperAdmin();
+    $cliente = Cliente::factory()->create(['sucursal_id' => $user->current_sucursal_id]);
+    $this->actingAs($user)->post(route('solicitudes.store'), solicitudDatos($cliente, solicitudProducto($user->id)));
+    $solicitud = Solicitud::firstOrFail();
+    $this->post(route('solicitudes.dictaminar', $solicitud), solicitudDictamenDatos(0))->assertSessionHasErrors('solicitud');
+    $this->post(route('solicitudes.enviar', $solicitud), ['lock_version' => 0]);
+    $this->post(route('solicitudes.dictaminar', $solicitud), solicitudDictamenDatos(1))->assertSessionHasNoErrors();
+    $this->post(route('solicitudes.dictaminar', $solicitud), solicitudDictamenDatos(1))->assertSessionHasErrors('solicitud');
+    $this->post(route('solicitudes.dictaminar', $solicitud), solicitudDictamenDatos(2, 'pld'))->assertSessionHasNoErrors();
+    expect($solicitud->fresh()->estado)->toBe(SolicitudEstado::EnRevision);
+    $dictamen = $solicitud->dictamenes()->firstOrFail();
+    expect($dictamen->getRawOriginal('contenido'))->not->toContain('Dictamen reservado')
+        ->and($dictamen->toArray())->not->toHaveKey('contenido');
+    expect(fn () => $dictamen->delete())->toThrow(ValidationException::class);
+    $this->get(route('solicitudes.show', $solicitud))->assertInertia(fn (Assert $page) => $page
+        ->where('dictamenes.evaluacion.0.revision_actual', true)->where('dictamenes.pld.0.resultado', 'bloqueada'));
+    $this->post(route('solicitudes.resolver', $solicitud), ['accion' => 'devolver', 'lock_version' => 3, 'responsable_id' => $user->id, 'motivo' => 'Corregir datos antes de nueva revisión.'])->assertSessionHasNoErrors();
+    $this->post(route('solicitudes.enviar', $solicitud), ['lock_version' => 4])->assertSessionHasNoErrors();
+    $this->get(route('solicitudes.show', $solicitud))->assertInertia(fn (Assert $page) => $page
+        ->where('dictamenes.evaluacion.0.revision_actual', false)->where('dictamenes.pld.0.revision_actual', false));
+    $this->assertDatabaseCount('solicitud_dictamenes', 2);
+    $this->assertDatabaseCount('sic_queries', 0);
+    expect(json_encode($solicitud->eventos()->get()->toArray()))->not->toContain('Dictamen reservado');
+});
+
+test('notas reservadas y bandejas requieren permisos específicos independientes', function () {
+    $this->seed(ModulesAndPermissionsSeeder::class);
+    $user = actingAsSuperAdmin();
+    $cliente = Cliente::factory()->create(['sucursal_id' => $user->current_sucursal_id]);
+    $this->actingAs($user)->post(route('solicitudes.store'), solicitudDatos($cliente, solicitudProducto($user->id)));
+    $solicitud = Solicitud::firstOrFail();
+    $this->post(route('solicitudes.enviar', $solicitud), ['lock_version' => 0]);
+    $this->post(route('solicitudes.dictaminar', $solicitud), solicitudDictamenDatos(1, 'pld'))->assertSessionHasNoErrors();
+    $user->forceFill(['is_super_admin' => false])->save();
+    $user->givePermissionTo(['read clientes', 'read solicitudes', 'update solicitudes']);
+    $this->get(route('solicitudes.show', $solicitud))->assertInertia(fn (Assert $page) => $page
+        ->where('dictamenes.pld', null)->where('dictamenes.evaluacion', null));
+    $this->get(route('cumplimiento.index'))->assertForbidden();
+    $this->get(route('evaluacion-solicitudes.index'))->assertForbidden();
+    $this->post(route('solicitudes.dictaminar', $solicitud), solicitudDictamenDatos(2, 'pld'))->assertForbidden();
+    $user->givePermissionTo('read cumplimiento');
+    $this->get(route('cumplimiento.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
+        ->where('bandeja', 'Cumplimiento')->where('filters.estado', 'en_revision')->where('solicitudes.total', 1));
+    $this->get(route('solicitudes.show', $solicitud))->assertInertia(fn (Assert $page) => $page
+        ->where('dictamenes.pld.0.contenido.fundamento', solicitudDictamenDatos(1)['fundamento'])->where('dictamenes.evaluacion', null));
+    $this->post(route('solicitudes.dictaminar', $solicitud), solicitudDictamenDatos(2, 'pld'))->assertForbidden();
+    $user->givePermissionTo('create cumplimiento');
+    $this->post(route('solicitudes.dictaminar', $solicitud), solicitudDictamenDatos(2, 'pld'))->assertSessionHasNoErrors();
+});
+
+test('dictamen exige fundamento y riesgo determinado para concluir sin observaciones', function () {
+    $user = actingAsSuperAdmin();
+    $cliente = Cliente::factory()->create(['sucursal_id' => $user->current_sucursal_id]);
+    $this->actingAs($user)->post(route('solicitudes.store'), solicitudDatos($cliente, solicitudProducto($user->id)));
+    $solicitud = Solicitud::firstOrFail();
+    $this->post(route('solicitudes.enviar', $solicitud), ['lock_version' => 0]);
+    $this->post(route('solicitudes.dictaminar', $solicitud), ['lock_version' => 1, 'tipo_dictamen' => 'evaluacion'])
+        ->assertSessionHasErrors(['fundamento' => 'El campo fundamento del dictamen es obligatorio.']);
+    $this->post(route('solicitudes.dictaminar', $solicitud), [...solicitudDictamenDatos(1, 'pld'), 'resultado' => 'sin_observaciones', 'nivel_riesgo' => 'sin_determinar'])
+        ->assertSessionHasErrors(['nivel_riesgo' => 'Determina el nivel de riesgo antes de concluir sin observaciones.']);
+    $this->post(route('solicitudes.dictaminar', $solicitud), [...solicitudDictamenDatos(1), 'nivel_riesgo' => 'alto'])->assertSessionHasErrors('nivel_riesgo');
+    $this->assertDatabaseCount('solicitud_dictamenes', 0);
+});
+
+test('devolver corregir y reenviar conserva ambas revisiones y cifra el motivo', function () {
+    $user = actingAsSuperAdmin();
+    $cliente = Cliente::factory()->create(['sucursal_id' => $user->current_sucursal_id]);
+    $this->actingAs($user)->post(route('solicitudes.store'), solicitudDatos($cliente, solicitudProducto($user->id)))->assertSessionHasNoErrors();
+    $solicitud = Solicitud::firstOrFail();
+    $this->post(route('solicitudes.enviar', $solicitud), ['lock_version' => 0])->assertSessionHasNoErrors();
+    $original = SolicitudRevision::firstOrFail();
+    $payload = ['accion' => 'devolver', 'lock_version' => 1, 'responsable_id' => $user->id, 'motivo' => 'Corregir el destino de los recursos.'];
+    $this->post(route('solicitudes.resolver', $solicitud), $payload)->assertSessionHasNoErrors();
+    $this->post(route('solicitudes.resolver', $solicitud), $payload)->assertSessionHasErrors('solicitud');
+    expect($solicitud->fresh()->estado)->toBe(SolicitudEstado::Devuelta);
+    $decision = $solicitud->resoluciones()->firstOrFail();
+    expect($decision->motivo)->toBe($payload['motivo'])
+        ->and($decision->getRawOriginal('motivo'))->not->toContain($payload['motivo'])
+        ->and($decision->toArray())->not->toHaveKey('motivo');
+    expect(fn () => $decision->update(['motivo' => 'Alterado']))->toThrow(ValidationException::class);
+    $this->get(route('solicitudes.show', $solicitud))->assertInertia(fn (Assert $page) => $page
+        ->where('resoluciones.0.motivo', $payload['motivo']));
+    $this->get(route('solicitudes.edit', $solicitud))->assertOk();
+    $this->put(route('solicitudes.update', $solicitud), ['lock_version' => 2, 'destino' => 'Nuevo destino documentado.'])->assertSessionHasNoErrors();
+    $this->post(route('solicitudes.enviar', $solicitud), ['lock_version' => 3])->assertSessionHasNoErrors();
+    expect($solicitud->fresh()->estado)->toBe(SolicitudEstado::EnRevision)
+        ->and($original->fresh()->snapshot['condiciones']['destino'])->toBe('Compra de herramienta.')
+        ->and($solicitud->revisiones()->where('numero', 2)->firstOrFail()->snapshot['condiciones']['destino'])->toBe('Nuevo destino documentado.');
+    $this->assertDatabaseCount('solicitud_resoluciones', 1);
+    $this->assertDatabaseCount('producto_version_usos', 2);
+    expect(json_encode($solicitud->eventos()->get()->toArray()))->not->toContain($payload['motivo']);
+});
+
+test('cancelación es terminal y sale de pendientes sin borrar evidencia', function () {
+    $user = actingAsSuperAdmin();
+    $cliente = Cliente::factory()->create(['sucursal_id' => $user->current_sucursal_id]);
+    $this->actingAs($user)->post(route('solicitudes.store'), ['cliente_id' => $cliente->id, 'clave_creacion' => (string) Str::uuid()]);
+    $solicitud = Solicitud::firstOrFail();
+    $this->post(route('solicitudes.resolver', $solicitud), ['accion' => 'cancelar', 'lock_version' => 0, 'motivo' => 'El cliente desistió de la solicitud.'])->assertSessionHasNoErrors();
+    expect($solicitud->fresh()->estado)->toBe(SolicitudEstado::Cancelada);
+    $this->put(route('solicitudes.update', $solicitud), ['lock_version' => 1, 'destino' => 'Otro'])->assertSessionHasErrors('solicitud');
+    $this->post(route('solicitudes.enviar', $solicitud), ['lock_version' => 1])->assertSessionHasErrors('solicitud');
+    $this->patch(route('solicitudes.asignar', $solicitud), ['lock_version' => 1, 'responsable_id' => $user->id])->assertSessionHasErrors('solicitud');
+    $this->get(route('solicitudes.trabajo'))->assertInertia(fn (Assert $page) => $page->where('solicitudes.total', 0));
+    $this->get(route('solicitudes.trabajo', ['estado' => 'cancelada']))->assertInertia(fn (Assert $page) => $page->where('solicitudes.total', 1));
+    $this->assertDatabaseCount('solicitudes', 1);
+});
+
+test('rechazo solo procede en revisión y exige permiso separado de captura', function () {
+    $this->seed(ModulesAndPermissionsSeeder::class);
+    $user = actingAsSuperAdmin();
+    $cliente = Cliente::factory()->create(['sucursal_id' => $user->current_sucursal_id]);
+    $this->actingAs($user)->post(route('solicitudes.store'), solicitudDatos($cliente, solicitudProducto($user->id)));
+    $solicitud = Solicitud::firstOrFail();
+    $data = ['accion' => 'rechazar', 'lock_version' => 0, 'motivo' => 'No cumple condiciones de originación.'];
+    $this->post(route('solicitudes.resolver', $solicitud), $data)->assertSessionHasErrors('solicitud');
+    $this->post(route('solicitudes.enviar', $solicitud), ['lock_version' => 0])->assertSessionHasNoErrors();
+    $user->forceFill(['is_super_admin' => false])->save();
+    $user->givePermissionTo(['read clientes', 'read solicitudes', 'update solicitudes']);
+    $data['lock_version'] = 1;
+    $this->post(route('solicitudes.resolver', $solicitud), $data)->assertForbidden();
+    $user->givePermissionTo('review solicitudes');
+    $this->post(route('solicitudes.resolver', $solicitud), $data)->assertSessionHasNoErrors();
+    expect($solicitud->fresh()->estado)->toBe(SolicitudEstado::Rechazada);
+    $this->post(route('solicitudes.resolver', $solicitud), [...$data, 'accion' => 'cancelar', 'lock_version' => 2])->assertForbidden();
+});
+
+test('resolución valida motivo responsable y sucursal en español', function () {
+    $user = actingAsSuperAdmin();
+    $cliente = Cliente::factory()->create(['sucursal_id' => $user->current_sucursal_id]);
+    $this->actingAs($user)->post(route('solicitudes.store'), solicitudDatos($cliente, solicitudProducto($user->id)));
+    $solicitud = Solicitud::firstOrFail();
+    $this->post(route('solicitudes.enviar', $solicitud), ['lock_version' => 0]);
+    $this->post(route('solicitudes.resolver', $solicitud), ['accion' => 'devolver', 'lock_version' => 1])
+        ->assertSessionHasErrors(['motivo' => 'El campo motivo operativo es obligatorio.', 'responsable_id']);
+    $data = ['accion' => 'devolver', 'lock_version' => 1, 'motivo' => 'Completar información de destino.', 'responsable_id' => $user->id];
+    $recipient = \App\Models\User::factory()->create(['status' => 'inactive']);
+    $this->post(route('solicitudes.resolver', $solicitud), [...$data, 'responsable_id' => $recipient->id])->assertSessionHasErrors('responsable_id');
+    $user->update(['current_sucursal_id' => null]);
+    $this->post(route('solicitudes.resolver', $solicitud), $data)->assertSessionHasErrors('sucursal');
+    $this->assertDatabaseCount('solicitud_resoluciones', 0);
+});
+
 test('crea un borrador mínimo reanudable sin aprobar ni consultar SIC', function () {
     $user = actingAsSuperAdmin();
     $cliente = Cliente::factory()->create(['sucursal_id' => $user->current_sucursal_id]);

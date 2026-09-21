@@ -50,4 +50,14 @@ class Solicitud extends Model
     {
         return $this->hasMany(SolicitudEvento::class);
     }
+
+    public function resoluciones()
+    {
+        return $this->hasMany(SolicitudResolucion::class);
+    }
+
+    public function dictamenes()
+    {
+        return $this->hasMany(SolicitudDictamen::class);
+    }
 }

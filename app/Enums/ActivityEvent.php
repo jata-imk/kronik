@@ -9,6 +9,10 @@ enum ActivityEvent: string
     case ApplicationUpdated = 'solicitud.updated';
     case ApplicationSubmitted = 'solicitud.submitted';
     case ApplicationAssigned = 'solicitud.assigned';
+    case ApplicationReturned = 'solicitud.returned';
+    case ApplicationRejected = 'solicitud.rejected';
+    case ApplicationCancelled = 'solicitud.cancelled';
+    case ApplicationAssessmentRecorded = 'solicitud.assessment_recorded';
     case TwoFactorCompleted = 'login.2fa_completed';
     case UserProfileUpdated = 'user.profile.updated';
     case CompanyUpdated = 'empresa.updated';
@@ -63,6 +67,10 @@ enum ActivityEvent: string
             self::ApplicationUpdated => 'Borrador de solicitud actualizado',
             self::ApplicationSubmitted => 'Solicitud enviada a revisión',
             self::ApplicationAssigned => 'Responsable de solicitud asignado',
+            self::ApplicationReturned => 'Solicitud devuelta para corrección',
+            self::ApplicationRejected => 'Solicitud rechazada',
+            self::ApplicationCancelled => 'Solicitud cancelada',
+            self::ApplicationAssessmentRecorded => 'Revisión especializada registrada',
             self::Login => 'Inicio de sesión',
             self::TwoFactorCompleted => 'Autenticación de dos factores completada',
             self::UserProfileUpdated => 'Perfil de usuario actualizado',
