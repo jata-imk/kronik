@@ -4,7 +4,9 @@
 
 La tabla `activity_log` contiene eventos reales emitidos por autenticación, perfil de usuario, configuración de empresa, sucursales y el expediente de clientes. La interfaz administrativa consulta estos registros con filtros, paginación y exportación CSV.
 
-Los procesos futuros de originación, decisiones, contratos, desembolsos, pagos y cobranza siguen en el backlog 10.
+Originación P2 registra creación, actualización, envío y asignación de solicitudes.
+Decisiones, contratos, desembolsos, pagos y cobranza se incorporan en los siguientes
+incrementos coordinados 04–07; los reportes posteriores no sustituyen esos eventos.
 
 ## Contrato
 
@@ -31,6 +33,7 @@ No se deben registrar nombres, correos, teléfonos, RFC, CURP, domicilios, conte
 
 | Área | Eventos |
 | --- | --- |
+| Solicitudes | `solicitud.created`, `solicitud.updated`, `solicitud.submitted`, `solicitud.assigned` |
 | Autenticación | `login`, `login.2fa_completed` |
 | Usuario | `user.profile.updated` |
 | Empresa | `empresa.updated` |

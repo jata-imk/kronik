@@ -1,5 +1,7 @@
 # Referencia
 
+- [Originación: solicitudes y Mi trabajo](originacion-solicitudes.md)
+
 - [Estado de integración SIC y acceso](sic-estado-integracion.md)
 
 - [Documentos digitales y plantillas](documentos-y-plantillas.md)

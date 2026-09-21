@@ -13,8 +13,8 @@ Implementar crédito simple V1 configurable, versionado, simulable y protegido c
 
 ## Estado actual
 
-- Estado: ajustes finales de revisión manual implementados y validados
-- Última actualización: 2026-08-22
+- Estado: entregado; PR #14 integrado mediante `4d077901`.
+- Última actualización de cierre: 2026-09-20 (conciliación con Notion).
 - Último punto estable: reglas de CAT/opcionales, activación empresarial y explicación matemática implementadas; suite completa, E2E y recorrido visual correctos.
 
 ## Decisiones

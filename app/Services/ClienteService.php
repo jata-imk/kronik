@@ -135,6 +135,11 @@ class ClienteService
                     'cliente' => 'No se puede eliminar un cliente con consultas SIC. Su evidencia debe conservarse.',
                 ]);
             }
+            if (\App\Models\Solicitud::where('cliente_id', $cliente->id)->exists()) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'cliente' => 'No se puede eliminar un cliente con solicitudes. Su expediente debe conservarse.',
+                ]);
+            }
             $this->documentoService->deleteFilesFor($cliente);
             $this->consentimientoService->deleteFilesFor($cliente);
             $cliente->direcciones()->delete();

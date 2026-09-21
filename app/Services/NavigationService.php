@@ -12,6 +12,8 @@ class NavigationService
         $gate = Gate::forUser($user);
         $modules = [
             ['Clientes', 'pi pi-fw pi-users', 'clientes.index', ['read clientes']],
+            ['Mi trabajo', 'pi pi-fw pi-check-square', 'solicitudes.trabajo', ['read solicitudes', 'read clientes']],
+            ['Solicitudes', 'pi pi-fw pi-folder-open', 'solicitudes.index', ['read solicitudes', 'read clientes']],
             ['Consultas SIC', 'pi pi-fw pi-credit-card', 'clientes.historial-crediticio.index', ['read clientes', 'read historial-crediticio']],
             ['Productos crediticios', 'pi pi-fw pi-wallet', 'productos-crediticios.index', ['read productos-crediticios']],
             ['Documentos y plantillas', 'pi pi-fw pi-file-edit', 'plantillas-documentos.index', ['read plantillas-documentos']],

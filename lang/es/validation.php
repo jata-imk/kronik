@@ -77,6 +77,13 @@ return [
     'custom' => [],
 
     'attributes' => [
+        'cliente_id' => 'cliente',
+        'producto_version_id' => 'versión del producto',
+        'responsable_id' => 'responsable',
+        'clave_creacion' => 'identificador de creación',
+        'lock_version' => 'versión de la solicitud',
+        'fecha_estimada' => 'fecha estimada de desembolso',
+        'destino' => 'destino del crédito',
         'buscar' => 'búsqueda',
         'por_pagina' => 'registros por página',
         'primer_nombre' => 'primer nombre',

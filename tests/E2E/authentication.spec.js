@@ -3,7 +3,7 @@ import { login, users } from "./support/auth.js";
 
 test("inicia y cierra sesión con una cuenta activa", async ({ page }) => {
     await login(page);
-    await expect(page.getByText("Administración", { exact: true })).toBeVisible();
+    await expect(page.locator(".layout-menu").getByText("Administración", { exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: "Opciones de usuario", exact: true }).click();
     await page.getByRole("menuitem", { name: /Cerrar sesión/i }).click();

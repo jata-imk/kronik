@@ -3,8 +3,8 @@
 ## Referencias
 
 - Notion: https://app.notion.com/p/3a061db7db7f8150ba15f9c27562a5f8
-- Rama: feat/originacion-incrementos
-- PR: pendiente
+- Rama P1: fix/sic-navegacion-segura; seguimiento en feat/originacion-incrementos.
+- PR: https://github.com/jata-imk/kronik/pull/16 (depende de #17).
 - ADR relacionados: 0011
 
 ## Objetivo

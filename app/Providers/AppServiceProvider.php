@@ -60,6 +60,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(DocumentoPlantillaVersion::class, DocumentoPlantillaPolicy::class);
         Gate::policy(DocumentoGenerado::class, DocumentoGeneradoPolicy::class);
         Relation::morphMap([
+            'solicitudes' => \App\Models\Solicitud::class,
+            'solicitud_revisiones' => \App\Models\SolicitudRevision::class,
             'clientes' => Cliente::class,
             'cliente_garantias' => ClienteGarantia::class,
         ]);

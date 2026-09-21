@@ -1,20 +1,17 @@
 <script setup>
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
-import Welcome from "@/Components/Welcome.vue";
+import { Link, usePage } from "@inertiajs/vue3";
+const page = usePage();
 </script>
 
 <template>
-    <AppLayout title="Dashboard">
-        <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                Tablero de Inicio
-            </h2>
-        </template>
-
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
-                <Welcome />
+    <AppLayout title="Tablero de inicio">
+        <template #card-content>
+            <div class="space-y-4 p-6">
+                <h1 class="text-2xl font-semibold">Tablero de inicio</h1>
+                <p>Usa el menú para acceder a los módulos disponibles para tu perfil.</p>
+                <Link v-if="page.props.auth.is_super_admin || (page.props.auth.permissions?.['read-solicitudes'] && page.props.auth.permissions?.['read-clientes'])" :href="route('solicitudes.trabajo')" class="text-primary underline">Abrir Mi trabajo: solicitudes y siguientes pasos</Link>
             </div>
-        </div>
+        </template>
     </AppLayout>
 </template>

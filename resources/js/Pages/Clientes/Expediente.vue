@@ -729,6 +729,11 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                 </div>
                 <div class="header-actions">
                     <Button
+                        v-if="page.props.auth.is_super_admin || (page.props.auth.permissions?.['create-solicitudes'] && page.props.auth.permissions?.['read-solicitudes'])"
+                        label="Nueva solicitud"
+                        @click="router.visit(route('solicitudes.create', { cliente_id: cliente.id }))"
+                    />
+                    <Button
                         label="Datos generales"
                         severity="contrast"
                         outlined
