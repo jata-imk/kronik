@@ -75,17 +75,25 @@ versionado existente; no se reescriben productos o créditos anteriores.
 
 Decisiones adicionales expresas del usuario del 27/09/2026:
 
-- **Coexistencia configurable:** algunos créditos mantienen interés ordinario y
-  moratorio durante el atraso; otros sustituyen o limitan el ordinario según
-  contrato/producto. No imponer una sola modalidad ni deducirla de las tasas.
-  Se conservan versionado, condiciones congeladas y convenciones existentes.
-  Falta concretar la fórmula y alcance de «limitar», y su interacción con gracia;
-  no inventar un tope, periodo ni valor predeterminado.
+- **Coexistencia configurable, únicamente dos modalidades en V1:**
+  - Ambos intereses: durante la mora siguen devengándose ordinario y moratorio,
+    cada uno según su respectiva base.
+  - Moratorio sustituye al ordinario: desde que una obligación entra en mora,
+    deja de generar ordinario bajo la regla definida y empieza a generar moratorio.
+  La selección corresponde al contrato/producto, no se deduce de sus tasas.
+  Se conservan versionado, condiciones congeladas, bases y convenciones existentes.
+  Límites y comportamientos especiales quedan como extensión futura del motor,
+  no como una tercera modalidad incompleta ni un bloqueo de definición para V1.
 - **Pagos con fecha pasada admitidos:** permitir registrar hoy un pago recibido
   antes. Conservar fecha efectiva del pago y fecha real de captura/actor sin
   falsificar el momento del registro. No confundirlo con mora B ni extender este
-  permiso a desembolsos retroactivos. Falta concretar el tratamiento de movimientos
-  posteriores y de periodos cerrados antes de implementar los cálculos afectados.
+  permiso a desembolsos retroactivos. En V1 se bloquea el pago con fecha pasada
+  si ya existen movimientos del mismo crédito con fecha efectiva posterior a la
+  del pago propuesto. No se implementa recálculo de movimientos posteriores ni
+  se permite eludir el bloqueo registrando una fecha efectiva distinta de la real.
+  Sin movimientos posteriores puede admitirse, sujeto a las demás validaciones
+  del crédito. Los controles de periodos cerrados, cuando apliquen, no se omiten
+  por esta autorización.
   Se mantiene la inmutabilidad y corrección trazable ya acordada: no sobrescribir
   ni eliminar movimientos para hacer encajar una fecha pasada.
 - **Excedentes fuera del sistema inicialmente:** no implementar por ahora una
@@ -114,6 +122,13 @@ Decisiones adicionales expresas del usuario del 27/09/2026:
   del producto/contrato conservadas históricamente, no de una regla universal.
 - En un pago pasado, conservar fecha efectiva y fecha real de captura distintas;
   comprobar trazabilidad e idempotencia sin editar movimientos anteriores.
+- Probar ambas modalidades de intereses con sus respectivas bases y transición
+  a mora de la obligación; no ofrecer límites especiales en V1.
+- Pago propuesto del día 5 con movimiento del mismo crédito del día 10: rechazar
+  sin crear pago ni modificar saldos/movimientos. Mensaje:
+  «No puedes registrar este pago con esa fecha porque el crédito tiene movimientos posteriores».
+- Pago pasado sin movimientos posteriores: admitir si cumple las demás validaciones.
+  Verificar el bloqueo en servidor, incluida la concurrencia con otro movimiento.
 - Comprobar que no se cree saldo a favor o anticipo automático por un excedente,
   ni se descarte silenciosamente parte del importe comunicado por el operador.
 
@@ -121,12 +136,14 @@ Estos son criterios pendientes de implementar y probar, no resultados de pruebas
 
 ## Lo que este acuerdo no resuelve
 
-Quedan cerrados el carácter configurable de la coexistencia, la admisión de pagos
-pasados y la exclusión inicial de la gestión de excedentes. Siguen pendientes los
-detalles de limitación del ordinario/interacción con gracia y tratamiento de pagos
-pasados con movimientos posteriores o periodos cerrados. No se han autorizado
+Quedan cerradas las dos modalidades V1 de coexistencia, la admisión de pagos
+pasados solo sin movimientos posteriores y la exclusión inicial de excedentes.
+Límites especiales y recálculo por inserción de pagos entre movimientos históricos
+no forman parte de V1. No se han autorizado
 desembolsos retroactivos ni un flujo nuevo de devoluciones. Se mantienen las
 decisiones sobre reversos compensatorios, orden de aplicación, actual/360 y precisión decimal.
+La combinación con gracia y los controles de periodos cerrados deben concretarse
+según las reglas aplicables antes de habilitar los casos afectados; no inventarlos.
 No se define aquí una nueva prioridad de aplicación para impuestos ni se resuelven
 por inferencia casos fiscales o de parcialidad no especificados; deberán detallarse
 antes de implementar los cálculos afectados.

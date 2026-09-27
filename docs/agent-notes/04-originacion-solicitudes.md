@@ -35,11 +35,12 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 - Cerradas funcionalmente: fiscalidad configurable por concepto, responsabilidad
   contractual institucional y gracia A por defecto/B configurable. Especificación
   en Notion y `docs/reference/decisiones-fiscales-contractuales-mora.md`.
-- Continuación aprobada: coexistencia configurable por producto/contrato,
-  pagos pasados admitidos y excedentes fuera del sistema inicialmente.
-- Pendientes: precisar limitación del ordinario/interacción con gracia y pagos
-  pasados con movimientos posteriores o periodos cerrados; otros detalles de cálculo
-  no especificados permanecen pendientes. No inferir desembolsos retroactivos.
+- Continuación aprobada: V1 con ambos intereses o moratorio que sustituye al
+  ordinario, según producto/contrato. Pagos pasados solo sin movimientos posteriores;
+  en otro caso bloquear. Excedentes fuera del sistema inicialmente.
+- Diferidos: límites especiales del motor y recálculo por inserción de pagos históricos.
+- Pendientes de detalle: combinación con gracia, controles de periodos cerrados y
+  otros cálculos no especificados. No inferir desembolsos retroactivos.
 - Habilitación real sigue exigiendo configuración fiscal y contratos validados
   por cada institución, además de las puertas financieras y de cumplimiento vigentes.
 
