@@ -100,8 +100,9 @@ Usuario autoriza integrar esta ronda; #17, #16, #18 y #19 ya están en main.
   documenta decisiones del usuario en iniciativa/Backlogs 04 y 07 y referencia local;
   precisa ADR 0012 sin cambiar arquitectura. No hay cambios de código, BD, estados,
   versiones existentes, banderas ni VPS. P4–P6 siguen pendientes de implementación.
-- Verificación de esta entrega: coherencia documental, enlaces relativos y diff-check;
-  no se ejecutan pruebas funcionales porque no se modificó código operativo.
+- Verificación de esta entrega: coherencia documental, enlaces relativos y diff-check.
+  El hook de publicación pasó 199 pruebas / 1416 aserciones / 1 omitida y build;
+  las pruebas de las nuevas reglas siguen pendientes de su implementación en P4–P6.
 - Commit o merge: P3 parcial c8cff6f y corrección visual 2c401ad; PR apilados 17 → 16 → 18 → 19, sin merge.
 - Aprobación: e573a37, PR #20 apilado sobre #19, sin merge.
 - Pendientes diferidos: 02.5 sigue diferido; producción SIC en P7.
