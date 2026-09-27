@@ -167,6 +167,11 @@ simultánea multi-conexión de contención queda pendiente; no inferirla de SQLi
 
 ## Límites siguientes
 
+Las [decisiones funcionales del 27/09/2026](decisiones-fiscales-contractuales-mora.md)
+cierran el diseño de fiscalidad configurable, responsabilidad contractual y gracia
+de mora A/B para P4–P6. No cambian el comportamiento implementado descrito aquí;
+la formalización y operación crediticia siguen pendientes.
+
 La mecánica de aprobación está implementada, no habilitada en la instalación real.
 `ORIGINACION_APROBACIONES_HABILITADAS=false` debe conservarse hasta validar perfil,
 políticas y documentos del operador. La referencia escrita en un formulario no

@@ -30,5 +30,17 @@ La tabla anexa es HTML controlado por servidor, no tablas libres de Quill.
 
 Fixtures independientes verifican actual/360, bisiestos, redondeo, parciales,
 reversos, anticipos y conservación de montos. MariaDB verifica concurrencia real.
-Impuestos, gracia/coexistencia de intereses, retroactividad, excedentes y contratos
-son puertas de habilitación; no asumir IVA cero ni reglas legales universales.
+La configuración fiscal y aprobación contractual de cada institución siguen siendo
+puertas de habilitación; no asumir IVA cero ni reglas legales universales.
+Coexistencia de intereses, fechas retroactivas de operaciones, excedentes y
+devoluciones siguen pendientes de definición.
+
+## Precisión funcional aprobada — 2026-09-27
+
+Sin cambiar la arquitectura de este ADR, se concreta fiscalidad independiente por
+concepto (gravado con tasa/base, exento, no causa o no definido), responsabilidad
+contractual de cada institución y gracia A efectiva por defecto con B retroactiva
+configurable. Se conservan versiones, snapshots y flujo existentes.
+Los requisitos y ejemplos están en
+[decisiones fiscales, contractuales y mora](../reference/decisiones-fiscales-contractuales-mora.md).
+Su aceptación no acredita implementación de P4–P6 ni autorización de dinero real.

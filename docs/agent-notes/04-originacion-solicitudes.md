@@ -4,7 +4,7 @@
 
 - Notion: https://app.notion.com/p/3a061db7db7f81948d4ae8fa9118ac1d
 - Coordinación: https://app.notion.com/p/3e161db7db7f817a8c89ec30767d4666
-- Rama actual: fix/clientes-accesos-menubar (base main 9a563f7).
+- Rama actual: docs/decisiones-fiscales-contratos-mora (base main 67cb6ee).
 - PR: [P0 #17](https://github.com/jata-imk/kronik/pull/17), [P1 #16](https://github.com/jata-imk/kronik/pull/16), [P2 #18](https://github.com/jata-imk/kronik/pull/18).
 - P3 parcial: [PR #19](https://github.com/jata-imk/kronik/pull/19), base #18, borrador.
 - P3 aprobación: [PR #20](https://github.com/jata-imk/kronik/pull/20), base #19, borrador.
@@ -18,8 +18,8 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 ## Estado actual
 
 - Estado: en progreso
-- Última actualización: 2026-09-26
-- Último punto estable: main 9a563f7, sincronizado; PR #16–#20 integrados.
+- Última actualización: 2026-09-27
+- Último punto estable: main 67cb6ee, sincronizado; PR #16–#21 integrados.
 - P0: Notion ampliado y ADR registrados (6359c99).
 - P1: SIC saneado/navegación (c29af31), rama fix/sic-navegacion-segura.
 - P2: borrador/revisión/asignación implementados y verificados (`c4b5770` más seguimiento); PR #18 borrador.
@@ -32,8 +32,13 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 ## Decisiones pendientes
 
-- Habilitación real exige políticas financieras, impuestos, contratos y perfil
-  de cumplimiento validados; lista completa y alcance manual en Notion.
+- Cerradas funcionalmente: fiscalidad configurable por concepto, responsabilidad
+  contractual institucional y gracia A por defecto/B configurable. Especificación
+  en Notion y `docs/reference/decisiones-fiscales-contractuales-mora.md`.
+- Pendientes: coexistencia de intereses, fechas retroactivas de operaciones,
+  excedentes/devoluciones y detalles de cálculo afectados no especificados.
+- Habilitación real sigue exigiendo configuración fiscal y contratos validados
+  por cada institución, además de las puertas financieras y de cumplimiento vigentes.
 
 ## Evidencia
 
@@ -91,6 +96,12 @@ Usuario autoriza integrar esta ronda; #17, #16, #18 y #19 ya están en main.
 
 ## Cierre
 
+- Actualización 2026-09-27: #21 confirmado integrado en 67cb6ee. Esta entrega solo
+  documenta decisiones del usuario en iniciativa/Backlogs 04 y 07 y referencia local;
+  precisa ADR 0012 sin cambiar arquitectura. No hay cambios de código, BD, estados,
+  versiones existentes, banderas ni VPS. P4–P6 siguen pendientes de implementación.
+- Verificación de esta entrega: coherencia documental, enlaces relativos y diff-check;
+  no se ejecutan pruebas funcionales porque no se modificó código operativo.
 - Commit o merge: P3 parcial c8cff6f y corrección visual 2c401ad; PR apilados 17 → 16 → 18 → 19, sin merge.
 - Aprobación: e573a37, PR #20 apilado sobre #19, sin merge.
 - Pendientes diferidos: 02.5 sigue diferido; producción SIC en P7.
