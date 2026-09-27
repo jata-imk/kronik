@@ -89,14 +89,14 @@ test('accesos del cliente precargan solicitud y respetan permiso y sucursal', fu
     $this->seed(ModulesAndPermissionsSeeder::class);
     $user = actingAsSuperAdmin();
     $cliente = Cliente::factory()->create(['sucursal_id' => $user->current_sucursal_id]);
-    $this->actingAs($user)->get(route('clientes.show', $cliente))->assertInertia(fn (Assert $page) => $page->where('puedeCrearSolicitud', true));
-    $this->get(route('clientes.edit', $cliente))->assertInertia(fn (Assert $page) => $page->where('puedeCrearSolicitud', true));
+    $this->actingAs($user)->get(route('clientes.show', $cliente))->assertOk();
+    $this->get(route('clientes.edit', $cliente))->assertOk();
     $this->get(route('solicitudes.create', ['cliente_id' => $cliente->id]))->assertInertia(fn (Assert $page) => $page->where('clienteInicial.id', $cliente->id));
     $user->forceFill(['current_sucursal_id' => null])->save();
-    $this->get(route('clientes.show', $cliente))->assertInertia(fn (Assert $page) => $page->where('puedeCrearSolicitud', false));
+    $this->get(route('solicitudes.create', ['cliente_id' => $cliente->id]))->assertForbidden();
     $user->forceFill(['is_super_admin' => false, 'current_sucursal_id' => $cliente->sucursal_id])->save();
     $user->givePermissionTo('read clientes');
-    $this->get(route('clientes.show', $cliente))->assertInertia(fn (Assert $page) => $page->where('puedeCrearSolicitud', false));
+    $this->get(route('clientes.show', $cliente))->assertOk();
     $this->get(route('solicitudes.create', ['cliente_id' => $cliente->id]))->assertForbidden();
 });
 

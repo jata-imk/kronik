@@ -16,7 +16,19 @@ test("recorre clientes, expediente e historial crediticio sin errores de consola
     await expect(page).toHaveURL(/\/clientes\/\d+/);
 
     const clientId = page.url().match(/\/clientes\/(\d+)/)?.[1];
-    await page.goto(`/clientes/${clientId}/expediente`);
+    for (const url of [`/clientes/${clientId}`, `/clientes/${clientId}/edit`]) {
+        await page.goto(url);
+        await expect(page.getByRole("button", { name: "Abrir expediente", exact: true })).toHaveCount(0);
+        await expect(page.getByRole("button", { name: "Nueva solicitud", exact: true })).toHaveCount(0);
+        const solicitud = page.getByRole("menuitem", { name: "Nueva solicitud", exact: true });
+        await expect(solicitud).toBeVisible();
+        await solicitud.click();
+        await expect(page).toHaveURL(new RegExp(`/solicitudes/create\\?cliente_id=${clientId}$`));
+        await expect(page.getByText(/Ana.*Garcia.*Lopez/).first()).toBeVisible();
+    }
+    await page.goto(`/clientes/${clientId}`);
+    await page.getByRole("menuitem", { name: /Expediente KYC|Abrir expediente/ }).click();
+    await expect(page).toHaveURL(new RegExp(`/clientes/${clientId}/expediente$`));
     await expect(page.getByText(/Expediente|Perfil KYC/i).first()).toBeVisible();
 
     await page.goto("/clientes/historial-crediticio");

@@ -62,6 +62,8 @@ class SolicitudController extends Controller
         $cliente = isset($data['cliente_id']) ? Cliente::findOrFail($data['cliente_id']) : null;
         if ($cliente) {
             Gate::authorize('view', $cliente);
+            abort_unless($request->user()->current_sucursal_id !== null
+                && (int) $request->user()->current_sucursal_id === (int) $cliente->sucursal_id, 403);
         }
 
         return Inertia::render('Solicitudes/Form', ['solicitud' => null, 'productos' => $this->productos(),
