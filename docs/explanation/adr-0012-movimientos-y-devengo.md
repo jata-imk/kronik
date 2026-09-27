@@ -32,8 +32,11 @@ Fixtures independientes verifican actual/360, bisiestos, redondeo, parciales,
 reversos, anticipos y conservación de montos. MariaDB verifica concurrencia real.
 La configuración fiscal y aprobación contractual de cada institución siguen siendo
 puertas de habilitación; no asumir IVA cero ni reglas legales universales.
-Coexistencia de intereses, fechas retroactivas de operaciones, excedentes y
-devoluciones siguen pendientes de definición.
+Coexistencia de intereses configurable por contrato/producto, pagos pasados
+admitidos y excedentes fuera del sistema inicialmente son decisiones aceptadas.
+Faltan los detalles de limitación del ordinario y de pagos pasados con movimientos
+posteriores o periodos cerrados; no se autorizan por inferencia desembolsos
+retroactivos ni un nuevo flujo de devoluciones.
 
 ## Precisión funcional aprobada — 2026-09-27
 

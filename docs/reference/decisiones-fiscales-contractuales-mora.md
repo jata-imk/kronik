@@ -66,9 +66,34 @@ Para una cuota que vence el día 10 con tres días de gracia:
 | Pago posterior al periodo de gracia | Solo días posteriores a la gracia. | Incluye días desde el primero posterior al vencimiento. |
 
 La alternativa B no significa cobrar mora durante la gracia a quien paga dentro
-de ella. Tampoco autoriza contabilizar pagos o desembolsos con fechas retroactivas:
-son decisiones diferentes. Las condiciones históricas se conservan según el
+de ella. Por sí misma no autoriza fechas retroactivas de operaciones; la autorización
+de pagos pasados se registra por separado más abajo, sin extenderla a desembolsos.
+Las condiciones históricas se conservan según el
 versionado existente; no se reescriben productos o créditos anteriores.
+
+## Continuación: atraso, pagos pasados y excedentes
+
+Decisiones adicionales expresas del usuario del 27/09/2026:
+
+- **Coexistencia configurable:** algunos créditos mantienen interés ordinario y
+  moratorio durante el atraso; otros sustituyen o limitan el ordinario según
+  contrato/producto. No imponer una sola modalidad ni deducirla de las tasas.
+  Se conservan versionado, condiciones congeladas y convenciones existentes.
+  Falta concretar la fórmula y alcance de «limitar», y su interacción con gracia;
+  no inventar un tope, periodo ni valor predeterminado.
+- **Pagos con fecha pasada admitidos:** permitir registrar hoy un pago recibido
+  antes. Conservar fecha efectiva del pago y fecha real de captura/actor sin
+  falsificar el momento del registro. No confundirlo con mora B ni extender este
+  permiso a desembolsos retroactivos. Falta concretar el tratamiento de movimientos
+  posteriores y de periodos cerrados antes de implementar los cálculos afectados.
+  Se mantiene la inmutabilidad y corrección trazable ya acordada: no sobrescribir
+  ni eliminar movimientos para hacer encajar una fecha pasada.
+- **Excedentes fuera del sistema inicialmente:** no implementar por ahora una
+  cuenta de saldo a favor ni convertir automáticamente el excedente en anticipo.
+  No ocultar ni recortar silenciosamente el importe recibido, ni inventar pagos
+  o devoluciones. La gestión de la excepción se realiza fuera del sistema.
+  El cierre de este alcance no modifica los reversos compensatorios ya aprobados
+  ni adelanta P8 de anticipos/liquidación.
 
 ## Criterios de aceptación para los incrementos de implementación
 
@@ -85,14 +110,23 @@ versionado existente; no se reescriben productos o créditos anteriores.
   y año bisiesto, conservando las convenciones del motor existente.
 - Mensajes esperados: «Define el tratamiento fiscal de este concepto» y
   «Indica la tasa y la base del impuesto para este concepto gravado».
+- Verificar que la coexistencia de intereses provenga de condiciones explícitas
+  del producto/contrato conservadas históricamente, no de una regla universal.
+- En un pago pasado, conservar fecha efectiva y fecha real de captura distintas;
+  comprobar trazabilidad e idempotencia sin editar movimientos anteriores.
+- Comprobar que no se cree saldo a favor o anticipo automático por un excedente,
+  ni se descarte silenciosamente parte del importe comunicado por el operador.
 
 Estos son criterios pendientes de implementar y probar, no resultados de pruebas ejecutadas.
 
 ## Lo que este acuerdo no resuelve
 
-Siguen pendientes coexistencia de interés ordinario y moratorio, fechas retroactivas
-de operaciones, excedentes y devoluciones. Se mantienen las decisiones existentes
-sobre reversos compensatorios, orden de aplicación, actual/360 y precisión decimal.
+Quedan cerrados el carácter configurable de la coexistencia, la admisión de pagos
+pasados y la exclusión inicial de la gestión de excedentes. Siguen pendientes los
+detalles de limitación del ordinario/interacción con gracia y tratamiento de pagos
+pasados con movimientos posteriores o periodos cerrados. No se han autorizado
+desembolsos retroactivos ni un flujo nuevo de devoluciones. Se mantienen las
+decisiones sobre reversos compensatorios, orden de aplicación, actual/360 y precisión decimal.
 No se define aquí una nueva prioridad de aplicación para impuestos ni se resuelven
 por inferencia casos fiscales o de parcialidad no especificados; deberán detallarse
 antes de implementar los cálculos afectados.
