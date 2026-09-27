@@ -303,5 +303,7 @@ class MenubarItemsSeeder extends Seeder
                 );
             }
         });
+
+        $this->call(ClienteAccesosMenubarSeeder::class);
     }
 }

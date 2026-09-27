@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\Cliente;
 use App\Models\MenubarItemModule;
 use App\Models\Module;
+use App\Models\Solicitud;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -204,6 +206,34 @@ class MenubarService
 
         $params = is_string($rawParams) ? json_decode($rawParams, true) : $rawParams;
         $params = is_array($params) ? $params : [];
+
+        if ($routeName === 'clientes.expediente.show' && $request->route('cliente') !== null) {
+            $cliente = $request->route('cliente');
+            $cliente = $cliente instanceof Cliente ? $cliente : Cliente::find($cliente);
+            if (! $cliente || ! $request->user()?->can('view', $cliente)) {
+                return null;
+            }
+            $params['cliente'] = $cliente->id;
+        }
+
+        if ($routeName === 'solicitudes.create') {
+            $actor = $request->user();
+            if (! $actor || ! $actor->can('create', Solicitud::class)) {
+                return null;
+            }
+
+            $cliente = $request->route('cliente');
+            if ($cliente !== null) {
+                $cliente = $cliente instanceof Cliente ? $cliente : Cliente::find($cliente);
+                // Scope is a domain invariant, including for super administrators.
+                if (! $cliente || ! $actor->current_sucursal_id
+                    || (int) $actor->current_sucursal_id !== (int) $cliente->sucursal_id
+                    || ! $actor->can('view', $cliente)) {
+                    return null;
+                }
+                $params['cliente_id'] = $cliente->id;
+            }
+        }
 
         foreach ($params as $key => $value) {
             $routeParam = $request->route($key);

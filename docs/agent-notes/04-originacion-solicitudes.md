@@ -4,7 +4,7 @@
 
 - Notion: https://app.notion.com/p/3a061db7db7f81948d4ae8fa9118ac1d
 - Coordinación: https://app.notion.com/p/3e161db7db7f817a8c89ec30767d4666
-- Rama: feat/solicitudes-aprobacion (base feat/solicitudes-resolucion)
+- Rama actual: fix/clientes-accesos-menubar (base main 9a563f7).
 - PR: [P0 #17](https://github.com/jata-imk/kronik/pull/17), [P1 #16](https://github.com/jata-imk/kronik/pull/16), [P2 #18](https://github.com/jata-imk/kronik/pull/18).
 - P3 parcial: [PR #19](https://github.com/jata-imk/kronik/pull/19), base #18, borrador.
 - P3 aprobación: [PR #20](https://github.com/jata-imk/kronik/pull/20), base #19, borrador.
@@ -18,8 +18,8 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 ## Estado actual
 
 - Estado: en progreso
-- Última actualización: 2026-09-20
-- Último punto estable: main 002ca0d (PR #15), igual a remoto al iniciar.
+- Última actualización: 2026-09-26
+- Último punto estable: main 9a563f7, sincronizado; PR #16–#20 integrados.
 - P0: Notion ampliado y ADR registrados (6359c99).
 - P1: SIC saneado/navegación (c29af31), rama fix/sic-navegacion-segura.
 - P2: borrador/revisión/asignación implementados y verificados (`c4b5770` más seguimiento); PR #18 borrador.
@@ -61,7 +61,7 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 ## Siguiente paso
 
-Continuar P4 formalización desde main una vez completada la integración de #20,
+Continuar P4 formalización desde main tras la corrección de accesos de Clientes,
 revalidando vigencia/evidencia antes de contrato/anexo y firma. P5 desembolso y P6
 primer pago completarán después la primera vertical. No avanzar SIC real ni dinero
 sin políticas validadas. VPS exclusivamente QA; no modificar la solicitud manual.
@@ -71,6 +71,23 @@ búsqueda de responsables, dictámenes resumidos, pendientes explicados y recarg
 con confirmación. CI aprobado (35550769722, MariaDB/build/backend/frontend).
 Usuario autoriza integrar esta ronda; #17, #16, #18 y #19 ya están en main.
 #20 queda como último PR de integración; verificar su estado remoto al retomar.
+
+### Continuación 2026-09-26
+
+- La integración anterior ya terminó; las referencias a PR borrador/sin merge
+  de los párrafos históricos anteriores quedan superadas por main `9a563f7`.
+- Petición nueva: no rediseñar pantallas de P2/P3; usar Documentos y Productos
+  como referencia visual en los siguientes incrementos, con orientación contextual.
+- Corrección previa a P4: quitar ambos botones del encabezado de Clientes y
+  ubicar Expediente y Nueva solicitud en el menubar; conservar rótulos existentes,
+  precargar el cliente y verificar sucursal también al abrir la URL directamente.
+- Migración aditiva de menús; no ejecutar el seeder general sobre QA para aplicarla.
+  Guion: `docs/how-to/accesos-contextuales-clientes.md`.
+- Verificación: 199 backend / 1416 aserciones / 1 omitida, 65 frontend,
+  3 E2E de Clientes aprobados; build, Pint y diff-check aprobados.
+- P4 todavía no implementado: preparar primero paquete contractual trazable
+  revalidando aprobación y congelando condiciones; separar la firma digitalizada
+  en otro incremento. No representar un PDF generado como contrato firmado.
 
 ## Cierre
 
