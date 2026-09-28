@@ -4,10 +4,12 @@
 
 - Notion: https://app.notion.com/p/3a061db7db7f81948d4ae8fa9118ac1d
 - Coordinación: https://app.notion.com/p/3e161db7db7f817a8c89ec30767d4666
-- Rama actual: feat/formalizacion-paquete (base main c3a0170; PR #22 integrado).
+- Rama de entrega P4a: feat/formalizacion-paquete (base main c3a0170; PR #22 integrado).
+- P4a: [PR #23](https://github.com/jata-imk/kronik/pull/23), implementación 35ab336.
+  El estado de integración y los checks se consultan en el PR y en Notion.
 - PR: [P0 #17](https://github.com/jata-imk/kronik/pull/17), [P1 #16](https://github.com/jata-imk/kronik/pull/16), [P2 #18](https://github.com/jata-imk/kronik/pull/18).
-- P3 parcial: [PR #19](https://github.com/jata-imk/kronik/pull/19), base #18, borrador.
-- P3 aprobación: [PR #20](https://github.com/jata-imk/kronik/pull/20), base #19, borrador.
+- P3 parcial: [PR #19](https://github.com/jata-imk/kronik/pull/19), integrado.
+- P3 aprobación: [PR #20](https://github.com/jata-imk/kronik/pull/20), integrado.
 - ADR relacionados: 0010–0015, 0005–0009
 
 ## Objetivo
@@ -20,17 +22,17 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 - Estado: en progreso
 - Última actualización: 2026-09-27
 - Último punto estable: main c3a0170, sincronizado; PR #16–#22 integrados.
-- P4a implementado, pendiente de CI/merge: paquete QA por aprobación, snapshot cifrado, contrato/anexo
+- P4a implementado y verificado localmente en #23: paquete QA por aprobación, snapshot cifrado, contrato/anexo
   informativo, PDF privado, revalidación e idempotencia. ADR 0015 y guion
   `docs/how-to/qa-paquete-contractual.md`. Fiscalidad aún no implementada: no
   asumir exención/tasa cero ni promover estos PDF QA a contratos operativos.
 - Usuario autoriza merge autónomo de los próximos PR una vez verificados.
 - P0: Notion ampliado y ADR registrados (6359c99).
 - P1: SIC saneado/navegación (c29af31), rama fix/sic-navegacion-segura.
-- P2: borrador/revisión/asignación implementados y verificados (`c4b5770` más seguimiento); PR #18 borrador.
+- P2: borrador/revisión/asignación implementados y verificados (`c4b5770` más seguimiento); PR #18 integrado.
 - P3 parcial: devolución/reenvío, cierres y dictámenes humanos por revisión;
   bandejas de Evaluación y Cumplimiento reutilizan el detalle de solicitud.
-- P3 siguiente incremento: políticas versionadas, requisitos y aprobación individual/dual;
+- P3 completado: políticas versionadas, requisitos y aprobación individual/dual;
   huellas de identidad/documentos, vigencia y evidencia. Habilitación por defecto cerrada.
 - P4b (firma) y P5–P9 pendientes. Sin operación monetaria habilitada.
 - Se preserva `.playwright-mcp/` local ajeno.
@@ -59,7 +61,8 @@ El alcance completo y las decisiones de producto permanecen en Notion.
   aprobados. Chromium requirió salir del sandbox para crear su perfil temporal;
   no se modificaron reglas para sortearlo. Los errores de etiqueta accesible del
   selector se corrigieron antes de repetir E2E. Suite final: 211 backend / 1584
-  aserciones / 1 omitida; 68 frontend. CI por registrar.
+  aserciones / 1 omitida; 68 frontend. El hook de publicación repitió backend/build
+  satisfactoriamente. Los resultados CI están en los checks de #23.
 - Migración P4a: `2026_09_27_000000_create_solicitud_paquetes_table`; permiso nuevo
   `prepare package solicitudes`, sin asignación automática. No se modificó `.env`
   ni se ejecutaron migraciones en la BD configurada por el usuario.
@@ -87,7 +90,7 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 ## Siguiente paso
 
-Cerrar CI/PR de P4a y sincronizar main. Continuar P4b (firma), incorporando los
+Tras la integración de #23, continuar P4b (firma) desde main, incorporando los
 requisitos fiscales/contractuales acordados antes de usar condiciones operativas.
 P5 desembolso y P6 primer pago completarán después la primera vertical. No promover
 PDF QA a contrato válido ni avanzar SIC real o dinero sin políticas validadas.
@@ -118,6 +121,10 @@ Usuario autoriza integrar esta ronda; #17, #16, #18 y #19 ya están en main.
 
 ## Cierre
 
+- Entrega P4a: 35ab336, PR #23, ADR 0015 y guion QA con capturas sintéticas.
+  No se cierra la iniciativa 04–07. No se desplegó en la VPS ni se modificó la
+  solicitud manual. Las referencias históricas siguientes describen entregas
+  anteriores; #16–#22 ya están integrados.
 - Actualización 2026-09-27: #21 confirmado integrado en 67cb6ee. Esta entrega solo
   documenta decisiones del usuario en iniciativa/Backlogs 04 y 07 y referencia local;
   precisa ADR 0012 sin cambiar arquitectura. No hay cambios de código, BD, estados,
