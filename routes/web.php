@@ -50,6 +50,9 @@ Route::middleware([
     Route::get('evaluacion-solicitudes', [\App\Http\Controllers\SolicitudController::class, 'index'])->name('evaluacion-solicitudes.index');
     Route::get('cumplimiento', [\App\Http\Controllers\SolicitudController::class, 'index'])->name('cumplimiento.index');
     Route::get('solicitudes/clientes', [\App\Http\Controllers\SolicitudController::class, 'clientes'])->name('solicitudes.clientes');
+    Route::get('solicitudes/{solicitud}/paquete', [\App\Http\Controllers\SolicitudPaqueteController::class, 'show'])->name('solicitudes.paquete.show');
+    Route::post('solicitudes/{solicitud}/paquete', [\App\Http\Controllers\SolicitudPaqueteController::class, 'store'])->name('solicitudes.paquete.store');
+    Route::post('solicitudes/{solicitud}/paquetes/{paquete}/reintentar', [\App\Http\Controllers\SolicitudPaqueteController::class, 'retry'])->name('solicitudes.paquete.retry');
     Route::post('solicitudes/{solicitud}/enviar', [\App\Http\Controllers\SolicitudController::class, 'enviar'])->name('solicitudes.enviar');
     Route::post('solicitudes/{solicitud}/resolver', [\App\Http\Controllers\SolicitudController::class, 'resolver'])->name('solicitudes.resolver');
     Route::post('solicitudes/{solicitud}/dictaminar', [\App\Http\Controllers\SolicitudController::class, 'dictaminar'])->name('solicitudes.dictaminar');

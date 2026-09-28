@@ -17,6 +17,7 @@ const e2eEnvironment = {
     E2E_DATABASE: "true",
     E2E_ORIGINACION_DUAL: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
     ORIGINACION_APROBACIONES_HABILITADAS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
+    ORIGINACION_PAQUETES_QA_HABILITADOS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
     GEOCODING_ENABLED: "false",
     DB_CONNECTION: process.env.E2E_DB_CONNECTION ?? "sqlite",
     DB_DATABASE: process.env.E2E_DB_DATABASE ?? localDatabase,
@@ -33,6 +34,7 @@ const e2eEnvironment = {
     DOCUMENTOS_NPM_BINARY: "",
     DOCUMENTOS_NODE_MODULES_PATH: fileURLToPath(new URL("./node_modules", import.meta.url)),
     DOCUMENTOS_CHROME_PATH: "",
+    DOCUMENTOS_DISK: "e2e_dual",
 };
 
 export default defineConfig({

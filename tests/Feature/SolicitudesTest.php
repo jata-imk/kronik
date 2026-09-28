@@ -13,6 +13,153 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia as Assert;
 
+beforeEach(fn () => $this->withoutVite());
+
+function prepararSolicitudConContrato($test): array
+{
+    \Illuminate\Support\Facades\Queue::fake();
+    [$user, $solicitud, $cliente, $producto, $doc] = prepararSolicitudAprobable($test);
+    config(['originacion.paquetes_qa_habilitados' => true]);
+    $test->post(route('solicitudes.aprobar', $solicitud), ['lock_version' => 3, 'motivo' => 'Aprobación para probar paquete contractual.'])->assertSessionHasNoErrors();
+    $service = app(\App\Services\Documentos\DocumentoPlantillaVersionService::class);
+    $plantilla = $service->create(['clave' => 'contrato-qa', 'nombre' => 'Contrato de prueba', 'tipo' => 'contrato',
+        'contenido_html' => '<p>Contrato para {{cliente.nombre_completo}}.</p>', 'presentacion' => []], $user->id);
+    $version = $service->activate($plantilla->versiones->first());
+    $data = ['version_id' => $version->id, 'lock_version' => 4, 'idempotency_key' => (string) Str::uuid(), 'confirmacion_qa' => true];
+
+    return [$user, $solicitud->fresh(), $cliente, $producto, $doc, $version, $data];
+}
+
+test('paquete QA congela aprobación contrato y tabla con idempotencia y sin formalizar', function () {
+    [$user, $solicitud, $cliente, , , $version, $data] = prepararSolicitudConContrato($this);
+    $this->post(route('solicitudes.paquete.store', $solicitud), $data)->assertSessionHasNoErrors();
+    $this->post(route('solicitudes.paquete.store', $solicitud), [...$data, 'idempotency_key' => (string) Str::uuid()])->assertSessionHasNoErrors();
+    $this->assertDatabaseCount('solicitud_paquetes', 1);
+    $this->assertDatabaseCount('documentos_generados', 1);
+    \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\GenerarDocumentoPdf::class, 1);
+    $paquete = \App\Models\SolicitudPaquete::firstOrFail();
+    expect($paquete->snapshot['fiscalidad'])->toBe('no_definida')
+        ->and($paquete->snapshot['tabla']['tabla'])->toHaveCount(13)
+        ->and($solicitud->fresh()->estado)->toBe(SolicitudEstado::Aprobada)
+        ->and($solicitud->fresh()->lock_version)->toBe(5);
+    expect(fn () => $paquete->update(['snapshot_hash' => 'alterada']))->toThrow(ValidationException::class);
+    $stored = \Illuminate\Support\Facades\DB::table('solicitud_paquetes')->value('snapshot');
+    expect($stored)->not->toContain('Contrato para');
+    $this->get(route('solicitudes.paquete.show', $solicitud))->assertInertia(fn (Assert $page) => $page
+        ->component('Solicitudes/Paquete')->where('actual.id', $paquete->id)->missing('actual.snapshot')->has('paquetes.data', 1));
+    $version->plantilla->update(['nombre' => 'Otro nombre posterior']);
+    expect($paquete->fresh()->snapshot['plantilla']['nombre'])->toBe('Contrato de prueba');
+    $this->get(route('clientes.expediente.show', $cliente))->assertInertia(fn (Assert $page) => $page->where('documentosGenerados.total', 0));
+});
+
+test('paquete revalida aprobación evidencia sucursal y habilitación en servidor', function (string $caso) {
+    [$user, $solicitud, $cliente, $producto, $doc, , $data] = prepararSolicitudConContrato($this);
+    match ($caso) {
+        'qa' => config(['originacion.paquetes_qa_habilitados' => false]),
+        'sucursal' => $user->update(['current_sucursal_id' => null]),
+        'vencida' => $this->travel(16)->days(),
+        'identidad' => $cliente->update(['primer_nombre' => 'Nombre cambiado']),
+        'documento' => $doc->update(['estado' => 'rechazado']),
+        'producto' => app(ProductoVersionService::class)->retirar($producto),
+    };
+    $this->post(route('solicitudes.paquete.store', $solicitud), $data)->assertSessionHasErrors('paquete');
+    $this->assertDatabaseCount('solicitud_paquetes', 0);
+})->with(['qa', 'sucursal', 'vencida', 'identidad', 'documento', 'producto']);
+
+test('paquete valida campos en español y rechaza versión retirada y lock obsoleto', function () {
+    [, $solicitud, , , , $version, $data] = prepararSolicitudConContrato($this);
+    $this->post(route('solicitudes.paquete.store', $solicitud), [])->assertSessionHasErrors(['version_id', 'idempotency_key', 'lock_version', 'confirmacion_qa']);
+    foreach (session('errors')->all() as $error) {
+        expect($error)->not->toContain('validation.');
+    }
+    $this->post(route('solicitudes.paquete.store', $solicitud), [...$data, 'confirmacion_qa' => false])
+        ->assertSessionHasErrors(['confirmacion_qa' => 'Confirma que el paquete es de prueba y no tiene validez contractual.']);
+    $this->post(route('solicitudes.paquete.store', $solicitud), [...$data, 'lock_version' => 0])->assertSessionHasErrors('paquete');
+    app(\App\Services\Documentos\DocumentoPlantillaVersionService::class)->retire($version);
+    $this->post(route('solicitudes.paquete.store', $solicitud), $data)->assertSessionHasErrors('version_id');
+});
+
+test('paquete protege pantalla estado y archivo por permisos de solicitud y documentos', function () {
+    $this->seed(ModulesAndPermissionsSeeder::class);
+    [$user, $solicitud, , , , , $data] = prepararSolicitudConContrato($this);
+    $this->post(route('solicitudes.paquete.store', $solicitud), $data)->assertSessionHasNoErrors();
+    $documento = \App\Models\SolicitudPaquete::firstOrFail()->documento;
+    $user->forceFill(['is_super_admin' => false])->save();
+    $user->givePermissionTo(['read clientes', 'read documentos', 'download documentos']);
+    $this->get(route('solicitudes.paquete.show', $solicitud))->assertForbidden();
+    $this->get(route('documentos-generados.status', $documento))->assertForbidden();
+    $this->get(route('documentos-generados.download', $documento))->assertForbidden();
+    $user->givePermissionTo('read solicitudes');
+    $this->get(route('solicitudes.paquete.show', $solicitud))->assertOk();
+    $this->post(route('solicitudes.paquete.store', $solicitud), $data)->assertForbidden();
+    $user->givePermissionTo(['prepare package solicitudes', 'generate documentos']);
+    $this->post(route('solicitudes.paquete.store', $solicitud), $data)->assertSessionHasNoErrors();
+});
+
+test('paquete genera anexo marcado usando snapshot y no regenera el original', function () {
+    [, $solicitud, $cliente, , , $version, $data] = prepararSolicitudConContrato($this);
+    $this->post(route('solicitudes.paquete.store', $solicitud), $data)->assertSessionHasNoErrors();
+    $paquete = \App\Models\SolicitudPaquete::firstOrFail();
+    $renderer = new class implements \App\Contracts\DocumentoPdfRenderer
+    {
+        public array $captured = [];
+
+        public function render(string $bodyHtml, ?string $headerHtml = null, ?string $footerHtml = null, array $options = []): string
+        {
+            $this->captured = compact('bodyHtml', 'headerHtml', 'options');
+
+            return '%PDF-original-qa';
+        }
+    };
+    $this->instance(\App\Contracts\DocumentoPdfRenderer::class, $renderer);
+    $cliente->update(['primer_nombre' => 'Cambió después']);
+    $job = new \App\Jobs\GenerarDocumentoPdf($paquete->documento->id);
+    $job->handle(app(\App\Services\Documentos\DocumentoRenderService::class), app(\App\Services\ActivityLogService::class));
+    expect($renderer->captured['bodyHtml'])->toContain('Fiscalidad no definida')->not->toContain('Cambió después')
+        ->and($renderer->captured['headerHtml'])->toContain('sin validez contractual')
+        ->and($renderer->captured['options']['marca_agua'])->toBe('QA — SIN VALIDEZ CONTRACTUAL');
+    $documento = $paquete->documento->fresh();
+    $this->get(route('documentos-generados.download', $documento))->assertOk();
+    \Illuminate\Support\Facades\Storage::disk($documento->disk)->delete($documento->path);
+    $job->handle(app(\App\Services\Documentos\DocumentoRenderService::class), app(\App\Services\ActivityLogService::class));
+    \Illuminate\Support\Facades\Storage::disk($documento->disk)->assertMissing($documento->path);
+    expect($documento->fresh()->archivo_hash)->toBe(hash('sha256', '%PDF-original-qa'));
+});
+
+test('paquete reintenta el mismo snapshot fallido y rechaza paquetes ajenos', function () {
+    [$user, $solicitud, $cliente, , , , $data] = prepararSolicitudConContrato($this);
+    $this->post(route('solicitudes.paquete.store', $solicitud), $data)->assertSessionHasNoErrors();
+    $paquete = \App\Models\SolicitudPaquete::firstOrFail();
+    $paquete->documento->update(['estado' => 'fallido', 'error_mensaje' => 'Prueba de recuperación']);
+    $this->post(route('solicitudes.paquete.retry', [$solicitud, $paquete]))->assertSessionHasNoErrors();
+    expect($paquete->documento->fresh()->estado->value)->toBe('pendiente');
+    $this->post(route('solicitudes.paquete.retry', [$solicitud, $paquete]))->assertSessionHasErrors('paquete');
+    $this->post(route('solicitudes.store'), ['cliente_id' => $cliente->id, 'clave_creacion' => (string) Str::uuid()])->assertSessionHasNoErrors();
+    $otra = Solicitud::latest('id')->firstOrFail();
+    $this->post(route('solicitudes.paquete.retry', [$otra, $paquete]))->assertNotFound();
+    $this->assertDatabaseCount('solicitud_paquetes', 1);
+});
+
+test('paquete histórico se conserva y una nueva aprobación permite otra versión', function () {
+    [$user, $solicitud, , , , $version, $data] = prepararSolicitudConContrato($this);
+    $this->post(route('solicitudes.paquete.store', $solicitud), $data)->assertSessionHasNoErrors();
+    $anterior = \App\Models\SolicitudPaquete::firstOrFail();
+    $this->post(route('solicitudes.resolver', $solicitud), ['accion' => 'devolver', 'lock_version' => 5,
+        'motivo' => 'Revisar el paquete con otra versión contractual.', 'responsable_id' => $user->id])->assertSessionHasNoErrors();
+    $this->get(route('solicitudes.paquete.show', $solicitud))->assertInertia(fn (Assert $page) => $page
+        ->where('actual', null)->where('paquetes.data.0.actual', false));
+    $this->post(route('solicitudes.enviar', $solicitud), ['lock_version' => 6])->assertSessionHasNoErrors();
+    $this->post(route('solicitudes.dictaminar', $solicitud), solicitudDictamenDatos(7))->assertSessionHasNoErrors();
+    $this->post(route('solicitudes.dictaminar', $solicitud), [...solicitudDictamenDatos(8, 'pld'), 'resultado' => 'sin_observaciones', 'nivel_riesgo' => 'bajo'])->assertSessionHasNoErrors();
+    $this->post(route('solicitudes.aprobar', $solicitud), ['lock_version' => 9, 'motivo' => 'Aprobación renovada con evidencia actual.'])->assertSessionHasNoErrors();
+    $service = app(\App\Services\Documentos\DocumentoPlantillaVersionService::class);
+    $nueva = $service->activate($service->duplicate($version->plantilla, $version, $user->id));
+    $this->post(route('solicitudes.paquete.store', $solicitud), [...$data, 'version_id' => $nueva->id, 'lock_version' => 10, 'idempotency_key' => (string) Str::uuid()])->assertSessionHasNoErrors();
+    $this->assertDatabaseCount('solicitud_paquetes', 2);
+    expect($anterior->fresh()->snapshot_hash)->toBe($anterior->snapshot_hash)
+        ->and($anterior->fresh()->snapshot['plantilla']['numero'])->toBe(1);
+});
+
 function solicitudProducto(int $userId): ProductoVersion
 {
     $producto = app(ProductoVersionService::class)->crear([
