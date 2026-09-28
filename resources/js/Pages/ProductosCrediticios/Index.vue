@@ -1,6 +1,8 @@
 <script setup>
 import FinancialFieldHelp from "@/Components/Products/FinancialFieldHelp.vue";
 import ProductVersionStatus from "@/Components/Products/ProductVersionStatus.vue";
+import ProductTaxPolicy from "@/Components/Products/ProductTaxPolicy.vue";
+import { emptyTaxConcept, normalizeTaxPolicy } from "@/Components/Products/fiscalidad";
 import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import axios from "axios";
@@ -36,6 +38,17 @@ const simulatorVisible = ref(false);
 const catalogVisible = ref(false);
 const helpGuideVisible = ref(false);
 const editingVersion = ref(null);
+const fiscalVersion = ref(null);
+const fiscalVisible = ref(false);
+const showFiscalPolicy = (version) => {
+    fiscalVersion.value = {
+        ...version,
+        fiscalidad: normalizeTaxPolicy(version.fiscalidad),
+        comisiones: version.comisiones.map((item) => ({ ...item, fiscalidad: { ...emptyTaxConcept(), ...item.fiscalidad } })),
+        legacyFiscal: !version.fiscalidad,
+    };
+    fiscalVisible.value = true;
+};
 const activeEditorTab = ref("general");
 const simulation = ref(null);
 const simulating = ref(false);
@@ -147,6 +160,7 @@ const help = {
 };
 
 const emptyVersion = () => ({
+    fiscalidad: normalizeTaxPolicy(),
     monto_minimo: 5000,
     monto_maximo: 100000,
     tasa_ordinaria_anual: 36,
@@ -264,6 +278,7 @@ const normalizeCommission = (item) => {
         modalidad_cobro: initial ? (item.modalidad_cobro ?? legacyMode) : null,
         obligatoria: item.obligatoria,
         incluye_cat: commissionIncludesCat(item),
+        fiscalidad: { ...emptyTaxConcept(), ...item.fiscalidad },
     };
 };
 const openCreate = () => {
@@ -286,6 +301,7 @@ const openEdit = (version) => {
         nombre: selected.value.nombre,
         descripcion: selected.value.descripcion ?? "",
         version: {
+            fiscalidad: normalizeTaxPolicy(version.fiscalidad),
             monto_minimo: Number(version.monto_minimo),
             monto_maximo: Number(version.monto_maximo),
             tasa_ordinaria_anual: Number(version.tasa_ordinaria_anual),
@@ -358,6 +374,7 @@ const addPeriodicity = () => {
 };
 const addCommission = () =>
     form.version.comisiones.push({
+        fiscalidad: emptyTaxConcept(),
         concepto_comision_id: null,
         tipo_importe: "fijo",
         importe: 0,
@@ -592,6 +609,7 @@ watch(
                             <Column v-if="can('manage origination productos-crediticios')" header="Originación"><template #body="{ data }"><Link :href="route('originacion-politicas.show', data.id)" class="text-primary underline">Política v{{ data.numero }}</Link></template></Column>
                             <Column header="Versión" style="width:16%"><template #body="{ data }"><div class="flex items-center gap-2"><Avatar :label="`v${data.numero}`" shape="circle" class="bg-primary-100 font-bold text-primary-700" /><ProductVersionStatus :state="data.estado" :used="data.usos_count > 0" /></div></template></Column>
                             <Column header="Condiciones"><template #body="{ data }"><p class="font-medium">{{ moneyCompact(data.monto_minimo) }} – {{ moneyCompact(data.monto_maximo) }}</p><p class="text-sm text-surface-500">{{ percent(data.tasa_ordinaria_anual) }} ordinaria · {{ data.dias_gracia_mora }} días de gracia</p></template></Column>
+                            <Column header="Fiscalidad"><template #body="{ data }"><Button :label="data.fiscalidad ? (data.fiscalidad.uso === 'prueba' ? 'Prueba / QA' : 'Institucional') : 'Sin definir'" icon="pi pi-percentage" severity="secondary" size="small" :aria-label="`Ver fiscalidad versión ${data.numero}`" @click="showFiscalPolicy(data)" /></template></Column>
                             <Column header="Periodicidad"><template #body="{ data }"><div class="flex flex-wrap gap-1"><Chip v-for="item in data.periodicidades" :key="item.id" :label="`${periodicityLabel[item.periodicidad]} ${item.plazo_minimo}–${item.plazo_maximo}`" /></div></template></Column>
                             <Column header="Vigencia"><template #body="{ data }"><p class="text-sm">{{ data.vigente_desde || 'Sin programar' }}</p><p class="text-xs text-surface-500">{{ data.cat_aplica ? 'CAT aplicable' : 'CAT no aplicable' }}</p></template></Column>
                             <Column header="Acciones"><template #body="{ data }"><div class="flex flex-nowrap gap-1"><Button v-if="data.estado === 'borrador' && can('update productos-crediticios')" v-tooltip.top="'Editar borrador'" icon="pi pi-pencil" text rounded :aria-label="`Editar versión ${data.numero}`" @click="openEdit(data)" /><Button v-if="can('simulate productos-crediticios')" v-tooltip.top="'Simular'" icon="pi pi-calculator" text rounded :aria-label="`Simular versión ${data.numero}`" @click="openSimulator(data)" /><Button v-if="can('version productos-crediticios')" v-tooltip.top="'Crear nueva versión'" icon="pi pi-copy" text rounded :aria-label="`Duplicar versión ${data.numero}`" @click="versionCopy(data)" /><Button v-if="data.estado === 'borrador' && can('activate productos-crediticios')" v-tooltip.top="'Activar'" icon="pi pi-check-circle" text rounded severity="success" :aria-label="`Activar versión ${data.numero}`" @click="activate(data)" /><Button v-if="['activa','programada'].includes(data.estado) && can('retire productos-crediticios')" v-tooltip.top="'Retirar'" icon="pi pi-ban" text rounded severity="danger" :aria-label="`Retirar versión ${data.numero}`" @click="retire(data)" /></div></template></Column>
@@ -600,14 +618,19 @@ watch(
                 </main>
             </div>
 
+            <Drawer v-model:visible="fiscalVisible" position="right" :header="`Fiscalidad · versión ${fiscalVersion?.numero ?? ''}`" :style="{ width: 'min(64rem, 96vw)' }">
+                <Message v-if="fiscalVersion?.legacyFiscal" severity="warn" :closable="false">Esta versión no tiene configuración fiscal registrada. No se asume ninguna exención; la presentación de prueba no modifica el histórico.</Message>
+                <ProductTaxPolicy v-if="fiscalVersion" :version="fiscalVersion" :conceptos="conceptosComision" readonly />
+            </Drawer>
             <Dialog id="product-editor" v-model:visible="editorVisible" :header="editingVersion ? `Editar versión ${editingVersion.numero}` : 'Nuevo producto crediticio'" modal maximizable :style="{ width: 'min(1080px, 96vw)' }">
                 <form class="space-y-5" @submit.prevent="submit">
                     <div class="flex flex-col gap-3 rounded-xl bg-primary-50 p-4 dark:bg-primary-950/30 sm:flex-row sm:items-center sm:justify-between"><div><p class="font-semibold">Configuración segura y explicada</p><p class="text-sm text-surface-600 dark:text-surface-300">El borrador se congela al activarse. Usa los botones de ayuda para revisar cada concepto.</p></div><Button type="button" label="Guía financiera" icon="pi pi-book" text @click="helpGuideVisible = true" /></div>
                     <Tabs v-model:value="activeEditorTab">
                         <TabList>
-                            <Tab v-for="tab in [{v:'general',l:'Información'},{v:'condiciones',l:'Montos y tasas'},{v:'reglas',l:'Reglas'},{v:'comisiones',l:'Comisiones'}]" :key="tab.v" :value="tab.v"><span class="flex items-center gap-2">{{ tab.l }}<Badge v-if="tabErrorCount(tab.v)" :value="tabErrorCount(tab.v)" severity="danger" /></span></Tab>
+                            <Tab v-for="tab in [{v:'general',l:'Información'},{v:'condiciones',l:'Montos y tasas'},{v:'reglas',l:'Reglas'},{v:'comisiones',l:'Comisiones'},{v:'fiscalidad',l:'Fiscalidad'}]" :key="tab.v" :value="tab.v"><span class="flex items-center gap-2">{{ tab.l }}<Badge v-if="tabErrorCount(tab.v)" :value="tabErrorCount(tab.v)" severity="danger" /></span></Tab>
                         </TabList>
                         <TabPanels>
+                            <TabPanel value="fiscalidad"><ProductTaxPolicy :version="form.version" :conceptos="conceptosComision" :errors="form.errors" /></TabPanel>
                             <TabPanel value="general"><div class="grid gap-4 pt-3 md:grid-cols-2">
                                 <div><div class="flex items-center"><label for="product-key" class="text-sm font-medium">Clave *</label><FinancialFieldHelp :title="help.key[0]" :description="help.key[1]" :example="help.key[2]" /></div><InputText id="product-key" v-model="form.clave" :invalid="!!error('clave')" :aria-invalid="!!error('clave')" fluid /><Message v-if="error('clave')" severity="error" size="small">{{ error('clave') }}</Message></div>
                                 <div><label for="product-name" class="mb-1 block text-sm font-medium">Nombre comercial *</label><InputText id="product-name" v-model="form.nombre" :invalid="!!error('nombre')" :aria-invalid="!!error('nombre')" fluid /><Message v-if="error('nombre')" severity="error" size="small">{{ error('nombre') }}</Message></div>

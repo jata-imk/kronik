@@ -70,7 +70,7 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
         $this->authorize('update', $producto);
         abort_unless($version->producto_crediticio_id === $producto->id, 404);
         $service->actualizar($producto, $version, $request->validated());
-        $this->actividad(ActivityEvent::CreditProductUpdated, 'Borrador de producto actualizado', $producto, ['configuracion_comercial', 'reglas_calculo']);
+        $this->actividad(ActivityEvent::CreditProductUpdated, 'Borrador de producto actualizado', $producto, ['configuracion_comercial', 'reglas_calculo', 'fiscalidad']);
 
         return back()->with('success', 'Borrador actualizado.');
     }

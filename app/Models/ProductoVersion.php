@@ -13,7 +13,7 @@ class ProductoVersion extends Model
     private const IMMUTABLE_FIELDS = [
         'moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual',
         'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica',
-        'cat_no_aplica_motivo', 'vigente_desde', 'snapshot', 'snapshot_hash',
+        'cat_no_aplica_motivo', 'vigente_desde', 'snapshot', 'snapshot_hash', 'fiscalidad',
     ];
 
     protected $table = 'producto_versiones';
@@ -21,6 +21,7 @@ class ProductoVersion extends Model
     protected $guarded = [];
 
     protected $casts = [
+        'fiscalidad' => 'array',
         'estado' => ProductoVersionEstado::class,
         'monto_minimo' => 'decimal:4', 'monto_maximo' => 'decimal:4',
         'tasa_ordinaria_anual' => 'decimal:8', 'tasa_moratoria_anual' => 'decimal:8',

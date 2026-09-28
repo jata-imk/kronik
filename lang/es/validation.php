@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'decimal' => 'El campo :attribute debe ser un número con entre :min y :max decimales.',
+    'prohibited_unless' => 'El campo :attribute debe quedar vacío para la opción seleccionada.',
     'accepted' => 'El campo :attribute debe ser aceptado.',
     'array' => 'El campo :attribute debe ser una lista válida.',
     'between' => [
@@ -141,5 +143,17 @@ return [
         'ingresos_mensuales' => 'ingresos mensuales',
         'egresos_mensuales' => 'egresos mensuales',
         'confirmacion_qa' => 'confirmación de uso exclusivo en QA',
+        'version.fiscalidad' => 'configuración fiscal',
+        'version.fiscalidad.uso' => 'uso de la configuración fiscal',
+        'version.fiscalidad.referencia' => 'referencia fiscal de la institución',
+        'version.fiscalidad.ordinario' => 'fiscalidad del interés ordinario',
+        'version.fiscalidad.moratorio' => 'fiscalidad del interés moratorio',
+        'version.fiscalidad.*.tratamiento' => 'tratamiento fiscal del interés',
+        'version.fiscalidad.*.tasa' => 'tasa de impuesto del interés',
+        'version.fiscalidad.*.base' => 'base de impuesto del interés',
+        'version.comisiones.*.fiscalidad' => 'fiscalidad de la comisión',
+        'version.comisiones.*.fiscalidad.tratamiento' => 'tratamiento fiscal de la comisión',
+        'version.comisiones.*.fiscalidad.tasa' => 'tasa de impuesto de la comisión',
+        'version.comisiones.*.fiscalidad.base' => 'base de impuesto de la comisión',
     ],
 ];

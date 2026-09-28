@@ -30,6 +30,101 @@ function productoPayload(array $version = []): array
     ];
 }
 
+function fiscalidadPrueba(): array
+{
+    return ['uso' => 'prueba', 'referencia' => 'Configuración sintética QA',
+        'ordinario' => ['tratamiento' => 'exento', 'tasa' => null, 'base' => null],
+        'moratorio' => ['tratamiento' => 'gravado', 'tasa' => '16.12345678', 'base' => 'importe_concepto']];
+}
+
+test('fiscalidad se conserva por concepto en versiones snapshots y clientes anteriores', function () {
+    $user = actingAsSuperAdmin();
+    $concepto = ConceptoComision::create(['clave' => 'FISCAL-QA', 'nombre' => 'Comisión QA', 'activo' => true]);
+    $comision = ['concepto_comision_id' => $concepto->id, 'tipo_importe' => 'fijo', 'importe' => '100', 'base_calculo' => 'no_aplica', 'momento_cobro' => 'cada_pago', 'obligatoria' => true,
+        'fiscalidad' => ['tratamiento' => 'no_causa', 'tasa' => null, 'base' => null]];
+    $data = productoPayload(['fiscalidad' => fiscalidadPrueba(), 'comisiones' => [$comision]]);
+    $this->actingAs($user)->post(route('productos-crediticios.store'), $data)->assertSessionHasNoErrors();
+    $version = ProductoVersion::firstOrFail();
+    expect($version->fiscalidad)->toBe(fiscalidadPrueba())
+        ->and($version->comisiones()->first()->fiscalidad['tratamiento'])->toBe('no_causa');
+
+    unset($data['version']['fiscalidad'], $data['version']['comisiones'][0]['fiscalidad']);
+    $this->put(route('productos-crediticios.update', [$version->producto, $version]), $data)->assertSessionHasNoErrors();
+    expect($version->refresh()->fiscalidad)->toBe(fiscalidadPrueba())
+        ->and($version->comisiones()->first()->fiscalidad['tratamiento'])->toBe('no_causa');
+    $service = app(ProductoVersionService::class);
+    $version = $service->activar($version, today()->toDateString());
+    $hash = $version->snapshot_hash;
+    expect($version->snapshot['fiscalidad'])->toBe(fiscalidadPrueba())
+        ->and($version->snapshot['comisiones'][0]['fiscalidad']['tratamiento'])->toBe('no_causa');
+    $copy = $service->nuevaVersion($version->producto, $version, $user->id);
+    expect($copy->fiscalidad)->toBe($version->fiscalidad)
+        ->and($copy->comisiones()->first()->fiscalidad)->toBe($version->comisiones()->first()->fiscalidad);
+    $copy->refresh()->update(['fiscalidad' => null]);
+    expect($version->refresh()->snapshot_hash)->toBe($hash)
+        ->and(fn () => $version->update(['fiscalidad' => null]))->toThrow(Illuminate\Validation\ValidationException::class)
+        ->and(fn () => $version->comisiones()->first()->update(['fiscalidad' => null]))->toThrow(Illuminate\Validation\ValidationException::class);
+});
+
+test('fiscalidad inválida se rechaza con mensajes españoles sin asumir tasa o base', function (string $path, mixed $value, string $error) {
+    $user = actingAsSuperAdmin();
+    $data = productoPayload(['fiscalidad' => fiscalidadPrueba()]);
+    data_set($data, $path, $value);
+    $this->actingAs($user)->post(route('productos-crediticios.store'), $data)->assertSessionHasErrors([$error]);
+    expect(implode(' ', session('errors')->all()))->not->toContain('validation.');
+    $this->assertDatabaseCount('productos_crediticios', 0);
+})->with([
+    ['version.fiscalidad.moratorio.tasa', null, 'version.fiscalidad.moratorio.tasa'],
+    ['version.fiscalidad.moratorio.base', null, 'version.fiscalidad.moratorio.base'],
+    ['version.fiscalidad.moratorio.base', 'monto_credito', 'version.fiscalidad.moratorio.base'],
+    ['version.fiscalidad.moratorio.tasa', '-1', 'version.fiscalidad.moratorio.tasa'],
+    ['version.fiscalidad.moratorio.tasa', '16.123456789', 'version.fiscalidad.moratorio.tasa'],
+    ['version.fiscalidad.ordinario.tasa', '0', 'version.fiscalidad.ordinario.tasa'],
+    ['version.fiscalidad.ordinario.tratamiento', 'otro', 'version.fiscalidad.ordinario.tratamiento'],
+    ['version.fiscalidad.ordinario', 'exento', 'version.fiscalidad.ordinario'],
+    ['version.fiscalidad.uso', 'produccion', 'version.fiscalidad.uso'],
+    ['version.fiscalidad', ['uso' => 'institucional', 'ordinario' => ['tratamiento' => 'no_definido'], 'moratorio' => ['tratamiento' => 'no_definido']], 'version.fiscalidad.referencia'],
+    ['version.fiscalidad.extra', 'no permitido', 'version.fiscalidad'],
+    ['version.fiscalidad', [], 'version.fiscalidad'],
+]);
+
+test('fiscalidad legacy queda indefinida y validación también protege llamadas directas', function () {
+    $service = app(ProductoVersionService::class);
+    $product = $service->crear(productoPayload(), null);
+    $version = $service->activar($product->versiones()->first(), today()->toDateString());
+    expect($version->fiscalidad)->toBeNull()->and($version->snapshot['fiscalidad'])->toBeNull();
+    $bad = fiscalidadPrueba();
+    $bad['moratorio']['tasa'] = null;
+    $data = productoPayload(['fiscalidad' => $bad]);
+    $data['clave'] = 'FISCAL-INVALID';
+    expect(fn () => $service->crear($data, null))->toThrow(Illuminate\Validation\ValidationException::class);
+});
+
+test('la tasa cero requiere declaración explícita y las comisiones gravadas requieren su propia base', function () {
+    $user = actingAsSuperAdmin();
+    $concepto = ConceptoComision::create(['clave' => 'IMPUESTO-QA', 'nombre' => 'Cargo QA', 'activo' => true]);
+    $fiscalidad = fiscalidadPrueba();
+    $fiscalidad['uso'] = 'institucional';
+    $data = productoPayload(['fiscalidad' => $fiscalidad, 'comisiones' => [[
+        'concepto_comision_id' => $concepto->id, 'tipo_importe' => 'porcentaje', 'importe' => '2',
+        'base_calculo' => 'monto_credito', 'momento_cobro' => 'cada_pago', 'obligatoria' => true,
+        'fiscalidad' => ['tratamiento' => 'gravado', 'tasa' => '0', 'base' => null],
+    ]]]);
+    $this->actingAs($user)->post(route('productos-crediticios.store'), $data)->assertSessionHasErrors(['version.comisiones.0.fiscalidad.base']);
+    expect(session('errors')->first('version.comisiones.0.fiscalidad.base'))->not->toContain('validation.');
+    $data['version']['comisiones'][0]['fiscalidad']['base'] = 'importe_concepto';
+    $this->post(route('productos-crediticios.store'), $data)->assertSessionHasNoErrors();
+    $version = ProductoVersion::firstOrFail();
+    expect($version->fiscalidad['uso'])->toBe('institucional')
+        ->and($version->comisiones()->first()->fiscalidad)->toBe(['tratamiento' => 'gravado', 'tasa' => '0', 'base' => 'importe_concepto']);
+});
+
+test('una comisión fiscal configurada sin uso de prueba o institucional es rechazada', function () {
+    $data = productoPayload();
+    $data['version']['comisiones'] = [['fiscalidad' => ['tratamiento' => 'no_causa']]];
+    expect(fn () => App\Support\FiscalidadProducto::validate($data['version']))->toThrow(Illuminate\Validation\ValidationException::class);
+});
+
 test('super admin puede crear y consultar productos globales', function () {
     $user = actingAsSuperAdmin();
 
