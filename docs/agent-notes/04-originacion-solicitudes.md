@@ -4,11 +4,11 @@
 
 - Notion: https://app.notion.com/p/3a061db7db7f81948d4ae8fa9118ac1d
 - Coordinación: https://app.notion.com/p/3e161db7db7f817a8c89ec30767d4666
-- Rama actual: docs/decisiones-fiscales-contratos-mora (base main 67cb6ee).
+- Rama actual: feat/formalizacion-paquete (base main c3a0170; PR #22 integrado).
 - PR: [P0 #17](https://github.com/jata-imk/kronik/pull/17), [P1 #16](https://github.com/jata-imk/kronik/pull/16), [P2 #18](https://github.com/jata-imk/kronik/pull/18).
 - P3 parcial: [PR #19](https://github.com/jata-imk/kronik/pull/19), base #18, borrador.
 - P3 aprobación: [PR #20](https://github.com/jata-imk/kronik/pull/20), base #19, borrador.
-- ADR relacionados: 0010–0014, 0005–0009
+- ADR relacionados: 0010–0015, 0005–0009
 
 ## Objetivo
 
@@ -19,7 +19,12 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 - Estado: en progreso
 - Última actualización: 2026-09-27
-- Último punto estable: main 67cb6ee, sincronizado; PR #16–#21 integrados.
+- Último punto estable: main c3a0170, sincronizado; PR #16–#22 integrados.
+- P4a implementado, pendiente de CI/merge: paquete QA por aprobación, snapshot cifrado, contrato/anexo
+  informativo, PDF privado, revalidación e idempotencia. ADR 0015 y guion
+  `docs/how-to/qa-paquete-contractual.md`. Fiscalidad aún no implementada: no
+  asumir exención/tasa cero ni promover estos PDF QA a contratos operativos.
+- Usuario autoriza merge autónomo de los próximos PR una vez verificados.
 - P0: Notion ampliado y ADR registrados (6359c99).
 - P1: SIC saneado/navegación (c29af31), rama fix/sic-navegacion-segura.
 - P2: borrador/revisión/asignación implementados y verificados (`c4b5770` más seguimiento); PR #18 borrador.
@@ -27,7 +32,7 @@ El alcance completo y las decisiones de producto permanecen en Notion.
   bandejas de Evaluación y Cumplimiento reutilizan el detalle de solicitud.
 - P3 siguiente incremento: políticas versionadas, requisitos y aprobación individual/dual;
   huellas de identidad/documentos, vigencia y evidencia. Habilitación por defecto cerrada.
-- P4–P9 pendientes. Sin operación monetaria habilitada.
+- P4b (firma) y P5–P9 pendientes. Sin operación monetaria habilitada.
 - Se preserva `.playwright-mcp/` local ajeno.
 
 ## Decisiones pendientes
@@ -46,6 +51,18 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 ## Evidencia
 
+- P4a: 12 pruebas específicas / 168 aserciones, 3 nuevas pruebas frontend;
+  E2E dual extendido hasta preparar/abrir PDF real aprobado. Playwright MCP:
+  escritorio 1440 y móvil 390 sin overflow; capturas sintéticas en docs/assets.
+  PDF de dos páginas verificado: aviso QA en ambas, anexo/fiscalidad pendiente.
+  Descarga HTTP 200 application/pdf con caché privada/no-store. Build y Pint
+  aprobados. Chromium requirió salir del sandbox para crear su perfil temporal;
+  no se modificaron reglas para sortearlo. Los errores de etiqueta accesible del
+  selector se corrigieron antes de repetir E2E. Suite final: 211 backend / 1584
+  aserciones / 1 omitida; 68 frontend. CI por registrar.
+- Migración P4a: `2026_09_27_000000_create_solicitud_paquetes_table`; permiso nuevo
+  `prepare package solicitudes`, sin asignación automática. No se modificó `.env`
+  ni se ejecutaron migraciones en la BD configurada por el usuario.
 - P2 final: 181 pruebas / 1092 aserciones, CI 35498852504 aprobado.
 - P3 parcial: 188 backend / 1240 aserciones / 1 omitida; 56 frontend; build y Pint aprobados.
 - Continuación aprobación: 196 backend / 1341 aserciones / 1 omitida; 60 frontend;
@@ -70,10 +87,11 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 ## Siguiente paso
 
-Continuar P4 formalización desde main tras la corrección de accesos de Clientes,
-revalidando vigencia/evidencia antes de contrato/anexo y firma. P5 desembolso y P6
-primer pago completarán después la primera vertical. No avanzar SIC real ni dinero
-sin políticas validadas. VPS exclusivamente QA; no modificar la solicitud manual.
+Cerrar CI/PR de P4a y sincronizar main. Continuar P4b (firma), incorporando los
+requisitos fiscales/contractuales acordados antes de usar condiciones operativas.
+P5 desembolso y P6 primer pago completarán después la primera vertical. No promover
+PDF QA a contrato válido ni avanzar SIC real o dinero sin políticas validadas.
+VPS exclusivamente QA; no modificar la solicitud manual.
 
 QA P3 corregido en 7933920: tarjetas/contexto, importes MXN, accesos desde cliente,
 búsqueda de responsables, dictámenes resumidos, pendientes explicados y recarga

@@ -102,6 +102,7 @@ class ClienteExpedienteController extends Controller
             ],
             'documentosGenerados' => fn () => request()->user()->can('read documentos')
                 ? $cliente->documentosGenerados()
+                    ->where(fn ($q) => $q->whereNull('documentable_type')->orWhere('documentable_type', '!=', 'solicitud_paquetes'))
                     ->with('version.plantilla')
                     ->latest('solicitado_en')
                     ->paginate(10, ['*'], 'documentos_page')

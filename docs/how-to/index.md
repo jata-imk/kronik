@@ -6,3 +6,4 @@
 - [Reset de datos de desarrollo](reset-datos-desarrollo.md)
 - [Restaurar catalogos](restaurar-catalogos.md)
 - [Migrar VPS](migrar-vps.md)
+- [Probar el paquete contractual QA](qa-paquete-contractual.md)

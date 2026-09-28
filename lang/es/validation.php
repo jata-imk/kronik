@@ -140,5 +140,6 @@ return [
         'actividad_economica' => 'actividad económica',
         'ingresos_mensuales' => 'ingresos mensuales',
         'egresos_mensuales' => 'egresos mensuales',
+        'confirmacion_qa' => 'confirmación de uso exclusivo en QA',
     ],
 ];

@@ -18,7 +18,7 @@ class SolicitudRequisitosService
     public function __construct(private readonly FechaEmpresa $fecha, private readonly SolicitudExpedienteService $expediente) {}
 
     /** Call inside the application/client/product transaction when used for approval. */
-    public function evaluar(Solicitud $solicitud, User $actor): array
+    public function evaluar(Solicitud $solicitud, User $actor, bool $paraPaquete = false): array
     {
         $items = [];
         $add = function (string $clave, bool $cumplido, string $mensaje) use (&$items): void {
@@ -26,9 +26,17 @@ class SolicitudRequisitosService
         };
         $revision = $solicitud->revisiones()->latest('numero')->first();
         $politica = $revision?->snapshot['politica_originacion'] ?? null;
+        $aprobacion = $paraPaquete ? $solicitud->resoluciones()->latest('id')->first() : null;
         $add('habilitacion', config('originacion.aprobaciones_habilitadas') === true, 'La aprobación está desactivada para toda la instalación. No se resuelve modificando documentos o dictámenes. Solicita al administrador técnico revisar ORIGINACION_APROBACIONES_HABILITADAS y reconstruir la caché de configuración. En QA puede habilitarla para pruebas; en operación real requiere validación del operador.');
-        $add('estado', $solicitud->estado === SolicitudEstado::EnRevision && $revision !== null, 'La solicitud debe estar en revisión.');
-        $add('permiso', Gate::forUser($actor)->allows('approve', $solicitud), 'Se requiere permiso de aprobación y la sucursal responsable seleccionada.');
+        $add('estado', $solicitud->estado === ($paraPaquete ? SolicitudEstado::Aprobada : SolicitudEstado::EnRevision) && $revision !== null,
+            $paraPaquete ? 'Se necesita una solicitud aprobada. Regresa a la solicitud para completar su revisión.' : 'La solicitud debe estar en revisión.');
+        $add('permiso', Gate::forUser($actor)->allows($paraPaquete ? 'preparePackage' : 'approve', $solicitud),
+            $paraPaquete ? 'Se requiere permiso para preparar paquetes y la sucursal responsable seleccionada.' : 'Se requiere permiso de aprobación y la sucursal responsable seleccionada.');
+        if ($paraPaquete) {
+            $add('vigencia_aprobacion', $aprobacion?->accion === 'aprobar' && $aprobacion->vigente_hasta !== null
+                && $aprobacion->vigente_hasta->toDateString() >= $this->fecha->hoy()->toDateString(),
+                'La aprobación debe estar vigente. Devuelve y reenvía la solicitud para obtener una nueva aprobación.');
+        }
         $add('politica', $politica !== null, 'Configura la política del producto y envía una nueva revisión.');
         $evidencia = ['revision_id' => $revision?->id, 'revision_hash' => $revision?->snapshot_hash, 'documentos' => []];
         if (! $politica || ! $revision) {
@@ -42,7 +50,7 @@ class SolicitudRequisitosService
         $add('producto', $productoDisponible, 'El producto debe estar activo y vigente para originación.');
         $add('monto', Decimal::compare($solicitud->monto, $reglas['monto_maximo']) <= 0, 'El monto excede el límite de aprobación de la política.');
         $add('fecha', $solicitud->fecha_estimada->toDateString() >= $this->fecha->hoy()->toDateString(), 'Actualiza la fecha estimada mediante una nueva revisión.');
-        $capturo = $solicitud->eventos()->where('actor_id', $actor->id)
+        $capturo = $solicitud->eventos()->where('actor_id', $paraPaquete ? $aprobacion?->actor_id : $actor->id)
             ->whereIn('tipo', ['creada', 'borrador_actualizado', 'enviada'])->exists();
         $add('separacion', $reglas['modalidad'] === 'individual' || ! $capturo, 'En modalidad dual debe aprobar una persona que no haya capturado ni enviado la solicitud.');
         $add('sic', $reglas['sic'] === 'manual_permitido', 'La política exige SIC integrado válido; el proveedor productivo todavía no está habilitado.');
@@ -76,6 +84,14 @@ class SolicitudRequisitosService
         }
         $evidencia['politica'] = $politica;
         $evidencia['expediente_hash'] = $huella;
+        if ($paraPaquete) {
+            $coincide = $aprobacion?->solicitud_revision_id === $revision->id;
+            foreach (['revision_id', 'revision_hash', 'expediente_hash', 'evaluacion_id', 'pld_id'] as $clave) {
+                $coincide = $coincide && isset($aprobacion->evidencia[$clave])
+                    && $aprobacion->evidencia[$clave] === $evidencia[$clave];
+            }
+            $add('evidencia_aprobada', $coincide, 'La evidencia ya no coincide con la aprobación. Devuelve y reenvía para renovar los dictámenes y la resolución.');
+        }
 
         return ['requisitos' => $items, 'puede_aprobar' => ! collect($items)->contains('cumplido', false), 'evidencia' => $evidencia, 'politica' => $politica];
     }

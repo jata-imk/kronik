@@ -15,3 +15,4 @@
 - [ADR 0007: flujos de comisiones y redondeo de crédito simple](adr-0007-flujos-comisiones-y-redondeo-creditos.md)
 - [ADR 0008: arquitectura de documentos y plantillas](adr-0008-arquitectura-documentos-y-plantillas.md)
 - [ADR 0009: motor de renderizado de documentos](adr-0009-motor-renderizado-documentos.md)
+- [ADR 0015: paquete contractual QA](adr-0015-paquete-contractual-qa.md)

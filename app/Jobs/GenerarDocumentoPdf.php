@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\ActivityEvent;
 use App\Enums\DocumentoGeneradoEstado;
 use App\Models\DocumentoGenerado;
+use App\Models\SolicitudPaquete;
 use App\Models\User;
 use App\Services\ActivityLogService;
 use App\Services\Documentos\DocumentoRenderService;
@@ -41,21 +42,36 @@ class GenerarDocumentoPdf implements ShouldQueue
     public function handle(DocumentoRenderService $renderer, ActivityLogService $activity): void
     {
         $document = DocumentoGenerado::query()->with(['version.plantilla', 'cliente'])->findOrFail($this->documentoId);
+        $paquete = $document->documentable_type === (new SolicitudPaquete)->getMorphClass() ? $document->documentable : null;
+        if ($document->documentable_type === (new SolicitudPaquete)->getMorphClass() && ! $paquete) {
+            throw new \RuntimeException('No se encontró el paquete que respalda el documento.');
+        }
+        if ($paquete && $document->archivo_hash !== null) {
+            // No regenerar el original de un paquete, incluso si se perdió el archivo.
+            return;
+        }
         if ($document->estado === DocumentoGeneradoEstado::Generado && $document->path && Storage::disk($document->disk)->exists($document->path)) {
             return;
         }
 
         $document->update(['estado' => DocumentoGeneradoEstado::Procesando, 'error_codigo' => null, 'error_mensaje' => null]);
-        $values = $document->datos_utilizados;
-        $pdf = $renderer->render($document->version->toArray(), $values);
+        $snapshot = $paquete?->snapshot;
+        if ($paquete && ! hash_equals($paquete->snapshot_hash, hash('sha256', json_encode($snapshot, JSON_THROW_ON_ERROR)))) {
+            throw new \RuntimeException('La huella del paquete no coincide.');
+        }
+        $values = $snapshot['variables'] ?? $document->datos_utilizados;
+        $pdf = $renderer->render($snapshot['plantilla'] ?? $document->version->toArray(), $values, $snapshot);
         if (! str_starts_with($pdf, '%PDF-')) {
             throw new \RuntimeException('El motor no produjo un PDF válido.');
         }
 
         $disk = config('documentos.disk', 'local');
         $path = "documentos-generados/{$document->cliente_id}/{$document->id}.pdf";
-        Storage::disk($disk)->put($path, $pdf);
-        $name = Str::slug($document->version->plantilla->nombre)."-v{$document->version->numero}-{$document->id}.pdf";
+        if (! Storage::disk($disk)->put($path, $pdf)) {
+            throw new \RuntimeException('No fue posible guardar el PDF privado.');
+        }
+        $name = $paquete ? "paquete-qa-{$paquete->id}-{$document->id}.pdf"
+            : Str::slug($document->version->plantilla->nombre)."-v{$document->version->numero}-{$document->id}.pdf";
         $document->update([
             'estado' => DocumentoGeneradoEstado::Generado,
             'disk' => $disk,
@@ -79,7 +95,7 @@ class GenerarDocumentoPdf implements ShouldQueue
     public function failed(Throwable $exception): void
     {
         $document = DocumentoGenerado::query()->with('cliente')->find($this->documentoId);
-        if (! $document) {
+        if (! $document || ($document->documentable_type === (new SolicitudPaquete)->getMorphClass() && $document->archivo_hash !== null)) {
             return;
         }
         $document->update([

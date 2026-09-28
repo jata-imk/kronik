@@ -37,6 +37,9 @@ class E2eSolicitudDualSeeder extends Seeder
             $admin->currentTeam->users()->attach($user->id);
             $user->sucursales()->attach($admin->current_sucursal_id);
             $user->givePermissionTo(['read clientes', 'read solicitudes', 'create solicitudes', 'update solicitudes', 'approve solicitudes']);
+            if ($perfil === 'aprobacion') {
+                $user->givePermissionTo(['read documentos', 'generate documentos', 'download documentos', 'prepare package solicitudes']);
+            }
             $usuarios[$perfil] = $user;
         }
         $cliente = Cliente::factory()->create(['primer_nombre' => 'Escenario', 'apellido_paterno' => 'Dual', 'sucursal_id' => $admin->current_sucursal_id]);

@@ -123,6 +123,7 @@ class SolicitudController extends Controller
                 'evaluate' => Gate::allows('evaluate', $solicitud),
                 'compliance' => Gate::allows('compliance', $solicitud),
                 'approve' => Gate::allows('approve', $solicitud),
+                'paquete' => Gate::allows('viewPackage', $solicitud),
                 'politica' => Gate::check(['read productos-crediticios', 'manage origination productos-crediticios']),
             ],
             'responsables' => (Gate::allows('assign', $solicitud) || Gate::allows('review', $solicitud)) ? User::query()->where('status', UserStatus::Active)

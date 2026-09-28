@@ -7,6 +7,19 @@ use App\Models\User;
 
 class SolicitudPolicy
 {
+    public function viewPackage(User $user, Solicitud $solicitud): bool
+    {
+        return $this->view($user, $solicitud) && $user->can('read documentos');
+    }
+
+    public function preparePackage(User $user, Solicitud $solicitud): bool
+    {
+        return $this->viewPackage($user, $solicitud) && $user->can('prepare package solicitudes')
+            && $user->can('generate documentos')
+            && $user->current_sucursal_id !== null
+            && (int) $user->current_sucursal_id === (int) $solicitud->sucursal_id;
+    }
+
     public function viewAny(User $user): bool
     {
         return $user->can('read solicitudes') && $user->can('read clientes');

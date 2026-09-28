@@ -4,7 +4,7 @@ export const solicitudEstados = {
     devuelta: { label: "Devuelta para corrección", siguiente: "Consultar el motivo, corregir los datos y reenviar una nueva revisión." },
     rechazada: { label: "Rechazada", siguiente: "Solicitud cerrada. Consulta el motivo y el historial." },
     cancelada: { label: "Cancelada", siguiente: "Solicitud cerrada. Se conserva la evidencia registrada." },
-    aprobada: { label: "Aprobada", siguiente: "Verificar vigencia y formalizar. La aprobación no autoriza desembolso; la formalización sigue pendiente de implementación." },
+    aprobada: { label: "Aprobada", siguiente: "Verificar vigencia y preparar el paquete contractual QA, si tienes permiso de documentos. Firma y desembolso siguen pendientes; la aprobación no los autoriza." },
 };
 
 export function solicitudEditable(estado) {
