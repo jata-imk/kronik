@@ -1,0 +1,19 @@
+<script setup>
+import TaxConceptField from "./TaxConceptField.vue";
+defineProps({ version: Object, readonly: Boolean, conceptos: { type: Array, default: () => [] }, errors: { type: Object, default: () => ({}) } });
+</script>
+<template>
+    <div class="space-y-4 pt-3">
+        <section class="rounded-2xl bg-gradient-to-br from-primary-700 to-indigo-700 p-5 text-white"><p class="text-xs uppercase tracking-widest"><i class="pi pi-shield mr-2" aria-hidden="true" />Política fiscal de esta versión</p><h3 class="mt-2 text-xl font-semibold">Cada concepto, su tratamiento</h3><p class="mt-2 text-sm text-white/90">La institución define la fiscalidad con su asesor. Se conservará con las condiciones de la versión; no cambia créditos ni paquetes anteriores.</p></section>
+        <Message severity="warn" :closable="false">Solo configuración: el simulador y los paquetes QA todavía no calculan impuestos. Guardar o activar esta versión no autoriza contratos ni operaciones con dinero real.</Message>
+        <div class="grid gap-4 rounded-xl bg-surface-50 p-4 dark:bg-surface-800 md:grid-cols-2">
+            <div><label for="tax-use" class="mb-1 block text-sm font-medium">Uso de esta configuración</label><Select input-id="tax-use" aria-label="Uso de esta configuración" v-model="version.fiscalidad.uso" :options="[{label:'Prueba / QA',value:'prueba'},{label:'Declaración institucional',value:'institucional'}]" option-label="label" option-value="value" :disabled="readonly" :invalid="!!errors['version.fiscalidad.uso']" :aria-invalid="!!errors['version.fiscalidad.uso']" fluid /><p class="mt-2 text-sm text-surface-600 dark:text-surface-300">{{ version.fiscalidad.uso === 'prueba' ? 'Configuración de prueba, no validada para operación real.' : 'Declaración manual de la institución; el software no certifica su validez fiscal.' }}</p></div>
+            <div><label for="tax-reference" class="mb-1 block text-sm font-medium">Referencia institucional o nota de prueba</label><Textarea id="tax-reference" v-model="version.fiscalidad.referencia" rows="3" maxlength="1000" :disabled="readonly" :invalid="!!errors['version.fiscalidad.referencia']" :aria-invalid="!!errors['version.fiscalidad.referencia']" fluid /><p class="mt-1 text-xs text-surface-500">Obligatoria para uso institucional: identifica el criterio, responsable o documento de respaldo. No incluyas datos personales ni secretos.</p></div>
+        </div>
+        <template v-for="key in ['version.fiscalidad', 'version.fiscalidad.uso', 'version.fiscalidad.referencia']" :key="key"><Message v-if="errors[key]" severity="error" size="small">{{ errors[key] }}</Message></template>
+        <div class="grid items-start gap-4 lg:grid-cols-2"><TaxConceptField v-model="version.fiscalidad.ordinario" title="Interés ordinario" path="version.fiscalidad.ordinario" :readonly="readonly" :errors="errors" /><TaxConceptField v-model="version.fiscalidad.moratorio" title="Interés moratorio" path="version.fiscalidad.moratorio" :readonly="readonly" :errors="errors" /></div>
+        <div><h3 class="font-semibold">Impuestos de las comisiones</h3><p class="mt-1 text-sm text-surface-500">Cada comisión tiene su propio tratamiento. Su base fiscal es distinta de la base comercial con la que calculas el cargo.</p></div>
+        <p v-if="!version.comisiones.length" class="rounded-xl border border-dashed border-surface-300 p-5 text-sm text-surface-500">Sin comisiones. Puedes agregarlas en la pestaña Comisiones y después definir aquí su fiscalidad.</p>
+        <TaxConceptField v-for="(item, index) in version.comisiones" :key="index" v-model="item.fiscalidad" :title="conceptos.find(c => c.id === item.concepto_comision_id)?.nombre ?? `Comisión ${index + 1}`" :path="`version.comisiones.${index}.fiscalidad`" :readonly="readonly" :errors="errors" />
+    </div>
+</template>

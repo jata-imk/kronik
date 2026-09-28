@@ -11,7 +11,21 @@ class ProductoVersionComision extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['importe' => 'decimal:8', 'obligatoria' => 'boolean', 'incluye_cat' => 'boolean'];
+    protected $casts = ['importe' => 'decimal:8', 'obligatoria' => 'boolean', 'incluye_cat' => 'boolean', 'fiscalidad' => 'array'];
+
+    protected static function booted(): void
+    {
+        $guard = function (self $comision): void {
+            $ids = array_filter([$comision->producto_version_id, $comision->getRawOriginal('producto_version_id')]);
+            foreach (array_unique($ids) as $id) {
+                if (! ProductoVersion::findOrFail($id)->esEditable()) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['version' => 'Las comisiones de una versión activada o utilizada son inmutables. Cree una nueva versión.']);
+                }
+            }
+        };
+        static::saving($guard);
+        static::deleting($guard);
+    }
 
     public function concepto()
     {

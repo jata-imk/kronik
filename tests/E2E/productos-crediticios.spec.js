@@ -1,6 +1,34 @@
 import { expect, test } from "@playwright/test";
 import { login } from "./support/auth.js";
 
+test("configura fiscalidad explícita y conserva la consulta de la versión", async ({ page }) => {
+    await login(page);
+    await page.goto("/productos-crediticios");
+    await page.getByRole("button", { name: "Nuevo producto", exact: true }).click();
+    await page.getByRole("textbox", { name: "Clave *", exact: true }).fill("FISCAL-E2E");
+    await page.getByLabel("Nombre comercial").fill("Producto fiscal QA");
+    await page.getByRole("tab", { name: "Fiscalidad", exact: true }).click();
+    await expect(page.getByText("Cada concepto, su tratamiento")).toBeVisible();
+    await page.getByRole("combobox", { name: "Tratamiento · Interés ordinario", exact: true }).click();
+    await page.getByRole("option", { name: "Gravado", exact: true }).click();
+    await page.getByRole("button", { name: "Guardar borrador" }).click();
+    await expect(page.locator('[aria-invalid="true"]').first()).toBeVisible();
+    await expect(page.getByText(/validation\./)).toHaveCount(0);
+    await page.getByLabel("Tasa de impuesto (%) · Interés ordinario", { exact: true }).fill("16.12345678");
+    await page.getByRole("combobox", { name: "Base de impuesto · Interés ordinario", exact: true }).click();
+    await page.getByRole("option", { name: "Importe íntegro de este concepto" }).click();
+    await page.getByRole("button", { name: "Guardar borrador" }).click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await page.getByRole("button").filter({ hasText: "Producto fiscal QA" }).click();
+    await page.getByRole("button", { name: "Ver fiscalidad versión 1", exact: true }).click();
+    await expect(page.getByLabel("Tasa de impuesto (%) · Interés ordinario", { exact: true })).toHaveValue("16.12345678");
+    await expect(page.getByLabel("Tasa de impuesto (%) · Interés ordinario", { exact: true })).toBeDisabled();
+    await expect(page.getByText(/Solo configuración: el simulador/)).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByText("Cada concepto, su tratamiento")).toBeVisible();
+    expect(await page.locator('.p-drawer-content').evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+});
+
 test("recorre catálogo, versiones y simulador de crédito simple", async ({ page }) => {
     await login(page);
     await page.goto("/productos-crediticios");

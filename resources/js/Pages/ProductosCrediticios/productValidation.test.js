@@ -6,6 +6,18 @@ import {
 } from "./productValidation";
 
 describe("product validation presentation", () => {
+    it("dirige impuestos de intereses y comisiones a Fiscalidad sin duplicar conteos", () => {
+        const errors = {
+            "version.comisiones.0.fiscalidad.base": "Requerida",
+            "version.fiscalidad.ordinario.tasa": "Requerida",
+            "version.comisiones.0.importe": "Requerido",
+        };
+        expect(tabForProductError("version.comisiones.0.fiscalidad.base")).toBe(
+            "fiscalidad",
+        );
+        expect(countProductTabErrors(errors, "fiscalidad")).toBe(2);
+        expect(countProductTabErrors(errors, "comisiones")).toBe(1);
+    });
     it("ubica errores anidados en su pestaña", () => {
         expect(tabForProductError("version.monto_minimo")).toBe("condiciones");
         expect(tabForProductError("version.reglas.metodos_amortizacion")).toBe(

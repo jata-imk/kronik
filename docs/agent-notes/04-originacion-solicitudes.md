@@ -20,11 +20,15 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 ## Estado actual
 
 - Estado: en progreso
-- Última actualización: 2026-09-27
-- Último punto estable: main c3a0170, sincronizado; PR #16–#22 integrados.
+- Última actualización: 2026-09-28
+- Último punto estable: main c0b1edd, PR #23 integrado y CI aprobado.
+- Continuación: feat/productos-fiscalidad, configuración fiscal previa a P4b.
+  ADR 0016 y `docs/how-to/configurar-fiscalidad-productos.md`. Configuración
+  independiente por interés/comisión, uso QA/institucional, validación y snapshots.
+  No calcula impuestos, no firma y no habilita dinero; paquetes QA sin cambios.
 - P4a implementado y verificado localmente en #23: paquete QA por aprobación, snapshot cifrado, contrato/anexo
   informativo, PDF privado, revalidación e idempotencia. ADR 0015 y guion
-  `docs/how-to/qa-paquete-contractual.md`. Fiscalidad aún no implementada: no
+  `docs/how-to/qa-paquete-contractual.md`. Cálculo fiscal aún no implementado: no
   asumir exención/tasa cero ni promover estos PDF QA a contratos operativos.
 - Usuario autoriza merge autónomo de los próximos PR una vez verificados.
 - P0: Notion ampliado y ADR registrados (6359c99).
@@ -52,6 +56,13 @@ El alcance completo y las decisiones de producto permanecen en Notion.
   por cada institución, además de las puertas financieras y de cumplimiento vigentes.
 
 ## Evidencia
+
+- Prerrequisito fiscal: 227 backend / 1655 aserciones / 1 omitida existente;
+  71 frontend; 3 E2E Productos crediticios; build, Pint y diff-check aprobados.
+  Playwright MCP verificó consulta de escritorio/móvil (sin desbordamiento),
+  tasa de ocho decimales y campos deshabilitados. Capturas en `docs/assets/fiscalidad-producto-*`.
+  Migración aditiva probada en SQLite aislado; CI MariaDB pendiente del PR.
+  No se modificó la VPS ni se sembraron datos en su base.
 
 - P4a: 12 pruebas específicas / 168 aserciones, 3 nuevas pruebas frontend;
   E2E dual extendido hasta preparar/abrir PDF real aprobado. Playwright MCP:
