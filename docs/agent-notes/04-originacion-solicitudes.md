@@ -7,6 +7,8 @@
 - Rama de entrega P4a: feat/formalizacion-paquete (base main c3a0170; PR #22 integrado).
 - P4a: [PR #23](https://github.com/jata-imk/kronik/pull/23), implementación 35ab336.
   El estado de integración y los checks se consultan en el PR y en Notion.
+- Configuración fiscal previa a P4b: [PR #24](https://github.com/jata-imk/kronik/pull/24),
+  implementación ab99185. El estado de integración y CI se conserva en el PR y Notion.
 - PR: [P0 #17](https://github.com/jata-imk/kronik/pull/17), [P1 #16](https://github.com/jata-imk/kronik/pull/16), [P2 #18](https://github.com/jata-imk/kronik/pull/18).
 - P3 parcial: [PR #19](https://github.com/jata-imk/kronik/pull/19), integrado.
 - P3 aprobación: [PR #20](https://github.com/jata-imk/kronik/pull/20), integrado.
@@ -61,7 +63,7 @@ El alcance completo y las decisiones de producto permanecen en Notion.
   71 frontend; 3 E2E Productos crediticios; build, Pint y diff-check aprobados.
   Playwright MCP verificó consulta de escritorio/móvil (sin desbordamiento),
   tasa de ocho decimales y campos deshabilitados. Capturas en `docs/assets/fiscalidad-producto-*`.
-  Migración aditiva probada en SQLite aislado; CI MariaDB pendiente del PR.
+  Migración aditiva probada en SQLite aislado; CI MariaDB y checks remotos en PR #24.
   No se modificó la VPS ni se sembraron datos en su base.
 
 - P4a: 12 pruebas específicas / 168 aserciones, 3 nuevas pruebas frontend;
@@ -101,8 +103,9 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 ## Siguiente paso
 
-Tras la integración de #23, continuar P4b (firma) desde main, incorporando los
-requisitos fiscales/contractuales acordados antes de usar condiciones operativas.
+Tras integrar #24, continuar desde main con cálculo fiscal decimal de los conceptos
+configurados y condiciones contractuales antes de P4b (firma). La configuración
+entregada no sustituye el motor ni los controles institucionales de habilitación.
 P5 desembolso y P6 primer pago completarán después la primera vertical. No promover
 PDF QA a contrato válido ni avanzar SIC real o dinero sin políticas validadas.
 VPS exclusivamente QA; no modificar la solicitud manual.
