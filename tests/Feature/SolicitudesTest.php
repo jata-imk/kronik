@@ -15,10 +15,10 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(fn () => $this->withoutVite());
 
-function prepararSolicitudConContrato($test): array
+function prepararSolicitudConContrato($test, bool $fiscalidad = true): array
 {
     \Illuminate\Support\Facades\Queue::fake();
-    [$user, $solicitud, $cliente, $producto, $doc] = prepararSolicitudAprobable($test);
+    [$user, $solicitud, $cliente, $producto, $doc] = prepararSolicitudAprobable($test, fiscalidad: $fiscalidad);
     config(['originacion.paquetes_qa_habilitados' => true]);
     $test->post(route('solicitudes.aprobar', $solicitud), ['lock_version' => 3, 'motivo' => 'Aprobación para probar paquete contractual.'])->assertSessionHasNoErrors();
     $service = app(\App\Services\Documentos\DocumentoPlantillaVersionService::class);
@@ -38,7 +38,9 @@ test('paquete QA congela aprobación contrato y tabla con idempotencia y sin for
     $this->assertDatabaseCount('documentos_generados', 1);
     \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\GenerarDocumentoPdf::class, 1);
     $paquete = \App\Models\SolicitudPaquete::firstOrFail();
-    expect($paquete->snapshot['fiscalidad'])->toBe('no_definida')
+    expect($paquete->snapshot['fiscalidad'])->toBe('proyeccion')
+        ->and($paquete->snapshot['tabla']['total_impuestos'])->not->toBe('0.00')
+        ->and($solicitud->revisiones()->first()->snapshot['simulacion_informativa']['fiscalidad']['estado'])->toBe('no_calculada')
         ->and($paquete->snapshot['tabla']['tabla'])->toHaveCount(13)
         ->and($solicitud->fresh()->estado)->toBe(SolicitudEstado::Aprobada)
         ->and($solicitud->fresh()->lock_version)->toBe(5);
@@ -50,6 +52,60 @@ test('paquete QA congela aprobación contrato y tabla con idempotencia y sin for
     $version->plantilla->update(['nombre' => 'Otro nombre posterior']);
     expect($paquete->fresh()->snapshot['plantilla']['nombre'])->toBe('Contrato de prueba');
     $this->get(route('clientes.expediente.show', $cliente))->assertInertia(fn (Assert $page) => $page->where('documentosGenerados.total', 0));
+});
+
+test('tabla fiscal del paquete conserva fechas importes y configuración de la versión aprobada', function () {
+    $this->travelTo(\Carbon\CarbonImmutable::parse('2026-01-01 12:00:00', app(FechaEmpresa::class)->zonaHoraria()));
+    [$user, $solicitud, , $producto, , , $data] = prepararSolicitudConContrato($this);
+    $this->post(route('solicitudes.paquete.store', $solicitud), $data)->assertSessionHasNoErrors();
+    $paquete = \App\Models\SolicitudPaquete::firstOrFail();
+    $snapshot = $paquete->snapshot;
+    expect($snapshot['tabla']['tabla'][1]['fecha'])->toBe('2026-02-08')
+        ->and($snapshot['tabla']['tabla'][1]['interes'])->toBe('310.00')
+        ->and($snapshot['tabla']['tabla'][1]['impuestos'])->toBe('49.60')
+        ->and($snapshot['tabla']['fiscalidad']['uso'])->toBe('prueba');
+    $productos = app(ProductoVersionService::class);
+    $nueva = $productos->nuevaVersion($producto->producto, $producto, $user->id)->refresh();
+    $nueva->update(['fiscalidad' => ['uso' => 'prueba', 'ordinario' => ['tratamiento' => 'exento']]]);
+    $this->travel(1)->days();
+    $productos->activar($nueva, app(FechaEmpresa::class)->hoy()->toDateString());
+    expect($paquete->fresh()->snapshot)->toBe($snapshot);
+    $this->get(route('solicitudes.paquete.show', $solicitud))->assertInertia(fn (Assert $page) => $page
+        ->where('actual.tabla.tabla.1.impuestos', '49.60'));
+});
+
+test('nuevo paquete bloquea fiscalidad ausente sin crear documento y orienta al operador', function () {
+    [, $solicitud, , , , , $data] = prepararSolicitudConContrato($this, false);
+    $this->get(route('solicitudes.paquete.show', $solicitud))->assertInertia(fn (Assert $page) => $page
+        ->where('preparacion.puede_preparar', false));
+    $this->post(route('solicitudes.paquete.store', $solicitud), $data)->assertSessionHasErrors('paquete');
+    expect(session('errors')->first('paquete'))->toContain('nueva versión con fiscalidad definida')->not->toContain('validation.');
+    $this->assertDatabaseCount('solicitud_paquetes', 0);
+    $this->assertDatabaseCount('documentos_generados', 0);
+    expect($solicitud->fresh()->lock_version)->toBe(4);
+});
+
+test('paquete anterior a impuestos conserva snapshot y reintenta sin promover su fiscalidad', function () {
+    [, $solicitud, , , , , $data] = prepararSolicitudConContrato($this);
+    $this->post(route('solicitudes.paquete.store', $solicitud), $data)->assertSessionHasNoErrors();
+    $paquete = \App\Models\SolicitudPaquete::firstOrFail();
+    // Reproduce a persisted P4a record, bypassing immutable model only in this fixture.
+    $snapshot = $paquete->snapshot;
+    unset($snapshot['formato']);
+    $snapshot['fiscalidad'] = 'no_definida';
+    $snapshot['tabla'] = $solicitud->revisiones()->first()->snapshot['simulacion_informativa'];
+    $paquete->snapshot = $snapshot;
+    $hash = hash('sha256', json_encode($snapshot, JSON_THROW_ON_ERROR));
+    \Illuminate\Support\Facades\DB::table('solicitud_paquetes')->where('id', $paquete->id)->update([
+        'snapshot' => $paquete->getAttributes()['snapshot'], 'snapshot_hash' => $hash]);
+    $paquete->documento->update(['estado' => 'fallido']);
+    $this->post(route('solicitudes.paquete.retry', [$solicitud, $paquete]))->assertSessionHasNoErrors();
+    $this->post(route('solicitudes.paquete.store', $solicitud), $data)->assertSessionHasNoErrors();
+    expect($paquete->fresh()->snapshot_hash)->toBe($hash)
+        ->and($paquete->fresh()->snapshot)->toBe($snapshot);
+    $html = view('documentos.paquete-anexo', ['snapshot' => $snapshot])->render();
+    expect($html)->toContain('Fiscalidad no definida', 'Total sin impuestos')->not->toContain('Total con impuestos');
+    $this->assertDatabaseCount('solicitud_paquetes', 1);
 });
 
 test('paquete revalida aprobación evidencia sucursal y habilitación en servidor', function (string $caso) {
@@ -115,7 +171,7 @@ test('paquete genera anexo marcado usando snapshot y no regenera el original', f
     $cliente->update(['primer_nombre' => 'Cambió después']);
     $job = new \App\Jobs\GenerarDocumentoPdf($paquete->documento->id);
     $job->handle(app(\App\Services\Documentos\DocumentoRenderService::class), app(\App\Services\ActivityLogService::class));
-    expect($renderer->captured['bodyHtml'])->toContain('Fiscalidad no definida')->not->toContain('Cambió después')
+    expect($renderer->captured['bodyHtml'])->toContain('Proyección fiscal QA congelada', 'Total con impuestos', 'Desglose fiscal por periodo y concepto')->not->toContain('Cambió después')
         ->and($renderer->captured['headerHtml'])->toContain('sin validez contractual')
         ->and($renderer->captured['options']['marca_agua'])->toBe('QA — SIN VALIDEZ CONTRACTUAL');
     $documento = $paquete->documento->fresh();
@@ -160,7 +216,7 @@ test('paquete histórico se conserva y una nueva aprobación permite otra versi�
         ->and($anterior->fresh()->snapshot['plantilla']['numero'])->toBe(1);
 });
 
-function solicitudProducto(int $userId): ProductoVersion
+function solicitudProducto(int $userId, bool $fiscalidad = true): ProductoVersion
 {
     $producto = app(ProductoVersionService::class)->crear([
         'clave' => 'SOL-'.Str::random(8), 'nombre' => 'Crédito de solicitud',
@@ -168,6 +224,9 @@ function solicitudProducto(int $userId): ProductoVersion
             'monto_minimo' => '5000.00', 'monto_maximo' => '100000.00',
             'tasa_ordinaria_anual' => '36.00', 'tasa_moratoria_anual' => '72.00',
             'dias_gracia_mora' => 3, 'cat_aplica' => true,
+            'fiscalidad' => $fiscalidad ? ['uso' => 'prueba', 'referencia' => 'Configuración sintética QA',
+                'ordinario' => ['tratamiento' => 'gravado', 'tasa' => '16', 'base' => 'importe_concepto'],
+                'moratorio' => ['tratamiento' => 'no_definido']] : null,
             'periodicidades' => [['periodicidad' => 'mensual', 'plazo_minimo' => 3, 'plazo_maximo' => 24, 'plazo_predeterminado' => 12]],
             'reglas' => ['metodos_amortizacion' => ['cuota_nivelada', 'capital_fijo'], 'permite_prepago_parcial' => true,
                 'permite_liquidacion_anticipada' => true, 'monto_minimo_prepago' => '500.00', 'aplicacion_prepago' => 'reducir_plazo'],
@@ -207,7 +266,7 @@ function politicaSolicitudDatos(string $modalidad = 'individual', string $sic = 
         'criterio_capacidad' => 'Revisar ingresos y egresos y fundamentar capacidad manualmente.', 'confirmacion' => true];
 }
 
-function prepararSolicitudAprobable($test, string $modalidad = 'individual', string $sic = 'manual_permitido'): array
+function prepararSolicitudAprobable($test, string $modalidad = 'individual', string $sic = 'manual_permitido', bool $fiscalidad = true): array
 {
     \Illuminate\Support\Facades\Storage::fake('local');
     config(['originacion.aprobaciones_habilitadas' => true]);
@@ -217,7 +276,7 @@ function prepararSolicitudAprobable($test, string $modalidad = 'individual', str
         'moral' => false, 'fecha_inicio_vigencia' => '2020-01-01', 'fecha_fin_vigencia' => '2099-12-31']);
     $cliente->datosFiscales()->create(['tipo_persona' => 'fisica', 'regimen_fiscal_id' => $regimen->id,
         'curp' => 'GODE561231HDFRRN09', 'rfc' => 'GODE561231GR8', 'razon_social' => 'Persona de prueba']);
-    $version = solicitudProducto($user->id);
+    $version = solicitudProducto($user->id, $fiscalidad);
     app(\App\Services\OriginacionPoliticaService::class)->crear($version, politicaSolicitudDatos($modalidad, $sic), $user);
     $doc = $cliente->documentos()->create(['tipo' => 'ine', 'version' => 1, 'estado' => 'validado', 'es_actual' => true,
         'disk' => 'local', 'path' => 'prueba/ine.pdf', 'mime_type' => 'application/pdf', 'nombre_original' => 'ine.pdf',

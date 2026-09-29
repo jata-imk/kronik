@@ -73,3 +73,21 @@ lectores que no pueden consultar solicitudes. El enlace al expediente se conserv
 Generar un contrato directamente desde el expediente omitiría la aprobación.
 Regenerar desde datos vivos rompería la trazabilidad. Asumir IVA cero para usar el
 simulador actual como tabla contractual contradiría las decisiones de producto.
+
+## Continuación: nuevos paquetes con proyección fiscal
+
+Desde el incremento posterior a PR #25, los nuevos snapshots usan `formato=2`
+y `fiscalidad=proyeccion`. Se calcula una sola vez la tabla fiscal del ADR 0017,
+con condiciones/fecha de la revisión aprobada y su versión inmutable de producto.
+Se verifica la huella de revisión y coincidencia del snapshot del producto.
+La revisión y su simulación informativa original no se sobrescriben. La consulta
+de requisitos anticipa los errores fiscales; la preparación los revalida bajo
+los bloqueos existentes. Configuración ausente exige nueva versión de producto
+y devolución/revisión/aprobación, no edición retroactiva de la versión utilizada.
+
+Los paquetes anteriores se leen y reintentan exclusivamente desde su snapshot;
+no se migran, recalculan ni promueven. La idempotencia sigue siendo por aprobación.
+El PDF y la pantalla distinguen ambos formatos y desglosan impuestos por periodo,
+concepto y modalidad inicial. Los permisos, banderas y esquema no cambian.
+Sigue siendo una proyección QA sin validez contractual: no añade firma,
+formalización, crédito, desembolso, causación fiscal ni pagos.

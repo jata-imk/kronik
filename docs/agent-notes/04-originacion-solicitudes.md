@@ -25,7 +25,15 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 - Estado: en progreso
 - Última actualización: 2026-09-28
-- Último punto estable: main 3e1377c, PR #24 integrado y CI aprobado.
+- Último punto estable: main 5fb0207, PR #25 integrado y CI aprobado.
+- Continuación actual: `feat/paquetes-fiscalidad`. Nuevos paquetes QA congelan
+  la proyección fiscal de la revisión/version aprobada; históricos conservan
+  formato y reintentos. Actualización de ADR 0015 y guion del paquete. Sin nuevas
+  migraciones, permisos o banderas; firma y formalización siguen pendientes.
+  Verificación: 248 backend / 1816 aserciones / 1 omitida preexistente, 74 frontend,
+  E2E dual con PDF real aprobado; build, Pint y diff-check aprobados. Playwright MCP
+  confirmó ajuste móvil sin desbordamiento tras transición del layout. Capturas
+  en `docs/assets/paquete-fiscal-*`; sin VPS ni base de datos predeterminada.
 - Continuación fiscal: main 3e1377c, PR #24 integrado. Rama
   `feat/simulacion-impuestos`: proyección fiscal explícita del simulador;
   ADR 0017 y guion con lista profesional `docs/how-to/qa-simulacion-fiscal.md`.
@@ -112,8 +120,8 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 ## Siguiente paso
 
-Tras integrar la proyección fiscal, conectar explícitamente sus resultados a nuevas
-condiciones/documentos QA antes de firma P4b. No recalcular ni promover paquetes
+Tras integrar los paquetes con proyección fiscal, implementar recepción y validación
+de firma autógrafa digitalizada para P4b. No recalcular ni promover paquetes
 P4a existentes. La revisión del contador no bloquea QA con configuraciones de
 prueba; la lista concreta está en `docs/how-to/qa-simulacion-fiscal.md`.
 P5 desembolso y P6 primer pago completarán después la primera vertical. No promover

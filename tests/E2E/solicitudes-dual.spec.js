@@ -36,7 +36,15 @@ test("dual bloquea capturista y permite aprobar a otra persona sin superadmin", 
         await aprobador.getByRole("button", { name: "Confirmar preparación QA" }).click();
         await expect(aprobador.getByRole("button", { name: "Ver PDF QA" })).toBeVisible({ timeout: 60000 });
         await expect(aprobador.getByText("Aprobada · sin formalizar", { exact: true })).toBeVisible();
+        await expect(aprobador.getByRole("heading", { name: "Tabla congelada · con impuestos proyectados" })).toBeVisible();
+        await expect(aprobador.getByRole("columnheader", { name: "Impuestos", exact: true })).toBeVisible();
+        await aprobador.getByText("Ver desglose fiscal por periodo y concepto", { exact: true }).click();
+        await expect(aprobador.getByText("Configuración de prueba / QA", { exact: true })).toBeVisible();
         await aprobador.screenshot({ path: testInfo.outputPath("paquete-qa-desktop.png"), fullPage: true });
+        await aprobador.setViewportSize({ width: 390, height: 844 });
+        await expect.poll(() => aprobador.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+        await aprobador.screenshot({ path: testInfo.outputPath("paquete-qa-mobile.png"), fullPage: true });
+        await aprobador.setViewportSize({ width: 1440, height: 1000 });
         await aprobador.getByRole("button", { name: "Ver PDF QA" }).click();
         await expect(aprobador.getByRole("dialog").last()).toBeVisible();
         await expect(aprobador.locator('iframe[title^="PDF:"]')).toBeVisible();
