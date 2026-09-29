@@ -26,7 +26,7 @@ function render(overrides = {}) {
 describe("Paquete contractual QA", () => {
     it("distingue prueba de formalización y no asume fiscalidad cero", () => {
         const wrapper = render();
-        expect(wrapper.text()).toContain("No definido · no equivale a tasa cero");
+        expect(wrapper.text()).toContain("Se validará al preparar");
         expect(wrapper.text()).toContain("no formaliza el crédito");
         expect(wrapper.text()).toContain("Aún no hay paquetes");
         expect(wrapper.text()).toContain("Firma · próxima entrega");
@@ -43,5 +43,20 @@ describe("Paquete contractual QA", () => {
         const wrapper = render({ can: { preparar: false } });
         expect(wrapper.findAll("button").some((button) => button.text() === "Preparar paquete QA")).toBe(false);
         wrapper.unmount();
+    });
+    it("distingue tabla fiscal congelada de un paquete histórico", () => {
+        const base = { id: 1, tabla: { monto: "10000", plazo: 12, tabla: [] } };
+        const legacy = render({ actual: base });
+        expect(legacy.text()).toContain("Histórico anterior a impuestos");
+        expect(legacy.text()).toContain("Tabla congelada · antes de impuestos");
+        expect(legacy.text()).not.toContain("Impuestos proyectados");
+        legacy.unmount();
+        const fiscal = render({ actual: { ...base, tabla: { ...base.tabla,
+            fiscalidad: { estado: "proyeccion", uso: "prueba", leyenda: "Configuración QA" }, total_impuestos: "160", totales: {},
+        } } });
+        expect(fiscal.text()).toContain("Proyección fiscal congelada");
+        expect(fiscal.text()).toContain("Tabla congelada · con impuestos proyectados");
+        expect(fiscal.text()).toContain("Ver desglose fiscal por periodo y concepto");
+        fiscal.unmount();
     });
 });

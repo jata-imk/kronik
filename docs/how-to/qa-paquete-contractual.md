@@ -59,7 +59,10 @@ en el anexo, no mediante nuevas variables arbitrarias.
 1. Usar un escenario sintético nuevo, sin alterar la solicitud manual ya revisada.
    Completar cliente PF, expediente, solicitud, evaluación, PLD y aprobación.
 2. Entrar a **Solicitud → Paquete contractual QA**. Comprobar cliente/sucursal,
-   aviso de fiscalidad pendiente, requisitos y enlaces de regreso/expediente.
+   requisitos fiscales y enlaces de regreso/expediente. Para nuevos paquetes,
+   usar un producto con fiscalidad definida de prueba en ordinarios y comisiones
+   aplicadas. Si falta, la pantalla debe orientar a crear una nueva versión y
+   devolver/corregir/aprobar la solicitud; no editar una versión ya utilizada.
 3. Preparar: elegir contrato activo y confirmar uso QA. Omitir la confirmación
    primero: debe aparecer un error claro en español sin crear paquete.
 4. Confirmar una vez. La solicitud sigue aprobada, no formalizada. Durante la
@@ -67,7 +70,9 @@ en el anexo, no mediante nuevas variables arbitrarias.
    vence su espera. Con cola síncrona el PDF puede estar listo inmediatamente.
 5. Abrir **Ver PDF QA**, comprobar encabezado/marca en todas las páginas,
    variables de cliente, tasas, número de pagos, tabla, fechas estimadas y aviso
-   de importes anteriores a impuestos. La fila cero no es un desembolso registrado.
+   de proyección fiscal QA, impuestos y desglose por periodo/concepto. Comparar
+   con el simulador usando iguales condiciones e impuestos habilitados. La fila
+   cero no es un desembolso registrado ni suma otra vez los impuestos financiados.
 6. Repetir la petición o recargar no debe producir otro paquete de la misma
    aprobación. Cambiar productos/plantillas después no modifica el PDF original.
 7. Verificar permisos con un lector sin preparación; debe consultar pero no generar.
@@ -83,6 +88,14 @@ en el anexo, no mediante nuevas variables arbitrarias.
     el servicio, **Reintentar PDF** usa los mismos datos congelados. No debe habilitarse
     para un documento en cola o que ya produjo original. Un archivo original perdido
     se restaura desde respaldo; no se reconstruye silenciosamente.
+12. Abrir un paquete P4a anterior: debe conservar importes anteriores a impuestos,
+    huella y PDF. Reintentar un fallo conserva ese mismo formato. No se migra a
+    proyección fiscal: para otro paquete se requiere una nueva aprobación.
+
+La integración fiscal no añade migraciones, permisos ni banderas. La marca QA
+permanece incluso si la configuración fiscal declara uso institucional; esto no
+certifica el contrato. Firma y formalización siguen pendientes. La revisión
+profesional para operación real está en [QA fiscal](qa-simulacion-fiscal.md).
 
 El listado genérico del expediente no mezcla estos paquetes con documentos
 operativos. Se consultan desde su solicitud para conservar contexto y permisos.
@@ -91,6 +104,9 @@ operativos. Se consultan desde su solicitud para conservar contexto y permisos.
 
 Capturas con datos sintéticos: [escritorio](../assets/qa-paquete-desktop.png) y
 [móvil](../assets/qa-paquete-mobile.png). No contienen información de la VPS.
+
+Integración fiscal: [escritorio](../assets/paquete-fiscal-desktop.png) y
+[móvil](../assets/paquete-fiscal-mobile.png), con desglose abierto y datos sintéticos.
 
 ## Pruebas aisladas para desarrollo
 
