@@ -22,6 +22,7 @@ class SimularCreditoRequest extends FormRequest
             'fecha' => ['required', 'date'],
             'comisiones_opcionales' => ['sometimes', 'array'],
             'comisiones_opcionales.*' => ['integer', 'distinct'],
+            'incluir_impuestos' => ['sometimes', 'boolean'],
         ];
     }
 

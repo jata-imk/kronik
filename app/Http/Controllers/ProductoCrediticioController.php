@@ -120,6 +120,7 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
             CarbonImmutable::parse($data['fecha']),
             $data['comisiones_opcionales'] ?? [],
             $incluirFormula,
+            (bool) ($data['incluir_impuestos'] ?? false),
         ));
     }
 
