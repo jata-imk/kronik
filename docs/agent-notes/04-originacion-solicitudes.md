@@ -9,6 +9,8 @@
   El estado de integración y los checks se consultan en el PR y en Notion.
 - Configuración fiscal previa a P4b: [PR #24](https://github.com/jata-imk/kronik/pull/24),
   implementación ab99185. El estado de integración y CI se conserva en el PR y Notion.
+- Proyección fiscal del simulador: [PR #25](https://github.com/jata-imk/kronik/pull/25),
+  implementación 7f5a489. Consultar integración y CI en el PR y la iniciativa de Notion.
 - PR: [P0 #17](https://github.com/jata-imk/kronik/pull/17), [P1 #16](https://github.com/jata-imk/kronik/pull/16), [P2 #18](https://github.com/jata-imk/kronik/pull/18).
 - P3 parcial: [PR #19](https://github.com/jata-imk/kronik/pull/19), integrado.
 - P3 aprobación: [PR #20](https://github.com/jata-imk/kronik/pull/20), integrado.
@@ -23,7 +25,7 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 - Estado: en progreso
 - Última actualización: 2026-09-28
-- Último punto estable: main c0b1edd, PR #23 integrado y CI aprobado.
+- Último punto estable: main 3e1377c, PR #24 integrado y CI aprobado.
 - Continuación fiscal: main 3e1377c, PR #24 integrado. Rama
   `feat/simulacion-impuestos`: proyección fiscal explícita del simulador;
   ADR 0017 y guion con lista profesional `docs/how-to/qa-simulacion-fiscal.md`.
