@@ -8,7 +8,9 @@ use App\Enums\DocumentoPlantillaVersionEstado;
 use App\Http\Requests\PrepararSolicitudPaqueteRequest;
 use App\Models\DocumentoPlantillaVersion;
 use App\Models\Solicitud;
+use App\Models\SolicitudFirma;
 use App\Models\SolicitudPaquete;
+use App\Services\SolicitudFirmaService;
 use App\Services\SolicitudPaqueteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -23,6 +25,16 @@ class SolicitudPaqueteController extends Controller
         $resolucionId = $solicitud->resoluciones()->latest('id')->value('id');
         $paquetes = SolicitudPaquete::where('solicitud_id', $solicitud->id)->with('documento')->latest('id')->paginate(10);
         $actual = SolicitudPaquete::where('solicitud_resolucion_id', $resolucionId)->with('documento')->first();
+        $firmas = SolicitudFirma::with(['receptor:id,name', 'revisor:id,name'])->whereIn('solicitud_paquete_id', SolicitudPaquete::where('solicitud_id', $solicitud->id)->select('id'))
+            ->latest('id')->paginate(10, ['*'], 'firmas_page')->withQueryString()->through(fn ($firma) => [
+                'id' => $firma->id, 'paquete_id' => $firma->solicitud_paquete_id, 'estado' => $firma->estado,
+                'actual' => $firma->solicitud_paquete_id === $actual?->id, 'fecha_firma' => $firma->fecha_firma->toDateString(),
+                'recibida_en' => $firma->created_at, 'revisada_en' => $firma->revisada_en, 'motivo' => $firma->motivo,
+                'recibida_por' => $firma->recibida_por, 'revisada_por' => $firma->revisada_por, 'archivo_hash' => $firma->archivo_hash,
+                'receptor' => $firma->receptor?->name, 'revisor' => $firma->revisor?->name,
+                'view_url' => route('solicitudes.firmas.view', [$solicitud, $firma]),
+                'download_url' => $request->user()->can('download documentos') ? route('solicitudes.firmas.download', [$solicitud, $firma]) : null,
+            ]);
         $serialize = function (SolicitudPaquete $paquete) use ($resolucionId, $request) {
             $doc = $paquete->documento;
             $ready = $doc?->estado === DocumentoGeneradoEstado::Generado;
@@ -42,12 +54,20 @@ class SolicitudPaqueteController extends Controller
                 'sucursal' => $solicitud->sucursal->nombre],
             'preparacion' => $service->requisitos($solicitud, $request->user()),
             'actual' => $actual ? [...$serialize($actual), 'tabla' => $actual->snapshot['tabla']] : null,
+            'firmas' => $firmas,
+            'formalizacion' => $actual?->formalizacion?->only(['id', 'modo', 'created_at', 'snapshot_hash']),
+            'firmaRequisitos' => $actual ? app(SolicitudFirmaService::class)->requisitos($solicitud, $actual, $request->user(),
+                Gate::allows('reviewSignature', $solicitud) ? 'reviewSignature' : 'receiveSignature') : null,
+            'firmaPendiente' => $actual?->firmas()->where('estado', 'recibida')->exists() ?? false,
+            'maxArchivoKb' => config('documentos.max_upload_kb'),
             'paquetes' => $paquetes->through($serialize),
             'plantillas' => Gate::allows('preparePackage', $solicitud) ? DocumentoPlantillaVersion::with('plantilla:id,nombre')
                 ->where('estado', DocumentoPlantillaVersionEstado::Activa)
                 ->whereHas('plantilla', fn ($q) => $q->where('tipo', DocumentoPlantillaTipo::Contrato)->where('activa', true))
                 ->get()->map(fn ($v) => ['id' => $v->id, 'label' => $v->plantilla->nombre.' · v'.$v->numero]) : [],
-            'can' => ['preparar' => Gate::allows('preparePackage', $solicitud)],
+            'can' => ['preparar' => Gate::allows('preparePackage', $solicitud),
+                'recibirFirma' => Gate::allows('receiveSignature', $solicitud),
+                'revisarFirma' => Gate::allows('reviewSignature', $solicitud)],
         ]);
     }
 

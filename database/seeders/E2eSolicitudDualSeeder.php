@@ -38,7 +38,7 @@ class E2eSolicitudDualSeeder extends Seeder
             $user->sucursales()->attach($admin->current_sucursal_id);
             $user->givePermissionTo(['read clientes', 'read solicitudes', 'create solicitudes', 'update solicitudes', 'approve solicitudes']);
             if ($perfil === 'aprobacion') {
-                $user->givePermissionTo(['read documentos', 'generate documentos', 'download documentos', 'prepare package solicitudes']);
+                $user->givePermissionTo(['read documentos', 'generate documentos', 'download documentos', 'prepare package solicitudes', 'receive signature solicitudes', 'review signature solicitudes']);
             }
             $usuarios[$perfil] = $user;
         }

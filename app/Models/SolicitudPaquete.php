@@ -25,6 +25,16 @@ class SolicitudPaquete extends Model
         return $this->morphOne(DocumentoGenerado::class, 'documentable');
     }
 
+    public function firmas()
+    {
+        return $this->hasMany(SolicitudFirma::class);
+    }
+
+    public function formalizacion()
+    {
+        return $this->hasOne(SolicitudFormalizacion::class);
+    }
+
     protected static function booted(): void
     {
         $reject = fn () => throw ValidationException::withMessages(['paquete' => 'El paquete es inmutable. Devuelve y reenvía la solicitud para preparar otro con una nueva aprobación.']);

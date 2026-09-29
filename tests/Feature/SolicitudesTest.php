@@ -15,6 +15,192 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(fn () => $this->withoutVite());
 
+function prepararContratoParaFirma($test): array
+{
+    [$user, $solicitud, , , , , $data] = prepararSolicitudConContrato($test);
+    config(['originacion.firmas_qa_habilitadas' => true, 'documentos.disk' => 'local']);
+    $test->post(route('solicitudes.paquete.store', $solicitud), $data)->assertSessionHasNoErrors();
+    $paquete = \App\Models\SolicitudPaquete::firstOrFail();
+    $original = "%PDF-1.4\nOriginal QA\n%%EOF";
+    \Illuminate\Support\Facades\Storage::disk('local')->put('qa/original.pdf', $original);
+    $paquete->documento->update(['estado' => 'generado', 'disk' => 'local', 'path' => 'qa/original.pdf',
+        'archivo_hash' => hash('sha256', $original), 'generado_en' => now(), 'nombre_archivo' => 'original.pdf']);
+
+    return [$user, $solicitud->fresh(), $paquete->fresh()];
+}
+
+function datosFirma(): array
+{
+    return ['archivo' => \Illuminate\Http\UploadedFile::fake()->createWithContent('firmado.pdf', "%PDF-1.4\nCopia firmada QA\n%%EOF"),
+        'fecha_firma' => app(FechaEmpresa::class)->hoy()->toDateString(), 'confirmacion_qa' => true,
+        'idempotency_key' => (string) Str::uuid(), 'lock_version' => 5];
+}
+
+function datosRevisionFirma(string $estado = 'aceptada', int $version = 6): array
+{
+    return ['estado_firma' => $estado, 'lock_version' => $version, 'confirmacion_revision' => true, 'confirmacion_qa' => true,
+        'motivo' => $estado === 'rechazada' ? 'Falta la firma del cliente en el anexo.' : null];
+}
+
+test('recibe firma privada y la aceptación formaliza QA una sola vez conservando condiciones', function () {
+    [, $solicitud, $paquete] = prepararContratoParaFirma($this);
+    $data = datosFirma();
+    $route = route('solicitudes.firmas.store', [$solicitud, $paquete]);
+    $this->post($route, $data)->assertSessionHasNoErrors();
+    $this->post($route, $data)->assertSessionHasNoErrors();
+    $firma = \App\Models\SolicitudFirma::firstOrFail();
+    $this->assertDatabaseCount('solicitud_firmas', 1);
+    expect($solicitud->fresh()->estado)->toBe(SolicitudEstado::Aprobada);
+    $this->get(route('solicitudes.firmas.view', [$solicitud, $firma]))->assertOk()->assertHeader('Content-Type', 'application/pdf');
+    $this->get(route('solicitudes.paquete.show', $solicitud))->assertInertia(fn (Assert $page) => $page
+        ->where('firmas.data.0.estado', 'recibida')->missing('firmas.data.0.path')->missing('firmas.data.0.disk'));
+    $this->post(route('solicitudes.firmas.review', [$solicitud, $firma]), datosRevisionFirma())->assertSessionHasNoErrors();
+    $this->post(route('solicitudes.firmas.review', [$solicitud, $firma]), datosRevisionFirma())->assertSessionHasNoErrors();
+    expect($solicitud->fresh()->estado)->toBe(SolicitudEstado::Formalizada)
+        ->and($paquete->fresh()->snapshot_hash)->toBe($paquete->snapshot_hash)
+        ->and($solicitud->eventos()->where('tipo', 'formalizada_qa')->count())->toBe(1);
+    $this->assertDatabaseCount('solicitud_formalizaciones', 1);
+    $formalizacion = \App\Models\SolicitudFormalizacion::firstOrFail();
+    expect($formalizacion->snapshot['firma_hash'])->toBe($firma->archivo_hash);
+    expect(fn () => $formalizacion->update(['modo' => 'real']))->toThrow(ValidationException::class);
+    expect(fn () => $firma->fresh()->update(['fecha_firma' => '2000-01-01']))->toThrow(ValidationException::class);
+});
+
+test('firma rechazada conserva motivo cifrado y permite una copia corregida', function () {
+    [, $solicitud, $paquete] = prepararContratoParaFirma($this);
+    $this->post(route('solicitudes.firmas.store', [$solicitud, $paquete]), datosFirma())->assertSessionHasNoErrors();
+    $firma = \App\Models\SolicitudFirma::firstOrFail();
+    $this->post(route('solicitudes.firmas.store', [$solicitud, $paquete]), [...datosFirma(), 'lock_version' => 6])->assertSessionHasErrors('firma');
+    $this->post(route('solicitudes.firmas.review', [$solicitud, $firma]), datosRevisionFirma('rechazada'))->assertSessionHasNoErrors();
+    expect(\Illuminate\Support\Facades\DB::table('solicitud_firmas')->value('motivo'))->not->toContain('Falta la firma');
+    $this->post(route('solicitudes.firmas.store', [$solicitud, $paquete]), [...datosFirma(), 'lock_version' => 7])->assertSessionHasNoErrors();
+    $this->assertDatabaseCount('solicitud_firmas', 2);
+    $this->assertDatabaseCount('solicitud_formalizaciones', 0);
+    expect($firma->fresh()->estado)->toBe('rechazada');
+});
+
+test('firma bloquea cambios de evidencia aprobación obsoleta archivos alterados y gate cerrado', function (string $caso) {
+    [, $solicitud, $paquete] = prepararContratoParaFirma($this);
+    $this->post(route('solicitudes.firmas.store', [$solicitud, $paquete]), datosFirma())->assertSessionHasNoErrors();
+    $firma = \App\Models\SolicitudFirma::firstOrFail();
+    match ($caso) {
+        'expediente' => $solicitud->cliente->update(['ocupacion' => 'Otra actividad']),
+        'vencida' => $this->travel(16)->days(),
+        'original' => \Illuminate\Support\Facades\Storage::disk('local')->put('qa/original.pdf', 'alterado'),
+        'copia' => \Illuminate\Support\Facades\Storage::disk($firma->disk)->put($firma->path, 'alterado'),
+        'gate' => config(['originacion.firmas_qa_habilitadas' => false]),
+    };
+    $this->post(route('solicitudes.firmas.review', [$solicitud, $firma]), datosRevisionFirma())->assertSessionHasErrors('firma');
+    $this->assertDatabaseCount('solicitud_formalizaciones', 0);
+    expect($firma->fresh()->estado)->toBe('recibida')->and($solicitud->fresh()->estado)->toBe(SolicitudEstado::Aprobada);
+})->with(['expediente', 'vencida', 'original', 'copia', 'gate']);
+
+test('firma valida PDF fecha confirmaciones y motivo en español', function () {
+    [, $solicitud, $paquete] = prepararContratoParaFirma($this);
+    $route = route('solicitudes.firmas.store', [$solicitud, $paquete]);
+    $this->post($route, [])->assertSessionHasErrors(['archivo', 'fecha_firma', 'confirmacion_qa', 'idempotency_key', 'lock_version']);
+    foreach (session('errors')->all() as $error) {
+        expect($error)->not->toContain('validation.');
+    }
+    $this->post($route, [...datosFirma(), 'archivo' => \Illuminate\Http\UploadedFile::fake()->createWithContent('falso.pdf', '<script>alert(1)</script>')])->assertSessionHasErrors('archivo');
+    $this->post($route, [...datosFirma(), 'fecha_firma' => '2000-01-01'])->assertSessionHasErrors('firma');
+    $this->post($route, [...datosFirma(), 'fecha_firma' => '2099-01-01'])->assertSessionHasErrors('fecha_firma');
+    $this->post($route, datosFirma())->assertSessionHasNoErrors();
+    $firma = \App\Models\SolicitudFirma::firstOrFail();
+    $this->post(route('solicitudes.firmas.review', [$solicitud, $firma]), [...datosRevisionFirma(), 'confirmacion_revision' => false])->assertSessionHasErrors('confirmacion_revision');
+    expect(session('errors')->first('confirmacion_revision'))->toContain('comparaste')->not->toContain('validation.');
+    $this->post(route('solicitudes.firmas.review', [$solicitud, $firma]), [...datosRevisionFirma('rechazada'), 'motivo' => '   '])->assertSessionHasErrors('motivo');
+});
+
+test('firma separa permisos de recepción revisión consulta y descarga', function () {
+    $this->seed(ModulesAndPermissionsSeeder::class);
+    [$user, $solicitud, $paquete] = prepararContratoParaFirma($this);
+    $user->forceFill(['is_super_admin' => false])->save();
+    $user->givePermissionTo(['read clientes', 'read solicitudes', 'read documentos']);
+    $route = route('solicitudes.firmas.store', [$solicitud, $paquete]);
+    $this->post($route, datosFirma())->assertForbidden();
+    $user->givePermissionTo('receive signature solicitudes');
+    $this->post($route, datosFirma())->assertSessionHasNoErrors();
+    $firma = \App\Models\SolicitudFirma::firstOrFail();
+    $this->post(route('solicitudes.firmas.review', [$solicitud, $firma]), datosRevisionFirma())->assertForbidden();
+    $this->get(route('solicitudes.firmas.view', [$solicitud, $firma]))->assertOk();
+    $this->get(route('solicitudes.firmas.download', [$solicitud, $firma]))->assertForbidden();
+    $user->givePermissionTo('review signature solicitudes');
+    $this->post(route('solicitudes.firmas.review', [$solicitud, $firma]), datosRevisionFirma())->assertSessionHasNoErrors();
+    $user->revokePermissionTo('read solicitudes');
+    $this->get(route('solicitudes.firmas.view', [$solicitud, $firma]))->assertForbidden();
+});
+
+test('firma no admite el original como firmado ni idempotencia con otros datos', function () {
+    [$user, $solicitud, $paquete] = prepararContratoParaFirma($this);
+    $route = route('solicitudes.firmas.store', [$solicitud, $paquete]);
+    $original = \Illuminate\Support\Facades\Storage::disk('local')->get('qa/original.pdf');
+    $this->post($route, [...datosFirma(), 'archivo' => \Illuminate\Http\UploadedFile::fake()->createWithContent('original.pdf', $original)])->assertSessionHasErrors('firma');
+    $data = datosFirma();
+    $this->post($route, $data)->assertSessionHasNoErrors();
+    $this->post($route, [...$data, 'archivo' => \Illuminate\Http\UploadedFile::fake()->createWithContent('otra.pdf', "%PDF-1.4\nOtra copia\n%%EOF")])->assertSessionHasErrors('firma');
+    $this->assertDatabaseCount('solicitud_firmas', 1);
+    $user->update(['current_sucursal_id' => Sucursal::factory()->create()->id]);
+    $this->post($route, $data)->assertSessionHasErrors('firma');
+});
+
+test('devolver una formalización QA conserva firma y registro histórico', function () {
+    [$user, $solicitud, $paquete] = prepararContratoParaFirma($this);
+    $this->post(route('solicitudes.firmas.store', [$solicitud, $paquete]), datosFirma())->assertSessionHasNoErrors();
+    $firma = \App\Models\SolicitudFirma::firstOrFail();
+    $this->post(route('solicitudes.firmas.review', [$solicitud, $firma]), datosRevisionFirma())->assertSessionHasNoErrors();
+    $this->post(route('solicitudes.resolver', $solicitud), ['accion' => 'devolver', 'lock_version' => 7,
+        'motivo' => 'Cambiar fecha y renovar las condiciones firmadas.', 'responsable_id' => $user->id])->assertSessionHasNoErrors();
+    $this->get(route('solicitudes.paquete.show', $solicitud))->assertInertia(fn (Assert $page) => $page
+        ->where('actual', null)->where('formalizacion', null)->where('firmas.data.0.actual', false)->where('firmas.data.0.estado', 'aceptada'));
+    $this->assertDatabaseCount('solicitud_formalizaciones', 1);
+    expect($firma->fresh()->estado)->toBe('aceptada');
+    $this->post(route('solicitudes.firmas.store', [$solicitud, $paquete]), [...datosFirma(), 'lock_version' => 8])->assertSessionHasErrors('firma');
+});
+
+test('firma rechaza evidencia de otra solicitud y una versión de captura obsoleta', function () {
+    [, $solicitud, $paquete] = prepararContratoParaFirma($this);
+    $route = route('solicitudes.firmas.store', [$solicitud, $paquete]);
+    $this->post($route, [...datosFirma(), 'lock_version' => 0])->assertSessionHasErrors('firma');
+    expect(\Illuminate\Support\Facades\Storage::disk('local')->allFiles('solicitudes'))->toBeEmpty();
+    $this->post($route, datosFirma())->assertSessionHasNoErrors();
+    $firma = \App\Models\SolicitudFirma::firstOrFail();
+    $this->post(route('solicitudes.store'), ['cliente_id' => $solicitud->cliente_id, 'clave_creacion' => (string) Str::uuid()])->assertSessionHasNoErrors();
+    $otra = Solicitud::latest('id')->firstOrFail();
+    $this->get(route('solicitudes.firmas.view', [$otra, $firma]))->assertNotFound();
+    $this->get(route('solicitudes.firmas.download', [$otra, $firma]))->assertNotFound();
+    $this->post(route('solicitudes.firmas.review', [$otra, $firma]), datosRevisionFirma())->assertNotFound();
+    $this->post(route('solicitudes.firmas.store', [$otra, $paquete]), datosFirma())->assertNotFound();
+    $this->assertDatabaseCount('solicitud_formalizaciones', 0);
+});
+
+test('firma permite rechazar evidencia aunque haya vencido la aprobación', function () {
+    [, $solicitud, $paquete] = prepararContratoParaFirma($this);
+    $this->post(route('solicitudes.firmas.store', [$solicitud, $paquete]), datosFirma())->assertSessionHasNoErrors();
+    $firma = \App\Models\SolicitudFirma::firstOrFail();
+    $this->travel(16)->days();
+    $this->post(route('solicitudes.firmas.review', [$solicitud, $firma]), datosRevisionFirma('rechazada'))->assertSessionHasNoErrors();
+    expect($firma->fresh()->estado)->toBe('rechazada');
+    $this->assertDatabaseCount('solicitud_formalizaciones', 0);
+});
+
+test('firma no convierte contratos históricos sin proyección fiscal', function () {
+    [, $solicitud, $paquete] = prepararContratoParaFirma($this);
+    // Fixture histórica únicamente: no existe una operación pública de edición del snapshot.
+    $snapshot = $paquete->snapshot;
+    unset($snapshot['formato']);
+    $snapshot['fiscalidad'] = 'no_definida';
+    $paquete->snapshot = $snapshot;
+    \Illuminate\Support\Facades\DB::table('solicitud_paquetes')->where('id', $paquete->id)->update([
+        'snapshot' => $paquete->getAttributes()['snapshot'],
+        'snapshot_hash' => hash('sha256', json_encode($snapshot, JSON_THROW_ON_ERROR)),
+    ]);
+    $this->post(route('solicitudes.firmas.store', [$solicitud, $paquete]), datosFirma())->assertSessionHasErrors('firma');
+    expect(session('errors')->first('firma'))->toContain('proyección fiscal');
+    $this->assertDatabaseCount('solicitud_firmas', 0);
+    expect($paquete->fresh()->snapshot)->toBe($snapshot);
+});
+
 function prepararSolicitudConContrato($test, bool $fiscalidad = true): array
 {
     \Illuminate\Support\Facades\Queue::fake();

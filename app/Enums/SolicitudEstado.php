@@ -10,6 +10,7 @@ enum SolicitudEstado: string
     case Rechazada = 'rechazada';
     case Cancelada = 'cancelada';
     case Aprobada = 'aprobada';
+    case Formalizada = 'formalizada';
 
     public function editable(): bool
     {
@@ -25,6 +26,7 @@ enum SolicitudEstado: string
             self::Rechazada => 'Rechazada',
             self::Cancelada => 'Cancelada',
             self::Aprobada => 'Aprobada',
+            self::Formalizada => 'Formalizada · QA',
         };
     }
 }
