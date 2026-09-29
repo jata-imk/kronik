@@ -143,6 +143,7 @@ return [
         'ingresos_mensuales' => 'ingresos mensuales',
         'egresos_mensuales' => 'egresos mensuales',
         'confirmacion_qa' => 'confirmación de uso exclusivo en QA',
+        'incluir_impuestos' => 'inclusión de impuestos en la simulación',
         'version.fiscalidad' => 'configuración fiscal',
         'version.fiscalidad.uso' => 'uso de la configuración fiscal',
         'version.fiscalidad.referencia' => 'referencia fiscal de la institución',

@@ -23,10 +23,23 @@ test("configura fiscalidad explícita y conserva la consulta de la versión", as
     await page.getByRole("button", { name: "Ver fiscalidad versión 1", exact: true }).click();
     await expect(page.getByLabel("Tasa de impuesto (%) · Interés ordinario", { exact: true })).toHaveValue("16.12345678");
     await expect(page.getByLabel("Tasa de impuesto (%) · Interés ordinario", { exact: true })).toBeDisabled();
-    await expect(page.getByText(/Solo configuración: el simulador/)).toBeVisible();
+    await expect(page.getByText(/El simulador puede aplicar esta configuración/)).toBeVisible();
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(page.getByText("Cada concepto, su tratamiento")).toBeVisible();
     expect(await page.locator('.p-drawer-content').evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+    await page.keyboard.press('Escape');
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.getByRole("button", { name: "Simular", exact: true }).click();
+    await page.getByLabel("Incluir impuestos proyectados", { exact: true }).check();
+    await page.getByRole("button", { name: "Calcular escenario" }).click();
+    await expect(page.getByRole("columnheader", { name: "Impuestos", exact: true })).toBeVisible();
+    await expect(page.getByText("Configuración de prueba / QA", { exact: true })).toBeVisible();
+    await page.getByText("Ver desglose fiscal por periodo y concepto", { exact: true }).click();
+    await expect(page.getByText(/16.12345678 %/).first()).toBeVisible();
+    await page.getByLabel("Incluir impuestos proyectados", { exact: true }).uncheck();
+    await expect(page.getByRole("columnheader", { name: "Impuestos", exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Calcular escenario" }).click();
+    await expect(page.getByText(/Escenario anterior a impuestos. No significa exención/)).toBeVisible();
 });
 
 test("recorre catálogo, versiones y simulador de crédito simple", async ({ page }) => {
@@ -56,6 +69,10 @@ test("recorre catálogo, versiones y simulador de crédito simple", async ({ pag
     await page.getByRole("button", { name: "Ver fórmula y sustitución de desarrollo" }).click();
     await expect(page.getByText("Significado de los símbolos", { exact: true })).toBeVisible();
     await expect(page.getByText("Saldo insoluto al inicio del periodo k.", { exact: true })).toBeVisible();
+    await page.getByLabel("Incluir impuestos proyectados", { exact: true }).check();
+    await page.getByRole("button", { name: "Calcular escenario" }).click();
+    await expect(page.getByText(/Define el uso de la configuración fiscal/).first()).toBeVisible();
+    await expect(page.getByRole("columnheader", { name: "Pago total", exact: true })).toHaveCount(0);
 });
 
 test("catálogo es utilizable en una pantalla móvil", async ({ page }) => {

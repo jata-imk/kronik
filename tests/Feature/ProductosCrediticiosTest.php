@@ -37,6 +37,110 @@ function fiscalidadPrueba(): array
         'moratorio' => ['tratamiento' => 'gravado', 'tasa' => '16.12345678', 'base' => 'importe_concepto']];
 }
 
+function escenarioFiscal(array $extra = []): array
+{
+    return ['monto' => '10000', 'periodicidad' => 'mensual', 'plazo' => 3, 'metodo' => 'capital_fijo', 'fecha' => '2026-01-01', 'incluir_impuestos' => true, ...$extra];
+}
+
+test('simulación desglosa interés e impuesto sin convertir el principal en base ni alterar CAT', function () {
+    $user = actingAsSuperAdmin();
+    $policy = fiscalidadPrueba();
+    $policy['ordinario'] = ['tratamiento' => 'gravado', 'tasa' => '16', 'base' => 'importe_concepto'];
+    $product = app(ProductoVersionService::class)->crear(productoPayload(['fiscalidad' => $policy]), $user->id);
+    $version = $product->versiones()->first();
+    $url = route('productos-crediticios.simular', $version);
+    $base = $this->actingAs($user)->postJson($url, escenarioFiscal(['incluir_impuestos' => false]))->assertOk();
+    $tax = $this->postJson($url, escenarioFiscal())->assertOk();
+    $tax->assertJsonPath('tabla.1.interes', '310.00')->assertJsonPath('tabla.1.impuestos', '49.60')
+        ->assertJsonPath('tabla.1.pago_total', '3692.93')->assertJsonPath('tabla.3.saldo', '0.00')
+        ->assertJsonPath('fiscalidad.estado', 'proyeccion')->assertJsonPath('fiscalidad.uso', 'prueba');
+    expect($tax->json('cat'))->toBe($base->json('cat'));
+    $total = '0.00';
+    foreach ($tax->json('tabla') as $row) {
+        $total = App\Support\Decimal::add($total, $row['impuestos'], 2);
+        if ($row['numero']) {
+            $payment = App\Support\Decimal::add(App\Support\Decimal::add($row['capital'], $row['interes']), $row['impuestos'], 2);
+            expect($row['pago_total'])->toBe($payment);
+        }
+    }
+    expect($tax->json('total_impuestos'))->toBe($total)
+        ->and($base->json('fiscalidad.estado'))->toBe('no_calculada')
+        ->and($base->json('total_impuestos'))->toBeNull();
+});
+
+test('impuesto de comisiones sigue modalidad sin duplicarse en cuotas', function (string $modalidad, string $saldo, string $efectivo, string $pagoInicial) {
+    $user = actingAsSuperAdmin();
+    $concepto = ConceptoComision::create(['clave' => 'COM-FISCAL', 'nombre' => 'Apertura QA', 'activo' => true]);
+    $product = app(ProductoVersionService::class)->crear(productoPayload(['tasa_ordinaria_anual' => '0', 'fiscalidad' => fiscalidadPrueba(), 'comisiones' => [[
+        'concepto_comision_id' => $concepto->id, 'tipo_importe' => 'fijo', 'importe' => '100', 'base_calculo' => 'no_aplica', 'momento_cobro' => 'inicio', 'modalidad_cobro' => $modalidad, 'obligatoria' => true,
+        'fiscalidad' => ['tratamiento' => 'gravado', 'tasa' => '16', 'base' => 'importe_concepto'],
+    ]]]), $user->id);
+    $version = $product->versiones()->first();
+    $url = route('productos-crediticios.simular', $version);
+    $base = $this->actingAs($user)->postJson($url, escenarioFiscal(['incluir_impuestos' => false]))->assertOk();
+    $result = $this->postJson($url, escenarioFiscal())->assertOk();
+    $result->assertJsonPath('escenario.saldo_financiado', $saldo)->assertJsonPath('escenario.efectivo_entregado', $efectivo)
+        ->assertJsonPath('tabla.0.pago_total', $pagoInicial)->assertJsonPath('tabla.0.comisiones', '100.00')
+        ->assertJsonPath('tabla.0.impuestos', '16.00')->assertJsonPath('total_impuestos', '16.00')
+        ->assertJsonPath('tabla.1.impuestos', '0.00')->assertJsonPath('tabla.3.saldo', '0.00');
+    expect($result->json('cat'))->toBe($base->json('cat'));
+    $capital = array_reduce($result->json('tabla'), fn ($sum, $row) => App\Support\Decimal::add($sum, $row['capital'], 2), '0.00');
+    expect($capital)->toBe($saldo)->and($result->json('total_pagar'))->toBe(App\Support\Decimal::add($saldo, $pagoInicial, 2));
+})->with([
+    ['financiada', '10116.00', '10000.00', '0.00'],
+    ['descuento_desembolso', '10000.00', '9884.00', '0.00'],
+    ['pago_separado', '10000.00', '10000.00', '116.00'],
+]);
+
+test('solo valida impuestos de conceptos aplicados y bloquea opcionales sin definir al seleccionarlas', function () {
+    $user = actingAsSuperAdmin();
+    $concepto = ConceptoComision::create(['clave' => 'OPT-FISCAL', 'nombre' => 'Asistencia QA', 'activo' => true]);
+    $product = app(ProductoVersionService::class)->crear(productoPayload(['fiscalidad' => fiscalidadPrueba(), 'comisiones' => [[
+        'concepto_comision_id' => $concepto->id, 'tipo_importe' => 'fijo', 'importe' => '100', 'base_calculo' => 'no_aplica', 'momento_cobro' => 'cada_pago', 'obligatoria' => false,
+        'fiscalidad' => ['tratamiento' => 'no_definido'],
+    ]]]), $user->id);
+    $version = $product->versiones()->first();
+    $url = route('productos-crediticios.simular', $version);
+    $this->actingAs($user)->postJson($url, escenarioFiscal())->assertOk()->assertJsonPath('total_impuestos', '0.00');
+    $result = $this->postJson($url, escenarioFiscal(['comisiones_opcionales' => [$version->comisiones()->first()->id]]))->assertUnprocessable()->assertJsonValidationErrors('fiscalidad');
+    expect($result->json('errors.fiscalidad.0'))->toContain('Asistencia QA')->not->toContain('validation.');
+    $version->comisiones()->first()->update(['fiscalidad' => ['tratamiento' => 'gravado', 'tasa' => '16', 'base' => 'importe_concepto']]);
+    $this->postJson($url, escenarioFiscal(['comisiones_opcionales' => [$version->comisiones()->first()->id]]))
+        ->assertOk()->assertJsonPath('total_impuestos', '48.00')->assertJsonPath('tabla.1.impuestos', '16.00');
+});
+
+test('simulación antigua no asume impuesto cero y la nueva bloquea fiscalidad ausente', function () {
+    $user = actingAsSuperAdmin();
+    $product = app(ProductoVersionService::class)->crear(productoPayload(), $user->id);
+    $url = route('productos-crediticios.simular', $product->versiones()->first());
+    $this->actingAs($user)->postJson($url, escenarioFiscal(['incluir_impuestos' => false]))->assertOk()->assertJsonPath('fiscalidad.estado', 'no_calculada');
+    $response = $this->postJson($url, escenarioFiscal())->assertUnprocessable()->assertJsonValidationErrors('fiscalidad');
+    expect($response->json('errors.fiscalidad.0'))->toContain('configuración fiscal')->not->toContain('validation.');
+    $this->postJson($url, escenarioFiscal(['incluir_impuestos' => 'incorrecto']))->assertUnprocessable()->assertJsonValidationErrors('incluir_impuestos');
+});
+
+test('impuesto financiado participa del saldo y del límite sin mutar la versión histórica', function () {
+    $user = actingAsSuperAdmin();
+    $concepto = ConceptoComision::create(['clave' => 'FIN-IMP', 'nombre' => 'Financiada QA', 'activo' => true]);
+    $fiscal = fiscalidadPrueba();
+    $fiscal['ordinario'] = ['tratamiento' => 'gravado', 'tasa' => '16', 'base' => 'importe_concepto'];
+    $service = app(ProductoVersionService::class);
+    $product = $service->crear(productoPayload(['fiscalidad' => $fiscal, 'comisiones' => [[
+        'concepto_comision_id' => $concepto->id, 'tipo_importe' => 'fijo', 'importe' => '100', 'base_calculo' => 'no_aplica', 'momento_cobro' => 'inicio', 'modalidad_cobro' => 'financiada', 'obligatoria' => true, 'fiscalidad' => $fiscal['ordinario'],
+    ]]]), $user->id);
+    $version = $service->activar($product->versiones()->first(), today()->toDateString());
+    $snapshot = $version->snapshot;
+    $hash = $version->snapshot_hash;
+    $this->actingAs($user)->postJson(route('productos-crediticios.simular', $version), escenarioFiscal())->assertOk()
+        ->assertJsonPath('tabla.1.interes', '313.60')->assertJsonPath('tabla.1.impuestos', '50.18')
+        ->assertJsonPath('tabla.1.pago_total', '3735.78')->assertJsonPath('totales.impuestos_financiados', '16.00')
+        ->assertJsonPath('totales.financiado_comisiones', '100.00');
+    expect($version->refresh()->snapshot)->toBe($snapshot)->and($version->snapshot_hash)->toBe($hash);
+    $copy = $service->nuevaVersion($product, $version, $user->id)->refresh();
+    $copy->update(['monto_maximo' => '10100']);
+    $this->postJson(route('productos-crediticios.simular', $copy), escenarioFiscal())->assertUnprocessable()->assertJsonValidationErrors('monto');
+});
+
 test('fiscalidad se conserva por concepto en versiones snapshots y clientes anteriores', function () {
     $user = actingAsSuperAdmin();
     $concepto = ConceptoComision::create(['clave' => 'FISCAL-QA', 'nombre' => 'Comisión QA', 'activo' => true]);

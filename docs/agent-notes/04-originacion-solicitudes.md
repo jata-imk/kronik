@@ -24,6 +24,13 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 - Estado: en progreso
 - Última actualización: 2026-09-28
 - Último punto estable: main c0b1edd, PR #23 integrado y CI aprobado.
+- Continuación fiscal: main 3e1377c, PR #24 integrado. Rama
+  `feat/simulacion-impuestos`: proyección fiscal explícita del simulador;
+  ADR 0017 y guion con lista profesional `docs/how-to/qa-simulacion-fiscal.md`.
+  No cambia paquetes QA, no firma ni habilita dinero. Verificación local:
+  245 backend / 1759 aserciones / 1 omitida existente; 73 frontend; 3 E2E Productos;
+  build, Pint y diff-check aprobados. Capturas Playwright headless escritorio/móvil,
+  sin desbordamiento. MCP no pudo iniciar Chrome; se usó el navegador del runner.
 - Continuación: feat/productos-fiscalidad, configuración fiscal previa a P4b.
   ADR 0016 y `docs/how-to/configurar-fiscalidad-productos.md`. Configuración
   independiente por interés/comisión, uso QA/institucional, validación y snapshots.
@@ -103,9 +110,10 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 ## Siguiente paso
 
-Tras integrar #24, continuar desde main con cálculo fiscal decimal de los conceptos
-configurados y condiciones contractuales antes de P4b (firma). La configuración
-entregada no sustituye el motor ni los controles institucionales de habilitación.
+Tras integrar la proyección fiscal, conectar explícitamente sus resultados a nuevas
+condiciones/documentos QA antes de firma P4b. No recalcular ni promover paquetes
+P4a existentes. La revisión del contador no bloquea QA con configuraciones de
+prueba; la lista concreta está en `docs/how-to/qa-simulacion-fiscal.md`.
 P5 desembolso y P6 primer pago completarán después la primera vertical. No promover
 PDF QA a contrato válido ni avanzar SIC real o dinero sin políticas validadas.
 VPS exclusivamente QA; no modificar la solicitud manual.

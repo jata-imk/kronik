@@ -1,7 +1,8 @@
 # Configurar y comprobar la fiscalidad de un producto
 
-Este incremento guarda configuración; **no calcula impuestos ni habilita dinero**.
-El simulador y el paquete contractual QA mantienen sus avisos anteriores a impuestos.
+La configuración no habilita dinero. El simulador puede aplicar impuestos al
+activar explícitamente la proyección fiscal; véase `qa-simulacion-fiscal.md`.
+Los paquetes contractuales QA anteriores a impuestos no cambian.
 
 ## Preparación
 

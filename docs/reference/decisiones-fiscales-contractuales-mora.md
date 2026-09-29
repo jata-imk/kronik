@@ -3,7 +3,9 @@
 - Aprobadas por el usuario: 2026-09-27.
 - Fuente de alcance: [iniciativa 04–07 en Notion](https://app.notion.com/p/3e161db7db7f817a8c89ec30767d4666).
 - Estado: especificación aceptada para P4–P6. Configuración fiscal por versión
-  implementada como prerrequisito (ADR 0016); cálculo fiscal y habilitación real pendientes.
+  implementada como prerrequisito (ADR 0016); proyección fiscal del simulador
+  implementada (ADR 0017). Integración contractual, fiscalidad de pagos y
+  habilitación real pendientes.
 
 Se aplica el diseño vigente: monolito, versiones inmutables, revisiones de solicitud,
 formalización separada de desembolso y movimientos trazables. Este acuerdo no

@@ -17,16 +17,25 @@ final class SimuladorCreditoSimple
         private readonly CalendarioCreditoSimple $calendario,
         private readonly TablaAmortizacionCreditoSimple $amortizacion,
         private readonly ResolverComisionesCreditoSimple $resolverComisiones,
+        private readonly ImpuestoConceptoService $impuestos,
     ) {}
 
     /** @return array<string, mixed> */
-    public function simular(ProductoVersion $version, string $monto, PeriodicidadCredito $periodicidad, int $plazo, MetodoAmortizacion $metodo, CarbonImmutable $fecha, array $comisionesOpcionales = [], bool $incluirFormula = false): array
+    public function simular(ProductoVersion $version, string $monto, PeriodicidadCredito $periodicidad, int $plazo, MetodoAmortizacion $metodo, CarbonImmutable $fecha, array $comisionesOpcionales = [], bool $incluirFormula = false, bool $incluirImpuestos = false): array
     {
         $version->loadMissing(['periodicidades', 'reglas', 'comisiones.concepto']);
         $resolucion = $this->resolverComisiones->resolver($version, $comisionesOpcionales);
         $comisiones = $resolucion['aplicadas'];
+        if ($incluirImpuestos) {
+            if (! in_array($version->fiscalidad['uso'] ?? null, ['prueba', 'institucional'], true)) {
+                throw ValidationException::withMessages(['fiscalidad' => 'Define el uso de la configuración fiscal en la versión del producto antes de calcular impuestos.']);
+            }
+            $this->impuestos->calcular($version->fiscalidad['ordinario'] ?? null, '0', 'Interés ordinario');
+            // Validate all applicable fees before calculating financing or presenting totals.
+            $this->detalle($comisiones, $monto, true);
+        }
         $iniciales = $comisiones->filter->esInicial();
-        $financiadas = $this->totalPorModalidad($iniciales, $monto, 'financiada');
+        $financiadas = $this->totalPorModalidad($iniciales, $monto, 'financiada', $incluirImpuestos);
         $saldoFinanciado = Decimal::round(Decimal::add($monto, $financiadas));
 
         $this->validar($version, $saldoFinanciado, $periodicidad, $plazo, $metodo);
@@ -36,10 +45,12 @@ final class SimuladorCreditoSimple
         $tabla = $resultado['tabla'];
         $cadaPago = $comisiones->where('momento_cobro', 'cada_pago');
         $acumulados = ['capital' => '0.00', 'interes' => '0.00', 'comisiones' => '0.00', 'pagado' => '0.00'];
+        $impuestosAcumulados = '0.00';
 
-        $pagoSeparado = $this->totalPorModalidad($iniciales, $monto, 'pago_separado');
-        $retenidas = $this->totalPorModalidad($iniciales, $monto, 'descuento_desembolso');
-        $comisionesIniciales = Decimal::round(Decimal::add(Decimal::add($pagoSeparado, $retenidas), $financiadas));
+        $pagoSeparado = $this->totalPorModalidad($iniciales, $monto, 'pago_separado', $incluirImpuestos);
+        $retenidas = $this->totalPorModalidad($iniciales, $monto, 'descuento_desembolso', $incluirImpuestos);
+        $detalleInicial = $this->detalle($iniciales, $monto, $incluirImpuestos);
+        $comisionesIniciales = $incluirImpuestos ? $this->sumar($detalleInicial, 'importe') : Decimal::round(Decimal::add(Decimal::add($pagoSeparado, $retenidas), $financiadas));
         $flujoNetoInicial = Decimal::round(Decimal::sub(Decimal::sub($monto, $pagoSeparado), $retenidas));
         $efectivoEntregado = Decimal::round(Decimal::sub($monto, $retenidas));
         $pagoInicial = $pagoSeparado;
@@ -56,7 +67,7 @@ final class SimuladorCreditoSimple
             'capital' => '0.00',
             'interes' => '0.00',
             'comisiones' => $comisionesIniciales,
-            'comisiones_detalle' => $this->detalle($iniciales, $monto),
+            'comisiones_detalle' => $detalleInicial,
             'pago_total' => $pagoInicial,
             'saldo_final' => $saldoFinanciado,
             'saldo' => $saldoFinanciado,
@@ -64,15 +75,28 @@ final class SimuladorCreditoSimple
             'flujo_neto_cliente' => $flujoNetoInicial,
             ...$this->camposAcumulados($acumulados),
         ];
+        if ($incluirImpuestos) {
+            $impuestosAcumulados = $this->sumar($detalleInicial, 'impuesto');
+            $filaCero += ['impuestos' => $impuestosAcumulados, 'impuestos_acumulados' => $impuestosAcumulados,
+                'impuestos_detalle' => array_column($detalleInicial, 'fiscalidad')];
+        }
 
         foreach ($tabla as &$fila) {
-            $detalle = $this->detalle($cadaPago, $monto);
+            $detalle = $this->detalle($cadaPago, $monto, $incluirImpuestos);
             $totalComisiones = array_reduce($detalle, fn (string $total, array $item) => Decimal::add($total, $item['importe']), '0');
             $totalCat = array_reduce($detalle, fn (string $total, array $item) => $item['incluye_cat'] ? Decimal::add($total, $item['importe']) : $total, '0');
             $fila['comisiones'] = Decimal::round($totalComisiones);
             $fila['comisiones_detalle'] = $detalle;
             $fila['pago_total'] = Decimal::round(Decimal::add($fila['pago_total'], $totalComisiones));
             $fila['pago_cat'] = Decimal::round(Decimal::add($fila['pago_cat'], $totalCat));
+            if ($incluirImpuestos) {
+                $interesFiscal = $this->impuestos->calcular($version->fiscalidad['ordinario'], $fila['interes'], 'Interés ordinario');
+                $fila['impuestos_detalle'] = [$interesFiscal, ...array_column($detalle, 'fiscalidad')];
+                $fila['impuestos'] = Decimal::round(Decimal::add($interesFiscal['impuesto'], $this->sumar($detalle, 'impuesto')));
+                $fila['pago_total'] = Decimal::round(Decimal::add($fila['pago_total'], $fila['impuestos']));
+                $impuestosAcumulados = Decimal::round(Decimal::add($impuestosAcumulados, $fila['impuestos']));
+                $fila['impuestos_acumulados'] = $impuestosAcumulados;
+            }
 
             foreach (['capital', 'interes', 'comisiones'] as $campo) {
                 $acumulados[$campo] = Decimal::round(Decimal::add($acumulados[$campo], $fila[$campo]));
@@ -132,6 +156,22 @@ final class SimuladorCreditoSimple
             'tabla' => [$filaCero, ...array_map(fn (array $fila) => collect($fila)->except('pago_cat')->all(), $tabla)],
         ];
 
+        $respuesta['fiscalidad'] = [
+            'estado' => $incluirImpuestos ? 'proyeccion' : 'no_calculada',
+            'uso' => $version->fiscalidad['uso'] ?? null,
+            'leyenda' => $incluirImpuestos
+                ? 'Proyección según configuración del producto, no determinación fiscal ni autorización de operación. Sin mora ni eventos extraordinarios. La cuota base no incluye impuestos; el pago total puede variar.'
+                : 'Escenario anterior a impuestos. No significa exención ni tasa cero; no representa el total con impuestos.',
+        ];
+        if ($incluirImpuestos) {
+            $respuesta['total_impuestos'] = $impuestosAcumulados;
+            $respuesta['totales']['impuestos'] = $impuestosAcumulados;
+            $respuesta['totales']['impuestos_financiados'] = $this->impuestosPorModalidad($detalleInicial, 'financiada');
+            $respuesta['totales']['impuestos_retenidos'] = $this->impuestosPorModalidad($detalleInicial, 'descuento_desembolso');
+            $respuesta['totales']['impuestos_pago_separado'] = $this->impuestosPorModalidad($detalleInicial, 'pago_separado');
+            $respuesta['totales']['financiado_comisiones'] = Decimal::round(Decimal::sub($financiadas, $respuesta['totales']['impuestos_financiados']));
+        }
+
         if ($incluirFormula) {
             $respuesta['formula_debug'] = $this->formula($version, $saldoFinanciado, $resultado, $tabla);
         }
@@ -144,7 +184,7 @@ final class SimuladorCreditoSimple
         $config = $version->periodicidades->firstWhere('periodicidad', $periodicidad->value);
         $errores = [];
         if (Decimal::compare($saldoFinanciado, (string) $version->monto_minimo) < 0 || Decimal::compare($saldoFinanciado, (string) $version->monto_maximo) > 0) {
-            $errores['monto'] = 'El saldo total financiado, incluidas las comisiones financiadas, debe estar dentro del rango del producto.';
+            $errores['monto'] = 'El saldo total financiado, incluidas las comisiones y los impuestos financiados del escenario, debe estar dentro del rango del producto.';
         }
         if (! $config || $plazo < $config->plazo_minimo || $plazo > $config->plazo_maximo) {
             $errores['plazo'] = 'El plazo no está permitido para la periodicidad seleccionada.';
@@ -157,26 +197,45 @@ final class SimuladorCreditoSimple
         }
     }
 
-    private function totalPorModalidad(Collection $comisiones, string $monto, string $modalidad): string
+    private function totalPorModalidad(Collection $comisiones, string $monto, string $modalidad, bool $incluirImpuestos = false): string
     {
+        if ($incluirImpuestos) {
+            $detalle = $this->detalle($comisiones->filter(fn ($item) => $item->modalidadInicial() === $modalidad), $monto, true);
+
+            return Decimal::round(Decimal::add($this->sumar($detalle, 'importe'), $this->sumar($detalle, 'impuesto')));
+        }
+
         return Decimal::round($comisiones->reduce(
             fn (string $total, $comision) => $comision->modalidadInicial() === $modalidad ? Decimal::add($total, $comision->calcular($monto)) : $total,
             '0',
         ));
     }
 
-    private function detalle(Collection $comisiones, string $monto): array
+    private function impuestosPorModalidad(array $detalle, string $modalidad): string
     {
-        return $comisiones->map(fn ($comision) => [
-            'id' => $comision->id,
-            'concepto' => $comision->concepto?->nombre ?? 'Comisión',
-            'clave' => $comision->concepto?->clave,
-            'importe' => Decimal::round($comision->calcular($monto)),
-            'momento' => $comision->esInicial() ? 'inicio' : $comision->momento_cobro,
-            'modalidad' => $comision->modalidadInicial(),
-            'incluye_cat' => (bool) $comision->incluye_cat,
-            'obligatoria' => (bool) $comision->obligatoria,
-        ])->values()->all();
+        return $this->sumar(array_filter($detalle, fn ($item) => $item['modalidad'] === $modalidad), 'impuesto');
+    }
+
+    private function detalle(Collection $comisiones, string $monto, bool $incluirImpuestos = false): array
+    {
+        return $comisiones->map(function ($comision) use ($monto, $incluirImpuestos): array {
+            $detalle = [
+                'id' => $comision->id,
+                'concepto' => $comision->concepto?->nombre ?? 'Comisión',
+                'clave' => $comision->concepto?->clave,
+                'importe' => Decimal::round($comision->calcular($monto)),
+                'momento' => $comision->esInicial() ? 'inicio' : $comision->momento_cobro,
+                'modalidad' => $comision->modalidadInicial(),
+                'incluye_cat' => (bool) $comision->incluye_cat,
+                'obligatoria' => (bool) $comision->obligatoria,
+            ];
+            if ($incluirImpuestos) {
+                $detalle['fiscalidad'] = $this->impuestos->calcular($comision->fiscalidad, $detalle['importe'], $detalle['concepto']);
+                $detalle['impuesto'] = $detalle['fiscalidad']['impuesto'];
+            }
+
+            return $detalle;
+        })->values()->all();
     }
 
     /** @return array{0: string, 1: array<int, string>} */
@@ -238,7 +297,7 @@ final class SimuladorCreditoSimple
                 ['simbolo' => 'Sₖ₋₁', 'significado' => 'Saldo insoluto al inicio del periodo k.'],
                 ['simbolo' => 'dₖ', 'significado' => 'Días naturales transcurridos durante el periodo k.'],
                 ['simbolo' => 'P', 'significado' => 'Principal o saldo total financiado al inicio.'],
-                ['simbolo' => 'C', 'significado' => 'Cuota base nivelada, antes de sumar comisiones.'],
+                ['simbolo' => 'C', 'significado' => 'Cuota base nivelada, antes de sumar comisiones e impuestos.'],
                 ['simbolo' => 'A', 'significado' => 'Amortización fija de capital por periodo.'],
                 ['simbolo' => 'n', 'significado' => 'Número total de pagos.'],
                 ['simbolo' => 'iⱼ', 'significado' => 'Factor de interés del periodo j: tasa anual × días del periodo ÷ 360.'],
