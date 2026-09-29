@@ -7,6 +7,18 @@ use App\Models\User;
 
 class SolicitudPolicy
 {
+    public function receiveSignature(User $user, Solicitud $solicitud): bool
+    {
+        return $this->viewPackage($user, $solicitud) && $user->can('receive signature solicitudes')
+            && $user->current_sucursal_id !== null && (int) $user->current_sucursal_id === (int) $solicitud->sucursal_id;
+    }
+
+    public function reviewSignature(User $user, Solicitud $solicitud): bool
+    {
+        return $this->viewPackage($user, $solicitud) && $user->can('review signature solicitudes')
+            && $user->current_sucursal_id !== null && (int) $user->current_sucursal_id === (int) $solicitud->sucursal_id;
+    }
+
     public function viewPackage(User $user, Solicitud $solicitud): bool
     {
         return $this->view($user, $solicitud) && $user->can('read documentos');

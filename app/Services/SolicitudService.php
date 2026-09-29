@@ -168,8 +168,8 @@ class SolicitudService
         return DB::transaction(function () use ($solicitud, $data, $actor) {
             $solicitud = $this->bloquear($solicitud, $actor, $data['accion'] === 'cancelar' ? 'cancel' : 'review', $data['lock_version']);
             $permitido = $data['accion'] === 'cancelar'
-                ? in_array($solicitud->estado, [SolicitudEstado::Borrador, SolicitudEstado::Devuelta, SolicitudEstado::EnRevision, SolicitudEstado::Aprobada], true)
-                : ($solicitud->estado === SolicitudEstado::EnRevision || ($data['accion'] === 'devolver' && $solicitud->estado === SolicitudEstado::Aprobada));
+                ? in_array($solicitud->estado, [SolicitudEstado::Borrador, SolicitudEstado::Devuelta, SolicitudEstado::EnRevision, SolicitudEstado::Aprobada, SolicitudEstado::Formalizada], true)
+                : ($solicitud->estado === SolicitudEstado::EnRevision || ($data['accion'] === 'devolver' && in_array($solicitud->estado, [SolicitudEstado::Aprobada, SolicitudEstado::Formalizada], true)));
             if (! $permitido) {
                 $this->error('solicitud', 'Esta acción no está disponible en el estado actual de la solicitud. Actualiza la página.');
             }

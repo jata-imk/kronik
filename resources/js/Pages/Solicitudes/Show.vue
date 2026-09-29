@@ -25,7 +25,7 @@ function actualizar() {
         onFinish: () => { actualizando.value = false; if (!actualizacion.value) actualizacion.value = "La actualización no se completó. Intenta nuevamente."; },
     });
 }
-const eventos = { creada: "Solicitud creada", borrador_actualizado: "Captura actualizada", enviada: "Enviada a revisión", asignada: "Responsable asignado", devuelta: "Devuelta para corrección", rechazada: "Solicitud rechazada", cancelada: "Solicitud cancelada", dictamen_registrado: "Revisión especializada registrada", aprobada: "Solicitud aprobada", paquete_preparado: "Paquete contractual QA solicitado", paquete_reintentado: "Generación del paquete QA reintentada" };
+const eventos = { creada: "Solicitud creada", borrador_actualizado: "Captura actualizada", enviada: "Enviada a revisión", asignada: "Responsable asignado", devuelta: "Devuelta para corrección", rechazada: "Solicitud rechazada", cancelada: "Solicitud cancelada", dictamen_registrado: "Revisión especializada registrada", aprobada: "Solicitud aprobada", paquete_preparado: "Contrato y tabla de pagos preparados", paquete_reintentado: "Generación del contrato QA reintentada", firma_recibida: "Copia firmada recibida", firma_rechazada: "Copia firmada rechazada", formalizada_qa: "Firma aceptada · formalización QA" };
 function enviar() {
     envio.lock_version = props.solicitud.lock_version;
     envio.post(route("solicitudes.enviar", props.solicitud.id), { preserveScroll: true });
@@ -56,7 +56,7 @@ function asignar() {
                     <ul class="mt-3 grid gap-2 md:grid-cols-2"><li v-for="(label, field) in campos" :key="field" class="flex items-center gap-2"><i :class="solicitud[field] !== null && solicitud[field] !== '' ? 'pi pi-check-circle text-green-600' : 'pi pi-clock text-amber-600'" aria-hidden="true" /><span><span class="sr-only">{{ solicitud[field] !== null && solicitud[field] !== '' ? 'Completo:' : 'Pendiente:' }}</span> {{ label }}</span></li></ul>
                 </section>
                 <div class="flex flex-wrap gap-4">
-                    <Link v-if="can.paquete" :href="route('solicitudes.paquete.show', solicitud.id)" class="text-primary underline"><i class="pi pi-file-pdf mr-2" aria-hidden="true" />Paquete contractual QA</Link>
+                    <Link v-if="can.paquete" :href="route('solicitudes.paquete.show', solicitud.id)" class="text-primary underline"><i class="pi pi-file-pdf mr-2" aria-hidden="true" />Contrato y tabla de pagos</Link>
                     <Link :href="route('clientes.expediente.show', solicitud.cliente_id)" class="text-primary underline">Expediente y documentos del cliente</Link>
                     <Link v-if="can.sic" :href="route('clientes.historial-crediticio.show', solicitud.cliente_id)" class="text-primary underline">Historial SIC</Link>
                     <Link v-if="can.politica && solicitud.producto_version_id" :href="route('originacion-politicas.show', solicitud.producto_version_id)" class="text-primary underline">Configurar política de originación</Link>

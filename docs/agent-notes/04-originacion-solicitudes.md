@@ -24,9 +24,22 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 ## Estado actual
 
 - Estado: en progreso
-- Última actualización: 2026-09-28
-- Último punto estable: main 5fb0207, PR #25 integrado y CI aprobado.
-- Continuación actual: `feat/paquetes-fiscalidad`. Nuevos paquetes QA congelan
+- Última actualización: 2026-09-29
+- Último punto estable: main 64d7247, PR #26 integrado y CI aprobado.
+- Continuación actual: `feat/formalizacion-firma`, recepción PDF privada y revisión
+  manual independiente. Aceptar conserva formalización QA inmutable; rechazar
+  permite otra copia sin borrar evidencia. ADR 0018 y guion
+  `docs/how-to/qa-firma-digitalizada.md`. La interfaz lo llama «Contrato y tabla
+  de pagos». P5/P6 aún pendientes; no se habilita dinero ni se toca la VPS.
+  Migración aditiva `2026_09_29_000000_create_solicitud_firmas_table`, permisos
+  `receive signature solicitudes` / `review signature solicitudes` sin asignación
+  automática y `ORIGINACION_FIRMAS_QA_HABILITADAS=false` por defecto.
+  Verificación local: 262 backend / 2044 aserciones / 1 omitida preexistente,
+  78 frontend; E2E dual completo con PDF real, rechazo, nueva copia y aceptación.
+  Corregido reinicio de dictamen/confirmaciones entre copias; cubierto por E2E.
+  Build, Pint y diff-check aprobados. Capturas escritorio/móvil inspeccionadas;
+  no desbordamiento horizontal. Evidencia en `docs/assets/firma-qa-*`.
+- Entrega anterior: `feat/paquetes-fiscalidad`. Nuevos paquetes QA congelan
   la proyección fiscal de la revisión/version aprobada; históricos conservan
   formato y reintentos. Actualización de ADR 0015 y guion del paquete. Sin nuevas
   migraciones, permisos o banderas; firma y formalización siguen pendientes.
@@ -57,7 +70,7 @@ El alcance completo y las decisiones de producto permanecen en Notion.
   bandejas de Evaluación y Cumplimiento reutilizan el detalle de solicitud.
 - P3 completado: políticas versionadas, requisitos y aprobación individual/dual;
   huellas de identidad/documentos, vigencia y evidencia. Habilitación por defecto cerrada.
-- P4b (firma) y P5–P9 pendientes. Sin operación monetaria habilitada.
+- P4b (firma) en verificación; P5–P9 pendientes. Sin operación monetaria habilitada.
 - Se preserva `.playwright-mcp/` local ajeno.
 
 ## Decisiones pendientes
@@ -120,8 +133,8 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 ## Siguiente paso
 
-Tras integrar los paquetes con proyección fiscal, implementar recepción y validación
-de firma autógrafa digitalizada para P4b. No recalcular ni promover paquetes
+Cerrar verificación y PR de firma P4b, integrar con CI aprobado y continuar con
+P5 desembolso sobre formalización QA vigente. No recalcular ni promover paquetes
 P4a existentes. La revisión del contador no bloquea QA con configuraciones de
 prueba; la lista concreta está en `docs/how-to/qa-simulacion-fiscal.md`.
 P5 desembolso y P6 primer pago completarán después la primera vertical. No promover

@@ -27,9 +27,9 @@ describe("Paquete contractual QA", () => {
     it("distingue prueba de formalización y no asume fiscalidad cero", () => {
         const wrapper = render();
         expect(wrapper.text()).toContain("Se validará al preparar");
-        expect(wrapper.text()).toContain("no formaliza el crédito");
-        expect(wrapper.text()).toContain("Aún no hay paquetes");
-        expect(wrapper.text()).toContain("Firma · próxima entrega");
+        expect(wrapper.text()).toContain("Generar el PDF no equivale a firmar");
+        expect(wrapper.text()).toContain("Aún no hay contratos preparados");
+        expect(wrapper.text()).toContain("Recibir y revisar la firma");
         wrapper.unmount();
     });
     it("muestra el bloqueo con explicación y deshabilita la preparación", () => {
@@ -41,7 +41,7 @@ describe("Paquete contractual QA", () => {
     });
     it("no muestra preparación a lectores sin permiso", () => {
         const wrapper = render({ can: { preparar: false } });
-        expect(wrapper.findAll("button").some((button) => button.text() === "Preparar paquete QA")).toBe(false);
+        expect(wrapper.findAll("button").some((button) => button.text() === "Preparar contrato QA")).toBe(false);
         wrapper.unmount();
     });
     it("distingue tabla fiscal congelada de un paquete histórico", () => {

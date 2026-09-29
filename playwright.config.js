@@ -18,6 +18,7 @@ const e2eEnvironment = {
     E2E_ORIGINACION_DUAL: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
     ORIGINACION_APROBACIONES_HABILITADAS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
     ORIGINACION_PAQUETES_QA_HABILITADOS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
+    ORIGINACION_FIRMAS_QA_HABILITADAS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
     GEOCODING_ENABLED: "false",
     DB_CONNECTION: process.env.E2E_DB_CONNECTION ?? "sqlite",
     DB_DATABASE: process.env.E2E_DB_DATABASE ?? localDatabase,

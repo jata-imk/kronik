@@ -1,5 +1,9 @@
 # Probar el paquete contractual QA (P4a)
 
+Continuación P4b: la pantalla se llama **Contrato y tabla de pagos**. La recepción
+y revisión manual de firma se prueban con el [guion de firma](qa-firma-digitalizada.md).
+Los límites siguientes describen el incremento P4a original, no toda la aplicación.
+
 ## Alcance
 
 Desde una solicitud aprobada se prepara un PDF privado con una plantilla de

@@ -27,9 +27,9 @@ test("dual bloquea capturista y permite aprobar a otra persona sin superadmin", 
         await aprobador.getByRole("button", { name: "Confirmar aprobación" }).click();
         await expect(aprobador.getByRole("heading", { name: "Aprobada", exact: true })).toBeVisible();
         await aprobador.screenshot({ path: testInfo.outputPath("dual-aprobada.png"), fullPage: true });
-        await aprobador.getByRole("link", { name: "Paquete contractual QA" }).click();
-        await expect(aprobador.getByRole("heading", { name: "Paquete contractual QA", exact: true })).toBeVisible();
-        await aprobador.getByRole("button", { name: "Preparar paquete QA", exact: true }).click();
+        await aprobador.getByRole("link", { name: "Contrato y tabla de pagos" }).click();
+        await expect(aprobador.getByRole("heading", { name: "Contrato y tabla de pagos", exact: true })).toBeVisible();
+        await aprobador.getByRole("button", { name: "Preparar contrato QA", exact: true }).click();
         await aprobador.getByLabel("Plantilla de contrato").click();
         await aprobador.getByRole("option").first().click();
         await aprobador.getByRole("checkbox").check();
@@ -49,11 +49,53 @@ test("dual bloquea capturista y permite aprobar a otra persona sin superadmin", 
         await expect(aprobador.getByRole("dialog").last()).toBeVisible();
         await expect(aprobador.locator('iframe[title^="PDF:"]')).toBeVisible();
         await expect(aprobador.getByText("No fue posible cargar", { exact: false })).toHaveCount(0);
+        const pdfUrl = await aprobador.getByRole("link", { name: "Descargar", exact: true }).getAttribute("href");
+        const pdf = await aprobador.request.get(pdfUrl);
+        expect(pdf.ok()).toBe(true);
+        const original = await pdf.body();
+        await aprobador.keyboard.press("Escape");
+        const fechaFirma = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City" }).format(new Date());
+        async function recibirCopia(intent) {
+            await aprobador.getByRole("button", { name: "Recibir copia firmada", exact: true }).click();
+            await aprobador.getByLabel("Contrato firmado en PDF").setInputFiles({
+                name: "firma-sintetica-qa.pdf", mimeType: "application/pdf",
+                buffer: Buffer.concat([original, Buffer.from("\n% Evidencia sintetica de firma QA intento " + intent)]),
+            });
+            await aprobador.getByLabel("Fecha de firma", { exact: false }).fill(fechaFirma);
+            await aprobador.getByRole("checkbox").check();
+            await aprobador.getByRole("button", { name: "Enviar copia para revisión" }).click();
+            await expect(aprobador.getByRole("button", { name: "Revisar firma", exact: true })).toBeVisible();
+        }
+        await recibirCopia(1);
+        await aprobador.getByRole("button", { name: "Revisar firma", exact: true }).click();
+        await aprobador.getByLabel("Resultado de firma").click();
+        await aprobador.getByRole("option", { name: "Rechazar copia y pedir corrección" }).click();
+        await aprobador.getByLabel("Observaciones", { exact: false }).fill("Falta una firma en el anexo sintético de pruebas.");
+        await aprobador.getByRole("checkbox").check();
+        await aprobador.getByRole("button", { name: "Confirmar rechazo de copia" }).click();
+        await expect(aprobador.getByText("Copia rechazada", { exact: true })).toBeVisible();
+        await recibirCopia(2);
+        await aprobador.getByRole("button", { name: "Revisar firma", exact: true }).click();
+        await expect(aprobador.getByLabel("Observaciones", { exact: false })).toHaveValue("");
+        await expect(aprobador.getByRole("checkbox").nth(0)).not.toBeChecked();
+        await expect(aprobador.getByRole("checkbox").nth(1)).not.toBeChecked();
+        await aprobador.getByRole("checkbox").nth(0).check();
+        await aprobador.getByRole("checkbox").nth(1).check();
+        await aprobador.getByRole("button", { name: "Aceptar firma y formalizar QA", exact: true }).click();
+        await expect(aprobador.getByText("Formalizada en QA.", { exact: true })).toBeVisible();
+        await expect(aprobador.getByText("Copia rechazada", { exact: true })).toBeVisible();
+        await expect(aprobador.getByText("Firma aceptada", { exact: true })).toBeVisible();
+        await aprobador.evaluate(() => scrollTo(0, 0));
+        await aprobador.screenshot({ path: testInfo.outputPath("firma-qa-desktop.png"), fullPage: true });
+        await aprobador.setViewportSize({ width: 390, height: 844 });
+        await expect.poll(() => aprobador.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        await aprobador.evaluate(() => scrollTo(0, 0));
+        await aprobador.screenshot({ path: testInfo.outputPath("firma-qa-mobile.png"), fullPage: true });
         assertApproverConsole();
     } finally {
         await context.close();
     }
     await page.getByRole("button", { name: "Actualizar datos de la solicitud" }).click();
-    await expect(page.getByRole("heading", { name: "Aprobada", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Formalizada · QA", exact: true })).toBeVisible();
     assertConsole();
 });

@@ -18,7 +18,7 @@ class SolicitudRequisitosService
     public function __construct(private readonly FechaEmpresa $fecha, private readonly SolicitudExpedienteService $expediente) {}
 
     /** Call inside the application/client/product transaction when used for approval. */
-    public function evaluar(Solicitud $solicitud, User $actor, bool $paraPaquete = false): array
+    public function evaluar(Solicitud $solicitud, User $actor, bool $paraPaquete = false, string $permisoPaquete = 'preparePackage'): array
     {
         $items = [];
         $add = function (string $clave, bool $cumplido, string $mensaje) use (&$items): void {
@@ -30,8 +30,8 @@ class SolicitudRequisitosService
         $add('habilitacion', config('originacion.aprobaciones_habilitadas') === true, 'La aprobación está desactivada para toda la instalación. No se resuelve modificando documentos o dictámenes. Solicita al administrador técnico revisar ORIGINACION_APROBACIONES_HABILITADAS y reconstruir la caché de configuración. En QA puede habilitarla para pruebas; en operación real requiere validación del operador.');
         $add('estado', $solicitud->estado === ($paraPaquete ? SolicitudEstado::Aprobada : SolicitudEstado::EnRevision) && $revision !== null,
             $paraPaquete ? 'Se necesita una solicitud aprobada. Regresa a la solicitud para completar su revisión.' : 'La solicitud debe estar en revisión.');
-        $add('permiso', Gate::forUser($actor)->allows($paraPaquete ? 'preparePackage' : 'approve', $solicitud),
-            $paraPaquete ? 'Se requiere permiso para preparar paquetes y la sucursal responsable seleccionada.' : 'Se requiere permiso de aprobación y la sucursal responsable seleccionada.');
+        $add('permiso', Gate::forUser($actor)->allows($paraPaquete ? $permisoPaquete : 'approve', $solicitud),
+            $paraPaquete ? 'Se requiere permiso para esta acción contractual y la sucursal responsable seleccionada.' : 'Se requiere permiso de aprobación y la sucursal responsable seleccionada.');
         if ($paraPaquete) {
             $add('vigencia_aprobacion', $aprobacion?->accion === 'aprobar' && $aprobacion->vigente_hasta !== null
                 && $aprobacion->vigente_hasta->toDateString() >= $this->fecha->hoy()->toDateString(),
