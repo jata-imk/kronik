@@ -25,8 +25,10 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 - Estado: en progreso
 - Última actualización: 2026-09-29
-- Último punto estable: main 64d7247, PR #26 integrado y CI aprobado.
-- Continuación actual: `feat/formalizacion-firma`, recepción PDF privada y revisión
+- Último punto estable: main 78f3cd5, PR #27 integrado y CI aprobado.
+- Continuación actual P5: `feat/creditos-desembolso`; ejecución registrada en
+  [Agent Note 07](07-amortizacion-pagos-cobranza.md). Firma P4b entregada.
+- Entrega anterior: `feat/formalizacion-firma`, recepción PDF privada y revisión
   manual independiente. Aceptar conserva formalización QA inmutable; rechazar
   permite otra copia sin borrar evidencia. ADR 0018 y guion
   `docs/how-to/qa-firma-digitalizada.md`. La interfaz lo llama «Contrato y tabla
@@ -70,7 +72,7 @@ El alcance completo y las decisiones de producto permanecen en Notion.
   bandejas de Evaluación y Cumplimiento reutilizan el detalle de solicitud.
 - P3 completado: políticas versionadas, requisitos y aprobación individual/dual;
   huellas de identidad/documentos, vigencia y evidencia. Habilitación por defecto cerrada.
-- P4b (firma) en verificación; P5–P9 pendientes. Sin operación monetaria habilitada.
+- P4b (firma) integrado; P5 en verificación, P6–P9 pendientes. Sin dinero real habilitado.
 - Se preserva `.playwright-mcp/` local ajeno.
 
 ## Decisiones pendientes
@@ -133,8 +135,8 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 ## Siguiente paso
 
-Cerrar verificación y PR de firma P4b, integrar con CI aprobado y continuar con
-P5 desembolso sobre formalización QA vigente. No recalcular ni promover paquetes
+Continuar P5 desembolso sobre formalización QA vigente siguiendo Agent Note 07.
+Firma P4b integrada en PR #27, main 78f3cd5. No recalcular ni promover paquetes
 P4a existentes. La revisión del contador no bloquea QA con configuraciones de
 prueba; la lista concreta está en `docs/how-to/qa-simulacion-fiscal.md`.
 P5 desembolso y P6 primer pago completarán después la primera vertical. No promover

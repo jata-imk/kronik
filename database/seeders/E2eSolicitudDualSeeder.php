@@ -38,6 +38,7 @@ class E2eSolicitudDualSeeder extends Seeder
             $user->sucursales()->attach($admin->current_sucursal_id);
             $user->givePermissionTo(['read clientes', 'read solicitudes', 'create solicitudes', 'update solicitudes', 'approve solicitudes']);
             if ($perfil === 'aprobacion') {
+                $user->givePermissionTo(['read creditos', 'disburse creditos']);
                 $user->givePermissionTo(['read documentos', 'generate documentos', 'download documentos', 'prepare package solicitudes', 'receive signature solicitudes', 'review signature solicitudes']);
             }
             $usuarios[$perfil] = $user;
@@ -69,7 +70,7 @@ class E2eSolicitudDualSeeder extends Seeder
         $solicitud = $service->crear(['cliente_id' => $cliente->id, 'clave_creacion' => (string) Str::uuid(),
             'producto_version_id' => $producto->id, 'monto' => '10000.00', 'plazo' => 12, 'periodicidad' => 'mensual',
             'metodo' => 'cuota_nivelada', 'destino' => 'Escenario dual para pruebas de navegador.',
-            'fecha_estimada' => app(FechaEmpresa::class)->hoy()->addWeek()->toDateString()], $usuarios['captura']);
+            'fecha_estimada' => app(FechaEmpresa::class)->hoy()->toDateString()], $usuarios['captura']);
         $service->enviar($solicitud, 0, $usuarios['captura']);
         foreach (['evaluacion', 'pld'] as $index => $tipo) {
             $service->dictaminar($solicitud, ['lock_version' => $index + 1, 'tipo_dictamen' => $tipo,

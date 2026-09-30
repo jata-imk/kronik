@@ -27,6 +27,11 @@ function render(overrides = {}, can = { update: true, assign: true, sic: true })
 }
 
 describe("Detalle de solicitud", () => {
+    it("describe el desembolso en la bitácora sin claves internas", () => {
+        const wrapper = render({ estado: "desembolsada", eventos: [{ id: 1, tipo: "desembolso_qa", actor: { name: "Operador" }, created_at: "2026-09-29T12:00:00Z" }] });
+        expect(wrapper.text()).toContain("Desembolso QA registrado");
+        expect(wrapper.text()).not.toContain("desembolso_qa");
+    });
     it("recarga requisitos y confirma el resultado sin confundirlo con edición", async () => {
         const wrapper = render();
         await wrapper.findAll("button").find(button => button.text() === "Actualizar datos de la solicitud").trigger("click");

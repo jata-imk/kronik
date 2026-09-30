@@ -26,6 +26,11 @@ class Solicitud extends Model
         return $this->belongsTo(Cliente::class);
     }
 
+    public function credito()
+    {
+        return $this->hasOne(Credito::class);
+    }
+
     public function sucursal()
     {
         return $this->belongsTo(Sucursal::class);

@@ -1,5 +1,8 @@
 # Probar recepción y validación de firma digitalizada
 
+Continuación P5: después de aceptar la firma, seguir el
+[guion de desembolso QA](qa-desembolso.md). Los límites siguientes describen P4b.
+
 ## Qué representa
 
 **Contrato y tabla de pagos** conserva el documento y las condiciones acordadas

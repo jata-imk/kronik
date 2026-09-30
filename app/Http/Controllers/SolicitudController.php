@@ -41,7 +41,7 @@ class SolicitudController extends Controller
         }
         $solicitudes = Solicitud::query()->with($this->relations())
             ->when($mine, fn ($q) => $q->where('responsable_id', $request->user()->id))
-            ->when($mine && empty($filters['estado']), fn ($q) => $q->whereNotIn('estado', [SolicitudEstado::Rechazada, SolicitudEstado::Cancelada]))
+            ->when($mine && empty($filters['estado']), fn ($q) => $q->whereNotIn('estado', [SolicitudEstado::Rechazada, SolicitudEstado::Cancelada, SolicitudEstado::Desembolsada]))
             ->when($filters['estado'] ?? null, fn ($q, $estado) => $q->where('estado', $estado))
             ->when($filters['buscar'] ?? null, fn ($q, $buscar) => $q->whereHas('cliente', fn ($c) => $c->where(fn ($n) => $n
                 ->where('primer_nombre', 'like', '%'.$buscar.'%')->orWhere('apellido_paterno', 'like', '%'.$buscar.'%'))))
@@ -108,6 +108,7 @@ class SolicitudController extends Controller
 
         return Inertia::render('Solicitudes/Show', [
             'solicitud' => $solicitud,
+            'creditoId' => Gate::allows('viewAny', \App\Models\Credito::class) ? $solicitud->credito()->value('id') : null,
             'revision' => $revision,
             'dictamenes' => $dictamenes,
             'aprobacionVencida' => $ultimaAprobacion && $ultimaAprobacion->vigente_hasta->toDateString() < app(FechaEmpresa::class)->hoy()->toDateString(),
@@ -124,6 +125,7 @@ class SolicitudController extends Controller
                 'compliance' => Gate::allows('compliance', $solicitud),
                 'approve' => Gate::allows('approve', $solicitud),
                 'paquete' => Gate::allows('viewPackage', $solicitud),
+                'desembolso' => Gate::allows('viewAny', \App\Models\Credito::class) && Gate::allows('viewPackage', $solicitud),
                 'politica' => Gate::check(['read productos-crediticios', 'manage origination productos-crediticios']),
             ],
             'responsables' => (Gate::allows('assign', $solicitud) || Gate::allows('review', $solicitud)) ? User::query()->where('status', UserStatus::Active)

@@ -80,6 +80,9 @@ return [
     'custom' => [],
 
     'attributes' => [
+        'fecha_desembolso' => 'fecha del desembolso',
+        'importe' => 'importe',
+        'referencia' => 'referencia',
         'cliente_id' => 'cliente',
         'producto_version_id' => 'versión del producto',
         'responsable_id' => 'responsable',

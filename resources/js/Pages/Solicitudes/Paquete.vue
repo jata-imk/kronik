@@ -9,7 +9,7 @@ import { formatMoneyWithCents as money } from "@/Pages/ProductosCrediticios/prod
 import axios from "axios";
 import { computed, ref, watch } from "vue";
 
-const props = defineProps({ solicitud: Object, preparacion: Object, actual: Object, paquetes: Object, plantillas: Array, can: Object, firmas: Object, formalizacion: Object, firmaRequisitos: Object, firmaPendiente: Boolean, maxArchivoKb: Number });
+const props = defineProps({ solicitud: Object, creditoId: Number, preparacion: Object, actual: Object, paquetes: Object, plantillas: Array, can: Object, firmas: Object, formalizacion: Object, firmaRequisitos: Object, firmaPendiente: Boolean, maxArchivoKb: Number });
 const conImpuestos = computed(() => props.actual?.tabla?.fiscalidad?.estado === "proyeccion");
 const columnas = computed(() => [{field:"capital",label:"Capital"},{field:"interes",label:"Interés"},{field:"comisiones",label:"Comisiones"}, ...(conImpuestos.value ? [{field:"impuestos",label:"Impuestos"}] : []), {field:"pago_total",label: conImpuestos.value ? "Total con impuestos" : "Total sin impuestos"},{field:"saldo_final",label:"Saldo"}]);
 const drawer = ref(false);
@@ -42,6 +42,8 @@ function reintentar(paquete) { retry.post(route("solicitudes.paquete.retry", [pr
         <template #card-content>
             <div class="space-y-6 p-4 md:p-6">
                 <nav class="flex flex-wrap gap-4 text-sm" aria-label="Contexto del contrato">
+                    <Link v-if="creditoId" :href="route('creditos.show', creditoId)" class="font-semibold text-primary hover:underline"><i class="pi pi-wallet mr-2" />Abrir crédito CR-{{ creditoId }}</Link>
+                    <Link v-else-if="can.desembolso && solicitud.estado === 'formalizada'" :href="route('solicitudes.desembolso.create', solicitud.id)" class="font-semibold text-primary hover:underline"><i class="pi pi-send mr-2" aria-hidden="true" />Registrar desembolso QA</Link>
                     <Link :href="route('solicitudes.show', solicitud.id)" class="text-primary hover:underline"><i class="pi pi-arrow-left mr-2" aria-hidden="true" />Solicitud SOL-{{ solicitud.id }}</Link>
                     <Link :href="route('clientes.expediente.show', solicitud.cliente_id)" class="text-primary hover:underline"><i class="pi pi-folder-open mr-2" aria-hidden="true" />Expediente del cliente</Link>
                 </nav>
@@ -60,7 +62,7 @@ function reintentar(paquete) { retry.post(route("solicitudes.paquete.retry", [pr
                         <i class="pi pi-file-check text-4xl text-white/70" aria-hidden="true" />
                     </div>
                     <div class="mt-5 grid gap-3 sm:grid-cols-3">
-                        <div class="rounded-xl bg-white/10 p-4"><p class="text-sm text-white/80">Solicitud</p><p class="mt-1 font-semibold">{{ formalizacion ? 'Formalizada · QA' : solicitud.estado === 'aprobada' ? 'Aprobada · sin formalizar' : 'Pendiente de aprobación vigente' }}</p></div>
+                        <div class="rounded-xl bg-white/10 p-4"><p class="text-sm text-white/80">Solicitud</p><p class="mt-1 font-semibold">{{ solicitud.estado === 'desembolsada' ? 'Desembolsada · QA' : formalizacion ? 'Formalizada · QA' : solicitud.estado === 'aprobada' ? 'Aprobada · sin formalizar' : 'Pendiente de aprobación vigente' }}</p></div>
                         <div class="rounded-xl bg-white/10 p-4"><p class="text-sm text-white/80">Contrato de esta aprobación</p><p class="mt-1 font-semibold">{{ actual ? estados[actual.documento?.estado]?.[0] : 'Todavía no preparado' }}</p></div>
                         <div class="rounded-xl bg-white/10 p-4"><p class="text-sm text-white/80">Tratamiento fiscal</p><p class="mt-1 font-semibold">{{ actual ? (conImpuestos ? "Proyección fiscal congelada" : "Histórico anterior a impuestos") : "Se validará al preparar" }}</p></div>
                     </div>
@@ -86,7 +88,7 @@ function reintentar(paquete) { retry.post(route("solicitudes.paquete.retry", [pr
                         <ol class="mt-4 space-y-4 text-sm">
                             <li><p class="font-semibold text-primary">1. Preparar y revisar el PDF QA</p><p class="mt-1">Comprueba cliente, versión y tabla. Un contrato por aprobación evita copias accidentales.</p></li>
                             <li><p class="font-semibold">2. Recibir y revisar la firma</p><p class="mt-1 text-surface-500">Adjunta la copia completa y pide a un responsable autorizado compararla con el original. Un rechazo permite enviar una corrección.</p></li>
-                            <li><p class="font-semibold">3. Desembolso y pagos · posteriores</p><p class="mt-1 text-surface-500">No registres transferencias ni cobros usando esta tabla de prueba.</p></li>
+                            <li><p class="font-semibold">3. Registrar desembolso QA</p><p class="mt-1 text-surface-500">Después de aceptar la firma, revisa la fecha e importe y registra una transferencia sintética desde la solicitud. Pagos es el siguiente incremento.</p></li>
                         </ol>
                         <p class="mt-5 text-sm">¿Cambió algo? Devuelve y reenvía desde la solicitud. Una nueva aprobación permite otro contrato sin borrar el anterior.</p>
                     </aside>

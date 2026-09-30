@@ -7,6 +7,12 @@ use App\Models\User;
 
 class SolicitudPolicy
 {
+    public function disburse(User $user, Solicitud $solicitud): bool
+    {
+        return $this->viewPackage($user, $solicitud) && $user->can('read creditos') && $user->can('disburse creditos')
+            && $user->current_sucursal_id !== null && (int) $user->current_sucursal_id === (int) $solicitud->sucursal_id;
+    }
+
     public function receiveSignature(User $user, Solicitud $solicitud): bool
     {
         return $this->viewPackage($user, $solicitud) && $user->can('receive signature solicitudes')

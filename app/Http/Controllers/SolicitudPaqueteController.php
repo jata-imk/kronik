@@ -56,6 +56,7 @@ class SolicitudPaqueteController extends Controller
             'actual' => $actual ? [...$serialize($actual), 'tabla' => $actual->snapshot['tabla']] : null,
             'firmas' => $firmas,
             'formalizacion' => $actual?->formalizacion?->only(['id', 'modo', 'created_at', 'snapshot_hash']),
+            'creditoId' => Gate::allows('viewAny', \App\Models\Credito::class) ? $solicitud->credito()->value('id') : null,
             'firmaRequisitos' => $actual ? app(SolicitudFirmaService::class)->requisitos($solicitud, $actual, $request->user(),
                 Gate::allows('reviewSignature', $solicitud) ? 'reviewSignature' : 'receiveSignature') : null,
             'firmaPendiente' => $actual?->firmas()->where('estado', 'recibida')->exists() ?? false,
@@ -66,6 +67,7 @@ class SolicitudPaqueteController extends Controller
                 ->whereHas('plantilla', fn ($q) => $q->where('tipo', DocumentoPlantillaTipo::Contrato)->where('activa', true))
                 ->get()->map(fn ($v) => ['id' => $v->id, 'label' => $v->plantilla->nombre.' · v'.$v->numero]) : [],
             'can' => ['preparar' => Gate::allows('preparePackage', $solicitud),
+                'desembolso' => Gate::allows('viewAny', \App\Models\Credito::class),
                 'recibirFirma' => Gate::allows('receiveSignature', $solicitud),
                 'revisarFirma' => Gate::allows('reviewSignature', $solicitud)],
         ]);

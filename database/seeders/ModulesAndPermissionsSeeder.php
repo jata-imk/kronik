@@ -146,6 +146,7 @@ class ModulesAndPermissionsSeeder extends Seeder
         );
 
         $actionsPerModule = [
+            'creditos' => ['read', 'disburse'],
             'solicitudes' => ['create', 'read', 'update', 'assign', 'review', 'cancel', 'approve', 'prepare package', 'receive signature', 'review signature'],
             'evaluacion-solicitudes' => ['create', 'read'],
             'cumplimiento' => ['create', 'read'],
@@ -167,6 +168,7 @@ class ModulesAndPermissionsSeeder extends Seeder
         ];
 
         foreach ([
+            Module::updateOrCreate(['name' => 'creditos'], ['icon' => 'pi-wallet', 'route_name' => 'creditos', 'parent_id' => null]),
             Module::updateOrCreate(['name' => 'solicitudes'], ['icon' => 'pi-folder-open', 'route_name' => 'solicitudes', 'parent_id' => null]),
             Module::updateOrCreate(['name' => 'evaluacion-solicitudes'], ['icon' => 'pi-chart-bar', 'route_name' => 'evaluacion-solicitudes', 'parent_id' => null]),
             Module::updateOrCreate(['name' => 'cumplimiento'], ['icon' => 'pi-shield', 'route_name' => 'cumplimiento', 'parent_id' => null]),

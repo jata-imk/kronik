@@ -2,6 +2,7 @@
 
 - [Backlog 04: originación y solicitudes](04-originacion-solicitudes.md)
 - [Backlog 05: SIC y score](05-sic-score.md)
+- [Backlog 07: amortización, pagos y cobranza](07-amortizacion-pagos-cobranza.md)
 
 - [Backlog 03.5: documentos digitales y plantillas](03.5-documentos-digitales-y-plantillas.md)
 - [Backlog 03: productos crediticios](03-productos-crediticios.md)
