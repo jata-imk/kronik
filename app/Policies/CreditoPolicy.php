@@ -16,4 +16,16 @@ class CreditoPolicy
     {
         return $this->viewAny($user);
     }
+
+    public function pay(User $user, Credito $credito): bool
+    {
+        return $this->view($user, $credito) && $user->can('pay creditos')
+            && (int) $user->current_sucursal_id === (int) $credito->sucursal_id;
+    }
+
+    public function reversePayment(User $user, Credito $credito): bool
+    {
+        return $this->view($user, $credito) && $user->can('reverse payments creditos')
+            && (int) $user->current_sucursal_id === (int) $credito->sucursal_id;
+    }
 }

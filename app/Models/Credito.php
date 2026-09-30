@@ -49,4 +49,9 @@ class Credito extends Model
     {
         return $this->hasMany(CreditoMovimiento::class);
     }
+
+    public function pagos()
+    {
+        return $this->hasMany(CreditoPago::class);
+    }
 }

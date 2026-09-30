@@ -51,7 +51,7 @@ class CreditoController extends Controller
         return redirect()->route('creditos.show', $credito)->with('success', 'Desembolso QA registrado una sola vez. No se ejecutó una transferencia bancaria.');
     }
 
-    public function show(Credito $credito)
+    public function show(Credito $credito, \App\Services\Credito\PagoService $pagos)
     {
         Gate::authorize('view', $credito);
         $credito->load(['cliente:id,primer_nombre,apellido_paterno,apellido_materno', 'sucursal:id,nombre', 'responsable:id,name']);
@@ -63,6 +63,9 @@ class CreditoController extends Controller
             'desembolso' => [...$desembolso->only(['id', 'importe', 'fecha_efectiva', 'created_at', 'registrado_por', 'medio']), 'referencia' => $desembolso->referencia],
             'cronograma' => ['version' => $cronograma->version, 'snapshot_hash' => $cronograma->snapshot_hash, 'tabla' => $cronograma->snapshot],
             'movimientos' => $credito->movimientos()->latest('id')->paginate(25),
+            'pagos' => $credito->pagos()->latest('id')->paginate(10, ['id', 'credito_id', 'tipo', 'importe', 'fecha_efectiva', 'created_at', 'reversa_de'], 'pagos_page'),
+            'situacion' => $pagos->consultar($credito),
+            'puedePagar' => Gate::allows('pay', $credito),
             'puedeVerContrato' => Gate::allows('viewPackage', $credito->solicitud),
         ]);
     }

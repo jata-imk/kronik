@@ -146,7 +146,7 @@ class ModulesAndPermissionsSeeder extends Seeder
         );
 
         $actionsPerModule = [
-            'creditos' => ['read', 'disburse'],
+            'creditos' => ['read', 'disburse', 'pay', 'reverse payments'],
             'solicitudes' => ['create', 'read', 'update', 'assign', 'review', 'cancel', 'approve', 'prepare package', 'receive signature', 'review signature'],
             'evaluacion-solicitudes' => ['create', 'read'],
             'cumplimiento' => ['create', 'read'],

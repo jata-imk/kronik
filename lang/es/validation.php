@@ -82,6 +82,8 @@ return [
     'attributes' => [
         'fecha_desembolso' => 'fecha del desembolso',
         'importe' => 'importe',
+        'fecha_pago' => 'fecha efectiva del pago',
+        'previa_hash' => 'distribución revisada del pago',
         'referencia' => 'referencia',
         'cliente_id' => 'cliente',
         'producto_version_id' => 'versión del producto',
@@ -151,6 +153,9 @@ return [
         'confirmacion_revision' => 'confirmación de revisión del contrato firmado',
         'incluir_impuestos' => 'inclusión de impuestos en la simulación',
         'version.fiscalidad' => 'configuración fiscal',
+        'version.politica_mora' => 'política de atraso',
+        'version.politica_mora.gracia' => 'aplicación de los días de gracia',
+        'version.politica_mora.intereses' => 'modalidad de intereses durante la mora',
         'version.fiscalidad.uso' => 'uso de la configuración fiscal',
         'version.fiscalidad.referencia' => 'referencia fiscal de la institución',
         'version.fiscalidad.ordinario' => 'fiscalidad del interés ordinario',

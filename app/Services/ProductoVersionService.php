@@ -6,6 +6,7 @@ use App\Enums\ProductoVersionEstado;
 use App\Models\ProductoCrediticio;
 use App\Models\ProductoVersion;
 use App\Support\FiscalidadProducto;
+use App\Support\PoliticaMora;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +47,10 @@ class ProductoVersionService
             if (! array_key_exists('fiscalidad', $data['version'])) {
                 $data['version']['fiscalidad'] = $version->fiscalidad;
             }
+            if (! array_key_exists('politica_mora', $data['version'])) {
+                $data['version']['politica_mora'] = $version->politica_mora;
+            }
+            PoliticaMora::validate($data['version']);
             $anteriores = $version->comisiones()->get()->keyBy('concepto_comision_id');
             foreach ($data['version']['comisiones'] as &$comision) {
                 if (! array_key_exists('fiscalidad', $comision)) {
@@ -70,7 +75,7 @@ class ProductoVersionService
     {
         $origen->loadMissing(['periodicidades', 'reglas', 'comisiones']);
         $data = [
-            ...$origen->only(['moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual', 'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica', 'cat_no_aplica_motivo', 'fiscalidad']),
+            ...$origen->only(['moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual', 'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica', 'cat_no_aplica_motivo', 'fiscalidad', 'politica_mora']),
             'vigente_desde' => null,
             'periodicidades' => $origen->periodicidades->map->only(['periodicidad', 'plazo_minimo', 'plazo_maximo', 'plazo_predeterminado'])->all(),
             'reglas' => $origen->reglas->only(['metodos_amortizacion', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago']),
@@ -130,6 +135,7 @@ class ProductoVersionService
     private function crearVersion(ProductoCrediticio $producto, array $data, ?int $userId): ProductoVersion
     {
         FiscalidadProducto::validate($data);
+        PoliticaMora::validate($data);
         $numero = ((int) $producto->versiones()->lockForUpdate()->max('numero')) + 1;
         $version = $producto->versiones()->create([...$this->camposVersion($data), 'numero' => $numero, 'creada_por' => $userId]);
         $version->periodicidades()->createMany($data['periodicidades']);
@@ -141,7 +147,7 @@ class ProductoVersionService
 
     private function camposVersion(array $data): array
     {
-        return Arr::only($data, ['moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual', 'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica', 'cat_no_aplica_motivo', 'vigente_desde', 'fiscalidad']);
+        return Arr::only($data, ['moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual', 'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica', 'cat_no_aplica_motivo', 'vigente_desde', 'fiscalidad', 'politica_mora']);
     }
 
     /** @param array<int, array<string, mixed>> $comisiones */
@@ -171,7 +177,7 @@ class ProductoVersionService
     {
         $version->loadMissing(['periodicidades', 'reglas', 'comisiones.concepto']);
 
-        return json_decode(json_encode($version->only(['numero', 'moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual', 'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica', 'cat_no_aplica_motivo', 'fiscalidad']) + [
+        return json_decode(json_encode($version->only(['numero', 'moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual', 'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica', 'cat_no_aplica_motivo', 'fiscalidad', 'politica_mora']) + [
             'periodicidades' => $version->periodicidades->map->only(['periodicidad', 'plazo_minimo', 'plazo_maximo', 'plazo_predeterminado'])->all(),
             'reglas' => $version->reglas?->only(['metodos_amortizacion', 'convencion_interes', 'base_moratoria', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago', 'ajuste_dia_inhabil', 'redondeo']),
             'comisiones' => $version->comisiones->map(fn ($c) => [...$c->only(['tipo_importe', 'importe', 'base_calculo', 'momento_cobro', 'modalidad_cobro', 'obligatoria', 'incluye_cat', 'fiscalidad']), 'concepto' => $c->concepto->only(['clave', 'nombre'])])->all(),
