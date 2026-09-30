@@ -5,6 +5,7 @@
 - Notion: https://app.notion.com/p/3a061db7db7f8187affec6f73e92e952
 - Iniciativa: https://app.notion.com/p/3e161db7db7f817a8c89ec30767d4666
 - Rama: feat/creditos-desembolso, base main 78f3cd5 (PR #27 integrado).
+- PR: https://github.com/jata-imk/kronik/pull/28; implementación 3401a1f.
 - ADR: 0012, 0018, 0019.
 
 ## Objetivo
@@ -16,7 +17,7 @@ completo y decisiones permanecen en Notion; no duplicar aquí la especificación
 
 - Estado: en progreso.
 - Última actualización: 2026-09-29.
-- Último punto estable: PR #27 integrado, CI del PR y main aprobados.
+- Último punto verificado localmente: implementación P5 3401a1f, suites y hook aprobados.
 - Crédito, cronograma v1 congelado, desembolso y movimiento inicial separados.
   Navegación/listado/detalle y acceso desde solicitud/contrato. No pagos todavía.
 - Migración aditiva 2026_09_29_100000; seeder de permisos read/disburse creditos.
@@ -41,10 +42,12 @@ completo y decisiones permanecen en Notion; no duplicar aquí la especificación
 
 ## Siguiente paso
 
-Completar verificaciones P5, publicar PR e integrar solo con CI aprobado.
-Después P6, resolviendo únicamente los detalles de cálculo realmente pendientes.
+Verificar estado remoto del PR #28 y su CI antes de retomar; integración autorizada
+solo con CI aprobado. Resultado remoto de cierre se registra en Notion.
+Después P6, resolviendo únicamente los detalles de cálculo realmente pendientes;
+consultas de producto enviadas sobre impuesto proporcional y gracia/sustitución.
 
 ## Cierre
 
-- Pendiente PR y CI. No cerrar Backlog 07 ni iniciativa 04–07.
+- No cerrar Backlog 07 ni iniciativa 04–07 al integrar P5; pagos no implementados.
 - SIC real, anticipos/liquidación, cobranza ampliada y 02.5 siguen diferidos.
