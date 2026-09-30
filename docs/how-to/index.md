@@ -6,5 +6,8 @@
 - [Reset de datos de desarrollo](reset-datos-desarrollo.md)
 - [Restaurar catalogos](restaurar-catalogos.md)
 - [Migrar VPS](migrar-vps.md)
-- [Probar el paquete contractual QA](qa-paquete-contractual.md)
-- [Guion integral QA: vida de un crédito simple](qa-pagos.md)
+- [Empezar aquí: vida de un crédito simple en QA](qa-credito-simple.md)
+- Guías complementarias por etapa: [simulación fiscal](qa-simulacion-fiscal.md),
+  [paquete contractual](qa-paquete-contractual.md),
+  [firma digitalizada](qa-firma-digitalizada.md),
+  [desembolso](qa-desembolso.md) y [pagos](qa-pagos.md).

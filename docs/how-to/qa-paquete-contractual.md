@@ -1,20 +1,23 @@
 # Probar el paquete contractual QA (P4a)
 
-Continuación P4b: la pantalla se llama **Contrato y tabla de pagos**. La recepción
-y revisión manual de firma se prueban con el [guion de firma](qa-firma-digitalizada.md).
-Los límites siguientes describen el incremento P4a original, no toda la aplicación.
+Esta es una guía complementaria para la pantalla **Contrato y tabla de pagos**.
+Para una primera prueba completa empieza por el [guion principal del crédito
+simple](qa-credito-simple.md). Aquí se detallan generación, visor y recuperación
+del PDF. La recepción y revisión manual de firma tienen su [guía de
+firma](qa-firma-digitalizada.md).
 
 ## Alcance
 
 Desde una solicitud aprobada se prepara un PDF privado con una plantilla de
 contrato y su anexo informativo. Conserva las versiones/datos utilizados y muestra
-**Documento de prueba QA — sin validez contractual**. Firma, crédito, desembolso,
-impuestos operativos y pagos todavía no forman parte de este incremento.
+**Documento de prueba QA — sin validez contractual**. Preparar el paquete no
+formaliza ni desembolsa el crédito; esas acciones se realizan después desde la
+misma solicitud, como explica el guion principal.
 
 ## Preparar la instalación QA
 
 Aplicar el despliegue habitual con respaldo, mantenimiento, dependencias y build.
-Dentro del servicio PHP del Compose utilizado por la instalación:
+En una instalación PHP directa, ejecutar desde la raíz de la aplicación:
 
 ```sh
 php artisan migrate --force
@@ -34,8 +37,8 @@ ORIGINACION_APROBACIONES_HABILITADAS=true
 ORIGINACION_PAQUETES_QA_HABILITADOS=true
 ```
 
-Si Compose entrega estas variables al contenedor, recrear los servicios afectados;
-editar un archivo que no consume el contenedor no cambia su configuración. Luego:
+Después de cambiar `.env`, reconstruir la caché de configuración y reiniciar las
+colas con el procedimiento de la instalación:
 
 ```sh
 php artisan optimize
@@ -67,6 +70,7 @@ en el anexo, no mediante nuevas variables arbitrarias.
    usar un producto con fiscalidad definida de prueba en ordinarios y comisiones
    aplicadas. Si falta, la pantalla debe orientar a crear una nueva versión y
    devolver/corregir/aprobar la solicitud; no editar una versión ya utilizada.
+   Para continuar hasta pagos QA, define también el tratamiento moratorio.
 3. Preparar: elegir contrato activo y confirmar uso QA. Omitir la confirmación
    primero: debe aparecer un error claro en español sin crear paquete.
 4. Confirmar una vez. La solicitud sigue aprobada, no formalizada. Durante la
@@ -98,8 +102,8 @@ en el anexo, no mediante nuevas variables arbitrarias.
 
 La integración fiscal no añade migraciones, permisos ni banderas. La marca QA
 permanece incluso si la configuración fiscal declara uso institucional; esto no
-certifica el contrato. Firma y formalización siguen pendientes. La revisión
-profesional para operación real está en [QA fiscal](qa-simulacion-fiscal.md).
+certifica el contrato. La revisión profesional de los cálculos está en
+[QA fiscal](qa-simulacion-fiscal.md).
 
 El listado genérico del expediente no mezcla estos paquetes con documentos
 operativos. Se consultan desde su solicitud para conservar contexto y permisos.

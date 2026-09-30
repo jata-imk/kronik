@@ -1,14 +1,22 @@
 # Probar la simulación con impuestos y preparar la revisión profesional
 
-Este incremento permite una **proyección de QA**, no habilita firma, desembolso,
-pagos ni operación real. No agrega migraciones; si vienes de antes de PR #24,
+Esta guía complementa la [prueba integral del crédito simple](qa-credito-simple.md).
+Se centra en la **simulación fiscal QA** y en las preguntas para el contador. La
+simulación no equivale a firma, desembolso, pago ni operación real; esas etapas QA
+se prueban por separado. No agrega migraciones; si vienes de antes de PR #24,
 aplica sus migraciones con el procedimiento habitual, sin reinicializar la base.
+
+El 16 % de los ejemplos siguientes es una **configuración ficticia para comprobar
+cálculos**, no una tasa que el sistema deba aplicar a todos los intereses o
+comisiones. La institución y su asesor deben definir cada concepto por separado.
 
 ## Recorrido de prueba
 
 1. Crear un producto de prueba o duplicar uno existente. En Fiscalidad, marcar
    Prueba / QA, definir ordinario gravado al 16 % sobre importe del concepto y
    moratorio sin definir. El moratorio no interviene en esta tabla sin atraso.
+   **Este borrador sirve solo para el simulador**: antes de usar una versión para
+   el recorrido hasta pagos, define también la fiscalidad moratoria.
 2. Simular $10,000, mensual, tres pagos, capital fijo, tasa ordinaria anual 36 %,
    disposición 01/01/2026, sin comisiones. Activar Incluir impuestos proyectados.
 3. La primera cuota debe mostrar interés $310.00, impuesto $49.60 y pago $3,692.93.

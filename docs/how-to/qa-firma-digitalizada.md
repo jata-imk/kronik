@@ -1,7 +1,8 @@
 # Probar recepción y validación de firma digitalizada
 
-Continuación P5: después de aceptar la firma, seguir el
-[guion de desembolso QA](qa-desembolso.md). Los límites siguientes describen P4b.
+Esta es una guía complementaria de [la prueba integral del crédito
+simple](qa-credito-simple.md). Después de aceptar la firma, continúa con el
+[desembolso QA](qa-desembolso.md).
 
 ## Qué representa
 
@@ -9,7 +10,8 @@ Continuación P5: después de aceptar la firma, seguir el
 de una solicitud. «Paquete» es su nombre técnico, no un módulo adicional.
 Generar el PDF no significa firma. Subir una copia tampoco significa aceptación.
 Un responsable autorizado la compara con el original y registra el resultado.
-En esta entrega todo es QA sin validez contractual: no hay desembolso ni dinero.
+La recepción y revisión son QA, sin validación contractual. Este paso no mueve
+dinero; el desembolso QA se registra después y tampoco ejecuta transferencias.
 
 ## Preparación
 
@@ -77,7 +79,8 @@ Remove-Item Env:\E2E_ORIGINACION_DUAL
 ```
 
 El runner usa su SQLite/almacén aislados. La copia E2E es sintética y solo prueba
-el flujo, no reconocimiento de firmas. P5 desembolso y P6 pago siguen pendientes.
+el flujo, no reconocimiento de firmas. El guion principal integra las etapas
+posteriores de desembolso y pagos QA.
 
 ## Evidencia visual sintética
 
