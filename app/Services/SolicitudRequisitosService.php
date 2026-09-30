@@ -18,7 +18,7 @@ class SolicitudRequisitosService
     public function __construct(private readonly FechaEmpresa $fecha, private readonly SolicitudExpedienteService $expediente) {}
 
     /** Call inside the application/client/product transaction when used for approval. */
-    public function evaluar(Solicitud $solicitud, User $actor, bool $paraPaquete = false, string $permisoPaquete = 'preparePackage'): array
+    public function evaluar(Solicitud $solicitud, User $actor, bool $paraPaquete = false, string $permisoPaquete = 'preparePackage', ?SolicitudEstado $estadoEsperado = null): array
     {
         $items = [];
         $add = function (string $clave, bool $cumplido, string $mensaje) use (&$items): void {
@@ -28,7 +28,7 @@ class SolicitudRequisitosService
         $politica = $revision?->snapshot['politica_originacion'] ?? null;
         $aprobacion = $paraPaquete ? $solicitud->resoluciones()->latest('id')->first() : null;
         $add('habilitacion', config('originacion.aprobaciones_habilitadas') === true, 'La aprobación está desactivada para toda la instalación. No se resuelve modificando documentos o dictámenes. Solicita al administrador técnico revisar ORIGINACION_APROBACIONES_HABILITADAS y reconstruir la caché de configuración. En QA puede habilitarla para pruebas; en operación real requiere validación del operador.');
-        $add('estado', $solicitud->estado === ($paraPaquete ? SolicitudEstado::Aprobada : SolicitudEstado::EnRevision) && $revision !== null,
+        $add('estado', $solicitud->estado === ($estadoEsperado ?? ($paraPaquete ? SolicitudEstado::Aprobada : SolicitudEstado::EnRevision)) && $revision !== null,
             $paraPaquete ? 'Se necesita una solicitud aprobada. Regresa a la solicitud para completar su revisión.' : 'La solicitud debe estar en revisión.');
         $add('permiso', Gate::forUser($actor)->allows($paraPaquete ? $permisoPaquete : 'approve', $solicitud),
             $paraPaquete ? 'Se requiere permiso para esta acción contractual y la sucursal responsable seleccionada.' : 'Se requiere permiso de aprobación y la sucursal responsable seleccionada.');

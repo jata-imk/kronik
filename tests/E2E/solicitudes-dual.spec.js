@@ -91,11 +91,27 @@ test("dual bloquea capturista y permite aprobar a otra persona sin superadmin", 
         await expect.poll(() => aprobador.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
         await aprobador.evaluate(() => scrollTo(0, 0));
         await aprobador.screenshot({ path: testInfo.outputPath("firma-qa-mobile.png"), fullPage: true });
+        await aprobador.setViewportSize({ width: 1440, height: 1000 });
+        await aprobador.getByRole("link", { name: "Registrar desembolso QA", exact: true }).click();
+        await expect(aprobador.getByRole("heading", { name: "Registrar desembolso", exact: true })).toBeVisible();
+        await expect(aprobador.locator('.p-message').first()).toHaveCSS("opacity", "1");
+        await aprobador.screenshot({ path: testInfo.outputPath("desembolso-qa-desktop.png"), fullPage: true });
+        await aprobador.getByRole("button", { name: "Revisar y registrar desembolso QA" }).click();
+        await aprobador.getByLabel("Referencia única de transferencia", { exact: false }).fill("QA-TRANSFERENCIA-E2E-001");
+        await aprobador.getByRole("checkbox").check();
+        await aprobador.getByRole("button", { name: "Confirmar registro QA" }).click();
+        await expect(aprobador).toHaveURL(/\/creditos\/\d+$/);
+        await expect(aprobador.getByRole("heading", { name: "Desembolso registrado", exact: true })).toBeVisible();
+        await expect(aprobador.getByText("Referencia: QA-TRANSFERENCIA-E2E-001", { exact: true })).toBeVisible();
+        await aprobador.screenshot({ path: testInfo.outputPath("credito-qa-desktop.png"), fullPage: true });
+        await aprobador.setViewportSize({ width: 390, height: 844 });
+        await expect.poll(() => aprobador.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        await aprobador.screenshot({ path: testInfo.outputPath("credito-qa-mobile.png"), fullPage: true });
         assertApproverConsole();
     } finally {
         await context.close();
     }
     await page.getByRole("button", { name: "Actualizar datos de la solicitud" }).click();
-    await expect(page.getByRole("heading", { name: "Formalizada · QA", exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Desembolsada · QA", exact: true })).toBeVisible();
     assertConsole();
 });

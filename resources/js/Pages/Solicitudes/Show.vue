@@ -8,7 +8,7 @@ import SolicitudDictamenPanel from "@/Components/Solicitudes/SolicitudDictamenPa
 import SolicitudAprobacion from "@/Components/Solicitudes/SolicitudAprobacion.vue";
 import "../../../css/originacion.css";
 import { formatMoneyWithCents as money } from "@/Pages/ProductosCrediticios/productValidation";
-const props = defineProps({ solicitud: Object, revision: { type: Object, default: null }, can: Object, responsables: Array, resoluciones: { type: Array, default: () => [] }, dictamenes: { type: Object, default: () => ({ evaluacion: null, pld: null }) }, aprobacion: { type: Object, default: null }, aprobacionVencida: Boolean });
+const props = defineProps({ solicitud: Object, creditoId: Number, revision: { type: Object, default: null }, can: Object, responsables: Array, resoluciones: { type: Array, default: () => [] }, dictamenes: { type: Object, default: () => ({ evaluacion: null, pld: null }) }, aprobacion: { type: Object, default: null }, aprobacionVencida: Boolean });
 const envio = useForm({ lock_version: props.solicitud.lock_version });
 const assignment = useForm({ lock_version: props.solicitud.lock_version, responsable_id: props.solicitud.responsable_id });
 const campos = { producto_version_id: "Producto y versión", monto: "Monto", plazo: "Número de pagos", periodicidad: "Periodicidad", metodo: "Amortización", destino: "Destino", fecha_estimada: "Fecha estimada" };
@@ -25,7 +25,7 @@ function actualizar() {
         onFinish: () => { actualizando.value = false; if (!actualizacion.value) actualizacion.value = "La actualización no se completó. Intenta nuevamente."; },
     });
 }
-const eventos = { creada: "Solicitud creada", borrador_actualizado: "Captura actualizada", enviada: "Enviada a revisión", asignada: "Responsable asignado", devuelta: "Devuelta para corrección", rechazada: "Solicitud rechazada", cancelada: "Solicitud cancelada", dictamen_registrado: "Revisión especializada registrada", aprobada: "Solicitud aprobada", paquete_preparado: "Contrato y tabla de pagos preparados", paquete_reintentado: "Generación del contrato QA reintentada", firma_recibida: "Copia firmada recibida", firma_rechazada: "Copia firmada rechazada", formalizada_qa: "Firma aceptada · formalización QA" };
+const eventos = { creada: "Solicitud creada", borrador_actualizado: "Captura actualizada", enviada: "Enviada a revisión", asignada: "Responsable asignado", devuelta: "Devuelta para corrección", rechazada: "Solicitud rechazada", cancelada: "Solicitud cancelada", dictamen_registrado: "Revisión especializada registrada", aprobada: "Solicitud aprobada", paquete_preparado: "Contrato y tabla de pagos preparados", paquete_reintentado: "Generación del contrato QA reintentada", firma_recibida: "Copia firmada recibida", firma_rechazada: "Copia firmada rechazada", formalizada_qa: "Firma aceptada · formalización QA", desembolso_qa: "Desembolso QA registrado" };
 function enviar() {
     envio.lock_version = props.solicitud.lock_version;
     envio.post(route("solicitudes.enviar", props.solicitud.id), { preserveScroll: true });
@@ -46,7 +46,7 @@ function asignar() {
         </template>
         <template #card-content>
             <div class="originacion-content space-y-6 p-4 md:p-6">
-                <Message severity="info" :closable="false">{{ solicitudEditable(solicitud.estado) ? 'Siguiente paso: completa la captura y envía a revisión. Guardar el borrador todavía no habilita Evaluación ni PLD.' : 'Revisa los pendientes antes de resolver. Las consultas SIC productivas, formalización y desembolso aún no están disponibles.' }}</Message>
+                <Message severity="info" :closable="false">{{ solicitudEditable(solicitud.estado) ? 'Siguiente paso: completa la captura y envía a revisión. Guardar el borrador todavía no habilita Evaluación ni PLD.' : solicitudEstados[solicitud.estado]?.siguiente }}</Message>
                 <Message v-if="aprobacionVencida" severity="warn" :closable="false">La aprobación venció. Devuelve y reenvía para obtener nuevos dictámenes y resolución antes de formalizar.</Message>
                 <section class="rounded border border-surface-200 p-4 dark:border-surface-700">
                     <h2 class="text-lg font-semibold">{{ solicitudEstados[solicitud.estado]?.label }}</h2>
@@ -56,6 +56,8 @@ function asignar() {
                     <ul class="mt-3 grid gap-2 md:grid-cols-2"><li v-for="(label, field) in campos" :key="field" class="flex items-center gap-2"><i :class="solicitud[field] !== null && solicitud[field] !== '' ? 'pi pi-check-circle text-green-600' : 'pi pi-clock text-amber-600'" aria-hidden="true" /><span><span class="sr-only">{{ solicitud[field] !== null && solicitud[field] !== '' ? 'Completo:' : 'Pendiente:' }}</span> {{ label }}</span></li></ul>
                 </section>
                 <div class="flex flex-wrap gap-4">
+                    <Link v-if="creditoId" :href="route('creditos.show', creditoId)" class="rounded-lg bg-primary px-4 py-2 font-semibold text-primary-contrast"><i class="pi pi-wallet mr-2" />Abrir crédito CR-{{ creditoId }}</Link>
+                    <Link v-else-if="can.desembolso && solicitud.estado === 'formalizada'" :href="route('solicitudes.desembolso.create', solicitud.id)" class="rounded-lg bg-primary px-4 py-2 font-semibold text-primary-contrast"><i class="pi pi-send mr-2" aria-hidden="true" />Registrar desembolso QA</Link>
                     <Link v-if="can.paquete" :href="route('solicitudes.paquete.show', solicitud.id)" class="text-primary underline"><i class="pi pi-file-pdf mr-2" aria-hidden="true" />Contrato y tabla de pagos</Link>
                     <Link :href="route('clientes.expediente.show', solicitud.cliente_id)" class="text-primary underline">Expediente y documentos del cliente</Link>
                     <Link v-if="can.sic" :href="route('clientes.historial-crediticio.show', solicitud.cliente_id)" class="text-primary underline">Historial SIC</Link>

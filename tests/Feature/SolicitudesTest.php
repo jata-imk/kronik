@@ -15,6 +15,91 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(fn () => $this->withoutVite());
 
+function prepararDesembolsoQa($test): array
+{
+    [$user, $solicitud, $paquete] = prepararContratoParaFirma($test);
+    $test->post(route('solicitudes.firmas.store', [$solicitud, $paquete]), datosFirma())->assertSessionHasNoErrors();
+    $firma = \App\Models\SolicitudFirma::firstOrFail();
+    $test->post(route('solicitudes.firmas.review', [$solicitud, $firma]), datosRevisionFirma())->assertSessionHasNoErrors();
+    $test->travel(7)->days();
+    config(['originacion.desembolsos_qa_habilitados' => true]);
+    $data = ['fecha_desembolso' => app(FechaEmpresa::class)->hoy()->toDateString(), 'importe' => $paquete->snapshot['tabla']['escenario']['efectivo_entregado'],
+        'referencia' => 'QA-'.Str::uuid(), 'idempotency_key' => (string) Str::uuid(), 'lock_version' => 7, 'confirmacion_qa' => true];
+
+    return [$user, $solicitud->fresh(), $paquete, $firma, $data];
+}
+
+test('desembolso QA crea un crédito calendario y movimiento inmutables sin duplicados', function () {
+    [$user, $solicitud, $paquete, , $data] = prepararDesembolsoQa($this);
+    $route = route('solicitudes.desembolso.store', $solicitud);
+    $this->get(route('solicitudes.desembolso.create', $solicitud))->assertInertia(fn (Assert $page) => $page->where('preparacion.permitido', true));
+    $this->post($route, $data)->assertSessionHasNoErrors();
+    $this->post($route, $data)->assertSessionHasNoErrors();
+    $credito = \App\Models\Credito::firstOrFail();
+    expect($solicitud->fresh()->estado)->toBe(SolicitudEstado::Desembolsada)
+        ->and($credito->cronogramas()->first()->snapshot)->toBe($paquete->snapshot['tabla'])
+        ->and($credito->capital_inicial)->toBe($paquete->snapshot['tabla']['escenario']['saldo_financiado']);
+    foreach (['creditos', 'credito_desembolsos', 'credito_cronogramas', 'credito_movimientos'] as $table) {
+        $this->assertDatabaseCount($table, 1);
+    }
+    $this->post($route, [...$data, 'importe' => '9999'])->assertSessionHasErrors('desembolso');
+    $this->post($route, [...$data, 'idempotency_key' => (string) Str::uuid()])->assertSessionHasErrors('desembolso');
+    foreach ([$credito, $credito->desembolso, $credito->cronogramas()->first(), $credito->movimientos()->first()] as $registro) {
+        expect(fn () => $registro->delete())->toThrow(ValidationException::class);
+        expect(fn () => $registro->update(['created_at' => now()->subDay()]))->toThrow(ValidationException::class);
+    }
+    expect(\Illuminate\Support\Facades\DB::table('credito_desembolsos')->value('referencia'))->not->toContain($data['referencia']);
+    $this->get(route('creditos.show', $credito))->assertInertia(fn (Assert $page) => $page
+        ->component('Creditos/Show')->missing('credito.condiciones')->missing('desembolso.payload_hash')->where('desembolso.referencia', $data['referencia']));
+    $this->get(route('creditos.index'))->assertInertia(fn (Assert $page) => $page->where('creditos.total', 1));
+    $this->get(route('solicitudes.desembolso.create', $solicitud))->assertRedirect(route('creditos.show', $credito));
+    $this->post(route('solicitudes.resolver', $solicitud), ['accion' => 'cancelar', 'lock_version' => 8, 'motivo' => 'Intento inválido posterior al desembolso.'])->assertSessionHasErrors('solicitud');
+    $this->post(route('solicitudes.resolver', $solicitud), ['accion' => 'devolver', 'lock_version' => 8, 'motivo' => 'Intento inválido posterior al desembolso.', 'responsable_id' => $user->id])->assertSessionHasErrors('solicitud');
+});
+
+test('desembolso bloquea condiciones inválidas sin efectos parciales', function (string $caso) {
+    [$user, $solicitud, , $firma, $data] = prepararDesembolsoQa($this);
+    match ($caso) {
+        'gate' => config(['originacion.desembolsos_qa_habilitados' => false]),
+        'importe' => $data['importe'] = '1.00',
+        'fecha' => $data['fecha_desembolso'] = app(FechaEmpresa::class)->hoy()->subDay()->toDateString(),
+        'lock' => $data['lock_version'] = 0,
+        'futuro' => $this->travelBack(),
+        'pasado' => $this->travel(1)->days(),
+        'expediente' => $solicitud->cliente->update(['ocupacion' => 'Cambio material']),
+        'firma' => \Illuminate\Support\Facades\Storage::disk($firma->disk)->put($firma->path, 'archivo alterado'),
+        'sucursal' => $user->forceFill(['current_sucursal_id' => null])->save(),
+    };
+    $this->post(route('solicitudes.desembolso.store', $solicitud), $data)->assertSessionHasErrors('desembolso');
+    foreach (['creditos', 'credito_desembolsos', 'credito_cronogramas', 'credito_movimientos'] as $table) {
+        $this->assertDatabaseCount($table, 0);
+    }
+    expect($solicitud->fresh()->estado)->toBe(SolicitudEstado::Formalizada);
+})->with(['gate', 'importe', 'fecha', 'lock', 'futuro', 'pasado', 'expediente', 'firma', 'sucursal']);
+
+test('desembolso exige permisos independientes y valida en español', function () {
+    $this->seed(ModulesAndPermissionsSeeder::class);
+    [$user, $solicitud, , , $data] = prepararDesembolsoQa($this);
+    $user->forceFill(['is_super_admin' => false])->save();
+    $user->givePermissionTo(['read clientes', 'read solicitudes', 'read documentos']);
+    $this->get(route('creditos.index'))->assertForbidden();
+    $this->get(route('solicitudes.desembolso.create', $solicitud))->assertForbidden();
+    $user->givePermissionTo('read creditos');
+    $this->get(route('solicitudes.desembolso.create', $solicitud))->assertOk();
+    $this->post(route('solicitudes.desembolso.store', $solicitud), $data)->assertForbidden();
+    $user->givePermissionTo('disburse creditos');
+    $this->post(route('solicitudes.desembolso.store', $solicitud), [])->assertSessionHasErrors(['importe', 'fecha_desembolso', 'referencia', 'confirmacion_qa']);
+    foreach (session('errors')->all() as $error) {
+        expect($error)->not->toContain('validation.');
+    }
+    $this->post(route('solicitudes.desembolso.store', $solicitud), [...$data, 'importe' => '10000.001'])->assertSessionHasErrors('importe');
+    $this->post(route('solicitudes.desembolso.store', $solicitud), $data)->assertSessionHasNoErrors();
+    $credito = \App\Models\Credito::firstOrFail();
+    $user->revokePermissionTo('read creditos');
+    $this->get(route('creditos.show', $credito))->assertForbidden();
+    expect(collect(app(\App\Services\NavigationService::class)->forUser($user))->pluck('items')->flatten(1)->pluck('label'))->not->toContain('Créditos');
+});
+
 function prepararContratoParaFirma($test): array
 {
     [$user, $solicitud, , , , , $data] = prepararSolicitudConContrato($test);

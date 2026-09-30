@@ -14,6 +14,7 @@ class NavigationService
             ['Clientes', 'pi pi-fw pi-users', 'clientes.index', ['read clientes']],
             ['Mi trabajo', 'pi pi-fw pi-check-square', 'solicitudes.trabajo', ['read solicitudes', 'read clientes']],
             ['Solicitudes', 'pi pi-fw pi-folder-open', 'solicitudes.index', ['read solicitudes', 'read clientes']],
+            ['Créditos', 'pi pi-fw pi-wallet', 'creditos.index', ['read creditos', 'read solicitudes', 'read clientes']],
             ['Evaluación', 'pi pi-fw pi-chart-bar', 'evaluacion-solicitudes.index', ['read solicitudes', 'read clientes', 'read evaluacion-solicitudes']],
             ['Cumplimiento', 'pi pi-fw pi-shield', 'cumplimiento.index', ['read solicitudes', 'read clientes', 'read cumplimiento']],
             ['Consultas SIC', 'pi pi-fw pi-credit-card', 'clientes.historial-crediticio.index', ['read clientes', 'read historial-crediticio']],

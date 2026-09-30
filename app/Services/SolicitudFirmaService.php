@@ -145,7 +145,7 @@ class SolicitudFirmaService
         }
     }
 
-    private function originalIntacto(SolicitudPaquete $paquete): void
+    public function originalIntacto(SolicitudPaquete $paquete): void
     {
         $doc = $paquete->documento;
         if (! hash_equals($paquete->snapshot_hash, hash('sha256', json_encode($paquete->snapshot, JSON_THROW_ON_ERROR)))
