@@ -4,6 +4,7 @@ export const productErrorTabs = {
         "version.monto_",
         "version.tasa_",
         "version.dias_",
+        "version.politica_mora",
         "version.periodicidades",
     ],
     reglas: ["version.reglas"],

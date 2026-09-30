@@ -141,6 +141,46 @@ test('impuesto financiado participa del saldo y del límite sin mutar la versió
     $this->postJson(route('productos-crediticios.simular', $copy), escenarioFiscal())->assertUnprocessable()->assertJsonValidationErrors('monto');
 });
 
+test('política de mora es explícita versionada e inmutable sin reinterpretar históricos', function () {
+    $user = actingAsSuperAdmin();
+    $service = app(ProductoVersionService::class);
+    $policy = ['gracia' => 'retroactiva', 'intereses' => 'sustituye'];
+    $data = productoPayload(['politica_mora' => $policy]);
+    $this->actingAs($user)->post(route('productos-crediticios.store'), $data)->assertSessionHasNoErrors();
+    $version = ProductoVersion::firstOrFail();
+    expect($version->politica_mora)->toBe($policy);
+    unset($data['version']['politica_mora']);
+    $this->put(route('productos-crediticios.update', [$version->producto, $version]), $data)->assertSessionHasNoErrors();
+    expect($version->refresh()->politica_mora)->toBe($policy);
+    $service->activar($version, today()->toDateString());
+    $version->refresh();
+    expect($version->snapshot['politica_mora'])->toBe($policy);
+    expect(fn () => $version->update(['politica_mora' => null]))->toThrow(Illuminate\Validation\ValidationException::class);
+    $copy = $service->nuevaVersion($version->producto, $version->fresh(), $user->id);
+    expect($copy->politica_mora)->toBe($policy);
+    $copy->refresh()->update(['politica_mora' => null]);
+    expect($version->fresh()->snapshot['politica_mora'])->toBe($policy);
+    expect($copy->fresh()->politica_mora)->toBeNull();
+});
+
+test('mora histórica no adquiere reglas por defecto y la validación protege el servicio', function () {
+    $service = app(ProductoVersionService::class);
+    $version = $service->crear(productoPayload(), null)->versiones()->first();
+    expect($version->politica_mora)->toBeNull();
+    $service->activar($version, today()->toDateString());
+    expect($version->fresh()->snapshot['politica_mora'])->toBeNull();
+    $data = productoPayload(['politica_mora' => ['gracia' => 'efectiva', 'intereses' => 'inventado']]);
+    $data['clave'] = 'INVALIDA';
+    expect(fn () => $service->crear($data, null))->toThrow(Illuminate\Validation\ValidationException::class);
+});
+
+test('política de mora inválida muestra errores en español', function (mixed $policy) {
+    $user = actingAsSuperAdmin();
+    $this->actingAs($user)->post(route('productos-crediticios.store'), productoPayload(['politica_mora' => $policy]))->assertSessionHasErrors();
+    expect(implode(' ', session('errors')->all()))->not->toContain('validation.');
+    $this->assertDatabaseCount('producto_versiones', 0);
+})->with([[[]], [['gracia' => 'efectiva', 'intereses' => null]], [['gracia' => 'otra', 'intereses' => 'ambos']], [['gracia' => 'efectiva', 'intereses' => 'ambos', 'extra' => true]]]);
+
 test('fiscalidad se conserva por concepto en versiones snapshots y clientes anteriores', function () {
     $user = actingAsSuperAdmin();
     $concepto = ConceptoComision::create(['clave' => 'FISCAL-QA', 'nombre' => 'Comisión QA', 'activo' => true]);

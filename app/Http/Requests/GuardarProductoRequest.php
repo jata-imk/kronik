@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\ProductoCrediticio;
 use App\Support\FiscalidadProducto;
+use App\Support\PoliticaMora;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -21,6 +22,7 @@ class GuardarProductoRequest extends FormRequest
 
         return [
             ...FiscalidadProducto::rules((array) $this->input('version', [])),
+            ...PoliticaMora::rules(),
             'clave' => ['required', 'string', 'max:40', Rule::unique('productos_crediticios', 'clave')->ignore($producto instanceof ProductoCrediticio ? $producto->id : null)],
             'nombre' => ['required', 'string', 'max:255'],
             'descripcion' => ['nullable', 'string', 'max:2000'],
@@ -101,6 +103,7 @@ class GuardarProductoRequest extends FormRequest
     public function messages(): array
     {
         return [
+            ...PoliticaMora::messages(),
             'version.monto_maximo.gte' => 'El monto máximo debe ser mayor o igual que el monto mínimo.',
             'version.periodicidades.*.plazo_maximo.gte' => 'El plazo máximo debe ser mayor o igual que el plazo mínimo.',
         ];

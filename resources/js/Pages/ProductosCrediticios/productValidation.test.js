@@ -20,6 +20,7 @@ describe("product validation presentation", () => {
     });
     it("ubica errores anidados en su pestaña", () => {
         expect(tabForProductError("version.monto_minimo")).toBe("condiciones");
+        expect(tabForProductError("version.politica_mora.intereses")).toBe("condiciones");
         expect(tabForProductError("version.reglas.metodos_amortizacion")).toBe(
             "reglas",
         );

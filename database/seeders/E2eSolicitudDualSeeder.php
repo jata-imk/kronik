@@ -38,7 +38,7 @@ class E2eSolicitudDualSeeder extends Seeder
             $user->sucursales()->attach($admin->current_sucursal_id);
             $user->givePermissionTo(['read clientes', 'read solicitudes', 'create solicitudes', 'update solicitudes', 'approve solicitudes']);
             if ($perfil === 'aprobacion') {
-                $user->givePermissionTo(['read creditos', 'disburse creditos']);
+                $user->givePermissionTo(['read creditos', 'disburse creditos', 'pay creditos', 'reverse payments creditos']);
                 $user->givePermissionTo(['read documentos', 'generate documentos', 'download documentos', 'prepare package solicitudes', 'receive signature solicitudes', 'review signature solicitudes']);
             }
             $usuarios[$perfil] = $user;
@@ -54,9 +54,9 @@ class E2eSolicitudDualSeeder extends Seeder
         $producto = ProductoVersion::whereHas('producto', fn ($q) => $q->where('clave', 'CS-ESENCIAL'))->firstOrFail();
         $productos = app(\App\Services\ProductoVersionService::class);
         $producto = $productos->nuevaVersion($producto->producto, $producto, $admin->id)->refresh();
-        $producto->update(['fiscalidad' => ['uso' => 'prueba', 'referencia' => 'Escenario sintético E2E',
+        $producto->update(['politica_mora' => ['gracia' => 'efectiva', 'intereses' => 'ambos'], 'fiscalidad' => ['uso' => 'prueba', 'referencia' => 'Escenario sintético E2E',
             'ordinario' => ['tratamiento' => 'gravado', 'tasa' => '16', 'base' => 'importe_concepto'],
-            'moratorio' => ['tratamiento' => 'no_definido']]]);
+            'moratorio' => ['tratamiento' => 'exento']]]);
         foreach ($producto->comisiones as $comision) {
             $comision->update(['fiscalidad' => ['tratamiento' => 'gravado', 'tasa' => '16', 'base' => 'importe_concepto']]);
         }

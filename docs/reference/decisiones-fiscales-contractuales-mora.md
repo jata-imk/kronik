@@ -139,6 +139,28 @@ Estos son criterios pendientes de implementar y probar, no resultados de pruebas
 
 ## Lo que este acuerdo no resuelve
 
+### Precisiones posteriores aprobadas para P6
+
+- Reparto proporcional entre cada concepto gravado y su impuesto, conservando el
+  orden de aplicación. No impone 16% ni crea impuestos para conceptos sin impuesto.
+- Sustitución solo sobre capital vencido sujeto a mora. Con A continúa ordinario
+  durante gracia; con B la sustitución alcanza retroactivamente esos días al
+  superar la gracia, sin cobrar ambos por los mismos días sobre ese capital.
+- Límite inicial aprobado: en B + sustitución no admitir pagos parciales aplicados
+  a una cuota durante su gracia. Admitir cubrir completamente la cuota afectada,
+  incluidos conceptos e impuestos. Mantener las demás combinaciones y fechas.
+  Validar en servidor antes de registrar y explicar en previa; no cambiar la fecha
+  o importe recibidos para eludirlo. Un pago a cuotas anteriores que no alcanza la
+  cuota en gracia no es un abono parcial a esta última.
+- **Pendiente posterior: implementar compensación trazable** para retirar este
+  límite. Requiere movimientos compensatorios vinculados a ordinario e impuesto
+  ya cobrados, sin borrar recibos ni cobrar doble; diseño fiscal, permisos, motivo,
+  idempotencia, concurrencia, reversos y distribución deben verificarse antes de
+  habilitarlo. No es saldo a favor libre ni devolución automática.
+
+Estas precisiones resuelven la combinación y prioridad fiscal antes pendientes
+en el texto histórico siguiente; no acreditan que P6 esté entregado.
+
 Quedan cerradas las dos modalidades V1 de coexistencia, la admisión de pagos
 pasados solo sin movimientos posteriores y la exclusión inicial de excedentes.
 Límites especiales y recálculo por inserción de pagos entre movimientos históricos

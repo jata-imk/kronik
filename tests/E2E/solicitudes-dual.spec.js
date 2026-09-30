@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { login, failOnConsoleErrors } from "./support/auth.js";
 
 test("dual bloquea capturista y permite aprobar a otra persona sin superadmin", async ({ page, browser }, testInfo) => {
-    test.setTimeout(150_000);
+    test.setTimeout(180_000);
     test.skip(process.env.E2E_ORIGINACION_DUAL !== "true", "Requiere escenario aislado con aprobación habilitada expresamente.");
     const assertConsole = await failOnConsoleErrors(page);
     await login(page, { email: "captura.dual@example.test", password: "password" });
@@ -107,6 +107,27 @@ test("dual bloquea capturista y permite aprobar a otra persona sin superadmin", 
         await aprobador.setViewportSize({ width: 390, height: 844 });
         await expect.poll(() => aprobador.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
         await aprobador.screenshot({ path: testInfo.outputPath("credito-qa-mobile.png"), fullPage: true });
+        await aprobador.setViewportSize({ width: 1440, height: 1000 });
+        await aprobador.getByRole("link", { name: "Registrar pago QA", exact: true }).click();
+        await aprobador.getByLabel("Importe recibido (MXN)", { exact: false }).pressSequentially("290");
+        await aprobador.getByLabel("Referencia única del pago", { exact: false }).fill("QA-PAGO-E2E-001");
+        await aprobador.getByRole("button", { name: "Revisar distribución" }).click();
+        await expect(aprobador.getByRole("heading", { name: "Distribución propuesta" })).toBeVisible();
+        await aprobador.screenshot({ path: testInfo.outputPath("pago-qa-desktop.png"), fullPage: true });
+        await aprobador.setViewportSize({ width: 390, height: 844 });
+        await expect.poll(() => aprobador.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        await aprobador.screenshot({ path: testInfo.outputPath("pago-qa-mobile.png"), fullPage: true });
+        await aprobador.getByRole("checkbox").check();
+        await aprobador.getByRole("button", { name: "Confirmar pago QA" }).click();
+        await expect(aprobador.getByRole("heading", { name: /^Recibo interno #/ })).toBeVisible();
+        await expect(aprobador.getByText("Referencia: QA-PAGO-E2E-001", { exact: true })).toBeVisible();
+        await aprobador.screenshot({ path: testInfo.outputPath("recibo-qa-mobile.png"), fullPage: true });
+        await aprobador.getByRole("button", { name: "Revertir último pago" }).click();
+        await aprobador.getByLabel("Motivo del reverso", { exact: false }).fill("Corrección sintética del escenario E2E.");
+        await aprobador.getByRole("checkbox").check();
+        await aprobador.getByRole("button", { name: "Confirmar reverso QA" }).click();
+        await expect(aprobador.getByRole("heading", { name: /^Reverso #/ })).toBeVisible();
+        await expect(aprobador.getByRole("link", { name: /^Consultar pago original/ })).toBeVisible();
         assertApproverConsole();
     } finally {
         await context.close();

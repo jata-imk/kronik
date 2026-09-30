@@ -1,4 +1,5 @@
 <script setup>
+import PoliticaMoraEditor from "@/Components/Products/PoliticaMoraEditor.vue";
 import FinancialFieldHelp from "@/Components/Products/FinancialFieldHelp.vue";
 import ProductVersionStatus from "@/Components/Products/ProductVersionStatus.vue";
 import ProductTaxPolicy from "@/Components/Products/ProductTaxPolicy.vue";
@@ -41,6 +42,8 @@ const helpGuideVisible = ref(false);
 const editingVersion = ref(null);
 const fiscalVersion = ref(null);
 const fiscalVisible = ref(false);
+const moraVersion = ref(null);
+const moraVisible = ref(false);
 const showFiscalPolicy = (version) => {
     fiscalVersion.value = {
         ...version,
@@ -169,6 +172,7 @@ const emptyVersion = () => ({
     tasa_ordinaria_anual: 36,
     tasa_moratoria_anual: 72,
     dias_gracia_mora: 3,
+    politica_mora: { gracia: "efectiva", intereses: null },
     cat_aplica: true,
     cat_no_aplica_motivo: "",
     vigente_desde: null,
@@ -310,6 +314,7 @@ const openEdit = (version) => {
             tasa_ordinaria_anual: Number(version.tasa_ordinaria_anual),
             tasa_moratoria_anual: Number(version.tasa_moratoria_anual),
             dias_gracia_mora: version.dias_gracia_mora,
+            politica_mora: version.politica_mora ? { ...version.politica_mora } : null,
             cat_aplica: version.cat_aplica,
             cat_no_aplica_motivo: version.cat_no_aplica_motivo ?? "",
             vigente_desde: version.vigente_desde,
@@ -629,6 +634,7 @@ watch(
                             <Column header="Versión" style="width:16%"><template #body="{ data }"><div class="flex items-center gap-2"><Avatar :label="`v${data.numero}`" shape="circle" class="bg-primary-100 font-bold text-primary-700" /><ProductVersionStatus :state="data.estado" :used="data.usos_count > 0" /></div></template></Column>
                             <Column header="Condiciones"><template #body="{ data }"><p class="font-medium">{{ moneyCompact(data.monto_minimo) }} – {{ moneyCompact(data.monto_maximo) }}</p><p class="text-sm text-surface-500">{{ percent(data.tasa_ordinaria_anual) }} ordinaria · {{ data.dias_gracia_mora }} días de gracia</p></template></Column>
                             <Column header="Fiscalidad"><template #body="{ data }"><Button :label="data.fiscalidad ? (data.fiscalidad.uso === 'prueba' ? 'Prueba / QA' : 'Institucional') : 'Sin definir'" icon="pi pi-percentage" severity="secondary" size="small" :aria-label="`Ver fiscalidad versión ${data.numero}`" @click="showFiscalPolicy(data)" /></template></Column>
+                            <Column header="Atraso"><template #body="{ data }"><Button :label="data.politica_mora ? 'Configurado' : 'Sin definir'" icon="pi pi-clock" severity="secondary" size="small" :aria-label="`Ver política de atraso versión ${data.numero}`" @click="moraVersion = data; moraVisible = true" /></template></Column>
                             <Column header="Periodicidad"><template #body="{ data }"><div class="flex flex-wrap gap-1"><Chip v-for="item in data.periodicidades" :key="item.id" :label="`${periodicityLabel[item.periodicidad]} ${item.plazo_minimo}–${item.plazo_maximo}`" /></div></template></Column>
                             <Column header="Vigencia"><template #body="{ data }"><p class="text-sm">{{ data.vigente_desde || 'Sin programar' }}</p><p class="text-xs text-surface-500">{{ data.cat_aplica ? 'CAT aplicable' : 'CAT no aplicable' }}</p></template></Column>
                             <Column header="Acciones"><template #body="{ data }"><div class="flex flex-nowrap gap-1"><Button v-if="data.estado === 'borrador' && can('update productos-crediticios')" v-tooltip.top="'Editar borrador'" icon="pi pi-pencil" text rounded :aria-label="`Editar versión ${data.numero}`" @click="openEdit(data)" /><Button v-if="can('simulate productos-crediticios')" v-tooltip.top="'Simular'" icon="pi pi-calculator" text rounded :aria-label="`Simular versión ${data.numero}`" @click="openSimulator(data)" /><Button v-if="can('version productos-crediticios')" v-tooltip.top="'Crear nueva versión'" icon="pi pi-copy" text rounded :aria-label="`Duplicar versión ${data.numero}`" @click="versionCopy(data)" /><Button v-if="data.estado === 'borrador' && can('activate productos-crediticios')" v-tooltip.top="'Activar'" icon="pi pi-check-circle" text rounded severity="success" :aria-label="`Activar versión ${data.numero}`" @click="activate(data)" /><Button v-if="['activa','programada'].includes(data.estado) && can('retire productos-crediticios')" v-tooltip.top="'Retirar'" icon="pi pi-ban" text rounded severity="danger" :aria-label="`Retirar versión ${data.numero}`" @click="retire(data)" /></div></template></Column>
@@ -637,6 +643,7 @@ watch(
                 </main>
             </div>
 
+            <Drawer v-model:visible="moraVisible" position="right" :header="`Política de atraso · versión ${moraVersion?.numero ?? ''}`" :style="{ width: 'min(48rem, 96vw)' }"><PoliticaMoraEditor v-if="moraVersion" :model-value="moraVersion.politica_mora" readonly /></Drawer>
             <Drawer v-model:visible="fiscalVisible" position="right" :header="`Fiscalidad · versión ${fiscalVersion?.numero ?? ''}`" :style="{ width: 'min(64rem, 96vw)' }">
                 <Message v-if="fiscalVersion?.legacyFiscal" severity="warn" :closable="false">Esta versión no tiene configuración fiscal registrada. No se asume ninguna exención; la presentación de prueba no modifica el histórico.</Message>
                 <ProductTaxPolicy v-if="fiscalVersion" :version="fiscalVersion" :conceptos="conceptosComision" readonly />
@@ -657,7 +664,7 @@ watch(
                                 <div class="flex items-center gap-2"><Checkbox v-model="form.version.cat_aplica" input-id="cat-applies" binary /><label for="cat-applies">Mostrar CAT informativo</label><FinancialFieldHelp :title="help.cat[0]" :description="help.cat[1]" :example="help.cat[2]" :note="help.cat[3]" /></div>
                                 <div v-if="!form.version.cat_aplica"><label for="cat-reason" class="mb-1 block text-sm font-medium">Motivo de no aplicación *</label><InputText id="cat-reason" v-model="form.version.cat_no_aplica_motivo" :invalid="!!error('version.cat_no_aplica_motivo')" :aria-invalid="!!error('version.cat_no_aplica_motivo')" fluid /><Message v-if="error('version.cat_no_aplica_motivo')" severity="error" size="small">{{ error('version.cat_no_aplica_motivo') }}</Message></div>
                             </div></TabPanel>
-                            <TabPanel value="condiciones"><div class="grid gap-4 pt-3 md:grid-cols-2 lg:grid-cols-4">
+                            <TabPanel value="condiciones"><PoliticaMoraEditor v-model="form.version.politica_mora" :errors="form.errors" class="mt-3" /><div class="grid gap-4 pt-3 md:grid-cols-2 lg:grid-cols-4">
                                 <div v-for="field in [{k:'monto_minimo',l:'Monto mínimo',h:'amount'},{k:'monto_maximo',l:'Monto máximo',h:'amount'}]" :key="field.k"><div class="flex items-center"><label :for="field.k" class="text-sm font-medium">{{ field.l }} *</label><FinancialFieldHelp :title="help[field.h][0]" :description="help[field.h][1]" :example="help[field.h][2]" /></div><InputNumber :id="field.k" v-model="form.version[field.k]" mode="currency" currency="MXN" locale="es-MX" :invalid="!!error(`version.${field.k}`)" :aria-invalid="!!error(`version.${field.k}`)" fluid /><Message v-if="error(`version.${field.k}`)" severity="error" size="small">{{ error(`version.${field.k}`) }}</Message></div>
                                 <div v-for="field in [{k:'tasa_ordinaria_anual',l:'Tasa ordinaria anual'},{k:'tasa_moratoria_anual',l:'Tasa moratoria anual'}]" :key="field.k"><div class="flex items-center"><label :for="field.k" class="text-sm font-medium">{{ field.l }} *</label><FinancialFieldHelp :title="help.rate[0]" :description="help.rate[1]" :example="help.rate[2]" /></div><InputNumber :id="field.k" v-model="form.version[field.k]" suffix=" %" :min-fraction-digits="2" :invalid="!!error(`version.${field.k}`)" :aria-invalid="!!error(`version.${field.k}`)" fluid /><Message v-if="error(`version.${field.k}`)" severity="error" size="small">{{ error(`version.${field.k}`) }}</Message></div>
                                 <div><div class="flex items-center"><label for="grace-days" class="text-sm font-medium">Días de gracia de mora</label><FinancialFieldHelp :title="help.grace[0]" :description="help.grace[1]" :example="help.grace[2]" /></div><InputNumber id="grace-days" v-model="form.version.dias_gracia_mora" :min="0" :invalid="!!error('version.dias_gracia_mora')" :aria-invalid="!!error('version.dias_gracia_mora')" fluid /><Message v-if="error('version.dias_gracia_mora')" severity="error" size="small">{{ error('version.dias_gracia_mora') }}</Message></div>

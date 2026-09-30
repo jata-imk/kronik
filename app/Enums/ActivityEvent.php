@@ -18,6 +18,8 @@ enum ActivityEvent: string
     case ApplicationSignatureReceived = 'solicitud.signature_received';
     case ApplicationSignatureReviewed = 'solicitud.signature_reviewed';
     case CreditDisbursed = 'credito.disbursed';
+    case CreditPaymentRecorded = 'credito.payment_recorded';
+    case CreditPaymentReversed = 'credito.payment_reversed';
     case TwoFactorCompleted = 'login.2fa_completed';
     case UserProfileUpdated = 'user.profile.updated';
     case CompanyUpdated = 'empresa.updated';
@@ -68,6 +70,8 @@ enum ActivityEvent: string
     public function label(): string
     {
         return match ($this) {
+            self::CreditPaymentRecorded => 'Pago QA registrado',
+            self::CreditPaymentReversed => 'Pago QA revertido',
             self::ApplicationCreated => 'Solicitud creada',
             self::ApplicationUpdated => 'Borrador de solicitud actualizado',
             self::ApplicationSubmitted => 'Solicitud enviada a revisión',

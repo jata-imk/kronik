@@ -7,6 +7,10 @@ test("configura fiscalidad explícita y conserva la consulta de la versión", as
     await page.getByRole("button", { name: "Nuevo producto", exact: true }).click();
     await page.getByRole("textbox", { name: "Clave *", exact: true }).fill("FISCAL-E2E");
     await page.getByLabel("Nombre comercial").fill("Producto fiscal QA");
+    await page.getByRole("tab", { name: "Montos y tasas", exact: true }).click();
+    await page.getByRole("combobox", { name: "Intereses durante la mora", exact: true }).click();
+    await page.getByRole("option", { name: "Moratorio sustituye al ordinario", exact: true }).click();
+    await expect(page.getByText(/Con A, el ordinario continúa durante la gracia/)).toBeVisible();
     await page.getByRole("tab", { name: "Fiscalidad", exact: true }).click();
     await expect(page.getByText("Cada concepto, su tratamiento")).toBeVisible();
     await page.getByRole("combobox", { name: "Tratamiento · Interés ordinario", exact: true }).click();
@@ -20,6 +24,15 @@ test("configura fiscalidad explícita y conserva la consulta de la versión", as
     await page.getByRole("button", { name: "Guardar borrador" }).click();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await page.getByRole("button").filter({ hasText: "Producto fiscal QA" }).click();
+    await page.getByRole("button", { name: "Ver política de atraso versión 1", exact: true }).click();
+    await expect(page.getByText("A · Gracia efectiva (recomendada)", { exact: true })).toBeVisible();
+    await expect(page.getByText("Moratorio sustituye al ordinario", { exact: true })).toBeVisible();
+    await expect.poll(() => page.locator('.p-drawer').evaluate(el => {
+        const rect = el.getBoundingClientRect();
+        return rect.left >= 0 && rect.right <= innerWidth + 1;
+    })).toBe(true);
+    await page.screenshot({ path: test.info().outputPath("politica-atraso-desktop.png"), fullPage: true, animations: "disabled" });
+    await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Ver fiscalidad versión 1", exact: true }).click();
     await expect(page.getByLabel("Tasa de impuesto (%) · Interés ordinario", { exact: true })).toHaveValue("16.12345678");
     await expect(page.getByLabel("Tasa de impuesto (%) · Interés ordinario", { exact: true })).toBeDisabled();

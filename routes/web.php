@@ -49,6 +49,11 @@ Route::middleware([
     Route::get('mi-trabajo', [\App\Http\Controllers\SolicitudController::class, 'index'])->name('solicitudes.trabajo');
     Route::get('creditos', [\App\Http\Controllers\CreditoController::class, 'index'])->name('creditos.index');
     Route::get('creditos/{credito}', [\App\Http\Controllers\CreditoController::class, 'show'])->name('creditos.show');
+    Route::get('creditos/{credito}/pagos/create', [\App\Http\Controllers\CreditoPagoController::class, 'create'])->name('creditos.pagos.create');
+    Route::post('creditos/{credito}/pagos/preview', [\App\Http\Controllers\CreditoPagoController::class, 'preview'])->name('creditos.pagos.preview');
+    Route::post('creditos/{credito}/pagos', [\App\Http\Controllers\CreditoPagoController::class, 'store'])->name('creditos.pagos.store');
+    Route::get('creditos/{credito}/pagos/{pago}', [\App\Http\Controllers\CreditoPagoController::class, 'show'])->name('creditos.pagos.show');
+    Route::post('creditos/{credito}/pagos/{pago}/reverso', [\App\Http\Controllers\CreditoPagoController::class, 'reverse'])->name('creditos.pagos.reverse');
     Route::get('solicitudes/{solicitud}/desembolso', [\App\Http\Controllers\CreditoController::class, 'preparar'])->name('solicitudes.desembolso.create');
     Route::post('solicitudes/{solicitud}/desembolso', [\App\Http\Controllers\CreditoController::class, 'store'])->name('solicitudes.desembolso.store');
     Route::get('evaluacion-solicitudes', [\App\Http\Controllers\SolicitudController::class, 'index'])->name('evaluacion-solicitudes.index');

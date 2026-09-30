@@ -7,4 +7,5 @@ return [
     'paquetes_qa_habilitados' => env('ORIGINACION_PAQUETES_QA_HABILITADOS', false),
     'firmas_qa_habilitadas' => env('ORIGINACION_FIRMAS_QA_HABILITADAS', false),
     'desembolsos_qa_habilitados' => env('ORIGINACION_DESEMBOLSOS_QA_HABILITADOS', false),
+    'pagos_qa_habilitados' => env('ORIGINACION_PAGOS_QA_HABILITADOS', false),
 ];

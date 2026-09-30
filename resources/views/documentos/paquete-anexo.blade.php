@@ -12,7 +12,14 @@
     <p>Monto: ${{ number_format((float) $snapshot['tabla']['monto'], 2) }} MXN · {{ $snapshot['tabla']['plazo'] }} pagos · {{ $snapshot['tabla']['periodicidad'] }} · {{ $snapshot['tabla']['metodo'] }}</p>
     <p>Destino: {{ $snapshot['condiciones']['destino'] }}</p>
     <p>Producto versión {{ $snapshot['producto']['numero'] }} · Tasa ordinaria anual: {{ $snapshot['producto']['tasa_ordinaria_anual'] }}% · Tasa moratoria anual: {{ $snapshot['producto']['tasa_moratoria_anual'] }}% · Días de gracia configurados: {{ $snapshot['producto']['dias_gracia_mora'] }}.</p>
-    <p>Convención: {{ $snapshot['producto']['reglas']['convencion_interes'] }}. Esta tabla no calcula mora ni aplica las nuevas modalidades de gracia o coexistencia de intereses, pendientes de implementación.</p>
+    <p>Convención: {{ $snapshot['producto']['reglas']['convencion_interes'] }}. Esta tabla proyecta curso normal, sin atraso.</p>
+    @if (!empty($snapshot['producto']['politica_mora']))
+        @php($mora = $snapshot['producto']['politica_mora'])
+        <p>Política de atraso conservada: {{ $mora['gracia'] === 'efectiva' ? 'A: los días de gracia no generan mora; comienza el día siguiente a terminar la gracia.' : 'B: si supera la gracia con capital vencido pendiente, la mora se calcula desde el día posterior al vencimiento.' }}</p>
+        <p>{{ $mora['intereses'] === 'ambos' ? 'Durante la mora se generan ordinario y moratorio sobre sus respectivas bases.' : 'El moratorio sustituye al ordinario solo sobre el capital vencido sujeto a mora. Con A, el ordinario continúa durante la gracia; con B, la sustitución es retroactiva al superarla, sin cobrar ambos por los mismos días sobre ese capital.' }}</p>
+    @else
+        <p>Modalidades de gracia y coexistencia de intereses sin definir en estas condiciones históricas; no se asignan reglas nuevas automáticamente.</p>
+    @endif
     <p>Saldo financiado: ${{ number_format((float) $snapshot['tabla']['escenario']['saldo_financiado'], 2) }} · Efectivo estimado al cliente: ${{ number_format((float) $snapshot['tabla']['escenario']['efectivo_entregado'], 2) }} MXN.</p>
     <table style="width:100%; border-collapse:collapse; font-size:8pt">
         <thead style="display:table-header-group"><tr>
