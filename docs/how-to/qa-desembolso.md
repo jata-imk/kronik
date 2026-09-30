@@ -1,5 +1,9 @@
 # Probar crédito y desembolso manual QA
 
+Esta es una guía complementaria. Para la primera prueba desde producto y cliente
+hasta pago, empieza por el [guion principal del crédito simple](qa-credito-simple.md).
+Aquí se amplía la etapa de desembolso y apertura del crédito.
+
 ## Preparar
 
 Seguir el despliegue habitual con respaldo, mantenimiento y migraciones.
@@ -40,9 +44,10 @@ Capturas del recorrido automatizado: [desembolso](../assets/desembolso-qa-deskto
 [crédito en escritorio](../assets/credito-qa-desktop.png) y
 [crédito en móvil](../assets/credito-qa-mobile.png).
 
-No ejecuta transferencias, no acredita contenido contractual ni fiscalidad y no
-ofrece pagos/reversos. Los cargos separados iniciales no se marcan cobrados.
-P6 agregará devengo y pagos; no usar esta proyección como saldo exigible.
+El desembolso no ejecuta transferencias ni acredita contenido contractual o
+fiscalidad. Los cargos separados iniciales no se marcan cobrados automáticamente.
+Los [pagos y reversos QA](qa-pagos.md) se registran en el crédito después de
+desembolsar; no uses la tabla firmada como saldo exigible actual.
 
 ## Verificación aislada
 

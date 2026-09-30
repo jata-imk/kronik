@@ -60,7 +60,7 @@ completo y decisiones permanecen en Notion; no duplicar aquí la especificación
 ## Siguiente paso
 
 Siguiente paso operativo: habilitar pagos únicamente en QA, aplicar migraciones y
-permisos, luego ejecutar docs/how-to/qa-pagos.md con un crédito QA nuevo. No
+permisos, luego ejecutar docs/how-to/qa-credito-simple.md con un crédito QA nuevo. No
 reabrir acuerdos funcionales. No afirmar operación real ni concurrencia
 multiconexión acreditada.
 
