@@ -1,7 +1,7 @@
 <script setup>
 import { useLayout } from "@sakai-vue/layout/composables/layout";
+import { KronikPreset, KronikPrimaryPalette } from "@/theme/kronik";
 import { $t, updatePreset, updateSurfacePalette } from "@primevue/themes";
-import Aura from "@primevue/themes/aura";
 import Lara from "@primevue/themes/lara";
 import Nora from "@primevue/themes/nora";
 import { ref } from "vue";
@@ -9,7 +9,7 @@ import { ref } from "vue";
 const { layoutConfig, isDarkTheme } = useLayout();
 
 const presets = {
-    Aura,
+    Aura: KronikPreset,
     Lara,
     Nora,
 };
@@ -18,27 +18,15 @@ const presetOptions = ref(Object.keys(presets));
 
 const menuMode = ref(layoutConfig.menuMode);
 const menuModeOptions = ref([
-    { label: "Static", value: "static" },
-    { label: "Overlay", value: "overlay" },
+    { label: "Fijo", value: "static" },
+    { label: "Flotante", value: "overlay" },
 ]);
 
-const primaryColors = ref([
+const primaryColors = [
     { name: "noir", palette: {} },
     {
         name: "emerald",
-        palette: {
-            50: "#ecfdf5",
-            100: "#d1fae5",
-            200: "#a7f3d0",
-            300: "#6ee7b7",
-            400: "#34d399",
-            500: "#10b981",
-            600: "#059669",
-            700: "#047857",
-            800: "#065f46",
-            900: "#064e3b",
-            950: "#022c22",
-        },
+        palette: KronikPrimaryPalette,
     },
     {
         name: "green",
@@ -280,9 +268,9 @@ const primaryColors = ref([
             950: "#4c0519",
         },
     },
-]);
+];
 
-const surfaces = ref([
+const surfaces = [
     {
         name: "slate",
         palette: {
@@ -419,12 +407,12 @@ const surfaces = ref([
             950: "#0c1920",
         },
     },
-]);
+];
 
 function getPresetExt() {
-    const color = primaryColors.value.find(
+    const color = primaryColors.find(
         (c) => c.name === layoutConfig.primary,
-    );
+    ) ?? primaryColors[1];
 
     if (color.name === "noir") {
         return {
@@ -482,10 +470,10 @@ function getPresetExt() {
             colorScheme: {
                 light: {
                     primary: {
-                        color: "{primary.500}",
+                        color: color.name === "emerald" ? "{primary.500}" : "{primary.700}",
                         contrastColor: "#ffffff",
-                        hoverColor: "{primary.600}",
-                        activeColor: "{primary.700}",
+                        hoverColor: color.name === "emerald" ? "{primary.700}" : "{primary.800}",
+                        activeColor: color.name === "emerald" ? "{primary.800}" : "{primary.900}",
                     },
                     highlight: {
                         background: "{primary.50}",
@@ -535,8 +523,8 @@ function applyTheme(type, color) {
 
 function onPresetChange() {
     layoutConfig.preset = preset.value;
-    const presetValue = presets[preset.value];
-    const surfacePalette = surfaces.value.find(
+    const presetValue = presets[preset.value] ?? KronikPreset;
+    const surfacePalette = surfaces.find(
         (s) => s.name === layoutConfig.surface,
     )?.palette;
 
@@ -556,34 +544,38 @@ function onMenuModeChange() {
 
 <template>
     <div
-        class="config-panel hidden absolute top-[3.25rem] right-0 w-64 p-4 bg-surface-0 dark:bg-surface-900 border border-surface rounded-border origin-top shadow-[0px_3px_5px_rgba(0,0,0,0.02),0px_0px_2px_rgba(0,0,0,0.05),0px_1px_4px_rgba(0,0,0,0.08)]"
+        class="config-panel hidden absolute top-[3.25rem] right-0 z-50 w-64 max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-5rem)] overflow-y-auto p-4 bg-surface-0 dark:bg-surface-900 border border-surface rounded-border origin-top shadow-[0px_3px_5px_rgba(0,0,0,0.02),0px_0px_2px_rgba(0,0,0,0.05),0px_1px_4px_rgba(0,0,0,0.08)]"
     >
         <div class="flex flex-col gap-4">
             <div>
-                <span class="text-sm text-muted-color font-semibold">Primary</span>
+                <span class="text-sm text-muted-color font-semibold">Color de énfasis</span>
                 <div class="pt-2 flex gap-2 flex-wrap justify-between">
                     <button
                         v-for="primaryColor of primaryColors"
                         :key="primaryColor.name"
                         type="button"
                         :title="primaryColor.name"
+                        :aria-label="`Color de énfasis ${primaryColor.name}`"
+                        :aria-pressed="layoutConfig.primary === primaryColor.name"
                         @click="updateColors('primary', primaryColor)"
-                        :class="['border-none w-5 h-5 rounded-full p-0 cursor-pointer outline-none outline-offset-1', { 'outline-primary': layoutConfig.primary === primaryColor.name }]"
+                        :class="['border-none w-11 h-11 rounded-full p-0 cursor-pointer outline-none outline-offset-1', { 'outline-primary': layoutConfig.primary === primaryColor.name }]"
                         :style="{ backgroundColor: `${primaryColor.name === 'noir' ? 'var(--text-color)' : primaryColor.palette['500']}` }"
                     ></button>
                 </div>
             </div>
             <div>
-                <span class="text-sm text-muted-color font-semibold">Surface</span>
+                <span class="text-sm text-muted-color font-semibold">Color de fondo</span>
                 <div class="pt-2 flex gap-2 flex-wrap justify-between">
                     <button
                         v-for="surface of surfaces"
                         :key="surface.name"
                         type="button"
                         :title="surface.name"
+                        :aria-label="`Color de fondo ${surface.name}`"
+                        :aria-pressed="layoutConfig.surface ? layoutConfig.surface === surface.name : isDarkTheme ? surface.name === 'zinc' : surface.name === 'slate'"
                         @click="updateColors('surface', surface)"
                         :class="[
-                            'border-none w-5 h-5 rounded-full p-0 cursor-pointer outline-none outline-offset-1',
+                            'border-none w-11 h-11 rounded-full p-0 cursor-pointer outline-none outline-offset-1',
                             { 'outline-primary': layoutConfig.surface ? layoutConfig.surface === surface.name : isDarkTheme ? surface.name === 'zinc' : surface.name === 'slate' }
                         ]"
                         :style="{ backgroundColor: `${surface.palette['500']}` }"
@@ -591,11 +583,11 @@ function onMenuModeChange() {
                 </div>
             </div>
             <div class="flex flex-col gap-2">
-                <span class="text-sm text-muted-color font-semibold">Presets</span>
+                <span class="text-sm text-muted-color font-semibold">Estilo de controles</span>
                 <SelectButton v-model="preset" @change="onPresetChange" :options="presetOptions" :allowEmpty="false" />
             </div>
             <div class="flex flex-col gap-2">
-                <span class="text-sm text-muted-color font-semibold">Menu Mode</span>
+                <span class="text-sm text-muted-color font-semibold">Modo del menú</span>
                 <SelectButton v-model="menuMode" @change="onMenuModeChange" :options="menuModeOptions" :allowEmpty="false" optionLabel="label" optionValue="value" />
             </div>
         </div>

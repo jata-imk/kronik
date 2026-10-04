@@ -1,5 +1,7 @@
 # Referencia
 
+- [Sistema de diseño UI/UX de Kronik](diseno-ui-ux.md)
+
 - [Originación: solicitudes y Mi trabajo](originacion-solicitudes.md)
 
 - [Estado de integración SIC y acceso](sic-estado-integracion.md)

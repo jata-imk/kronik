@@ -3,7 +3,7 @@ import { createInertiaApp } from "@inertiajs/vue3";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import { ZiggyVue } from "../../vendor/tightenco/ziggy";
 
-import Aura from "@primevue/themes/aura";
+import { KronikPreset } from "./theme/kronik";
 import PrimeVue from "primevue/config";
 import Select from "primevue/select";
 import { guardPrimeVueSelectOverlay } from "./Utils/primeVueSelectOverlay";
@@ -14,8 +14,11 @@ import ToastService from "primevue/toastservice";
 import twemojiDirective from "./Directives/twemoji";
 
 import "./bootstrap";
+import "@fontsource-variable/inter";
+import "@fontsource-variable/inter/wght-italic.css";
 import "../css/app.css";
 import "@sakai-vue/assets/styles.scss";
+import "../css/kronik.css";
 
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 guardPrimeVueSelectOverlay(Select);
@@ -33,7 +36,7 @@ createInertiaApp({
             .use(ZiggyVue)
             .use(PrimeVue, {
                 theme: {
-                    preset: Aura,
+                    preset: KronikPreset,
                     options: {
                         darkModeSelector: ".app-dark",
                     },

@@ -1,4 +1,5 @@
 <script setup>
+import PageHeader from "@/Components/PageHeader.vue";
 import { Link, useForm } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import axios from "axios";
@@ -53,7 +54,7 @@ function save() {
 
 <template>
     <AppLayout :title="solicitud ? 'Editar borrador' : 'Nueva solicitud'">
-        <template #card-header><header class="flex items-center gap-4 rounded-t-2xl bg-primary-50 p-6 dark:bg-primary-950/30"><i class="pi pi-folder-open text-3xl text-primary" aria-hidden="true" /><div><p class="text-sm text-surface-500">Originación · Captura</p><h1 class="text-2xl font-semibold">{{ solicitud ? `Editar SOL-${solicitud.id}` : "Nueva solicitud" }}</h1><p>Relaciona un cliente y un producto para comenzar su evaluación.</p></div></header></template>
+        <template #card-header><PageHeader eyebrow="Operación · Captura" :title="solicitud ? `Editar SOL-${solicitud.id}` : 'Nueva solicitud'" description="Relaciona un cliente y un producto para comenzar su evaluación." /></template>
         <template #card-content>
             <form class="originacion-content originacion-captura space-y-5 p-4 md:p-6" @submit.prevent="save">
                 <Message severity="info" :closable="false">Solo se muestran clientes de tu sucursal activa. Guarda un borrador con el cliente y completa las condiciones después. Evaluación y PLD se habilitan al enviar a revisión, no al guardar.</Message>

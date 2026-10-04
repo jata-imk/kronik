@@ -1,4 +1,5 @@
 <script setup>
+import PageHeader from "@/Components/PageHeader.vue";
 import { Link, router, useForm } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { computed, ref } from "vue";
@@ -39,10 +40,9 @@ function asignar() {
 <template>
     <AppLayout :title="`Solicitud SOL-${solicitud.id}`">
         <template #card-header>
-            <div class="originacion-heading flex flex-wrap items-center justify-between gap-3 p-6">
-                <div><h1 class="text-2xl font-semibold">Solicitud SOL-{{ solicitud.id }}</h1><p>{{ solicitud.cliente.primer_nombre }} {{ solicitud.cliente.apellido_paterno }} · {{ solicitud.sucursal.nombre }}</p></div>
-                <Link :href="route('solicitudes.index')" class="text-primary underline">Volver a solicitudes</Link>
-            </div>
+            <PageHeader eyebrow="Operación · Originación" :title="`Solicitud SOL-${solicitud.id}`" :description="`${solicitud.cliente.primer_nombre} ${solicitud.cliente.apellido_paterno} · ${solicitud.sucursal.nombre}`">
+                <template #actions><Link :href="route('solicitudes.index')" class="text-primary underline">Volver a solicitudes</Link></template>
+            </PageHeader>
         </template>
         <template #card-content>
             <div class="originacion-content space-y-6 p-4 md:p-6">
@@ -75,9 +75,9 @@ function asignar() {
                     <Button label="Enviar a revisión" :loading="envio.processing" @click="enviar" />
                     <p class="mt-2 text-sm">Al enviar se congela la revisión y se validan las condiciones contra el producto vigente. No genera consultas SIC ni movimientos monetarios.</p>
                 </section>
-                <form v-if="can.assign && !['rechazada', 'cancelada'].includes(solicitud.estado)" class="flex flex-wrap items-end gap-3" @submit.prevent="asignar">
-                    <div class="flex flex-col gap-1"><label for="sol-responsable">Responsable</label><Select input-id="sol-responsable" aria-label="Responsable" v-model="assignment.responsable_id" :options="responsables" option-label="name" option-value="id" filter filter-placeholder="Buscar por nombre" empty-filter-message="No hay responsables con ese nombre." /><small>Usuarios activos autorizados de esta sucursal.</small></div>
-                    <Button type="submit" label="Asignar responsable" :loading="assignment.processing" />
+                <form v-if="can.assign && !['rechazada', 'cancelada'].includes(solicitud.estado)" class="flex flex-wrap items-end gap-3 rounded-2xl border border-surface-200 p-4 dark:border-surface-700" @submit.prevent="asignar">
+                    <div class="flex min-w-0 flex-1 flex-col gap-1 sm:max-w-80"><label for="sol-responsable">Responsable</label><Select input-id="sol-responsable" aria-label="Responsable" v-model="assignment.responsable_id" :options="responsables" option-label="name" option-value="id" filter filter-placeholder="Buscar por nombre" empty-filter-message="No hay responsables con ese nombre." fluid /><small>Usuarios activos autorizados de esta sucursal.</small></div>
+                    <Button type="submit" label="Asignar responsable" :loading="assignment.processing" class="w-full sm:w-auto" />
                     <Message v-for="(error, key) in assignment.errors" :key="key" severity="error" :closable="false">{{ error }}</Message>
                 </form>
                 <div class="originacion-dictamenes grid items-start gap-4 xl:grid-cols-2">

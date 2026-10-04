@@ -1,6 +1,7 @@
 <script setup>
 import { Link } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
+import PageHeader from "@/Components/PageHeader.vue";
 import SimulationTaxSummary from "@/Components/Products/SimulationTaxSummary.vue";
 import { formatMoneyWithCents as money } from "@/Pages/ProductosCrediticios/productValidation";
 defineProps({ credito: Object, desembolso: Object, cronograma: Object, movimientos: Object, pagos: Object, situacion: Object, puedePagar: Boolean, puedeVerContrato: Boolean });
@@ -9,11 +10,11 @@ const tipos = { capital_inicial: "Capital inicial", devengo: "Concepto devengado
 </script>
 <template>
     <AppLayout :title="`Crédito CR-${credito.id}`">
+        <template #card-header><PageHeader eyebrow="Operación · Cartera" :title="`Crédito CR-${credito.id}`" :description="`${credito.cliente.primer_nombre} ${credito.cliente.apellido_paterno} · ${credito.sucursal.nombre}`" /></template>
         <template #card-content>
             <div class="space-y-6 p-4 md:p-6">
                 <nav class="flex flex-wrap gap-4 text-sm" aria-label="Contexto del crédito"><Link :href="route('creditos.index')" class="text-primary hover:underline"><i class="pi pi-arrow-left mr-2" />Créditos</Link><Link :href="route('solicitudes.show', credito.solicitud_id)" class="text-primary hover:underline">Solicitud SOL-{{ credito.solicitud_id }}</Link><Link :href="route('clientes.expediente.show', credito.cliente_id)" class="text-primary hover:underline">Expediente del cliente</Link><Link v-if="puedeVerContrato" :href="route('solicitudes.paquete.show', credito.solicitud_id)" class="text-primary hover:underline">Contrato y firma</Link></nav>
-                <header><p class="text-xs font-semibold uppercase tracking-widest text-primary">Crédito simple · MXN</p><h1 class="mt-2 text-2xl font-bold">Crédito CR-{{ credito.id }}</h1><p class="mt-2 text-surface-500">{{ credito.cliente.primer_nombre }} {{ credito.cliente.apellido_paterno }} · {{ credito.sucursal.nombre }}</p></header>
-                <section class="rounded-2xl bg-gradient-to-br from-slate-950 to-violet-700 p-6 text-white" aria-label="Resumen del crédito">
+                <section class="k-feature p-6" aria-label="Resumen del crédito">
                     <Tag value="Activo · QA" severity="success" /><h2 class="mt-4 text-xl font-semibold text-white">Desembolso registrado</h2>
                     <div class="mt-5 grid gap-4 sm:grid-cols-3"><div class="rounded-xl bg-white/10 p-4"><p>Efectivo entregado</p><p class="mt-2 text-2xl font-bold">{{ money(desembolso.importe) }}</p></div><div class="rounded-xl bg-white/10 p-4"><p>Capital inicial registrado</p><p class="mt-2 text-2xl font-bold">{{ money(credito.capital_inicial) }}</p></div><div class="rounded-xl bg-white/10 p-4"><p>Fecha efectiva</p><p class="mt-2 text-xl font-semibold">{{ fecha(desembolso.fecha_efectiva) }}</p></div></div>
                 </section>

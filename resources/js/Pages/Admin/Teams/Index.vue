@@ -1,4 +1,5 @@
 <script setup>
+import PageHeader from "@/Components/PageHeader.vue";
 import { computed, ref } from "vue";
 import { router, useForm, usePage } from "@inertiajs/vue3";
 import { FilterMatchMode } from "@primevue/core/api";
@@ -108,7 +109,7 @@ const reactivate = (team) =>
 
 <template>
     <AppLayout title="Equipos">
-        <template #card-header><div class="flex flex-wrap items-center justify-between gap-3 p-4"><div class="flex items-center"><Button icon="pi pi-arrow-left" as="a" :href="route('admin.dashboard')" /><div class="ml-4"><h2 class="text-2xl font-bold">Equipos y departamentos</h2><p class="text-sm text-surface-500">Contextos organizativos y de permisos.</p></div></div><Button v-if="can('create-teams')" label="Crear equipo" icon="pi pi-plus" @click="openCreate" /></div></template>
+        <template #card-header><PageHeader eyebrow="Administración · Organización" title="Equipos y departamentos" description="Contextos organizativos y de permisos."><template #actions><Button icon="pi pi-arrow-left" label="Volver" severity="secondary" as="a" :href="route('admin.dashboard')" /><Button v-if="can('create-teams')" label="Crear equipo" icon="pi pi-plus" @click="openCreate" /></template></PageHeader></template>
         <template #card-content>
             <ConfirmDialog />
             <div>

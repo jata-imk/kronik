@@ -1,6 +1,7 @@
 <script setup>
 import { Link, router } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
+import PageHeader from "@/Components/PageHeader.vue";
 import { reactive, ref } from "vue";
 import { solicitudEstados } from "@/Utils/solicitudEstados";
 import "../../../css/originacion.css";
@@ -20,13 +21,12 @@ function buscar(page = 1) {
 <template>
     <AppLayout :title="bandeja ?? (miTrabajo ? 'Mi trabajo' : 'Solicitudes')">
         <template #card-header>
-            <div class="originacion-heading flex flex-wrap items-center justify-between gap-3 p-6">
-                <div><p class="mb-1 text-sm text-surface-500">Originación · Bandeja de trabajo</p><h1 class="text-2xl font-semibold"><i class="pi pi-folder-open mr-2 text-primary" aria-hidden="true" />{{ bandeja ?? (miTrabajo ? "Mi trabajo" : "Solicitudes") }}</h1></div>
-                <div class="flex gap-4">
+            <PageHeader eyebrow="Operación · Originación" :title="bandeja ?? (miTrabajo ? 'Mi trabajo' : 'Solicitudes')" :description="miTrabajo ? 'Solicitudes bajo tu responsabilidad.' : 'Seguimiento desde la captura hasta la formalización.'">
+                <template #actions>
                     <Link :href="route(miTrabajo ? 'solicitudes.index' : 'solicitudes.trabajo')" class="text-primary underline">{{ miTrabajo ? "Todas las solicitudes" : "Mis pendientes" }}</Link>
-                    <Link v-if="puedeCrear" :href="route('solicitudes.create')" class="text-primary underline">Nueva solicitud</Link>
-                </div>
-            </div>
+                    <Link v-if="puedeCrear" :href="route('solicitudes.create')" class="k-action-link"><i class="pi pi-plus" aria-hidden="true" />Nueva solicitud</Link>
+                </template>
+            </PageHeader>
         </template>
         <template #card-content>
             <div class="originacion-content space-y-5 p-4 md:p-6">
@@ -38,7 +38,11 @@ function buscar(page = 1) {
                     <div class="flex flex-col gap-1"><label for="orden">Orden</label><Select input-id="orden" aria-label="Orden" v-model="filters.orden" :options="[{ label: 'Más recientes', value: 'recientes' }, { label: 'Más antiguas', value: 'antiguas' }]" option-label="label" option-value="value" /></div>
                     <Button type="submit" label="Buscar" :loading="loading" />
                 </form>
-                <DataTable :value="solicitudes.data" :loading="loading" striped-rows scrollable data-key="id">
+                <div class="k-mobile-records" aria-label="Solicitudes">
+                    <div v-if="!solicitudes.data.length" class="k-empty k-surface"><i class="pi pi-folder-open" aria-hidden="true" /><strong>Sin solicitudes con estos filtros</strong><span>Prueba otro estado o crea una nueva solicitud.</span></div>
+                    <article v-for="solicitud in solicitudes.data" :key="solicitud.id" class="k-surface k-record-card"><div><p class="k-eyebrow">SOL-{{ solicitud.id }}</p><h2 class="font-semibold">{{ solicitud.cliente?.primer_nombre }} {{ solicitud.cliente?.apellido_paterno }}</h2></div><p class="text-sm">{{ solicitudEstados[solicitud.estado]?.label }} · {{ solicitud.sucursal?.nombre ?? 'Sin sucursal' }}</p><p class="text-sm text-surface-500">{{ solicitudEstados[solicitud.estado]?.siguiente }}</p><Link :href="route('solicitudes.show', solicitud.id)" class="k-action-link">Abrir solicitud <i class="pi pi-arrow-right" aria-hidden="true" /></Link></article>
+                </div>
+                <DataTable class="k-desktop-records" :value="solicitudes.data" :loading="loading" striped-rows scrollable data-key="id">
                     <template #empty>No hay solicitudes con estos filtros. Puedes crear una o consultar todas las solicitudes.</template>
                     <Column header="Solicitud"><template #body="{ data }"><Link :href="route('solicitudes.show', data.id)" class="text-primary underline">SOL-{{ data.id }}</Link></template></Column>
                     <Column header="Cliente"><template #body="{ data }">{{ data.cliente.primer_nombre }} {{ data.cliente.apellido_paterno }}</template></Column>

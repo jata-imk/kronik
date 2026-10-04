@@ -12,19 +12,22 @@ const emit = defineEmits(["mapLoaded"]); // Emitimos evento cuando el mapa está
 
 const mapContainer = ref(null);
 const mapInstance = ref(null);
+const tileError = ref(false);
 
 const { setMap } = useMap();
+provide("mapInstance", mapInstance);
 
 onMounted(() => {
     mapInstance.value = new maplibregl.Map({
-        container: "map",
+        container: mapContainer.value,
         style: {
             version: 8,
             sources: {
                 osm: {
                     type: "raster",
-                    tiles: ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
+                    tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
                     tileSize: 256,
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>',
                 },
             },
             layers: [
@@ -38,7 +41,9 @@ onMounted(() => {
     });
 
     setMap(mapInstance.value);
-    provide("mapInstance", mapInstance); // 🔥 Aquí damos el mapa a todos los hijos
+    mapInstance.value.on("error", (event) => {
+        if (event.sourceId === "osm") tileError.value = true;
+    });
 
     // En la primer carga centrar el mapa en Mexico
     mapInstance.value.on("load", () => {
@@ -66,14 +71,28 @@ defineExpose({
 </script>
   
 <template>
-    <div ref="mapContainer" id="map" class="map-container">
+    <div ref="mapContainer" class="map-container">
         <slot v-if="mapInstance" /> <!-- Solo renderizamos hijos cuando el mapa esté listo -->
+        <p v-if="tileError" class="map-tile-error" role="status">El mapa base no está disponible en este momento. Revisa la conexión o intenta más tarde.</p>
     </div>
 </template>
   
 <style>
   .map-container {
+    position: relative;
     width: 100%;
     height: 100%;
+  }
+  .map-tile-error {
+    position: absolute;
+    z-index: 2;
+    left: 1rem;
+    right: 1rem;
+    bottom: 2.5rem;
+    padding: .75rem 1rem;
+    border-radius: .75rem;
+    background: rgba(255, 255, 255, .94);
+    color: #18334a;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, .14);
   }
 </style>

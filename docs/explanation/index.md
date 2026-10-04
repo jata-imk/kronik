@@ -1,5 +1,8 @@
 # Explicacion
 
+- [ADR 0021: identidad visual y navegación de Kronik](adr-0021-identidad-visual-kronik.md)
+- [Auditoría visual QA de octubre de 2026](auditoria-ui-qa-2026-10.md)
+
 - [ADR 0010: originación integrada](adr-0010-originacion-integrada.md)
 - [ADR 0011: integración SIC segura](adr-0011-integracion-sic-segura.md)
 - [ADR 0012: movimientos y devengo](adr-0012-movimientos-y-devengo.md)

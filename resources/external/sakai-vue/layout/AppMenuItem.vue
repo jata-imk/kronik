@@ -1,6 +1,6 @@
 <script setup>
 import { useLayout } from "@sakai-vue/layout/composables/layout";
-import { onBeforeMount, ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { Link } from "@inertiajs/vue3";
 
 const { layoutState, setActiveMenuItem, toggleMenu } = useLayout();
@@ -24,41 +24,19 @@ const props = defineProps({
     },
 });
 
-const isActiveMenu = ref(false);
-const itemKey = ref(null);
-const itemRoutesNames = ref(null);
+const itemKey = computed(() => props.parentItemKey ? `${props.parentItemKey}-${props.index}` : String(props.index));
+const openByUser = ref(false);
+const matchesRoute = (item) =>
+    (item.to && route().current(item.to)) ||
+    item.activeRoutes?.some((name) => route().current(name)) ||
+    item.items?.some(matchesRoute) || false;
+const isActiveMenu = computed(() => openByUser.value || matchesRoute(props.item) ||
+    layoutState.activeMenuItem === itemKey.value ||
+    layoutState.activeMenuItem?.startsWith(`${itemKey.value}-`));
 
-onBeforeMount(() => {
-    itemRoutesNames.value =
-        props.item.to ||
-        props.item.items?.reduce(
-            (prev, curr) =>
-                curr.to ? (prev || []).concat(curr.to) : prev || [],
-            null,
-        );
-
-    itemKey.value = props.parentItemKey
-        ? `${props.parentItemKey}-${props.index}`
-        : String(props.index);
-
-    const activeItem = layoutState.activeMenuItem;
-
-    isActiveMenu.value =
-        activeItem === itemKey.value ||
-        itemRoutesNames.value?.includes(activeItem) ||
-        activeItem
-            ? activeItem.startsWith(`${itemKey.value}-`) ||
-              itemRoutesNames.value?.includes(activeItem)
-            : false;
+watch(() => layoutState.activeMenuItem, (key) => {
+    if (key && !key.startsWith(itemKey.value)) openByUser.value = false;
 });
-
-watch(
-    () => layoutState.activeMenuItem,
-    (newVal) => {
-        isActiveMenu.value =
-            newVal === itemKey.value || newVal.startsWith(`${itemKey.value}-`);
-    },
-);
 
 function itemClick(event, item) {
     if (item.disabled) {
@@ -77,24 +55,19 @@ function itemClick(event, item) {
         item.command({ originalEvent: event, item: item });
     }
 
-    const foundItemKey = item.items
-        ? isActiveMenu.value
-            ? props.parentItemKey
-            : itemKey
-        : itemKey.value;
-
-    setActiveMenuItem(foundItemKey);
+    if (item.items) openByUser.value = !isActiveMenu.value;
+    setActiveMenuItem(itemKey.value);
 }
 
 function checkActiveRoute(item) {
-    return route().current() === item.to;
+    return matchesRoute({ to: item.to, activeRoutes: item.activeRoutes });
 }
 </script>
 
 <template>
     <li :class="{ 'layout-root-menuitem': root, 'active-menuitem': isActiveMenu }">
         <div v-if="root && item.visible !== false" class="layout-menuitem-root-text">{{ item.label }}</div>
-        <a v-if="(!item.to || item.items) && item.visible !== false" :href="item.url" @click="itemClick($event, item, index)" :class="item.class" :target="item.target" tabindex="0">
+        <a v-if="(!item.to || item.items) && item.visible !== false" :href="item.url || '#'" @click.prevent="itemClick($event, item)" :class="item.class" :target="item.target" :aria-expanded="item.items ? isActiveMenu : undefined" tabindex="0">
             <i :class="item.icon" class="layout-menuitem-icon"></i>
             <span class="layout-menuitem-text">{{ item.label }}</span>
             <i class="pi pi-fw pi-angle-down layout-submenu-toggler" v-if="item.items"></i>

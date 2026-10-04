@@ -1,4 +1,5 @@
 <script setup>
+import PageHeader from "@/Components/PageHeader.vue";
 import { ref } from "vue";
 import { useForm, usePage } from "@inertiajs/vue3";
 import { useToast } from "primevue/usetoast";
@@ -41,15 +42,15 @@ const submit = (selectedRole, modelHasChangedCallback) => {
 <template>
     <AppLayout title="Roles y permisos" :pt="{ 'card-content-body': '!p-0' }">
         <template #card-header>
-            <div class="flex items-center p-4">
-                <Button icon="pi pi-arrow-left" class="min-w-fit"  as="a" :href="route('admin.dashboard')"></Button>
-                <h2 class="text-2xl font-bold ml-4">Configuraciones de roles y permisos</h2>
-            </div>
+            <PageHeader eyebrow="Administración · Accesos" title="Roles y permisos" description="Configura los permisos de cada rol.">
+                <template #actions><Button icon="pi pi-arrow-left" label="Volver" severity="secondary" as="a" :href="route('admin.dashboard')" /></template>
+            </PageHeader>
         </template>
 
         <template #card-content>
             <RolePanel
                 :roles="page.props.roles"
+                :role-members="page.props.roleMembers"
                 :modules="page.props.modules"
                 :permissions="page.props.permissions"
                 :form-role-permissions="formRolePermissions"

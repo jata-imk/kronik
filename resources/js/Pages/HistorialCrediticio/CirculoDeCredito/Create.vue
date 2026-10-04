@@ -1,6 +1,7 @@
 <script setup>
 import { Link } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
+import PageHeader from "@/Components/PageHeader.vue";
 
 defineProps({
     cliente: { type: Object, default: null },
@@ -10,7 +11,7 @@ defineProps({
 
 <template>
     <AppLayout title="Disponibilidad de consultas SIC">
-        <template #card-header><h1 class="p-6 text-2xl font-semibold">Disponibilidad de consultas SIC</h1></template>
+        <template #card-header><PageHeader eyebrow="Operación · Clientes" title="Disponibilidad de consultas SIC" description="Consulta el estado de la integración antes de continuar." /></template>
         <template #card-content>
             <div class="space-y-5 p-6">
                 <Message severity="warn" :closable="false">{{ motivoNoDisponible }}</Message>

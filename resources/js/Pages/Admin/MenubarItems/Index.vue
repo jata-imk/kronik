@@ -4,6 +4,7 @@ import { NodeService } from "@sakai-vue/service/NodeService";
 import { router, usePage } from "@inertiajs/vue3";
 
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
+import PageHeader from "@/Components/PageHeader.vue";
 import MenubarItemForm from "./Form.vue";
 
 const page = usePage();
@@ -47,10 +48,9 @@ const deleteItem = (item) => {
 <template>
     <AppLayout title="Configuración de barra de menú por módulos">
         <template #card-header>
-            <div class="flex items-center p-4">
-                <Button icon="pi pi-arrow-left"  as="a" :href="route('admin.dashboard')"></Button>
-                <h2 class="text-2xl font-bold ml-4">Configuración de barra de menú por módulos</h2>
-            </div>
+            <PageHeader eyebrow="Administración · Navegación" title="Menú contextual por módulos" description="Configura las acciones locales de cada módulo.">
+                <template #actions><Button icon="pi pi-arrow-left" label="Volver" severity="secondary" as="a" :href="route('admin.dashboard')" /></template>
+            </PageHeader>
         </template>
 
         <template #card-content>

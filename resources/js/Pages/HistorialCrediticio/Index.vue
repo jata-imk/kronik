@@ -1,6 +1,7 @@
 <script setup>
 import { router, Link } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
+import PageHeader from "@/Components/PageHeader.vue";
 import { reactive, ref } from "vue";
 
 const props = defineProps({
@@ -39,17 +40,13 @@ function buscar(page = 1) {
 <template>
     <AppLayout title="Consultas SIC">
         <template #card-header>
-            <div class="flex flex-wrap items-center justify-between gap-3 p-6">
-                <div>
-                    <h1 class="text-2xl font-semibold">Consultas SIC</h1>
-                    <p v-if="cliente" class="mt-1">{{ nombre(cliente) }}</p>
-                </div>
-                <div class="flex flex-wrap gap-3">
+            <PageHeader eyebrow="Operación · Clientes" title="Consultas SIC" :description="cliente ? nombre(cliente) : 'Historial de consultas y estado de cada registro.'">
+                <template #actions>
                     <Link v-if="cliente" :href="route('clientes.expediente.show', cliente.id)" class="text-primary underline">Volver al expediente</Link>
                     <Link v-if="cliente" :href="route('clientes.historial-crediticio.index')" class="text-primary underline">Todas las consultas</Link>
                     <Link v-if="puedeConsultar" :href="route('circulo-credito.create', cliente ? { cliente: cliente.id } : {})" class="text-primary underline">Disponibilidad de consultas</Link>
-                </div>
-            </div>
+                </template>
+            </PageHeader>
         </template>
         <template #card-content>
             <div class="space-y-5 p-6">

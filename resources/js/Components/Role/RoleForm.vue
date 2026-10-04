@@ -1,5 +1,8 @@
 <script setup>
 import { computed, ref } from "vue";
+import { router } from "@inertiajs/vue3";
+import { useConfirm } from "primevue/useconfirm";
+import { useToast } from "primevue/usetoast";
 
 import RoleHeader from "./RoleHeader.vue";
 import RoleModules from "./RoleModules.vue";
@@ -9,6 +12,7 @@ import RoleUsers from "./RoleUsers.vue";
 const props = defineProps({
     formRolePermissions: Object,
     role: Object,
+    members: { type: Array, default: () => [] },
     editRoleNameMode: Boolean,
     modelHasChanged: Boolean,
     modules: Array,
@@ -18,8 +22,10 @@ const props = defineProps({
 });
 
 const showUsers = ref(false);
+const confirm = useConfirm();
+const toast = useToast();
 
-const emit = defineEmits(["update:editRoleNameMode", "submit"]);
+const emit = defineEmits(["update:editRoleNameMode", "submit", "deleted"]);
 
 const menuItems = computed(() => [
     {
@@ -34,7 +40,7 @@ const menuItems = computed(() => [
         icon: "pi pi-fw pi-trash",
         command: () => {
             confirm.require({
-                message: "Realmente desea eliminar el rol?",
+                message: "¿Realmente deseas eliminar este rol?",
                 header: "Confirmar",
                 icon: "pi pi-info-circle",
                 rejectLabel: "Cancelar",
@@ -49,11 +55,11 @@ const menuItems = computed(() => [
                 },
                 accept: () => {
                     router.delete(
-                        route("admin.roles.destroy", selectedRole.value.id),
+                        route("admin.roles.destroy", props.role.id),
                         {
                             only: ["roles", "errors"],
                             onSuccess: () => {
-                                selectedRole.value = null;
+                                emit("deleted");
                                 toast.add({
                                     severity: "info",
                                     summary: "Confirmado",
@@ -74,14 +80,6 @@ const menuItems = computed(() => [
                         },
                     );
                 },
-                reject: () => {
-                    toast.add({
-                        severity: "error",
-                        summary: "Cancelado",
-                        detail: "Se ha cancelado la eliminación del rol",
-                        life: 5000,
-                    });
-                },
             });
         },
     },
@@ -100,7 +98,7 @@ const handleSubmit = () => {
 </script>
 
 <template>
-    <form @submit.prevent="handleSubmit" class="xl:col-span-9 p-2 pt-24 min-h-screen xl:min-h-full relative grid grid-cols-1 lg:grid-cols-12 gap-4 xl:gap-0">
+    <form @submit.prevent="handleSubmit" class="grid min-w-0 grid-cols-1 gap-4 p-4 lg:grid-cols-12 xl:col-span-9 xl:min-h-full xl:gap-0 xl:p-5">
         <RoleHeader
             :formRolePermissions="formRolePermissions"
             :role="role"
@@ -113,6 +111,7 @@ const handleSubmit = () => {
         <RoleUsers
             v-if="showUsers"
             :role="role"
+            :members="members"
             class="lg:col-span-8 col-span-1"
         />
 
@@ -131,7 +130,7 @@ const handleSubmit = () => {
             :role="role"
             :selectedRoleAvatarLabel="selectedRoleAvatarLabel"
             :permissionsByModule="permissionsByModule"
-            class="lg:col-span-4 col-span-1 p-4 border-t lg:border-t-0 lg:border-l border-gray-200 order-[-1] xl:order-none mt-14 sm:mt-0"
+            class="lg:col-span-4 col-span-1 p-4 border-t lg:border-t-0 lg:border-l border-gray-200 order-[-1] xl:order-none"
         />
     </form>
 </template>

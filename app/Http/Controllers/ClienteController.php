@@ -61,6 +61,7 @@ class ClienteController extends Controller implements HasMiddleware
         }
 
         return Inertia::render('Clientes/Index', [
+            'view' => $request->routeIs('clientes.expedientes.index') ? 'expedientes' : 'clientes',
             'clientes' => $clientes,
             'can' => [
                 'create' => $request->user()->can('create', Cliente::class),

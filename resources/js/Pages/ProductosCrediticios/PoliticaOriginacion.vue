@@ -1,4 +1,5 @@
 <script setup>
+import PageHeader from "@/Components/PageHeader.vue";
 import { Link, router, useForm } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { formatMoneyWithCents as money } from "./productValidation";
@@ -12,7 +13,7 @@ function guardar() {
 </script>
 <template>
     <AppLayout title="Política de originación">
-        <template #card-header><div class="originacion-heading space-y-2 p-6"><p class="text-sm text-surface-500">Productos crediticios · Reglas de decisión</p><h1 class="text-2xl font-semibold"><i class="pi pi-sliders-h mr-2 text-primary" aria-hidden="true" />Política de originación</h1><p>{{ version.producto.nombre }} · versión de producto {{ version.numero }}</p><Link :href="route('productos-crediticios.index')" class="text-primary underline">Volver a productos</Link></div></template>
+        <template #card-header><PageHeader eyebrow="Configuración · Reglas de decisión" title="Política de originación" :description="`${version.producto.nombre} · versión de producto ${version.numero}`"><template #actions><Link :href="route('productos-crediticios.index')" class="text-primary underline">Volver a productos</Link></template></PageHeader></template>
         <template #card-content>
             <div class="originacion-content space-y-5 p-4 md:p-6">
                 <Message severity="warn" :closable="false">Guardar configura criterios internos, no acredita validación jurídica ni habilita operaciones reales. Cada cambio conserva historia y exige reenviar las solicitudes anteriores antes de aprobar.</Message>

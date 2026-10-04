@@ -4,7 +4,7 @@ import { usePage } from "@inertiajs/vue3";
 import MenubarQuickAdd from "@/Components/MenubarQuickAdd.vue";
 
 const page = usePage();
-const menubarItems = computed(() => page.props.menubarItems ?? []);
+const menubarItems = computed(() => (page.props.menubarItems ?? []).filter((item) => !["Inicio", "Regresar", "Administración"].includes(item.label)));
 const quickAddRef = ref(null);
 
 const opcionesSuperAdmin = [

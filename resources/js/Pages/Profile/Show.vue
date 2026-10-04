@@ -1,5 +1,6 @@
 <script setup>
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
+import PageHeader from "@/Components/PageHeader.vue";
 import DeleteUserForm from "@/Pages/Profile/Partials/DeleteUserForm.vue";
 import LogoutOtherBrowserSessionsForm from "@/Pages/Profile/Partials/LogoutOtherBrowserSessionsForm.vue";
 import SectionBorder from "@/Components/SectionBorder.vue";
@@ -16,9 +17,7 @@ defineProps({
 <template>
     <AppLayout title="Perfil">
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight dark:text-gray-200">
-                Perfil
-            </h2>
+            <PageHeader eyebrow="Cuenta · Personal" title="Editar perfil" description="Datos de cuenta, seguridad y sesiones activas." />
         </template>
 
         <div>

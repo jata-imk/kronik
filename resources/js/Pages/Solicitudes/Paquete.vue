@@ -1,6 +1,7 @@
 <script setup>
 import { Link, router, useForm } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
+import PageHeader from "@/Components/PageHeader.vue";
 import PrivateDocumentViewer from "@/Components/Documents/PrivateDocumentViewer.vue";
 import SimulationTaxSummary from "@/Components/Products/SimulationTaxSummary.vue";
 import SolicitudFirmaPanel from "@/Components/Solicitudes/SolicitudFirmaPanel.vue";
@@ -39,6 +40,7 @@ function reintentar(paquete) { retry.post(route("solicitudes.paquete.retry", [pr
 
 <template>
     <AppLayout :title="`Contrato · SOL-${solicitud.id}`">
+        <template #card-header><PageHeader eyebrow="Operación · Formalización" title="Contrato y tabla de pagos" description="Conserva el contrato, la tabla de pagos y la copia firmada."><template #actions><Button v-if="can.preparar && !actual" label="Preparar contrato QA" icon="pi pi-plus" :disabled="!preparacion.puede_preparar" @click="drawer = true" /></template></PageHeader></template>
         <template #card-content>
             <div class="space-y-6 p-4 md:p-6">
                 <nav class="flex flex-wrap gap-4 text-sm" aria-label="Contexto del contrato">
@@ -47,15 +49,6 @@ function reintentar(paquete) { retry.post(route("solicitudes.paquete.retry", [pr
                     <Link :href="route('solicitudes.show', solicitud.id)" class="text-primary hover:underline"><i class="pi pi-arrow-left mr-2" aria-hidden="true" />Solicitud SOL-{{ solicitud.id }}</Link>
                     <Link :href="route('clientes.expediente.show', solicitud.cliente_id)" class="text-primary hover:underline"><i class="pi pi-folder-open mr-2" aria-hidden="true" />Expediente del cliente</Link>
                 </nav>
-                <header class="flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                        <p class="mb-2 text-xs font-semibold uppercase tracking-widest text-primary"><i class="pi pi-file-pdf mr-2" aria-hidden="true" />Preparación contractual</p>
-                        <h1 class="text-2xl font-bold">Contrato y tabla de pagos</h1>
-                        <p class="mt-2 text-surface-500">Aquí conservas el contrato, su tabla de pagos y las condiciones acordadas. Después recibes y revisas la copia firmada.</p>
-                    </div>
-                    <Button v-if="can.preparar && !actual" label="Preparar contrato QA" icon="pi pi-plus" :disabled="!preparacion.puede_preparar" @click="drawer = true" />
-                </header>
-
                 <section class="paquete-hero rounded-2xl p-5 text-white md:p-6" aria-label="Resumen del contrato">
                     <div class="flex flex-wrap items-start justify-between gap-4">
                         <div><Tag value="Solo pruebas QA" severity="warn" /><h2 class="mt-4 text-xl font-semibold text-white">{{ solicitud.cliente }}</h2><p class="mt-1 text-white/80">SOL-{{ solicitud.id }} · {{ solicitud.sucursal }}</p></div>

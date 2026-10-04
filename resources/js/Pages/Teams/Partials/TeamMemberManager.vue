@@ -151,7 +151,7 @@ const displayableRole = (role) => {
                                 :class="{
                                     'border-t border-gray-200 focus:border-none rounded-t-none': i > 0,
                                     'rounded-b-none': i !== Object.keys(availableRoles).length - 1,
-                                    'outline-none border-indigo-500 ring-2 ring-indigo-500': !!addTeamMemberForm.roles?.includes(role.id),
+                                    'outline-none border-primary ring-2 ring-primary': !!addTeamMemberForm.roles?.includes(role.id),
                                 }"
                                 @click="addTeamMemberForm.roles = (addTeamMemberForm.roles?.length && addTeamMemberForm.roles?.includes(role.id)) ? addTeamMemberForm.roles.filter((r) => r !== role.id) : [...addTeamMemberForm.roles ?? [], role.id]"
                             >
@@ -305,7 +305,7 @@ const displayableRole = (role) => {
                             :class="{
                                     'border-t border-gray-200 focus:border-none rounded-t-none': i > 0,
                                     'rounded-b-none': i !== Object.keys(availableRoles).length - 1,
-                                    'outline-none border-indigo-500 ring-2 ring-indigo-500': !![Number(managingRoleFor.membership.role)].includes(role.id),
+                                    'outline-none border-primary ring-2 ring-primary': !![Number(managingRoleFor.membership.role)].includes(role.id),
                                 }"
                             @click="updateRoleForm.roles = role.id"
                         >

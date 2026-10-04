@@ -65,17 +65,20 @@ export function useLayout() {
     };
 
     const toggleMenu = () => {
-        if (layoutConfig.menuMode === "overlay") {
+        if (window.innerWidth <= 991) {
+            layoutState.staticMenuMobileActive = !layoutState.staticMenuMobileActive;
+            layoutState.overlayMenuActive = false;
+        } else if (layoutConfig.menuMode === "overlay") {
             layoutState.overlayMenuActive = !layoutState.overlayMenuActive;
-        }
-
-        if (window.innerWidth > 991) {
+        } else {
             layoutState.staticMenuDesktopInactive =
                 !layoutState.staticMenuDesktopInactive;
-        } else {
-            layoutState.staticMenuMobileActive =
-                !layoutState.staticMenuMobileActive;
         }
+    };
+    const closeMenu = () => {
+        layoutState.overlayMenuActive = false;
+        layoutState.staticMenuMobileActive = false;
+        layoutState.menuHoverActive = false;
     };
 
     const isSidebarActive = computed(
@@ -93,6 +96,7 @@ export function useLayout() {
         layoutConfig,
         layoutState,
         toggleMenu,
+        closeMenu,
         isSidebarActive,
         isDarkTheme,
         getPrimary,

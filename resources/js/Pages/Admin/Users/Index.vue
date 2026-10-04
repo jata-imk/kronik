@@ -1,4 +1,5 @@
 <script setup>
+import PageHeader from "@/Components/PageHeader.vue";
 import { computed, ref } from "vue";
 import { router, usePage } from "@inertiajs/vue3";
 import { FilterMatchMode } from "@primevue/core/api";
@@ -112,13 +113,9 @@ const deactivate = (user) => {
 <template>
     <AppLayout title="Usuarios">
         <template #card-header>
-            <div class="flex flex-wrap items-center justify-between gap-3 p-4">
-                <div class="flex items-center">
-                    <Button icon="pi pi-arrow-left" as="a" :href="route('admin.dashboard')" />
-                    <div class="ml-4"><h2 class="text-2xl font-bold">Gestión de usuarios</h2><p class="text-sm text-surface-500">Equipos, roles y sucursales asignadas.</p></div>
-                </div>
-                <Button v-if="can('create-users')" label="Invitar usuario" icon="pi pi-user-plus" @click="openCreate" />
-            </div>
+            <PageHeader eyebrow="Administración · Accesos" title="Gestión de usuarios" description="Equipos, roles y sucursales asignadas.">
+                <template #actions><Button icon="pi pi-arrow-left" label="Volver" severity="secondary" as="a" :href="route('admin.dashboard')" /><Button v-if="can('create-users')" label="Invitar usuario" icon="pi pi-user-plus" @click="openCreate" /></template>
+            </PageHeader>
         </template>
 
         <template #card-content>

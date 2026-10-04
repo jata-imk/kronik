@@ -1,7 +1,7 @@
 <script setup>
 import { useLayout } from "@sakai-vue/layout/composables/layout";
-import { computed, ref, watch } from "vue";
-import { Head } from "@inertiajs/vue3";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
+import { Head, usePage } from "@inertiajs/vue3";
 
 
 import AppTopbar from "./AppTopbar.vue";
@@ -12,7 +12,9 @@ import AppMenubar from "./AppMenubar.vue";
 
 import Toast from "primevue/toast";
 
-const { layoutConfig, layoutState, isSidebarActive } = useLayout();
+const { layoutConfig, layoutState, isSidebarActive, closeMenu } = useLayout();
+const page = usePage();
+const hasContextualMenu = computed(() => (page.props.menubarItems ?? []).some((item) => !["Inicio", "Regresar", "Administración"].includes(item.label)));
 
 const outsideClickListener = ref(null);
 
@@ -55,7 +57,7 @@ function bindOutsideClickListener() {
 
 function unbindOutsideClickListener() {
     if (outsideClickListener.value) {
-        document.removeEventListener("click", outsideClickListener);
+        document.removeEventListener("click", outsideClickListener.value);
         outsideClickListener.value = null;
     }
 }
@@ -71,6 +73,14 @@ function isOutsideClicked(event) {
         topbarEl.contains(event.target)
     );
 }
+const closeOnEscape = (event) => {
+    if (event.key === "Escape" && isSidebarActive.value) closeMenu();
+};
+onMounted(() => document.addEventListener("keydown", closeOnEscape));
+onUnmounted(() => {
+    document.removeEventListener("keydown", closeOnEscape);
+    unbindOutsideClickListener();
+});
 </script>
 
 <template>
@@ -84,16 +94,16 @@ function isOutsideClicked(event) {
             <Banner />
 
             <!-- Page Heading -->
-            <header v-if="$slots.header">
+            <div v-if="$slots.header">
                 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
                     <slot name="header" />
                 </div>
-            </header>
+            </div>
 
             <main class="layout-main">
                 <Card v-if="$slots['card-header'] || $slots['card-content']" :pt="$attrs.pt?.['card-content-body'] && { body: $attrs.pt['card-content-body'] }">
-                    <template #header>
-                        <AppMenubar />
+                    <template v-if="hasContextualMenu || $slots['card-header']" #header>
+                        <AppMenubar v-if="hasContextualMenu" />
                         <slot v-if="$slots['card-header']" name="card-header" />
                     </template>
 
@@ -106,7 +116,7 @@ function isOutsideClicked(event) {
             </main>
             <app-footer></app-footer>
         </div>
-        <div class="layout-mask animate-fadein"></div>
+        <div class="layout-mask animate-fadein" @click="closeMenu"></div>
     </div>
 
     <Toast position="bottom-right" />

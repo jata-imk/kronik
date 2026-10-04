@@ -1,4 +1,5 @@
 <script setup>
+import PageHeader from "@/Components/PageHeader.vue";
 import CodigoPostalAutocomplete from "@/Components/CodigoPostalAutocomplete.vue";
 import IntlTelInput from "@/Components/IntlTelInput.vue";
 import PaisSelect from "@/Components/PaisSelect.vue";
@@ -136,16 +137,9 @@ const error = (field) => form.errors[field];
 <template>
     <AppLayout title="Configuración de empresa">
         <template #card-header>
-            <div class="flex items-center p-4">
-                <Button
-                    icon="pi pi-arrow-left"
-                    as="a"
-                    :href="route('admin.dashboard')"
-                />
-                <h2 class="text-2xl font-bold ml-4">
-                    Configuración de empresa
-                </h2>
-            </div>
+            <PageHeader eyebrow="Administración · Empresa" title="Configuración de empresa" description="Datos legales y parámetros generales de la organización.">
+                <template #actions><Button icon="pi pi-arrow-left" label="Volver" severity="secondary" as="a" :href="route('admin.dashboard')" /></template>
+            </PageHeader>
         </template>
 
         <template #card-content>

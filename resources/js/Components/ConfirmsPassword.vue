@@ -11,15 +11,15 @@ const emit = defineEmits(["confirmed"]);
 defineProps({
     title: {
         type: String,
-        default: "Confirm Password",
+        default: "Confirmar contraseña",
     },
     content: {
         type: String,
-        default: "For your security, please confirm your password to continue.",
+        default: "Por seguridad, confirma tu contraseña para continuar.",
     },
     button: {
         type: String,
-        default: "Confirm",
+        default: "Confirmar",
     },
 });
 
@@ -60,7 +60,7 @@ const confirmPassword = () => {
         })
         .catch((error) => {
             form.processing = false;
-            form.error = error.response.data.errors.password[0];
+            form.error = error.response?.data?.errors?.password?.[0] ?? "No se pudo confirmar la contraseña. Intenta de nuevo.";
             passwordInput.value.focus();
         });
 };
@@ -92,7 +92,7 @@ const closeModal = () => {
                         v-model="form.password"
                         type="password"
                         class="mt-1 block w-3/4"
-                        placeholder="Password"
+                        placeholder="Contraseña"
                         autocomplete="current-password"
                         @keyup.enter="confirmPassword"
                     />
@@ -103,7 +103,7 @@ const closeModal = () => {
 
             <template #footer>
                 <SecondaryButton @click="closeModal">
-                    Cancel
+                    Cancelar
                 </SecondaryButton>
 
                 <PrimaryButton

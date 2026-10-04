@@ -6,6 +6,7 @@ import RoleForm from "@components/Role/RoleForm.vue";
 
 const props = defineProps({
     roles: Array,
+    roleMembers: Object,
     modules: Array,
     permissions: Array,
     formRolePermissions: Object,
@@ -96,7 +97,7 @@ watch(
 </script>
 
 <template>
-    <div class="grid grid-cols-1 xl:grid-cols-12 gap-4 xl:gap-0 min-h-screen">
+    <div class="grid min-w-0 grid-cols-1 gap-4 xl:min-h-screen xl:grid-cols-12 xl:gap-0">
         <RoleSidebar
             :roles="roles"
             :selectedRole="selectedRole"
@@ -107,6 +108,7 @@ watch(
         <RoleForm
             :formRolePermissions="props.formRolePermissions"
             :role="selectedRole"
+            :members="selectedRole ? (roleMembers?.[selectedRole.id] ?? []) : []"
             :editRoleNameMode="editRoleNameMode"
             :modelHasChanged="modelHasChanged"
             :modules="modules"
@@ -115,6 +117,7 @@ watch(
             :selectedRoleAvatarLabel="selectedRoleAvatarLabel"
             @update:editRoleNameMode="editRoleNameMode = $event"
             @submit="handleSaveRole"
+            @deleted="selectedRole = null"
         />
     </div>
 </template>
