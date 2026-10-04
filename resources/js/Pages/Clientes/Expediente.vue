@@ -1105,10 +1105,11 @@ function formatCurrency(value, currency = props.opciones.moneda) {
 
 <style scoped>
 .dossier-shell { width: 100%; max-width: 100%; overflow: hidden; background: #f5f5f2; min-height: calc(100vh - 9rem); color: #20201e; }
-.dossier-header { background: #191917; color: #fff; padding: 1.75rem clamp(1rem, 3vw, 2.75rem); display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; border-bottom: 4px solid #ee6c4d; }
+.dossier-header { background: var(--p-surface-900, #0f172a); color: #fff; padding: 1.75rem clamp(1rem, 3vw, 2.75rem); display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; border-bottom: 4px solid var(--p-primary-color); }
 .identity-lockup { display: flex; align-items: center; gap: 1rem; min-width: 0; }
-.identity-mark { width: 3.75rem; height: 3.75rem; flex: 0 0 3.75rem; display: grid; place-items: center; background: #f2cc8f; color: #191917; font-size: 1.15rem; font-weight: 800; border-radius: 6px; }
-.eyebrow, .section-kicker { text-transform: uppercase; font-size: .72rem; font-weight: 800; letter-spacing: .08em; color: #ee6c4d; margin: 0 0 .3rem; }
+.identity-mark { width: 3.75rem; height: 3.75rem; flex: 0 0 3.75rem; display: grid; place-items: center; background: var(--p-primary-100); color: var(--p-primary-800); font-size: 1.15rem; font-weight: 800; border-radius: 6px; }
+.eyebrow, .section-kicker { text-transform: uppercase; font-size: .72rem; font-weight: 800; letter-spacing: .08em; color: var(--k-brand); margin: 0 0 .3rem; }
+.dossier-header .eyebrow { color: #6ee7b7; }
 .dossier-header h1 { margin: 0; font-size: clamp(1.45rem, 2vw, 2.15rem); line-height: 1.15; letter-spacing: 0; }
 .identity-meta { display: flex; flex-wrap: wrap; gap: .35rem 1rem; color: #c8c8c2; font-size: .82rem; margin-top: .55rem; }
 .header-actions { display: flex; gap: .65rem; flex-wrap: wrap; justify-content: flex-end; }
@@ -1126,7 +1127,7 @@ function formatCurrency(value, currency = props.opciones.moneda) {
 .rail-nav { display: grid; gap: .25rem; }
 .rail-nav button { border: 0; background: transparent; color: #464641; display: flex; align-items: center; gap: .7rem; width: 100%; min-height: 2.75rem; padding: .65rem .75rem; border-left: 3px solid transparent; font-weight: 650; text-align: left; cursor: pointer; }
 .rail-nav button:hover { background: #e2e2dc; }
-.rail-nav button.active { background: #fff; color: #171715; border-left-color: #ee6c4d; }
+.rail-nav button.active { background: var(--p-content-background, #fff); color: var(--k-ink); border-left-color: var(--p-primary-color); }
 .dossier-content { min-width: 0; background: #fff; }
 .workspace-section { padding: clamp(1.25rem, 3vw, 2.75rem); min-height: 650px; }
 .section-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; padding-bottom: 1.25rem; border-bottom: 2px solid #242421; margin-bottom: 1.6rem; }
@@ -1185,11 +1186,13 @@ function formatCurrency(value, currency = props.opciones.moneda) {
     .rail-stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .rail-nav { display: flex; max-width: 100%; overflow-x: auto; padding-bottom: .3rem; }
     .rail-nav button { min-width: max-content; border-left: 0; border-bottom: 3px solid transparent; }
-    .rail-nav button.active { border-left: 0; border-bottom-color: #ee6c4d; }
+    .rail-nav button.active { border-left: 0; border-bottom-color: var(--p-primary-color); }
     .workspace-section { min-height: 540px; }
 }
 
 @media (max-width: 640px) {
+    .rail-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); overflow: visible; }
+    .rail-nav button { min-width: 0; min-height: 3rem; line-height: 1.25; }
     .identity-mark { width: 3rem; height: 3rem; flex-basis: 3rem; }
     .identity-meta { flex-direction: column; gap: .2rem; }
     .header-actions :deep(.p-button) { flex: 1 1 auto; }

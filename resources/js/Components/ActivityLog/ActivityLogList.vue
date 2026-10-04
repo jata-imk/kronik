@@ -65,20 +65,12 @@ const onPageChange = ({ first, rows }) => {
 </script>
 
 <template>
-    <div>
-        <div class="flex items-start gap-4 mb-4">
-            <Button icon="pi pi-arrow-left" as="a" :href="route('admin.dashboard')" />
-            <div class="flex-1 flex items-start justify-between gap-4">
-                <div>
-                    <h2 class="text-2xl font-bold m-0">Actividad</h2>
-                    <p class="text-surface-500 mt-1 mb-0">
-                        Mostrando {{ activityLogs.from ?? 0 }}–{{ activityLogs.to ?? 0 }} de {{ activityLogs.total }} eventos
-                    </p>
-                </div>
-                <div class="flex gap-2">
-                    <Button label="Actualizar" icon="pi pi-refresh" outlined :loading="loading" @click="visit()" />
-                    <Button label="Exportar CSV" icon="pi pi-download" @click="exportLogs" />
-                </div>
+    <div class="p-4 md:p-6">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <p class="text-surface-500">Mostrando {{ activityLogs.from ?? 0 }}–{{ activityLogs.to ?? 0 }} de {{ activityLogs.total }} eventos</p>
+            <div class="flex gap-2">
+                <Button label="Actualizar" icon="pi pi-refresh" outlined :loading="loading" @click="visit()" />
+                <Button label="Exportar CSV" icon="pi pi-download" @click="exportLogs" />
             </div>
         </div>
 

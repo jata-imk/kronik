@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { usePage } from "@inertiajs/vue3";
 import { FilterMatchMode } from "@primevue/core/api";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
+import PageHeader from "@/Components/PageHeader.vue";
 import UpdateTeamNameForm from "@/Pages/Teams/Partials/UpdateTeamNameForm.vue";
 import CollectionSummary from "@/Components/DataTable/CollectionSummary.vue";
 import TruncatedText from "@/Components/DataTable/TruncatedText.vue";
@@ -58,16 +59,12 @@ const inviteParams = (extra = {}) => ({
 <template>
     <AppLayout title="Configuración del equipo">
         <template #header>
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                    <h2 class="text-xl font-semibold">Configuración del equipo</h2>
-                    <p class="text-sm text-surface-500">Permisos, integrantes y contexto organizativo.</p>
-                </div>
-                <div class="flex gap-2 whitespace-nowrap">
+            <PageHeader eyebrow="Cuenta · Equipo actual" title="Configuración del equipo" description="Permisos, integrantes y contexto organizativo.">
+                <template #actions>
                     <Tag :value="team.activo ? 'Activo' : 'Inactivo'" :severity="team.activo ? 'success' : 'secondary'" />
                     <Tag :value="team.personal_team ? 'Personal' : 'Institucional'" severity="info" />
-                </div>
-            </div>
+                </template>
+            </PageHeader>
         </template>
 
         <div class="mx-auto max-w-7xl py-8 sm:px-6 lg:px-8">

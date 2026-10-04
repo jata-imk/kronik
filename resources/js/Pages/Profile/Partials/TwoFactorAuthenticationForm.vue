@@ -154,7 +154,7 @@ const disableTwoFactorAuthentication = () => {
                     </div>
 
                     <div v-if="confirming" class="mt-4">
-                        <InputLabel for="code" value="Codigo" />
+                        <InputLabel for="code" value="Código" />
 
                         <InputText
                             id="code"
@@ -168,7 +168,7 @@ const disableTwoFactorAuthentication = () => {
                             @keyup.enter="confirmTwoFactorAuthentication"
                         />
 
-                        <Message v-if="form.errors.code" severity="error" size="small" class="mt-2" > {{ form.errors.code }} </Message>
+                        <Message v-if="confirmationForm.errors.code" severity="error" size="small" class="mt-2">{{ confirmationForm.errors.code }}</Message>
                     </div>
                 </div>
 

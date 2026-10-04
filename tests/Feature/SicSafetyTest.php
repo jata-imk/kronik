@@ -102,12 +102,15 @@ test('navigation exposes product catalogue independently from administration and
     $user = actingAsSuperAdmin();
     $user->forceFill(['is_super_admin' => false])->save();
     $user->givePermissionTo(['read clientes', 'read productos-crediticios']);
-    $menu = collect(app(NavigationService::class)->forUser($user))->pluck('items')->flatten(1);
+    $menu = collect(app(NavigationService::class)->forUser($user))->pluck('items')->flatten(1)
+        ->flatMap(fn ($item) => $item['items'] ?? [$item]);
     expect($menu->pluck('to')->all())->toContain('productos-crediticios.index', 'clientes.index')
         ->not->toContain('admin.dashboard', 'clientes.historial-crediticio.index', 'sakai');
     $this->actingAs($user)->get(route('productos-crediticios.index'))->assertOk();
 
     $user->forceFill(['is_super_admin' => true])->save();
-    $menu = collect(app(NavigationService::class)->forUser($user))->pluck('items')->flatten(1);
+    $menu = collect(app(NavigationService::class)->forUser($user))->pluck('items')->flatten(1)
+        ->flatMap(fn ($item) => $item['items'] ?? [$item]);
     expect($menu->pluck('to')->all())->toContain('admin.dashboard', 'clientes.historial-crediticio.index');
+    expect($menu->pluck('to')->all())->toContain('clientes.expedientes.index');
 });

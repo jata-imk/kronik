@@ -22,6 +22,9 @@ export default {
             "2xl": "1920px",
         },
         extend: {
+            fontFamily: {
+                sans: ['"Inter Variable"', "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+            },
             colors: {
                 'bg-surface-card': 'var(--surface-card)',
             }

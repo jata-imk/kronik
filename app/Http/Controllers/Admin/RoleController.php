@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Module;
 use App\Models\Permission;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -32,9 +33,18 @@ class RoleController extends Controller implements HasMiddleware
     {
         $teamId = Auth::user()->currentTeam->id;
         $roles = config('permission.models.role')::where(config('permission.column_names.team_foreign_key', 'team_id'), $teamId)->with('permissions.module')->get();
+        $membersByRole = DB::table('model_has_roles')
+            ->join('users', 'users.id', '=', 'model_has_roles.model_id')
+            ->where('model_has_roles.team_id', $teamId)
+            ->where('model_has_roles.model_type', (new User)->getMorphClass())
+            ->whereIn('model_has_roles.role_id', $roles->pluck('id'))
+            ->orderBy('users.name')
+            ->get(['model_has_roles.role_id', 'users.id', 'users.name'])
+            ->groupBy('role_id');
 
         return Inertia::render('Admin/Roles/Index', [
             'roles' => fn () => $roles,
+            'roleMembers' => fn () => $membersByRole,
             'permissions' => Permission::with('module')->get(),
             'modules' => Module::with('permissions')->get(),
         ]);

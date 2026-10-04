@@ -1,5 +1,6 @@
 <script setup>
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
+import PageHeader from "@/Components/PageHeader.vue";
 import FormCliente from "./Partials/FormCliente.vue";
 
 </script>
@@ -7,9 +8,7 @@ import FormCliente from "./Partials/FormCliente.vue";
 <template>
     <AppLayout title="Informacion del cliente">
         <template #card-header>
-            <div class="flex flex-wrap justify-between items-center gap-3 px-6 pt-4">
-                <h2 class="text-2xl font-bold mb-4">Editar informacion del cliente</h2>
-            </div>
+            <PageHeader eyebrow="Operación · Clientes" title="Editar cliente" description="Actualiza los datos del expediente." />
         </template>
         <template #card-content><FormCliente /></template>
     </AppLayout>

@@ -17,6 +17,7 @@ const props = defineProps({
     },
     filters: { type: Object, default: () => ({ scope: "current" }) },
     sucursales: { type: Array, default: () => [] },
+    view: { type: String, default: "clientes" },
 });
 
 const toast = useToast();
@@ -30,6 +31,20 @@ const transferDialog = ref(false);
 const targetSucursalId = ref(null);
 const transferProcessing = ref(false);
 const scope = ref(props.filters.scope ?? "current");
+const expedienteBuscar = ref("");
+const mobileBuscar = ref("");
+const clientesMobile = computed(() => {
+    const needle = mobileBuscar.value.trim().toLocaleLowerCase("es-MX");
+    return needle ? props.clientes.filter((cliente) =>
+        `${cliente.id} ${cliente.nombre_completo} ${cliente.email ?? ""} ${cliente.sucursal?.nombre ?? ""}`.toLocaleLowerCase("es-MX").includes(needle),
+    ) : props.clientes;
+});
+const expedientesFiltrados = computed(() => {
+    const needle = expedienteBuscar.value.trim().toLocaleLowerCase("es-MX");
+    return needle ? props.clientes.filter((cliente) =>
+        `${cliente.id} ${cliente.nombre_completo} ${cliente.sucursal?.nombre ?? ""}`.toLocaleLowerCase("es-MX").includes(needle),
+    ) : props.clientes;
+});
 
 watch(
     () => props.filters.scope,
@@ -135,7 +150,7 @@ const changeScope = (nextScope) => {
     // Si la visita falla, el filtro recibido del servidor vuelve a sincronizarla.
     scope.value = nextScope;
     router.get(
-        route("clientes.index"),
+        route(props.view === "expedientes" ? "clientes.expedientes.index" : "clientes.index"),
         { scope: nextScope },
         {
             preserveState: true,
@@ -268,10 +283,10 @@ const exportData = async () => {
 <template>
     <div class="card !p-0">
         <div class="flex flex-wrap gap-4 justify-content-between align-items-center mb-4">
-            <div class="w-full flex gap-2">
-                <Button v-if="can.create" label="Nuevo Cliente" icon="pi pi-plus" class="p-button-success" @click="navigateToCreate" />
-                <Button v-if="can.create" label="Importar" icon="pi pi-upload" class="p-button-info" @click="showImportDialog" />
-                <Button label="Exportar" icon="pi pi-download" class="p-button-help" @click="exportData" />
+            <div class="w-full flex flex-wrap gap-2">
+                <Button v-if="can.create && view !== 'expedientes'" label="Nuevo cliente" icon="pi pi-plus" @click="navigateToCreate" />
+                <Button v-if="can.create && view !== 'expedientes'" label="Importar" icon="pi pi-upload" severity="secondary" @click="showImportDialog" />
+                <Button v-if="view !== 'expedientes'" label="Exportar" icon="pi pi-download" severity="secondary" @click="exportData" />
                 <SelectButton
                     :model-value="scope"
                     :options="[{ label: 'Sucursal actual', value: 'current' }, { label: 'Todas', value: 'all' }]"
@@ -282,7 +297,33 @@ const exportData = async () => {
             </div>
         </div>
 
-        <DataTable
+        <section v-if="view === 'expedientes'" aria-label="Expedientes de clientes">
+            <label for="expediente-buscar" class="block mb-2 font-semibold">Buscar expediente</label>
+            <InputText id="expediente-buscar" v-model="expedienteBuscar" placeholder="Nombre, número o sucursal" class="w-full md:max-w-sm mb-4" />
+            <div v-if="expedientesFiltrados.length" class="k-expediente-list">
+                <article v-for="cliente in expedientesFiltrados" :key="cliente.id" class="k-surface k-expediente-row">
+                    <span class="k-expediente-avatar" aria-hidden="true">{{ cliente.primer_nombre?.[0] }}{{ cliente.apellido_paterno?.[0] }}</span>
+                    <div class="min-w-0 flex-1"><p class="font-semibold truncate">{{ cliente.nombre_completo }}</p><p class="text-sm text-surface-500">Cliente #{{ cliente.id }} · {{ cliente.sucursal?.nombre ?? 'Sin sucursal' }}</p></div>
+                    <Button label="Abrir expediente" icon="pi pi-arrow-right" icon-pos="right" @click="viewExpediente(cliente.id)" />
+                </article>
+            </div>
+            <div v-else class="k-empty k-surface"><i class="pi pi-folder-open" aria-hidden="true" /><strong>Sin expedientes para mostrar</strong><span>Prueba otro término o cambia el filtro de sucursal.</span></div>
+        </section>
+
+        <section v-if="view !== 'expedientes'" class="k-mobile-client-list" aria-label="Clientes">
+            <label for="clientes-mobile-buscar" class="block mb-2 font-semibold">Buscar cliente</label>
+            <InputText id="clientes-mobile-buscar" v-model="mobileBuscar" placeholder="Nombre, correo o sucursal" class="w-full mb-4" />
+            <div v-if="clientesMobile.length" class="k-expediente-list">
+                <article v-for="cliente in clientesMobile" :key="cliente.id" class="k-surface k-client-card">
+                    <div class="flex gap-3 items-center min-w-0"><span class="k-expediente-avatar" aria-hidden="true">{{ cliente.primer_nombre?.[0] }}{{ cliente.apellido_paterno?.[0] }}</span><div class="min-w-0"><p class="font-semibold truncate">{{ cliente.nombre_completo }}</p><p class="text-sm text-surface-500">Cliente #{{ cliente.id }} · {{ cliente.sucursal?.nombre ?? 'Sin sucursal' }}</p></div></div>
+                    <p v-if="cliente.email" class="text-sm truncate">{{ cliente.email }}</p>
+                    <div class="flex flex-wrap gap-2"><Button label="Expediente" icon="pi pi-folder-open" size="small" @click="viewExpediente(cliente.id)" /><Button label="Ver" icon="pi pi-eye" severity="secondary" outlined size="small" @click="viewCliente(cliente.id)" /><Button v-if="cliente.can_update" label="Editar" icon="pi pi-pencil" severity="secondary" outlined size="small" @click="editCliente(cliente.id)" /></div>
+                </article>
+            </div>
+            <div v-else class="k-empty k-surface"><i class="pi pi-users" aria-hidden="true" /><strong>Sin clientes para mostrar</strong><span>Prueba otro término o cambia el filtro de sucursal.</span></div>
+        </section>
+
+        <DataTable v-if="view !== 'expedientes'" class="k-desktop-client-table p-datatable-sm"
             :value="clientes"
             v-model:filters="filters"
             filter-display="row"
@@ -299,7 +340,7 @@ const exportData = async () => {
             responsive-layout="scroll"
             :scrollable="true"
             scroll-height="73vh"
-            striped-rows :row-hover="true" class="p-datatable-sm">
+            striped-rows :row-hover="true">
             <template #header>
                 <div class="flex justify-end mb-4">
                     <span class="p-input-icon-left">
@@ -416,15 +457,15 @@ const exportData = async () => {
             <Column header="Acciones" :exportable="false" :frozen="true" align-frozen="right">
                 <template #body="{ data }">
                     <div class="flex gap-2">
-                        <Button v-tooltip.top="'Abrir expediente'" :aria-label="`Abrir expediente de ${data.nombre_completo}`" icon="pi pi-folder-open" class="p-button-rounded p-button-warning p-button-sm"
+                        <Button v-tooltip.top="'Abrir expediente'" :aria-label="`Abrir expediente de ${data.nombre_completo}`" icon="pi pi-folder-open" rounded size="small"
                             @click="viewExpediente(data.id)" />
-                        <Button v-tooltip.top="'Ver cliente'" :aria-label="`Ver ${data.nombre_completo}`" icon="pi pi-eye" class="p-button-rounded p-button-info p-button-sm"
+                        <Button v-tooltip.top="'Ver cliente'" :aria-label="`Ver ${data.nombre_completo}`" icon="pi pi-eye" rounded outlined severity="secondary" size="small"
                             @click="viewCliente(data.id)" />
-                        <Button v-if="data.can_update" v-tooltip.top="'Editar cliente'" :aria-label="`Editar ${data.nombre_completo}`" icon="pi pi-pencil" class="p-button-rounded p-button-success p-button-sm"
+                        <Button v-if="data.can_update" v-tooltip.top="'Editar cliente'" :aria-label="`Editar ${data.nombre_completo}`" icon="pi pi-pencil" rounded outlined severity="secondary" size="small"
                             @click="editCliente(data.id)" />
                         <Button v-if="data.can_transfer" v-tooltip.top="'Trasladar cliente'" :aria-label="`Trasladar ${data.nombre_completo}`" icon="pi pi-arrow-right-arrow-left" text
                             @click="openTransfer(data)" />
-                        <Button v-if="data.can_delete" v-tooltip.top="'Eliminar cliente'" :aria-label="`Eliminar ${data.nombre_completo}`" icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-sm"
+                        <Button v-if="data.can_delete" v-tooltip.top="'Eliminar cliente'" :aria-label="`Eliminar ${data.nombre_completo}`" icon="pi pi-trash" rounded outlined severity="danger" size="small"
                             @click="confirmDelete(data)" />
                     </div>
                 </template>

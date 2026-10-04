@@ -1,4 +1,5 @@
 <script setup>
+import PageHeader from "@/Components/PageHeader.vue";
 import PoliticaMoraEditor from "@/Components/Products/PoliticaMoraEditor.vue";
 import FinancialFieldHelp from "@/Components/Products/FinancialFieldHelp.vue";
 import ProductVersionStatus from "@/Components/Products/ProductVersionStatus.vue";
@@ -87,6 +88,12 @@ const moneyCompact = (value) =>
     }).format(Number(value ?? 0));
 const percent = (value) =>
     `${Number(value ?? 0).toLocaleString("es-MX", { maximumFractionDigits: 4 })}%`;
+const displayDate = (value) => {
+    if (!value) return "Sin programar";
+    const datePart = String(value).slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return value;
+    return new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${datePart}T12:00:00Z`));
+};
 const stateMeta = (state) =>
     ({
         borrador: ["Borrador", "secondary"],
@@ -603,15 +610,14 @@ watch(
 <template>
     <AppLayout title="Productos crediticios">
         <template #card-header>
-            <div class="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
-                <div><p class="text-sm font-semibold uppercase tracking-widest text-primary">Configuración comercial</p><h1 class="mt-1 text-2xl font-bold">Productos crediticios</h1><p class="mt-1 text-sm text-surface-500">Crédito simple V1 · parámetros versionados y simulación transparente</p></div>
-                <div class="flex flex-wrap gap-2"><Button v-if="can('manage commissions productos-crediticios')" label="Catálogo de comisiones" icon="pi pi-list" severity="secondary" @click="catalogVisible = true" /><Button v-if="can('create productos-crediticios')" label="Nuevo producto" icon="pi pi-plus" @click="openCreate" /></div>
-            </div>
+            <PageHeader eyebrow="Configuración · Comercial" title="Productos crediticios" description="Crédito simple V1 · parámetros versionados y simulación transparente">
+                <template #actions><Button v-if="can('manage commissions productos-crediticios')" label="Catálogo de comisiones" icon="pi pi-list" severity="secondary" @click="catalogVisible = true" /><Button v-if="can('create productos-crediticios')" label="Nuevo producto" icon="pi pi-plus" @click="openCreate" /></template>
+            </PageHeader>
         </template>
         <template #card-content>
             <ConfirmDialog />
-            <div class="grid min-h-[36rem] gap-5 lg:grid-cols-[19rem_minmax(0,1fr)]">
-                <aside class="rounded-2xl border border-surface-200 bg-surface-50/70 p-3 dark:border-surface-700 dark:bg-surface-900/50">
+            <div class="grid min-h-[36rem] min-w-0 grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[19rem_minmax(0,1fr)]">
+                <aside class="min-w-0 rounded-2xl border border-surface-200 bg-surface-50/70 p-3 dark:border-surface-700 dark:bg-surface-900/50">
                     <IconField class="mb-3"><InputIcon class="pi pi-search" /><InputText v-model="query" aria-label="Buscar productos" placeholder="Buscar producto" fluid /></IconField>
                     <div v-if="products.length" class="space-y-2">
                         <button v-for="product in products" :key="product.id" type="button" class="w-full rounded-xl border p-3 text-left transition" :class="selected?.id === product.id ? 'border-primary bg-primary-50 shadow-sm dark:bg-primary-950/30' : 'border-transparent bg-surface-0 hover:border-surface-300 dark:bg-surface-800'" @click="selectedId = product.id">
@@ -623,20 +629,20 @@ watch(
                 </aside>
 
                 <main v-if="selected" class="min-w-0 space-y-5">
-                    <section class="overflow-hidden rounded-2xl bg-gradient-to-br from-primary-700 via-primary-600 to-indigo-600 p-5 text-white shadow-lg shadow-primary-900/10">
+                    <section class="k-feature overflow-hidden p-5">
                         <div class="flex flex-col gap-5 md:flex-row md:items-start md:justify-between"><div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold">{{ selected.clave }}</span><span class="rounded-full bg-white/15 px-2.5 py-1 text-xs">Crédito simple</span></div><h2 class="mt-3 truncate text-2xl font-bold">{{ selected.nombre }}</h2><p class="mt-1 max-w-2xl text-sm text-white/75">{{ selected.descripcion || 'Sin descripción comercial.' }}</p></div><Button v-if="latest && can('simulate productos-crediticios')" label="Simular" icon="pi pi-calculator" severity="secondary" @click="openSimulator(latest)" /></div>
                         <div v-if="latest" class="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4"><div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/70">Montos</p><p class="mt-1 font-semibold">{{ moneyCompact(latest.monto_minimo) }} – {{ moneyCompact(latest.monto_maximo) }}</p></div><div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/70">Tasa ordinaria anual</p><p class="mt-1 text-lg font-semibold">{{ percent(latest.tasa_ordinaria_anual) }}</p></div><div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/70">Mora anual</p><p class="mt-1 text-lg font-semibold">{{ percent(latest.tasa_moratoria_anual) }}</p></div><div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/70">Versión actual</p><p class="mt-1 text-lg font-semibold">v{{ latest.numero }} · {{ stateMeta(latest.estado)[0] }}</p></div></div>
                     </section>
                     <section class="rounded-2xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-700 dark:bg-surface-900">
                         <div class="mb-4"><h3 class="font-semibold">Versiones y vigencia</h3><p class="text-sm text-surface-500">Las versiones activadas son históricas e inmutables.</p></div>
-                        <DataTable :value="selected.versiones" striped-rows responsive-layout="scroll" :table-style="{ minWidth: '52rem' }">
+                        <DataTable :value="selected.versiones" striped-rows scrollable :table-style="{ minWidth: '72rem' }">
                             <Column v-if="can('manage origination productos-crediticios')" header="Originación"><template #body="{ data }"><Link :href="route('originacion-politicas.show', data.id)" class="text-primary underline">Política v{{ data.numero }}</Link></template></Column>
                             <Column header="Versión" style="width:16%"><template #body="{ data }"><div class="flex items-center gap-2"><Avatar :label="`v${data.numero}`" shape="circle" class="bg-primary-100 font-bold text-primary-700" /><ProductVersionStatus :state="data.estado" :used="data.usos_count > 0" /></div></template></Column>
                             <Column header="Condiciones"><template #body="{ data }"><p class="font-medium">{{ moneyCompact(data.monto_minimo) }} – {{ moneyCompact(data.monto_maximo) }}</p><p class="text-sm text-surface-500">{{ percent(data.tasa_ordinaria_anual) }} ordinaria · {{ data.dias_gracia_mora }} días de gracia</p></template></Column>
-                            <Column header="Fiscalidad"><template #body="{ data }"><Button :label="data.fiscalidad ? (data.fiscalidad.uso === 'prueba' ? 'Prueba / QA' : 'Institucional') : 'Sin definir'" icon="pi pi-percentage" severity="secondary" size="small" :aria-label="`Ver fiscalidad versión ${data.numero}`" @click="showFiscalPolicy(data)" /></template></Column>
-                            <Column header="Atraso"><template #body="{ data }"><Button :label="data.politica_mora ? 'Configurado' : 'Sin definir'" icon="pi pi-clock" severity="secondary" size="small" :aria-label="`Ver política de atraso versión ${data.numero}`" @click="moraVersion = data; moraVisible = true" /></template></Column>
-                            <Column header="Periodicidad"><template #body="{ data }"><div class="flex flex-wrap gap-1"><Chip v-for="item in data.periodicidades" :key="item.id" :label="`${periodicityLabel[item.periodicidad]} ${item.plazo_minimo}–${item.plazo_maximo}`" /></div></template></Column>
-                            <Column header="Vigencia"><template #body="{ data }"><p class="text-sm">{{ data.vigente_desde || 'Sin programar' }}</p><p class="text-xs text-surface-500">{{ data.cat_aplica ? 'CAT aplicable' : 'CAT no aplicable' }}</p></template></Column>
+                            <Column header="Fiscalidad"><template #body="{ data }"><Button :label="data.fiscalidad ? (data.fiscalidad.uso === 'prueba' ? 'Prueba / QA' : 'Institucional') : 'Sin definir'" icon="pi pi-percentage" severity="secondary" size="small" class="whitespace-nowrap" :aria-label="`Ver fiscalidad versión ${data.numero}`" @click="showFiscalPolicy(data)" /></template></Column>
+                            <Column header="Atraso"><template #body="{ data }"><Button :label="data.politica_mora ? 'Configurado' : 'Sin definir'" icon="pi pi-clock" severity="secondary" size="small" class="whitespace-nowrap" :aria-label="`Ver política de atraso versión ${data.numero}`" @click="moraVersion = data; moraVisible = true" /></template></Column>
+                            <Column header="Periodicidad"><template #body="{ data }"><div class="flex flex-wrap gap-1"><Chip v-for="item in data.periodicidades" :key="item.id" :label="`${periodicityLabel[item.periodicidad]} ${item.plazo_minimo}–${item.plazo_maximo}`" class="whitespace-nowrap" /></div></template></Column>
+                            <Column header="Vigencia"><template #body="{ data }"><p class="whitespace-nowrap text-sm">{{ displayDate(data.vigente_desde) }}</p><p class="whitespace-nowrap text-xs text-surface-500">{{ data.cat_aplica ? 'CAT aplicable' : 'CAT no aplicable' }}</p></template></Column>
                             <Column header="Acciones"><template #body="{ data }"><div class="flex flex-nowrap gap-1"><Button v-if="data.estado === 'borrador' && can('update productos-crediticios')" v-tooltip.top="'Editar borrador'" icon="pi pi-pencil" text rounded :aria-label="`Editar versión ${data.numero}`" @click="openEdit(data)" /><Button v-if="can('simulate productos-crediticios')" v-tooltip.top="'Simular'" icon="pi pi-calculator" text rounded :aria-label="`Simular versión ${data.numero}`" @click="openSimulator(data)" /><Button v-if="can('version productos-crediticios')" v-tooltip.top="'Crear nueva versión'" icon="pi pi-copy" text rounded :aria-label="`Duplicar versión ${data.numero}`" @click="versionCopy(data)" /><Button v-if="data.estado === 'borrador' && can('activate productos-crediticios')" v-tooltip.top="'Activar'" icon="pi pi-check-circle" text rounded severity="success" :aria-label="`Activar versión ${data.numero}`" @click="activate(data)" /><Button v-if="['activa','programada'].includes(data.estado) && can('retire productos-crediticios')" v-tooltip.top="'Retirar'" icon="pi pi-ban" text rounded severity="danger" :aria-label="`Retirar versión ${data.numero}`" @click="retire(data)" /></div></template></Column>
                         </DataTable>
                     </section>

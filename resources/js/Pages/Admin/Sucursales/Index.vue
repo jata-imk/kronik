@@ -1,4 +1,5 @@
 <script setup>
+import PageHeader from "@/Components/PageHeader.vue";
 import CodigoPostalAutocomplete from "@/Components/CodigoPostalAutocomplete.vue";
 import IntlTelInput from "@/Components/IntlTelInput.vue";
 import { useDireccionCodigoPostal } from "@/Composables/useDireccionCodigoPostal";
@@ -83,6 +84,14 @@ const filters = ref({
     horario_search: { value: null, matchMode: FilterMatchMode.CONTAINS },
     summary_search: { value: null, matchMode: FilterMatchMode.CONTAINS },
     estado_label: { value: "Activa", matchMode: FilterMatchMode.EQUALS },
+});
+const sucursalesMobile = computed(() => {
+    const estado = filters.value.estado_label.value;
+    const buscar = String(filters.value.global.value ?? "").trim().toLocaleLowerCase("es-MX");
+    return sucursales.value.filter((sucursal) =>
+        (!estado || sucursal.estado_label === estado) &&
+        (!buscar || `${sucursal.sucursal_search} ${sucursal.domicilio_display} ${sucursal.horario_search}`.toLocaleLowerCase("es-MX").includes(buscar)),
+    );
 });
 
 const emptySucursal = () => ({
@@ -249,10 +258,9 @@ const deactivate = (sucursal) => {
 <template>
     <AppLayout title="Sucursales">
         <template #card-header>
-            <div class="flex items-center p-4">
-                <Button icon="pi pi-arrow-left" as="a" :href="route('admin.dashboard')" />
-                <h2 class="text-2xl font-bold ml-4">Sucursales</h2>
-            </div>
+            <PageHeader eyebrow="Administración · Organización" title="Sucursales" description="Gestiona las sucursales y su operación.">
+                <template #actions><Button icon="pi pi-arrow-left" label="Volver a administración" severity="secondary" as="a" :href="route('admin.dashboard')" /></template>
+            </PageHeader>
         </template>
 
         <template #card-content>
@@ -262,7 +270,13 @@ const deactivate = (sucursal) => {
                     <Button v-if="can('create-sucursales')" label="Crear sucursal" icon="pi pi-plus" @click="openCreate" />
                 </div>
 
-                <DataTable v-model:filters="filters" :value="sucursales" :global-filter-fields="['nombre', 'domicilio_display', 'email', 'telefono', 'horario_search', 'summary_search', 'estado_label']" filter-display="row" paginator :rows="10" striped-rows scrollable responsive-layout="scroll" :table-style="{ tableLayout: 'fixed', minWidth: '60rem' }">
+                <section class="k-mobile-records px-4 pb-4" aria-label="Sucursales">
+                    <div class="flex flex-wrap gap-2"><Select v-model="filters.estado_label.value" aria-label="Filtrar sucursales por estado" :options="['Activa', 'Inactiva']" placeholder="Todos los estados" show-clear class="w-full" /><InputText v-model="filters.global.value" aria-label="Buscar sucursales" placeholder="Buscar sucursales" class="w-full" /></div>
+                    <div v-if="!sucursalesMobile.length" class="k-empty k-surface"><i class="pi pi-map-marker" aria-hidden="true" /><strong>Sin sucursales con estos filtros</strong></div>
+                    <article v-for="sucursal in sucursalesMobile" :key="sucursal.id" class="k-surface k-record-card"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><h3 class="font-semibold truncate">{{ sucursal.nombre }}</h3><p class="text-sm text-surface-500">{{ sucursal.clave }} · {{ sucursal.estado_label }}</p></div><span class="size-2.5 shrink-0 rounded-full mt-2" :class="sucursal.activa ? 'bg-green-500' : 'bg-surface-400'" /></div><p class="text-sm">{{ sucursal.telefono || 'Sin teléfono' }}</p><p class="text-sm break-all">{{ sucursal.email || 'Sin correo' }}</p><p class="text-sm text-surface-500">{{ sucursal.domicilio_display }}</p><div class="flex flex-wrap gap-2"><Button v-if="can('update-sucursales')" label="Editar" icon="pi pi-pencil" outlined size="small" @click="openEdit(sucursal)" /><Button v-if="can('delete-sucursales') && sucursal.activa" label="Desactivar" icon="pi pi-ban" outlined severity="danger" size="small" @click="deactivate(sucursal)" /></div></article>
+                </section>
+
+                <DataTable class="k-desktop-records" v-model:filters="filters" :value="sucursales" :global-filter-fields="['nombre', 'domicilio_display', 'email', 'telefono', 'horario_search', 'summary_search', 'estado_label']" filter-display="row" paginator :rows="10" striped-rows scrollable responsive-layout="scroll" :table-style="{ tableLayout: 'fixed', minWidth: '60rem' }">
                     <template #header><div class="flex flex-wrap items-center justify-between gap-3"><span class="text-sm text-surface-500">Se muestran activas por defecto; usa el filtro Estado para consultar el archivo.</span><div class="flex flex-wrap gap-2"><Select v-model="filters.estado_label.value" aria-label="Filtrar sucursales por estado" :options="['Activa', 'Inactiva']" placeholder="Todos los estados" show-clear class="w-44" /><IconField><InputIcon class="pi pi-search" /><InputText v-model="filters.global.value" placeholder="Buscar sucursales" /></IconField></div></div></template>
                     <Column field="sucursal_search" header="Sucursal" sortable :show-filter-menu="false" style="width: 26%">
                         <template #body="{ data }">

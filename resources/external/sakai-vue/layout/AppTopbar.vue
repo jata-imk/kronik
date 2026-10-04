@@ -4,7 +4,7 @@ import AppConfigurator from "./AppConfigurator.vue";
 import AppUserMenu from "./AppUserMenu.vue";
 import { Link } from "@inertiajs/vue3";
 
-const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
+const { toggleMenu, toggleDarkMode, isDarkTheme, isSidebarActive } = useLayout();
 
 const appName = import.meta.env.VITE_APP_NAME;
 </script>
@@ -12,10 +12,10 @@ const appName = import.meta.env.VITE_APP_NAME;
 <template>
     <div class="layout-topbar">
         <div class="layout-topbar-logo-container">
-            <button aria-label="Mostrar u ocultar menú" v-tooltip.bottom="'Mostrar u ocultar menú'" class="layout-menu-button layout-topbar-action" @click="toggleMenu">
+            <button :aria-label="isSidebarActive ? 'Cerrar menú' : 'Abrir menú'" :aria-expanded="isSidebarActive" aria-controls="k-main-sidebar" v-tooltip.bottom="'Mostrar u ocultar menú'" class="layout-menu-button layout-topbar-action" @click="toggleMenu">
                 <i class="pi pi-bars"></i>
             </button>
-            <Link :href="route('dashboard')" class="layout-topbar-logo">
+            <Link :href="route('dashboard')" class="layout-topbar-logo" aria-label="Kronik, ir al tablero">
                 <svg viewBox="0 0 54 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
                         fill-rule="evenodd"
@@ -66,14 +66,6 @@ const appName = import.meta.env.VITE_APP_NAME;
 
             <div class="layout-topbar-menu hidden lg:block">
                 <div class="layout-topbar-menu-content">
-                    <button type="button" class="layout-topbar-action" aria-label="Calendario" v-tooltip.bottom="'Calendario'">
-                        <i class="pi pi-calendar"></i>
-                        <span>Calendario</span>
-                    </button>
-                    <button type="button" class="layout-topbar-action" aria-label="Notificaciones" v-tooltip.bottom="'Notificaciones'">
-                        <i class="pi pi-inbox"></i>
-                        <span>Notificaciones</span>
-                    </button>
                     <AppUserMenu />
                 </div>
             </div>

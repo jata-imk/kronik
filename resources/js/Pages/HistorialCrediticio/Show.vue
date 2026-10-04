@@ -3,6 +3,7 @@ import { ref, reactive, computed } from "vue";
 import { usePage } from "@inertiajs/vue3";
 
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
+import PageHeader from "@/Components/PageHeader.vue";
 import CreditScoreCard from "@/Components/HistorialCrediticio/CreditScoreCard.vue";
 import CreditFactorsCard from "@/Components/HistorialCrediticio/CreditFactorsCard.vue";
 import TransactionTimeLine from "@/Components/HistorialCrediticio/TransactionTimeline.vue";
@@ -115,15 +116,11 @@ const creditTransactions = ref([
 </script>
 
 <template>
-    <AppLayout title="Listado de clientes">
+    <AppLayout title="Listado de consultas">
         <template #card-header>
-            <div class="pl-6">
-                <div class="flex justify-between items-center pt-4">
-                    <h2 class="text-2xl font-bold mb-4">Listado de consultas</h2>
-                </div>
-    
-                <SelectButton v-model="selectedSic" :options="sics" optionLabel="nombre" :option-disabled="(sic) => !sic.activo" :allow-empty="false" />
-            </div>
+            <PageHeader eyebrow="Operación · Clientes" title="Listado de consultas" description="Revisa el historial crediticio disponible.">
+                <template #actions><SelectButton v-model="selectedSic" :options="sics" optionLabel="nombre" :option-disabled="(sic) => !sic.activo" :allow-empty="false" /></template>
+            </PageHeader>
         </template>
 
         <template #card-content>

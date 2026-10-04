@@ -1,4 +1,5 @@
 <script setup>
+import PageHeader from "@/Components/PageHeader.vue";
 import DocumentEditor from "@/Components/Documents/DocumentEditor.vue";
 import DocumentPdfPreview from "@/Components/Documents/DocumentPdfPreview.vue";
 import DocumentVersionStatus from "@/Components/Documents/DocumentVersionStatus.vue";
@@ -347,14 +348,9 @@ watch(selected, (item) => {
 <template>
     <AppLayout title="Documentos y plantillas">
         <template #card-header>
-            <div class="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <div class="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.16em] text-primary"><i class="pi pi-file-edit" />Centro documental</div>
-                    <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0">Documentos y plantillas</h1>
-                    <p class="mt-1 text-sm text-surface-500">Redacciones versionadas, generación trazable y archivos siempre privados.</p>
-                </div>
-                <Button v-if="can('create plantillas-documentos')" label="Nueva plantilla" icon="pi pi-plus" @click="openCreate" />
-            </div>
+            <PageHeader eyebrow="Configuración · Centro documental" title="Documentos y plantillas" description="Redacciones versionadas, generación trazable y archivos siempre privados.">
+                <template #actions><Button v-if="can('create plantillas-documentos')" label="Nueva plantilla" icon="pi pi-plus" @click="openCreate" /></template>
+            </PageHeader>
         </template>
 
         <template #card-content>
@@ -384,7 +380,7 @@ watch(selected, (item) => {
                 </aside>
 
                 <main v-if="selected" class="min-w-0 space-y-5">
-                    <section class="overflow-hidden rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-primary-900 p-5 text-white shadow-xl shadow-slate-950/10 sm:p-6">
+                    <section class="k-feature overflow-hidden p-5 sm:p-6">
                         <div class="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
                             <div class="min-w-0"><div class="flex flex-wrap gap-2"><Tag :value="typeLabel(selected.tipo)" severity="secondary" rounded /><Tag :value="selected.clave" severity="contrast" rounded /></div><h2 class="mt-4 truncate text-2xl font-bold">{{ selected.nombre }}</h2><p class="mt-2 max-w-2xl text-sm text-white/70">{{ selected.descripcion || 'Sin descripción comercial. Puedes agregarla en el próximo borrador.' }}</p></div>
                             <Button v-if="selectedVersion" label="Previsualizar" icon="pi pi-eye" severity="secondary" @click="showPreview(selectedVersion)" />

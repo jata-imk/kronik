@@ -1,8 +1,10 @@
 <script setup>
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
+import PageHeader from "@/Components/PageHeader.vue";
 import ListadoClientes from "./Partials/ListadoClientes.vue";
 
-const { clientes, can, filters, sucursales } = defineProps({
+const { clientes, can, filters, sucursales, view } = defineProps({
+    view: { type: String, default: "clientes" },
     confirmsTwoFactorAuthentication: Boolean,
     sessions: Array,
     clientes: {
@@ -19,15 +21,13 @@ const { clientes, can, filters, sucursales } = defineProps({
 </script>
 
 <template>
-    <AppLayout title="Listado de clientes">
+    <AppLayout :title="view === 'expedientes' ? 'Expedientes KYC' : 'Clientes'">
         <template #card-header>
-            <div class="flex justify-between items-center pl-4 pt-4">
-                <h2 class="text-2xl font-bold">Gestión de clientes</h2>
-            </div>
+            <PageHeader eyebrow="Operación · Clientes" :title="view === 'expedientes' ? 'Expedientes KYC' : 'Clientes'" :description="view === 'expedientes' ? 'Consulta la documentación y el estado de cada expediente.' : 'Gestiona la información de tus clientes y sus sucursales.'" />
         </template>
 
         <template #card-content>
-            <ListadoClientes :clientes="clientes" :can="can" :filters="filters" :sucursales="sucursales" />
+            <ListadoClientes :clientes="clientes" :can="can" :filters="filters" :sucursales="sucursales" :view="view" />
         </template>
     </AppLayout>
 </template>

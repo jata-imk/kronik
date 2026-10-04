@@ -1,6 +1,7 @@
 <script setup>
 import { Link, useForm } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
+import PageHeader from "@/Components/PageHeader.vue";
 import { computed, ref } from "vue";
 import { formatMoneyWithCents as money } from "@/Pages/ProductosCrediticios/productValidation";
 const props = defineProps({ solicitud: Object, preparacion: Object, puedeRegistrar: Boolean });
@@ -15,14 +16,14 @@ function registrar() {
 
 <template>
     <AppLayout title="Registrar desembolso QA">
+        <template #card-header><PageHeader eyebrow="Operación · Cartera" title="Registrar desembolso" :description="`${solicitud.cliente.primer_nombre} ${solicitud.cliente.apellido_paterno} · ${solicitud.sucursal.nombre}`" /></template>
         <template #card-content>
             <div class="space-y-6 p-4 md:p-6">
                 <nav class="flex flex-wrap gap-4 text-sm" aria-label="Contexto del desembolso">
                     <Link :href="route('solicitudes.show', solicitud.id)" class="text-primary hover:underline"><i class="pi pi-arrow-left mr-2" />Solicitud SOL-{{ solicitud.id }}</Link>
                     <Link :href="route('solicitudes.paquete.show', solicitud.id)" class="text-primary hover:underline"><i class="pi pi-file-pdf mr-2" />Contrato y tabla de pagos</Link>
                 </nav>
-                <header><p class="text-xs font-semibold uppercase tracking-widest text-primary">Operación crediticia</p><h1 class="mt-2 text-2xl font-bold">Registrar desembolso</h1><p class="mt-2 text-surface-500">{{ solicitud.cliente.primer_nombre }} {{ solicitud.cliente.apellido_paterno }} · {{ solicitud.sucursal.nombre }}</p></header>
-                <section v-if="resumen" class="rounded-2xl bg-gradient-to-br from-slate-950 to-violet-700 p-6 text-white" aria-label="Importes firmados">
+                <section v-if="resumen" class="k-feature p-6" aria-label="Importes firmados">
                     <Tag value="Transferencia manual · solo QA" severity="warn" />
                     <div class="mt-5 grid gap-4 sm:grid-cols-3">
                         <div><p class="text-white/80">Efectivo a entregar</p><p class="mt-2 text-3xl font-bold">{{ money(resumen.importe) }}</p><p class="mt-2 text-sm text-white/80">Importe exacto de la transferencia</p></div>
@@ -31,15 +32,15 @@ function registrar() {
                     </div>
                 </section>
                 <Message severity="warn" :closable="false">Esta pantalla solo registra una transferencia sintética para QA. No envía dinero al banco. No utilices comprobantes ni cuentas reales.</Message>
-                <div class="grid gap-5 lg:grid-cols-3">
-                    <section class="space-y-4 rounded-2xl border border-surface-200 p-5 dark:border-surface-700 lg:col-span-2">
+                <div class="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-3">
+                    <section class="min-w-0 space-y-4 rounded-2xl border border-surface-200 p-5 dark:border-surface-700 lg:col-span-2">
                         <h2 class="text-lg font-semibold"><i class="pi pi-shield mr-2 text-primary" />Antes de registrar</h2>
-                        <ul v-if="pendientes.length" class="space-y-3"><li v-for="item in pendientes" :key="item.clave" class="rounded-xl bg-amber-50 p-3 text-amber-900 dark:bg-amber-950 dark:text-amber-100"><i class="pi pi-exclamation-circle mr-2" />{{ item.mensaje }}</li></ul>
+                        <ul v-if="pendientes.length" class="space-y-3"><li v-for="item in pendientes" :key="item.clave" class="k-break rounded-xl bg-amber-50 p-3 text-amber-900 dark:bg-amber-950 dark:text-amber-100"><i class="pi pi-exclamation-circle mr-2" />{{ item.mensaje }}</li></ul>
                         <Message v-else severity="success" :closable="false">Formalización y evidencia vigentes. Se volverán a comprobar al confirmar.</Message>
                         <Button v-if="puedeRegistrar" label="Revisar y registrar desembolso QA" icon="pi pi-send" :disabled="!preparacion.permitido" @click="drawer = true" />
                         <p v-else class="text-sm text-surface-500">Solicita el permiso de desembolso al administrador y selecciona la sucursal responsable.</p>
                     </section>
-                    <aside class="space-y-3 rounded-2xl border border-surface-200 bg-surface-50 p-5 dark:border-surface-700 dark:bg-surface-900">
+                    <aside class="min-w-0 space-y-3 rounded-2xl border border-surface-200 bg-surface-50 p-5 dark:border-surface-700 dark:bg-surface-900">
                         <h2 class="font-semibold"><i class="pi pi-info-circle mr-2 text-primary" />Cómo se compone</h2>
                         <template v-if="resumen"><p>Monto solicitado: {{ money(resumen.monto) }}</p><p>Retenciones: {{ money(resumen.retenido) }}</p><p>Cargos iniciales separados: {{ money(resumen.separado) }}</p></template>
                         <p class="text-sm text-surface-500">Los importes incluyen los impuestos proyectados según su modalidad. Los cargos separados no se descuentan de la transferencia ni se marcan pagados aquí.</p>

@@ -16,7 +16,7 @@ function render(overrides = {}) {
             paquetes: { data: [], last_page: 1 }, plantillas: [], can: { preparar: true }, ...overrides,
         },
         global: { mocks: { route: (name) => name }, stubs: {
-            AppLayout: { template: '<main><slot name="card-content" /></main>' },
+            AppLayout: { template: '<main><slot name="card-header" /><slot name="card-content" /></main>' },
             Button: { props: ["label", "disabled"], template: '<button :disabled="disabled">{{ label }}</button>' },
             Message: { template: '<div><slot /></div>' }, Tag: true,
             Drawer: true, PrivateDocumentViewer: true, DataTable: true, Column: true,

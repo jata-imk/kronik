@@ -17,6 +17,7 @@ use App\Http\Controllers\ClienteVinculoController;
 use App\Http\Controllers\CodigoPostalController;
 use App\Http\Controllers\ConceptoComisionController;
 use App\Http\Controllers\CurrentSucursalController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentoGeneradoController;
 use App\Http\Controllers\DocumentoPlantillaController;
 use App\Http\Controllers\GeocodingController;
@@ -42,9 +43,7 @@ Route::middleware([
     'verified',
     'active',
 ])->group(function () {
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('mi-trabajo', [\App\Http\Controllers\SolicitudController::class, 'index'])->name('solicitudes.trabajo');
     Route::get('creditos', [\App\Http\Controllers\CreditoController::class, 'index'])->name('creditos.index');
@@ -75,6 +74,7 @@ Route::middleware([
     Route::patch('solicitudes/{solicitud}/responsable', [\App\Http\Controllers\SolicitudController::class, 'asignar'])->name('solicitudes.asignar');
     Route::resource('solicitudes', \App\Http\Controllers\SolicitudController::class)->except('destroy')->parameters(['solicitudes' => 'solicitud']);
 
+    Route::get('clientes/expedientes', [ClienteController::class, 'index'])->name('clientes.expedientes.index');
     // Importante: Las rutas de clientes.historial-crediticio deben ir antes de la ruta de clientes
     Route::get('clientes/historial-crediticio', [HistorialCrediticioController::class, 'index'])->name('clientes.historial-crediticio.index');
     Route::get('clientes/{cliente}/historial-crediticio', [HistorialCrediticioController::class, 'show'])->name('clientes.historial-crediticio.show');

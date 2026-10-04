@@ -10,7 +10,7 @@ const emit = defineEmits(["update:editRoleNameMode"]);
 </script>
 
 <template>
-    <div class="flex flex-col sm:flex-row gap-4 sm:gap-0 items-start justify-between mb-4 bg-gray-300 dark:bg-gray-800 p-4 rounded-none xl:rounded-xl rounded-tl-none rounded-tr-none absolute top-0 left-0 right-0 lg:left-[20px] lg:right-[20px]">
+    <div class="col-span-1 flex min-w-0 flex-col items-start justify-between gap-4 rounded-xl bg-surface-100 p-4 dark:bg-surface-800 sm:flex-row lg:col-span-12">
         <div class="flex gap-1 sm:gap-4 items-start">
             <span class="pi pi-fw pi-key !text-2xl"></span>
             <div>
