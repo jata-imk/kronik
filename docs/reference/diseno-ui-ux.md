@@ -19,6 +19,8 @@ Las aplicaciones citadas son referencias de organización del trabajo. Los color
 
 La apariencia es configurable por navegador desde **Personalizar apariencia** en la barra superior: color de énfasis, color de fondo, estilo de controles, modo del menú y tema claro/oscuro. La selección se conserva en `layoutConfig` de localStorage. El verde es solo el valor inicial. `resources/js/theme/kronik.js` define el preset inicial; `AppConfigurator.vue` aplica las selecciones y `resources/css/kronik.css` consume los tokens semánticos de PrimeVue. No crear otro juego de colores fijo dentro de una página.
 
+Las muestras del personalizador muestran un círculo de 1.5rem dentro de un botón de al menos 44px: el color se ve compacto, pero sigue siendo cómodo al tacto. La selección se indica con contorno y `aria-pressed`.
+
 | Token | Claro | Oscuro | Uso |
 | --- | --- | --- | --- |
 | Énfasis | `--p-primary-color` | `--p-primary-color` | Acción primaria; depende de la selección |
@@ -29,7 +31,7 @@ La apariencia es configurable por navegador desde **Personalizar apariencia** en
 | Borde | `--p-surface-200` | `--p-surface-700` | Separación de superficies |
 
 - Usar **Inter Variable**, distribuida localmente con `@fontsource-variable/inter`. Cifras financieras con numerales tabulares (`k-financial`).
-- Escala recomendada: título de página 1.6rem/700, sección 1.15rem/700, texto 1rem, ayuda .85rem y ceja .75rem/700. La escala móvil sube el tamaño base a 16px.
+- Escala recomendada: título de página 1.6rem/700, sección 1.15rem/700, texto 1rem, ayuda .85rem y ceja .75rem/700. En pantallas de hasta 575px, la raíz usa 93.75% (15px con la preferencia normal del navegador); los títulos y descripciones se ajustan por componente.
 - Espaciado de base 4px; intervalos habituales 8, 12, 16, 24 y 32px. Radio de superficie 1rem; controles entre .5 y .75rem. Sombra suave solo para capas principales.
 - El color de énfasis comunica acciones y foco; nunca debe usarse como único indicador de estado. Error, advertencia y éxito deben incluir texto e icono cuando sea útil. Evitar colores de marca fijos en CSS o Tailwind para elementos que deben responder al selector.
 - En tema claro, los botones de paletas alternativas toman el tono 700 para sostener texto blanco legible; el verde inicial conserva su tono 500, que ya es oscuro. En tema oscuro, PrimeVue usa un tono claro con texto de superficie oscura. Comprobar contraste tras añadir una paleta nueva, incluido hover y foco.
@@ -39,7 +41,7 @@ La apariencia es configurable por navegador desde **Personalizar apariencia** en
 | Elemento | Regla | Fuente técnica |
 | --- | --- | --- |
 | Texto de producto | Inter Variable; pesos 400, 600 y 700 como base. Evitar cambiar de familia entre módulos. | `resources/js/app.js`, `resources/css/kronik.css` |
-| Cursiva editorial | Inter Variable Italic en fragmentos breves y deliberados de la landing y el acceso: una idea por bloque. También puede destacar una frase editorial en un estado vacío o bienvenida. Nunca en cifras, etiquetas, estados, campos, tablas ni instrucciones de seguridad. | `wght-italic.css`, `.k-display-accent` |
+| Acento manuscrito | Caveat Variable en fragmentos breves y deliberados de la landing y el acceso: una idea por bloque. También puede destacar una frase editorial en un estado vacío o bienvenida. Nunca en cifras, etiquetas, estados, campos, tablas ni instrucciones de seguridad. La interfaz operativa sigue en Inter. | `@fontsource-variable/caveat`, `.k-display-accent` |
 | Cifras | Numerales tabulares y alineación consistente; moneda con dos decimales y unidad explícita. | `.k-financial` |
 | Espaciado | Retícula base de 4 px. Usar 8 px entre elementos relacionados, 12–16 px dentro de controles, 24 px en cabeceras y 32 px para separar bloques mayores. | `--k-space-4/6/8` y utilidades Tailwind |
 | Radios | 16 px en paneles; 12 px en controles y acciones. No mezclar radios arbitrarios dentro de un mismo módulo. | `--k-radius`, `--k-radius-control` |
@@ -47,13 +49,13 @@ La apariencia es configurable por navegador desde **Personalizar apariencia** en
 
 El editor de documentos conserva sus familias tipográficas propias para representar el documento final; esas fuentes no se aplican a la interfaz de operación.
 
-En móvil mantener el texto base en **16 px equivalentes (1rem)** para lectura y zoom del navegador. Reducir títulos, cejas y texto auxiliar por componente mediante `rem` o `clamp()`; no reducir todo `html` a 85–90 %, porque también encoge controles y texto crítico. Usar `rem` en tamaños de letra, controles y ritmos de interfaz; `px` es válido para bordes de 1 px, puntos decorativos y detalles físicos que no representan texto. Comprobar el diseño a 320, 390, 768 y 1440 px y con zoom 200 %.
+En móvil, usar 15px equivalentes (1rem) para texto corriente y una altura de línea de 1.42 en el área de trabajo: caben más datos sin compactar en exceso. Las entradas de formularios mantienen un mínimo de 16px para evitar zoom automático en iOS; los botones táctiles conservan al menos 44×44px. Reducir títulos y texto auxiliar por componente mediante `rem` o `clamp()`; no bajar la raíz a 85–90 %, porque también encogería controles y texto crítico. Usar `rem` en tamaños de letra, controles y ritmos de interfaz; `px` es válido para bordes de 1 px y detalles físicos. Comprobar el diseño a 320, 390, 768 y 1440 px y con zoom 200 %.
 
 ### Portada pública y movimiento
 
 La portada explica el recorrido en cuatro etapas y muestra capturas reales de cada módulo junto a su explicación. Guardar las capturas optimizadas en `public/images/landing/`, difuminar filas con datos de clientes o usuarios antes de publicarlas y actualizar las imágenes cuando cambie la interfaz. Cada imagen lleva `alt`, pie de foto y enlace para ampliarla. No poner cifras de prueba como promesas comerciales.
 
-En escritorio, la primera pantalla usa dos columnas: titular y acción a la izquierda; maqueta del espacio de trabajo a la derecha. En móvil se apilan. `HeroParticleBurst.vue` dibuja una constelación determinista de trazos SVG que usa el énfasis seleccionado y tonos cálidos derivados; cada trazo se desplaza y cambia de opacidad con duración y fase distintas, además del movimiento lento del conjunto. Una máscara despeja el centro para mantener la legibilidad. El titular revela la segunda línea como máquina de escribir, con el texto completo reservado en el flujo para evitar saltos y un `aria-label` estático para lectores de pantalla. Con movimiento reducido se muestra completo de inmediato.
+En escritorio, la primera pantalla usa dos columnas: titular y acción a la izquierda; maqueta del espacio de trabajo a la derecha. En móvil se apilan. `HeroParticleBurst.vue` dibuja en canvas una constelación radial determinista de pequeños trazos. El centro persigue el cursor con resorte amortiguado y cada partícula avanza a su propia velocidad; el campo conserva inercia al cambiar de dirección o salir del hero. El color principal responde al énfasis seleccionado y los tonos cálidos y azules son secundarios. El lienzo se ajusta a la densidad de píxeles, con límite para cuidar el rendimiento. El panel de maqueta usa un degradado suave, sin retícula de puntos que compita con las partículas; la retícula isométrica queda reservada a las cabeceras internas. El centro de la constelación queda despejado para mantener la legibilidad. El titular revela la segunda línea como máquina de escribir, con el texto completo reservado en el flujo para evitar saltos y un `aria-label` estático para lectores de pantalla. Con movimiento reducido se muestra completo de inmediato y el canvas dibuja una sola imagen estática.
 
 Una banda fotográfica separa el recorrido de la galería y una segunda foto aparece como textura tenue tras el encabezado de la galería. Ambas se sirven localmente, optimizadas y con degradado para asegurar contraste; nunca se colocan debajo de tablas o datos financieros. Fuentes: [escritorio con documentos, Cht Gsml en Unsplash](https://unsplash.com/photos/desk-with-papers-glasses-calculator-and-office-supplies-sW02MHv37yk) y [revisión de documentos, Mikhail Nilov en Pexels](https://www.pexels.com/photo/a-person-examining-documents-8296970/). Sus licencias permiten el uso gratuito en una web comercial: [Unsplash](https://unsplash.com/license), [Pexels](https://www.pexels.com/license/). Mantener aquí autor, página y licencia si se sustituyen.
 

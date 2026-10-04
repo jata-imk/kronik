@@ -16,6 +16,7 @@ import twemojiDirective from "./Directives/twemoji";
 import "./bootstrap";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/inter/wght-italic.css";
+import "@fontsource-variable/caveat";
 import "../css/app.css";
 import "@sakai-vue/assets/styles.scss";
 import "../css/kronik.css";

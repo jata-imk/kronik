@@ -12,6 +12,13 @@ useScrollReveal(landing);
 const typedLine = ref("");
 const fullLine = "en cada paso.";
 let typingTimer;
+const particleBurst = ref(null);
+function moveParticles(event) {
+    if (event.pointerType !== "touch") particleBurst.value?.setPointer(event.clientX, event.clientY);
+}
+function resetParticles() {
+    particleBurst.value?.resetPointer();
+}
 onMounted(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         typedLine.value = fullLine;
@@ -23,7 +30,9 @@ onMounted(() => {
         if (character === fullLine.length) window.clearInterval(typingTimer);
     }, 90);
 });
-onUnmounted(() => window.clearInterval(typingTimer));
+onUnmounted(() => {
+    window.clearInterval(typingTimer);
+});
 const destination = () => page.props.auth?.user ? "dashboard" : "login";
 const journey = [
     { number: "01", title: "Prepara", text: "Productos, políticas y documentos listos para operar.", icon: "pi pi-sliders-h" },
@@ -41,8 +50,8 @@ const journey = [
             <nav aria-label="Acceso"><Link v-if="canLogin" :href="route(destination())" class="k-public-login">{{ destination() === 'dashboard' ? 'Ir al tablero' : 'Iniciar sesión' }} <i class="pi pi-arrow-right" aria-hidden="true" /></Link></nav>
         </header>
         <main>
-            <section class="k-landing-hero">
-                <HeroParticleBurst />
+            <section class="k-landing-hero" @pointermove="moveParticles" @pointerleave="resetParticles">
+                <HeroParticleBurst ref="particleBurst" />
                 <div class="k-landing-intro">
                     <p class="k-eyebrow">Un espacio para todo el recorrido</p>
                     <h1 aria-label="Crédito claro, en cada paso.">Crédito claro,<span class="k-hero-type-line" aria-hidden="true"><span class="k-hero-type-reserve">{{ fullLine }}</span><em class="k-display-accent k-hero-typed">{{ typedLine }}<span class="k-hero-caret" /></em></span></h1>
