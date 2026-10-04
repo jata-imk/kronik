@@ -492,8 +492,10 @@ select {
 }
 .k-display-accent {
     color: var(--k-brand);
-    font-style: italic;
-    font-weight: 650;
+    font-family: "Caveat Variable", cursive;
+    font-style: normal;
+    font-weight: 600;
+    letter-spacing: -.025em;
 }
 .k-public-copy > p:not(.k-eyebrow) {
     max-width: 54ch;
@@ -677,16 +679,13 @@ select {
     position: absolute;
     inset: 0 0 0 13%;
     border-radius: 2rem;
+    border: 1px solid color-mix(in srgb, var(--k-brand), transparent 89%);
     background: radial-gradient(
-            circle,
-            var(--k-pattern-ink) 1px,
-            transparent 1.5px
-        )
-        0 0 / 2.5rem 2.5rem,
-        radial-gradient(circle, var(--k-pattern-ink) 1px, transparent 1.5px)
-        1.25rem 1.25rem / 2.5rem 2.5rem,
-        color-mix(in srgb, var(--k-brand), var(--k-canvas) 94%);
-    opacity: 0.65;
+        circle at 70% 30%,
+        color-mix(in srgb, var(--k-brand), transparent 84%),
+        color-mix(in srgb, var(--k-brand), var(--k-canvas) 97%) 65%
+    );
+    opacity: .8;
 }
 .k-landing-window {
     position: relative;
@@ -948,27 +947,6 @@ select {
     isolation: isolate;
     overflow: hidden;
 }
-.k-landing::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background-image: radial-gradient(
-            circle,
-            var(--k-pattern-ink) 1px,
-            transparent 1.5px
-        ), radial-gradient(circle, var(--k-pattern-ink) 1px, transparent 1.5px);
-    background-size: 6rem 6rem, 9rem 9rem;
-    background-position: 0 0, 2.5rem 3rem;
-    opacity: 0.12;
-    animation: k-particle-drift 60s linear infinite;
-}
-@keyframes k-particle-drift {
-    to {
-        background-position: 6rem 6rem, 11.5rem 12rem;
-    }
-}
 .k-landing-window {
     animation: k-window-float 8s ease-in-out infinite;
 }
@@ -1072,7 +1050,6 @@ select {
         cubic-bezier(0.2, 0.75, 0.2, 1);
 }
 @media (prefers-reduced-motion: reduce) {
-    .k-landing::before,
     .k-landing-window,
     .k-landing-scene::before {
         animation: none;
@@ -1202,16 +1179,22 @@ select {
 
 @media (max-width: 575px) {
     html {
-        font-size: 16px;
+        font-size: 93.75%;
+        line-height: 1.42;
+    }
+    .layout-main {
+        line-height: 1.42;
     }
     .k-page-title {
-        font-size: 1.375rem;
+        font-size: 1.25rem;
+        line-height: 1.15;
     }
     .k-page-description {
-        font-size: .9375rem;
+        font-size: .9rem;
+        line-height: 1.45;
     }
     .k-eyebrow {
-        font-size: .6875rem;
+        font-size: .73rem;
     }
     .layout-main-container {
         padding-left: .75rem;
@@ -1237,7 +1220,7 @@ select {
         padding: .9rem;
     }
     .k-metric-value {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
     }
     .k-panel {
         padding: 1rem;
@@ -1276,6 +1259,35 @@ select {
     }
     .k-public-preview {
         padding: 1rem;
+    }
+    .layout-topbar {
+        padding-inline: .75rem;
+    }
+    .layout-topbar .layout-topbar-logo {
+        gap: .35rem;
+        font-size: 1.05rem;
+    }
+    .layout-topbar .layout-topbar-logo svg {
+        width: 2rem;
+    }
+    .layout-topbar .layout-topbar-actions {
+        gap: .3rem;
+    }
+    .layout-topbar .layout-config-menu {
+        gap: .1rem;
+    }
+    .layout-topbar .layout-topbar-action {
+        width: 2.95rem;
+        height: 2.95rem;
+    }
+    .layout-topbar .layout-topbar-action i {
+        font-size: 1.1rem;
+    }
+    .layout-topbar .layout-menu-button {
+        margin-right: .25rem;
+    }
+    .layout-main :is(input, textarea, select) {
+        font-size: max(1rem, 16px);
     }
 }
 @media (max-width: 991px) {
@@ -1320,34 +1332,37 @@ select {
     position: absolute;
     z-index: -1;
     top: -4rem;
-    left: 58%;
-    width: min(110vw, 95rem);
-    height: min(56rem, 100svh);
+    left: 50%;
+    width: 100vw;
+    height: calc(100% + 8rem);
     max-width: none;
     transform: translateX(-50%);
     pointer-events: none;
-    opacity: .82;
-    mask-image: radial-gradient(ellipse, transparent 0 12%, #000 36% 72%, transparent 100%);
-    animation: k-burst-breathe 9s ease-in-out infinite alternate;
+    color: var(--k-brand);
 }
-.k-hero-particle { stroke: var(--k-brand); opacity: .65; }
-.k-hero-particle line {
-    animation-name: k-particle-travel;
-    animation-timing-function: ease-in-out;
-    animation-iteration-count: infinite;
-    animation-direction: alternate;
+.k-color-swatch {
+    display: grid;
+    place-items: center;
+    flex: 0 0 max(3rem, 44px);
+    width: max(3rem, 44px);
+    height: max(3rem, 44px);
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
 }
-@keyframes k-particle-travel {
-    from { transform: translateX(-.5rem); opacity: .25; }
-    to { transform: translateX(.7rem); opacity: 1; }
+.k-color-swatch::before {
+    content: "";
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--swatch-color);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--k-ink), transparent 85%);
 }
-.k-hero-particle-0,
-.k-hero-particle-5 { stroke: color-mix(in srgb, var(--k-brand), #f59e0b 55%); }
-.k-hero-particle-2,
-.k-hero-particle-7 { stroke: color-mix(in srgb, var(--k-brand), #e56fa0 50%); }
-.k-hero-particle-4 { opacity: .35; }
-@keyframes k-burst-breathe {
-    to { opacity: 1; transform: translateX(-50%) scale(1.045) rotate(2deg); }
+.k-color-swatch[aria-pressed="true"]::before {
+    outline: 2px solid var(--k-brand);
+    outline-offset: 2px;
 }
 .k-landing-intro {
     position: relative;
@@ -1368,7 +1383,7 @@ select {
     margin: .12em 0 0;
     white-space: nowrap;
 }
-.k-hero-type-reserve { visibility: hidden; }
+.k-hero-type-reserve { visibility: hidden; font-family: "Caveat Variable", cursive; font-weight: 600; letter-spacing: -.025em; }
 .k-hero-typed {
     position: absolute;
     inset: 0 auto auto 0;
@@ -1606,7 +1621,7 @@ select {
 @media (max-width: 575px) {
     .k-landing-hero { gap: 2rem; padding-block: 3rem; }
     .k-landing-intro h1 { font-size: clamp(2.35rem, 10vw, 3.6rem); }
-    .k-hero-burst { top: -5rem; width: 190vw; height: 37rem; opacity: .62; }
+    .k-hero-burst { width: 100vw; height: calc(100% + 8rem); opacity: .62; }
     .k-landing-actions { gap: 1rem; }
     .k-landing-note { align-items: start; text-align: left; }
     .k-landing-close { grid-template-columns: 1fr; gap: 1.5rem; }
@@ -1619,7 +1634,6 @@ select {
 }
 @media (prefers-reduced-motion: reduce) {
     .k-hero-burst,
-    .k-hero-particle line,
     .k-hero-caret,
     .k-doodle path,
     .k-glow-frame::after { animation: none; }

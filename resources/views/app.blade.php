@@ -4,6 +4,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    {{-- QA sets same-origin at the server; map tiles need the origin as Referer. --}}
+    <meta name="referrer" content="strict-origin-when-cross-origin">
 
     <title inertia>{{ config('app.name', 'Laravel') }}</title>
 

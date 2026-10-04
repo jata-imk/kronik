@@ -558,8 +558,8 @@ function onMenuModeChange() {
                         :aria-label="`Color de énfasis ${primaryColor.name}`"
                         :aria-pressed="layoutConfig.primary === primaryColor.name"
                         @click="updateColors('primary', primaryColor)"
-                        :class="['border-none w-11 h-11 rounded-full p-0 cursor-pointer outline-none outline-offset-1', { 'outline-primary': layoutConfig.primary === primaryColor.name }]"
-                        :style="{ backgroundColor: `${primaryColor.name === 'noir' ? 'var(--text-color)' : primaryColor.palette['500']}` }"
+                        class="k-color-swatch"
+                        :style="{ '--swatch-color': primaryColor.name === 'noir' ? 'var(--text-color)' : primaryColor.palette['500'] }"
                     ></button>
                 </div>
             </div>
@@ -574,11 +574,8 @@ function onMenuModeChange() {
                         :aria-label="`Color de fondo ${surface.name}`"
                         :aria-pressed="layoutConfig.surface ? layoutConfig.surface === surface.name : isDarkTheme ? surface.name === 'zinc' : surface.name === 'slate'"
                         @click="updateColors('surface', surface)"
-                        :class="[
-                            'border-none w-11 h-11 rounded-full p-0 cursor-pointer outline-none outline-offset-1',
-                            { 'outline-primary': layoutConfig.surface ? layoutConfig.surface === surface.name : isDarkTheme ? surface.name === 'zinc' : surface.name === 'slate' }
-                        ]"
-                        :style="{ backgroundColor: `${surface.palette['500']}` }"
+                        class="k-color-swatch"
+                        :style="{ '--swatch-color': surface.palette['500'] }"
                     ></button>
                 </div>
             </div>
