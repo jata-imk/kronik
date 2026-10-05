@@ -21,6 +21,8 @@ let observer;
 let motionPreference;
 let frame;
 let previousTime = 0;
+let elapsed = 0;
+let pulsePhase = -Math.PI / 2;
 let width = 0;
 let height = 0;
 let radius = 0;
@@ -65,7 +67,7 @@ function draw(time = 0) {
     context.clearRect(0, 0, width, height);
     const brand = getComputedStyle(canvas.value).color;
     const tones = [brand, brand, brand, brand, "#e0a150", "#bd79ad", "#6593d5"];
-    const pulse = 1 + 0.14 * Math.sin(time * 0.0019) + 0.04 * Math.sin(time * 0.0038);
+    const pulse = 1 + 0.16 * Math.sin(pulsePhase);
     for (const particle of particles) {
         const distance = (76 + particle.distance * radius) * pulse;
         const angle = particle.angle + time * particle.drift * 0.00006;
@@ -85,11 +87,13 @@ function draw(time = 0) {
 function animate(time) {
     const delta = Math.min((time - (previousTime || time)) / 16.67, 2);
     previousTime = time;
+    elapsed += delta * 16.67;
+    pulsePhase += delta * 0.026;
     center.vx = Math.max(-11, Math.min(11, (center.vx + (target.x - center.x) * 0.009 * delta) * Math.pow(0.9, delta)));
     center.vy = Math.max(-11, Math.min(11, (center.vy + (target.y - center.y) * 0.009 * delta) * Math.pow(0.9, delta)));
     center.x += center.vx * delta;
     center.y += center.vy * delta;
-    draw(time);
+    draw(elapsed);
     frame = requestAnimationFrame(animate);
 }
 
@@ -100,6 +104,7 @@ function updateMotion() {
     if (motionPreference?.matches) {
         center = { x: width / 2, y: height / 2, vx: 0, vy: 0 };
         target = { x: center.x, y: center.y };
+        pulsePhase = -Math.PI / 2;
         draw(0);
     } else {
         frame = requestAnimationFrame(animate);
