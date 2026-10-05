@@ -19,7 +19,7 @@ Las aplicaciones citadas son referencias de organización del trabajo. Los color
 
 La apariencia es configurable por navegador desde **Personalizar apariencia** en la barra superior: color de énfasis, color de fondo, estilo de controles, modo del menú y tema claro/oscuro. La selección se conserva en `layoutConfig` de localStorage. El verde es solo el valor inicial. `resources/js/theme/kronik.js` define el preset inicial; `AppConfigurator.vue` aplica las selecciones y `resources/css/kronik.css` consume los tokens semánticos de PrimeVue. No crear otro juego de colores fijo dentro de una página.
 
-Las muestras del personalizador muestran un círculo de 1.5rem dentro de un botón de al menos 44px: el color se ve compacto, pero sigue siendo cómodo al tacto. La selección se indica con contorno y `aria-pressed`.
+Las muestras del personalizador se distribuyen en una cuadrícula estable de cuatro columnas: la paleta de fondo ocupa dos filas completas y no deja huecos por el reparto flexible. Cada muestra muestra un círculo de 1.875rem dentro de un botón de al menos 44px; la selección se indica con contorno y `aria-pressed`.
 
 | Token | Claro | Oscuro | Uso |
 | --- | --- | --- | --- |

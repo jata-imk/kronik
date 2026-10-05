@@ -1340,6 +1340,13 @@ select {
     pointer-events: none;
     color: var(--k-brand);
 }
+.k-color-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .25rem;
+    justify-items: center;
+    margin-top: .5rem;
+}
 .k-color-swatch {
     display: grid;
     place-items: center;
@@ -1354,8 +1361,8 @@ select {
 }
 .k-color-swatch::before {
     content: "";
-    width: 1.5rem;
-    height: 1.5rem;
+    width: 1.875rem;
+    height: 1.875rem;
     border-radius: 50%;
     background: var(--swatch-color);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--k-ink), transparent 85%);
