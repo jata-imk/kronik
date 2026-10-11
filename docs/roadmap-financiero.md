@@ -1,14 +1,22 @@
-# Roadmap Financiero para SOFOM ENR
+# Roadmap financiero de Kronik
 
 ## Objetivo
 
-Definir los procesos necesarios para convertir el sistema actual en una plataforma configurable para pequeñas financieras mexicanas. El supuesto base es una SOFOM ENR que otorga crédito propio, inicia con crédito simple y posteriormente opera crédito revolvente. El despliegue esperado es una instancia por financiera, no una app multi-financiera.
+Plataforma configurable para prestamistas personales y pequeñas instituciones financieras mexicanas, incluidas SOFIPOs mediante perfiles institucionales. Crédito simple individual PF/MXN primero; otros motores quedan como extensiones. Despliegue de una instancia por financiera; equipos son contextos de permisos.
 
 ## Estado Actual del Sistema
 
-Ya existe una base funcional para usuarios, equipos, permisos, sucursales, clientes, datos fiscales, domicilios y consultas de historial crediticio. Los `teams` representan departamentos o contextos de permisos y las sucursales representan unidades operativas separadas. Un usuario puede operar en varias sucursales con una principal y una actual; cada cliente conserva una sucursal responsable. Los clientes ya tienen datos personales, fiscales, direcciones y relación con consultas SIC. Círculo de Crédito está parcialmente integrado mediante servicios, repositorios, seeders y vistas para seleccionar APIs.
+Ya existe una base funcional para usuarios, equipos, permisos, sucursales, clientes, datos fiscales, domicilios y consultas de historial crediticio. Los `teams` representan departamentos o contextos de permisos y las sucursales representan unidades operativas separadas. Un usuario puede operar en varias sucursales con una principal y una actual; cada cliente conserva una sucursal responsable. Los clientes ya tienen datos personales, fiscales, direcciones y relación con consultas SIC. Círculo de Crédito tiene un adaptador QA para tres APIs, lectura histórica y evidencia cifrada; los SDK heredados siguen cerrados.
 
-Ya existe expediente documental y crédito simple V1 con versiones inmutables, catálogo de comisiones, modalidades de cobro inicial, simulador auditable y CAT informativo. La infraestructura de plantillas documentales versionadas, visor privado y generación PDF corresponde a Backlog 03.5; la generación contractual final esperará la entidad de originación. Faltan solicitudes, operación contractual del motor de amortización, autorización SIC formal, PLD, cobranza, pagos, reportes regulatorios/operativos y contabilidad.
+Actualización del 10/10/2026: P0–P6 integrados, con solicitudes, expediente y consentimiento SIC, evaluación manual/PLD, aprobación, contrato y tabla congelados, revisión de firma digitalizada, desembolso y pagos QA con devengo/reversos. Productos, fiscalidad y documentos están versionados. Los SDK SIC anteriores permanecen cerrados; P7 recupera consultas por un adaptador seguro y el historial.
+
+P7 recupera FICO v2, Fintech y Reporte de Crédito + FICO en simulación y su lectura
+histórica; P8 incorpora anticipos, liquidación y cierre. Implementados y verificados
+localmente en la rama de entrega, pendientes de revisión/integración. 2FA y revisión
+manual aprobadas. Cumplimiento/cobranza ampliados, reportes, contabilidad y crédito
+revolvente siguen pendientes; Backlog 02.5 diferido.
+[Notion](https://app.notion.com/p/3e161db7db7f817a8c89ec30767d4666) define prioridades.
+Las secciones siguientes describen el objetivo funcional sin acreditar cumplimiento universal.
 
 ## Procesos Requeridos
 

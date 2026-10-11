@@ -4,6 +4,7 @@ namespace App\Enums;
 
 enum ActivityEvent: string
 {
+    case SicAttemptReconciled = 'sic.attempt_reconciled';
     case Login = 'login';
     case ApplicationCreated = 'solicitud.created';
     case ApplicationUpdated = 'solicitud.updated';
@@ -46,6 +47,7 @@ enum ActivityEvent: string
     case ClientSicConsentRevoked = 'cliente.consentimiento_sic.revoked';
     case ClientSicConsentEvidenceDownloaded = 'cliente.consentimiento_sic.evidence_downloaded';
     case ClientSicFicoScoreV2Queried = 'cliente.sic.fico_score_v2.queried';
+    case SicEvidenceViewed = 'cliente.sic.evidence_viewed';
     case ClientSicFintechScoreQueried = 'cliente.sic.fintech_score.queried';
     case ClientSicCreditReportFicoQueried = 'cliente.sic.credit_report_fico.queried';
     case CreditProductCreated = 'producto_crediticio.created';
@@ -112,6 +114,8 @@ enum ActivityEvent: string
             self::ClientSicConsentRevoked => 'Consentimiento SIC revocado',
             self::ClientSicConsentEvidenceDownloaded => 'Evidencia de consentimiento SIC descargada',
             self::ClientSicFicoScoreV2Queried => 'Consulta SIC FICO Score v2',
+            self::SicEvidenceViewed => 'Resultado SIC visualizado',
+            self::SicAttemptReconciled => 'Intento SIC conciliado',
             self::ClientSicFintechScoreQueried => 'Consulta SIC Fintech Score',
             self::ClientSicCreditReportFicoQueried => 'Consulta de reporte de crédito con FICO Score',
             self::CreditProductCreated => 'Producto crediticio creado',

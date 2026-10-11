@@ -23,6 +23,10 @@ El alcance completo y las decisiones de producto permanecen en Notion.
 
 ## Estado actual
 
+- Actualización 10/10/2026: P0–P6 integrados (P5 PR #28, P6 PR #29). Base main b988273. Continúa P7 SIC QA y P8 anticipos/liquidación; 2FA y revisión manual aprobadas. Las entradas siguientes son históricas.
+
+## Seguimiento histórico
+
 - Estado: en progreso
 - Última actualización: 2026-09-29
 - Último punto estable: main 78f3cd5, PR #27 integrado y CI aprobado.

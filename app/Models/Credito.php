@@ -54,4 +54,9 @@ class Credito extends Model
     {
         return $this->hasMany(CreditoPago::class);
     }
+
+    public function ultimoPago()
+    {
+        return $this->hasOne(CreditoPago::class)->latestOfMany();
+    }
 }

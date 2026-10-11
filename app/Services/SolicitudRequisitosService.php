@@ -53,8 +53,14 @@ class SolicitudRequisitosService
         $capturo = $solicitud->eventos()->where('actor_id', $paraPaquete ? $aprobacion?->actor_id : $actor->id)
             ->whereIn('tipo', ['creada', 'borrador_actualizado', 'enviada'])->exists();
         $add('separacion', $reglas['modalidad'] === 'individual' || ! $capturo, 'En modalidad dual debe aprobar una persona que no haya capturado ni enviado la solicitud.');
-        $add('sic', $reglas['sic'] === 'manual_permitido', 'La política exige SIC integrado válido; el proveedor productivo todavía no está habilitado.');
         $cliente = Cliente::findOrFail($solicitud->cliente_id);
+        $sic = app(\App\Services\SICs\SicRequisito::class)->evaluar($revision->id, $cliente, $reglas,
+            $paraPaquete ? ($aprobacion?->evidencia['sic'] ?? ['consulta_id' => 0]) : null);
+        $add('sic', $reglas['sic'] === 'manual_permitido' || $sic !== null,
+            'La política exige SIC de la revisión vigente. Consulta en QA un servicio permitido, con consentimiento válido, y revisa su resultado. Las políticas antiguas deben definir servicios y tratamiento sin score.');
+        if ($reglas['sic'] === 'requerido' && $sic) {
+            $evidencia['sic'] = $sic;
+        }
         $identidad = $this->expediente->identidad($cliente);
         $add('persona_fisica', ($identidad['fiscales']['tipo_persona'] ?? null) === 'fisica', 'Esta entrega solo permite aprobar personas físicas con identidad fiscal registrada.');
         $add('cliente', json_encode($identidad, JSON_THROW_ON_ERROR) === json_encode($revision->snapshot['identidad_cliente'] ?? null, JSON_THROW_ON_ERROR),

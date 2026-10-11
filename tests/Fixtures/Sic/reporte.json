@@ -1,0 +1,21 @@
+{
+    "demo": true,
+    "folioConsulta": "E2E-REPORTE-001",
+    "persona": {"primerNombre":"REPORTE", "apellidoPaterno":"QA", "fechaNacimiento":"1965-08-09"},
+    "scores": [{"nombreScore":"FICO", "valor":680, "razones":["A1","B2"]}],
+    "creditos": [
+        {"nombreOtorgante":"Otorgante QA A", "cuentaActual":"SINTETICA-001", "tipoCredito":"PP", "tipoCuenta":"F", "claveUnidadMonetaria":"MX", "saldoActual":12500.25, "saldoVencido":0, "limiteCredito":15000, "fechaActualizacion":"2026-09-30", "numeroPagosVencidos":0},
+        {"nombreOtorgante":"Otorgante QA B", "cuentaActual":"SINTETICA-002", "tipoCredito":"TC", "tipoCuenta":"R", "claveUnidadMonetaria":"MX", "saldoActual":8400, "saldoVencido":1200, "limiteCredito":20000, "fechaActualizacion":"2026-09-28", "numeroPagosVencidos":1},
+        {"nombreOtorgante":"Otorgante QA C", "cuentaActual":"SINTETICA-003", "tipoCredito":"PP", "claveUnidadMonetaria":"MX", "saldoActual":2200, "fechaActualizacion":"2026-09-25"},
+        {"nombreOtorgante":"Otorgante QA D", "cuentaActual":"SINTETICA-004", "tipoCredito":"TC", "claveUnidadMonetaria":"US", "saldoActual":250, "saldoVencido":0, "fechaActualizacion":"2026-09-30"}
+    ],
+    "consultas": [
+        {"fechaConsulta":"2026-07-05","nombreOtorgante":"Otorgante QA A","tipoCredito":"PP"},
+        {"fechaConsulta":"2026-08-15","nombreOtorgante":"Otorgante QA B","tipoCredito":"TC"},
+        {"fechaConsulta":"2026-08-25","nombreOtorgante":"Otorgante QA C","tipoCredito":"PP"},
+        {"fechaConsulta":"2026-09-12","nombreOtorgante":"Otorgante QA D","tipoCredito":"TC"}
+    ],
+    "domicilios": [{"direccion":"DOMICILIO SINTETICO QA 1","CP":"01000","estado":"CDMX","fechaReporte":"2026-09-30"}],
+    "empleos": [{"nombreEmpresa":"Empresa sintética QA","fechaReporte":"2026-09-30"}],
+    "mensajes": [{"mensaje":"Fixture visual sintético. Sin datos reales ni valor de aprobación."}]
+}

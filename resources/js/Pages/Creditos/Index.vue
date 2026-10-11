@@ -7,6 +7,8 @@ import { formatMoneyWithCents as money } from "@/Pages/ProductosCrediticios/prod
 const props = defineProps({ creditos: Object, filters: Object, sucursales: Array });
 const filters = reactive({ buscar: "", sucursal_id: null, orden: "recientes", por_pagina: 25, ...props.filters });
 const loading = ref(false);
+const estado = (credito) => ({ activo: "Activo · QA", liquidado: "Liquidado · QA", por_revisar: "Requiere revisión" })[credito.estado_operativo] ?? "Requiere revisión";
+const severidad = (credito) => credito.estado_operativo === "por_revisar" ? "warn" : credito.estado_operativo === "liquidado" ? "info" : "success";
 function buscar(page = 1) { router.get(route("creditos.index"), { ...filters, page }, { preserveState: true, onStart: () => { loading.value = true; }, onFinish: () => { loading.value = false; } }); }
 </script>
 <template>
@@ -25,14 +27,14 @@ function buscar(page = 1) { router.get(route("creditos.index"), { ...filters, pa
                 </form>
                 <div class="k-mobile-records" aria-label="Créditos">
                     <div v-if="!creditos.data.length" class="k-empty k-surface"><i class="pi pi-wallet" aria-hidden="true" /><strong>Sin créditos con estos filtros</strong><span>Completa la firma y registra el desembolso desde una solicitud.</span></div>
-                    <article v-for="credito in creditos.data" :key="credito.id" class="k-surface k-record-card"><div class="flex justify-between items-start gap-2"><div><p class="k-eyebrow">CR-{{ credito.id }}</p><h2 class="font-semibold">{{ credito.cliente?.primer_nombre }} {{ credito.cliente?.apellido_paterno }}</h2></div><Tag severity="success" value="Activo · QA" /></div><p class="text-sm text-surface-500">{{ credito.sucursal?.nombre ?? 'Sin sucursal' }}</p><p class="k-financial font-semibold">Capital inicial: {{ money(credito.capital_inicial) }}</p><Link :href="route('creditos.show', credito.id)" class="k-action-link">Ver crédito <i class="pi pi-arrow-right" aria-hidden="true" /></Link></article>
+                    <article v-for="credito in creditos.data" :key="credito.id" class="k-surface k-record-card"><div class="flex justify-between items-start gap-2"><div><p class="k-eyebrow">CR-{{ credito.id }}</p><h2 class="font-semibold">{{ credito.cliente?.primer_nombre }} {{ credito.cliente?.apellido_paterno }}</h2></div><Tag :severity="severidad(credito)" :value="estado(credito)" /></div><p class="text-sm text-surface-500">{{ credito.sucursal?.nombre ?? 'Sin sucursal' }}</p><p class="k-financial font-semibold">Capital inicial: {{ money(credito.capital_inicial) }}</p><Link :href="route('creditos.show', credito.id)" class="k-action-link">Ver crédito <i class="pi pi-arrow-right" aria-hidden="true" /></Link></article>
                 </div>
                 <DataTable class="k-desktop-records" :value="creditos.data" :loading="loading" stripedRows scrollable dataKey="id">
                     <template #empty>No hay créditos con estos filtros. Para crear uno, completa la firma y registra el desembolso desde una solicitud.</template>
                     <Column header="Crédito"><template #body="{data}"><Link :href="route('creditos.show', data.id)" class="font-semibold text-primary underline">CR-{{ data.id }}</Link></template></Column>
                     <Column header="Cliente"><template #body="{data}">{{ data.cliente.primer_nombre }} {{ data.cliente.apellido_paterno }}</template></Column>
                     <Column field="sucursal.nombre" header="Sucursal" /><Column field="responsable.name" header="Responsable" />
-                    <Column header="Estado"><template #body><Tag severity="success" value="Activo · QA" /></template></Column>
+                    <Column header="Estado"><template #body="{data}"><Tag :severity="severidad(data)" :value="estado(data)" /></template></Column>
                     <Column header="Capital inicial"><template #body="{data}">{{ money(data.capital_inicial) }}</template></Column>
                 </DataTable>
                 <p class="text-sm text-surface-500">El capital inicial no representa el saldo actualizado. Abre el crédito para consultar su situación y registrar pagos de prueba.</p>

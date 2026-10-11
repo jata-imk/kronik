@@ -7,13 +7,15 @@ import DistribucionPago from "@/Components/Creditos/DistribucionPago.vue";
 import { formatMoneyWithCents as money } from "@/Pages/ProductosCrediticios/productValidation";
 const props = defineProps({ credito: Object, pago: Object, puedeReversar: Boolean });
 const drawer = ref(false);
+const tipo = (v) => ({ prepago: "Anticipo", liquidacion: "Liquidación", reverso: "Compensación", pago: "Pago" })[v] ?? "Operación";
+const registro = (p) => ["liquidacion", "reverso"].includes(p.tipo) ? (p.reverso_id ? "revertida" : "registrada") : (p.reverso_id ? "revertido" : "registrado");
 const form = useForm({ motivo: "", confirmacion_qa: false, idempotency_key: crypto.randomUUID() });
-function reversar() { form.post(route("creditos.pagos.reverse", [props.credito.id, props.pago.id])); }
+function reversar() { form.post(route("creditos.pagos.reverse", [props.credito.id, props.pago.id]), { onSuccess: () => { drawer.value = false; form.reset(); } }); }
 </script>
 <template>
     <AppLayout :title="`Registro de pago #${pago.id}`"><template #card-header><PageHeader eyebrow="Operación · Cartera" :title="`${pago.tipo === 'reverso' ? 'Reverso' : 'Recibo interno'} #${pago.id}`" description="Detalle del movimiento y su distribución." /></template><template #card-content><div class="space-y-6 p-4 md:p-6">
         <Link :href="route('creditos.show', credito.id)" class="text-primary hover:underline">Volver al crédito CR-{{ credito.id }}</Link>
-        <section class="k-feature p-6"><Tag :value="pago.tipo === 'reverso' ? 'Compensación · QA' : pago.reverso_id ? 'Pago revertido · QA' : 'Pago registrado · QA'" severity="info" /><p class="mt-4 text-3xl font-bold">{{ money(pago.importe) }}</p><p class="mt-2">Fecha efectiva: {{ pago.fecha_efectiva?.slice(0,10) }}</p><p class="mt-2 text-sm">Capturado: {{ new Date(pago.created_at).toLocaleString('es-MX') }} · usuario #{{ pago.actor_id }}</p></section>
+        <section class="k-feature p-6"><Tag :value="`${tipo(pago.tipo)} ${registro(pago)} · QA`" severity="info" /><p class="mt-4 text-3xl font-bold">{{ money(pago.importe) }}</p><p class="mt-2">Fecha efectiva: {{ pago.fecha_efectiva?.slice(0,10) }}</p><p class="mt-2 text-sm">Capturado: {{ new Date(pago.created_at).toLocaleString('es-MX') }} · usuario #{{ pago.actor_id }}</p><p class="mt-2">Calendario conservado: versión {{ pago.cronograma_version }} · {{ pago.estado_operativo === 'liquidado' ? 'Crédito liquidado' : 'Crédito activo' }} al registrar esta operación</p></section>
         <Message severity="warn" :closable="false">Registro sintético QA. No es CFDI, comprobante bancario ni autorización para operar dinero real.</Message>
         <p v-if="pago.referencia" class="break-all">Referencia: {{ pago.referencia }}</p><p v-if="pago.motivo" class="break-words">Motivo: {{ pago.motivo }}</p>
         <Link v-if="pago.reversa_de" :href="route('creditos.pagos.show', [credito.id, pago.reversa_de])" class="inline-block text-primary underline">Consultar pago original #{{ pago.reversa_de }}</Link><Link v-if="pago.reverso_id" :href="route('creditos.pagos.show', [credito.id, pago.reverso_id])" class="inline-block text-primary underline">Consultar reverso #{{ pago.reverso_id }}</Link>

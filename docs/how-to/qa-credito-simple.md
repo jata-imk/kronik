@@ -2,8 +2,10 @@
 
 Este documento guía una primera prueba manual de punta a punta: configurar un
 producto, preparar cliente y expediente, originar/evaluar/aprobar una solicitud,
-formalizarla en modo QA, registrar un desembolso ficticio y probar pagos. Está
-organizado por etapa para que operación, analistas, cumplimiento y contador puedan
+formalizarla en modo QA, registrar un desembolso ficticio, probar pagos y anticipos,
+liquidar el crédito y comprobar su reapertura mediante reverso. Incluye la consulta
+SIC sandbox cuando la política del producto la requiere. Está organizado por
+etapa para que operación, analistas, cumplimiento y contador puedan
 seguir el mismo caso.
 
 ## Cómo usar esta guía
@@ -27,6 +29,8 @@ sintético del expediente no necesita iniciar sesión.
 | Carga, rechazo o aceptación de la copia firmada | [Firma digitalizada](qa-firma-digitalizada.md) |
 | Registro único del desembolso y búsqueda del crédito | [Desembolso](qa-desembolso.md) |
 | Recibos, errores y reversos de pagos | [Pagos](qa-pagos.md) |
+| Tres APIs CDC, histórico, gráficos y conciliación de intentos inciertos | [SIC sandbox](qa-sic.md) |
+| Anticipos, cotización de liquidación y versiones del calendario | [Anticipos y liquidación](qa-anticipos-liquidacion.md) |
 
 ### Qué significa cada etapa
 
@@ -35,12 +39,16 @@ sintético del expediente no necesita iniciar sesión.
 | Producto y versión | Las condiciones financieras y reglas que podrá elegir la solicitud. |
 | Cliente y expediente | La persona de prueba y sus datos/documentos de respaldo. |
 | Solicitud | La petición de crédito; un borrador todavía no se evalúa. |
+| SIC sandbox | Respuesta de simulación vinculada a consentimiento e identidad; si se usa para aprobación, también a la revisión actual. |
 | Evaluación y cumplimiento | Dos dictámenes humanos sobre el caso. Ninguno por sí solo aprueba el crédito. |
 | Aprobación | La resolución autorizada, todavía sin contrato ni desembolso. |
 | Contrato y tabla de pagos | PDF de prueba con condiciones y calendario congelados. |
 | Firma digitalizada | Copia PDF recibida y revisada manualmente; no es firma electrónica verificada. |
 | Desembolso QA | Registro interno que crea el crédito; no realiza una transferencia. |
 | Pago QA | Movimiento interno sobre deuda exigible y recibo; no cobra dinero al cliente. |
+| Anticipo QA | Aplicación a capital futuro después de cubrir devengos/cargos; recalcula el calendario según el contrato. |
+| Liquidación QA | Cotización y registro exactos que cierran el crédito con saldo y cargos aplicables en cero. |
+| Reverso de liquidación | Movimiento compensatorio que conserva el recibo, restaura el calendario y reabre el crédito; no devuelve dinero. |
 
 > **Solo QA.** El paquete y la revisión de firma son documentos/evidencias de
 > prueba sin validación contractual; el desembolso y los pagos son registros
@@ -64,9 +72,9 @@ Antes de habilitar acciones o capturar información:
   `QA-2026-CR-001`; nunca escribas una referencia bancaria real.
 - Los comprobantes de firma/desembolso/pago deben ser archivos o referencias
   sintéticos. No ejecutes transferencias.
-- No consultes proveedores SIC reales ni habilites credenciales de producción para
-  este ejercicio. Para la evaluación utiliza la revisión manual permitida por la
-  política del producto.
+- Para SIC, usa exclusivamente las rutas sandbox CDC con API key QA y personas
+  sintéticas. No habilites credenciales ni consultas productivas. Si la política
+  permite evaluación manual sin SIC, puedes recorrer ese escenario sin consulta.
 - Asegura que `APP_DEBUG=false`, que no se envían notificaciones reales a clientes
   y que existe respaldo recuperable antes de probar. No uses `migrate:fresh`,
   seeders de desarrollo/E2E ni limpiezas masivas en una instalación persistente.
@@ -83,6 +91,13 @@ correspondientes deben estar habilitadas y la caché de configuración reconstru
 | `ORIGINACION_FIRMAS_QA_HABILITADAS=true` | Recibir y revisar copia de firma en QA | No valida firma criptográfica ni identidad legal. |
 | `ORIGINACION_DESEMBOLSOS_QA_HABILITADOS=true` | Registrar desembolso ficticio | No ordena ni confirma transferencia bancaria. |
 | `ORIGINACION_PAGOS_QA_HABILITADOS=true` | Registrar/revertir pagos de créditos QA | No habilita pagos productivos ni movimiento de dinero real. |
+| `ORIGINACION_ANTICIPOS_QA_HABILITADOS=true` | Anticipos y liquidación de créditos QA | Requiere también pagos QA habilitados y reglas contractuales compatibles. |
+| `SIC_QA_HABILITADO=true` y `CIRCULO_CREDITO_SANDBOX=true` | FICO v2, Fintech y RC + FICO en simulación | Requiere API key QA y host `https://services.circulodecredito.com.mx`; no habilita transporte productivo. |
+
+Para SIC, mantener cola y scheduler activos; reiniciar workers después de cambiar
+configuración. Si PHP necesita un archivo de autoridades confiables, configurar
+`SIC_CA_BUNDLE` sin desactivar TLS. Antes de actualizar una instalación existente,
+respaldar base/archivos privados y aplicar migraciones aditivas; no reseedearla.
 
 No pongas estas banderas en una instalación que atienda operaciones reales para
 completar la guía. Si la VPS hoy contiene solamente datos y operaciones sintéticos,
@@ -102,12 +117,15 @@ Usa cuentas distintas para probar tanto el flujo positivo como las denegaciones:
 | Administrador de producto | Crear/configurar versión, política y fiscalidad de prueba; preparar plantilla QA | Administración de productos y documentos; no necesita registrar pagos. |
 | Capturista/asesor | Crear cliente si corresponde, completar expediente, crear y enviar solicitud | Clientes/expediente, documentos, crear/editar/asignar solicitudes. |
 | Analista | Registrar dictamen de evaluación manual y capacidad de pago | `read evaluacion-solicitudes` y `create evaluacion-solicitudes`, además de lectura de cliente/solicitud. |
+| Operador SIC | Preparar consulta sandbox y revisar respuesta/histórico | `create circulo-credito`, `read historial-crediticio`, `read clientes` y `update clientes`; sucursal responsable del cliente. |
+| Revisor SIC | Conciliar un intento incierto tras revisión con el proveedor | `reconcile circulo-credito`, además de los permisos del operador SIC. |
 | Cumplimiento | Documentar revisión humana y nivel de riesgo | `read cumplimiento` y `create cumplimiento`, además de lectura de cliente/solicitud; notas PLD reservadas. |
 | Aprobador | Revisar requisitos y confirmar resolución | `approve solicitudes`; en modalidad dual, distinto de quien capturó o envió. |
 | Formalización | Preparar paquete y recibir copia de firma | `prepare package solicitudes`, `receive signature solicitudes`, `read documentos`, `generate documentos` y lectura de solicitud/cliente. |
 | Revisor de firma | Comparar original/copia y aceptar o devolver | `review signature solicitudes`; usa otra cuenta para probar permisos. La identidad distinta del receptor no es una restricción impuesta por el código. |
 | Operador de desembolso | Registrar el desembolso ficticio | `disburse creditos`, además de los accesos requeridos a solicitud/documentos. |
 | Cajero/operador de pagos | Previsualizar y registrar pago QA | `pay creditos`; acceso al crédito y sucursal correcta. |
+| Operador de anticipos/cierre | Cotizar y registrar anticipo o liquidación QA | `prepay creditos` para anticipo y `settle creditos` para liquidación; se conceden por separado. |
 | Revisor de correcciones | Revertir el último pago QA con motivo | `reverse payments creditos`, separado del permiso de pago. |
 | Cliente de prueba | Persona sintética del expediente; no es una cuenta de usuario | No presupongas que existe un portal de autoservicio para el cliente. |
 
@@ -123,7 +141,8 @@ La sucursal activa y el permiso se validan también en el servidor.
 Para consultar un crédito se necesitan además `read creditos`, `read solicitudes`
 y `read clientes`. Quien descargue el PDF contractual necesita `download documentos`;
 quien registre desembolso necesita lectura documental. Los permisos de pago y
-reverso se conceden por separado, pero el código no exige operadores diferentes.
+reverso, anticipo y liquidación se conceden por separado, pero el código no exige
+operadores diferentes.
 
 ## 1. Configurar producto y versión de prueba
 
@@ -143,10 +162,16 @@ Configura y registra en la hoja de prueba:
 - Política de originación: documentos requeridos, modalidad individual/dual,
   límite y vigencia de aprobación, regla de capacidad de pago y SIC requerido o
   revisión manual permitida. Para probar la separación de funciones, usa modalidad
-  dual y prepara un aprobador distinto de quien capture o envíe. Para este recorrido
-  permite revisión manual; una política que exija SIC integrado bloqueará la
-  aprobación mientras no exista esa consulta válida. No intentes una consulta SIC
-  real.
+  dual y prepara un aprobador distinto de quien capture o envíe. Si exige SIC,
+  selecciona los servicios admitidos y la regla para resultados sin score:
+  **bloquear** o **evaluación manual documentada**. La consulta sandbox debe
+  corresponder a la revisión vigente antes de aprobar. Para el escenario sin SIC,
+  configura la alternativa manual permitida por el producto.
+- Para completar P8, activa **Permitir prepago parcial** y **Permitir liquidación
+  anticipada**. Define **Aplicar prepago para** reducir plazo o reducir pago y el
+  mínimo de prepago. El mínimo aplica al capital anticipado después de cubrir
+  devengos y cargos, no al total recibido. Una segunda corrida con otro producto
+  permite comparar ambas modalidades sin editar el contrato del primer crédito.
 - Para cada concepto fiscal por separado —interés ordinario, moratorio y cada
   comisión— define en modo de prueba si está gravado, exento, no causa o sigue sin
   definir; si está gravado, define tasa y base configuradas para QA. No asumas 16 %,
@@ -155,7 +180,11 @@ Configura y registra en la hoja de prueba:
 - Comisiones: nombre, importe, modalidad (financiada, descontada o pago separado),
   obligatoriedad y tratamiento fiscal de cada una. Omite comisiones opcionales en
   la primera corrida para reducir variables; prueba una segunda corrida si quieres
-  cubrirlas.
+  cubrirlas. Para cargos de evento/liquidación, define el evento explícito
+  (anticipo parcial, liquidación anticipada u ordinaria) y, si son porcentuales,
+  su base: monto original solicitado, capital anticipado o capital insoluto antes
+  de operar. Un contrato histórico con cargos ambiguos puede bloquear P8; no
+  corrijas su snapshot para continuar: prepara otro caso con reglas explícitas.
 
 Guarda una captura o transcribe la versión, sus valores y la marca **Prueba/QA**.
 Prueba en un borrador separado que un concepto aplicado y fiscalmente “sin definir”
@@ -189,6 +218,9 @@ Usa un cliente persona física sintético dentro de la sucursal QA. Captura solo
 necesario para probar el flujo. Completa secciones de identidad/datos fiscales,
 domicilio, perfil económico, referencias y documentos que la política requiera.
 Carga archivos sintéticos claramente marcados y valida cada uno como el rol autorizado.
+Si vas a consultar SIC, completa nombre, nacimiento y domicilio mexicano, incluidos
+estado, municipio, colonia y código postal. Registra consentimiento vigente con
+evidencia privada sintética; el archivo no es una autorización legal de una persona real.
 
 Qué comprobar:
 
@@ -245,7 +277,38 @@ si una acción o bloqueo requiere contexto.
 
 Estas decisiones las realizan personas. La pantalla puede organizar información y
 marcar requisitos, pero no determina automáticamente solvencia, fraude o cumplimiento.
-Mantén la consulta SIC real fuera de esta primera prueba.
+Cuando la política exija SIC, completa primero la consulta sandbox de esta revisión.
+
+### SIC sandbox e histórico
+
+Si la política permite el escenario sin SIC, continúa con la evaluación manual.
+Para el escenario con SIC:
+
+1. Como operador SIC, abre **Consultas SIC → nueva consulta** y selecciona el
+   cliente sintético, servicio admitido, consentimiento vigente y revisión actual
+   de la solicitud. Confirma sandbox y prepara la consulta una sola vez.
+2. Espera el resultado; la página actualiza los estados preparada/en proceso.
+   Verifica servicio, marca QA, fecha, folio, modelo, score y razones. Un score no
+   sustituye los dictámenes humanos ni aprueba por sí mismo el crédito.
+3. En RC + FICO, revisa secciones y gráficas presentes: saldos por moneda, cobertura
+   de datos, cuentas con vencido y consultas por mes. Abre **Ver datos de la gráfica**
+   y el detalle de cuentas/consultas. FICO y Fintech pueden devolver solo scores y
+   razones; no deben mostrar cuentas inventadas ni ceros para datos ausentes.
+4. Abre el historial y comprueba que el resultado puede consultarse nuevamente.
+   Un histórico sin procedencia verificada o un resultado marcado demostrativo no
+   satisface el requisito de aprobación. Si solo se guardó un score en el registro
+   antiguo, no esperes recuperar secciones que nunca se almacenaron.
+5. Si el resultado queda **incierto**, no reenvíes. El revisor autorizado revisa el
+   intento con el proveedor y registra referencia, motivo y confirmación para
+   conciliar sin acreditar un resultado; después puede prepararse una consulta nueva.
+6. En requisitos de aprobación, verifica que se reconoce la evidencia de la revisión
+   actual. Otra API no admitida, revisión anterior, identidad cambiada o consentimiento
+   revocado deben bloquearla. Sin score utilizable se aplica la política explícita;
+   E2 bloquea incluso con alternativa manual. QA no añade una caducidad inventada.
+
+Las consultas de conectividad con casos oficiales y la migración cifrada del
+histórico se detallan en [SIC sandbox](qa-sic.md); el comando de conectividad no
+crea evidencia para aprobar esta solicitud.
 
 ### Evaluación
 
@@ -355,8 +418,9 @@ para estados, duplicados y evidencia.
 
 Los pagos solo pueden probarse en un crédito QA recién desembolsado con política y
 fiscalidad explícitas. Una cuota de capital con vencimiento futuro **no es exigible
-hoy**: aunque registres el desembolso hoy, el sistema no permite pagarla por
-anticipado. Para comprobar el pago el mismo día, crea desde el principio una
+hoy**: **Registrar pago QA** cubre deuda exigible. Para aplicar a capital futuro,
+usa **Anticipos y liquidación**, siguiendo los apartados 8.1 y 8.2. Para comprobar
+el pago ordinario el mismo día, crea desde el principio una
 comisión inicial con modalidad **pago separado**, fiscalidad definida y monto de
 prueba; ese pago cubre la comisión, no amortiza capital. Para comprobar una primera
 cuota con interés y capital, vuelve cuando llegue su vencimiento real. No adelantes
@@ -388,8 +452,59 @@ El operador con `pay creditos` debe:
    enlazado a movimientos compensatorios. Esto no devuelve dinero ni borra historia.
 
 Este flujo aplica solo a datos ficticios; la [decisión técnica de P6](../explanation/adr-0020-pagos-manuales-qa.md)
-documenta límites como anticipos, liquidación anticipada, conciliación bancaria,
-CFDI y operaciones monetarias reales aún no cubiertas.
+documenta pagos ordinarios. P8 agrega [anticipos, liquidación y cierre QA](qa-anticipos-liquidacion.md);
+P7 agrega [consultas SIC sandbox](qa-sic.md). Conciliación bancaria, CFDI y
+operaciones monetarias reales siguen fuera de alcance.
+
+### 8.1. Registrar anticipo y revisar el nuevo calendario
+
+El crédito debe seguir activo y tener vencimientos futuros; las reglas P8 y
+comisiones del contrato deben estar definidas desde el apartado 1.
+
+1. Con `prepay creditos`, abre **Anticipos y liquidación → Anticipo parcial**.
+   Captura fecha efectiva válida, referencia sintética única y **total recibido**,
+   suficiente para cubrir devengos/cargos y el mínimo de capital anticipado.
+   Selecciona comisiones opcionales solo si corresponden al evento.
+2. Pulsa **Revisar efecto y distribución**. Comprueba que primero cubre vencidos,
+   ordinario/moratorio devengados, impuestos y cargos aplicables; el remanente se
+   aplica al capital futuro. No asumas que todo el recibo reduce capital.
+3. Revisa capital antes/después, cuotas futuras, último vencimiento, intereses
+   estimados, distribución y calendario. La gráfica compara las mismas fechas
+   suponiendo pagos puntuales; su tabla alternativa permite revisar valores.
+   Reducir pago conserva fechas/cantidad; reducir plazo conserva la base de cuota
+   o capital periódico según el método, con ajuste final.
+4. Cambia el importe y verifica que desaparece la previa. Recalcula, revisa y marca
+   confirmación QA. Registrar una vez crea recibo y movimientos; reintentar no duplica.
+5. En el crédito, verifica historial, capital y selector de calendarios. El firmado
+   original permanece y la operación crea una versión posterior; no reescribe el contrato.
+
+Comprueba rechazo de mínimo incumplido, fecha inválida, comisión incompatible y
+falta de permiso. Para B + sustitución durante gracia, conserva el bloqueo documentado.
+Si pruebas reverso de anticipo en un caso separado, solo el último admisible se
+compensa y restaura el calendario con una nueva versión.
+
+### 8.2. Liquidar y comprobar reapertura mediante reverso
+
+1. Con `settle creditos`, abre **Anticipos y liquidación → Liquidación total**. Usa fecha
+   válida y otra referencia sintética única. Deja **Total recibido** vacío para
+   cotizar y pulsa **Revisar efecto y distribución**.
+2. Revisa el total exacto: capital, devengos e impuestos a la fecha y comisiones
+   aplicables. No incluye intereses futuros ni comisiones periódicas de cuotas
+   eliminadas; los cargos ya exigibles permanecen. La previa debe mostrar cierre
+   total, saldo cero y ausencia de cuotas futuras.
+3. En una prueba de rechazo, introduce un total distinto de la cotización y pulsa
+   **Revisar efecto y distribución**: debe explicar la discrepancia sin registrar
+   saldo a favor ni recortar un excedente.
+   Vuelve a cotizar dejando el importe vacío y revisa el total devuelto.
+4. Confirma QA con ese importe exacto. Comprueba recibo, estado **Liquidado · QA**,
+   historial y calendario conservado; no debe ofrecer registrar nuevos pagos.
+5. Con `reverse payments creditos`, abre el recibo de la última liquidación y
+   registra motivo de prueba. Comprueba compensación enlazada, recibo original
+   intacto, crédito reabierto y calendario restaurado mediante otra versión.
+
+La reapertura es parte de esta prueba y debe quedar registrada como tal. Si quieres
+terminar con el crédito liquidado, cotiza nuevamente y registra otra liquidación
+con nueva referencia; una referencia anterior no se reutiliza aunque se revierta.
 
 ## 9. Revisión del contador o asesor
 
@@ -416,6 +531,11 @@ una conversación informal.
   parciales. Revisar redondeos y centavos entre proyección, recibo y movimientos.
 - **Comisiones:** confirmar importe, obligatoriedad, momento de cobro y modalidad
   (financiada, descontada o separada), además de su tratamiento fiscal independiente.
+  Para anticipos/liquidación, cotejar evento y base comercial congelados.
+- **Anticipos y liquidación:** comprobar mínimo sobre capital anticipado, cobertura
+  de todos los devengos a la fecha, retiro de intereses futuros, total exacto de
+  cierre y conservación del calendario original. Revisar ambas modalidades de
+  prepago con casos separados y la reapertura mediante compensación.
 - **Reversos y fechas:** comprobar ejemplos de pago parcial, fecha efectiva/captura,
   reverso compensatorio y límites de corrección. El sistema bloquea pago retroactivo
   si ya existen movimientos posteriores.
@@ -423,8 +543,8 @@ una conversación informal.
   presentación de importes. La aprobación jurídica del contenido es una revisión
   separada que corresponde a la institución; una plantilla activa no la acredita.
 - **Alcance no implementado:** conciliación bancaria, CFDI, retenciones,
-  acreditamientos/declaraciones, liquidación anticipada, anticipos y casos de
-  compensación futura no deben darse por cubiertos por esta prueba.
+  acreditamientos/declaraciones y casos de compensación futura no deben darse
+  por cubiertos por esta prueba. Anticipos/liquidación requieren el recorrido P8.
 
 Pide al contador que marque cada punto como “revisado para el escenario”,
 “requiere ajuste” o “fuera de alcance”; no es necesario que dé visto bueno a una
@@ -453,3 +573,6 @@ severidad. Separa fallas de interfaz, permiso, negocio, cálculo y explicación.
 - [Configuración fiscal de producto](configurar-fiscalidad-productos.md)
 - [Solicitudes, evaluación y aprobación](../reference/originacion-solicitudes.md)
 - [Decisión técnica sobre pagos QA y límites](../explanation/adr-0020-pagos-manuales-qa.md)
+- [SIC sandbox e histórico](qa-sic.md)
+- [Anticipos y liquidación QA](qa-anticipos-liquidacion.md)
+- [Decisión técnica de anticipos y liquidación](../explanation/adr-0023-anticipos-liquidacion-qa.md)

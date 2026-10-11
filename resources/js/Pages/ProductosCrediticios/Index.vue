@@ -288,6 +288,7 @@ const normalizeCommission = (item) => {
         tipo_importe: item.tipo_importe,
         importe: Number(item.importe),
         base_calculo: item.base_calculo,
+        evento_cobro: item.evento_cobro ?? null,
         momento_cobro: initial ? "inicio" : item.momento_cobro,
         modalidad_cobro: initial ? (item.modalidad_cobro ?? legacyMode) : null,
         obligatoria: item.obligatoria,
@@ -394,6 +395,7 @@ const addCommission = () =>
         tipo_importe: "fijo",
         importe: 0,
         base_calculo: "no_aplica",
+        evento_cobro: null,
         momento_cobro: "inicio",
         modalidad_cobro: "pago_separado",
         obligatoria: true,
@@ -409,6 +411,10 @@ const changeCommissionMoment = (item) => {
             ? (item.modalidad_cobro ?? "pago_separado")
             : null;
     updateCommissionCat(item);
+    if (!["evento", "liquidacion"].includes(item.momento_cobro)) {
+        item.evento_cobro = null;
+        if (item.tipo_importe === "porcentaje") item.base_calculo = "monto_credito";
+    }
 };
 const updateCommissionCat = (item) => {
     item.incluye_cat = commissionIncludesCat(item);
@@ -687,6 +693,7 @@ watch(
                                         <div><label class="mb-1 block text-xs font-medium">Importe *</label><InputNumber v-model="item.importe" :suffix="item.tipo_importe === 'porcentaje' ? ' %' : ''" :mode="item.tipo_importe === 'fijo' ? 'currency' : 'decimal'" currency="MXN" locale="es-MX" :invalid="!!error(`version.comisiones.${index}.importe`)" :aria-invalid="!!error(`version.comisiones.${index}.importe`)" fluid /><Message v-if="error(`version.comisiones.${index}.importe`)" severity="error" size="small">{{ error(`version.comisiones.${index}.importe`) }}</Message></div>
                                         <div><label class="mb-1 block text-xs font-medium">Momento *</label><Select v-model="item.momento_cobro" :options="momentOptions" option-label="label" option-value="value" :invalid="!!error(`version.comisiones.${index}.momento_cobro`)" :aria-invalid="!!error(`version.comisiones.${index}.momento_cobro`)" fluid @change="changeCommissionMoment(item)" /><Message v-if="error(`version.comisiones.${index}.momento_cobro`)" severity="error" size="small">{{ error(`version.comisiones.${index}.momento_cobro`) }}</Message></div>
                                         <div v-if="item.momento_cobro === 'inicio'" class="md:col-span-2"><label class="mb-1 block text-xs font-medium">Modalidad inicial *</label><Select v-model="item.modalidad_cobro" :options="modalityOptions" option-label="label" option-value="value" :invalid="!!error(`version.comisiones.${index}.modalidad_cobro`)" :aria-invalid="!!error(`version.comisiones.${index}.modalidad_cobro`)" fluid /><Message v-if="error(`version.comisiones.${index}.modalidad_cobro`)" severity="error" size="small">{{ error(`version.comisiones.${index}.modalidad_cobro`) }}</Message></div>
+                                        <template v-if="['evento','liquidacion'].includes(item.momento_cobro)"><div><label :for="`comision-evento-${index}`" class="mb-1 block text-xs font-medium">Evento *</label><Select :input-id="`comision-evento-${index}`" v-model="item.evento_cobro" :options="[{label:'Anticipo parcial',value:'prepago'},{label:'Liquidación anticipada',value:'liquidacion_anticipada'},{label:'Liquidación ordinaria',value:'liquidacion_ordinaria'}]" option-label="label" option-value="value" fluid /></div><div v-if="item.tipo_importe === 'porcentaje'"><label :for="`comision-base-${index}`" class="mb-1 block text-xs font-medium">Base porcentual *</label><Select :input-id="`comision-base-${index}`" v-model="item.base_calculo" :options="[{label:'Monto original solicitado',value:'monto_credito'},{label:'Capital anticipado',value:'capital_anticipado'},{label:'Capital insoluto antes de operar',value:'capital_insoluto'}]" option-label="label" option-value="value" fluid /></div></template>
                                         <div class="pt-6"><div class="flex items-center gap-2"><Checkbox v-model="item.obligatoria" :input-id="`required-${index}`" binary @change="updateCommissionCat(item)" /><label :for="`required-${index}`">Obligatoria</label></div><p class="mt-1 text-xs text-surface-500">{{ item.obligatoria ? 'Se cobra sin contratar un servicio adicional.' : 'El cliente decide si contrata este cargo adicional.' }}</p><Message v-if="error(`version.comisiones.${index}.obligatoria`)" severity="error" size="small">{{ error(`version.comisiones.${index}.obligatoria`) }}</Message></div>
                                         <div class="pt-6"><div class="flex items-center gap-2"><Checkbox v-model="item.incluye_cat" :input-id="`cat-${index}`" binary disabled /><label :for="`cat-${index}`">Incluir en CAT base</label></div><p class="mt-1 text-xs" :class="item.incluye_cat ? 'text-green-700 dark:text-green-400' : 'text-surface-500'">{{ catReason(item) }}</p></div>
                                     </div>

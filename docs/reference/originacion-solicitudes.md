@@ -170,13 +170,15 @@ simultánea multi-conexión de contención queda pendiente; no inferirla de SQLi
 Las [decisiones funcionales del 27/09/2026](decisiones-fiscales-contractuales-mora.md)
 cierran el diseño de fiscalidad configurable, responsabilidad contractual y gracia
 de mora A/B para P4–P6. No cambian el comportamiento implementado descrito aquí;
-la formalización y operación crediticia siguen pendientes.
+la formalización, desembolso y pagos QA se completaron en P4–P6; P7/P8 agregan
+SIC sandbox, anticipos, liquidación y cierre. Las operaciones reales siguen cerradas.
 
 La mecánica de aprobación está implementada, no habilitada en la instalación real.
 `ORIGINACION_APROBACIONES_HABILITADAS=false` debe conservarse hasta validar perfil,
 políticas y documentos del operador. La referencia escrita en un formulario no
 acredita por sí misma validación jurídica. P4 debe revalidar aprobación/expediente
-antes de formalizar. No existe aún esa operación ni desembolso/pago.
+antes de formalizar. Esa revalidación está implementada en el paquete QA y sus
+etapas de firma/desembolso; véanse las guías QA correspondientes.
 El criterio de capacidad se evalúa por una persona; no hay cálculo automático de
 umbral ni score. Las fuentes son referencias documentadas, no nuevos adjuntos del dictamen.
 Pendientes: tareas por especialidad/asignación independiente, requisitos calculados,

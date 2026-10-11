@@ -1,44 +1,46 @@
 # Estado de la integración SIC
 
-Desde el saneamiento P1 (2026-09-20), las consultas heredadas están cerradas,
-incluido el acceso directo a sus servicios/repositories. No hay flag de activación.
-Los SDK se conservan como referencia para el adaptador contratado de P7; no son
-una integración productiva validada. Véase [ADR 0011](../explanation/adr-0011-integracion-sic-segura.md).
+Actualización: 10/10/2026. P7 recupera lectura histórica y tres servicios de
+simulación mediante adaptador nuevo. Los seis puntos de entrada del SDK antiguo
+siguen cerrados por los motivos de [ADR 0011](../explanation/adr-0011-integracion-sic-segura.md).
+Véase [ADR 0022](../explanation/adr-0022-sic-qa-evidencia.md).
 
-## Acceso y navegación
+## Servicios QA
 
-- Consultas SIC exige `read historial-crediticio` y `read clientes`.
-- Preparación de consulta exige `create circulo-credito` y acceso al cliente;
-  al especificar cliente se exige además su permiso de actualización/sucursal.
-- La pantalla de preparación informa el bloqueo y no envía datos ni genera costos.
-- El histórico conserva proveedor, servicio, fecha y estado registrado, con
-  búsqueda, filtro y paginación. No muestra respuestas ni errores crudos, score,
-  comparativas, transacciones o recomendaciones demostrativas.
-- Procedencia de los históricos: **no verificada**. No usarlos para aprobación.
-- No se puede eliminar desde ClienteService un cliente con consultas SIC.
-- No se modifican ni cifran retroactivamente los JSON existentes en este incremento.
-  Restringir copias/acceso a BD; la migración cifrada pertenece a P7.
+| Clave | Ruta sandbox | Resumen |
+| --- | --- | --- |
+| `fico_score_v2` | `/sandbox/v2/ficoscore` | Score, modelo, razones y fecha. |
+| `fintech` | `/sandbox/v1/fintechscore/` | Score, modelo, razones y fecha. |
+| `rc_fico_score` | `/sandbox/v1/rcficoscore` | Base común y secciones presentes de cuentas, consultas, domicilios, empleos, identidad y mensajes. |
 
-## Inventario preservado
+El catálogo conserva siete APIs; solo estas tres tienen adaptador. La respuesta
+original se conserva cifrada aunque un campo no tenga gráfica. Las gráficas
+separan monedas MX/US/UD, distinguen cero de dato ausente y no inventan rangos de
+score ni umbrales de riesgo. La evolución compara el mismo servicio, modelo
+identificado y ambiente.
 
-`app/Services/SICs/CirculoDeCredito/` conserva SDK FicoScorev2, FintechScore y
-RCFicoScore. Sus seis puntos de entrada Service/Repository ahora rechazan ejecución.
-`Sic`, `SicApi`, `SicQuery` y `SicQueryResult` se conservan; no se elimina evidencia.
-`SicsSeeder` conserva siete servicios de catálogo: no implica que estén disponibles.
-El consentimiento privado existente continúa accesible en el expediente; no
-habilita por sí solo el adaptador. No hay llamadas al proveedor en pruebas.
+## Acceso y evidencia
 
-## Reanudación productiva
+- Historial/detalle: lectura de historial y clientes; política de acceso al cliente.
+- Consulta: permiso de creación SIC, actualización del cliente, equipo/sucursal
+  activos, consentimiento vigente con archivo y revisión actual si corresponde.
+- Conciliación: permiso adicional `reconcile circulo-credito`.
+- Intento: actor, equipo, sucursal, consentimiento, revisión opcional, hashes e
+  idempotencia. Petición/respuesta/resultado/conciliación cifrados e inmutables.
+- SIC requerido: APIs y regla sin score explícitas en política versionada; revisión,
+  identidad y consentimiento vigentes. Evaluación manual y PLD siguen exigidos.
+- Históricos de procedencia desconocida y datos demo no acreditan aprobación.
+  QA no habilita originación productiva.
 
-Requiere contrato/API, datos reales, consentimiento ligado a operación, firma y
-verificación, TLS, estados inciertos, conciliación e idempotencia/costos. Se probará
-con fakes y validación del proveedor antes de abrir ejecución. No volver a conectar
-el controlador a los SDK de sandbox ni reintroducir personas de demostración.
+## Estados y operación
 
-## Navegación general
+`preparada → enviando → completada/error/incierta`. Cambios de requisitos antes
+del envío cancelan el intento. Un timeout/interrupción no se reintenta. El
+scheduler marca envíos interrumpidos tras dos minutos. Conciliación documentada
+cierra como `conciliada_sin_resultado`, sin fabricar score ni consultar de nuevo.
 
-`NavigationService` filtra por Gate cada entrada; Vue solo renderiza el resultado.
-Productos y documentos no dependen de `access admin`. Se conserva el Menubar
-contextual. Los ejemplos Sakai siguen en su ruta de desarrollo, no en sidebar.
-No requiere migraciones ni seeders nuevos; revisar asignaciones del permiso SIC
-existente a los perfiles que realmente necesitan leer esos datos.
+TLS verificado; `SIC_CA_BUNDLE` opcional configura autoridades confiables de PHP.
+Guard de QA/sandbox/host/key y redirecciones rechazadas. Firma nativa P384/SHA256
+probada; transporte productivo cerrado. Migración conserva respuestas existentes.
+`sic:cifrar-historico` archiva y verifica; retirar texto plano requiere respaldo.
+[Guía SIC QA](../how-to/qa-sic.md).
