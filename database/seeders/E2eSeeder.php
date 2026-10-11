@@ -158,5 +158,13 @@ class E2eSeeder extends Seeder
         if (filter_var(env('E2E_ORIGINACION_DUAL'), FILTER_VALIDATE_BOOL)) {
             $this->call(E2eSolicitudDualSeeder::class);
         }
+        if (filter_var(env('E2E_SIC_FIXTURES'), FILTER_VALIDATE_BOOL)) {
+            $admin = User::where('email', 'test@example.com')->firstOrFail();
+            $cliente = \App\Models\Cliente::where('primer_nombre', 'Ana')->firstOrFail();
+            \Illuminate\Support\Facades\Storage::disk('e2e_dual')->put('sic-consentimiento.txt', 'Consentimiento sintético E2E, sin valor jurídico.');
+            $cliente->consentimientosSic()->create(['registrado_por' => $admin->id, 'medio' => 'firma_autografa', 'otorgado_en' => now()->subDay(),
+                'evidencia_disk' => 'e2e_dual', 'evidencia_path' => 'sic-consentimiento.txt', 'evidencia_nombre_original' => 'sic-consentimiento.txt',
+                'evidencia_mime_type' => 'text/plain', 'evidencia_tamano_bytes' => 50]);
+        }
     }
 }

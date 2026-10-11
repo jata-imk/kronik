@@ -44,13 +44,13 @@ function buscar(page = 1) {
                 <template #actions>
                     <Link v-if="cliente" :href="route('clientes.expediente.show', cliente.id)" class="text-primary underline">Volver al expediente</Link>
                     <Link v-if="cliente" :href="route('clientes.historial-crediticio.index')" class="text-primary underline">Todas las consultas</Link>
-                    <Link v-if="puedeConsultar" :href="route('circulo-credito.create', cliente ? { cliente: cliente.id } : {})" class="text-primary underline">Disponibilidad de consultas</Link>
+                    <Link v-if="puedeConsultar" :href="route('circulo-credito.create', cliente ? { cliente: cliente.id } : {})" class="k-action-link">Nueva consulta QA</Link>
                 </template>
             </PageHeader>
         </template>
         <template #card-content>
             <div class="space-y-5 p-6">
-                <Message severity="warn" :closable="false">Histórico heredado: su origen (pruebas o producción) no está verificado. Un registro exitoso no acredita vigencia ni un score válido para aprobar crédito. Las nuevas consultas están deshabilitadas mientras se valida la integración.</Message>
+                <Message severity="info" :closable="false">Las consultas QA se identifican en su detalle. Los registros heredados conservan procedencia no verificada y no acreditan por sí solos un requisito de aprobación.</Message>
                 <form class="flex flex-wrap items-end gap-3" @submit.prevent="buscar()">
                     <div class="flex flex-col gap-1">
                         <label for="sic-buscar">Buscar cliente</label>
@@ -65,6 +65,7 @@ function buscar(page = 1) {
                 <DataTable :value="consultas.data" :loading="loading" data-key="id" striped-rows scrollable>
                     <template #empty>No hay consultas con estos filtros. Revisa el expediente del cliente para preparar su autorización.</template>
                     <Column field="id" header="Consulta" />
+                    <Column header="Resultado"><template #body="{ data }"><Link :href="route('consultas-sic.show', data.id)" class="k-action-link">Ver consulta #{{ data.id }}</Link></template></Column>
                     <Column header="Cliente">
                         <template #body="{ data }"><Link :href="route('clientes.historial-crediticio.show', data.cliente_id)" class="text-primary underline">{{ nombre(data.cliente) }}</Link></template>
                     </Column>

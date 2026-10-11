@@ -49,6 +49,9 @@ Route::middleware([
     Route::get('creditos', [\App\Http\Controllers\CreditoController::class, 'index'])->name('creditos.index');
     Route::get('creditos/{credito}', [\App\Http\Controllers\CreditoController::class, 'show'])->name('creditos.show');
     Route::get('creditos/{credito}/pagos/create', [\App\Http\Controllers\CreditoPagoController::class, 'create'])->name('creditos.pagos.create');
+    Route::get('creditos/{credito}/anticipos', [\App\Http\Controllers\CreditoPagoController::class, 'anticipo'])->name('creditos.anticipos.create');
+    Route::post('creditos/{credito}/anticipos/preview', [\App\Http\Controllers\CreditoPagoController::class, 'preview'])->name('creditos.anticipos.preview');
+    Route::post('creditos/{credito}/anticipos', [\App\Http\Controllers\CreditoPagoController::class, 'store'])->name('creditos.anticipos.store');
     Route::post('creditos/{credito}/pagos/preview', [\App\Http\Controllers\CreditoPagoController::class, 'preview'])->name('creditos.pagos.preview');
     Route::post('creditos/{credito}/pagos', [\App\Http\Controllers\CreditoPagoController::class, 'store'])->name('creditos.pagos.store');
     Route::get('creditos/{credito}/pagos/{pago}', [\App\Http\Controllers\CreditoPagoController::class, 'show'])->name('creditos.pagos.show');
@@ -82,6 +85,9 @@ Route::middleware([
     // Optional parameters must be trailing: the legacy optional middle segment
     // silently produced 404s for the global entry point.
     Route::get('consultas-sic/nueva/{cliente?}', [CirculoCreditoController::class, 'create'])->whereNumber('cliente')->name('circulo-credito.create');
+    Route::get('consultas-sic/clientes', [CirculoCreditoController::class, 'clientes'])->name('consultas-sic.clientes');
+    Route::get('consultas-sic/{consulta}', [HistorialCrediticioController::class, 'detalle'])->whereNumber('consulta')->name('consultas-sic.show');
+    Route::post('consultas-sic/{consulta}/conciliar', [HistorialCrediticioController::class, 'conciliar'])->whereNumber('consulta')->name('consultas-sic.conciliar');
     Route::get('consultas-sic', [CirculoCreditoController::class, 'create'])->name('circulo-credito.index');
     Route::post('consultas-sic/{cliente?}', [CirculoCreditoController::class, 'store'])->whereNumber('cliente')->name('circulo-credito.store');
     Route::get('clientes/{cliente}/circulo-credito/create', [CirculoCreditoController::class, 'create'])->whereNumber('cliente');

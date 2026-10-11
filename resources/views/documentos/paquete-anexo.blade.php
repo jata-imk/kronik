@@ -13,6 +13,26 @@
     <p>Destino: {{ $snapshot['condiciones']['destino'] }}</p>
     <p>Producto versión {{ $snapshot['producto']['numero'] }} · Tasa ordinaria anual: {{ $snapshot['producto']['tasa_ordinaria_anual'] }}% · Tasa moratoria anual: {{ $snapshot['producto']['tasa_moratoria_anual'] }}% · Días de gracia configurados: {{ $snapshot['producto']['dias_gracia_mora'] }}.</p>
     <p>Convención: {{ $snapshot['producto']['reglas']['convencion_interes'] }}. Esta tabla proyecta curso normal, sin atraso.</p>
+    @php($reglasAnticipo = $snapshot['producto']['reglas'])
+    <h2>Anticipos y liquidación: condiciones conservadas</h2>
+    <p>Anticipo parcial: {{ ($reglasAnticipo['permite_prepago_parcial'] ?? false) ? 'permitido' : 'no permitido' }}.
+        Capital anticipado mínimo: ${{ number_format((float) ($reglasAnticipo['monto_minimo_prepago'] ?? 0), 2) }} MXN.
+        Aplicación: {{ ($reglasAnticipo['aplicacion_prepago'] ?? null) === 'reducir_plazo' ? 'reducir plazo' : 'reducir pago' }}.
+        Liquidación anticipada: {{ ($reglasAnticipo['permite_liquidacion_anticipada'] ?? false) ? 'permitida' : 'no permitida' }}.</p>
+    @foreach ($snapshot['producto']['comisiones'] ?? [] as $comision)
+        @if (in_array($comision['momento_cobro'], ['evento', 'liquidacion'], true))
+            <p>{{ $comision['concepto']['nombre'] }}:
+                {{ ['prepago' => 'Anticipo parcial', 'liquidacion_anticipada' => 'Liquidación anticipada', 'liquidacion_ordinaria' => 'Liquidación ordinaria'][$comision['evento_cobro'] ?? ''] ?? 'Evento no definido en esta versión histórica' }}.
+                {{ $comision['tipo_importe'] === 'porcentaje' ? $comision['importe'].'%' : '$'.number_format((float) $comision['importe'], 2).' MXN' }};
+                base: {{ ['monto_credito' => 'monto original solicitado', 'capital_anticipado' => 'capital anticipado', 'capital_insoluto' => 'capital insoluto antes de la operación', 'no_aplica' => 'importe fijo'][$comision['base_calculo']] ?? 'no definida' }};
+                {{ $comision['obligatoria'] ? 'obligatoria' : 'opcional' }}.
+                Fiscalidad: {{ ['gravado' => 'gravado', 'exento' => 'exento', 'no_causa' => 'no causa impuesto'][$comision['fiscalidad']['tratamiento'] ?? ''] ?? 'sin definir' }}
+                @if (($comision['fiscalidad']['tratamiento'] ?? null) === 'gravado')
+                    — {{ $comision['fiscalidad']['tasa'] }}% sobre el importe del concepto.
+                @endif
+            </p>
+        @endif
+    @endforeach
     @if (!empty($snapshot['producto']['politica_mora']))
         @php($mora = $snapshot['producto']['politica_mora'])
         <p>Política de atraso conservada: {{ $mora['gracia'] === 'efectiva' ? 'A: los días de gracia no generan mora; comienza el día siguiente a terminar la gracia.' : 'B: si supera la gracia con capital vencido pendiente, la mora se calcula desde el día posterior al vencimiento.' }}</p>

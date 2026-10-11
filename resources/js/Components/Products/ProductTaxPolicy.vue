@@ -1,6 +1,8 @@
 <script setup>
 import TaxConceptField from "./TaxConceptField.vue";
 defineProps({ version: Object, readonly: Boolean, conceptos: { type: Array, default: () => [] }, errors: { type: Object, default: () => ({}) } });
+const evento = (v) => ({ prepago: "Anticipo parcial", liquidacion_anticipada: "Liquidación anticipada", liquidacion_ordinaria: "Liquidación ordinaria" })[v] ?? "Sin evento definido en esta versión";
+const base = (v) => ({ monto_credito: "Monto original solicitado", capital_anticipado: "Capital anticipado", capital_insoluto: "Capital insoluto antes de operar", no_aplica: "Importe fijo" })[v] ?? "Sin base definida";
 </script>
 <template>
     <div class="space-y-4 pt-3">
@@ -14,6 +16,6 @@ defineProps({ version: Object, readonly: Boolean, conceptos: { type: Array, defa
         <div class="grid items-start gap-4 lg:grid-cols-2"><TaxConceptField v-model="version.fiscalidad.ordinario" title="Interés ordinario" path="version.fiscalidad.ordinario" :readonly="readonly" :errors="errors" /><TaxConceptField v-model="version.fiscalidad.moratorio" title="Interés moratorio" path="version.fiscalidad.moratorio" :readonly="readonly" :errors="errors" /></div>
         <div><h3 class="font-semibold">Impuestos de las comisiones</h3><p class="mt-1 text-sm text-surface-500">Cada comisión tiene su propio tratamiento. Su base fiscal es distinta de la base comercial con la que calculas el cargo.</p></div>
         <p v-if="!version.comisiones.length" class="rounded-xl border border-dashed border-surface-300 p-5 text-sm text-surface-500">Sin comisiones. Puedes agregarlas en la pestaña Comisiones y después definir aquí su fiscalidad.</p>
-        <TaxConceptField v-for="(item, index) in version.comisiones" :key="index" v-model="item.fiscalidad" :title="conceptos.find(c => c.id === item.concepto_comision_id)?.nombre ?? `Comisión ${index + 1}`" :path="`version.comisiones.${index}.fiscalidad`" :readonly="readonly" :errors="errors" />
+        <div v-for="(item, index) in version.comisiones" :key="index" class="space-y-2"><p v-if="['evento','liquidacion'].includes(item.momento_cobro)" class="text-sm text-muted-color">{{ evento(item.evento_cobro) }} · Base comercial: {{ base(item.base_calculo) }} · {{ item.obligatoria ? 'Obligatoria' : 'Opcional' }}</p><TaxConceptField v-model="item.fiscalidad" :title="conceptos.find(c => c.id === item.concepto_comision_id)?.nombre ?? `Comisión ${index + 1}`" :path="`version.comisiones.${index}.fiscalidad`" :readonly="readonly" :errors="errors" /></div>
     </div>
 </template>

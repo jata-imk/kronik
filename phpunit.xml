@@ -27,6 +27,16 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="SIC_QA_HABILITADO" value="false"/>
+        <env name="SIC_CA_BUNDLE" value=""/>
+        <env name="CIRCULO_CREDITO_API_KEY" value="TEST-NO-PROVIDER-CREDENTIAL"/>
+        <env name="CIRCULO_CREDITO_SANDBOX" value="true"/>
+        <env name="ORIGINACION_APROBACIONES_HABILITADAS" value="false"/>
+        <env name="ORIGINACION_PAQUETES_QA_HABILITADOS" value="false"/>
+        <env name="ORIGINACION_FIRMAS_QA_HABILITADAS" value="false"/>
+        <env name="ORIGINACION_DESEMBOLSOS_QA_HABILITADOS" value="false"/>
+        <env name="ORIGINACION_PAGOS_QA_HABILITADOS" value="false"/>
+        <env name="ORIGINACION_ANTICIPOS_QA_HABILITADOS" value="false"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
     </php>

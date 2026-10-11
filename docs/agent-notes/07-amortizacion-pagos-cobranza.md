@@ -4,16 +4,32 @@
 
 - Notion: https://app.notion.com/p/3a061db7db7f8187affec6f73e92e952
 - Iniciativa: https://app.notion.com/p/3e161db7db7f817a8c89ec30767d4666
-- Rama de entrega: feat/creditos-pagos, base main c005e99 (PR #28 integrado).
-- Último PR integrado: https://github.com/jata-imk/kronik/pull/29; main bce10933.
-- ADR: 0012, 0018, 0019, 0020.
+- Rama actual: `feat/sic-qa-anticipos-liquidacion`, base main b988273.
+- Última entrega P6 integrada: https://github.com/jata-imk/kronik/pull/29.
+- ADR: 0012, 0018, 0019, 0020, 0023.
 
 ## Objetivo
 
-P6 conecta crédito con pagos, distribución y reversos manuales QA. El alcance
-completo y decisiones permanecen en Notion; no duplicar aquí la especificación.
+P8 completa anticipos, liquidación, cierre y reversos compensatorios sobre P6 QA.
+El alcance completo y decisiones permanecen en Notion; no duplicar aquí la especificación.
 
 ## Estado actual
+
+- Actualización 10/10/2026: P8 implementado en `feat/sic-qa-anticipos-liquidacion`,
+  base main b988273; pendiente de revisión/integración. ADR 0023 y guía QA específica.
+- E2E completo aprobado: aprobación dual → PDF real → firma revisada → desembolso
+  → pago/reverso → anticipo → liquidación → reverso/reapertura. Base E2E aislada.
+- Matriz financiera con métodos/modalidades, fechas reales/bisiesto, devengos,
+  impuestos, comisiones explícitas y opcionales, mínimos y conservación de capital.
+  MCP: gráficas, escritorio/móvil/tema oscuro; accesibilidad y contraste refinados.
+- Migración aplicada en QA con respaldo verificado. Pagos/anticipos QA habilitados
+  localmente; no se registraron operaciones financieras en la base existente.
+  VPS intacta. Backlog 07 permanece abierto por P9 y siguientes.
+- Regresión final: 372 backend / 39,755 aserciones / 1 omitida; 90 frontend;
+  dos E2E completos, build y Pint aprobados. Capturas sintéticas en la guía QA.
+- Historial P6 a continuación; no acredita contención multiconexión simultánea.
+
+## Seguimiento histórico P6
 
 - Estado: P6 entregado; Backlog 07 continúa en progreso.
 - Última actualización: 2026-09-30.

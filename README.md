@@ -1,6 +1,6 @@
 # Sistema ERP Financiero
 
-ERP financiero orientado a pequeñas financieras y fintech mexicanas que operan productos de crédito. El supuesto funcional principal es una **SOFOM ENR**, con soporte inicial para crédito simple y roadmap temprano para crédito revolvente.
+Kronik es una plataforma de operación crediticia para prestamistas personales y pequeñas instituciones financieras mexicanas, incluidas SOFIPOs mediante perfiles configurables. El alcance inicial es persona física, MXN y crédito simple; no presume un régimen SOFOM ni acredita cumplimiento regulatorio completo.
 
 El despliegue esperado es **una app por financiera**. Si otra financiera contrata el sistema, se despliega otra instancia/VPS con su propia configuración.
 
@@ -16,8 +16,16 @@ El repositorio ya cuenta con una base Laravel 11 + Inertia + Vue 3:
 - Configuración global de empresa y sucursales operativas.
 - Alta, edición, consulta, traslado y eliminación de clientes con sucursal responsable.
 - Datos fiscales, domicilios, catálogos de países, régimen fiscal y códigos postales.
-- Integración parcial con Círculo de Crédito para FICO Score, Fintech Score y reportes relacionados.
-- Dashboard de historial crediticio con consultas SIC almacenadas.
+- Productos crediticios versionados, simulación decimal, comisiones, impuestos y CAT informativo.
+- Solicitudes, expediente, consentimiento SIC, evaluación manual, revisión PLD y aprobación configurable.
+- Contrato y tabla congelados, firma autógrafa digitalizada revisada y desembolso único manual QA.
+- Pagos manuales QA, devengo diario, distribución proporcional de impuestos y reversos compensatorios.
+- SIC QA: FICO v2, Fintech y Reporte de Crédito + FICO; historial recuperado,
+  evidencia cifrada, consentimiento/revisión e intentos trazables. Gráficas según
+  las secciones realmente reportadas, separadas por moneda.
+- Anticipos, liquidación y cierre QA con previa, calendarios versionados y reverso
+  compensatorio que restaura calendario y puede reabrir el crédito.
+- Diseño Kronik configurable, navegación por permisos y resúmenes operativos.
 - Menubar configurable por base de datos.
 - Bitácora de actividad con `spatie/laravel-activitylog`.
 
@@ -90,6 +98,14 @@ Dependencias externas:
   los invoque.
 
 ## Roadmap Prioritario
+
+Estado revisado el 10/10/2026: P0–P6 integrados; P7 sandbox e historial y P8 anticipos,
+liquidación/cierre implementados en la rama de entrega, pendientes de revisión e
+integración. 2FA y revisión manual aprobadas. Cumplimiento/cobranza ampliados y
+Backlog 02.5 siguen pendientes. [Notion](https://app.notion.com/p/3e161db7db7f817a8c89ec30767d4666)
+define prioridades. Guías: [SIC QA](docs/how-to/qa-sic.md) y
+[anticipos/liquidación QA](docs/how-to/qa-anticipos-liquidacion.md).
+La lista siguiente describe capacidades generales futuras.
 
 1. **Documentación y diseño funcional:** convertir el análisis financiero en TODOs implementables por módulo.
 2. **Configuración de empresa:** perfil de financiera, sucursales, folios, parámetros globales e integraciones.

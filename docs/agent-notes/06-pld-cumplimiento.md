@@ -14,6 +14,10 @@ Conectar revisión humana reservada al expediente de solicitud. Alcance completo
 
 ## Estado actual
 
+- Actualización 10/10/2026: revisión manual y aprobación integradas en P3 y revalidadas por P4–P6. Usuario aprueba revisión manual y 2FA. Cumplimiento ampliado sigue pendiente; el perfil institucional requiere configuración explícita. Evidencia siguiente histórica.
+
+## Seguimiento histórico
+
 - Estado: en progreso
 - Última actualización: 2026-09-20
 - Dictámenes cifrados/inmutables por revisión, lectura/escritura diferenciadas.

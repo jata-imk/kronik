@@ -3,15 +3,31 @@
 ## Referencias
 
 - Notion: https://app.notion.com/p/3a061db7db7f8150ba15f9c27562a5f8
-- Rama P1: fix/sic-navegacion-segura; seguimiento en feat/originacion-incrementos.
-- PR: https://github.com/jata-imk/kronik/pull/16 (depende de #17).
-- ADR relacionados: 0011
+- Rama actual: `feat/sic-qa-anticipos-liquidacion`, base main b988273.
+- PR histórico P1 integrado: https://github.com/jata-imk/kronik/pull/16.
+- ADR relacionados: 0011 (legado), 0022 (SIC QA).
 
 ## Objetivo
 
-Sanear el legado antes de implementar el adaptador productivo contratado.
+Recuperar tres servicios sandbox, histórico cifrado y evidencia trazable para
+originación QA. Contratación y habilitación productivas corresponden a otra entrega.
 
 ## Estado actual
+
+- Actualización 10/10/2026: P7 QA implementado en `feat/sic-qa-anticipos-liquidacion`,
+  base main b988273; pendiente de revisión/integración. ADR 0022 y guía `qa-sic.md`.
+- Tres pruebas sandbox explícitas con casos oficiales: HTTP 200, sin evidencia
+  insertada. E2E de tres servicios y MCP de reporte/temas/móvil aprobados.
+- Migraciones aplicadas en QA tras respaldo cifrado verificado (67 tablas).
+  Dos históricos archivados, verificados y retirados de texto plano, IDs intactos.
+  Flag SIC QA local activo; TLS verificado con CA privado local. VPS intacta.
+- Pruebas de consentimiento/revisión, incertidumbre/conciliación, respuesta tardía,
+  firma, cifrado y resúmenes. No acreditar concurrencia simultánea multiconexión.
+- Regresión final: 372 backend / 39,755 aserciones / 1 omitida; 90 frontend;
+  dos E2E completos, build y Pint aprobados. Capturas sintéticas en la guía QA.
+- La evidencia siguiente corresponde a P1; producción permanece cerrada.
+
+## Seguimiento histórico P1
 
 - Estado: en progreso
 - Última actualización: 2026-09-20
@@ -34,9 +50,11 @@ Sanear el legado antes de implementar el adaptador productivo contratado.
 
 ## Siguiente paso
 
-Verificar regresión general y revisar P1; P7 depende de validación del proveedor.
+Revisar PR y CI MariaDB; probar con operadores QA y políticas de servicios/sin score.
+Contrato/API productivos permanecen como entrega posterior, según Notion.
 
-## Cierre
+## Cierre histórico P1
 
-- Commit o merge: pendiente.
-- Pendientes diferidos: adaptador, cifrado/migración de históricos y normalización.
+- P1 integrado (PR #16). P7 sandbox implementado ahora; pendiente de revisión/integración.
+- El adaptador productivo contratado sigue diferido. Cifrado y normalización QA
+  están incluidos en P7.

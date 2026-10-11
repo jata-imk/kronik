@@ -55,9 +55,10 @@ una cuota, espera a su vencimiento; no cambies fechas ni el reloj para simularlo
   español, sin claves `validation.*`.
 
 El calendario firmado no es el saldo exigible calculado al día. El libro registra
-devengos al aplicar pagos; consultar el crédito no crea movimientos. Anticipos,
-liquidación anticipada, conciliación bancaria, CFDI y dinero real quedan fuera de
-esta entrega. Consulta la [decisión técnica de pagos QA](../explanation/adr-0020-pagos-manuales-qa.md).
+devengos al aplicar pagos; consultar el crédito no crea movimientos. P8 agrega
+[anticipos, liquidación y cierre QA](qa-anticipos-liquidacion.md) en un recorrido
+separado. Conciliación bancaria, CFDI y dinero real siguen fuera de alcance.
+Consulta la [decisión técnica de pagos QA](../explanation/adr-0020-pagos-manuales-qa.md).
 
 Capturas sintéticas: [previa en escritorio](../assets/qa-pagos/pago-qa-desktop.png),
 [captura móvil](../assets/qa-pagos/pago-qa-mobile.png) y

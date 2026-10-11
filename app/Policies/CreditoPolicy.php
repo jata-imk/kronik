@@ -28,4 +28,16 @@ class CreditoPolicy
         return $this->view($user, $credito) && $user->can('reverse payments creditos')
             && (int) $user->current_sucursal_id === (int) $credito->sucursal_id;
     }
+
+    public function prepay(User $user, Credito $credito): bool
+    {
+        return $this->view($user, $credito) && $user->can('prepay creditos')
+            && (int) $user->current_sucursal_id === (int) $credito->sucursal_id;
+    }
+
+    public function settle(User $user, Credito $credito): bool
+    {
+        return $this->view($user, $credito) && $user->can('settle creditos')
+            && (int) $user->current_sucursal_id === (int) $credito->sucursal_id;
+    }
 }

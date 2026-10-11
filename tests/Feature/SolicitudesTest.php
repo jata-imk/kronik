@@ -483,7 +483,7 @@ test('bloqueos de habilitación SIC documentos y dictámenes no pueden saltarse 
     [$user, $solicitud, $cliente, $version, $doc] = prepararSolicitudAprobable($this, 'individual', 'requerido');
     $data = ['lock_version' => 3, 'motivo' => 'Intento de aprobación bloqueada.'];
     $this->post(route('solicitudes.aprobar', $solicitud), $data)->assertSessionHasErrors('aprobacion');
-    expect(session('errors')->first('aprobacion'))->toContain('SIC integrado');
+    expect(session('errors')->first('aprobacion'))->toContain('SIC de la revisión vigente');
     $this->assertDatabaseCount('solicitud_resoluciones', 0);
     $this->assertDatabaseCount('sic_queries', 0);
 });

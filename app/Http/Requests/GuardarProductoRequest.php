@@ -51,7 +51,8 @@ class GuardarProductoRequest extends FormRequest
             'version.comisiones.*.concepto_comision_id' => ['required', 'integer', 'distinct', Rule::exists('conceptos_comision', 'id')->where('activo', true)],
             'version.comisiones.*.tipo_importe' => ['required', Rule::in(['fijo', 'porcentaje'])],
             'version.comisiones.*.importe' => ['required', 'decimal:0,8', 'min:0'],
-            'version.comisiones.*.base_calculo' => ['required', Rule::in(['no_aplica', 'monto_credito'])],
+            'version.comisiones.*.base_calculo' => ['required', Rule::in(['no_aplica', 'monto_credito', 'capital_anticipado', 'capital_insoluto'])],
+            'version.comisiones.*.evento_cobro' => ['nullable', Rule::in(['prepago', 'liquidacion_anticipada', 'liquidacion_ordinaria'])],
             'version.comisiones.*.momento_cobro' => ['required', Rule::in(['inicio', 'firma', 'desembolso_descuento', 'cada_pago', 'evento', 'liquidacion'])],
             'version.comisiones.*.modalidad_cobro' => ['nullable', Rule::in(['pago_separado', 'descuento_desembolso', 'financiada'])],
             'version.comisiones.*.obligatoria' => ['required', 'boolean'],
@@ -75,8 +76,16 @@ class GuardarProductoRequest extends FormRequest
                 if ($concepto?->clave === 'PAGO_TARDIO' && bccomp($tasaMora, '0', 8) > 0) {
                     $validator->errors()->add("version.comisiones.$index.concepto_comision_id", 'No puede cobrarse comisión por pago tardío y tasa moratoria en el mismo periodo.');
                 }
-                if (($comision['tipo_importe'] ?? null) === 'porcentaje' && ($comision['base_calculo'] ?? null) !== 'monto_credito') {
-                    $validator->errors()->add("version.comisiones.$index.base_calculo", 'Seleccione el monto del crédito como base de una comisión porcentual.');
+                $evento = in_array($comision['momento_cobro'] ?? null, ['evento', 'liquidacion'], true);
+                if (($comision['tipo_importe'] ?? null) === 'porcentaje'
+                    && ! in_array($comision['base_calculo'] ?? null, $evento ? ['monto_credito', 'capital_anticipado', 'capital_insoluto'] : ['monto_credito'], true)) {
+                    $validator->errors()->add("version.comisiones.$index.base_calculo", 'Selecciona una base porcentual compatible con el momento de cobro.');
+                }
+                if ($evento && empty($comision['evento_cobro'])) {
+                    $validator->errors()->add("version.comisiones.$index.evento_cobro", 'Selecciona el evento que genera esta comisión.');
+                }
+                if (! $evento && ! empty($comision['evento_cobro'])) {
+                    $validator->errors()->add("version.comisiones.$index.evento_cobro", 'El evento solo aplica a comisiones por evento o liquidación.');
                 }
                 $inicial = in_array($comision['momento_cobro'] ?? null, ['inicio', 'firma', 'desembolso_descuento'], true);
                 if ($inicial && empty($comision['modalidad_cobro']) && ($comision['momento_cobro'] ?? null) === 'inicio') {
@@ -97,6 +106,8 @@ class GuardarProductoRequest extends FormRequest
             'version.tasa_moratoria_anual' => 'tasa moratoria anual', 'version.periodicidades' => 'periodicidades',
             'version.reglas.metodos_amortizacion' => 'métodos de amortización',
             'version.comisiones.*.modalidad_cobro' => 'modalidad de cobro inicial',
+            'version.comisiones.*.evento_cobro' => 'evento que genera la comisión',
+            'version.comisiones.*.base_calculo' => 'base de cálculo de la comisión',
         ];
     }
 

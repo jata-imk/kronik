@@ -146,7 +146,7 @@ class ModulesAndPermissionsSeeder extends Seeder
         );
 
         $actionsPerModule = [
-            'creditos' => ['read', 'disburse', 'pay', 'reverse payments'],
+            'creditos' => ['read', 'disburse', 'pay', 'reverse payments', 'prepay', 'settle'],
             'solicitudes' => ['create', 'read', 'update', 'assign', 'review', 'cancel', 'approve', 'prepare package', 'receive signature', 'review signature'],
             'evaluacion-solicitudes' => ['create', 'read'],
             'cumplimiento' => ['create', 'read'],
@@ -163,7 +163,7 @@ class ModulesAndPermissionsSeeder extends Seeder
             'plantillas-documentos' => ['create', 'read', 'update', 'activate', 'retire', 'version'],
             'documentos' => ['read', 'generate', 'download'],
             'historial-crediticio' => ['read'],
-            'circulo-credito' => ['create', 'read'],
+            'circulo-credito' => ['create', 'read', 'reconcile'],
             'teams' => ['read', 'add members', 'delete', 'remove members', 'update', 'update members', 'create'],
         ];
 

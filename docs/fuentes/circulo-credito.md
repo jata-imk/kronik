@@ -5,7 +5,13 @@
 - Nombre: Documentacion tecnica y contratos de Circulo de Credito.
 - Institucion: Circulo de Credito.
 - URL publica general: https://www.circulodecredito.com.mx/
-- Fecha de consulta: 2026-07-17.
+- Fecha de consulta: 2026-10-10.
+- Portal de APIs: https://developer.circulodecredito.com.mx/apis
+- FICO v2, caso sandbox oficial: https://github.com/APIHub-CdC/ficoscore-v2-simulacion-client-java/blob/master/src/test/java/com/cdc/apihub/mx/FS/simulacion/test/ApiTest.java
+- Fintech, caso sandbox oficial: https://github.com/APIHub-CdC/fintechscore-simulacion-client-php/blob/master/test/Api/FintechScoreSimulacionApiTest.php
+- RC + FICO, caso sandbox oficial: https://github.com/APIHub-CdC/rc-ficoscore-simulacion-client-php/blob/master/test/Api/ReporteDeCreditoConFicoScoreApiTest.php
+- Firma oficial: https://github.com/APIHub-CdC/signature-manager-php/blob/master/lib/Interceptor/KeyHandler.php
+- Modelo de cuenta: https://github.com/APIHub-CdC/rc-ficoscore-simulacion-client-php/blob/master/lib/Model/Credito.php
 
 ## Resumen
 
@@ -28,4 +34,8 @@ Kronik ya contiene servicios, modelos y repositories para integraciones de Circu
 ## Pendiente de Validacion
 
 - Incorporar resumen interno de documentacion privada cuando el contrato/proveedor lo permita.
-- Confirmar campos obligatorios por API usada antes de cerrar el modulo SIC.
+- QA verificado: las tres rutas sandbox respondieron HTTP 200 con casos sintéticos
+  oficiales el 10/10/2026; no se insertó evidencia acreditable de aprobación.
+- Producción sigue pendiente: contratos, habilitación, credenciales, firma/verificación
+  del transporte y políticas validadas. El host coincide entre ambientes; no basta
+  comprobarlo para identificar sandbox. Las rutas y flags deben comprobarse también.

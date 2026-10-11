@@ -53,6 +53,9 @@ class ProductoVersionService
             PoliticaMora::validate($data['version']);
             $anteriores = $version->comisiones()->get()->keyBy('concepto_comision_id');
             foreach ($data['version']['comisiones'] as &$comision) {
+                if (! array_key_exists('evento_cobro', $comision)) {
+                    $comision['evento_cobro'] = $anteriores->get($comision['concepto_comision_id'])?->evento_cobro;
+                }
                 if (! array_key_exists('fiscalidad', $comision)) {
                     $comision['fiscalidad'] = $anteriores->get($comision['concepto_comision_id'])?->fiscalidad;
                 }
@@ -79,7 +82,7 @@ class ProductoVersionService
             'vigente_desde' => null,
             'periodicidades' => $origen->periodicidades->map->only(['periodicidad', 'plazo_minimo', 'plazo_maximo', 'plazo_predeterminado'])->all(),
             'reglas' => $origen->reglas->only(['metodos_amortizacion', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago']),
-            'comisiones' => $origen->comisiones->map->only(['concepto_comision_id', 'tipo_importe', 'importe', 'base_calculo', 'momento_cobro', 'modalidad_cobro', 'obligatoria', 'fiscalidad'])->all(),
+            'comisiones' => $origen->comisiones->map->only(['concepto_comision_id', 'tipo_importe', 'importe', 'base_calculo', 'momento_cobro', 'evento_cobro', 'modalidad_cobro', 'obligatoria', 'fiscalidad'])->all(),
         ];
 
         return DB::transaction(fn () => $this->crearVersion($producto, $data, $userId));
@@ -180,7 +183,7 @@ class ProductoVersionService
         return json_decode(json_encode($version->only(['numero', 'moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual', 'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica', 'cat_no_aplica_motivo', 'fiscalidad', 'politica_mora']) + [
             'periodicidades' => $version->periodicidades->map->only(['periodicidad', 'plazo_minimo', 'plazo_maximo', 'plazo_predeterminado'])->all(),
             'reglas' => $version->reglas?->only(['metodos_amortizacion', 'convencion_interes', 'base_moratoria', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago', 'ajuste_dia_inhabil', 'redondeo']),
-            'comisiones' => $version->comisiones->map(fn ($c) => [...$c->only(['tipo_importe', 'importe', 'base_calculo', 'momento_cobro', 'modalidad_cobro', 'obligatoria', 'incluye_cat', 'fiscalidad']), 'concepto' => $c->concepto->only(['clave', 'nombre'])])->all(),
+            'comisiones' => $version->comisiones->map(fn ($c) => [...$c->only(['tipo_importe', 'importe', 'base_calculo', 'momento_cobro', 'evento_cobro', 'modalidad_cobro', 'obligatoria', 'incluye_cat', 'fiscalidad']), 'concepto' => $c->concepto->only(['clave', 'nombre'])])->all(),
         ], JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
     }
 

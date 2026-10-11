@@ -110,11 +110,12 @@ function solicitudDictamenDatos(int $lockVersion, string $tipo = 'evaluacion'): 
 function politicaSolicitudDatos(string $modalidad = 'individual', string $sic = 'manual_permitido'): array
 {
     return ['version_anterior' => 0, 'modalidad' => $modalidad, 'sic' => $sic, 'monto_maximo' => '50000.00',
+        ...($sic === 'requerido' ? ['sic_apis' => ['fico_score_v2'], 'sic_sin_score' => 'bloquear'] : []),
         'vigencia_dias' => 15, 'documentos' => ['ine'], 'referencia_validacion' => 'Validación interna de pruebas, no para producción.',
         'criterio_capacidad' => 'Revisar ingresos y egresos y fundamentar capacidad manualmente.', 'confirmacion' => true];
 }
 
-function prepararSolicitudAprobable($test, string $modalidad = 'individual', string $sic = 'manual_permitido', bool $fiscalidad = true, bool $pagos = false): array
+function prepararSolicitudAprobable($test, string $modalidad = 'individual', string $sic = 'manual_permitido', bool $fiscalidad = true, bool $pagos = false, ?\Closure $prepararCliente = null): array
 {
     \Illuminate\Support\Facades\Storage::fake('local');
     config(['originacion.aprobaciones_habilitadas' => true]);
@@ -130,6 +131,7 @@ function prepararSolicitudAprobable($test, string $modalidad = 'individual', str
         'disk' => 'local', 'path' => 'prueba/ine.pdf', 'mime_type' => 'application/pdf', 'nombre_original' => 'ine.pdf',
         'tamano_bytes' => 10, 'revisado_en' => now(), 'revisado_por' => $user->id]);
     \Illuminate\Support\Facades\Storage::disk('local')->put('prueba/ine.pdf', 'fixture');
+    $prepararCliente?->__invoke($cliente, $user);
     $test->actingAs($user)->post(route('solicitudes.store'), solicitudDatos($cliente, $version))->assertSessionHasNoErrors();
     $solicitud = Solicitud::firstOrFail();
     $test->post(route('solicitudes.enviar', $solicitud), ['lock_version' => 0])->assertSessionHasNoErrors();

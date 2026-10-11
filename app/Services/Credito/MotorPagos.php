@@ -49,6 +49,11 @@ final class MotorPagos
         if ($fecha < $state['fecha']) {
             $this->error('No puedes registrar este pago con esa fecha porque el crédito tiene movimientos posteriores.');
         }
+        if (($state['estado_operativo'] ?? null) === 'liquidado') {
+            $state['fecha'] = $fecha;
+
+            return $state;
+        }
         $producto = $state['producto'];
         $policy = $producto['politica_mora'];
         $diasGracia = (int) $producto['dias_gracia_mora'];
@@ -114,6 +119,9 @@ final class MotorPagos
             }
         }
         foreach ($state['cargos'] as $key => $cargo) {
+            if (($cargo['vigente'] ?? true) === false) {
+                continue;
+            }
             [$base, $impuesto] = $this->pendiente($cargo);
             if ($cargo['fecha'] <= $state['fecha'] && D::compare(D::add($base, $impuesto), '0') > 0) {
                 $filas[] = ['clave' => $key, 'cuota' => $cargo['cuota'], 'fecha' => $cargo['fecha'], 'tipo' => $cargo['tipo'], 'concepto' => $cargo['concepto'],
@@ -124,7 +132,7 @@ final class MotorPagos
         $orden = ['comision' => 0, 'moratorio' => 1, 'ordinario' => 2, 'capital' => 3];
         usort($filas, fn ($a, $b) => [$a['cuota'], $orden[$a['tipo']], $a['clave']] <=> [$b['cuota'], $orden[$b['tipo']], $b['clave']]);
 
-        return ['fecha' => $state['fecha'], 'capital_insoluto' => $capital, 'capital_vencido' => $vencido, 'dias_atraso' => $diasAtraso,
+        return ['fecha' => $state['fecha'], 'cronograma_version' => $state['cronograma_version'] ?? 1, 'estado_operativo' => $state['estado_operativo'] ?? (D::compare($capital, '0') === 0 && D::compare($total, '0') === 0 ? 'liquidado' : 'activo'), 'capital_insoluto' => $capital, 'capital_vencido' => $vencido, 'dias_atraso' => $diasAtraso,
             'exigible' => $total, 'conceptos' => $filas];
     }
 

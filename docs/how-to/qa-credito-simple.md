@@ -388,8 +388,9 @@ El operador con `pay creditos` debe:
    enlazado a movimientos compensatorios. Esto no devuelve dinero ni borra historia.
 
 Este flujo aplica solo a datos ficticios; la [decisión técnica de P6](../explanation/adr-0020-pagos-manuales-qa.md)
-documenta límites como anticipos, liquidación anticipada, conciliación bancaria,
-CFDI y operaciones monetarias reales aún no cubiertas.
+documenta pagos ordinarios. P8 agrega [anticipos, liquidación y cierre QA](qa-anticipos-liquidacion.md);
+P7 agrega [consultas SIC sandbox](qa-sic.md). Conciliación bancaria, CFDI y
+operaciones monetarias reales siguen fuera de alcance.
 
 ## 9. Revisión del contador o asesor
 
@@ -423,8 +424,8 @@ una conversación informal.
   presentación de importes. La aprobación jurídica del contenido es una revisión
   separada que corresponde a la institución; una plantilla activa no la acredita.
 - **Alcance no implementado:** conciliación bancaria, CFDI, retenciones,
-  acreditamientos/declaraciones, liquidación anticipada, anticipos y casos de
-  compensación futura no deben darse por cubiertos por esta prueba.
+  acreditamientos/declaraciones y casos de compensación futura no deben darse
+  por cubiertos por esta prueba. Anticipos/liquidación requieren el recorrido P8.
 
 Pide al contador que marque cada punto como “revisado para el escenario”,
 “requiere ajuste” o “fuera de alcance”; no es necesario que dé visto bueno a una

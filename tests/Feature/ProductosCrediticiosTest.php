@@ -42,6 +42,20 @@ function escenarioFiscal(array $extra = []): array
     return ['monto' => '10000', 'periodicidad' => 'mensual', 'plazo' => 3, 'metodo' => 'capital_fijo', 'fecha' => '2026-01-01', 'incluir_impuestos' => true, ...$extra];
 }
 
+test('event commission configuration persists through activation and duplication', function () {
+    $actor = actingAsSuperAdmin();
+    $concepto = ConceptoComision::create(['clave' => 'ANTICIPO', 'nombre' => 'Anticipo', 'activo' => true]);
+    $comision = ['concepto_comision_id' => $concepto->id, 'momento_cobro' => 'evento', 'evento_cobro' => 'prepago', 'tipo_importe' => 'porcentaje',
+        'importe' => '5', 'base_calculo' => 'capital_anticipado', 'obligatoria' => true, 'modalidad_cobro' => null, 'fiscalidad' => ['tratamiento' => 'exento']];
+    $this->actingAs($actor)->post(route('productos-crediticios.store'), productoPayload(['fiscalidad' => fiscalidadPrueba(), 'comisiones' => [$comision]]))->assertSessionHasNoErrors();
+    $version = ProductoVersion::firstOrFail();
+    $service = app(ProductoVersionService::class);
+    $activa = $service->activar($version, '2026-01-01');
+    expect($activa->snapshot['comisiones'][0]['evento_cobro'])->toBe('prepago')->and($activa->snapshot['comisiones'][0]['base_calculo'])->toBe('capital_anticipado');
+    $copia = $service->nuevaVersion($activa->producto, $activa, $actor->id);
+    expect($copia->comisiones()->first()->evento_cobro)->toBe('prepago')->and($copia->comisiones()->first()->fiscalidad)->toBe(['tratamiento' => 'exento']);
+});
+
 test('simulación desglosa interés e impuesto sin convertir el principal en base ni alterar CAT', function () {
     $user = actingAsSuperAdmin();
     $policy = fiscalidadPrueba();

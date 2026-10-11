@@ -11,7 +11,7 @@ class SicQuery extends Model
 
     protected $table = 'sic_queries';
 
-    protected $hidden = ['response_data', 'mensaje_error'];
+    protected $hidden = ['response_data', 'mensaje_error', 'idempotency_key', 'payload_hash', 'identidad_hash', 'consentimiento_hash'];
 
     protected $fillable = [
         'cliente_id',
@@ -21,6 +21,8 @@ class SicQuery extends Model
         'status',
         'mensaje_error',
         'response_data',
+        'ambiente', 'estado_operacion', 'actor_id', 'team_id', 'sucursal_id', 'consentimiento_id',
+        'solicitud_revision_id', 'idempotency_key', 'payload_hash', 'identidad_hash', 'consentimiento_hash', 'http_status',
     ];
 
     protected $casts = [
@@ -46,5 +48,10 @@ class SicQuery extends Model
     public function results()
     {
         return $this->hasMany(SicQueryResult::class);
+    }
+
+    public function evidencias()
+    {
+        return $this->hasMany(SicEvidencia::class);
     }
 }
