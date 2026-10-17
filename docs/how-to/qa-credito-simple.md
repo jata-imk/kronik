@@ -1,4 +1,8 @@
-# Guion principal QA: vida de un crédito simple
+# Guía operativa QA: crédito simple para un prestamista o financiera pequeña
+
+Revisión funcional: **17/10/2026**, contra `main` en `f3581cb`, con SIC y P8
+(PR #36) y la portada ampliada (PR #37) integrados. Este documento describe el
+código revisado; comprueba que tu instalación tenga esa entrega o una posterior.
 
 Este documento guía una primera prueba manual de punta a punta: configurar un
 producto, preparar cliente y expediente, originar/evaluar/aprobar una solicitud,
@@ -8,10 +12,32 @@ SIC sandbox cuando la política del producto la requiere. Está organizado por
 etapa para que operación, analistas, cumplimiento y contador puedan
 seguir el mismo caso.
 
+Está dirigida tanto a quien presta y opera individualmente como al equipo de una
+financiera pequeña que quiere ensayar su operación, incluida una SOFOM. El resultado
+es una **aceptación operativa de QA**. El perfil institucional SOFOM, su validación
+regulatoria y la habilitación de SIC/dinero reales continúan como entregas pendientes.
+
+### Alcance del caso
+
+| Concepto | Qué puedes recorrer hoy |
+| --- | --- |
+| Otorgante | Configuración de empresa persona física o moral; una instalación por institución. |
+| Acreditado | Persona física con identidad fiscal registrada. Configurar al otorgante como persona moral no habilita créditos a personas morales. |
+| Crédito | Crédito simple en MXN; capital fijo o cuota nivelada; periodicidad semanal, quincenal o mensual permitida por la versión. |
+| Disposición | Un desembolso manual QA por solicitud formalizada. |
+| Vida del crédito | Pago exigible, anticipo, liquidación, recibos, versiones y reversos compensatorios. |
+| SIC | Tres servicios Círculo de Crédito en sandbox e histórico disponible; requisito según política. |
+| Decisiones | Evaluación y PLD manuales, aprobación individual o dual explícita y revisión manual de firma digitalizada. |
+
+Este recorrido no cubre crédito revolvente, disposiciones múltiples, nómina,
+reestructuras ni productos especializados por el hecho de cambiarles el nombre.
+
 ## Cómo usar esta guía
 
 **Para tu primera prueba, sigue únicamente este archivo, en orden del apartado 0
-al 10.** Cada apartado dice qué hacer y qué resultado esperar. Las demás guías
+al 10.** En 0.1 elige operación individual o en equipo; en 1.1 encontrarás un
+caso con importes para cotejar. Cada apartado dice qué hacer y qué resultado
+esperar. Las demás guías
 `qa-*.md` amplían una etapa para investigar un bloqueo, repetir casos difíciles o
 revisar cálculos con el contador; no tienes que ejecutarlas todas. Los comandos de
 pruebas automatizadas que aparecen al final de algunas son para desarrollo: no los
@@ -25,6 +51,9 @@ sintético del expediente no necesita iniciar sesión.
 | Si necesitas profundizar en... | Abre después... |
 | --- | --- |
 | Impuestos y ejemplos numéricos con el contador | [Simulación fiscal](qa-simulacion-fiscal.md) |
+| Datos de la institución y domicilio | [Configurar empresa](configurar-empresa.md) |
+| Equipos, usuarios, invitaciones y sucursales | [Usuarios, equipos y sucursales](../reference/usuarios-equipos-sucursales.md) |
+| Acceso global y permisos por equipo | [Roles y permisos](../reference/roles-y-permisos.md) |
 | Generación, PDF o reintento del contrato | [Paquete contractual](qa-paquete-contractual.md) |
 | Carga, rechazo o aceptación de la copia firmada | [Firma digitalizada](qa-firma-digitalizada.md) |
 | Registro único del desembolso y búsqueda del crédito | [Desembolso](qa-desembolso.md) |
@@ -58,9 +87,153 @@ sintético del expediente no necesita iniciar sesión.
 > se llama “producción” pero actualmente solo aloja pruebas, comprueba que base,
 > archivos, usuarios, correos e integraciones no atiendan operaciones reales.
 
+### Dónde se prueba cada área
+
+| Área disponible | Apartado de esta guía |
+| --- | --- |
+| Empresa, sucursales y equipos | 0.2–0.3 |
+| Usuarios, roles, permisos, perfil, 2FA y sesiones | 0.4–0.5 y 0.7 |
+| Portada, acceso, tablero y Mi trabajo | 0.5 y 9.1 |
+| Productos, versiones, comisiones, fiscalidad, simulador y política | 1 |
+| Plantillas, editor, vista previa, documentos generados y descargas | 2 y 6 |
+| Clientes, expediente, referencias, vínculos, garantías y consentimiento | 2 |
+| Solicitudes, responsables, devoluciones, rechazo y cancelación | 3 y 5 |
+| SIC, histórico, evaluación y cumplimiento manual | 4 |
+| Contrato y revisión de firma | 6 |
+| Desembolso, cartera y calendario | 7 y 9.1 |
+| Pagos, recibos, anticipos, liquidación y reversos | 8–8.3 |
+| Actividad, filtros, CSV y navegación contextual | 9.2–9.3 |
+| Observaciones, bloqueos y aceptación del ejercicio | 10 |
+
+Accesos rápidos: [preparación](#0-preparar-el-entorno-y-repartir-el-trabajo),
+[producto](#1-configurar-producto-y-versión-de-prueba),
+[expediente](#2-preparar-plantilla-documental-y-cliente-sintético),
+[solicitud](#3-crear-y-completar-la-solicitud),
+[evaluación/SIC](#4-evaluar-y-revisar-cumplimiento),
+[aprobación](#5-revisar-requisitos-y-aprobar),
+[contrato/firma](#6-preparar-contrato-y-recibirrevisar-firma-qa),
+[desembolso](#7-registrar-desembolso-ficticio-y-abrir-el-crédito),
+[pagos y cierre](#8-registrar-pago-qa-recibo-y-reverso),
+[ejemplo numérico](#83-caso-numérico-completo-para-la-primera-corrida),
+[rutina diaria](#91-rutina-de-apertura-atención-y-cierre-operativo-qa) y
+[aceptación](#101-lista-de-aceptación-del-recorrido).
+
 ## 0. Preparar el entorno y repartir el trabajo
 
-### Comprobar que realmente es QA
+### 0.1 Elegir el escenario operativo
+
+| Escenario | Configuración del ejercicio | Quién toma las decisiones |
+| --- | --- | --- |
+| Prestamista que opera solo | Una sucursal, un equipo y política de aprobación **Individual: misma persona, decisión auditada**. | La misma persona puede capturar, dictaminar y aprobar si tiene todos los permisos. Debe completar evaluación y PLD; la modalidad individual no omite requisitos. |
+| Financiera o SOFOM pequeña con equipo | Equipos y sucursales necesarios; política **Dual: quien capturó no aprueba** para ensayar separación de funciones. | Otra persona con cuenta propia aprueba. Puede agrupar otras responsabilidades según la organización; recibir/revisar firma y registrar/revertir pagos tienen permisos separados. |
+
+El tamaño o denominación de la institución no selecciona automáticamente una
+modalidad. La define una política versionada. En dual, ni el superadmin puede
+aprobar una revisión que capturó, modificó como borrador o envió. No crees una
+segunda identidad de la misma persona para simular la separación organizativa.
+
+Para una primera corrida individual usa evaluación manual permitida sin SIC.
+Repite en otro caso con SIC requerido y, si hay equipo, modalidad dual. Así puedes
+aislar un problema de proveedor o de permisos sin cambiar la política de un caso
+ya evaluado.
+
+### 0.2 Configurar a la institución
+
+Como administrador autorizado, abre **Empresa / Configuración de empresa**:
+
+1. Elige persona física para representar al prestamista individual o moral para
+   representar a la sociedad. En QA utiliza datos sintéticos con formatos válidos.
+2. Completa razón social/nombre, RFC, régimen compatible, contacto y domicilio.
+   Confirma el código postal con Enter o seleccionándolo y elige la colonia;
+   verifica municipio, estado y país. La validación local de RFC no consulta el SAT.
+3. Selecciona México, MXN y la zona horaria que usará la institución. Para la
+   corrida de ejemplo usa `America/Mexico_City`; comprueba la fecha empresarial.
+4. Revisa los parámetros operativos y guarda la configuración completa. El estado
+   **Activa** de Empresa no aprueba solicitudes ni abre las banderas financieras.
+5. Verifica que nombre y datos correctos llegan a las variables documentales que
+   uses. La empresa se configura una vez por instalación; un equipo no representa
+   una segunda financiera con otra base de datos o credenciales independientes.
+
+La hora de corte y los valores generales guardados no ejecutan un cierre contable
+ni reemplazan la política de mora o la fiscalidad versionada de cada producto.
+
+En esta entrega, el adaptador SIC QA toma host, API key y sandbox de las variables
+`CIRCULO_CREDITO_*` a través de `config/sic.php`. Guardar una clave en la sección
+Integraciones de Empresa no sustituye esa configuración técnica. Si SIC ya
+funciona, no recaptures secretos: confirma con el administrador qué configuración
+está efectiva sin imprimirla ni incluirla en capturas.
+
+### 0.3 Organizar sucursales y equipos
+
+1. En **Sucursales**, crea o comprueba la sucursal de prueba activa, domicilio,
+   clave y prefijos/consecutivos de sus folios. Conserva identificadores únicos.
+2. En **Equipos**, prepara el grupo de trabajo. Una persona puede usar un solo
+   equipo; una institución puede separar áreas según su organización.
+3. Asigna sucursal principal y sucursales autorizadas a cada operador. La principal
+   es su contexto inicial; selecciona la sucursal responsable antes de operar.
+4. Cambia de equipo y de sucursal por separado. El equipo determina roles/permisos;
+   la sucursal determina el contexto operativo. Cambiar uno no cambia el otro.
+
+Con una cuenta operativa, prueba una sucursal no asignada y comprueba la denegación.
+Si necesitas transferir un cliente, utiliza la acción explícita con `transfer clientes`
+entre sucursales permitidas. No cambies IDs ni traslades por separado su historial
+crediticio; los contratos y créditos conservan su contexto histórico.
+
+Para desactivar una sucursal con usuarios activos o clientes, reasigna primero
+sus dependencias. Un equipo no puede desactivarse mientras sea el equipo actual
+de algún usuario. No elimines registros para hacer desaparecer un bloqueo.
+
+### 0.4 Dar de alta usuarios y asignar roles
+
+1. Selecciona el equipo correcto y abre **Roles y permisos**. Crea o elige el rol,
+   selecciona sus permisos agrupados por módulo y pulsa **Actualizar** cuando haya
+   cambios. Revisa **Ver miembros** para comprobar quién lo utiliza.
+2. En **Usuarios**, crea al integrante con correo QA controlado, al menos un
+   equipo con sus roles, sucursal principal y sucursales permitidas.
+3. La cuenta queda pendiente. El invitado abre el enlace recibido y establece su
+   contraseña; luego puede iniciar sesión como cuenta activa. Si falla el envío,
+   revisa el correo de QA y usa reenviar invitación, sin duplicar la cuenta.
+4. Entra con esa cuenta y comprueba menú y acciones. El nombre del rol —por ejemplo,
+   Gerente— no concede permisos por sí mismo. Un rol de otro equipo o un rol vacío
+   tampoco equivale al rol que acabas de configurar.
+5. Tras añadir permisos a una versión nueva, revisa los roles ya existentes de
+   cada equipo. Las migraciones crean permisos; no los conceden automáticamente.
+
+El **superadmin global** ya dispone del acceso funcional completo; no necesita
+recibir cada permiso. Un rol llamado “Super Admin” no convierte una cuenta en
+superadmin global. Para comprobar las denegaciones usa cuentas operativas comunes.
+El acceso global conserva las reglas de negocio: modalidad dual, requisitos,
+consentimiento, fechas, contexto exigido por SIC/crédito y banderas QA.
+
+Una persona que opere sola puede reunir funciones en su rol operativo. Para
+administrar necesitará además los permisos del área correspondiente; `access admin`
+permite entrar al panel, no reemplaza permisos como `read roles`/`update roles`,
+`create users`/`update users` o `update configuracion-empresa`.
+
+Si alguien deja de operar, desactiva su usuario; se conserva su historia y se
+revocan sesiones/tokens. No uses la cuenta del cliente como cuenta de operador.
+
+### 0.5 Asegurar el acceso y comprobar el perfil
+
+1. Desde la portada abre **Iniciar sesión**. Usa la cuenta QA activada; no existe
+   autorregistro público. El cliente del expediente no inicia sesión en este flujo.
+   Si olvidaste la contraseña, usa **¿Olvidaste tu contraseña?** y comprueba el
+   enlace en el correo QA controlado; no crees otra cuenta para recuperar acceso.
+2. En **Editar perfil**, revisa datos, contraseña y sesiones. Prueba **Cerrar otras
+   sesiones del navegador** con la contraseña, conservando tu sesión de trabajo.
+3. En **Autenticación de dos factores**, habilita y confirma contraseña cuando se
+   solicite. Escanea el QR con tu autenticador y confirma el código OTP; mostrar
+   el QR por sí solo no completa la activación.
+4. Guarda códigos de recuperación en un lugar privado. Cierra sesión y vuelve a
+   entrar con OTP; en una prueba separada verifica acceso con un código de
+   recuperación y conserva los restantes o regenera el conjunto.
+5. No adjuntes QR, clave, OTP, recuperación ni contraseña al reporte de hallazgos.
+
+2FA está disponible y aprobado como flujo. Esta entrega no obliga a activarlo a
+todas las cuentas por una política central; registra qué cuentas lo probaron.
+La configuración de perfil y contraseña debe probarla cada titular autorizado.
+
+### 0.6 Comprobar que realmente es QA
 
 Antes de habilitar acciones o capturar información:
 
@@ -108,25 +281,30 @@ Las banderas no otorgan permisos. Un administrador debe asignar permisos mínimo
 contextos de sucursal a cada cuenta. El seeder crea permisos, pero no los asigna a
 roles personalizados. No compartas contraseñas entre participantes.
 
-### Separación sugerida de roles
+### 0.7 Repartir permisos por responsabilidad
 
 Usa cuentas distintas para probar tanto el flujo positivo como las denegaciones:
 
 | Participante | Trabajo en esta prueba | Permisos típicos a revisar |
 | --- | --- | --- |
-| Administrador de producto | Crear/configurar versión, política y fiscalidad de prueba; preparar plantilla QA | Administración de productos y documentos; no necesita registrar pagos. |
-| Capturista/asesor | Crear cliente si corresponde, completar expediente, crear y enviar solicitud | Clientes/expediente, documentos, crear/editar/asignar solicitudes. |
+| Administrador de organización | Configurar empresa, sucursales, usuarios y roles | `access admin`, lectura y acciones autorizadas de `configuracion-empresa`, `sucursales`, `users`, `roles` y `teams`. |
+| Administrador de producto | Crear/configurar versión, política y fiscalidad de prueba | `read`, `create`, `update`, `version`, `activate`, `simulate` y `manage origination productos-crediticios`; `manage commissions productos-crediticios` para administrar el catálogo de comisiones. |
+| Gestor documental | Preparar plantilla y generar/descargar documentos QA | Lectura, creación, actualización, versionado y activación de `plantillas-documentos`; `read documentos`, `generate documentos` y `download documentos`. |
+| Capturista/asesor | Completar expediente, crear y enviar solicitud | `read clientes`, `create clientes` si da de alta, `update clientes`; `read solicitudes`, `create solicitudes`, `update solicitudes` y `assign solicitudes` según su tarea. |
 | Analista | Registrar dictamen de evaluación manual y capacidad de pago | `read evaluacion-solicitudes` y `create evaluacion-solicitudes`, además de lectura de cliente/solicitud. |
 | Operador SIC | Preparar consulta sandbox y revisar respuesta/histórico | `create circulo-credito`, `read historial-crediticio`, `read clientes` y `update clientes`; sucursal responsable del cliente. |
 | Revisor SIC | Conciliar un intento incierto tras revisión con el proveedor | `reconcile circulo-credito`, además de los permisos del operador SIC. |
 | Cumplimiento | Documentar revisión humana y nivel de riesgo | `read cumplimiento` y `create cumplimiento`, además de lectura de cliente/solicitud; notas PLD reservadas. |
 | Aprobador | Revisar requisitos y confirmar resolución | `approve solicitudes`; en modalidad dual, distinto de quien capturó o envió. |
+| Revisor de solicitudes | Devolver o rechazar; cancelar cuando proceda | `review solicitudes` para revisión; `cancel solicitudes` para cancelación, además de lectura del caso. |
 | Formalización | Preparar paquete y recibir copia de firma | `prepare package solicitudes`, `receive signature solicitudes`, `read documentos`, `generate documentos` y lectura de solicitud/cliente. |
 | Revisor de firma | Comparar original/copia y aceptar o devolver | `review signature solicitudes`; usa otra cuenta para probar permisos. La identidad distinta del receptor no es una restricción impuesta por el código. |
 | Operador de desembolso | Registrar el desembolso ficticio | `disburse creditos`, además de los accesos requeridos a solicitud/documentos. |
 | Cajero/operador de pagos | Previsualizar y registrar pago QA | `pay creditos`; acceso al crédito y sucursal correcta. |
 | Operador de anticipos/cierre | Cotizar y registrar anticipo o liquidación QA | `prepay creditos` para anticipo y `settle creditos` para liquidación; se conceden por separado. |
 | Revisor de correcciones | Revertir el último pago QA con motivo | `reverse payments creditos`, separado del permiso de pago. |
+| Consulta de cartera | Revisar crédito, calendario, movimientos y recibos | `read creditos`, `read solicitudes` y `read clientes`; no necesita `pay creditos` para leer un recibo. |
+| Consulta de actividad | Filtrar eventos administrativos y exportar CSV | `read activity-log`; limitar la distribución de exportaciones a sus destinatarios autorizados. |
 | Cliente de prueba | Persona sintética del expediente; no es una cuenta de usuario | No presupongas que existe un portal de autoservicio para el cliente. |
 
 Las cuentas `consulta.clientes@example.test`, `editor.expedientes@example.test` y
@@ -135,9 +313,11 @@ y en el [guion documental](qa-backlog-03-5-documentos-y-plantillas.md). Son cuen
 de datos demo, no garantizadas en la VPS. No ejecutes seeders de desarrollo en la
 instalación persistente para crearlas; pide al administrador cuentas QA dedicadas.
 
-Comprueba que cada usuario selecciona la sucursal de prueba antes de escribir. Un
-permiso global no debe permitir mutar una solicitud/crédito desde otra sucursal.
-La sucursal activa y el permiso se validan también en el servidor.
+Comprueba con una cuenta operativa que selecciona la sucursal responsable antes de
+escribir. Un lector de clientes puede consultar otras sucursales y, aun así, no
+editar allí. El superadmin tiene excepciones globales en las policies de clientes;
+los servicios de solicitudes, crédito y SIC comprueban su contexto operativo
+además del acceso funcional. No uses la cuenta global para probar límites de un rol.
 Para consultar un crédito se necesitan además `read creditos`, `read solicitudes`
 y `read clientes`. Quien descargue el PDF contractual necesita `download documentos`;
 quien registre desembolso necesita lectura documental. Los permisos de pago y
@@ -146,9 +326,16 @@ operadores diferentes.
 
 ## 1. Configurar producto y versión de prueba
 
-Con el administrador de producto, crea un producto identificable como QA o duplica
-uno de prueba y crea una nueva versión borrador. No alteres una versión ya usada por
-una solicitud o crédito: las versiones y evidencias formalizadas quedan congeladas.
+Con el administrador de producto, crea un producto identificable como QA o usa
+**Duplicar versión** sobre uno de prueba para crear otro borrador. No alteres una
+versión ya usada por una solicitud o crédito: las versiones y evidencias
+formalizadas quedan congeladas.
+
+Si falta el concepto de apertura, abre **Catálogo de comisiones**, registra una
+clave/nombre QA y agrégalo antes de configurar la versión. El catálogo identifica
+el concepto; su importe, modalidad y fiscalidad se definen en la versión. No marques
+origen RECO o revisión documental si no se comprobó. Retirar un concepto lo excluye
+de configuraciones nuevas, sin alterar versiones históricas.
 
 Configura y registra en la hoja de prueba:
 
@@ -161,8 +348,9 @@ Configura y registra en la hoja de prueba:
   la gracia; no fuerces el caso ni cambies fechas para evadir el bloqueo.
 - Política de originación: documentos requeridos, modalidad individual/dual,
   límite y vigencia de aprobación, regla de capacidad de pago y SIC requerido o
-  revisión manual permitida. Para probar la separación de funciones, usa modalidad
-  dual y prepara un aprobador distinto de quien capture o envíe. Si exige SIC,
+  revisión manual permitida. Usa la modalidad elegida en 0.1: individual para la
+  primera corrida de una sola persona; dual para comprobar separación con otra
+  persona aprobadora. Si exige SIC,
   selecciona los servicios admitidos y la regla para resultados sin score:
   **bloquear** o **evaluación manual documentada**. La consulta sandbox debe
   corresponder a la revisión vigente antes de aprobar. Para el escenario sin SIC,
@@ -198,6 +386,52 @@ Para revisar pantalla y cálculos del producto antes de seguir, usa
 [configuración fiscal de producto](configurar-fiscalidad-productos.md) y
 [simulación fiscal QA y revisión del contador](qa-simulacion-fiscal.md).
 
+### 1.1 Caso de referencia para completar el ciclo el mismo día
+
+Estos valores son **sintéticos**, elegidos para cotejar la operación; no representan
+una oferta, tasa recomendada ni criterio fiscal para un prestamista o SOFOM.
+Puedes usar otros valores, anotándolos antes de empezar.
+
+| Campo | Valor para la primera corrida |
+| --- | --- |
+| Producto | `QA-CICLO-INDIVIDUAL`; versión nueva; rango de monto de $5,000 a $20,000 MXN. |
+| Solicitud | $10,000 MXN; capital fijo; 12 pagos mensuales, dentro de los plazos permitidos por el producto. |
+| Interés | Ordinario anual 36 % y moratorio anual 72 %, exclusivamente para el ejercicio. |
+| Gracia y mora | 0 días, alternativa A/efectiva, ambos intereses. |
+| Comisión inicial | Una apertura fija de $500, obligatoria, al inicio y en **pago separado**. |
+| Otras comisiones | Ninguna periódica, financiada, descontada, opcional o de evento en esta primera corrida. |
+| Fiscalidad | Uso **Prueba / QA**; ordinario, moratorio y apertura gravados con tasa de ejemplo 16 % sobre importe íntegro de cada concepto. |
+| Anticipo | Permitir parcial; mínimo de capital anticipado $500; reducir plazo. Permitir liquidación anticipada. |
+| Política | Individual, evaluación manual permitida, límite $20,000, vigencia 7 días; documentos y criterio de capacidad documentados. |
+| Fecha | El día real de la prueba en la zona de la institución; completar hasta desembolso sin cambiar de día. |
+
+Activa producto y configura su política antes de enviar la solicitud. En el
+simulador, marca **Incluir impuestos proyectados** para comparar la proyección
+fiscal. Sin marcarla, la tabla es anterior a impuestos; no significa exención.
+El simulador no cotiza mora ni cargos futuros de eventos. Registra su CAT
+informativo cuando aplique; no lo confundas con la tasa ordinaria ni lo uses como
+validación de una oferta institucional.
+
+El monto solicitado y el capital inicial serán $10,000 en este caso; la apertura
+se paga aparte, por lo que no reduce el efectivo ni se financia. El cargo inicial
+exigible será $580 ($500 de concepto + $80 de impuesto de ejemplo).
+
+Para el caso en equipo, crea otra solicitud/producto identificable con política
+dual y SIC requerido; conserva los valores financieros si deseas comparar.
+Para **reducir pago**, crea una versión/caso separado desde el principio.
+
+### 1.2 Versiones, activación y cambios posteriores
+
+- Guarda y vuelve a abrir el borrador para comprobar los valores. Activar lo deja
+  disponible para originar; programar activación para otra fecha no lo habilita hoy.
+- Si la versión ya está activa o fue usada, crea una versión nueva para cambiar
+  las condiciones; no esperes que editar el catálogo modifique contratos previos.
+- Retirar requiere `retire productos-crediticios` y excluye nuevas originaciones;
+  no liquida ni borra créditos existentes. Prueba esta acción con otro caso, sin
+  retirar la versión que todavía necesita tu solicitud en evaluación.
+- Si cambias la política mientras una solicitud está en revisión, devuelve y
+  reenvía para capturar la política actual y renovar sus evidencias.
+
 ## 2. Preparar plantilla documental y cliente sintético
 
 ### Plantilla
@@ -207,6 +441,23 @@ prueba, con identificadores visibles como `QA — SIN VALIDEZ CONTRACTUAL`. No c
 un contrato de una institución para aparentar aprobación. Revisa que el PDF generado
 muestre la marca QA en todas sus páginas y que una modificación posterior de la
 plantilla no reescriba documentos históricos.
+
+Recorrido mínimo si todavía no tienes una plantilla QA:
+
+1. Pulsa **Nueva plantilla**; captura nombre, clave única sin espacios, tipo
+   **Contrato**, resumen de cambios y descripción.
+2. Completa encabezado, contenido y pie. Usa **Variables permitidas** para insertar
+   datos de Empresa/Cliente/Documento admitidos para ese tipo; evita inventar
+   variables o pegar código. Incluye texto sintético y una marca de prueba visible.
+3. Guarda el borrador y abre **Previsualizar**. Comprueba variables resueltas,
+   encabezado/pie, saltos de página y formato con datos sintéticos. Esa vista previa
+   todavía no es el contrato generado de una solicitud.
+4. Activa la versión confirmando su inmutabilidad. Para cambios posteriores,
+   duplícala y trabaja en un nuevo borrador; no retires la que necesita este caso.
+
+Prepara además un PDF sintético válido con el texto “PRUEBA QA — SIN DATOS REALES”
+para las cargas del expediente. Para firma necesitarás otra copia PDF sintética,
+con contenido distinto del original generado; renombrar el mismo archivo no basta.
 
 La activación de una plantilla solo la hace seleccionable: **no aprueba su contenido
 jurídicamente**. Ve el [guion del paquete contractual QA](qa-paquete-contractual.md)
@@ -238,6 +489,37 @@ Qué comprobar:
 Para pruebas exhaustivas de carga, privacidad y documentos consulta el [guion de
 Documentos y plantillas](qa-backlog-03-5-documentos-y-plantillas.md); este recorrido
 solo necesita los documentos mínimos requeridos por la política.
+
+### Referencias, vínculos y garantías
+
+En el mismo expediente, prueba las secciones que utilice tu operación:
+
+1. Captura una referencia sintética y confirma su consulta posterior.
+2. Registra un vínculo con otro cliente de prueba. No se admite vincular al
+   cliente consigo mismo ni repetir el mismo vínculo.
+3. Registra una garantía con tipo, descripción, moneda y valor estimado cuando
+   corresponda. El propietario puede ser el titular o un cliente previamente
+   relacionado; registra primero ese vínculo si la garantía pertenece al tercero.
+4. Si preparas un documento de garantía o consentimiento con una plantilla,
+   comprueba la entidad relacionada y conserva el documento generado. Generar el
+   PDF de consentimiento no registra por sí solo una autorización SIC vigente:
+   debe recibirse/registrarse su evidencia en Consentimientos SIC.
+
+Registrar una referencia, vínculo o garantía no crea una obligación solidaria,
+avalúo certificado ni cobranza ejecutable. Tampoco amplía automáticamente el monto
+autorizable. La evaluación debe documentar qué información revisó.
+
+### Documentos y consentimiento
+
+Para el ejemplo, elige como requeridos INE, comprobante de domicilio, constancia
+fiscal y comprobante de ingresos; sube únicamente archivos sintéticos válidos para
+el formulario. La política puede exigir un subconjunto u otro tipo admitido;
+registra esa selección y valida los requeridos antes de dictaminar.
+
+Comprueba versión, fecha de vigencia, revisión y archivo privado de cada documento.
+En consentimiento SIC verifica medio, fecha de otorgamiento, vencimiento si aplica
+y evidencia recibida. En una prueba separada revócalo y comprueba que la evidencia
+ya no habilita consultas/aprobaciones que requieran ese consentimiento.
 
 ## 3. Crear y completar la solicitud
 
@@ -318,6 +600,10 @@ fundamento, fuente/metodología y datos mínimos sintéticos. Confirma que el re
 muestre el último dictamen y que el formulario anterior no siga abierto como si
 pudiera editarse: un dictamen nuevo crea evidencia nueva.
 
+Para el recorrido positivo elige **Favorable**; completa fundamento, fuentes y
+metodología explicando el criterio de capacidad configurado. No existe un umbral
+automático que reemplace ese análisis humano.
+
 Prueba un escenario separado que se devuelva para corregir datos y reenviar. El
 dictamen de la revisión previa debe quedar histórico y no satisfacer automáticamente
 la revisión nueva. No cargues reportes de crédito reales ni notas innecesarias.
@@ -330,6 +616,10 @@ seguimiento manual. Si no existe proveedor/lista conectado, no interpretes la
 ausencia de coincidencias como una búsqueda realizada: documenta que la comprobación
 fue manual y limitada a las fuentes revisadas.
 
+Para continuar al crédito, el resultado debe ser **Sin observaciones** con nivel
+de riesgo determinado y fundamentos/fuentes/metodología completos. “Pendiente”,
+“Bloqueada” o riesgo “Sin determinar” no habilitan la aprobación.
+
 Comprueba que:
 
 - Los campos requeridos impiden cerrar un dictamen incompleto y explican cómo
@@ -341,6 +631,17 @@ Comprueba que:
 - Devolver la solicitud indica responsable y siguiente paso, sin filtrar detalles
   reservados de PLD en el motivo operativo.
 - Los cambios de evidencia indican qué dictamen debe renovarse y por quién.
+
+**Para operación individual:** registra ambos dictámenes con tu cuenta autorizada,
+como actuaciones distintas. La opción de evaluación manual sin SIC no elimina
+PLD ni la evaluación favorable. Para el caso en equipo, distribúyelos entre sus
+responsables y deja el aprobador dual fuera de la captura y el envío.
+
+Completa primero datos y documentos. Validar un documento, cambiar un domicilio
+o sustituir evidencia después de dictaminar puede dejar obsoletos ambos dictámenes.
+Si solo cambió el expediente, registra los dictámenes nuevos que se soliciten;
+si cambió la identidad o las condiciones/política de la revisión, devuelve y
+reenvía antes de volver a evaluar. Recargar la página no renueva la evidencia.
 
 ## 5. Revisar requisitos y aprobar
 
@@ -359,6 +660,23 @@ Prueba ambos resultados en solicitudes separadas:
    En modalidad dual, el aprobador no debe ser quien capturó/envió. Comprueba fecha,
    actor, evidencia y vigencia de aprobación en el historial.
 
+En el caso individual, aprobar con la misma cuenta es el resultado esperado si
+tiene permisos y cumple los requisitos. En el caso dual, prueba que esa misma
+actuación se rechaza incluso para el superadmin y utiliza al aprobador distinto.
+
+En casos separados, comprueba las salidas alternativas:
+
+| Acción | Resultado que debes comprobar |
+| --- | --- |
+| Devolver | Motivo operativo comprensible, responsable que corrige y nuevo envío/revisión sin borrar la anterior. |
+| Rechazar | Resolución e historial conservados; no permite continuar a contrato/desembolso. |
+| Cancelar antes del desembolso, donde esté permitido | Caso conservado y fuera del flujo activo; no equivale a eliminarlo ni a revertir un crédito desembolsado. |
+| Cambiar condiciones o identidad | La revisión anterior no habilita una aprobación nueva: devuelve, corrige, reenvía y renueva evidencia/dictámenes. |
+
+Si dos personas mantienen abierto el mismo formulario, una acción posterior
+puede rechazar la versión obsoleta. Recarga y revisa el estado vigente antes de
+actuar; no repitas confirmaciones para intentar superar el control de concurrencia.
+
 Si aparece habilitación operativa pendiente, verifica con el administrador que la
 bandera `ORIGINACION_APROBACIONES_HABILITADAS` esté intencionalmente activa en QA;
 no intentes resolverla cambiando PLD o documentos. Apagarla debe bloquear nuevas
@@ -372,8 +690,16 @@ impuestos configurados, periodicidad, fechas, número de cuotas y total. La tabl
 una proyección y el paquete debe indicar **Documento de prueba QA — sin validez
 contractual**.
 
-Para probar los permisos, usa dos cuentas diferentes. Esta separación es una
-disciplina de QA; el sistema no bloquea por identidad a quien tenga ambos permisos.
+Revisa también las reglas congeladas de anticipos: si admite parcialidad, mínimo
+de capital anticipado, reducción de plazo/pago, liquidación anticipada y comisiones
+por evento con su base e impuesto. Deben coincidir con la versión elegida.
+Abre todas las páginas del PDF. Si la generación sigue pendiente o falla, revisa
+la cola y la causa antes de reintentar; el registro de un trabajo no acredita que
+exista un archivo completo. Cambiar la plantilla después no cambia ese paquete.
+
+Para probar la separación de permisos, usa dos cuentas diferentes si cuentas con
+un equipo. En operación individual puedes recibir y revisar con la misma cuenta
+autorizada; el sistema no bloquea por identidad a quien tenga ambos permisos.
 Comprueba la fecha de recepción: debe estar entre la generación del original y hoy.
 
 Luego:
@@ -416,8 +742,9 @@ para estados, duplicados y evidencia.
 
 ## 8. Registrar pago QA, recibo y reverso
 
-Los pagos solo pueden probarse en un crédito QA recién desembolsado con política y
-fiscalidad explícitas. Una cuota de capital con vencimiento futuro **no es exigible
+Para esta primera corrida utiliza un crédito QA recién desembolsado con política y
+fiscalidad explícitas. Después puedes continuar sobre ese crédito activo y su
+historia. Una cuota de capital con vencimiento futuro **no es exigible
 hoy**: **Registrar pago QA** cubre deuda exigible. Para aplicar a capital futuro,
 usa **Anticipos y liquidación**, siguiendo los apartados 8.1 y 8.2. Para comprobar
 el pago ordinario el mismo día, crea desde el principio una
@@ -445,8 +772,10 @@ El operador con `pay creditos` debe:
 5. Si el escenario lo permite, probar parcialidad y fiscalidad. Para gracia B +
    sustitución al ordinario, la combinación afectada puede bloquear pagos parciales
    durante la gracia; registrar el bloqueo como hallazgo, no eludirlo.
-6. Como lector/sin permiso, intentar registrar y abrir recibo por URL. La operación
-   debe denegarse con mensaje en español. Cambiar a otra sucursal debe bloquearla.
+6. Con un lector autorizado de cartera, abrir el recibo debe estar permitido, pero
+   registrar o revertir sin sus permisos debe denegarse. Una cuenta sin lectura
+   del crédito tampoco puede abrir el recibo por URL. Cambiar de sucursal debe
+   bloquear las operaciones de escritura; no se confunde con la consulta autorizada.
 7. Con otra cuenta y `reverse payments creditos`, revertir únicamente el último
    pago permitido, indicando motivo. El registro original debe permanecer y quedar
    enlazado a movimientos compensatorios. Esto no devuelve dinero ni borra historia.
@@ -456,7 +785,7 @@ documenta pagos ordinarios. P8 agrega [anticipos, liquidación y cierre QA](qa-a
 P7 agrega [consultas SIC sandbox](qa-sic.md). Conciliación bancaria, CFDI y
 operaciones monetarias reales siguen fuera de alcance.
 
-### 8.1. Registrar anticipo y revisar el nuevo calendario
+### 8.1 Registrar anticipo y revisar el nuevo calendario
 
 El crédito debe seguir activo y tener vencimientos futuros; las reglas P8 y
 comisiones del contrato deben estar definidas desde el apartado 1.
@@ -483,7 +812,7 @@ falta de permiso. Para B + sustitución durante gracia, conserva el bloqueo docu
 Si pruebas reverso de anticipo en un caso separado, solo el último admisible se
 compensa y restaura el calendario con una nueva versión.
 
-### 8.2. Liquidar y comprobar reapertura mediante reverso
+### 8.2 Liquidar y comprobar reapertura mediante reverso
 
 1. Con `settle creditos`, abre **Anticipos y liquidación → Liquidación total**. Usa fecha
    válida y otra referencia sintética única. Deja **Total recibido** vacío para
@@ -506,11 +835,37 @@ La reapertura es parte de esta prueba y debe quedar registrada como tal. Si quie
 terminar con el crédito liquidado, cotiza nuevamente y registra otra liquidación
 con nueva referencia; una referencia anterior no se reutiliza aunque se revierta.
 
-## 9. Revisión del contador o asesor
+### 8.3 Caso numérico completo para la primera corrida
+
+Usa exactamente el producto de **1.1** y realiza todo en la misma fecha empresarial
+del desembolso, antes del primer vencimiento. Todos los importes son MXN. La tasa
+de impuesto del ejemplo es sintética; no prescribe el tratamiento de una institución.
+
+| Paso | Captura/acción | Resultado esperado |
+| --- | --- | --- |
+| Desembolso | Capital de $10,000 y comisión inicial de $500, pago separado, impuesto configurado del 16%. | Capital pendiente $10,000; comisión exigible $580 ($500 + $80). El efectivo del desembolso no se reduce por esa comisión separada. |
+| Pago ordinario | Registrar $290 con referencia nueva. | Recibo: $250 a comisión y $40 a su impuesto. Capital pendiente $10,000; comisión más impuesto pendientes $290. |
+| Reverso de ese pago | Revertir el último recibo con motivo de prueba, **antes del anticipo**. | Se conserva el recibo original, se compensa y vuelve a haber $580 exigibles; capital $10,000. |
+| Anticipo parcial | Total recibido $2,000; reducción de plazo; referencia nueva. | Cubre $580 de comisión/impuesto y anticipa **$1,420 de capital**. Capital pendiente **$8,580**; calendario con **11 cuotas futuras**, conservando el original. |
+| Liquidación total | Dejar importe vacío, cotizar y confirmar el total exacto con otra referencia. | En estas condiciones y en el mismo día, cotización **$8,580**, sin intereses devengados ni comisiones adicionales; crédito liquidado, capital/saldo cero. |
+| Reverso de liquidación | Revertir el último recibo indicando motivo. | Crédito reabierto, capital $8,580, calendario previo restaurado mediante otra versión; liquidación original y compensación conservadas. |
+| Cierre final del ejercicio | Cotizar de nuevo y liquidar con referencia diferente. | Si sigue siendo el mismo día y no hay otros movimientos/cargos, total $8,580; vuelve a quedar liquidado. |
+
+Los importes de distribución y las 11 cuotas se cotejaron con los motores de
+simulación y anticipos de esta entrega. No introduzcas $8,580 a ciegas: si cambia
+el día, la versión, los impuestos, las comisiones o la secuencia, utiliza la
+cotización vigente y explica la diferencia. El mínimo de anticipo se compara con
+los $1,420 aplicados a capital, no con los $2,000 del recibo.
+
+Este caso comprueba el ciclo el mismo día. No acredita mora, vencimiento de primera
+cuota, gracia ni movimientos de días posteriores: repítelos en casos separados
+cuando corresponda su fecha real, sin alterar reloj, contrato ni base de datos.
+
+## 9. Revisar cálculos, operación diaria y actividad
 
 Invita al contador a revisar la **configuración de prueba y los cálculos**, no a
-certificar que el producto ya está listo para venderse. Entrega una copia/exportación
-de la versión QA, una tabla con escenario y resultados, la simulación, el paquete
+certificar que el producto ya está listo para venderse. Entrega una copia controlada
+de los valores de la versión QA, una tabla con escenario y resultados, la simulación, el paquete
 marcado sin validez y los recibos sintéticos. Pídele documentar observaciones,
 supuestos, alcance institucional y fecha; no cambies configuración productiva desde
 una conversación informal.
@@ -553,6 +908,72 @@ incluye preguntas ampliadas para una revisión profesional. **No existe una tasa
 universal que esta aplicación deba asumir**: la configuración final corresponde a
 cada institución con su asesor.
 
+### 9.1 Rutina de apertura, atención y cierre operativo QA
+
+Esta rutina organiza el trabajo; no es un cierre contable o de caja automatizado.
+
+1. **Al iniciar:** verifica cuenta, equipo, sucursal y fecha empresarial. En el
+   tablero revisa clientes, solicitudes, créditos y pendientes que tus permisos
+   permiten ver. Un indicador oculto/no disponible no significa cero operaciones.
+2. **Atender pendientes:** entra en **Mi trabajo** y Solicitudes, usa búsqueda y
+   filtros disponibles y abre el caso antes de actuar. Revisa responsable, etapa,
+   requisitos y última actuación; evita atender una captura desactualizada.
+3. **Consultar cartera:** busca el crédito en su listado y abre el detalle. El
+   capital inicial del listado no es el saldo actual de toda la cartera. Coteja
+   capital pendiente, exigible, vencido, días y fecha de cálculo en cada crédito.
+   La situación calculada al día no implica que se haya ejecutado un asiento de
+   devengos; los movimientos registrados se consultan en su historial.
+4. **Consultar calendarios:** alterna el original firmado y las versiones posteriores.
+   Elegir una versión para verla no restaura deuda; una restauración operativa solo
+   ocurre mediante el reverso admisible y queda registrada como otra versión.
+5. **Al terminar:** coteja por crédito referencias, recibos, distribución, reversos
+   y estado final. Anota pendientes y su responsable, incluidos intentos SIC
+   inciertos. Un recibo y su reverso no son dos cobros ni una devolución bancaria;
+   no sumes sus importes como efectivo neto recibido.
+
+Si un crédito histórico aparece **Por revisar** o sin política/fiscalidad suficiente,
+no interpretes esa situación como saldo cero ni fuerces su operación. Registra el
+caso y usa un crédito nuevo configurado explícitamente para esta prueba.
+
+Un último pago ordinario puede cerrar el crédito si ya cubre todo lo aplicable.
+Cuando correspondan comisiones de cierre/liquidación, utiliza **Liquidación total**
+para cotizarlas; no sustituyas esa operación con un pago ordinario forzado.
+
+### 9.2 Revisar actividad y conservar evidencia
+
+1. En cada solicitud/crédito, revisa su historia: revisión, decisión, contrato,
+   desembolso, recibos y compensaciones deben permitir seguir el mismo caso.
+2. Con `read activity-log`, abre **Actividad / Registro de actividad**. Utiliza
+   búsqueda y filtros por usuario, evento, entidad y fechas para localizar las
+   actuaciones disponibles. Coteja identificador, actor, fecha y contexto que
+   registre cada evento; no esperes que todos tengan los mismos campos. La cuenta
+   operativa consulta actividad de su equipo actual; el superadmin tiene lectura
+   global. Cambiar equipo puede cambiar lo que aparece sin que se haya borrado.
+3. Prueba **Exportar CSV** sobre el filtro elegido y compara algunas filas con
+   pantalla. Conserva el archivo con acceso controlado: puede incluir correo,
+   IP y propiedades del evento. No lo adjuntes completo a un ticket público.
+4. Una cuenta sin ese permiso no debe obtener el registro administrativo por URL.
+   Tener acceso a la historia de su crédito no concede lectura global de actividad.
+
+La actividad disponible y las evidencias de estos flujos no constituyen una matriz
+integral de auditoría. El backlog 02.5 sigue diferido; este CSV tampoco es un
+reporte contable, de cartera ni regulatorio.
+
+### 9.3 Comprobar navegación y uso en distintas pantallas
+
+- Recorre el menú con cada rol. Verifica equipo/sucursal actuales y acceso a los
+  módulos autorizados. Ocultar un enlace no sustituye la autorización de su URL.
+- Si administras **Menú**, revisa sus entradas y permisos de administración de
+  `menubar-items`. Cambiar el menú no concede permisos de negocio a un rol.
+- En escritorio y móvil comprueba formularios, filtros, tablas, tarjetas, recibos,
+  cotizaciones y descarga de PDF. Revisa que importes, fecha, estado y siguiente
+  acción sigan siendo legibles; utiliza zoom y navegación con teclado.
+- En SIC y anticipos, coteja las gráficas con sus tablas de datos. Ausencia de
+  información no debe convertirse en cero; identifica monedas, unidades y fecha.
+  Si utilizas tema oscuro, comprueba contraste y etiquetas en ambos temas.
+- La portada muestra módulos y capturas ilustrativas, incluida SIC. No representa
+  datos del cliente; para consultar un caso inicia sesión y abre su expediente.
+
 ## 10. Cierre de la sesión y registro de hallazgos
 
 Por cada etapa anota identificador QA del caso (sin datos personales), rol probado,
@@ -567,6 +988,80 @@ severidad. Separa fallas de interfaz, permiso, negocio, cálculo y explicación.
   reconstruir la caché, sin borrar los registros.
 - Si el entorno no está aislado de operaciones reales, detén las pruebas y solicita
   una instancia/base de QA separada antes de continuar.
+
+### 10.1 Lista de aceptación del recorrido
+
+Para cada fila registra **Aprobado**, **Falló**, **Pendiente** o **No aplica**, con
+fecha, responsable e identificadores del caso. “No aplica” requiere explicar el
+perfil elegido; una prueba todavía no ejecutada queda pendiente. No marques como
+aprobado un flujo manual solo porque exista una prueba automatizada de desarrollo.
+
+| Área | Evidencia mínima del ejercicio |
+| --- | --- |
+| Institución y contexto | Empresa guardada; equipo/sucursal correctos; cuenta operativa activada; rol y permisos comprobados. |
+| Seguridad | Inicio/cierre de sesión, recuperación de acceso y prueba 2FA de las cuentas elegidas; no conservar secretos como evidencia. |
+| Producto | Identificador y versión activa; política, comisiones, fiscalidad y anticipos explícitos; simulación cotejada. |
+| Expediente | Cliente sintético, documentos requeridos validados; referencias/vínculos/garantías si se utilizaron. |
+| Solicitud | Borrador, responsable, envío y revisión identificables; un caso separado devuelto/rechazado/cancelado según corresponda. |
+| Evaluación y PLD | Dos dictámenes favorables vigentes sobre la revisión/expediente correctos; fundamento sintético y notas reservadas protegidas. |
+| SIC, cuando se requiera | Consentimiento, API admitida, consulta y resultado vinculados; histórico consultable, gráficas/datos coherentes. Registrar qué APIs se probaron; una no acredita las tres. |
+| Aprobación | Individual positiva o dual con otro aprobador; dual consigo mismo rechazada cuando se pruebe esa modalidad; bloqueo por requisito pendiente comprobado. |
+| Formalización | PDF completo y marcado QA, copia distinta recibida y revisión manual; fecha y condiciones coincidentes. |
+| Desembolso | Un crédito por solicitud, referencia sintética, calendario original y capital/efectivo correctos; sin transferencia real. |
+| Pago y reverso | Vista previa, distribución, recibo y compensación enlazados; lectura de recibo permitida al lector y escritura denegada sin permiso. |
+| Anticipo | Capital anticipado cotejado, nuevo calendario y original conservado; mínimo aplicado al capital. Registrar si se probó reducir plazo o pago. |
+| Liquidación y reapertura | Cotización exacta, cierre, reverso admisible, reapertura y cierre final con referencia nueva. |
+| Trabajo diario y actividad | Caso reencontrable por filtros; fechas/saldos bien interpretados; eventos disponibles y CSV revisados con acceso controlado. |
+| Presentación | Formularios y mensajes en español; PDF, móvil y gráficas/tablas legibles; sin datos ausentes presentados como cero. |
+
+Un recorrido individual aprobado no acredita modalidad dual, todas las
+periodicidades/métodos, ambos efectos del anticipo ni mora/gracia. Registra esas
+variantes en casos separados con la misma estructura. Conserva los pendientes
+concretos antes de invitar a otros operadores a repetir el ejercicio.
+
+### 10.2 Bloqueos frecuentes y siguiente acción
+
+| Síntoma | Qué comprobar y cómo continuar |
+| --- | --- |
+| No aparece un módulo o devuelve acceso denegado | Equipo actual, rol de ese equipo, permisos concretos y sucursal; vuelve a cargar tras la corrección. No basta el nombre del rol ni editar el menú. |
+| Función QA deshabilitada | Que sea el entorno aislado correcto y estén activas sus banderas/configuración efectiva; lo revisa quien administra la instalación. |
+| Empresa tiene clave SIC pero no consulta | Configuración `CIRCULO_CREDITO_*`, sandbox, API key QA, cola/scheduler y TLS; la clave de Empresa no sustituye la del adaptador actual. Sigue `qa-sic.md`, sin imprimir secretos. |
+| Consulta incierta o en proceso | Revisa el estado sin repetir la preparación. Un intento incierto requiere revisión/conciliación autorizada antes de una consulta nueva. |
+| SIC no satisface aprobación | API admitida, revisión actual, identidad, consentimiento vigente, procedencia y política para resultado sin score. Un histórico/demostración no sustituye esa evidencia. |
+| Dictamen o aprobación obsoletos | Completa primero expediente; renueva dictámenes o devuelve/reenvía si cambió identidad, condiciones o política. No se resuelve solo recargando. |
+| Aprobador bloqueado en dual | Otra persona debe aprobar si el usuario capturó/modificó el borrador/envió; también se exige al superadmin. |
+| No permite desembolsar hoy | Fecha empresarial igual a la firmada, vigencia de aprobación, paquete completo, copia y revisión aceptada. Si cambió el día previsto, rehace formalización mediante devolución y nueva revisión. |
+| No hay capital exigible para pago ordinario | Si aún no vence, utiliza anticipo para capital futuro. El pago ordinario del ejemplo solo cubre la comisión inicial separada. |
+| Anticipo menor al mínimo o liquidación con exceso | Revisa lo destinado a devengos/cargos antes del capital; vuelve a cotizar. La liquidación exige el total exacto, sin saldo a favor automático. |
+| Crédito histórico “Por revisar” | Documenta qué política/fiscalidad falta; no edites su evidencia congelada. Usa un crédito QA nuevo para el recorrido soportado. |
+| Registro cambió mientras confirmabas | Recarga, revisa estado/historial y calcula otra previa si procede; no repitas operaciones hasta confirmar si ya quedaron registradas. |
+| Contrato pendiente/fallido | Revisar worker, archivo privado y causa del trabajo; reintentar tras corregirla. No cargar el original como copia firmada. |
+
+Si persiste un fallo, entrega el identificador interno, acción, hora/zona,
+resultado esperado/observado y mensaje en español, sin payloads SIC ni archivos
+privados. No pruebes soluciones modificando directamente saldos o evidencias.
+
+### 10.3 Qué acredita esta guía y qué falta para operar realmente
+
+Completarla demuestra que los participantes pudieron recorrer **el crédito simple
+QA configurado**. Permite ensayar responsabilidades y detectar ajustes antes de
+incorporar una operación real. No habilita por sí misma estos pendientes:
+
+| Tema | Situación que debe resolverse por separado |
+| --- | --- |
+| SIC productivo | Validar entrega del proveedor, credenciales/rutas, autorizaciones y políticas institucionales. El transporte actual de esta guía sigue en sandbox. |
+| Dinero y administración financiera | Los registros QA no ejecutan cobros, transferencias, conciliación bancaria, contabilidad ni CFDI. Definir y validar la operación real correspondiente. |
+| Contratación | Validar contenido y proceso jurídico institucional; recibir/revisar un PDF QA no acredita una firma electrónica ni un contrato válido. |
+| Perfil SOFOM | El perfil institucional y su alcance regulatorio siguen pendientes. La institución y sus asesores deben determinar qué aplica y validar procesos/reportes; no se acredita cumplimiento por activar Empresa o PLD manual. |
+| Auditoría y operación técnica | La matriz integral de auditoría del backlog 02.5 sigue diferida. Comprobar por instalación respaldos y recuperación, accesos, colas, monitoreo y responsables operativos. |
+
+Para una SOFOM, conserva como referencias oficiales de revisión institucional
+[CNBV: SOFOMES](https://www.gob.mx/cnbv/acciones-y-programas/sociedades-financieras-de-objeto-multiple-sofomes)
+y [CONDUSEF: registros](https://www.condusef.gob.mx/index.php?p=registros).
+La definición del siguiente alcance y su prioridad corresponde al
+[Notion del repositorio](https://app.notion.com/p/1a261db7db7f800c809bf96e22e0d05a),
+con los hallazgos y validaciones del ejercicio. Mantén estas brechas explícitas
+al presentar el sistema a un prestamista o una financiera pequeña.
 
 ### Si necesitas consultar una regla
 
