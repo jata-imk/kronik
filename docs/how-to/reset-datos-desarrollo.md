@@ -68,7 +68,7 @@ Con `APP_ENV=production`, el comando solo permite el modo mínimo, con mantenimi
 - Créditos QA, cronogramas y sus versiones, desembolsos, movimientos, pagos, anticipos, liquidaciones y reversos.
 - Productos, versiones, periodicidades, reglas, comisiones asociadas, usos y políticas de originación.
 - Plantillas, versiones, recursos gráficos y documentos generados.
-- Todas las entradas y submenús de **Administración → Menú contextual por módulos**, junto con sus asociaciones a módulos y rutas (`menubar_items`, `menubar_item_module`). En mínimo y vacío quedan sin entradas; en demo se eliminan y `SystemSeeder` reconstruye únicamente el menú predeterminado.
+- Todas las entradas y submenús de **Administración → Menú contextual por módulos**, junto con sus asociaciones a módulos y rutas (`menubar_items`, `menubar_item_module`). En mínimo y vacío quedan sin entradas; en demo se eliminan y `SystemSeeder` reconstruye el catálogo de navegación con rutas de activación vacías. Para cargarlo después del modo mínimo usa el [seeder existente del menú](configurar-menu-contextual.md).
 - Usuarios, equipos y sucursales, salvo las excepciones del modo mínimo; invitaciones, membresías, tokens API, sesiones, solicitudes de recuperación de contraseña y recordar sesión.
 - Roles de equipo y asignaciones directas de roles/permisos. En modo mínimo se copian nuevamente las plantillas de roles globales al equipo conservado, sin asignarlas a otros usuarios.
 - Actividad histórica QA, trabajos en cola, fallidos, lotes y tablas de caché de esta base.

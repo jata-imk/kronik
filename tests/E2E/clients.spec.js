@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => login(page));
 test("recorre clientes, expediente e historial crediticio sin errores de consola", async ({ page }) => {
     const assertNoConsoleErrors = await failOnConsoleErrors(page);
     await page.goto("/clientes");
-    await expect(page.getByText("Ana", { exact: false }).first()).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: "Ana Lucia Garcia Lopez" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Sucursal actual", exact: true })).toHaveAttribute("aria-pressed", "true");
 
     const viewButton = page.getByRole("button", { name: /Ver Ana Lucia Garcia Lopez/i });

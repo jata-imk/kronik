@@ -4,6 +4,7 @@
 
 - `CatalogSeeder`: catalogos base y pesados, incluyendo paises, SAT CFDI y SEPOMEX.
 - `SystemSeeder`: datos de sistema, modulos, permisos, roles globales, menubar y SICs.
+- `MenubarItemsSeeder`: catálogo de 19 módulos y 45 acciones con páginas destino y parámetros; entradas nuevas sin rutas de activación. Es aditivo y conserva las personalizaciones existentes. Consulta [Cargar el catálogo del menú contextual](../how-to/configurar-menu-contextual.md).
 - `DevelopmentSeeder`: datos demo para desarrollo.
 - `DatabaseSeeder`: ejecuta catalogos, sistema y desarrollo.
 

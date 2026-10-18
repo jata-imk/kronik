@@ -47,6 +47,15 @@ php artisan db:seed --class=DevelopmentSeeder --force
 
 ## Permisos
 
+Para cargar el catálogo contextual después de un reinicio QA, sin activar sus
+entradas en las páginas:
+
+```bash
+php artisan db:seed --class=MenubarItemsSeeder --force
+```
+
+Consulta [Cargar el catálogo del menú contextual](../how-to/configurar-menu-contextual.md).
+
 ```bash
 php artisan permission:create-permission "read clientes" web --module-id=1
 ```

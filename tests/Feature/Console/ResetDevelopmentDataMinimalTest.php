@@ -113,7 +113,8 @@ it('clears contextual menu entries children and module routes according to the r
     $this->assertDatabaseMissing('menubar_items', ['label' => 'Acción personalizada QA']);
     if ($mode === 'demo') {
         expect(DB::table('menubar_items')->count())->toBeGreaterThan(0)
-            ->and(DB::table('menubar_item_module')->count())->toBeGreaterThan(0);
+            ->and(DB::table('menubar_item_module')->count())->toBeGreaterThan(0)
+            ->and(DB::table('menubar_item_module')->whereJsonLength('routes', '>', 0)->exists())->toBeFalse();
     } else {
         $this->assertDatabaseCount('menubar_items', 0);
         $this->assertDatabaseCount('menubar_item_module', 0);
