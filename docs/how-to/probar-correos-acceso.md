@@ -101,6 +101,22 @@ Muestras revisadas con Playwright/Chromium (no certifican Outlook clásico):
 - [Invitación en escritorio](../assets/correos/mail-invitacion-desktop.png).
 - [Recuperación en móvil](../assets/correos/mail-recuperacion-mobile.png).
 
+## Evidencia confirmada en QA
+
+El 18 de octubre de 2026, el usuario confirmó envío desde QA, revisión de logs,
+recepción por los destinatarios y creación de usuario mediante invitación.
+También confirmó que el correo se ve correctamente en **Outlook clásico**.
+Son resultados reportados por el operador, posteriores al despliegue de la
+[PR #40](https://github.com/jata-imk/kronik/pull/40).
+
+No se proporcionaron versión/build de Outlook, sistema operativo ni captura de
+esa revisión. La confirmación se conserva para el correo observado; no se
+extiende automáticamente a todas las variantes, versiones o modos visuales.
+La recuperación y verificación cuentan con regresión automatizada; sus pasos
+manuales anteriores siguen disponibles para comprobar cada escenario cuando
+corresponda. La [nota de entrega](../agent-notes/correos-acceso.md) conserva el
+estado y la evidencia.
+
 ## Regresión automatizada
 
 ```bash

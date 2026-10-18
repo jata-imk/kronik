@@ -1,6 +1,6 @@
 # ADR 0024: reinicio integral de una instalación QA
 
-Estado: implementado, pendiente de revisión e integración.
+Estado: aceptado e integrado mediante [PR #39](https://github.com/jata-imk/kronik/pull/39) (`0a7656c`). El usuario confirmó la ejecución satisfactoria en QA el 2026-10-18; evidencia operativa en la [nota de mantenimiento](../agent-notes/mantenimiento-reset-qa.md).
 
 ## Contexto
 

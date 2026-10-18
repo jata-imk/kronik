@@ -9,6 +9,8 @@ Una tarea no se marca como completada si no tiene pruebas aplicables pasando y d
 - El comportamiento esperado esta implementado.
 - Las pruebas automatizadas aplicables pasan.
 - La documentacion Diataxis correspondiente esta actualizada.
+- Los índices de sección y [temas](../topic/index.md) enlazan los documentos afectados y sus enlaces locales están revisados.
+- Se aplica la [documentación viva](documentacion-viva.md): integración, despliegue y validaciones conocidas están diferenciados; no quedan pendientes ya confirmados en notas o Notion.
 - Los datos demo o fixtures necesarios estan disponibles si el flujo se valida manualmente o con e2e.
 - Los permisos, migraciones, seeders, comandos y variables de entorno afectados estan documentados.
 - Todos los errores visibles usan mensajes claros en espanol; ninguna clave `validation.*` llega a la interfaz.
