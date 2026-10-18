@@ -1,15 +1,25 @@
 # How-to
 
-- [Probar correos de acceso y seguridad](probar-correos-acceso.md)
+[Buscar por tema](../topic/index.md) · [Índice general](../index.md)
 
-- [Configurar empresa](configurar-empresa.md)
+- [Accesos del cliente desde el menubar](accesos-contextuales-clientes.md)
+- [Actualizar módulos y capturas de la portada](actualizar-portada.md)
+- [Configurar Empresa](configurar-empresa.md)
+- [Configurar y comprobar la fiscalidad de un producto](configurar-fiscalidad-productos.md)
+- [Cargar el catálogo del menú contextual](configurar-menu-contextual.md)
 - [Desplegar Kronik en una VPS Debian 12](desplegar-vps-nuevo.md)
-- [Validar un RFC](validar-rfc.md)
-- [Reset de datos de desarrollo](reset-datos-desarrollo.md)
-- [Restaurar catalogos](restaurar-catalogos.md)
+- [Editar plantillas documentales](editar-plantillas-documentales.md)
 - [Migrar VPS](migrar-vps.md)
-- [Empezar aquí: vida de un crédito simple en QA](qa-credito-simple.md)
-- Guías complementarias por etapa: [simulación fiscal](qa-simulacion-fiscal.md),
-  [paquete contractual](qa-paquete-contractual.md),
-  [firma digitalizada](qa-firma-digitalizada.md),
-  [desembolso](qa-desembolso.md) y [pagos](qa-pagos.md).
+- [Probar correos de acceso y seguridad](probar-correos-acceso.md)
+- [Probar anticipos y liquidación QA](qa-anticipos-liquidacion.md)
+- [Guion QA manual — Backlog 03.5](qa-backlog-03-5-documentos-y-plantillas.md)
+- [Guía operativa QA: crédito simple para un prestamista o financiera pequeña](qa-credito-simple.md)
+- [Probar crédito y desembolso manual QA](qa-desembolso.md)
+- [Probar recepción y validación de firma digitalizada](qa-firma-digitalizada.md)
+- [Pagos manuales QA: pruebas detalladas](qa-pagos.md)
+- [Probar el paquete contractual QA (P4a)](qa-paquete-contractual.md)
+- [Probar Círculo de Crédito en simulación](qa-sic.md)
+- [Probar la simulación con impuestos y preparar la revisión profesional](qa-simulacion-fiscal.md)
+- [Reiniciar datos de desarrollo o QA](reset-datos-desarrollo.md)
+- [Restaurar catalogos y datos de desarrollo](restaurar-catalogos.md)
+- [Validar un RFC en Kronik](validar-rfc.md)

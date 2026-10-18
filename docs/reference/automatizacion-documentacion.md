@@ -30,6 +30,11 @@ Remove-Item Env:\DOCS_NOT_NEEDED
 
 El workflow de GitHub Actions repite la misma regla para evitar depender de hooks locales.
 
+Este control solo comprueba que exista algún cambio documental. No evalúa
+vigencia, exactitud, cobertura temática ni enlaces. La revisión de contenido e
+índices se realiza según la [regla de documentación viva](documentacion-viva.md);
+modificar un documento ajeno al cambio no satisface esa obligación.
+
 Relacionado:
 
 - [CI](ci.md)
