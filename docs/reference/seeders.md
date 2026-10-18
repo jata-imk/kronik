@@ -16,7 +16,7 @@ Los seeders de sistema y desarrollo deben poder re-ejecutarse sin duplicar regis
 Para volver a datos de prueba sin borrar SAT/SEPOMEX:
 
 ```bash
-php artisan dev:reset-data
+php artisan dev:reset-data --confirm-qa
 ```
 
 Catalogos protegidos por el reset:
@@ -26,7 +26,9 @@ Catalogos protegidos por el reset:
 - `divisiones_administrativas`
 - `codigos_postales`
 
-El comando toma conteos antes de truncar datos volatiles y falla si un catalogo pierde registros. Puede permitir aumentos idempotentes cuando el seeder completa un registro faltante.
+El comando usa eliminaciones en una transacción, con claves foráneas activas, y revierte si un catálogo pierde registros. Puede permitir aumentos idempotentes cuando el seeder completa un registro faltante.
+
+Para preparar accesos QA sin demos, usa `--minimal --admin-email=administrador@ejemplo.com`, primero con `--dry-run` y después con `--confirm-qa`. Este modo conserva una cuenta global existente con sus credenciales, un equipo, Matriz y empresa; elimina productos y plantillas, y no ejecuta `DevelopmentSeeder` ni `SystemSeeder`. Consulta el [procedimiento de reinicio](../how-to/reset-datos-desarrollo.md), incluidos respaldo y detención de procesos.
 
 ## Reconstruccion de Catalogos
 

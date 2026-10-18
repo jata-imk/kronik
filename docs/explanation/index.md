@@ -1,5 +1,7 @@
 # Explicacion
 
+- [ADR 0024: reinicio integral de una instalación QA](adr-0024-reinicio-integral-qa.md)
+
 - [ADR 0021: identidad visual y navegación de Kronik](adr-0021-identidad-visual-kronik.md)
 - [Auditoría visual QA de octubre de 2026](auditoria-ui-qa-2026-10.md)
 

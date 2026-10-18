@@ -7,9 +7,21 @@ php artisan serve
 php artisan migrate
 php artisan migrate:fresh --seed
 php artisan db:seed
-php artisan dev:reset-data
+php artisan dev:reset-data --dry-run
 php artisan test
 ```
+
+Para revisar o preparar una instalación exclusivamente QA sin recrear demos:
+
+```bash
+php artisan dev:reset-data --minimal --admin-email=administrador@ejemplo.com --dry-run
+php artisan dev:reset-data --minimal --admin-email=administrador@ejemplo.com --confirm-qa
+```
+
+El borrado requiere `--confirm-qa` en todos los modos. Fuera de local/testing
+requiere mantenimiento; con `APP_ENV=production` solo permite el modo mínimo.
+Respaldo, detención de procesos, alcance y recuperación de archivos pendientes:
+[Reiniciar datos de desarrollo o QA](../how-to/reset-datos-desarrollo.md).
 
 `phpunit.xml` fuerza SQLite `:memory:` para la ejecución local. CI reemplaza
 esa configuración con una base MariaDB aislada. Las pruebas no deben usar la

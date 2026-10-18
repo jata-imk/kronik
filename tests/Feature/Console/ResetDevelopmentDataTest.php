@@ -42,8 +42,7 @@ it('resets development data and recreates demo records', function () {
         'email' => 'discard@example.test',
     ]);
 
-    $this->artisan('dev:reset-data')
-        ->assertSuccessful();
+    $this->artisan('dev:reset-data', ['--confirm-qa' => true])->assertSuccessful();
 
     expect(User::where('email', 'discard@example.test')->exists())->toBeFalse()
         ->and(User::where('email', 'test@example.com')->exists())->toBeTrue()
