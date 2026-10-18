@@ -10,6 +10,7 @@ El reinicio de desarrollo anterior no cubría los módulos de originación, cart
 
 - `dev:reset-data` delega en un servicio de mantenimiento independiente de los servicios financieros. Se mantienen las restricciones de inmutabilidad y conservación de los modelos en los flujos normales.
 - El alcance es explícito: cada tabla está clasificada como reiniciable o conservada. Una nueva tabla sin clasificar bloquea el comando hasta revisar su política y dependencias.
+- Por indicación del usuario se borran las entradas, submenús y asociaciones del menú contextual por módulos. En mínimo/vacío quedan sin entradas; el modo demo reconstruye el menú predeterminado mediante sus seeders habituales. El catálogo de módulos y la navegación principal siguen disponibles.
 - Se usa una transacción con eliminaciones ordenadas y claves foráneas activas; no se reinician secuencias. Se rompe únicamente la referencia de reversos que impide eliminar el conjunto de pagos QA.
 - El modo `--minimal` conserva una cuenta global existente, activa y verificada, con contraseña y 2FA. Conserva su primer equipo propio, Matriz y empresa; crea solo los contextos faltantes, sin usuarios ni datos demo.
 - Se exige una declaración explícita `--confirm-qa`; se bloquean operaciones marcadas como reales y se exige mantenimiento fuera de local/testing. Los registros antiguos sin marcador no prueban que sean ficticios: corresponde al operador confirmar el carácter exclusivamente QA de la instalación. `APP_ENV=production` solo admite modo mínimo para ese caso.

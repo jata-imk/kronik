@@ -32,6 +32,7 @@ class ResetDevelopmentDataService
         'cliente_consentimientos_sic', 'cliente_garantias', 'cliente_vinculos', 'cliente_referencias', 'cliente_documentos',
         'direcciones', 'clientes_datos_fiscales', 'clientes',
         'personal_access_tokens', 'team_invitations', 'team_user', 'sucursal_user',
+        'menubar_item_module', 'menubar_items',
         'sessions', 'password_reset_tokens', 'jobs', 'failed_jobs', 'job_batches', 'cache', 'cache_locks',
     ];
 
@@ -61,8 +62,8 @@ class ResetDevelopmentDataService
         }
         $tables = [...self::TABLES, config('activitylog.table_name', 'activity_log'),
             config('permission.table_names.model_has_roles'), config('permission.table_names.model_has_permissions')];
-        $preserved = [...self::CATALOGS, 'migrations', 'development_data_resets', 'modules', 'menubar_items',
-            'menubar_item_module', 'sics', 'sic_apis', 'conceptos_comision',
+        $preserved = [...self::CATALOGS, 'migrations', 'development_data_resets', 'modules',
+            'sics', 'sic_apis', 'conceptos_comision',
             ...array_values(config('permission.table_names')), 'users', 'teams', 'sucursales', 'empresa_configuraciones'];
         $unknown = array_diff(Schema::getTableListing(), $tables, $preserved);
         if ($unknown) {
@@ -110,6 +111,8 @@ class ResetDevelopmentDataService
             $catalogs = collect(self::CATALOGS)->mapWithKeys(fn ($table) => [$table => DB::table($table)->count()]);
             // Break the self reference without bypassing FK enforcement or model immutability in normal flows.
             DB::table('credito_pagos')->whereNotNull('reversa_de')->update(['reversa_de' => null]);
+            // Remove nesting before deletion to avoid cascade depth limits on large menus.
+            DB::table('menubar_items')->whereNotNull('parent_id')->update(['parent_id' => null]);
             foreach ($plan['tables'] as $table) {
                 DB::table($table)->delete();
             }

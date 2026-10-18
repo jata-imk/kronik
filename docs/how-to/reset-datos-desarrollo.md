@@ -68,6 +68,7 @@ Con `APP_ENV=production`, el comando solo permite el modo mínimo, con mantenimi
 - Créditos QA, cronogramas y sus versiones, desembolsos, movimientos, pagos, anticipos, liquidaciones y reversos.
 - Productos, versiones, periodicidades, reglas, comisiones asociadas, usos y políticas de originación.
 - Plantillas, versiones, recursos gráficos y documentos generados.
+- Todas las entradas y submenús de **Administración → Menú contextual por módulos**, junto con sus asociaciones a módulos y rutas (`menubar_items`, `menubar_item_module`). En mínimo y vacío quedan sin entradas; en demo se eliminan y `SystemSeeder` reconstruye únicamente el menú predeterminado.
 - Usuarios, equipos y sucursales, salvo las excepciones del modo mínimo; invitaciones, membresías, tokens API, sesiones, solicitudes de recuperación de contraseña y recordar sesión.
 - Roles de equipo y asignaciones directas de roles/permisos. En modo mínimo se copian nuevamente las plantillas de roles globales al equipo conservado, sin asignarlas a otros usuarios.
 - Actividad histórica QA, trabajos en cola, fallidos, lotes y tablas de caché de esta base.
@@ -78,8 +79,9 @@ No se borran directorios completos de almacenamiento. Archivos huérfanos sin re
 ## Qué conserva
 
 - Países, regímenes fiscales SAT, divisiones administrativas y códigos postales SEPOMEX. Se verifican sus conteos dentro de la transacción; pueden aumentar en modo demo si faltaban catálogos mínimos.
-- Módulos, permisos, roles globales y sus permisos, menú, proveedores/APIs SIC y catálogo de conceptos de comisión. En modo demo `SystemSeeder` vuelve a sembrarlos idempotentemente; en mínimo y vacío no se modifica su configuración.
+- Módulos, permisos, roles globales y sus permisos, proveedores/APIs SIC y catálogo de conceptos de comisión. En modo demo `SystemSeeder` vuelve a sembrarlos idempotentemente; en mínimo y vacío no se modifica su configuración.
 - `.env`, credenciales de proveedores, `APP_KEY`, configuración técnica y código.
+- Configuración de almacenamiento (`config/filesystems.php` y sus variables de entorno): define las carpetas privadas/públicas donde Laravel guarda archivos, o la conexión a un servicio como S3. El comando elimina los archivos registrados incluidos en su alcance y mantiene esas ubicaciones y conexiones disponibles para archivos nuevos.
 - El historial de mantenimiento `development_data_resets`, separado de la actividad operativa QA que se borra.
 - En modo mínimo: la configuración de empresa y su logotipo; el ID, contraseña, verificación, 2FA y foto del administrador seleccionado; su primer equipo propio por ID y Matriz si existen. Si faltan, se crean el equipo «Administración» y Matriz. Ambos quedan activos y el administrador queda situado en ellos.
 

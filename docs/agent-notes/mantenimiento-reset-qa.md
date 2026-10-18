@@ -15,12 +15,13 @@ Preparar una nueva ronda de accesos QA mediante un reinicio completo que conserv
 
 - Estado: implementado, pendiente de revisión e integración.
 - Última actualización: 2026-10-17.
-- Último punto estable: 31 pruebas específicas aprobadas, 241 aserciones; build y Pint correctos. La PR y Notion conservan el resultado de la regresión final y CI MariaDB.
+- Último punto estable: 34 pruebas específicas aprobadas, 280 aserciones; Pint correcto. Incluyen limpieza del menú contextual, vista previa, rollback y acceso administrativo posterior. La PR y Notion conservan el resultado de la regresión final, build y CI MariaDB.
 - Sin ejecutar reinicios ni migraciones en la VPS o en la base local de la aplicación. Las mutaciones de prueba usan bases aisladas y discos simulados.
 
 ## Decisiones pendientes
 
 - Ninguna de implementación. El operador debe elegir el administrador y comprobar el respaldo antes de ejecutar el procedimiento en la instalación QA.
+- Ajuste solicitado después de la primera entrega: eliminar también el menú contextual por módulos y sus asociaciones. Mínimo/vacío quedan sin entradas; demo reconstruye los valores predeterminados. Conserva catálogo de módulos, navegación principal y configuración de almacenamiento.
 
 ## Evidencia
 

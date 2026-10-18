@@ -87,6 +87,45 @@ it('creates only the missing minimum contexts without changing the administrator
     $this->assertDatabaseCount('documento_plantillas', 0);
 });
 
+it('clears contextual menu entries children and module routes according to the reset mode', function (string $mode) {
+    $this->seed(Database\Seeders\SystemSeeder::class);
+    $admin = actingAsSuperAdmin();
+    $module = DB::table('modules')->first();
+    $modules = DB::table('modules')->get()->toJson();
+    $parent = DB::table('menubar_items')->insertGetId(['label' => 'Menú personalizado QA', 'type' => 'menu']);
+    $child = DB::table('menubar_items')->insertGetId(['label' => 'Acción personalizada QA', 'type' => 'route:name',
+        'value' => 'dashboard', 'parent_id' => $parent]);
+    foreach ([$parent, $child] as $item) {
+        DB::table('menubar_item_module')->insert(['menubar_item_id' => $item, 'module_id' => $module->id, 'routes' => '["dashboard"]']);
+    }
+    $before = DB::table('menubar_items')->get()->toJson();
+    $links = DB::table('menubar_item_module')->get()->toJson();
+    $options = match ($mode) {
+        'minimal' => minimalResetOptions($admin),
+        'empty' => ['--no-seed' => true, '--confirm-qa' => true],
+        'demo' => ['--confirm-qa' => true],
+    };
+    $this->artisan('dev:reset-data', [...$options, '--dry-run' => true])->assertSuccessful();
+    expect(DB::table('menubar_items')->get()->toJson())->toBe($before)
+        ->and(DB::table('menubar_item_module')->get()->toJson())->toBe($links);
+    $this->artisan('dev:reset-data', $options)->assertSuccessful();
+    $this->assertDatabaseMissing('menubar_items', ['label' => 'Menú personalizado QA']);
+    $this->assertDatabaseMissing('menubar_items', ['label' => 'Acción personalizada QA']);
+    if ($mode === 'demo') {
+        expect(DB::table('menubar_items')->count())->toBeGreaterThan(0)
+            ->and(DB::table('menubar_item_module')->count())->toBeGreaterThan(0);
+    } else {
+        $this->assertDatabaseCount('menubar_items', 0);
+        $this->assertDatabaseCount('menubar_item_module', 0);
+        expect(DB::table('modules')->get()->toJson())->toBe($modules);
+    }
+    if ($mode === 'minimal') {
+        $this->actingAs($admin->fresh())->get(route('admin.menubar-items.index'))->assertOk()
+            ->assertInertia(fn ($page) => $page->component('Admin/MenubarItems/Index')->has('menubarCatalogo', 0));
+        $this->get(route('admin.users.index'))->assertOk();
+    }
+})->with(['minimal', 'empty', 'demo']);
+
 it('previews without changing database files or sessions', function () {
     $admin = actingAsSuperAdmin();
     $other = User::factory()->create(['profile_photo_path' => 'profile-photos/otro.jpg']);
@@ -143,6 +182,8 @@ it('rolls back database mutations and leaves files untouched if the database res
     $admin = actingAsSuperAdmin();
     $other = User::factory()->create(['profile_photo_path' => 'profile-photos/otro.jpg']);
     Storage::disk('public')->put('profile-photos/otro.jpg', 'otro');
+    $menuId = DB::table('menubar_items')->insertGetId(['label' => 'Menú antes del fallo', 'type' => 'menu']);
+    $childId = DB::table('menubar_items')->insertGetId(['label' => 'Hijo antes del fallo', 'parent_id' => $menuId]);
     $fail = true;
     DB::listen(function ($query) use (&$fail) {
         if ($fail && str_starts_with(strtolower($query->sql), 'delete from') && str_contains($query->sql, 'users')) {
@@ -154,6 +195,8 @@ it('rolls back database mutations and leaves files untouched if the database res
     expect($admin->fresh()->current_sucursal_id)->toBe($admin->current_sucursal_id)
         ->and($other->fresh())->not->toBeNull();
     $this->assertDatabaseCount('development_data_resets', 0);
+    $this->assertDatabaseHas('menubar_items', ['id' => $menuId, 'label' => 'Menú antes del fallo']);
+    $this->assertDatabaseHas('menubar_items', ['id' => $childId, 'parent_id' => $menuId]);
     Storage::disk('public')->assertExists('profile-photos/otro.jpg');
 });
 
