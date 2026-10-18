@@ -1,5 +1,7 @@
 # Agent Notes
 
+- [Correos de acceso y seguridad](correos-acceso.md)
+
 - [Mantenimiento: reinicio integral QA](mantenimiento-reset-qa.md)
 
 - [Backlog 04: originación y solicitudes](04-originacion-solicitudes.md)

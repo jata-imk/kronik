@@ -8,8 +8,13 @@ php artisan migrate
 php artisan migrate:fresh --seed
 php artisan db:seed
 php artisan dev:reset-data --dry-run
+php artisan mail:preview
 php artisan test
 ```
+
+`mail:preview` genera muestras HTML/TXT/EML ficticias y privadas, sin enviar
+mensajes ni crear usuarios; solo local/testing. Consulta
+[Probar correos de acceso](../how-to/probar-correos-acceso.md).
 
 Para revisar o preparar una instalación exclusivamente QA sin recrear demos:
 

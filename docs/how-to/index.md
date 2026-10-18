@@ -1,5 +1,7 @@
 # How-to
 
+- [Probar correos de acceso y seguridad](probar-correos-acceso.md)
+
 - [Configurar empresa](configurar-empresa.md)
 - [Desplegar Kronik en una VPS Debian 12](desplegar-vps-nuevo.md)
 - [Validar un RFC](validar-rfc.md)
