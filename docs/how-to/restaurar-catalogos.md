@@ -57,5 +57,5 @@ La carga es valida cuando los conteos principales son mayores que cero y `merida
 Cuando los catalogos ya existen, no use `migrate:fresh`. Ejecute:
 
 ```bash
-php artisan dev:reset-data
+php artisan dev:reset-data --confirm-qa
 ```

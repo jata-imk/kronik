@@ -5,9 +5,22 @@ use Database\Seeders\MenubarItemsSeeder;
 use Database\Seeders\ModulesAndPermissionsSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
 
+function configureMenubarFixture($test): void
+{
+    $test->seed(ModulesAndPermissionsSeeder::class);
+    $test->seed(MenubarItemsSeeder::class);
+    foreach ([
+        'clientes' => ['clientes.edit', 'clientes.show', 'clientes.expediente.show'],
+        'historial-crediticio' => ['clientes.historial-crediticio.index', 'clientes.historial-crediticio.show'],
+    ] as $module => $routes) {
+        App\Models\MenubarItemModule::where('module_id', App\Models\Module::where('name', $module)->value('id'))
+            ->get()->each(fn ($link) => $link->update(['routes' => $routes]));
+    }
+    $test->seed(Database\Seeders\ClienteAccesosMenubarSeeder::class);
+}
+
 test('credit history routes resolve their configured menubar module', function () {
-    $this->seed(ModulesAndPermissionsSeeder::class);
-    $this->seed(MenubarItemsSeeder::class);
+    configureMenubarFixture($this);
     $user = actingAsSuperAdmin();
 
     $this->actingAs($user)
@@ -15,7 +28,7 @@ test('credit history routes resolve their configured menubar module', function (
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('menubarItems.0.label', 'Inicio')
-            ->where('menubarItems.1.label', 'Historial Crediticio')
+            ->where('menubarItems.1.label', 'Historial crediticio')
         );
 });
 
@@ -32,8 +45,7 @@ test('el catálogo administrativo no sobrescribe las rutas del menú compartido'
 });
 
 test('client menubar actions resolve the current client URLs', function () {
-    $this->seed(ModulesAndPermissionsSeeder::class);
-    $this->seed(MenubarItemsSeeder::class);
+    configureMenubarFixture($this);
     $user = actingAsSuperAdmin();
     $cliente = Cliente::factory()->create();
 
@@ -60,8 +72,7 @@ test('client menubar actions resolve the current client URLs', function () {
 });
 
 test('los accesos principales del cliente precargan solicitud sin duplicar el menú personalizado', function () {
-    $this->seed(ModulesAndPermissionsSeeder::class);
-    $this->seed(MenubarItemsSeeder::class);
+    configureMenubarFixture($this);
     $user = actingAsSuperAdmin();
     $cliente = Cliente::factory()->create(['sucursal_id' => $user->current_sucursal_id]);
     $shortcut = \App\Models\MenubarItem::where('value', 'solicitudes.create')->firstOrFail();
@@ -85,8 +96,7 @@ test('los accesos principales del cliente precargan solicitud sin duplicar el me
 });
 
 test('el acceso a solicitud respeta permisos y sucursal incluso para superadministradores', function () {
-    $this->seed(ModulesAndPermissionsSeeder::class);
-    $this->seed(MenubarItemsSeeder::class);
+    configureMenubarFixture($this);
     $user = actingAsSuperAdmin();
     $cliente = Cliente::factory()->create(['sucursal_id' => $user->current_sucursal_id]);
 

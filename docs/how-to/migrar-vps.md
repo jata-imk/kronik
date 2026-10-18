@@ -56,4 +56,4 @@ mantenimiento, corrija o restaure el respaldo y la versión anterior. No ejecute
 
 ## Desarrollo
 
-`php artisan dev:reset-data` es solo para entornos descartables. No lo ejecutes en produccion.
+`dev:reset-data` es solo para instalaciones descartables con datos de prueba. Nunca lo ejecutes sobre datos reales. Para una VPS exclusivamente QA, incluso configurada con `APP_ENV=production`, existe el modo mínimo con vista previa, mantenimiento y confirmación explícita. Sigue [Reiniciar datos de desarrollo o QA](reset-datos-desarrollo.md) antes de utilizarlo.

@@ -48,6 +48,12 @@ esta guía. Empieza verificando banderas, permisos y sucursal. Cuando una etapa 
 otro rol, cierra sesión y entra con la cuenta QA correspondiente; el cliente
 sintético del expediente no necesita iniciar sesión.
 
+Para empezar una nueva ronda eliminando los casos anteriores, consulta
+[Reiniciar datos de desarrollo o QA](reset-datos-desarrollo.md). El modo mínimo
+conserva un superadministrador y la configuración básica; requiere vista previa,
+respaldo y detención de procesos antes del borrado. No lo ejecutes en una
+instalación con datos reales.
+
 | Si necesitas profundizar en... | Abre después... |
 | --- | --- |
 | Impuestos y ejemplos numéricos con el contador | [Simulación fiscal](qa-simulacion-fiscal.md) |

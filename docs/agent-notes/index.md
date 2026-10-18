@@ -1,5 +1,7 @@
 # Agent Notes
 
+- [Mantenimiento: reinicio integral QA](mantenimiento-reset-qa.md)
+
 - [Backlog 04: originación y solicitudes](04-originacion-solicitudes.md)
 - [Backlog 05: SIC y score](05-sic-score.md)
 - [Backlog 07: amortización, pagos y cobranza](07-amortizacion-pagos-cobranza.md)

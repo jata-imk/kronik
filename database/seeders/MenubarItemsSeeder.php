@@ -7,303 +7,108 @@ use App\Models\MenubarItemModule;
 use App\Models\Module;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
+use RuntimeException;
 
 class MenubarItemsSeeder extends Seeder
 {
+    // Only navigable screens/viewers: writes and JSON helper endpoints are not menu destinations.
+    private const CATALOG = [
+        'dashboard' => ['Inicio y cuenta', [
+            'dashboard' => 'Panel principal', 'profile.show' => 'Mi perfil y seguridad', 'api-tokens.index' => 'Tokens API',
+        ]],
+        'clientes' => ['Clientes', [
+            'clientes.index' => 'Listado de clientes', 'clientes.create' => 'Nuevo cliente',
+            'clientes.show' => 'Información del cliente', 'clientes.edit' => 'Editar cliente',
+            'clientes.expedientes.index' => 'Expedientes de clientes', 'clientes.expediente.show' => 'Abrir expediente',
+            'solicitudes.create' => 'Nueva solicitud',
+        ]],
+        'solicitudes' => ['Solicitudes', [
+            'solicitudes.index' => 'Listado de solicitudes', 'solicitudes.trabajo' => 'Mi trabajo',
+            'solicitudes.clientes' => 'Clientes para solicitudes', 'solicitudes.create' => 'Nueva solicitud',
+            'solicitudes.show' => 'Detalle de solicitud', 'solicitudes.edit' => 'Editar solicitud',
+            'solicitudes.paquete.show' => 'Paquete contractual', 'solicitudes.desembolso.create' => 'Preparar desembolso QA',
+        ]],
+        'evaluacion-solicitudes' => ['Evaluación de solicitudes', ['evaluacion-solicitudes.index' => 'Bandeja de evaluación']],
+        'cumplimiento' => ['Cumplimiento', ['cumplimiento.index' => 'Bandeja de cumplimiento']],
+        'creditos' => ['Créditos y pagos', [
+            'creditos.index' => 'Cartera de créditos', 'creditos.show' => 'Detalle del crédito',
+            'creditos.pagos.create' => 'Registrar pago QA', 'creditos.anticipos.create' => 'Anticipo o liquidación QA',
+            'creditos.pagos.show' => 'Recibo de pago',
+        ]],
+        'productos-crediticios' => ['Productos crediticios', [
+            'productos-crediticios.index' => 'Productos y simulador', 'originacion-politicas.show' => 'Política de originación',
+        ]],
+        'plantillas-documentos' => ['Plantillas de documentos', ['plantillas-documentos.index' => 'Plantillas, versiones y recursos']],
+        'documentos' => ['Documentos', [
+            'clientes.expediente.show' => 'Documentos del cliente', 'documentos-generados.view' => 'Ver PDF generado',
+        ]],
+        'historial-crediticio' => ['Historial crediticio', [
+            'clientes.historial-crediticio.index' => 'Listado de consultas', 'clientes.historial-crediticio.show' => 'Historial del cliente',
+            'consultas-sic.show' => 'Reporte y gráficas SIC',
+        ]],
+        'circulo-credito' => ['Círculo de Crédito', [
+            'circulo-credito.index' => 'Consulta SIC', 'circulo-credito.create' => 'Nueva consulta SIC',
+            'consultas-sic.clientes' => 'Clientes para consulta SIC',
+        ]],
+        'admin' => ['Administración', ['admin.dashboard' => 'Panel de administración']],
+        'users' => ['Usuarios', ['admin.users.index' => 'Usuarios e invitaciones']],
+        'teams' => ['Equipos', ['admin.teams.index' => 'Gestión de equipos', 'teams.show' => 'Centro del equipo']],
+        'sucursales' => ['Sucursales', ['admin.sucursales.index' => 'Gestión de sucursales']],
+        'roles' => ['Roles y permisos', ['admin.roles.index' => 'Gestión de roles y permisos']],
+        'menubar-items' => ['Menú contextual', ['admin.menubar-items.index' => 'Menú contextual por módulos']],
+        'activity-log' => ['Actividad y auditoría', ['admin.users.activity' => 'Actividad de usuarios']],
+        'configuracion-empresa' => ['Empresa', ['admin.configuracion-empresa.index' => 'Configuración de empresa']],
+    ];
+
     public function run(): void
     {
-        DB::transaction(function () {
-            $clientes = Module::where('name', 'clientes')->firstOrFail();
-            $historial = Module::where('name', 'historial-crediticio')->firstOrFail();
-            $cdc = Module::where('name', 'circulo-credito')->firstOrFail();
-            $dashboard = Module::where('name', 'dashboard')->firstOrFail();
-            $admin = Module::where('name', 'admin')->firstOrFail();
-            $users = Module::where('name', 'users')->firstOrFail();
-            $roles = Module::where('name', 'roles')->firstOrFail();
-            $menubarItems = Module::where('name', 'menubar-items')->firstOrFail();
-            $activityLog = Module::where('name', 'activity-log')->firstOrFail();
-            $configuracionEmpresa = Module::where('name', 'configuracion-empresa')->firstOrFail();
-            $sucursales = Module::where('name', 'sucursales')->firstOrFail();
-            $productosCrediticios = Module::where('name', 'productos-crediticios')->firstOrFail();
-            $plantillasDocumentos = Module::where('name', 'plantillas-documentos')->firstOrFail();
-
-            $items = [
-                [
-                    'id' => 1,
-                    'label' => 'Clientes',
-                    'icon' => null,
-                    'type' => 'menu',
-                    'value' => null,
-                    'params' => null,
-                    'parent_id' => null,
-                    'sort_order' => 0,
-                ],
-                [
-                    'id' => 2,
-                    'label' => 'Ver información',
-                    'icon' => 'pi pi-fw pi-user',
-                    'type' => 'route:dynamic',
-                    'value' => '[{"condition_type":"route_regexp","condition_value": {"route_name":"clientes.edit","pregmatch_subject_type":"referer"},"route_name":"clientes.edit","params":"{\"cliente\":\"{cliente}\"}"},{ "condition_type":"default", "route_name":"clientes.edit", "params":"{\"cliente\":\"{cliente}\"}"}]',
-                    'params' => null,
-                    'parent_id' => 1,
-                    'sort_order' => 1,
-                ],
-                [
-                    'id' => 3,
-                    'label' => 'Nuevo cliente',
-                    'icon' => 'pi pi-fw pi-user-plus',
-                    'type' => 'route:name',
-                    'value' => 'clientes.create',
-                    'params' => null,
-                    'parent_id' => 1,
-                    'sort_order' => 2,
-                ],
-                [
-                    'id' => 4,
-                    'label' => 'Editar',
-                    'icon' => 'pi pi-fw pi-user-edit',
-                    'type' => 'route:name',
-                    'value' => 'clientes.edit',
-                    'params' => json_encode(['cliente' => '{cliente}']),
-                    'parent_id' => 1,
-                    'sort_order' => 3,
-                ],
-                [
-                    'id' => 5,
-                    'label' => 'Listado',
-                    'icon' => 'pi pi-fw pi-users',
-                    'type' => 'route:name',
-                    'value' => 'clientes.index',
-                    'params' => null,
-                    'parent_id' => 1,
-                    'sort_order' => 4,
-                ],
-                [
-                    'id' => 6,
-                    'label' => 'Historial Crediticio',
-                    'icon' => null,
-                    'type' => 'menu',
-                    'value' => null,
-                    'params' => json_encode(['cliente' => '{cliente}', 'historial-crediticio' => '{historial-crediticio}']),
-                    'parent_id' => null,
-                    'sort_order' => 0,
-                ],
-                [
-                    'id' => 18,
-                    'label' => 'Expediente KYC',
-                    'icon' => 'pi pi-fw pi-folder-open',
-                    'type' => 'route:name',
-                    'value' => 'clientes.expediente.show',
-                    'params' => json_encode(['cliente' => '{cliente}']),
-                    'parent_id' => 1,
-                    'sort_order' => 2,
-                ],
-                [
-                    'id' => 7,
-                    'label' => 'Listado de consultas',
-                    'icon' => 'pi pi-fw pi-list',
-                    'type' => 'route:name',
-                    'value' => 'clientes.historial-crediticio.index',
-                    'params' => null,
-                    'parent_id' => 6,
-                    'sort_order' => 1,
-                ],
-                [
-                    'id' => 8,
-                    'label' => 'Nueva consulta',
-                    'icon' => null,
-                    'type' => 'menu',
-                    'value' => null,
-                    'params' => json_encode(['cliente' => '{cliente}', 'historial-crediticio' => '{historial-crediticio}']),
-                    'parent_id' => 6,
-                    'sort_order' => 2,
-                ],
-                [
-                    'id' => 9,
-                    'label' => 'Círculo de crédito',
-                    'icon' => 'pi pi-fw pi-plus-circle',
-                    'type' => 'route:name',
-                    'value' => 'circulo-credito.index',
-                    'params' => json_encode(['cliente' => '{cliente}', 'circulo-credito' => '{circulo-credito}', 'historial-crediticio' => '{historial-crediticio}']),
-                    'parent_id' => 8,
-                    'sort_order' => 1,
-                ],
-                [
-                    'id' => 10,
-                    'label' => 'Administración',
-                    'icon' => null,
-                    'type' => 'menu',
-                    'value' => null,
-                    'params' => null,
-                    'parent_id' => null,
-                    'sort_order' => 90,
-                ],
-                [
-                    'id' => 11,
-                    'label' => 'Panel admin',
-                    'icon' => 'pi pi-fw pi-shield',
-                    'type' => 'route:name',
-                    'value' => 'admin.dashboard',
-                    'params' => null,
-                    'parent_id' => 10,
-                    'sort_order' => 1,
-                ],
-                [
-                    'id' => 12,
-                    'label' => 'Usuarios',
-                    'icon' => 'pi pi-fw pi-users',
-                    'type' => 'route:name',
-                    'value' => 'admin.users.index',
-                    'params' => null,
-                    'parent_id' => 10,
-                    'sort_order' => 2,
-                ],
-                [
-                    'id' => 13,
-                    'label' => 'Roles y permisos',
-                    'icon' => 'pi pi-fw pi-key',
-                    'type' => 'route:name',
-                    'value' => 'admin.roles.index',
-                    'params' => null,
-                    'parent_id' => 10,
-                    'sort_order' => 3,
-                ],
-                [
-                    'id' => 14,
-                    'label' => 'Menú',
-                    'icon' => 'pi pi-fw pi-bars',
-                    'type' => 'route:name',
-                    'value' => 'admin.menubar-items.index',
-                    'params' => null,
-                    'parent_id' => 10,
-                    'sort_order' => 4,
-                ],
-                [
-                    'id' => 15,
-                    'label' => 'Actividad',
-                    'icon' => 'pi pi-fw pi-history',
-                    'type' => 'route:name',
-                    'value' => 'admin.users.activity',
-                    'params' => null,
-                    'parent_id' => 10,
-                    'sort_order' => 5,
-                ],
-                [
-                    'id' => 16,
-                    'label' => 'Configuración de empresa',
-                    'icon' => 'pi pi-fw pi-building',
-                    'type' => 'route:name',
-                    'value' => 'admin.configuracion-empresa.index',
-                    'params' => null,
-                    'parent_id' => 10,
-                    'sort_order' => 6,
-                ],
-                [
-                    'id' => 17,
-                    'label' => 'Sucursales',
-                    'icon' => 'pi pi-fw pi-map-marker',
-                    'type' => 'route:name',
-                    'value' => 'admin.sucursales.index',
-                    'params' => null,
-                    'parent_id' => 10,
-                    'sort_order' => 7,
-                ],
-                [
-                    'id' => 19,
-                    'label' => 'Productos crediticios',
-                    'icon' => 'pi pi-fw pi-wallet',
-                    'type' => 'route:name',
-                    'value' => 'productos-crediticios.index',
-                    'params' => null,
-                    'parent_id' => null,
-                    'sort_order' => 20,
-                ],
-                [
-                    'id' => 20,
-                    'label' => 'Documentos y plantillas',
-                    'icon' => 'pi pi-fw pi-file-edit',
-                    'type' => 'route:name',
-                    'value' => 'plantillas-documentos.index',
-                    'params' => null,
-                    'parent_id' => null,
-                    'sort_order' => 21,
-                ],
-            ];
-
-            foreach ($items as $item) {
-                $id = $item['id'];
-                unset($item['id']);
-
-                MenubarItem::updateOrCreate(['id' => $id], $item);
+        $modules = Module::whereIn('name', array_keys(self::CATALOG))->get()->keyBy('name');
+        foreach (self::CATALOG as $moduleName => [$label, $pages]) {
+            if (! $modules->has($moduleName)) {
+                throw new RuntimeException("Falta el módulo {$moduleName}. Ejecuta ModulesAndPermissionsSeeder antes de cargar el menú.");
             }
-
-            $links = [
-                ['menubar_item_id' => 19, 'module_id' => $productosCrediticios->id, 'routes' => ['productos-crediticios.index']],
-                ['menubar_item_id' => 20, 'module_id' => $plantillasDocumentos->id, 'routes' => ['plantillas-documentos.index']],
-                ['menubar_item_id' => 1, 'module_id' => $clientes->id,  'routes' => ['clientes.edit', 'clientes.show']],
-                ['menubar_item_id' => 18, 'module_id' => $clientes->id, 'routes' => ['clientes.edit', 'clientes.show', 'clientes.expediente.show']],
-                ['menubar_item_id' => 2, 'module_id' => $clientes->id,  'routes' => ['clientes.edit']],
-                ['menubar_item_id' => 3, 'module_id' => $clientes->id,  'routes' => ['clientes.edit', 'clientes.show']],
-                ['menubar_item_id' => 4, 'module_id' => $clientes->id,  'routes' => ['clientes.show']],
-                ['menubar_item_id' => 5, 'module_id' => $clientes->id,  'routes' => ['clientes.edit', 'clientes.show']],
-                ['menubar_item_id' => 6, 'module_id' => $clientes->id,  'routes' => ['clientes.edit', 'clientes.show']],
-                ['menubar_item_id' => 6, 'module_id' => $historial->id, 'routes' => ['clientes.historial-crediticio.index']],
-                ['menubar_item_id' => 7, 'module_id' => $historial->id, 'routes' => ['clientes.historial-crediticio.index', 'clientes.historial-crediticio.show']],
-                ['menubar_item_id' => 7, 'module_id' => $clientes->id,  'routes' => ['clientes.edit', 'clientes.show']],
-                ['menubar_item_id' => 8, 'module_id' => $clientes->id,  'routes' => ['clientes.edit', 'clientes.show']],
-                ['menubar_item_id' => 8, 'module_id' => $historial->id, 'routes' => ['clientes.historial-crediticio.index']],
-                ['menubar_item_id' => 9, 'module_id' => $clientes->id,  'routes' => ['clientes.edit', 'clientes.show']],
-                ['menubar_item_id' => 9, 'module_id' => $historial->id, 'routes' => ['clientes.historial-crediticio.index']],
-                ['menubar_item_id' => 9, 'module_id' => $cdc->id,       'routes' => ['circulo-credito.index']],
-            ];
-
-            $adminRoutesByModule = [
-                $dashboard->id => ['dashboard'],
-                $admin->id => ['admin.dashboard'],
-                $users->id => ['admin.users.index', 'admin.users.show', 'admin.users.create', 'admin.users.edit'],
-                $roles->id => ['admin.roles.index', 'admin.roles.show', 'admin.roles.create', 'admin.roles.edit'],
-                $menubarItems->id => [
-                    'admin.menubar-items.index',
-                    'admin.menubar-items.show',
-                    'admin.menubar-items.create',
-                    'admin.menubar-items.edit',
-                ],
-                $activityLog->id => ['admin.users.activity'],
-                $configuracionEmpresa->id => [
-                    'admin.configuracion-empresa.index',
-                    'admin.configuracion-empresa.update',
-                ],
-                $sucursales->id => [
-                    'admin.sucursales.index',
-                    'admin.sucursales.store',
-                    'admin.sucursales.update',
-                    'admin.sucursales.destroy',
-                ],
-            ];
-
-            foreach ($adminRoutesByModule as $moduleId => $routes) {
-                foreach ([10, 11, 12, 13, 14, 15, 16, 17] as $menubarItemId) {
-                    $links[] = [
-                        'menubar_item_id' => $menubarItemId,
-                        'module_id' => $moduleId,
-                        'routes' => $routes,
-                    ];
+            foreach ($pages as $routeName => $pageLabel) {
+                if (! Route::has($routeName) || ! in_array('GET', Route::getRoutes()->getByName($routeName)->methods(), true)) {
+                    throw new RuntimeException("La página {$routeName} no está disponible. Revisa el catálogo del menú antes de sembrarlo.");
                 }
             }
+        }
 
-            foreach ($links as $link) {
-                MenubarItemModule::updateOrCreate(
-                    [
-                        'menubar_item_id' => $link['menubar_item_id'],
-                        'module_id' => $link['module_id'],
-                    ],
-                    [
-                        'routes' => $link['routes'],
-                    ],
-                );
+        DB::transaction(function () use ($modules) {
+            foreach (self::CATALOG as $moduleName => [$label, $pages]) {
+                $module = $modules->get($moduleName);
+                // Menu values are ignored by the renderer; this stable key permits renaming a folder.
+                $parent = MenubarItem::firstOrCreate(['type' => 'menu', 'value' => 'catalogo:'.$moduleName], [
+                    'label' => $label, 'icon' => 'pi pi-'.preg_replace('/^pi-/', '', $module->icon ?? 'folder'),
+                    'parent_id' => null, 'sort_order' => (int) MenubarItem::max('sort_order') + 1,
+                ]);
+                $this->linkWithoutActivation($parent, $module);
+                foreach ($pages as $routeName => $pageLabel) {
+                    $params = [];
+                    $route = Route::getRoutes()->getByName($routeName);
+                    foreach ($route->parameterNames() as $parameter) {
+                        if (! str_contains($route->uri(), '{'.$parameter.'?}')) {
+                            $params[$parameter] = '{'.$parameter.'}';
+                        }
+                    }
+                    $item = MenubarItem::where('type', 'route:name')->where('value', $routeName)
+                        ->whereHas('menubarItemModules', fn ($query) => $query->where('module_id', $module->id))
+                        ->orderBy('id')->first();
+                    $item ??= MenubarItem::create([
+                        'parent_id' => $parent->id, 'type' => 'route:name', 'value' => $routeName,
+                        'label' => $pageLabel, 'icon' => 'pi pi-arrow-right', 'params' => $params ?: null,
+                        'sort_order' => (int) $parent->children()->max('sort_order') + 1,
+                    ]);
+                    $this->linkWithoutActivation($item, $module);
+                }
             }
         });
+    }
 
-        $this->call(ClienteAccesosMenubarSeeder::class);
+    private function linkWithoutActivation(MenubarItem $item, Module $module): void
+    {
+        // Re-running the seeder preserves activation routes chosen later by the administrator.
+        MenubarItemModule::firstOrCreate(['menubar_item_id' => $item->id, 'module_id' => $module->id], ['routes' => []]);
     }
 }

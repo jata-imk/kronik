@@ -1,5 +1,10 @@
 # Sistema MenubarItems
 
+Para sembrar el catálogo completo sin activar sus entradas, consulta
+[Cargar el catálogo del menú contextual](how-to/configurar-menu-contextual.md).
+Se utiliza el `MenubarItemsSeeder` existente; las páginas destino y las rutas de
+activación son campos diferentes.
+
 ## Cómo funciona
 
 El sistema genera dinámicamente la barra de navegación superior en función de la ruta activa. Los items son configurables desde la BD por un administrador. El flujo es:

@@ -24,6 +24,8 @@ class E2eSeeder extends Seeder
 
         $this->call(SystemSeeder::class);
         $this->call(DevelopmentSeeder::class);
+        // Explicit activation belongs to the isolated navigation fixture, not the base catalogue.
+        $this->call(ClienteAccesosMenubarSeeder::class);
 
         DB::transaction(function (): void {
             $admin = User::where('email', 'test@example.com')->firstOrFail();
