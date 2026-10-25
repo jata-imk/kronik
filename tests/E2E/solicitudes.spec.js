@@ -13,7 +13,7 @@ test("crea, reanuda y envía una solicitud sin aprobar ni consultar SIC", async 
     const detail = page.url();
     await page.getByRole("button", { name: "Enviar a revisión", exact: true }).click();
     await expect(page.getByText("Completa este dato antes de enviar la solicitud a revisión.")).toBeVisible();
-    await page.getByRole("link", { name: "Completar borrador" }).click();
+    await page.getByRole("link", { name: "Editar solicitud", exact: true }).click();
     await page.getByLabel("Producto y versión", { exact: true }).click();
     await page.getByRole("option", { name: /Crédito Simple Esencial/ }).click();
     await page.getByLabel("Monto solicitado (MXN)").pressSequentially("10000.00");
