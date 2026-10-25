@@ -51,8 +51,10 @@ despliegue manual. Otros hallazgos permanecen registrados sin corrección.
 
 ## Siguiente paso
 
-Continuar con [el folio de escenario Fintech](sic-folio-fintech.md). Domicilio
-corregido y validado; conservar errores históricos y no convertir un404 en score.
+El [folio de escenario Fintech](sic-folio-fintech.md) también quedó corregido y
+validado: consulta9 completada del caso principal. Conservar errores históricos;
+una respuesta HTTP404 no es un score. El score404 de consulta9 es un valor sintético
+de una respuesta completada, sin inferencia de riesgo real.
 
 ## Cierre
 

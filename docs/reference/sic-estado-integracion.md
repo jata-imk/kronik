@@ -1,6 +1,6 @@
 # Estado de la integración SIC
 
-Actualización: 10/10/2026. P7 recupera lectura histórica y tres servicios de
+Actualización: 25/10/2026. P7 recupera lectura histórica y tres servicios de
 simulación mediante adaptador nuevo. Los seis puntos de entrada del SDK antiguo
 siguen cerrados por los motivos de [ADR 0011](../explanation/adr-0011-integracion-sic-segura.md).
 Véase [ADR 0022](../explanation/adr-0022-sic-qa-evidencia.md).
@@ -25,6 +25,12 @@ interno único de cada consulta. No requiere otra variable de entorno. Al
 desplegar, reconstruir configuración y reiniciar workers para incorporar el valor.
 La petición conserva los datos del cliente seleccionado; la pantalla explica que
 es una simulación. Véase la [aclaración de ADR0022](../explanation/adr-0022-sic-qa-evidencia.md#aclaración-del-escenario-fintech--25102026).
+
+El estado de transporte se interpreta por separado del valor numérico del score:
+un score `404` en una consulta **Completada** no es un error HTTP404. Si el
+proveedor no informa modelo, no se inventa su interpretación. La
+[validación por interfaz](../agent-notes/sic-folio-fintech.md) conserva evidencia
+fechada del escenario y sus límites; no acredita riesgo real ni habilitación productiva.
 
 ## Acceso y evidencia
 
