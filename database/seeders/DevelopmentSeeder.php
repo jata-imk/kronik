@@ -480,6 +480,7 @@ class DevelopmentSeeder extends Seeder
             ],
             [
                 'datos_adicionales' => [
+                    'nombre_ciudad' => 'Ciudad de México',
                     'estado' => 'Ciudad de México',
                     'municipio' => 'Cuauhtémoc',
                     'asentamiento' => 'Centro (Área 1)',

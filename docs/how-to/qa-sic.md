@@ -15,7 +15,9 @@
 ## Consultar y revisar
 
 1. Cliente sintético de la sucursal actual con nombre, nacimiento y domicilio
-   mexicano completos, incluidos municipio y colonia. Consentimiento vigente y
+   mexicano completos, incluidos municipio y colonia. FICO v2 y RC + FICO requieren
+   además ciudad en el [catálogo postal](../reference/sic-estado-integracion.md#acceso-y-evidencia).
+   Consentimiento vigente y
    evidencia privada en expediente.
 2. **Consultas SIC → nueva consulta**: servicio, consentimiento y revisión vigente
    si será evidencia de originación. Confirmar sandbox.
@@ -25,6 +27,12 @@
    tabla alternativa. No se asignan rangos ni categorías de riesgo.
 5. Un intento incierto no se reenvía. Revisar con proveedor y conciliar con permiso,
    referencia y motivo; después se puede preparar una consulta nueva.
+
+Una respuesta «No se encontró a la persona» del sandbox no fabrica un score ni
+acredita por sí sola una política que lo exige. Para documentar un resultado
+positivo de simulación, usar un caso sintético publicado por el proveedor y
+mantener su identidad, consentimiento y revisión vinculados; no sustituir solo
+el cuerpo enviado ni reutilizar evidencia de otra persona.
 
 Conectividad con casos sintéticos oficiales, sin crear evidencia de aprobación:
 

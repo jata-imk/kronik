@@ -19,8 +19,11 @@ corregir este bloqueo y continuar; los otros hallazgos quedan registrados.
   `APP_TIMEZONE=America/Mexico_City`, bloqueando la vigencia del consentimiento.
 - El servicio convierte el instante a la zona de almacenamiento antes de escribir.
   No cambia reloj, políticas SIC, permisos, vencimiento ni evidencia histórica.
-- Integración y CI: consultar el estado de la PR #42. El usuario despliega QA
-  manualmente desde `main`; el despliegue y la validación QA aún no se han confirmado.
+- PR #42 integrada en main `d218a0c`, CI aprobada. José confirmó el despliegue
+  manual el24/10/2026; no informó el commit efectivo del servidor.
+- Comportamiento validado en QA: consentimiento4 capturado24/10 23:51 México,
+  guardado25/10 05:51:06Z, frente a servidor05:51:34GMT. Permitió preparar y enviar
+  de inmediato consulta3. El consentimiento2 se revocó y conserva evidencia.
 
 ## Evidencia
 
@@ -40,20 +43,20 @@ corregir este bloqueo y continuar; los otros hallazgos quedan registrados.
   fixtures y zona America/Mexico_City; sin llamadas externas. `sic-safety.spec.js`
   falla buscando el texto histórico «Histórico heredado»; se registra por separado,
   sin modificar ese test o la aplicación dentro de esta corrección.
-- QA: bloqueo original en cliente sintético 8, consentimiento 2 y SOL-6; no se
-  creó ni envió una consulta. Validación posterior al despliegue pendiente.
+- QA: bloqueo original en cliente sintético8, consentimiento2 y SOL-6 conservado.
+  Validación posterior positiva para la fecha con consentimiento4; la consulta3
+  terminó HTTP400 por domicilio, otro problema registrado como SIC-DOM-001.
 - Sin migraciones, seeders ni variables nuevas. No reparar consentimientos previos
   automáticamente: conservar evidencia y revocar/registrar uno nuevo por la interfaz.
 
 ## Siguiente paso
 
-Completar integración de PR #42 y comunicar a José el commit que debe desplegar.
+Corrección de fecha entregada y validada. Continuar con
+[domicilio sandbox](sic-domicilio-sandbox.md), que es el nuevo bloqueo.
 Worktree: `output/manual-credito-simple/worktrees/sic-fecha/`; `vendor` es copia
 propia y `node_modules` es un enlace al workspace.
-Tras integrar, el usuario despliega; comprobar un nuevo
-consentimiento con fecha actual y continuar SIC sandbox una sola vez por intento.
 
 ## Cierre
 
-- Commit/merge: pendiente.
+- Commit/merge: implementación16d96e6, PR42, merge d218a0c.
 - Diferidos: los demás hallazgos del manual; SIC productivo permanece cerrado.
