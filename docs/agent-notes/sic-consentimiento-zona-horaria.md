@@ -4,7 +4,7 @@
 
 - Notion: [manual visual QA](https://app.notion.com/p/3fe61db7db7f812d878ccccc1e90d651).
 - Rama: `fix/sic-consentimiento-zona-horaria`, base `main` `06a5723`.
-- PR: pendiente de crear.
+- PR: [#42](https://github.com/jata-imk/kronik/pull/42), implementación `16d96e6`.
 - ADR relacionados: [0022, SIC QA](../explanation/adr-0022-sic-qa-evidencia.md).
 
 ## Objetivo
@@ -19,7 +19,8 @@ corregir este bloqueo y continuar; los otros hallazgos quedan registrados.
   `APP_TIMEZONE=America/Mexico_City`, bloqueando la vigencia del consentimiento.
 - El servicio convierte el instante a la zona de almacenamiento antes de escribir.
   No cambia reloj, políticas SIC, permisos, vencimiento ni evidencia histórica.
-- Integración y despliegue pendientes. El usuario despliega QA manualmente desde `main`.
+- Integración y CI: consultar el estado de la PR #42. El usuario despliega QA
+  manualmente desde `main`; el despliegue y la validación QA aún no se han confirmado.
 
 ## Evidencia
 
@@ -33,7 +34,8 @@ corregir este bloqueo y continuar; los otros hallazgos quedan registrados.
   de chunks preexistentes. Pint sobre los tres archivos PHP modificados aprobado.
 - El primer intento sin `.env`/build aislados falló por preparación local; se creó
   `.env` de pruebas sin credenciales reales y se compiló antes de la suite final.
-- CI todavía no ejecutada: no se ha creado PR ni commit de la corrección.
+- CI MariaDB del commit `16d96e6`: aprobada el 24/10/2026. Hook pre-push:
+  420 pruebas backend aprobadas, una omitida, 40436 aserciones y build aprobado.
 - Navegador aislado, 24/10/2026: `sic-qa.spec.js` aprobado, tres servicios con
   fixtures y zona America/Mexico_City; sin llamadas externas. `sic-safety.spec.js`
   falla buscando el texto histórico «Histórico heredado»; se registra por separado,
@@ -45,9 +47,9 @@ corregir este bloqueo y continuar; los otros hallazgos quedan registrados.
 
 ## Siguiente paso
 
-Revisión del diff y preparación de commit/PR tras reanudar.
-Worktree: `output/manual-credito-simple/worktrees/sic-fecha/`; cambios sin commit
-conservados, `vendor` es copia propia y `node_modules` es un enlace al workspace.
+Completar integración de PR #42 y comunicar a José el commit que debe desplegar.
+Worktree: `output/manual-credito-simple/worktrees/sic-fecha/`; `vendor` es copia
+propia y `node_modules` es un enlace al workspace.
 Tras integrar, el usuario despliega; comprobar un nuevo
 consentimiento con fecha actual y continuar SIC sandbox una sola vez por intento.
 
