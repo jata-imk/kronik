@@ -32,5 +32,8 @@ class ResetUserPassword implements ResetsUserPasswords
         }
 
         $user->forceFill($attributes)->save();
+        // Successful activation or recovery consumes links from both flows.
+        \Illuminate\Support\Facades\Password::broker('invitaciones')->deleteToken($user);
+        \Illuminate\Support\Facades\Password::broker('users')->deleteToken($user);
     }
 }

@@ -10,6 +10,7 @@ use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\Sucursal;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\UserInvitationService;
 use App\Services\UserManagementService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -17,7 +18,6 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
@@ -92,13 +92,7 @@ class UserController extends Controller implements HasMiddleware
     public function store(StoreUserRequest $request, UserManagementService $service)
     {
         $user = $service->create($request->validated(), $request->user());
-        $status = Password::sendResetLink(['email' => $user->email]);
-
-        if ($status !== Password::RESET_LINK_SENT) {
-            throw ValidationException::withMessages([
-                'email' => 'La cuenta fue creada, pero no se pudo enviar la invitación. Puedes reenviarla desde el listado.',
-            ]);
-        }
+        app(UserInvitationService::class)->send($user);
 
         return back()->with('success', 'Usuario creado e invitación enviada');
     }
@@ -153,14 +147,7 @@ class UserController extends Controller implements HasMiddleware
 
     public function resendInvitation(Request $request, User $user)
     {
-        abort_unless($user->status === UserStatus::Pending, 422, 'Sólo se pueden reenviar invitaciones pendientes.');
-
-        $status = Password::sendResetLink(['email' => $user->email]);
-        throw_if($status !== Password::RESET_LINK_SENT, ValidationException::withMessages([
-            'email' => 'No se pudo enviar la invitación. Revisa la configuración de correo.',
-        ]));
-
-        $user->forceFill(['invited_at' => now()])->save();
+        app(UserInvitationService::class)->send($user);
 
         return back()->with('success', 'Invitación reenviada');
     }
@@ -176,6 +163,7 @@ class UserController extends Controller implements HasMiddleware
             ->groupBy('team_id');
 
         return [
+            ...app(UserInvitationService::class)->details($user),
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,

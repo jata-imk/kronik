@@ -33,7 +33,7 @@ class ResetDevelopmentDataService
         'direcciones', 'clientes_datos_fiscales', 'clientes',
         'personal_access_tokens', 'team_invitations', 'team_user', 'sucursal_user',
         'menubar_item_module', 'menubar_items',
-        'sessions', 'password_reset_tokens', 'jobs', 'failed_jobs', 'job_batches', 'cache', 'cache_locks',
+        'sessions', 'password_reset_tokens', 'user_invitation_tokens', 'jobs', 'failed_jobs', 'job_batches', 'cache', 'cache_locks',
     ];
 
     public function __construct(private ResetDataFiles $files) {}

@@ -28,6 +28,15 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+Route::middleware(['guest', 'throttle:10,1'])->group(function () {
+    Route::get('invitaciones/{token}', [\App\Http\Controllers\UserInvitationController::class, 'show'])->name('invitations.show');
+    Route::post('invitaciones', [\App\Http\Controllers\UserInvitationController::class, 'store'])->name('invitations.accept');
+});
+
+// Explicit tombstones prevent the package's historical invitation flow from accepting links.
+Route::get('team-invitations/{invitation}', fn () => abort(404))->name('team-invitations.accept');
+Route::delete('team-invitations/{invitation}', fn () => abort(404))->name('team-invitations.destroy');
+
 Route::get('/', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),

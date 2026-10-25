@@ -1,5 +1,7 @@
 # Agent Notes
 
+- [Invitaciones: vigencia propia](invitaciones-vigencia-propia.md)
+
 - [Roles: aislamiento y etiquetas](roles-aislamiento-etiquetas.md)
 
 - [Solicitudes: etiqueta de edición](solicitudes-etiqueta-edicion.md)

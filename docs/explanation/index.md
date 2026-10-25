@@ -1,5 +1,7 @@
 # Explicacion
 
+- [ADR 0026: vigencia propia de invitaciones](adr-0026-invitaciones-vigencia-propia.md)
+
 - [ADR 0025: aislamiento y presentación de roles](adr-0025-roles-aislamiento-presentacion.md)
 
 - [ADR 0024: reinicio integral de una instalación QA](adr-0024-reinicio-integral-qa.md)

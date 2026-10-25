@@ -91,6 +91,12 @@ return [
     */
 
     'passwords' => [
+        'invitaciones' => [
+            'provider' => 'users',
+            'table' => 'user_invitation_tokens',
+            'expire' => (int) env('INVITATION_EXPIRE_MINUTES', 4320),
+            'throttle' => 60,
+        ],
         'users' => [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),

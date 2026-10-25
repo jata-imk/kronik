@@ -29,6 +29,21 @@ class E2eSeeder extends Seeder
 
         DB::transaction(function (): void {
             $admin = User::where('email', 'test@example.com')->firstOrFail();
+            $invited = User::forceCreate([
+                'name' => 'Invitada E2E', 'email' => 'invitada.e2e@example.test',
+                'password' => \Illuminate\Support\Str::random(64),
+                'status' => \App\Enums\UserStatus::Pending, 'email_verified_at' => null,
+                'current_team_id' => $admin->current_team_id,
+                'current_sucursal_id' => $admin->current_sucursal_id,
+                'sucursal_principal_id' => $admin->current_sucursal_id, 'invited_at' => now(),
+            ]);
+            $invited->teams()->attach($admin->current_team_id);
+            $invited->sucursales()->attach($admin->current_sucursal_id);
+            // Synthetic token exists only in the guarded, disposable E2E environment.
+            DB::table('user_invitation_tokens')->insert([
+                'email' => $invited->email,
+                'token' => \Illuminate\Support\Facades\Hash::make('E2E-INVITATION-ONLY'), 'created_at' => now(),
+            ]);
             $secondBranch = Sucursal::updateOrCreate(
                 ['clave' => 'NORTE'],
                 [

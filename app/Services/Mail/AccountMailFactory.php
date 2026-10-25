@@ -8,11 +8,18 @@ use Illuminate\Notifications\Messages\MailMessage;
 
 class AccountMailFactory
 {
-    public function passwordReset(User $user, string $token): MailMessage
+    public function invitation(User $user, string $token): MailMessage
+    {
+        return $this->passwordReset($user, $token, true);
+    }
+
+    public function passwordReset(User $user, string $token, bool $invitationFlow = false): MailMessage
     {
         $invitation = $user->status === UserStatus::Pending;
         $appName = config('app.name');
-        $minutes = (int) config('auth.passwords.'.config('auth.defaults.passwords').'.expire');
+        $broker = $invitationFlow ? 'invitaciones' : 'users';
+        $minutes = (int) config("auth.passwords.{$broker}.expire");
+        $expiry = $invitationFlow && $minutes >= 60 && $minutes % 60 === 0 ? ($minutes / 60).' horas' : "{$minutes} minutos";
 
         return $this->message($user, [
             'subject' => $invitation ? "Te invitaron a {$appName}" : "Restablece tu contraseña en {$appName}",
@@ -22,11 +29,11 @@ class AccountMailFactory
                 ? "Te crearon una cuenta en {$appName}. Elige una contraseña para activarla y comenzar a trabajar con tu equipo."
                 : 'Recibimos una solicitud para restablecer la contraseña de tu cuenta. Usa el siguiente botón para elegir una nueva.',
             'actionLabel' => $invitation ? 'Crear mi contraseña' : 'Restablecer contraseña',
-            'actionUrl' => url(route('password.reset', [
+            'actionUrl' => url(route($invitationFlow ? 'invitations.show' : 'password.reset', [
                 'token' => $token,
                 'email' => $user->getEmailForPasswordReset(),
             ], false)),
-            'expiry' => "Este enlace vence en {$minutes} minutos a partir de su emisión.",
+            'expiry' => "Este enlace vence en {$expiry} a partir de su emisión.",
             'nextStep' => $invitation
                 ? 'Al guardar tu contraseña, tu cuenta quedará activa y este correo se marcará como verificado. Después podrás iniciar sesión.'
                 : 'Después de guardar tu nueva contraseña, podrás iniciar sesión con ella. Este enlace solo se puede usar una vez.',
