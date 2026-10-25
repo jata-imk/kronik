@@ -18,6 +18,7 @@ const props = defineProps({
     modules: Array,
     permissions: Array,
     permissionsByModule: Object,
+    capabilities: { type: Object, default: () => ({}) },
     selectedRoleAvatarLabel: String,
 });
 
@@ -30,6 +31,7 @@ const emit = defineEmits(["update:editRoleNameMode", "submit", "deleted"]);
 const menuItems = computed(() => [
     {
         label: "Cambiar nombre",
+        visible: props.capabilities.update,
         icon: "pi pi-fw pi-pencil",
         command: () => {
             emit("update:editRoleNameMode", true);
@@ -37,6 +39,7 @@ const menuItems = computed(() => [
     },
     {
         label: "Eliminar",
+        visible: props.capabilities.delete,
         icon: "pi pi-fw pi-trash",
         command: () => {
             confirm.require({
@@ -105,6 +108,7 @@ const handleSubmit = () => {
             :editRoleNameMode="editRoleNameMode"
             :menuItems="menuItems"
             :modelHasChanged="modelHasChanged"
+            :can-update="capabilities.update"
             @update:editRoleNameMode="emit('update:editRoleNameMode', $event)"
         />
 
@@ -120,6 +124,7 @@ const handleSubmit = () => {
                 v-if="role"
                 :modules="modules"
                 :permissions="permissions"
+                :readonly="!capabilities.update"
                 v-model:selected-permissions="formRolePermissions.permissions"
                 class="lg:col-span-8 col-span-1"
             />

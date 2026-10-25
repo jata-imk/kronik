@@ -6,6 +6,11 @@ use Spatie\Permission\Models\Permission as SpatiePermission;
 
 class Permission extends SpatiePermission
 {
+    protected static function booted(): void
+    {
+        static::saving(fn ($permission) => \App\Support\PermissionCatalog::fill($permission, true));
+    }
+
     public function module()
     {
         return $this->belongsTo(Module::class);
@@ -20,9 +25,10 @@ class Permission extends SpatiePermission
 
     public function getResourceAttribute()
     {
-        // Extrae el recurso del nombre del permiso  
+        // Extrae el recurso del nombre del permiso
         // Ej: "create users" -> "users"
         $parts = explode(' ', $this->name);
+
         return count($parts) > 1 ? $parts[1] : null;
     }
 }

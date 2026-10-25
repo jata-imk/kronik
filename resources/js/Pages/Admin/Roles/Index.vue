@@ -48,12 +48,14 @@ const submit = (selectedRole, modelHasChangedCallback) => {
         </template>
 
         <template #card-content>
+            <Message v-for="(error, field) in formRolePermissions.errors" :key="field" severity="error">{{ error }}</Message>
             <RolePanel
                 :roles="page.props.roles"
                 :role-members="page.props.roleMembers"
                 :modules="page.props.modules"
                 :permissions="page.props.permissions"
                 :form-role-permissions="formRolePermissions"
+                :capabilities="page.props.roleCapabilities"
                 @add-role="createRoleModalIsOpen = true"
                 @save-role="(selectedRole, modelHasChanged, modelHasChangedCallback) => {
                     modelHasChanged && submit(selectedRole, modelHasChangedCallback);

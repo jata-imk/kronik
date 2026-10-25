@@ -1,5 +1,7 @@
 # Agent Notes
 
+- [Roles: aislamiento y etiquetas](roles-aislamiento-etiquetas.md)
+
 - [Solicitudes: etiqueta de edición](solicitudes-etiqueta-edicion.md)
 
 - [Folio de escenario de Fintech sandbox](sic-folio-fintech.md)

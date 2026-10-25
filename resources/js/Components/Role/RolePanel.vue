@@ -10,6 +10,7 @@ const props = defineProps({
     modules: Array,
     permissions: Array,
     formRolePermissions: Object,
+    capabilities: { type: Object, default: () => ({}) },
 });
 
 const emit = defineEmits(["add-role", "save-role"]);
@@ -44,8 +45,8 @@ const modelHasChanged = computed({
             selectedRole.value?.permissions.map((p) => p.id),
         );
         return (
-            setUno.difference(setDos).size > 0 ||
-            setDos.difference(setUno).size > 0 ||
+            [...setUno].some((id) => !setDos.has(id)) ||
+            [...setDos].some((id) => !setUno.has(id)) ||
             (selectedRole.value &&
                 !editRoleNameMode.value &&
                 props.formRolePermissions.name !== selectedRole.value?.name)
@@ -84,10 +85,11 @@ watch(
                 (p) => p.id === permissionId,
             );
             if (permission) {
-                if (!objModules[permission.module.name]) {
-                    objModules[permission.module.name] = [];
+                const moduleLabel = permission.module?.etiqueta || "Otros permisos";
+                if (!objModules[moduleLabel]) {
+                    objModules[moduleLabel] = [];
                 }
-                objModules[permission.module.name].push(permission);
+                objModules[moduleLabel].push(permission);
             }
         }
 
@@ -100,6 +102,7 @@ watch(
     <div class="grid min-w-0 grid-cols-1 gap-4 xl:min-h-screen xl:grid-cols-12 xl:gap-0">
         <RoleSidebar
             :roles="roles"
+            :can-create="capabilities.create"
             :selectedRole="selectedRole"
             @update:selectedRole="selectedRole = $event"
             @add-role="emit('add-role')"
@@ -107,6 +110,7 @@ watch(
 
         <RoleForm
             :formRolePermissions="props.formRolePermissions"
+            :capabilities="capabilities"
             :role="selectedRole"
             :members="selectedRole ? (roleMembers?.[selectedRole.id] ?? []) : []"
             :editRoleNameMode="editRoleNameMode"

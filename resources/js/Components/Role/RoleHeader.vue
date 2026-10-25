@@ -5,6 +5,7 @@ const props = defineProps({
     editRoleNameMode: Boolean,
     menuItems: Array,
     modelHasChanged: Boolean,
+    canUpdate: Boolean,
 });
 const emit = defineEmits(["update:editRoleNameMode"]);
 </script>
@@ -31,7 +32,7 @@ const emit = defineEmits(["update:editRoleNameMode"]);
                 :buttonProps="{ class: '!hidden' }"
                 :menuButtonProps="{ rounded: true }"
                 :disabled="!props.role" />
-            <Button severity="primary" :disabled="!props.modelHasChanged" type="submit">Actualizar</Button>
+            <Button v-if="canUpdate" severity="primary" :disabled="!props.modelHasChanged" type="submit">Actualizar</Button>
         </div>
     </div>
 </template>
