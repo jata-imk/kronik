@@ -23,8 +23,9 @@ Identificar la acción de reanudar un borrador como «Editar solicitud».
 
 ## Evidencia
 
-- Pruebas: Vitest del detalle: 8 aprobadas. Build, suite backend y E2E en validación; resultados finales en la PR y Notion.
-- Revisión: `codex review --uncommitted`, esfuerzo medium, sin hallazgos. El revisor no pudo ejecutar Vitest en su sandbox; la ejecución local independiente sí pasó.
+- Pruebas: Vitest del detalle: 8 aprobadas. Build aprobado; backend: 428 aprobadas, 1 omitida, 40,484 aserciones. E2E en validación; resultados finales en la PR y Notion.
+- Diagnóstico E2E: la traza y captura mostraron que en móvil el folio no es el nombre del enlace. La comprobación de Mi trabajo identifica ahora el destino de la solicitud, conservando la aserción de visibilidad. Sin errores de consola en la traza.
+- Revisión medium: primera pasada sin hallazgos de producto; segunda pasada detectó que el selector nuevo debía usar la URL absoluta de Ziggy. Corregido. El revisor no pudo ejecutar Vitest en su sandbox; la ejecución local independiente sí pasó.
 - Migraciones o seeders: no requiere.
 
 ## Siguiente paso
