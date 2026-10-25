@@ -12,6 +12,9 @@ test("SIC displays all three services with provenance and report charts", async 
         await page.goto("/consultas-sic/nueva/1", { waitUntil: "domcontentloaded" });
         await page.getByLabel("Servicio", { exact: false }).click();
         await page.getByRole("option", { name: service, exact: true }).click();
+        if (service === "Fintech Score") {
+            await expect(page.getByText("Fintech usa un escenario de simulación del proveedor.", { exact: false })).toBeVisible();
+        }
         await page.getByLabel("Consentimiento", { exact: false }).click();
         await page.getByRole("option").first().click();
         await page.getByRole("checkbox").check();

@@ -42,3 +42,24 @@ La firma P384/SHA256 hex(DER) queda aislada y probada. Transporte productivo
 cerrado hasta validación del proveedor, contratos, credenciales y políticas.
 Pruebas automáticas con fakes; prueba explícita sandbox solo con casos sintéticos
 oficiales, sin insertar evidencia de aprobación.
+
+## Aclaración del escenario Fintech — 25/10/2026
+
+El recorrido con datos sintéticos desde la interfaz identificó que el ejemplo
+Fintech verificado usa el folio de escenario `20210304`. En laboratorio, conservar
+los mismos datos y cambiar únicamente ese folio por `8` o `00000008` produjo
+HTTP404; con el folio publicado, incluso con RFC de dígito válido y municipio
+del catálogo, respondió HTTP200 con score. El número de consulta de Kronik no
+debe confundirse con ese identificador externo de simulación.
+
+El constructor de peticiones usa `sic.servicios.fintech.folio_sandbox`, con ese
+caso oficial como configuración inicial. La petición real se conserva cifrada
+con su folio externo; cada intento mantiene su ID interno, consentimiento,
+identidad, revisión e idempotencia propios. La interfaz explica el escenario.
+No se modifica la persona enviada ni se fabrican respuestas. FICO y Reporte
+mantienen su contrato propio; no se les aplica esta correspondencia.
+
+La selección es exclusiva del flujo QA/sandbox protegido por el guard existente,
+sin habilitar transporte productivo. Los comandos de laboratorio no guardan
+evidencia aprobatoria; la operación de interfaz conserva la evidencia QA real
+recibida y sigue exigiendo los requisitos de la revisión y aprobación manual.

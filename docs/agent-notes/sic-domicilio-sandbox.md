@@ -4,7 +4,8 @@
 
 - Notion: [manual visual QA](https://app.notion.com/p/3fe61db7db7f812d878ccccc1e90d651).
 - Rama: `fix/sic-domicilio-sandbox`, base main `d218a0c`.
-- PR: pendiente de crear.
+- PR: [#43](https://github.com/jata-imk/kronik/pull/43), implementación522d0f0,
+  merge79d155d en main.
 - ADR: [0022, SIC QA](../explanation/adr-0022-sic-qa-evidencia.md).
 
 ## Objetivo
@@ -29,7 +30,10 @@ despliegue manual. Otros hallazgos permanecen registrados sin corrección.
   paréntesis/espacios solo en la petición; datos originales conservados.
 - Desarrollo/E2E: se completa la ciudad del domicilio sintético mínimo; no
   requiere ejecutar ese seeder en QA ni modificar su catálogo existente.
-- Integración/despliegue pendientes.
+- Integrado con CI aprobada y despliegue confirmado por José. En QA consultas6/7
+  dejan de recibir el400 por domicilio y terminan404 sin resultado. La petición
+  del cliente10 conserva ciudad CIUDAD DE MEXICO, colonia MONTEVIDEO y datos
+  originales de catálogo. El folio de escenario Fintech es otro bloqueo.
 
 ## Evidencia
 
@@ -38,20 +42,19 @@ despliegue manual. Otros hallazgos permanecen registrados sin corrección.
   SIC aprobadas y200 aserciones; se añadió además regresión de ciudad opcional
   en Fintech. Suite completa previa a esa última aserción:426 aprobadas,1 omitida,
   40475 aserciones; el hook final registrará el total vigente.
+- Hook final local:427 aprobadas,1 omitida,40479 aserciones y build aprobado.
 - E2E `sic-qa.spec.js`: aprobado (tres servicios y reporte con cinco gráficas),
-  con fixtures aislados, sin conexión al proveedor; Pint aprobado. CI pendiente.
+  con fixtures aislados, sin conexión al proveedor; Pint aprobado. CI verde.
 - Los ejemplos oficiales y el SDK marcan ciudad obligatoria en FICO/Reporte;
   ver las [fuentes SIC](../fuentes/circulo-credito.md).
 - Sin migraciones, permisos, nuevas variables ni habilitación productiva.
 
 ## Siguiente paso
 
-Completar pruebas y PR, integrar y pedir a José despliegue del commit. Después
-crear intentos nuevos desde UI con el domicilio corregido y conservar el historial.
-Si no existe el personaje en el sandbox, preparar datos sintéticos oficiales y
-una revisión/evidencia vigente por la interfaz; no convertir errores en score.
+Continuar con [el folio de escenario Fintech](sic-folio-fintech.md). Domicilio
+corregido y validado; conservar errores históricos y no convertir un404 en score.
 
 ## Cierre
 
-- Commit/merge: pendiente.
+- Commit/merge:522d0f0, PR43, main79d155d; despliegue reportado por José.
 - Diferidos: SIC productivo; otros hallazgos del manual.

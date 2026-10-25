@@ -58,9 +58,13 @@ final class SicPeticion
             return ['folio' => $folio, 'persona' => $persona];
         }
         if ($api === 'fintech') {
+            $folioSandbox = config('sic.servicios.fintech.folio_sandbox');
+            if (! is_string($folioSandbox) || trim($folioSandbox) === '') {
+                throw ValidationException::withMessages(['sic' => 'El escenario de simulación Fintech no está configurado. Solicita al administrador técnico revisar la configuración de QA.']);
+            }
             $persona['domicilio']['pais'] = 'MX';
 
-            return ['folioOtorgante' => $folio, 'persona' => $persona];
+            return ['folioOtorgante' => $folioSandbox, 'persona' => $persona];
         }
         $persona['nacionalidad'] = 'MX';
 
