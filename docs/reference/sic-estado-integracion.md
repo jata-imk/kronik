@@ -19,6 +19,13 @@ separan monedas MX/US/UD, distinguen cero de dato ausente y no inventan rangos d
 score ni umbrales de riesgo. La evolución compara el mismo servicio, modelo
 identificado y ambiente.
 
+Fintech usa el folio externo del escenario oficial configurado en
+`sic.servicios.fintech.folio_sandbox` (inicialmente `20210304`), separado del ID
+interno único de cada consulta. No requiere otra variable de entorno. Al
+desplegar, reconstruir configuración y reiniciar workers para incorporar el valor.
+La petición conserva los datos del cliente seleccionado; la pantalla explica que
+es una simulación. Véase la [aclaración de ADR0022](../explanation/adr-0022-sic-qa-evidencia.md#aclaración-del-escenario-fintech--25102026).
+
 ## Acceso y evidencia
 
 El domicilio enviado incluye la ciudad de `codigos_postales.datos_adicionales.nombre_ciudad`.

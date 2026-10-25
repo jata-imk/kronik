@@ -52,7 +52,8 @@ test('SIC QA preserves encrypted evidence and never duplicates a provider POST',
 
         return ($persona['domicilio']['ciudad'] ?? null) === 'CIUDAD DE MEXICO'
             && $persona['domicilio']['coloniaPoblacion'] === 'CENTRO AREA 1'
-            && $persona['domicilio']['delegacionMunicipio'] === 'ALVARO OBREGON';
+            && $persona['domicilio']['delegacionMunicipio'] === 'ALVARO OBREGON'
+            && ($api !== 'fintech' || $payload['folioOtorgante'] === '20210304');
     });
     expect($cliente->direcciones()->first()->divisionAdministrativaTres->nombre)->toBe('Centro (Área 1)')
         ->and($cliente->direcciones()->first()->codigoPostal->datos_adicionales['nombre_ciudad'])->toBe('Ciudad de México');
@@ -89,6 +90,19 @@ test('Fintech can omit the optional city without inventing one from the municipa
     Http::assertSent(fn ($request) => ! array_key_exists('ciudad', $request->data()['persona']['domicilio']));
     Http::assertSentCount(1);
     expect($query->fresh()->estado_operacion)->toBe('completada');
+});
+
+test('Fintech rejects missing sandbox scenario configuration in Spanish without sending', function () {
+    [$actor, $cliente, $data] = sicQaFixture();
+    $data['api'] = 'fintech';
+    config(['sic.servicios.fintech.folio_sandbox' => null]);
+    Http::fake();
+
+    $this->actingAs($actor)->postJson(route('circulo-credito.store', $cliente), $data)->assertUnprocessable()
+        ->assertJsonPath('errors.sic.0', 'El escenario de simulación Fintech no está configurado. Solicita al administrador técnico revisar la configuración de QA.');
+    $this->assertDatabaseCount('sic_queries', 0);
+    Http::assertNothingSent();
+    Queue::assertNothingPushed();
 });
 
 test('SIC QA validates consent again before sending and cancels without network', function () {

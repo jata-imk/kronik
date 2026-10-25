@@ -1,5 +1,7 @@
 # Agent Notes
 
+- [Folio de escenario de Fintech sandbox](sic-folio-fintech.md)
+
 - [Corrección del domicilio enviado al sandbox SIC](sic-domicilio-sandbox.md)
 
 - [Corrección de la fecha del consentimiento SIC](sic-consentimiento-zona-horaria.md)
