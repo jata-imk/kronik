@@ -9,6 +9,7 @@ test('teams are deactivated without deleting memberships', function () {
     $user->ownedTeams()->save($team = Team::factory()->make([
         'personal_team' => false,
     ]));
+    grantTeamPermissions($user, $team, ['delete teams']);
 
     $team->users()->attach(
         $otherUser = User::factory()->create(), ['role' => 'test-role']
@@ -31,6 +32,7 @@ test('personal teams cant be deleted', function () {
 test('teams with current users cannot be deactivated', function () {
     $this->actingAs($owner = User::factory()->withPersonalTeam()->create());
     $team = $owner->ownedTeams()->create(['name' => 'Operaciones', 'personal_team' => false]);
+    grantTeamPermissions($owner, $team, ['delete teams']);
     $member = User::factory()->create(['current_team_id' => $team->id]);
     $team->users()->attach($member);
 

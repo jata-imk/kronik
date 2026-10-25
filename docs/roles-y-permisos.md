@@ -101,7 +101,7 @@ const permissions = page.props.auth.permissions;
 ## CRUD de roles (flujo completo)
 
 1. **Crear rol** → `POST /admin/roles` → `RoleController::store()`
-   - Valida nombre único, `team_id` del equipo activo
+   - Valida nombre único por equipo y guard; el servidor resuelve `?team=ID` o el equipo actual. Ignora `team_id` del cuerpo
    - Opción `add_all_permissions` asigna todos los permisos de una vez
    - Guard forzado a `web`
 
@@ -141,4 +141,4 @@ Módulo: Admin
 - Un usuario puede tener el mismo nombre de rol en distintos equipos porque los roles son únicos por `name + team_id`.
 - En Jobs y comandos Artisan: llamar `setPermissionsTeamId($teamId)` manualmente antes de verificar permisos.
 - El caché de permisos de Spatie puede causar datos obsoletos. En desarrollo usar `php artisan permission:cache-reset` si los permisos no reflejan cambios recientes.
-- `UserController::index()` incluye `orWhere('name', 'Super Admin')` — el rol `Super Admin` es transversal a todos los equipos.
+- `users.is_super_admin` es la capacidad global explícita; las plantillas globales no se administran desde Roles. Véase [referencia vigente](reference/roles-y-permisos.md).

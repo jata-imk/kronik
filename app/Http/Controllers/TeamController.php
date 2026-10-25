@@ -30,6 +30,11 @@ class TeamController extends InertiaTeamController
             'users.sucursales',
             'users.sucursalPrincipal',
         );
+        $context = app(\App\Services\TeamContext::class);
+        $context->ensureAccess($request->user(), $team);
+        $capabilities = $context->run($request->user(), $team, fn () => collect([
+            'update teams', 'delete teams', 'read roles', 'read activity-log',
+        ])->mapWithKeys(fn ($permission) => [str_replace(' ', '-', $permission) => $request->user()->can($permission)]));
         $canManageUsers = $request->user()->can('read users');
         $members = collect([$team->owner])->merge($team->users)->unique('id');
         $roleAssignments = DB::table('model_has_roles')
@@ -40,6 +45,26 @@ class TeamController extends InertiaTeamController
             ->get(['model_has_roles.model_id', 'roles.id', 'roles.name'])
             ->groupBy('model_id');
 
+        $memberPayload = fn (User $user) => [
+            ...app(\App\Services\UserInvitationService::class)->details($user),
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'profile_photo_url' => $user->profile_photo_url,
+            'status' => $user->status->value,
+            'status_label' => $user->status->label(),
+            'is_super_admin' => (bool) $user->is_super_admin,
+            'is_owner' => $team->owner->is($user),
+            'roles' => $roleAssignments->get($user->id, collect())->map(fn ($role) => [
+                'id' => $role->id,
+                'name' => $role->name,
+            ])->values(),
+            'sucursal_principal' => $user->sucursalPrincipal
+                ? ['id' => $user->sucursalPrincipal->id, 'nombre' => $user->sucursalPrincipal->nombre]
+                : null,
+            'sucursales' => $user->sucursales->map->only(['id', 'nombre', 'clave'])->values(),
+        ];
+
         return Jetstream::inertia()->render($request, 'Teams/Show', [
             'team' => [
                 'id' => $team->id,
@@ -49,24 +74,8 @@ class TeamController extends InertiaTeamController
                 'owner' => $team->owner,
                 'members_count' => $members->count(),
             ],
-            'members' => $canManageUsers ? $members->map(fn (User $user) => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'profile_photo_url' => $user->profile_photo_url,
-                'status' => $user->status->value,
-                'status_label' => $user->status->label(),
-                'is_super_admin' => (bool) $user->is_super_admin,
-                'is_owner' => $team->owner->is($user),
-                'roles' => $roleAssignments->get($user->id, collect())->map(fn ($role) => [
-                    'id' => $role->id,
-                    'name' => $role->name,
-                ])->values(),
-                'sucursal_principal' => $user->sucursalPrincipal
-                    ? ['id' => $user->sucursalPrincipal->id, 'nombre' => $user->sucursalPrincipal->nombre]
-                    : null,
-                'sucursales' => $user->sucursales->map->only(['id', 'nombre', 'clave'])->values(),
-            ])->values() : [],
+            'members' => $canManageUsers ? $members->reject(fn ($user) => $user->status === \App\Enums\UserStatus::Pending)->map($memberPayload)->values() : [],
+            'pendingInvitations' => $canManageUsers ? $members->filter(fn ($user) => $user->status === \App\Enums\UserStatus::Pending)->map($memberPayload)->values() : [],
             'roles' => $canManageUsers
                 ? config('permission.models.role')::query()
                     ->where(config('permission.column_names.team_foreign_key', 'team_id'), $team->id)
@@ -78,6 +87,17 @@ class TeamController extends InertiaTeamController
                 ? Sucursal::query()->where('activa', true)->orderBy('nombre')->get(['id', 'nombre', 'clave'])
                 : [],
             'canManageUsers' => $canManageUsers,
+            'teamCapabilities' => $capabilities,
+            'responsibleCandidates' => $capabilities['update-teams'] ? $members
+                ->filter(fn ($user) => $user->status === \App\Enums\UserStatus::Active && $user->id !== $team->user_id)
+                ->map->only(['id', 'name'])->values() : [],
+            'teamRoles' => $capabilities['read-roles'] ? $team->ownedRoles()->with('permissions.module')->get()->map(fn ($role) => [
+                'id' => $role->id, 'name' => $role->name,
+                'members_count' => $roleAssignments->flatten(1)->where('id', $role->id)->pluck('model_id')->unique()->count(),
+                'modules' => $role->permissions->pluck('module.etiqueta')->filter()->unique()->values(),
+            ]) : [],
+            'recentActivity' => $capabilities['read-activity-log'] ? config('activitylog.activity_model')::where('team_id', $team->id)
+                ->latest()->limit(10)->get(['id', 'description', 'created_at']) : [],
         ]);
     }
 

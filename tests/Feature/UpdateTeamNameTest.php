@@ -4,6 +4,7 @@ use App\Models\User;
 
 test('team names can be updated', function () {
     $this->actingAs($user = User::factory()->withPersonalTeam()->create());
+    grantTeamPermissions($user, $user->currentTeam, ['update teams']);
 
     $this->put('/teams/'.$user->currentTeam->id, [
         'name' => 'Test Team',

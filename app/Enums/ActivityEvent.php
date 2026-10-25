@@ -4,6 +4,7 @@ namespace App\Enums;
 
 enum ActivityEvent: string
 {
+    case TeamResponsibleTransferred = 'team.responsible_transferred';
     case SicAttemptReconciled = 'sic.attempt_reconciled';
     case Login = 'login';
     case ApplicationCreated = 'solicitud.created';
@@ -72,6 +73,7 @@ enum ActivityEvent: string
     public function label(): string
     {
         return match ($this) {
+            self::TeamResponsibleTransferred => 'Responsable del equipo transferido',
             self::CreditPaymentRecorded => 'Pago QA registrado',
             self::CreditPaymentReversed => 'Pago QA revertido',
             self::ApplicationCreated => 'Solicitud creada',

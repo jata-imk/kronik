@@ -29,6 +29,18 @@ No existen autorregistro, borrado de cuenta por el usuario ni invitaciones de mi
 
 ## Equipos
 
+La configuración distingue equipo actual de seleccionado. Desde ella se consultan
+integrantes, invitaciones pendientes, resumen de roles y actividad del equipo,
+según permisos. Los enlaces a Roles y Bitácora conservan la selección sin cambiar
+el equipo actual. Sucursales y configuración de empresa mantienen sus ámbitos.
+
+El responsable es informativo: sus facultades dependen de roles Spatie, sin
+privilegio por ser owner. Transferir requiere `update teams`, confirmación y otro
+integrante activo; conserva membresías, roles y contextos, y registra la operación.
+Desactivar/reactivar está disponible en la configuración con los mismos permisos
+y restricciones del listado. `activo=false` tampoco permite desactivar equipos
+que aún tengan usuarios actuales. Véase [ADR 0027](../explanation/adr-0027-equipo-seleccionado-responsable.md).
+
 Los equipos se administran como departamentos institucionales. Sus roles se copian desde las plantillas globales al crear el equipo. Un equipo no puede desactivarse mientras algún usuario lo conserve como equipo actual.
 
 ## Sucursales y clientes

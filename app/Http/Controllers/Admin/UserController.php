@@ -31,7 +31,6 @@ class UserController extends Controller implements HasMiddleware
             new Middleware('permission:create users', only: ['store', 'resendInvitation']),
             new Middleware('permission:update users', only: ['update']),
             new Middleware('permission:delete users', only: ['destroy']),
-            new Middleware('permission:read activity-log', only: ['usersActivity', 'exportActivity']),
         ];
     }
 
@@ -200,7 +199,8 @@ class UserController extends Controller implements HasMiddleware
         return Inertia::render('Admin/Logs/UserActivity', [
             'activityLogs' => $activityLogs,
             'filters' => $filters,
-            'filterOptions' => $this->activityFilterOptions(),
+            'filterOptions' => $this->activityFilterOptions($filters['team_id']),
+            'activityTeam' => $filters['team_id'] ? Team::findOrFail($filters['team_id'])->only(['id', 'name']) : null,
         ]);
     }
 
@@ -240,6 +240,7 @@ class UserController extends Controller implements HasMiddleware
     {
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
+            'team_id' => ['nullable', 'integer', 'exists:teams,id'],
             'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'event' => ['nullable', 'string', 'max:100'],
             'subject_type' => ['nullable', 'string', 'max:255'],
@@ -248,7 +249,14 @@ class UserController extends Controller implements HasMiddleware
             'per_page' => ['nullable', 'integer', 'in:10,20,50,100'],
         ]);
 
+        if (! empty($filters['team_id'])) {
+            app(\App\Services\TeamContext::class)->authorize($request->user(), Team::findOrFail($filters['team_id']), 'read activity-log');
+        } else {
+            \Illuminate\Support\Facades\Gate::authorize('read activity-log');
+        }
+
         return [
+            'team_id' => null,
             'search' => '',
             'user_id' => null,
             'event' => null,
@@ -262,7 +270,7 @@ class UserController extends Controller implements HasMiddleware
 
     private function activityQuery(array $filters): Builder
     {
-        $query = $this->scopedActivityQuery()->latest();
+        $query = $this->scopedActivityQuery($filters['team_id'])->latest();
 
         if (! empty($filters['search'])) {
             $search = '%'.$filters['search'].'%';
@@ -301,11 +309,15 @@ class UserController extends Controller implements HasMiddleware
         return $query;
     }
 
-    private function scopedActivityQuery(): Builder
+    private function scopedActivityQuery(?int $teamId = null): Builder
     {
         $activityModel = config('activitylog.activity_model');
         $query = $activityModel::query()->with(['causer', 'team:id,name', 'sucursal:id,nombre,clave']);
         $user = Auth::user();
+
+        if ($teamId) {
+            return $query->where('team_id', $teamId);
+        }
 
         if ($user?->is_super_admin) {
             return $query;
@@ -363,9 +375,9 @@ class UserController extends Controller implements HasMiddleware
         ];
     }
 
-    private function activityFilterOptions(): array
+    private function activityFilterOptions(?int $teamId = null): array
     {
-        $activityQuery = $this->scopedActivityQuery();
+        $activityQuery = $this->scopedActivityQuery($teamId);
         $events = collect(ActivityEvent::options())->keyBy('value');
         $unknownEvents = (clone $activityQuery)
             ->whereNotNull('event')

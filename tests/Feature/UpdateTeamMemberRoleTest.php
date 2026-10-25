@@ -4,6 +4,7 @@ use App\Models\User;
 
 test('team member roles can be updated', function () {
     $this->actingAs($user = User::factory()->withPersonalTeam()->create());
+    grantTeamPermissions($user, $user->currentTeam, ['update members teams']);
 
     $user->currentTeam->users()->attach(
         $otherUser = User::factory()->create(), ['role' => 'admin']
@@ -18,7 +19,7 @@ test('team member roles can be updated', function () {
     ))->toBeTrue();
 });
 
-test('only team owner can update team member roles', function () {
+test('team membership alone cannot update team member roles', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
     $user->currentTeam->users()->attach(

@@ -8,7 +8,7 @@ class UpdateRoleRequest extends StoreRoleRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('update roles') ?? false;
+        return app(\App\Services\TeamContext::class)->allows($this->user(), app(\App\Services\TeamContext::class)->resolve($this), 'update roles');
     }
 
     public function rules(): array

@@ -7,6 +7,7 @@ import PageHeader from "@/Components/PageHeader.vue";
 import UpdateTeamNameForm from "@/Pages/Teams/Partials/UpdateTeamNameForm.vue";
 import CollectionSummary from "@/Components/DataTable/CollectionSummary.vue";
 import TruncatedText from "@/Components/DataTable/TruncatedText.vue";
+import TeamGeneralActions from "@/Components/Teams/TeamGeneralActions.vue";
 
 const props = defineProps({
     team: Object,
@@ -14,6 +15,11 @@ const props = defineProps({
     roles: { type: Array, default: () => [] },
     sucursales: { type: Array, default: () => [] },
     canManageUsers: Boolean,
+    teamCapabilities: { type: Object, default: () => ({}) },
+    responsibleCandidates: { type: Array, default: () => [] },
+    teamRoles: { type: Array, default: () => [] },
+    recentActivity: { type: Array, default: () => [] },
+    pendingInvitations: { type: Array, default: () => [] },
 });
 const page = usePage();
 const auth = computed(() => page.props.auth);
@@ -59,8 +65,9 @@ const inviteParams = (extra = {}) => ({
 <template>
     <AppLayout title="Configuración del equipo">
         <template #header>
-            <PageHeader eyebrow="Cuenta · Equipo actual" title="Configuración del equipo" description="Permisos, integrantes y contexto organizativo.">
+            <PageHeader :eyebrow="team.id === auth.user.current_team_id ? 'Cuenta · Equipo actual' : 'Cuenta · Equipo seleccionado'" :title="`Configuración del equipo: ${team.name}`" description="Permisos, integrantes y contexto organizativo.">
                 <template #actions>
+                    <Button v-if="auth.is_super_admin || auth.permissions['read-teams']" label="Volver a equipos" severity="secondary" as="a" :href="route('admin.teams.index')" />
                     <Tag :value="team.activo ? 'Activo' : 'Inactivo'" :severity="team.activo ? 'success' : 'secondary'" />
                     <Tag :value="team.personal_team ? 'Personal' : 'Institucional'" severity="info" />
                 </template>
@@ -68,7 +75,8 @@ const inviteParams = (extra = {}) => ({
         </template>
 
         <div class="mx-auto max-w-7xl py-8 sm:px-6 lg:px-8">
-            <UpdateTeamNameForm :team="team" :permissions="auth.permissions" />
+            <UpdateTeamNameForm :team="team" :permissions="teamCapabilities" />
+            <TeamGeneralActions :team="team" :capabilities="teamCapabilities" :candidates="responsibleCandidates" />
 
             <Card class="mt-8">
                 <template #title>
@@ -159,6 +167,7 @@ const inviteParams = (extra = {}) => ({
                                 <Button
                                     v-if="auth.permissions['update-users'] || auth.is_super_admin"
                                     icon="pi pi-pencil"
+                                    :aria-label="`Editar ${data.name}`"
                                     text
                                     as="a"
                                     :href="userUrl({ edit_user_id: data.id })"
@@ -184,6 +193,38 @@ const inviteParams = (extra = {}) => ({
                     </div>
                 </template>
             </Card>
+            <Card v-if="canManageUsers" class="mt-8">
+                <template #title>Invitaciones pendientes</template>
+                <template #content>
+                    <p v-if="!pendingInvitations.length">No hay invitaciones pendientes.</p>
+                    <div v-for="invitation in pendingInvitations" :key="invitation.id" class="mb-4 rounded-lg border border-surface-200 p-4 dark:border-surface-700">
+                        <p class="font-medium">{{ invitation.name }}</p><p>{{ invitation.email }}</p>
+                        <p>{{ invitation.invited_at ? `Enviada: ${new Date(invitation.invited_at).toLocaleString('es-MX')}` : 'Sin envío registrado' }}</p>
+                        <p v-if="invitation.invitation_expires_at">Vence: {{ new Date(invitation.invitation_expires_at).toLocaleString('es-MX') }}</p>
+                        <Tag v-if="invitation.invitation_expired" value="Sin enlace vigente" severity="warn" />
+                    </div>
+                </template>
+            </Card>
+            <Card v-if="teamCapabilities['read-roles']" class="mt-8">
+                <template #title>Roles y permisos</template>
+                <template #content>
+                    <Button label="Administrar roles" as="a" :href="route('admin.roles.index', { team: team.id })" />
+                    <p v-if="!teamRoles.length" class="mt-4">Este equipo aún no tiene roles.</p>
+                    <div v-for="role in teamRoles" :key="role.id" class="mt-4 rounded-lg border border-surface-200 p-4 dark:border-surface-700">
+                        <p class="font-medium">{{ role.name }}</p><p>{{ role.members_count }} personas asignadas</p>
+                        <CollectionSummary :items="role.modules" max-width="24rem" />
+                    </div>
+                </template>
+            </Card>
+            <Card v-if="teamCapabilities['read-activity-log']" class="mt-8">
+                <template #title>Actividad reciente</template>
+                <template #content>
+                    <Button label="Ver bitácora del equipo" as="a" :href="route('admin.users.activity', { team_id: team.id })" />
+                    <p v-if="!recentActivity.length" class="mt-4">No hay actividad reciente.</p>
+                    <p v-for="activity in recentActivity" :key="activity.id" class="mt-3">{{ activity.description }} · {{ new Date(activity.created_at).toLocaleString('es-MX') }}</p>
+                </template>
+            </Card>
         </div>
+        <ConfirmDialog />
     </AppLayout>
 </template>

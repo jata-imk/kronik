@@ -71,10 +71,18 @@ class E2eSeeder extends Seeder
 
             $admin->sucursales()->syncWithoutDetaching([$secondBranch->id]);
 
-            Team::updateOrCreate(
+            $operationsTeam = Team::updateOrCreate(
                 ['user_id' => $admin->id, 'name' => 'Operaciones E2E'],
                 ['personal_team' => false, 'activo' => true],
             );
+            $responsible = User::forceCreate([
+                'name' => 'Responsable E2E', 'email' => 'responsable.e2e@example.test',
+                'password' => \Illuminate\Support\Str::random(64), 'status' => \App\Enums\UserStatus::Active,
+                'email_verified_at' => now(), 'current_team_id' => $admin->current_team_id,
+                'current_sucursal_id' => $admin->current_sucursal_id, 'sucursal_principal_id' => $admin->current_sucursal_id,
+            ]);
+            $responsible->teams()->attach([$admin->current_team_id, $operationsTeam->id]);
+            $responsible->sucursales()->attach($admin->current_sucursal_id);
 
             app(ActivityLogService::class)->log(
                 event: ActivityEvent::Login,
