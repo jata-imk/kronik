@@ -25,6 +25,7 @@ Administrar el equipo seleccionado sin alterar el actual y formalizar al respons
 
 - Pruebas: suite backend completa 457 aprobadas y 1 omitida; regresión final de contexto/validación/invitación 10 aprobadas / 87 aserciones; 4 Vue; build y Pint aprobados. E2E: 4 administración, 1 Roles y 1 configuración aprobados.
 - Revisión medium: corregido fixture de invitación para otorgar permiso explícito; segunda pasada sin hallazgos. Captura y traza del primer E2E permitieron corregir el nombre accesible del selector de responsable. La captura móvil desactiva transiciones para reflejar el layout final.
+- CI inicial: detectó la omisión de la ruta de transferencia en el commit; se incluye en el commit correctivo de la misma PR. El código de la ruta ya formaba parte de las pruebas y review locales.
 - Capturas: [escritorio](../assets/equipo-seleccionado-desktop.png) y [móvil](../assets/equipo-seleccionado-mobile.png).
 - Migraciones o seeders: sin migración; fixture E2E activo para transferir responsable.
 
