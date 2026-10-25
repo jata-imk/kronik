@@ -145,6 +145,16 @@ const deactivate = (user) => {
                     <template #body="{ data }"><CollectionSummary :items="data.team_names" max-width="20rem" /></template>
                     <template #filter="{ filterModel, filterCallback }"><InputText v-model="filterModel.value" placeholder="Equipo" @input="filterCallback()" /></template>
                 </Column>
+                <Column header="Invitación">
+                    <template #body="{ data }">
+                        <div v-if="data.status === 'pending'" class="text-sm">
+                            <p>{{ data.invited_at ? `Enviada: ${new Date(data.invited_at).toLocaleString('es-MX')}` : 'Sin envío registrado' }}</p>
+                            <p v-if="data.invitation_expires_at">Vence: {{ new Date(data.invitation_expires_at).toLocaleString('es-MX') }}</p>
+                            <Tag v-if="data.invitation_expired" value="Sin enlace vigente" severity="warn" />
+                        </div>
+                        <span v-else>—</span>
+                    </template>
+                </Column>
                 <Column field="sucursal_search" header="Sucursales" :show-filter-menu="false">
                     <template #body="{ data }"><Tag v-if="data.is_super_admin" value="Acceso global" severity="contrast" /><CollectionSummary v-else :items="data.sucursal_names" max-width="20rem" /></template>
                     <template #filter="{ filterModel, filterCallback }"><InputText v-model="filterModel.value" placeholder="Sucursal" @input="filterCallback()" /></template>

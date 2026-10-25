@@ -47,8 +47,8 @@ test('admin invitation and resend deliver branded multipart emails and the invit
     expect($first->getSubject())->toBe('Te invitaron a Kronik QA')
         ->and($first->getTo()[0]->getAddress())->toBe($user->email)
         ->and($first->getFrom()[0]->getName())->toBe('Equipo Kronik QA')
-        ->and($first->getHtmlBody())->toContain('Crear mi contraseña', 'Tu equipo te espera.', '60 minutos')
-        ->and($first->getTextBody())->toContain('Contadora invitada', 'Crear mi contraseña', '60 minutos')
+        ->and($first->getHtmlBody())->toContain('Crear mi contraseña', 'Tu equipo te espera.', '72 horas')
+        ->and($first->getTextBody())->toContain('Contadora invitada', 'Crear mi contraseña', '72 horas')
         ->and($first->toString())->toContain('multipart/alternative', 'text/plain', 'text/html')
         ->and($user->status)->toBe(UserStatus::Pending);
 
@@ -65,11 +65,11 @@ test('admin invitation and resend deliver branded multipart emails and the invit
     $message = lastAccountEmail();
     expect($message->getSubject())->toBe('Te invitaron a Kronik QA');
     $token = basename(parse_url(accountActionUrl($message), PHP_URL_PATH));
-    expect(Password::tokenExists($user, basename(parse_url($firstUrl, PHP_URL_PATH))))->toBeFalse();
+    expect(Password::broker('invitaciones')->tokenExists($user, basename(parse_url($firstUrl, PHP_URL_PATH))))->toBeFalse();
 
     $this->app['auth']->forgetGuards();
     Inertia::flushShared();
-    $this->post('/reset-password', [
+    $this->post('/invitaciones', [
         'token' => $token,
         'email' => $user->email,
         'password' => 'nueva-clave-segura',
@@ -80,7 +80,7 @@ test('admin invitation and resend deliver branded multipart emails and the invit
     expect($user->status)->toBe(UserStatus::Active)
         ->and($user->hasVerifiedEmail())->toBeTrue()
         ->and(Hash::check('nueva-clave-segura', $user->password))->toBeTrue()
-        ->and(Password::tokenExists($user, $token))->toBeFalse();
+        ->and(Password::broker('invitaciones')->tokenExists($user, $token))->toBeFalse();
 });
 
 test('active user receives recovery wording and a valid token with the configured expiry', function () {

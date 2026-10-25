@@ -26,7 +26,7 @@ class UserManagementService
                 'sucursal_principal_id' => $data['sucursal_principal_id'],
                 'current_sucursal_id' => $data['sucursal_principal_id'],
                 'status' => UserStatus::Pending,
-                'invited_at' => now(),
+                'invited_at' => null,
             ]);
 
             $this->syncAssignments($user, $data, $actor);

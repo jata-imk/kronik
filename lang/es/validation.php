@@ -84,6 +84,7 @@ return [
     ],
 
     'attributes' => [
+        'token' => 'enlace de acceso',
         'permissions' => 'permisos del rol',
         'permissions.*' => 'permiso del rol',
         'add_all_permissions' => 'asignación de todos los permisos',

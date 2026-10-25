@@ -10,7 +10,16 @@
 
 Las tres variantes comparten diseño, nombre de aplicación, identificación de la cuenta, vigencia, instrucciones de seguridad y enlace alternativo. Cada envío incluye HTML y texto plano (`multipart/alternative`). Si una cuenta **pendiente** solicita recuperación, recibe la variante de invitación: sigue necesitando activar su cuenta.
 
-La invitación utiliza el broker de recuperación existente. Al guardar la contraseña, la cuenta pendiente se activa y su correo se marca como verificado. No se envía una segunda verificación en ese paso. Un reenvío genera otro token e invalida el anterior; si se solicita inmediatamente, el broker puede rechazarlo por su límite de frecuencia. La vigencia se obtiene de `auth.passwords.{broker}.expire` (60 minutos con la configuración actual). La verificación utiliza `auth.verification.expire`, con valor predeterminado de 60 minutos, y mantiene la firma temporal de Laravel.
+La invitación administrativa utiliza el broker `invitaciones` y su tabla propia,
+con 72 horas por defecto (`INVITATION_EXPIRE_MINUTES=4320`). Al guardar la
+contraseña, la cuenta pendiente se activa y verifica el correo una sola vez.
+Reenviar invalida el enlace anterior y cualquier enlace corto legado; antes de
+60 segundos muestra «Espera un minuto antes de reenviar la invitación».
+Recuperación mantiene el broker `users` y 60 minutos; también conservan ese plazo
+los enlaces anteriores y la recuperación solicitada por una cuenta pendiente.
+La verificación conserva su firma temporal y `auth.verification.expire` (60 min).
+Las rutas heredadas de invitación Jetstream responden 404; véase
+[ADR 0026](../explanation/adr-0026-invitaciones-vigencia-propia.md).
 
 ## 1. Revisar localmente sin credenciales SMTP
 

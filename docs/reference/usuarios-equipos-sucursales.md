@@ -11,6 +11,12 @@ Cambiar de equipo no cambia la sucursal y cambiar de sucursal no cambia el equip
 
 ## Alta y estado de usuarios
 
+Las invitaciones administrativas tienen vigencia propia de 72 horas configurables.
+El listado muestra envío y vencimiento real; reenviar antes de 60 segundos pide
+esperar un minuto. Reenviar invalida el enlace anterior. Aceptar activa una cuenta
+pendiente y verifica su correo, una sola vez. Recuperación conserva 60 minutos.
+Véase [ADR 0026](../explanation/adr-0026-invitaciones-vigencia-propia.md).
+
 Las cuentas se crean en **Administración > Usuarios**. Es obligatorio asignar al menos un equipo, sus roles, una sucursal principal y las sucursales permitidas. La cuenta queda `pending` y recibe un enlace de restablecimiento para definir su contraseña. Al completarlo pasa a `active` y verifica el correo.
 
 Estados:

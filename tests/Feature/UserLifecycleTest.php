@@ -3,7 +3,7 @@
 use App\Enums\UserStatus;
 use App\Models\Sucursal;
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Notifications\UserInvitation;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
 use Spatie\Permission\Models\Role;
@@ -32,7 +32,7 @@ test('global administrator creates a pending user with team and branch assignmen
         ->and($invited->sucursales()->whereKey($branch)->exists())->toBeTrue();
     setPermissionsTeamId($team->id);
     expect($invited->hasRole($role))->toBeTrue();
-    Notification::assertSentTo($invited, ResetPassword::class);
+    Notification::assertSentTo($invited, UserInvitation::class);
 });
 
 test('inactive and pending users cannot keep an authenticated session', function (UserStatus $status) {
