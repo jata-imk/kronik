@@ -7,6 +7,7 @@ use App\Models\Cliente;
 use App\Models\ClienteConsentimientoSic;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -25,6 +26,8 @@ class ClienteConsentimientoSicService
             return DB::transaction(function () use ($cliente, $data, $file, $user, $disk, $path) {
                 $consentimiento = $cliente->consentimientosSic()->create([
                     ...$data,
+                    // The database datetime has no offset; preserve the browser's instant in the app timezone.
+                    'otorgado_en' => Carbon::parse($data['otorgado_en'])->setTimezone(config('app.timezone')),
                     'registrado_por' => $user->id,
                     'evidencia_disk' => $disk,
                     'evidencia_path' => $path,
