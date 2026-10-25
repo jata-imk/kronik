@@ -23,7 +23,7 @@ const closeCreateRoleModal = () => {
 };
 
 const submit = (selectedRole, modelHasChangedCallback) => {
-    formRolePermissions.put(route("admin.roles.update", selectedRole.id), {
+    formRolePermissions.put(route("admin.roles.update", { role: selectedRole.id, team: page.props.roleTeam.id }), {
         only: ["roles"],
         onSuccess: () => {
             createRoleModalIsOpen.value = false;
@@ -42,8 +42,8 @@ const submit = (selectedRole, modelHasChangedCallback) => {
 <template>
     <AppLayout title="Roles y permisos" :pt="{ 'card-content-body': '!p-0' }">
         <template #card-header>
-            <PageHeader eyebrow="Administración · Accesos" title="Roles y permisos" description="Configura los permisos de cada rol.">
-                <template #actions><Button icon="pi pi-arrow-left" label="Volver" severity="secondary" as="a" :href="route('admin.dashboard')" /></template>
+            <PageHeader eyebrow="Administración · Accesos" title="Roles y permisos" :description="`Configura los permisos de ${page.props.roleTeam.name}. El equipo actual no cambia.`">
+                <template #actions><Button icon="pi pi-arrow-left" label="Volver" severity="secondary" as="a" :href="route('teams.show', page.props.roleTeam.id)" /></template>
             </PageHeader>
         </template>
 
@@ -56,12 +56,13 @@ const submit = (selectedRole, modelHasChangedCallback) => {
                 :permissions="page.props.permissions"
                 :form-role-permissions="formRolePermissions"
                 :capabilities="page.props.roleCapabilities"
+                :team-id="page.props.roleTeam.id"
                 @add-role="createRoleModalIsOpen = true"
                 @save-role="(selectedRole, modelHasChanged, modelHasChangedCallback) => {
                     modelHasChanged && submit(selectedRole, modelHasChangedCallback);
                 }" />
 
-            <CreateRoleModal v-model:visible="createRoleModalIsOpen" @close="closeCreateRoleModal" />
+            <CreateRoleModal :team-id="page.props.roleTeam.id" v-model:visible="createRoleModalIsOpen" @close="closeCreateRoleModal" />
             <ConfirmDialog></ConfirmDialog>
         </template>
     </AppLayout>

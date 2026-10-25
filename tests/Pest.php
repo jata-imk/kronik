@@ -74,3 +74,17 @@ function actingAsSuperAdmin(): App\Models\User
 
     return $user;
 }
+
+function grantTeamPermissions(App\Models\User $user, App\Models\Team $team, array $permissions): void
+{
+    $previous = getPermissionsTeamId();
+    try {
+        setPermissionsTeamId($team->id);
+        foreach ($permissions as $name) {
+            $user->givePermissionTo(App\Models\Permission::findOrCreate($name, 'web'));
+        }
+    } finally {
+        setPermissionsTeamId($previous);
+        $user->unsetRelation('roles')->unsetRelation('permissions');
+    }
+}

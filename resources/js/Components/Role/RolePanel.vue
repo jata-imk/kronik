@@ -6,6 +6,7 @@ import RoleForm from "@components/Role/RoleForm.vue";
 
 const props = defineProps({
     roles: Array,
+    teamId: Number,
     roleMembers: Object,
     modules: Array,
     permissions: Array,
@@ -111,6 +112,7 @@ watch(
         <RoleForm
             :formRolePermissions="props.formRolePermissions"
             :capabilities="capabilities"
+            :team-id="teamId"
             :role="selectedRole"
             :members="selectedRole ? (roleMembers?.[selectedRole.id] ?? []) : []"
             :editRoleNameMode="editRoleNameMode"

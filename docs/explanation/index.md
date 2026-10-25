@@ -1,5 +1,7 @@
 # Explicacion
 
+- [ADR 0027: equipo seleccionado y responsable informativo](adr-0027-equipo-seleccionado-responsable.md)
+
 - [ADR 0026: vigencia propia de invitaciones](adr-0026-invitaciones-vigencia-propia.md)
 
 - [ADR 0025: aislamiento y presentación de roles](adr-0025-roles-aislamiento-presentacion.md)

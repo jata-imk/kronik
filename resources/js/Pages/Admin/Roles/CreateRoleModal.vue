@@ -8,6 +8,7 @@ const toast = useToast();
 const emit = defineEmits(["close"]);
 const props = defineProps({
     visible: Boolean,
+    teamId: Number,
 });
 
 const visible = ref(props.visible);
@@ -25,7 +26,7 @@ const form = useForm({
 });
 
 const submit = async () => {
-    form.post(route("admin.roles.store"), {
+    form.post(route("admin.roles.store", { team: props.teamId }), {
         only: ["roles"],
         onSuccess: () => {
             toast.add({

@@ -9,13 +9,13 @@ class StoreRoleRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('create roles') ?? false;
+        return app(\App\Services\TeamContext::class)->allows($this->user(), app(\App\Services\TeamContext::class)->resolve($this), 'create roles');
     }
 
     protected function nameRules(): array
     {
         return ['required', 'string', 'max:255', Rule::unique('roles', 'name')
-            ->where('team_id', $this->user()->current_team_id)
+            ->where('team_id', app(\App\Services\TeamContext::class)->resolve($this)->id)
             ->where('guard_name', 'web')->ignore($this->route('role'))];
     }
 

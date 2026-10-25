@@ -28,13 +28,13 @@ const updateTeamName = () => {
         </template>
 
         <template #description>
-            El nombre del equipo y la información del propietario.
+            Datos generales y persona responsable del equipo.
         </template>
 
         <template #form>
             <!-- Team Owner Information -->
             <div class="col-span-6">
-                <InputLabel value="Propietario del equipo" />
+                <InputLabel value="Responsable del equipo" />
 
                 <div class="flex items-center mt-2">
                     <img class="size-12 rounded-full object-cover" :src="team.owner.profile_photo_url" :alt="team.owner.name">

@@ -10,7 +10,10 @@ Kronik usa tres conceptos distintos:
 
 ## Decision
 
-Los equipos (`teams`) representan departamentos o grupos de trabajo, no la financiera. Por eso las acciones de Jetstream sobre equipos usan `TeamPolicy` (`ownsTeam`, `belongsToTeam`) y no dependen de que los seeders Spatie hayan corrido.
+Los equipos (`teams`) representan departamentos o grupos de trabajo, no la
+financiera. `TeamPolicy` comprueba pertenencia y permisos Spatie del equipo
+afectado; ser responsable no concede privilegios. Super Admin conserva su acceso
+global explícito. Véase [ADR 0027](../explanation/adr-0027-equipo-seleccionado-responsable.md).
 
 Spatie sigue siendo la fuente para permisos funcionales del sistema, como:
 
@@ -29,7 +32,12 @@ Ver [Usuarios, equipos y sucursales](usuarios-equipos-sucursales.md).
 
 ## Administración de roles
 
-Las escrituras de Roles se restringen al equipo actual autorizado. Enviar
+Roles acepta `?team=ID` para administrar el seleccionado; sin ese parámetro usa
+el actual. La selección no cambia el equipo ni sucursal actuales. Consulta,
+alta, edición y eliminación autorizan los permisos del seleccionado, y las
+capacidades de navegación permanecen en el contexto actual.
+
+Las escrituras de Roles se restringen al equipo seleccionado autorizado. Enviar
 `team_id` en el cuerpo no cambia ese destino. Actualizar o eliminar un rol de
 otro equipo o una plantilla global devuelve 404, incluso para Super Admin.
 Las plantillas continúan administradas mediante seeders.

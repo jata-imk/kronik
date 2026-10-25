@@ -84,6 +84,10 @@ return [
     ],
 
     'attributes' => [
+        'team' => 'equipo seleccionado',
+        'team_id' => 'equipo seleccionado',
+        'responsible_id' => 'responsable del equipo',
+        'confirmation' => 'confirmación de transferencia',
         'token' => 'enlace de acceso',
         'permissions' => 'permisos del rol',
         'permissions.*' => 'permiso del rol',

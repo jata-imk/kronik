@@ -4,6 +4,7 @@ use App\Models\User;
 
 test('team members can be removed from teams', function () {
     $this->actingAs($user = User::factory()->withPersonalTeam()->create());
+    grantTeamPermissions($user, $user->currentTeam, ['remove members teams']);
 
     $user->currentTeam->users()->attach(
         $otherUser = User::factory()->create(), ['role' => 'admin']
@@ -14,7 +15,7 @@ test('team members can be removed from teams', function () {
     expect($user->currentTeam->fresh()->users)->toHaveCount(0);
 });
 
-test('only team owner can remove team members', function () {
+test('team membership alone cannot remove team members', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
     $user->currentTeam->users()->attach(

@@ -9,7 +9,7 @@ class UpdateTeamRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('update teams') ?? false;
+        return app(\App\Services\TeamContext::class)->allows($this->user(), $this->route('team'), 'update teams');
     }
 
     public function rules(): array

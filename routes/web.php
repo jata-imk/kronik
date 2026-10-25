@@ -172,6 +172,7 @@ Route::middleware([
     })->name('componentes');
 
     Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');
+    Route::put('/teams/{team}/responsible', [\App\Http\Controllers\TeamResponsibleController::class, 'update'])->name('teams.responsible.update');
     Route::post('/teams', [TeamController::class, 'store'])->name('teams.store');
     Route::put('/current-sucursal', [CurrentSucursalController::class, 'update'])->name('current-sucursal.update');
 

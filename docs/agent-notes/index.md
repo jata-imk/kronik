@@ -1,5 +1,7 @@
 # Agent Notes
 
+- [Equipo: contexto seleccionado y responsable](equipo-contexto-responsable.md)
+
 - [Invitaciones: vigencia propia](invitaciones-vigencia-propia.md)
 
 - [Roles: aislamiento y etiquetas](roles-aislamiento-etiquetas.md)

@@ -12,6 +12,7 @@ import RoleUsers from "./RoleUsers.vue";
 const props = defineProps({
     formRolePermissions: Object,
     role: Object,
+    teamId: Number,
     members: { type: Array, default: () => [] },
     editRoleNameMode: Boolean,
     modelHasChanged: Boolean,
@@ -58,7 +59,7 @@ const menuItems = computed(() => [
                 },
                 accept: () => {
                     router.delete(
-                        route("admin.roles.destroy", props.role.id),
+                        route("admin.roles.destroy", { role: props.role.id, team: props.teamId }),
                         {
                             only: ["roles", "errors"],
                             onSuccess: () => {
