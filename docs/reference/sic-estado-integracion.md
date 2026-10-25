@@ -21,6 +21,17 @@ identificado y ambiente.
 
 ## Acceso y evidencia
 
+El domicilio enviado incluye la ciudad de `codigos_postales.datos_adicionales.nombre_ciudad`.
+FICO v2 y Reporte de Crédito + FICO la requieren; si falta o supera 65 caracteres,
+la consulta se rechaza en español antes de conservar un intento o enviar al proveedor.
+No se sustituye por el municipio o el estado. Fintech admite omitirla cuando el
+catálogo no dispone de ese dato.
+
+En la petición, los textos del domicilio se convierten a mayúsculas sin acentos,
+se reemplazan los paréntesis por espacios y se compactan los espacios. Esto permite
+enviar colonias como `Centro (Área 1)`; el expediente y el catálogo conservan su
+nombre original. No se alteran las respuestas históricas.
+
 - Historial/detalle: lectura de historial y clientes; política de acceso al cliente.
 - Consulta: permiso de creación SIC, actualización del cliente, equipo/sucursal
   activos, consentimiento vigente con archivo y revisión actual si corresponde.

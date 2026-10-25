@@ -1,5 +1,7 @@
 # Agent Notes
 
+- [Corrección del domicilio enviado al sandbox SIC](sic-domicilio-sandbox.md)
+
 - [Corrección de la fecha del consentimiento SIC](sic-consentimiento-zona-horaria.md)
 
 - [Correos de acceso y seguridad](correos-acceso.md)
