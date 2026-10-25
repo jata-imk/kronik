@@ -24,6 +24,8 @@ identificado y ambiente.
 - Historial/detalle: lectura de historial y clientes; política de acceso al cliente.
 - Consulta: permiso de creación SIC, actualización del cliente, equipo/sucursal
   activos, consentimiento vigente con archivo y revisión actual si corresponde.
+  La [fecha de otorgamiento](expediente-clientes.md#consentimiento-sic) conserva
+  el instante enviado por el navegador aunque la aplicación use una zona distinta de UTC.
 - Conciliación: permiso adicional `reconcile circulo-credito`.
 - Intento: actor, equipo, sucursal, consentimiento, revisión opcional, hashes e
   idempotencia. Petición/respuesta/resultado/conciliación cifrados e inmutables.
