@@ -1,5 +1,7 @@
 # Explicacion
 
+- [ADR 0025: aislamiento y presentación de roles](adr-0025-roles-aislamiento-presentacion.md)
+
 - [ADR 0024: reinicio integral de una instalación QA](adr-0024-reinicio-integral-qa.md)
 
 - [ADR 0021: identidad visual y navegación de Kronik](adr-0021-identidad-visual-kronik.md)

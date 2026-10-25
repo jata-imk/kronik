@@ -41,12 +41,13 @@ const submit = async () => {
 </script>
 
 <template>
-  <Dialog v-model:visible="visible" :modal="true" :style="{ width: '500px' }" @hide="emit('close')" >
+  <Dialog v-model:visible="visible" :modal="true" :style="{ width: '500px', maxWidth: '95vw' }" @hide="emit('close')" >
     <template #header>
       <h2>Crear Rol</h2>
     </template>
 
     <form @submit.prevent="submit">
+      <Message v-for="(error, field) in form.errors" :key="field" severity="error">{{ error }}</Message>
       <div class="grid grid-cols-1 gap-4">
         <div>
           <label class="block text-sm font-medium mb-1" for="name">Nombre del Rol</label>

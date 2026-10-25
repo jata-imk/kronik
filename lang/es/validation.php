@@ -84,6 +84,9 @@ return [
     ],
 
     'attributes' => [
+        'permissions' => 'permisos del rol',
+        'permissions.*' => 'permiso del rol',
+        'add_all_permissions' => 'asignación de todos los permisos',
         'otorgado_en' => 'fecha de consentimiento',
         'fecha_desembolso' => 'fecha del desembolso',
         'importe' => 'importe',
