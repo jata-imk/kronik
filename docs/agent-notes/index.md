@@ -1,5 +1,7 @@
 # Agent Notes
 
+- [Solicitudes: etiqueta de edición](solicitudes-etiqueta-edicion.md)
+
 - [Folio de escenario de Fintech sandbox](sic-folio-fintech.md)
 
 - [Corrección del domicilio enviado al sandbox SIC](sic-domicilio-sandbox.md)
