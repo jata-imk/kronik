@@ -2,7 +2,8 @@
 
 ## Referencias
 
-- Notion: https://app.notion.com/p/3fd61db7db7f81c2a96ae325ea722a33.
+- Proyecto en Notion: https://app.notion.com/p/1a261db7db7f800c809bf96e22e0d05a.
+- La antigua nota técnica de Notion figura eliminada al consultar el 26/10/2026. El seguimiento técnico permanece en esta Agent Note y en la PR; no se restaura ni duplica la nota eliminada.
 - Rama: `docs/indice-temas-documentacion-viva`; base inicial `06a5723`, sincronizada con `main` en `735e822` el 26/10/2026.
 - PR: https://github.com/jata-imk/kronik/pull/41 (borrador; sin integrar).
 - Regla: [documentación viva](../reference/documentacion-viva.md).
