@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from "vue";
-import { router, useForm, usePage } from "@inertiajs/vue3";
+import { useForm, usePage } from "@inertiajs/vue3";
 import ActionMessage from "@/Components/ActionMessage.vue";
 import ActionSection from "@/Components/ActionSection.vue";
 import ConfirmationModal from "@/Components/ConfirmationModal.vue";
@@ -39,12 +39,6 @@ const addTeamMember = () => {
         errorBag: "addTeamMember",
         preserveScroll: true,
         onSuccess: () => addTeamMemberForm.reset(),
-    });
-};
-
-const cancelTeamInvitation = (invitation) => {
-    router.delete(route("team-invitations.destroy", invitation), {
-        preserveScroll: true,
     });
 };
 
@@ -187,43 +181,6 @@ const displayableRole = (role) => {
                     </Button>
                 </template>
             </FormSection>
-        </div>
-
-        <div v-if="team.team_invitations.length > 0 && props.permissions['add-members-teams']">
-            <SectionBorder />
-
-            <!-- Team Member Invitations -->
-            <ActionSection class="mt-10 sm:mt-0">
-                <template #title>
-                    Invitaciones de equipo pendientes
-                </template>
-
-                <template #description>
-                    Estas personas han sido invitadas a tu equipo y recibieron un correo electrónico de invitación. Pueden unirse al equipo si aceptan la invitación.
-                </template>
-
-                <!-- Pending Team Member Invitation List -->
-                <template #content>
-                    <div class="space-y-6">
-                        <div v-for="invitation in team.team_invitations" :key="invitation.id" class="flex items-center justify-between">
-                            <div class="text-gray-600 dark:text-gray-400">
-                                {{ invitation.email }}
-                            </div>
-
-                            <div class="flex items-center">
-                                <!-- Cancel Team Invitation -->
-                                <button
-                                    v-if="props.permissions['remove-members-teams']"
-                                    class="cursor-pointer ms-6 text-sm text-red-500 focus:outline-none"
-                                    @click="cancelTeamInvitation(invitation)"
-                                >
-                                    Cancelar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-            </ActionSection>
         </div>
 
         <div v-if="team.users.length > 0">

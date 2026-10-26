@@ -13,6 +13,9 @@ comprobaciones; la nota conserva la evidencia de la entrega y resultados QA.
 
 ## Seguimiento y temas relacionados
 
+- [ADR 0026: vigencia propia de invitaciones](../explanation/adr-0026-invitaciones-vigencia-propia.md).
+- [Nota de vigencia de invitaciones](../agent-notes/invitaciones-vigencia-propia.md).
+
 - [Nota de correos de acceso](../agent-notes/correos-acceso.md).
 - [Entrega y evidencia en Notion](https://app.notion.com/p/3fd61db7db7f8154a184fe116db8e0d5).
 - [Usuarios y permisos](usuarios-equipos-permisos.md), [diseño](diseno-navegacion.md), [despliegue](despliegue-mantenimiento.md).

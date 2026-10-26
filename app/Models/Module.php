@@ -3,17 +3,22 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\MenubarItemModule;
 
 class Module extends Model
 {
     protected $table = 'modules';
+
     protected $fillable = [
         'name',
         'icon',
         'route_name',
-        'parent_id'
+        'parent_id', 'etiqueta', 'descripcion',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(fn ($module) => \App\Support\PermissionCatalog::fill($module));
+    }
 
     public function parent()
     {
@@ -35,7 +40,7 @@ class Module extends Model
         )->withPivot('routes')
             ->as('menubarItemModule')
             ->using(MenubarItemModule::class)
-            ->withTimestamps();;
+            ->withTimestamps();
     }
 
     public function menubarItemModules()

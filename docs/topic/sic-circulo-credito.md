@@ -20,6 +20,10 @@ El alcance productivo se rige por las validaciones pendientes documentadas.
 
 ## Seguimiento y temas relacionados
 
+- [Consentimiento y zona horaria](../agent-notes/sic-consentimiento-zona-horaria.md).
+- [Domicilio enviado al sandbox](../agent-notes/sic-domicilio-sandbox.md).
+- [Folio del escenario Fintech](../agent-notes/sic-folio-fintech.md).
+
 - [Backlog 05: CDC, score y SIC](../todos/05-cdc-score-sic.md).
 - [Nota de SIC y score](../agent-notes/05-sic-score.md).
 - [Clientes](clientes-expediente.md), [originación](originacion-solicitudes.md), [portada y capturas](diseno-navegacion.md).

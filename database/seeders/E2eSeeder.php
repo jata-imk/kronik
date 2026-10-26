@@ -29,6 +29,21 @@ class E2eSeeder extends Seeder
 
         DB::transaction(function (): void {
             $admin = User::where('email', 'test@example.com')->firstOrFail();
+            $invited = User::forceCreate([
+                'name' => 'Invitada E2E', 'email' => 'invitada.e2e@example.test',
+                'password' => \Illuminate\Support\Str::random(64),
+                'status' => \App\Enums\UserStatus::Pending, 'email_verified_at' => null,
+                'current_team_id' => $admin->current_team_id,
+                'current_sucursal_id' => $admin->current_sucursal_id,
+                'sucursal_principal_id' => $admin->current_sucursal_id, 'invited_at' => now(),
+            ]);
+            $invited->teams()->attach($admin->current_team_id);
+            $invited->sucursales()->attach($admin->current_sucursal_id);
+            // Synthetic token exists only in the guarded, disposable E2E environment.
+            DB::table('user_invitation_tokens')->insert([
+                'email' => $invited->email,
+                'token' => \Illuminate\Support\Facades\Hash::make('E2E-INVITATION-ONLY'), 'created_at' => now(),
+            ]);
             $secondBranch = Sucursal::updateOrCreate(
                 ['clave' => 'NORTE'],
                 [
@@ -56,10 +71,18 @@ class E2eSeeder extends Seeder
 
             $admin->sucursales()->syncWithoutDetaching([$secondBranch->id]);
 
-            Team::updateOrCreate(
+            $operationsTeam = Team::updateOrCreate(
                 ['user_id' => $admin->id, 'name' => 'Operaciones E2E'],
                 ['personal_team' => false, 'activo' => true],
             );
+            $responsible = User::forceCreate([
+                'name' => 'Responsable E2E', 'email' => 'responsable.e2e@example.test',
+                'password' => \Illuminate\Support\Str::random(64), 'status' => \App\Enums\UserStatus::Active,
+                'email_verified_at' => now(), 'current_team_id' => $admin->current_team_id,
+                'current_sucursal_id' => $admin->current_sucursal_id, 'sucursal_principal_id' => $admin->current_sucursal_id,
+            ]);
+            $responsible->teams()->attach([$admin->current_team_id, $operationsTeam->id]);
+            $responsible->sucursales()->attach($admin->current_sucursal_id);
 
             app(ActivityLogService::class)->log(
                 event: ActivityEvent::Login,

@@ -31,7 +31,7 @@ class PreviewAccountMail extends Command
         }
 
         $user = new User(['name' => 'Andrea Martínez', 'email' => 'andrea@example.test', 'status' => UserStatus::Pending]);
-        $invitation = $factory->passwordReset($user, 'SOLO-VISTA-PREVIA');
+        $invitation = $factory->invitation($user, 'SOLO-VISTA-PREVIA');
         $user->status = UserStatus::Active;
         $recovery = $factory->passwordReset($user, 'SOLO-VISTA-PREVIA');
 

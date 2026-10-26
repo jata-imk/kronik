@@ -14,6 +14,9 @@ en [Notion](https://app.notion.com/p/3e161db7db7f817a8c89ec30767d4666).
 1. Seleccionar sucursal activa. En **Solicitudes → Nueva solicitud**, buscar un
    cliente de esa sucursal; desde el expediente se puede precargar el cliente.
 2. Guardar solo el cliente para crear borrador o capturar las condiciones disponibles.
+   Desde el detalle, **Editar solicitud** reanuda un borrador; una solicitud
+   devuelta muestra **Corregir solicitud**. Ambas acciones requieren permiso de
+   edición y conservan las restricciones del estado.
 3. Completar versión vigente de producto, monto, periodicidad, número de pagos,
    método, fecha estimada y destino. Este incremento usa solo comisiones obligatorias;
    la selección de opcionales sigue disponible en el simulador de productos.

@@ -23,3 +23,5 @@ sus documentos específicos.
 - [Backlog 04: originación](../todos/04-originacion-solicitudes.md).
 - [Nota de originación](../agent-notes/04-originacion-solicitudes.md).
 - [SIC](sic-circulo-credito.md), [cumplimiento](fiscalidad-cumplimiento.md), [contratos y firmas](documentos-contratos-firmas.md), [cartera](cartera-pagos.md).
+
+- [Nota de la etiqueta Editar solicitud](../agent-notes/solicitudes-etiqueta-edicion.md).

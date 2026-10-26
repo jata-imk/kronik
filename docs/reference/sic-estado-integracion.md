@@ -1,6 +1,6 @@
 # Estado de la integración SIC
 
-Actualización: 10/10/2026. P7 recupera lectura histórica y tres servicios de
+Actualización: 25/10/2026. P7 recupera lectura histórica y tres servicios de
 simulación mediante adaptador nuevo. Los seis puntos de entrada del SDK antiguo
 siguen cerrados por los motivos de [ADR 0011](../explanation/adr-0011-integracion-sic-segura.md).
 Véase [ADR 0022](../explanation/adr-0022-sic-qa-evidencia.md).
@@ -19,11 +19,37 @@ separan monedas MX/US/UD, distinguen cero de dato ausente y no inventan rangos d
 score ni umbrales de riesgo. La evolución compara el mismo servicio, modelo
 identificado y ambiente.
 
+Fintech usa el folio externo del escenario oficial configurado en
+`sic.servicios.fintech.folio_sandbox` (inicialmente `20210304`), separado del ID
+interno único de cada consulta. No requiere otra variable de entorno. Al
+desplegar, reconstruir configuración y reiniciar workers para incorporar el valor.
+La petición conserva los datos del cliente seleccionado; la pantalla explica que
+es una simulación. Véase la [aclaración de ADR0022](../explanation/adr-0022-sic-qa-evidencia.md#aclaración-del-escenario-fintech--25102026).
+
+El estado de transporte se interpreta por separado del valor numérico del score:
+un score `404` en una consulta **Completada** no es un error HTTP404. Si el
+proveedor no informa modelo, no se inventa su interpretación. La
+[validación por interfaz](../agent-notes/sic-folio-fintech.md) conserva evidencia
+fechada del escenario y sus límites; no acredita riesgo real ni habilitación productiva.
+
 ## Acceso y evidencia
+
+El domicilio enviado incluye la ciudad de `codigos_postales.datos_adicionales.nombre_ciudad`.
+FICO v2 y Reporte de Crédito + FICO la requieren; si falta o supera 65 caracteres,
+la consulta se rechaza en español antes de conservar un intento o enviar al proveedor.
+No se sustituye por el municipio o el estado. Fintech admite omitirla cuando el
+catálogo no dispone de ese dato.
+
+En la petición, los textos del domicilio se convierten a mayúsculas sin acentos,
+se reemplazan los paréntesis por espacios y se compactan los espacios. Esto permite
+enviar colonias como `Centro (Área 1)`; el expediente y el catálogo conservan su
+nombre original. No se alteran las respuestas históricas.
 
 - Historial/detalle: lectura de historial y clientes; política de acceso al cliente.
 - Consulta: permiso de creación SIC, actualización del cliente, equipo/sucursal
   activos, consentimiento vigente con archivo y revisión actual si corresponde.
+  La [fecha de otorgamiento](expediente-clientes.md#consentimiento-sic) conserva
+  el instante enviado por el navegador aunque la aplicación use una zona distinta de UTC.
 - Conciliación: permiso adicional `reconcile circulo-credito`.
 - Intento: actor, equipo, sucursal, consentimiento, revisión opcional, hashes e
   idempotencia. Petición/respuesta/resultado/conciliación cifrados e inmutables.

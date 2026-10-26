@@ -4,6 +4,7 @@ use App\Models\User;
 
 test('generic Jetstream member endpoint cannot invite an unknown account', function () {
     $user = User::factory()->withPersonalTeam()->create();
+    grantTeamPermissions($user, $user->currentTeam, ['add members teams']);
 
     $this->actingAs($user)
         ->post('/teams/'.$user->currentTeam->id.'/members', [

@@ -57,18 +57,20 @@ describe("Detalle de solicitud", () => {
         expect(wrapper.text()).toContain("No representa avance de aprobación");
         expect(wrapper.text()).toContain("Enviar a revisión");
         expect(wrapper.text()).toContain("Expediente y documentos del cliente");
+        expect(wrapper.get('a[href="solicitudes.edit"]').text()).toBe("Editar solicitud");
     });
     it("oculta acciones no autorizadas", () => {
         const wrapper = render({}, { update: false, assign: false, sic: false });
         expect(wrapper.text()).not.toContain("Enviar a revisión");
         expect(wrapper.text()).not.toContain("Asignar responsable");
         expect(wrapper.text()).not.toContain("Historial SIC");
+        expect(wrapper.text()).not.toContain("Editar solicitud");
     });
     it("no ofrece editar o reenviar condiciones ya enviadas", () => {
         const wrapper = render({ estado: "en_revision" });
         expect(wrapper.text()).toContain("En revisión");
         expect(wrapper.text()).not.toContain("Enviar a revisión");
-        expect(wrapper.text()).not.toContain("Completar borrador");
+        expect(wrapper.text()).not.toContain("Editar solicitud");
         expect(wrapper.text()).toContain("no hay aprobación ni autorización de desembolso");
     });
     it("orienta la corrección de una devolución", () => {
@@ -83,5 +85,6 @@ describe("Detalle de solicitud", () => {
         expect(wrapper.text()).not.toContain("Enviar a revisión");
         expect(wrapper.text()).not.toContain("Asignar responsable");
         expect(wrapper.text()).not.toContain("Devolución o cierre");
+        expect(wrapper.text()).not.toContain("Editar solicitud");
     });
 });

@@ -39,7 +39,7 @@ class TeamPolicy
      */
     public function update(User $user, Team $team): bool
     {
-        return $user->ownsTeam($team) || $user->can('update teams');
+        return app(\App\Services\TeamContext::class)->allows($user, $team, 'update teams');
     }
 
     /**
@@ -47,7 +47,7 @@ class TeamPolicy
      */
     public function addTeamMember(User $user, Team $team): bool
     {
-        return $user->ownsTeam($team) || $user->can('add members teams');
+        return app(\App\Services\TeamContext::class)->allows($user, $team, 'add members teams');
     }
 
     /**
@@ -55,7 +55,7 @@ class TeamPolicy
      */
     public function updateTeamMember(User $user, Team $team): bool
     {
-        return $user->ownsTeam($team) || $user->can('update members teams');
+        return app(\App\Services\TeamContext::class)->allows($user, $team, 'update members teams');
     }
 
     /**
@@ -63,7 +63,7 @@ class TeamPolicy
      */
     public function removeTeamMember(User $user, Team $team): bool
     {
-        return $user->ownsTeam($team) || $user->can('remove members teams');
+        return app(\App\Services\TeamContext::class)->allows($user, $team, 'remove members teams');
     }
 
     /**
@@ -71,6 +71,6 @@ class TeamPolicy
      */
     public function delete(User $user, Team $team): bool
     {
-        return ! $team->personal_team && ($user->ownsTeam($team) || $user->can('delete teams'));
+        return ! $team->personal_team && app(\App\Services\TeamContext::class)->allows($user, $team, 'delete teams');
     }
 }

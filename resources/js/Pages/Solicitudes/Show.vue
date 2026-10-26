@@ -62,7 +62,7 @@ function asignar() {
                     <Link :href="route('clientes.expediente.show', solicitud.cliente_id)" class="text-primary underline">Expediente y documentos del cliente</Link>
                     <Link v-if="can.sic" :href="route('clientes.historial-crediticio.show', solicitud.cliente_id)" class="text-primary underline">Historial SIC</Link>
                     <Link v-if="can.politica && solicitud.producto_version_id" :href="route('originacion-politicas.show', solicitud.producto_version_id)" class="text-primary underline">Configurar política de originación</Link>
-                    <Link v-if="can.update && solicitudEditable(solicitud.estado)" :href="route('solicitudes.edit', solicitud.id)" class="text-primary underline">{{ solicitud.estado === 'devuelta' ? 'Corregir solicitud' : 'Completar borrador' }}</Link>
+                    <Link v-if="can.update && solicitudEditable(solicitud.estado)" :href="route('solicitudes.edit', solicitud.id)" class="text-primary underline">{{ solicitud.estado === 'devuelta' ? 'Corregir solicitud' : 'Editar solicitud' }}</Link>
                 </div>
                 <section>
                     <h2 class="text-lg font-semibold">Condiciones solicitadas</h2>

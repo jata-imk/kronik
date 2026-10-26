@@ -2,6 +2,19 @@
 
 - [Documentación viva e índice por temas](documentacion-viva-indice-temas.md)
 - [Backlog 06: PLD y cumplimiento](06-pld-cumplimiento.md)
+- [Equipo: contexto seleccionado y responsable](equipo-contexto-responsable.md)
+
+- [Invitaciones: vigencia propia](invitaciones-vigencia-propia.md)
+
+- [Roles: aislamiento y etiquetas](roles-aislamiento-etiquetas.md)
+
+- [Solicitudes: etiqueta de edición](solicitudes-etiqueta-edicion.md)
+
+- [Folio de escenario de Fintech sandbox](sic-folio-fintech.md)
+
+- [Corrección del domicilio enviado al sandbox SIC](sic-domicilio-sandbox.md)
+
+- [Corrección de la fecha del consentimiento SIC](sic-consentimiento-zona-horaria.md)
 
 - [Correos de acceso y seguridad](correos-acceso.md)
 

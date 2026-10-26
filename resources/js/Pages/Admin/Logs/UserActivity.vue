@@ -3,6 +3,7 @@ import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import PageHeader from "@/Components/PageHeader.vue";
 import ActivityLogList from "@/Components/ActivityLog/ActivityLogList.vue";
 defineProps({
+    activityTeam: Object,
     activityLogs: { type: Object, required: true },
     filters: { type: Object, required: true },
     filterOptions: { type: Object, required: true },
@@ -11,7 +12,7 @@ defineProps({
 
 <template>
     <AppLayout title="Actividad">
-        <template #card-header><PageHeader eyebrow="Administración · Control" title="Actividad" description="Eventos recientes y filtros de auditoría."><template #actions><Button icon="pi pi-arrow-left" label="Volver" severity="secondary" as="a" :href="route('admin.dashboard')" /></template></PageHeader></template>
+        <template #card-header><PageHeader eyebrow="Administración · Control" title="Actividad" :description="activityTeam ? `Actividad del equipo ${activityTeam.name}` : 'Eventos recientes y filtros de auditoría.'"><template #actions><Button icon="pi pi-arrow-left" label="Volver" severity="secondary" as="a" :href="activityTeam ? route('teams.show', activityTeam.id) : route('admin.dashboard')" /></template></PageHeader></template>
         <template #card-content>
             <ActivityLogList
                 :activity-logs="activityLogs"

@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreRoleRequest;
+use App\Http\Requests\Admin\UpdateRoleRequest;
 use App\Models\Module;
 use App\Models\Permission;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Spatie\Permission\Models\Role;
@@ -18,12 +19,7 @@ class RoleController extends Controller implements HasMiddleware
 {
     public static function middleware(): array
     {
-        return [
-            new Middleware('permission:read roles', only: ['index', 'show']),
-            new Middleware('permission:create roles', only: ['create', 'store', 'createPermission', 'assignPermission']),
-            new Middleware('permission:update roles', only: ['edit', 'update']),
-            new Middleware('permission:delete roles', only: ['destroy']),
-        ];
+        return [new Middleware(\App\Http\Middleware\AuthorizeRoleTeam::class)];
     }
 
     /**
@@ -31,8 +27,10 @@ class RoleController extends Controller implements HasMiddleware
      */
     public function index(Request $request)
     {
-        $teamId = Auth::user()->currentTeam->id;
-        $roles = config('permission.models.role')::where(config('permission.column_names.team_foreign_key', 'team_id'), $teamId)->with('permissions.module')->get();
+        $team = app(\App\Services\TeamContext::class)->resolve($request);
+        $teamId = $team->id;
+        abort_unless($teamId, 403);
+        $roles = config('permission.models.role')::where(config('permission.column_names.team_foreign_key', 'team_id'), $teamId)->where('guard_name', 'web')->with('permissions.module')->get();
         $membersByRole = DB::table('model_has_roles')
             ->join('users', 'users.id', '=', 'model_has_roles.model_id')
             ->where('model_has_roles.team_id', $teamId)
@@ -45,8 +43,10 @@ class RoleController extends Controller implements HasMiddleware
         return Inertia::render('Admin/Roles/Index', [
             'roles' => fn () => $roles,
             'roleMembers' => fn () => $membersByRole,
-            'permissions' => Permission::with('module')->get(),
-            'modules' => Module::with('permissions')->get(),
+            'permissions' => Permission::where('guard_name', 'web')->with('module')->get(),
+            'modules' => Module::with(['permissions' => fn ($query) => $query->where('guard_name', 'web')])->get(),
+            'roleTeam' => $team->only(['id', 'name']),
+            'roleCapabilities' => app(\App\Services\TeamContext::class)->run($request->user(), $team, fn () => collect(['create', 'update', 'delete'])->mapWithKeys(fn ($action) => [$action => $request->user()->can("{$action} roles")])),
         ]);
     }
 
@@ -61,23 +61,18 @@ class RoleController extends Controller implements HasMiddleware
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreRoleRequest $request)
     {
-        $fields = $request->validate([
-            'team_id' => ['nullable', 'exists:teams,id'],
-            'name' => ['required', 'string', 'max:255', 'unique:roles,name'],
-            // 'guard_name' => ['nullable', 'string', 'max:255'],
-            'add_all_permissions' => ['nullable', 'boolean'],
-        ]);
-
-        $fields['guard_name'] = 'web';
-
-        $role = Role::create($fields);
-
-        if ($fields['add_all_permissions']) {
-            $permissions = Permission::all();
-            $role->givePermissionTo($permissions);
-        }
+        DB::transaction(function () use ($request) {
+            $role = Role::query()->create([
+                'name' => $request->validated('name'),
+                'guard_name' => 'web',
+                'team_id' => app(\App\Services\TeamContext::class)->resolve($request)->id,
+            ]);
+            if ($request->boolean('add_all_permissions')) {
+                $role->syncPermissions(Permission::where('guard_name', 'web')->get());
+            }
+        });
 
         return redirect()->back()->with('success', 'Rol creado');
     }
@@ -101,18 +96,15 @@ class RoleController extends Controller implements HasMiddleware
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Role $role)
+    public function update(UpdateRoleRequest $request, Role $role)
     {
-        $fields = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'permissions' => ['nullable', 'array'],
-        ]);
-
-        $role->update(['name' => $fields['name']]);
-
-        if ($fields['permissions']) {
-            $role->syncPermissions($fields['permissions']);
-        }
+        $this->ensureRoleTeam($request, $role);
+        DB::transaction(function () use ($request, $role) {
+            $role->update(['name' => $request->validated('name')]);
+            if ($request->has('permissions')) {
+                $role->syncPermissions(Permission::whereIn('id', $request->validated('permissions'))->get());
+            }
+        });
 
         return redirect()->back()->with('success', 'Rol actualizado');
     }
@@ -120,11 +112,13 @@ class RoleController extends Controller implements HasMiddleware
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Role $role)
+    public function destroy(Request $request, Role $role)
     {
-        DB::transaction(function () use ($role) {
+        $this->ensureRoleTeam($request, $role);
+
+        return DB::transaction(function () use ($role) {
             $permissionsCount = $role->permissions()->count();
-            $usersCount = $role->users()->count();
+            $usersCount = DB::table('model_has_roles')->where('role_id', $role->id)->count();
 
             if ($permissionsCount > 0 || $usersCount > 0) {
                 return redirect()->back()->withErrors([
@@ -152,6 +146,7 @@ class RoleController extends Controller implements HasMiddleware
 
     public function assignPermission(Request $request, Role $role)
     {
+        $this->ensureRoleTeam($request, $role);
         $fields = $request->validate([
             'permission_id' => ['required', 'integer', 'exists:permissions,id'],
         ]);
@@ -159,5 +154,10 @@ class RoleController extends Controller implements HasMiddleware
         $role->givePermissionTo($fields['permission_id']);
 
         return redirect()->back()->with('success', 'Permiso asignado');
+    }
+
+    private function ensureRoleTeam(Request $request, Role $role): void
+    {
+        abort_unless($role->guard_name === 'web' && $role->team_id !== null && (int) $role->team_id === (int) app(\App\Services\TeamContext::class)->resolve($request)->id, 404);
     }
 }

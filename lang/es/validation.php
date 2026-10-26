@@ -77,9 +77,22 @@ return [
     'unique' => 'El valor de :attribute ya está en uso.',
     'url' => 'El campo :attribute debe ser una URL válida.',
 
-    'custom' => [],
+    'custom' => [
+        'otorgado_en' => [
+            'before_or_equal' => 'La fecha de consentimiento no puede ser posterior al momento actual.',
+        ],
+    ],
 
     'attributes' => [
+        'team' => 'equipo seleccionado',
+        'team_id' => 'equipo seleccionado',
+        'responsible_id' => 'responsable del equipo',
+        'confirmation' => 'confirmación de transferencia',
+        'token' => 'enlace de acceso',
+        'permissions' => 'permisos del rol',
+        'permissions.*' => 'permiso del rol',
+        'add_all_permissions' => 'asignación de todos los permisos',
+        'otorgado_en' => 'fecha de consentimiento',
         'fecha_desembolso' => 'fecha del desembolso',
         'importe' => 'importe',
         'fecha_pago' => 'fecha efectiva del pago',

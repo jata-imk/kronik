@@ -36,6 +36,7 @@ it('preserves one administrator with credentials company catalogs and usable con
     $company = EmpresaConfiguracion::create(['singleton_key' => 'default', 'razon_social' => 'Empresa QA', 'logotipo_path' => 'logos/empresa.png']);
     User::factory()->withPersonalTeam()->create(['profile_photo_path' => 'profile-photos/otro.jpg']);
     $admin->createToken('QA');
+    DB::table('user_invitation_tokens')->insert(['email' => $admin->email, 'token' => 'synthetic-token', 'created_at' => now()]);
     Storage::disk('public')->put('profile-photos/admin.jpg', 'admin');
     Storage::disk('public')->put('profile-photos/otro.jpg', 'otro');
     Storage::disk('public')->put('logos/empresa.png', 'logo');
@@ -50,6 +51,7 @@ it('preserves one administrator with credentials company catalogs and usable con
     $this->assertDatabaseCount('clientes', 0);
     $this->assertDatabaseCount('sic_queries', 0);
     $this->assertDatabaseCount('personal_access_tokens', 0);
+    $this->assertDatabaseCount('user_invitation_tokens', 0);
     expect($admin->fresh()->only(array_keys($credentials)))->toBe($credentials)
         ->and(Hash::check('password', $admin->fresh()->password))->toBeTrue()
         ->and($admin->fresh()->remember_token)->toBeNull()

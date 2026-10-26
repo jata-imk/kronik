@@ -9,7 +9,6 @@ use App\Models\Team;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -20,8 +19,6 @@ class TeamController extends Controller implements HasMiddleware
         return [
             new Middleware('permission:read teams', only: ['index']),
             new Middleware('permission:create teams', only: ['store']),
-            new Middleware('permission:update teams', only: ['update']),
-            new Middleware('permission:delete teams', only: ['destroy']),
         ];
     }
 
@@ -66,20 +63,15 @@ class TeamController extends Controller implements HasMiddleware
 
     public function update(UpdateTeamRequest $request, Team $team)
     {
-        $team->update($request->validated());
+        app(\App\Services\TeamManagementService::class)->update($team, $request->validated());
 
         return back()->with('success', 'Equipo actualizado');
     }
 
     public function destroy(Team $team)
     {
-        if ($team->currentUsers()->exists()) {
-            throw ValidationException::withMessages([
-                'team' => 'Cambia el equipo actual de todos sus usuarios antes de desactivarlo.',
-            ]);
-        }
-
-        $team->update(['activo' => false]);
+        app(\App\Services\TeamContext::class)->authorize(request()->user(), $team, 'delete teams');
+        app(\App\Services\TeamManagementService::class)->update($team, ['activo' => false]);
 
         return back()->with('success', 'Equipo desactivado');
     }

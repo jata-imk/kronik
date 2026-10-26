@@ -11,6 +11,12 @@ Cambiar de equipo no cambia la sucursal y cambiar de sucursal no cambia el equip
 
 ## Alta y estado de usuarios
 
+Las invitaciones administrativas tienen vigencia propia de 72 horas configurables.
+El listado muestra envío y vencimiento real; reenviar antes de 60 segundos pide
+esperar un minuto. Reenviar invalida el enlace anterior. Aceptar activa una cuenta
+pendiente y verifica su correo, una sola vez. Recuperación conserva 60 minutos.
+Véase [ADR 0026](../explanation/adr-0026-invitaciones-vigencia-propia.md).
+
 Las cuentas se crean en **Administración > Usuarios**. Es obligatorio asignar al menos un equipo, sus roles, una sucursal principal y las sucursales permitidas. La cuenta queda `pending` y recibe un enlace de restablecimiento para definir su contraseña. Al completarlo pasa a `active` y verifica el correo.
 
 Estados:
@@ -22,6 +28,18 @@ Estados:
 No existen autorregistro, borrado de cuenta por el usuario ni invitaciones de miembros por el flujo genérico de Jetstream.
 
 ## Equipos
+
+La configuración distingue equipo actual de seleccionado. Desde ella se consultan
+integrantes, invitaciones pendientes, resumen de roles y actividad del equipo,
+según permisos. Los enlaces a Roles y Bitácora conservan la selección sin cambiar
+el equipo actual. Sucursales y configuración de empresa mantienen sus ámbitos.
+
+El responsable es informativo: sus facultades dependen de roles Spatie, sin
+privilegio por ser owner. Transferir requiere `update teams`, confirmación y otro
+integrante activo; conserva membresías, roles y contextos, y registra la operación.
+Desactivar/reactivar está disponible en la configuración con los mismos permisos
+y restricciones del listado. `activo=false` tampoco permite desactivar equipos
+que aún tengan usuarios actuales. Véase [ADR 0027](../explanation/adr-0027-equipo-seleccionado-responsable.md).
 
 Los equipos se administran como departamentos institucionales. Sus roles se copian desde las plantillas globales al crear el equipo. Un equipo no puede desactivarse mientras algún usuario lo conserve como equipo actual.
 

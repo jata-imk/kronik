@@ -10,6 +10,7 @@ import TextInput from "@/Components/TextInput.vue";
 const props = defineProps({
     email: String,
     token: String,
+    invitation: { type: Boolean, default: false },
 });
 
 const form = useForm({
@@ -20,14 +21,14 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.post(route("password.update"), {
+    form.post(route(props.invitation ? "invitations.accept" : "password.update"), {
         onFinish: () => form.reset("password", "password_confirmation"),
     });
 };
 </script>
 
 <template>
-    <Head title="Reset Password" />
+    <Head :title="invitation ? 'Crear contraseña' : 'Restablecer contraseña'" />
 
     <AuthenticationCard>
         <template #logo>
@@ -36,7 +37,7 @@ const submit = () => {
 
         <form @submit.prevent="submit">
             <div>
-                <InputLabel for="email" value="Email" />
+                <InputLabel for="email" value="Correo electrónico" />
                 <TextInput
                     id="email"
                     v-model="form.email"
@@ -50,7 +51,7 @@ const submit = () => {
             </div>
 
             <div class="mt-4">
-                <InputLabel for="password" value="Password" />
+                <InputLabel for="password" value="Contraseña" />
                 <TextInput
                     id="password"
                     v-model="form.password"
@@ -63,7 +64,7 @@ const submit = () => {
             </div>
 
             <div class="mt-4">
-                <InputLabel for="password_confirmation" value="Confirm Password" />
+                <InputLabel for="password_confirmation" value="Confirmar contraseña" />
                 <TextInput
                     id="password_confirmation"
                     v-model="form.password_confirmation"
@@ -77,7 +78,7 @@ const submit = () => {
 
             <div class="flex items-center justify-end mt-4">
                 <PrimaryButton :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                    Reset Password
+                    {{ invitation ? 'Crear mi contraseña' : 'Restablecer contraseña' }}
                 </PrimaryButton>
             </div>
         </form>

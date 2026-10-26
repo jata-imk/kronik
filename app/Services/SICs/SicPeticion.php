@@ -28,12 +28,20 @@ final class SicPeticion
             || $dom?->pais?->codigo_iso !== 'MX') {
             throw ValidationException::withMessages(['sic' => 'Completa nombre, apellido, nacimiento y domicilio mexicano con municipio, colonia, estado y código postal válido antes de consultar.']);
         }
+        $nombreCiudad = data_get($dom->codigoPostal->datos_adicionales, 'nombre_ciudad');
+        $ciudad = is_string($nombreCiudad) ? self::textoDomicilio($nombreCiudad) : '';
+        if ((in_array($api, ['fico_score_v2', 'rc_fico_score'], true) && $ciudad === '') || mb_strlen($ciudad) > 65) {
+            throw ValidationException::withMessages(['sic' => 'El código postal seleccionado no tiene una ciudad válida para este servicio SIC. Revisa el catálogo postal antes de consultar.']);
+        }
         $persona = ['primerNombre' => Str::upper(Str::ascii($cliente->primer_nombre)),
             'apellidoPaterno' => Str::upper(Str::ascii($cliente->apellido_paterno)),
             'fechaNacimiento' => $cliente->fecha_nacimiento->format('Y-m-d'),
-            'domicilio' => ['direccion' => Str::upper(Str::ascii(trim($dom->linea_uno.' '.$dom->linea_dos))), 'CP' => $cp, 'estado' => $estado,
-                'delegacionMunicipio' => Str::upper(Str::ascii($dom->divisionAdministrativaDos->nombre)),
-                'coloniaPoblacion' => Str::upper(Str::ascii($dom->divisionAdministrativaTres?->nombre ?? ''))]];
+            'domicilio' => ['direccion' => self::textoDomicilio(trim($dom->linea_uno.' '.$dom->linea_dos)), 'CP' => $cp, 'estado' => $estado,
+                'delegacionMunicipio' => self::textoDomicilio($dom->divisionAdministrativaDos->nombre),
+                'coloniaPoblacion' => self::textoDomicilio($dom->divisionAdministrativaTres?->nombre ?? '')]];
+        if ($ciudad !== '') {
+            $persona['domicilio']['ciudad'] = $ciudad;
+        }
         if ($cliente->apellido_materno) {
             $persona['apellidoMaterno'] = Str::upper(Str::ascii($cliente->apellido_materno));
         }
@@ -50,12 +58,22 @@ final class SicPeticion
             return ['folio' => $folio, 'persona' => $persona];
         }
         if ($api === 'fintech') {
+            $folioSandbox = config('sic.servicios.fintech.folio_sandbox');
+            if (! is_string($folioSandbox) || trim($folioSandbox) === '') {
+                throw ValidationException::withMessages(['sic' => 'El escenario de simulación Fintech no está configurado. Solicita al administrador técnico revisar la configuración de QA.']);
+            }
             $persona['domicilio']['pais'] = 'MX';
 
-            return ['folioOtorgante' => $folio, 'persona' => $persona];
+            return ['folioOtorgante' => $folioSandbox, 'persona' => $persona];
         }
         $persona['nacionalidad'] = 'MX';
 
         return $persona;
+    }
+
+    private static function textoDomicilio(string $value): string
+    {
+        // Catalog labels can contain parentheses rejected by the sandbox; keep the source unchanged.
+        return Str::squish(Str::upper(str_replace(['(', ')'], ' ', Str::ascii($value))));
     }
 }

@@ -2,6 +2,9 @@
 
 ## Aplicacion
 
+- `INVITATION_EXPIRE_MINUTES`: vigencia del enlace de invitación, 4320 minutos
+  (72 horas) por defecto. No cambia los 60 minutos de recuperación de contraseña.
+
 - `APP_ENV`: use `production` en la VPS.
 - `APP_KEY`: clave de cifrado. Se genera una sola vez, se respalda y no se
   comparte entre instancias.

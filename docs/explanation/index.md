@@ -2,6 +2,14 @@
 
 [Buscar por tema](../topic/index.md) · [Índice general](../index.md)
 
+- [ADR 0027: equipo seleccionado y responsable informativo](adr-0027-equipo-seleccionado-responsable.md)
+
+- [ADR 0026: vigencia propia de invitaciones](adr-0026-invitaciones-vigencia-propia.md)
+
+- [ADR 0025: aislamiento y presentación de roles](adr-0025-roles-aislamiento-presentacion.md)
+
+- [ADR 0024: reinicio integral de una instalación QA](adr-0024-reinicio-integral-qa.md)
+
 - [ADR 0001: Configuracion por Instalacion](adr-0001-configuracion-por-instalacion.md)
 - [ADR 0002: CI con GitHub Actions](adr-0002-ci-github-actions.md)
 - [ADR 0003: Expediente de cliente y KYC](adr-0003-expediente-cliente-kyc.md)
@@ -25,5 +33,4 @@
 - [ADR 0021 — Identidad visual y navegación de Kronik](adr-0021-identidad-visual-kronik.md)
 - [ADR 0022: SIC sandbox con evidencia cifrada](adr-0022-sic-qa-evidencia.md)
 - [ADR 0023: anticipos, liquidación y calendarios conservados](adr-0023-anticipos-liquidacion-qa.md)
-- [ADR 0024: reinicio integral de una instalación QA](adr-0024-reinicio-integral-qa.md)
 - [Auditoría visual de QA — octubre de 2026](auditoria-ui-qa-2026-10.md)

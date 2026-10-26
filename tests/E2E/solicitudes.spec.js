@@ -11,9 +11,10 @@ test("crea, reanuda y envía una solicitud sin aprobar ni consultar SIC", async 
     await page.getByRole("button", { name: "Guardar borrador", exact: true }).click();
     await expect(page).toHaveURL(/\/solicitudes\/\d+$/);
     const detail = page.url();
+    await page.screenshot({ path: testInfo.outputPath("solicitud-editar-desktop.png"), fullPage: true });
     await page.getByRole("button", { name: "Enviar a revisión", exact: true }).click();
     await expect(page.getByText("Completa este dato antes de enviar la solicitud a revisión.")).toBeVisible();
-    await page.getByRole("link", { name: "Completar borrador" }).click();
+    await page.getByRole("link", { name: "Editar solicitud", exact: true }).click();
     await page.getByLabel("Producto y versión", { exact: true }).click();
     await page.getByRole("option", { name: /Crédito Simple Esencial/ }).click();
     await page.getByLabel("Monto solicitado (MXN)").pressSequentially("10000.00");
@@ -95,7 +96,7 @@ test("crea, reanuda y envía una solicitud sin aprobar ni consultar SIC", async 
     for (const summary of await page.getByText("Últimos 20 dictámenes, del más reciente al más antiguo", { exact: true }).all()) await summary.click();
     await expect(page.getByRole("heading", { name: "Favorable · Histórico; no aplica a la revisión actual", exact: true })).toBeVisible();
     await page.goto("/mi-trabajo");
-    await expect(page.getByRole("link", { name: /SOL-/ }).first()).toBeVisible();
+    await expect(page.locator(`a[href="${detail}"]`).first()).toBeVisible();
     await page.goto(detail);
     await page.getByLabel("Acción", { exact: true }).click();
     await page.getByRole("option", { name: "Rechazar solicitud", exact: true }).click();

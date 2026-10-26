@@ -55,7 +55,16 @@ Los campos de fecha muestran `DD-MM-YYYY` y se envian al backend como `YYYY-MM-D
 
 ## Consentimiento SIC
 
-Registra fecha, usuario capturista, medio, evidencia, vencimiento opcional y revocacion. No autoriza por si solo una llamada externa: Backlog 05 debe aplicar la regla de consentimiento vigente antes de consultar una SIC.
+Registra fecha, usuario capturista, medio, evidencia, vencimiento opcional y revocacion.
+La fecha y hora de otorgamiento representa un instante: el navegador puede enviarla
+en ISO 8601 con `Z` u otro desplazamiento. Antes de persistirla se convierte a
+`APP_TIMEZONE`, porque la columna `datetime` no conserva la zona horaria; al
+serializarla se devuelve el mismo instante en UTC. El vencimiento sigue siendo
+una fecha de calendario, sin ese ajuste de hora.
+
+Se rechazan otorgamientos futuros. Para consultar se exige además consentimiento
+no revocado, no vencido y con evidencia disponible; ver
+[acceso y evidencia SIC](sic-estado-integracion.md#acceso-y-evidencia).
 
 ## Evidencia visual
 

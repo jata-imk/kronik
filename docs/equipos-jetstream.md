@@ -1,5 +1,11 @@
 # Equipos de Jetstream
 
+Referencia vigente: [usuarios, equipos y sucursales](reference/usuarios-equipos-sucursales.md)
+y [ADR 0027](explanation/adr-0027-equipo-seleccionado-responsable.md).
+Configurar otro equipo no cambia el actual: sus permisos se evalúan en un
+contexto temporal restaurado al finalizar. El responsable es informativo y no
+concede privilegios; puede transferirse a otro integrante activo con confirmación.
+
 ## ¿Qué es un Equipo en Jetstream?
 
 Jetstream introduce el concepto de **equipos** (`teams`) como una forma de agrupar usuarios bajo un contexto compartido. Cada usuario puede pertenecer a múltiples equipos, pero solo tiene **un equipo activo a la vez** (`current_team_id`). Todo el acceso a datos, roles y permisos se evalúa en función de ese equipo activo.
@@ -10,7 +16,8 @@ Jetstream introduce el concepto de **equipos** (`teams`) como una forma de agrup
 |-------|-----------|
 | `teams` | Registro de cada equipo (`id`, `name`, `user_id` dueño, `personal_team`) |
 | `team_user` (pivot `memberships`) | Relación usuario↔equipo con columna `role` (rol Jetstream, no Spatie) |
-| `team_invitations` | Invitaciones pendientes por correo |
+| `team_invitations` | Historial legado; sus rutas de aceptación y eliminación responden 404 |
+| `user_invitation_tokens` | Tokens del flujo administrativo de invitaciones, con vigencia propia |
 
 ### Equipo personal
 

@@ -112,6 +112,11 @@ function enviar() {
                                 placeholder="Selecciona un servicio"
                                 fluid
                             />
+                            <Message v-if="form.api === 'fintech'" severity="info" :closable="false" class="mt-3">
+                                Fintech usa un escenario de simulación del proveedor. Cada intento
+                                conserva su número de consulta en Kronik; el resultado no describe
+                                a una persona real.
+                            </Message>
                         </div>
                         <div>
                             <label for="sic-consentimiento" class="mb-2 block font-semibold"

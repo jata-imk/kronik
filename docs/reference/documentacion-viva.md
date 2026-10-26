@@ -1,5 +1,9 @@
 # Documentación viva e índices por tema
 
+## Instrucciones compartidas de agentes
+
+[AGENTS.md](../../AGENTS.md) es la única guía de instrucciones del repositorio, escrita en español. [CLAUDE.md](../../CLAUDE.md) solo enlaza e importa esa guía; no mantener reglas separadas por herramienta. Al modificar las instrucciones, actualizar el archivo canónico y revisar sus referencias.
+
 ## Fuentes de verdad
 
 | Información | Ubicación |
