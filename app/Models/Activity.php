@@ -8,6 +8,9 @@ use Spatie\Activitylog\Models\Activity as BaseActivity;
 
 class Activity extends BaseActivity
 {
+    /** Explicit captured context may contain null; never infer it again. */
+    public bool $contextProvided = false;
+
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
@@ -21,6 +24,9 @@ class Activity extends BaseActivity
     protected static function booted(): void
     {
         static::creating(function (self $activity): void {
+            if ($activity->contextProvided) {
+                return;
+            }
             $user = Auth::user();
 
             if (! $user instanceof User && $activity->causer_type === (new User)->getMorphClass()) {

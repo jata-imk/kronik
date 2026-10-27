@@ -1,5 +1,7 @@
 # Agent Notes
 
+- [Equipo: acciones de integrantes](equipo-acciones-integrantes.md)
+
 - [Documentación viva e índice por temas](documentacion-viva-indice-temas.md)
 - [Backlog 06: PLD y cumplimiento](06-pld-cumplimiento.md)
 - [Equipo: contexto seleccionado y responsable](equipo-contexto-responsable.md)

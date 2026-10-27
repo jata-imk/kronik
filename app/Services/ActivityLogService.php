@@ -29,9 +29,12 @@ class ActivityLogService
         ?User $causer = null,
         ?int $teamId = null,
         ?int $sucursalId = null,
+        bool $inheritActorContext = true,
     ): ?ActivityContract {
-        $teamId ??= $causer?->current_team_id;
-        $sucursalId ??= $causer?->current_sucursal_id;
+        if ($inheritActorContext) {
+            $teamId ??= $causer?->current_team_id;
+            $sucursalId ??= $causer?->current_sucursal_id;
+        }
         $properties = [
             ...$this->requestMetadata(),
             ...$this->sanitizeMetadata($metadata),
@@ -40,7 +43,10 @@ class ActivityLogService
         $logger = activity()
             ->event($event->value)
             ->withProperties($properties)
-            ->tap(function ($activity) use ($teamId, $sucursalId): void {
+            ->tap(function ($activity) use ($teamId, $sucursalId, $inheritActorContext): void {
+                if ($activity instanceof \App\Models\Activity) {
+                    $activity->contextProvided = ! $inheritActorContext;
+                }
                 $activity->team_id = $teamId;
                 $activity->sucursal_id = $sucursalId;
             });

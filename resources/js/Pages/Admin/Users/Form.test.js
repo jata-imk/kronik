@@ -1,6 +1,6 @@
 import { mount } from "@vue/test-utils";
 import { describe, expect, it, vi } from "vitest";
-import UserForm from "./Form.vue";
+import UserForm from "@/Components/Users/UserFormDialog.vue";
 
 const formErrors = vi.hoisted(() => ({}));
 vi.mock("@inertiajs/vue3", () => ({

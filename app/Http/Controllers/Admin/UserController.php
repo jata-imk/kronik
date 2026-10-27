@@ -3,11 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\ActivityEvent;
-use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
-use App\Models\Sucursal;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\UserInvitationService;
@@ -17,10 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use Spatie\Permission\Models\Role;
 
 class UserController extends Controller implements HasMiddleware
 {
@@ -55,24 +50,15 @@ class UserController extends Controller implements HasMiddleware
             $prefill['invite'] = (bool) $prefill['invite'];
         }
 
+        $data = app(\App\Services\UserAdministrationData::class);
+
         return Inertia::render('Admin/Users/Index', [
-            'users' => fn () => User::query()
+            'users' => fn () => $data->users(User::query()
                 ->with(['ownedTeams', 'teams', 'sucursales', 'sucursalPrincipal', 'currentSucursal'])
                 ->orderBy('name')
                 ->get()
-                ->map(fn (User $user) => $this->userPayload($user)),
-            'teams' => fn () => Team::query()->where('activo', true)->orderBy('name')->get(['id', 'name']),
-            'roles' => fn () => Role::query()
-                ->whereNotNull('team_id')
-                ->where('name', '!=', 'Super Admin')
-                ->orderBy('name')
-                ->get(['id', 'name', 'team_id']),
-            'sucursales' => fn () => Sucursal::query()->where('activa', true)->orderBy('nombre')->get(['id', 'nombre', 'clave']),
-            'statusOptions' => collect(UserStatus::cases())->map(fn (UserStatus $status) => [
-                'value' => $status->value,
-                'label' => $status->label(),
-            ]),
-            'canManageSuperAdmin' => (bool) Auth::user()->is_super_admin,
+            )->values(),
+            ...$data->formOptions($request->user()),
             'prefill' => $prefill,
         ]);
     }
@@ -91,7 +77,7 @@ class UserController extends Controller implements HasMiddleware
     public function store(StoreUserRequest $request, UserManagementService $service)
     {
         $user = $service->create($request->validated(), $request->user());
-        app(UserInvitationService::class)->send($user);
+        app(UserInvitationService::class)->send($user, $request->user());
 
         return back()->with('success', 'Usuario creado e invitación enviada');
     }
@@ -127,62 +113,16 @@ class UserController extends Controller implements HasMiddleware
      */
     public function destroy(Request $request, User $user)
     {
-        if ($user->is_super_admin && ! $request->user()->is_super_admin) {
-            abort(403, 'Solo un Super Admin global puede desactivar otra cuenta global.');
-        }
-
-        if ($request->user()->is($user)) {
-            throw ValidationException::withMessages([
-                'user' => 'No puedes desactivar tu propia cuenta.',
-            ]);
-        }
-
-        $user->forceFill(['status' => UserStatus::Inactive])->save();
-        $user->tokens()->delete();
-        DB::table('sessions')->where('user_id', $user->id)->delete();
+        app(UserManagementService::class)->deactivate($user, $request->user());
 
         return back()->with('success', 'Usuario desactivado');
     }
 
     public function resendInvitation(Request $request, User $user)
     {
-        app(UserInvitationService::class)->send($user);
+        app(UserInvitationService::class)->send($user, $request->user());
 
         return back()->with('success', 'Invitación reenviada');
-    }
-
-    private function userPayload(User $user): array
-    {
-        $teamRoles = DB::table('model_has_roles')
-            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-            ->where('model_has_roles.model_type', $user->getMorphClass())
-            ->where('model_has_roles.model_id', $user->id)
-            ->where('roles.name', '!=', 'Super Admin')
-            ->get(['model_has_roles.team_id', 'roles.id as role_id'])
-            ->groupBy('team_id');
-
-        return [
-            ...app(UserInvitationService::class)->details($user),
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'status' => $user->status->value,
-            'status_label' => $user->status->label(),
-            'is_super_admin' => (bool) $user->is_super_admin,
-            'current_team_id' => $user->current_team_id,
-            'sucursal_principal_id' => $user->sucursal_principal_id,
-            'current_sucursal_id' => $user->current_sucursal_id,
-            'sucursal_ids' => $user->sucursales->pluck('id')->all(),
-            'team_names' => $user->allTeams()->pluck('name')->values()->all(),
-            'sucursal_names' => $user->sucursales->pluck('nombre')->values()->all(),
-            'team_search' => $user->allTeams()->pluck('name')->join(' '),
-            'sucursal_search' => $user->sucursales->pluck('nombre')->join(' '),
-            'team_roles' => $user->allTeams()->map(fn (Team $team) => [
-                'team_id' => $team->id,
-                'role_ids' => $teamRoles->get($team->id, collect())->pluck('role_id')->all(),
-            ])->values(),
-            'invited_at' => $user->invited_at?->toIso8601String(),
-        ];
     }
 
     /**

@@ -27,6 +27,8 @@ const initialTeamRoles = props.user?.team_roles?.length
       ? [{ team_id: props.teams[0].id, role_ids: [] }]
       : [];
 const selectedTeamIds = ref(initialTeamRoles.map((item) => item.team_id));
+const originalTeamIds = props.user?.team_roles?.map((item) => item.team_id) ?? [];
+const originalBranchIds = props.user?.sucursal_ids ?? [];
 const form = useForm({
     name: props.user?.name ?? "",
     email: props.user?.email ?? "",
@@ -77,10 +79,10 @@ const selectedTeams = computed(() =>
     })),
 );
 const availableCurrentTeams = computed(() =>
-    props.teams.filter((team) => selectedTeamIds.value.includes(team.id)),
+    props.teams.filter((team) => team.activo !== false && selectedTeamIds.value.includes(team.id)),
 );
 const availablePrincipalBranches = computed(() =>
-    props.sucursales.filter((branch) => form.sucursal_ids.includes(branch.id)),
+    props.sucursales.filter((branch) => branch.activa !== false && form.sucursal_ids.includes(branch.id)),
 );
 const errorMessages = computed(() => [...new Set(Object.values(form.errors).flat())]);
 
@@ -116,7 +118,7 @@ const submit = () => {
         v-model:visible="visible"
         :header="user ? 'Editar usuario' : 'Invitar usuario'"
         modal
-        :style="{ width: '760px' }"
+        :style="{ width: '760px', maxWidth: '95vw' }"
         @hide="emit('close')"
     >
         <form class="flex flex-col gap-5" @submit.prevent="submit">
@@ -128,18 +130,19 @@ const submit = () => {
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                     <label class="mb-1 block text-sm font-medium">Nombre *</label>
-                    <InputText v-model="form.name" fluid />
+                    <InputText v-model="form.name" aria-label="Nombre" fluid />
                     <small class="text-red-500">{{ form.errors.name }}</small>
                 </div>
                 <div>
                     <label class="mb-1 block text-sm font-medium">Correo electrónico *</label>
-                    <InputText v-model="form.email" type="email" fluid />
+                    <InputText v-model="form.email" aria-label="Correo electrónico" type="email" fluid />
                     <small class="text-red-500">{{ form.errors.email }}</small>
                 </div>
                 <div v-if="user">
                     <label class="mb-1 block text-sm font-medium">Estado</label>
                     <Select
                         v-model="form.status"
+                        aria-label="Estado de la cuenta"
                         :options="statusOptions"
                         option-label="label"
                         option-value="value"
@@ -161,6 +164,8 @@ const submit = () => {
                     <label class="mb-1 block text-sm font-medium">Equipos asignados *</label>
                     <MultiSelect
                         v-model="selectedTeamIds"
+                        aria-label="Equipos asignados"
+                        :option-disabled="(team) => team.activo === false && !originalTeamIds.includes(team.id)"
                         :options="teams"
                         option-label="name"
                         option-value="id"
@@ -171,7 +176,7 @@ const submit = () => {
                     <small class="text-red-500">{{ form.errors.team_roles }}</small>
                 </div>
                 <div v-for="item in selectedTeams" :key="item.assignment.team_id" class="rounded border p-3">
-                    <label class="mb-2 block text-sm font-medium">Roles en {{ item.team?.name }}</label>
+                    <label class="mb-2 block text-sm font-medium">Roles en {{ item.team?.name }}{{ item.team?.activo === false ? " (inactivo; asignación conservada)" : "" }}</label>
                     <MultiSelect
                         v-model="item.assignment.role_ids"
                         :options="item.roles"
@@ -186,7 +191,7 @@ const submit = () => {
                 <div>
                     <label class="mb-1 block text-sm font-medium">Equipo actual inicial *</label>
                     <Select
-                        v-model="form.current_team_id"
+                        v-model="form.current_team_id" aria-label="Equipo actual"
                         :options="availableCurrentTeams"
                         option-label="name"
                         option-value="id"
@@ -205,6 +210,8 @@ const submit = () => {
                     <label class="mb-1 block text-sm font-medium">Sucursales asignadas *</label>
                     <MultiSelect
                         v-model="form.sucursal_ids"
+                        aria-label="Sucursales asignadas"
+                        :option-disabled="(branch) => branch.activa === false && !originalBranchIds.includes(branch.id)"
                         :options="sucursales"
                         option-label="nombre"
                         option-value="id"
@@ -217,7 +224,7 @@ const submit = () => {
                 <div>
                     <label class="mb-1 block text-sm font-medium">Sucursal principal *</label>
                     <Select
-                        v-model="form.sucursal_principal_id"
+                        v-model="form.sucursal_principal_id" aria-label="Sucursal principal"
                         :options="availablePrincipalBranches"
                         option-label="nombre"
                         option-value="id"

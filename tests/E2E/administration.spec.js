@@ -30,7 +30,7 @@ test("muestra el centro completo del equipo y prellena una invitación", async (
     await expect(page.getByText("Miembros", { exact: true })).toBeVisible();
     await expect(page.getByRole("table").getByText("Test User", { exact: true }).first()).toBeVisible();
     await expect(page.getByRole("table").getByLabel("Responsable del equipo")).toBeVisible();
-    await page.getByRole("link", { name: /invitar usuario/i }).click();
+    await page.getByRole("button", { name: /invitar usuario/i }).click();
 
     await expect(page.getByRole("dialog")).toBeVisible();
     await expect(page.getByRole("dialog")).toContainText(/Equipos y roles/i);

@@ -8,6 +8,8 @@ import UpdateTeamNameForm from "@/Pages/Teams/Partials/UpdateTeamNameForm.vue";
 import CollectionSummary from "@/Components/DataTable/CollectionSummary.vue";
 import TruncatedText from "@/Components/DataTable/TruncatedText.vue";
 import TeamGeneralActions from "@/Components/Teams/TeamGeneralActions.vue";
+import UserFormDialog from "@/Components/Users/UserFormDialog.vue";
+import UserActions from "@/Components/Users/UserActions.vue";
 
 const props = defineProps({
     team: Object,
@@ -20,8 +22,18 @@ const props = defineProps({
     teamRoles: { type: Array, default: () => [] },
     recentActivity: { type: Array, default: () => [] },
     pendingInvitations: { type: Array, default: () => [] },
+    userFormOptions: { type: Object, default: () => ({}) },
 });
 const page = usePage();
+const showUserForm = ref(false);
+const selectedUser = ref(null);
+const userPrefill = ref({});
+const editUser = (user) => { selectedUser.value = user; userPrefill.value = {}; showUserForm.value = true; };
+const inviteUser = (roleId) => {
+    selectedUser.value = null;
+    userPrefill.value = { team_id: props.team.id, role_id: roleId, sucursal_id: page.props.auth.user.current_sucursal_id };
+    showUserForm.value = true;
+};
 const auth = computed(() => page.props.auth);
 const memberRoles = (member) =>
     Array.from(
@@ -53,13 +65,6 @@ const filters = ref({
     sucursales_search: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
 const statuses = ["Activo", "Pendiente", "Inactivo"];
-const userUrl = (params = {}) => route("admin.users.index", params);
-const inviteParams = (extra = {}) => ({
-    invite: 1,
-    team_id: props.team.id,
-    sucursal_id: auth.value.user.current_sucursal_id ?? undefined,
-    ...extra,
-});
 </script>
 
 <template>
@@ -83,11 +88,10 @@ const inviteParams = (extra = {}) => ({
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <div class="flex items-center gap-2"><span>Miembros</span><Badge :value="team.members_count" /></div>
                         <Button
-                            v-if="canManageUsers && (auth.permissions['create-users'] || auth.is_super_admin)"
+                            v-if="team.activo && canManageUsers && (auth.permissions['create-users'] || auth.is_super_admin)"
                             label="Invitar usuario"
                             icon="pi pi-user-plus"
-                            as="a"
-                            :href="userUrl(inviteParams())"
+                            @click="inviteUser()"
                         />
                     </div>
                 </template>
@@ -109,7 +113,7 @@ const inviteParams = (extra = {}) => ({
                     >
                         <template #header>
                             <div class="flex flex-wrap justify-between gap-3">
-                                <span class="text-sm text-surface-500">Los cambios se guardan desde el gobierno central de usuarios.</span>
+                                <span class="text-sm text-surface-500">Las acciones de cuenta afectan todos los equipos; quitar una membresía solo afecta este equipo.</span>
                                 <IconField>
                                     <InputIcon class="pi pi-search" />
                                     <InputText v-model="filters.global.value" placeholder="Buscar miembros" />
@@ -164,19 +168,12 @@ const inviteParams = (extra = {}) => ({
                         </Column>
                         <Column header="Acciones">
                             <template #body="{ data }">
-                                <Button
-                                    v-if="auth.permissions['update-users'] || auth.is_super_admin"
-                                    icon="pi pi-pencil"
-                                    :aria-label="`Editar ${data.name}`"
-                                    text
-                                    as="a"
-                                    :href="userUrl({ edit_user_id: data.id })"
-                                />
+                                <UserActions :user="data" :team="team" :can-remove="teamCapabilities['remove-members-teams']" @edit="editUser(data)" />
                             </template>
                         </Column>
                     </DataTable>
 
-                    <div v-if="canManageUsers && roles.length" class="mt-6 border-t border-surface-200 pt-4 dark:border-surface-700">
+                    <div v-if="team.activo && canManageUsers && roles.length && (auth.is_super_admin || auth.permissions['create-users'])" class="mt-6 border-t border-surface-200 pt-4 dark:border-surface-700">
                         <div class="mb-2 text-sm font-medium">Invitar con rol preseleccionado</div>
                         <div class="flex flex-wrap gap-2">
                             <Button
@@ -186,8 +183,7 @@ const inviteParams = (extra = {}) => ({
                                 icon="pi pi-plus"
                                 severity="secondary"
                                 size="small"
-                                as="a"
-                                :href="userUrl(inviteParams({ role_id: role.id }))"
+                                @click="inviteUser(role.id)"
                             />
                         </div>
                     </div>
@@ -202,6 +198,7 @@ const inviteParams = (extra = {}) => ({
                         <p>{{ invitation.invited_at ? `Enviada: ${new Date(invitation.invited_at).toLocaleString('es-MX')}` : 'Sin envío registrado' }}</p>
                         <p v-if="invitation.invitation_expires_at">Vence: {{ new Date(invitation.invitation_expires_at).toLocaleString('es-MX') }}</p>
                         <Tag v-if="invitation.invitation_expired" value="Sin enlace vigente" severity="warn" />
+                        <UserActions :user="invitation" :team="team" :can-remove="teamCapabilities['remove-members-teams']" @edit="editUser(invitation)" />
                     </div>
                 </template>
             </Card>
@@ -226,5 +223,6 @@ const inviteParams = (extra = {}) => ({
             </Card>
         </div>
         <ConfirmDialog />
+        <UserFormDialog v-if="showUserForm" :user="selectedUser" v-bind="userFormOptions" :prefill="userPrefill" @close="showUserForm = false" />
     </AppLayout>
 </template>
