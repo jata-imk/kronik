@@ -72,6 +72,7 @@ class DesembolsoService
     {
         try {
             return DB::transaction(function () use ($solicitud, $data, $actor) {
+                app(\App\Services\EmpresaOperacionService::class)->exigir(\App\Enums\OperacionEmpresa::Desembolsar, $actor, $solicitud);
                 $solicitud = Solicitud::lockForUpdate()->findOrFail($solicitud->id);
                 Gate::forUser($actor)->authorize('disburse', $solicitud);
                 if (config('originacion.desembolsos_qa_habilitados') !== true || ! $actor->currentSucursal?->activa

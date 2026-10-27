@@ -60,36 +60,38 @@ class EmpresaConfiguracionController extends Controller implements HasMiddleware
 
     public function update(UpdateEmpresaConfiguracionRequest $request)
     {
-        $fields = $request->validated();
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+            $fields = $request->validated();
 
-        $configuracion = EmpresaConfiguracion::firstOrCreate(
-            ['singleton_key' => 'default'],
-            ['estatus' => 'borrador'],
-        );
+            $configuracion = EmpresaConfiguracion::lockForUpdate()->firstOrCreate(
+                ['singleton_key' => 'default'],
+                ['estatus' => 'borrador'],
+            );
 
-        $integraciones = $configuracion->integraciones ?? [];
-        $incomingIntegraciones = $fields['integraciones'] ?? [];
-        $integraciones['circulo_credito_host'] = $incomingIntegraciones['circulo_credito_host'] ?? null;
-        $integraciones['circulo_credito_sandbox'] = $incomingIntegraciones['circulo_credito_sandbox'] ?? true;
+            $integraciones = $configuracion->integraciones ?? [];
+            $incomingIntegraciones = $fields['integraciones'] ?? [];
+            $integraciones['circulo_credito_host'] = $incomingIntegraciones['circulo_credito_host'] ?? null;
+            $integraciones['circulo_credito_sandbox'] = $incomingIntegraciones['circulo_credito_sandbox'] ?? true;
 
-        if (! empty($incomingIntegraciones['circulo_credito_api_key'])) {
-            $integraciones['circulo_credito_api_key'] = $incomingIntegraciones['circulo_credito_api_key'];
-        }
+            if (! empty($incomingIntegraciones['circulo_credito_api_key'])) {
+                $integraciones['circulo_credito_api_key'] = $incomingIntegraciones['circulo_credito_api_key'];
+            }
 
-        $fields['integraciones'] = $integraciones;
-        $fields['singleton_key'] = 'default';
+            $fields['integraciones'] = $integraciones;
+            $fields['singleton_key'] = 'default';
 
-        $configuracion->update($fields);
+            $configuracion->update($fields);
 
-        $activityLog = app(ActivityLogService::class);
-        $activityLog->log(
-            event: ActivityEvent::CompanyUpdated,
-            description: 'Configuracion de empresa actualizada',
-            subject: $configuracion,
-            metadata: ['changed_fields' => $activityLog->fieldNames($fields)],
-            causer: Auth::user(),
-        );
+            $activityLog = app(ActivityLogService::class);
+            $activityLog->log(
+                event: ActivityEvent::CompanyUpdated,
+                description: 'Configuracion de empresa actualizada',
+                subject: $configuracion,
+                metadata: ['changed_fields' => $activityLog->fieldNames($fields)],
+                causer: Auth::user(),
+            );
 
-        return redirect()->back()->with('success', 'Configuracion de empresa actualizada');
+            return redirect()->back()->with('success', 'Configuracion de empresa actualizada');
+        });
     }
 }

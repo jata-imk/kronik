@@ -67,6 +67,7 @@ class HandleInertiaRequests extends Middleware
         $permissions = Permission::query()->orderBy('name')->get();
 
         return array_merge(parent::share($request), [
+            'empresaOperacion' => fn () => app(\App\Services\EmpresaOperacionService::class)->compartir(),
             'navigation' => fn () => app(\App\Services\NavigationService::class)->forUser($request->user()),
             'menubarItems' => function () use ($request) {
                 try {

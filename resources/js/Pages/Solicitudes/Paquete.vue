@@ -40,7 +40,7 @@ function reintentar(paquete) { retry.post(route("solicitudes.paquete.retry", [pr
 
 <template>
     <AppLayout :title="`Contrato · SOL-${solicitud.id}`">
-        <template #card-header><PageHeader eyebrow="Operación · Formalización" title="Contrato y tabla de pagos" description="Conserva el contrato, la tabla de pagos y la copia firmada."><template #actions><Button v-if="can.preparar && !actual" label="Preparar contrato QA" icon="pi pi-plus" :disabled="!preparacion.puede_preparar" @click="drawer = true" /></template></PageHeader></template>
+        <template #card-header><PageHeader eyebrow="Operación · Formalización" title="Contrato y tabla de pagos" description="Conserva el contrato, la tabla de pagos y la copia firmada."><template #actions><Button v-if="can.preparar && !actual" v-empresa-operacion="'documentar'" label="Preparar contrato QA" icon="pi pi-plus" :disabled="!preparacion.puede_preparar" @click="drawer = true" /></template></PageHeader></template>
         <template #card-content>
             <div class="space-y-6 p-4 md:p-6">
                 <nav class="flex flex-wrap gap-4 text-sm" aria-label="Contexto del contrato">
@@ -91,7 +91,7 @@ function reintentar(paquete) { retry.post(route("solicitudes.paquete.retry", [pr
                     <h2 class="text-lg font-semibold">Contratos conservados</h2><p class="mb-4 text-sm text-surface-500">Los anteriores son evidencia histórica, no autorizaciones vigentes. Sus archivos no se sobrescriben.</p>
                     <div v-if="!paquetes.data.length" class="rounded-xl bg-surface-50 p-8 text-center dark:bg-surface-900"><i class="pi pi-inbox mb-3 text-3xl text-primary" aria-hidden="true" /><h3 class="font-semibold">Aún no hay contratos preparados</h3><p class="mt-2 text-sm">Completa los requisitos y usa «Preparar contrato QA». Si no ves la acción, solicita al administrador los permisos de preparación y documentos.</p></div>
                     <div v-for="item in paquetes.data" :key="item.id" class="mb-3 rounded-xl border border-surface-200 p-4 dark:border-surface-700">
-                        <div class="flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">{{ item.plantilla }} · v{{ item.version }}</h3><p class="mt-1 text-sm text-surface-500">Contrato #{{ item.id }} · {{ fecha(item.created_at) }} · {{ item.actual ? 'Última resolución' : 'Histórico' }}</p></div><div class="flex flex-wrap gap-2"><Tag :value="estados[item.documento?.estado]?.[0] ?? 'Sin archivo'" :severity="estados[item.documento?.estado]?.[1] ?? 'secondary'" /><Button v-if="item.documento?.view_url" label="Ver PDF QA" icon="pi pi-eye" severity="secondary" @click="abrir(item.documento)" /><Button v-if="item.actual && item.documento?.estado === 'fallido' && can.preparar" label="Reintentar PDF" icon="pi pi-refresh" :loading="retry.processing" :disabled="!preparacion.puede_preparar" @click="reintentar(item)" /></div></div>
+                        <div class="flex flex-wrap items-center justify-between gap-3"><div><h3 class="font-semibold">{{ item.plantilla }} · v{{ item.version }}</h3><p class="mt-1 text-sm text-surface-500">Contrato #{{ item.id }} · {{ fecha(item.created_at) }} · {{ item.actual ? 'Última resolución' : 'Histórico' }}</p></div><div class="flex flex-wrap gap-2"><Tag :value="estados[item.documento?.estado]?.[0] ?? 'Sin archivo'" :severity="estados[item.documento?.estado]?.[1] ?? 'secondary'" /><Button v-if="item.documento?.view_url" label="Ver PDF QA" icon="pi pi-eye" severity="secondary" @click="abrir(item.documento)" /><Button v-if="item.actual && item.documento?.estado === 'fallido' && can.preparar" v-empresa-operacion="'documentar'" label="Reintentar PDF" icon="pi pi-refresh" :loading="retry.processing" :disabled="!preparacion.puede_preparar" @click="reintentar(item)" /></div></div>
                         <p v-if="item.documento?.error_mensaje" role="alert" class="mt-3 text-sm text-red-600">{{ item.documento.error_mensaje }}</p>
                         <p class="mt-3 break-all text-xs text-surface-500"><i class="pi pi-lock mr-1" aria-hidden="true" />Huella del contrato: {{ item.snapshot_hash }}</p>
                     </div>
@@ -118,7 +118,7 @@ function reintentar(paquete) { retry.post(route("solicitudes.paquete.retry", [pr
                     </div>
                     <label class="flex items-start gap-3"><Checkbox v-model="form.confirmacion_qa" binary inputId="confirmar-paquete-qa" /><span>Entiendo que este documento es de prueba, sin validez contractual, e incluirá impuestos proyectados según la configuración del producto.</span></label>
                     <Message v-for="(error, key) in form.errors" :key="key" severity="error" :closable="false">{{ error }}</Message>
-                    <Button type="submit" label="Confirmar preparación QA" icon="pi pi-file-pdf" :loading="form.processing" :disabled="!plantillas.length" class="w-full" />
+                    <Button v-empresa-operacion="'documentar'" type="submit" label="Confirmar preparación QA" icon="pi pi-file-pdf" :loading="form.processing" :disabled="!plantillas.length" class="w-full" />
                 </form>
             </Drawer>
             <PrivateDocumentViewer v-model:visible="viewer" :url="documento?.view_url ?? ''" :downloadUrl="documento?.download_url ?? ''" :name="documento?.nombre_archivo ?? 'Contrato QA'" />

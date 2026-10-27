@@ -30,6 +30,8 @@ class SolicitudPaqueteService
     {
         $result = app(SolicitudRequisitosService::class)->evaluar($solicitud, $actor, paraPaquete: true);
         $items = $result['requisitos'];
+        $empresa = app(EmpresaOperacionService::class)->compartir();
+        $items[] = ['clave' => 'empresa', 'cumplido' => $empresa['capacidades']['documentar'], 'mensaje' => $empresa['motivo'] ?? 'Empresa activa.'];
         $items[] = ['clave' => 'qa', 'cumplido' => config('originacion.paquetes_qa_habilitados') === true,
             'mensaje' => 'El administrador técnico debe habilitar ORIGINACION_PAQUETES_QA_HABILITADOS y reconstruir la caché de configuración en QA. Esta entrega no genera contratos válidos para operación real.'];
         $items[] = ['clave' => 'sucursal', 'cumplido' => $actor->current_sucursal_id !== null
@@ -57,6 +59,8 @@ class SolicitudPaqueteService
     public function preparar(Solicitud $solicitud, array $data, User $actor): SolicitudPaquete
     {
         return DB::transaction(function () use ($solicitud, $data, $actor) {
+            app(EmpresaOperacionService::class)->exigir(\App\Enums\OperacionEmpresa::Documentar, $actor, $solicitud);
+            app(EmpresaOperacionService::class)->exigirDatosDocumentales();
             $solicitud = Solicitud::lockForUpdate()->findOrFail($solicitud->id);
             Gate::forUser($actor)->authorize('preparePackage', $solicitud);
             $cliente = Cliente::lockForUpdate()->findOrFail($solicitud->cliente_id);
@@ -107,6 +111,7 @@ class SolicitudPaqueteService
                 'estado' => DocumentoGeneradoEstado::Pendiente, 'idempotency_key' => $data['idempotency_key'],
                 'datos_utilizados' => $resolved['values'], 'metadatos_variables' => $resolved['metadata'],
                 'solicitado_en' => now(), 'creado_por' => $actor->id,
+                'team_id' => $actor->current_team_id, 'sucursal_id' => $solicitud->sucursal_id,
             ]);
             $solicitud->increment('lock_version');
             $solicitud->eventos()->create(['actor_id' => $actor->id, 'tipo' => 'paquete_preparado', 'datos' => ['paquete_id' => $paquete->id]]);
@@ -120,6 +125,8 @@ class SolicitudPaqueteService
     public function reintentar(Solicitud $solicitud, SolicitudPaquete $paquete, User $actor): void
     {
         DB::transaction(function () use ($solicitud, $paquete, $actor) {
+            app(EmpresaOperacionService::class)->exigir(\App\Enums\OperacionEmpresa::Documentar, $actor, $solicitud);
+            app(EmpresaOperacionService::class)->exigirDatosDocumentales();
             $solicitud = Solicitud::lockForUpdate()->findOrFail($solicitud->id);
             Gate::forUser($actor)->authorize('preparePackage', $solicitud);
             abort_unless($paquete->solicitud_id === $solicitud->id, 404);

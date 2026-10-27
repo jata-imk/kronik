@@ -54,3 +54,5 @@ Consulta el [índice temático](../topic/index.md) para encontrar material relac
 ## Notas
 
 - [Backlog 01.5 - Gestion de usuarios, equipos y sucursales](01.5-gestion-usuarios-equipos-sucursales.md)
+
+- [Estatus operativo de empresa](empresa-estatus-operativo.md).

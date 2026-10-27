@@ -6,7 +6,6 @@ use App\Enums\ActivityEvent;
 use App\Enums\DocumentoGeneradoEstado;
 use App\Models\DocumentoGenerado;
 use App\Models\SolicitudPaquete;
-use App\Models\User;
 use App\Services\ActivityLogService;
 use App\Services\Documentos\DocumentoRenderService;
 use Illuminate\Bus\Queueable;
@@ -54,7 +53,26 @@ class GenerarDocumentoPdf implements ShouldQueue
             return;
         }
 
-        $document->update(['estado' => DocumentoGeneradoEstado::Procesando, 'error_codigo' => null, 'error_mensaje' => null]);
+        if ($document->estado === DocumentoGeneradoEstado::Fallido && $document->error_codigo === 'EmpresaNoOperativa') {
+            return;
+        }
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($document) {
+                $empresa = app(\App\Services\EmpresaOperacionService::class);
+                $empresa->exigir(\App\Enums\OperacionEmpresa::Documentar, recurso: $document,
+                    equipoId: $document->team_id, sucursalId: $document->sucursal_id,
+                    iniciadorId: $document->creado_por, sistema: true);
+                $empresa->exigirDatosDocumentales();
+                $document->update(['estado' => DocumentoGeneradoEstado::Procesando, 'error_codigo' => null, 'error_mensaje' => null]);
+            });
+        } catch (\App\Exceptions\OperacionEmpresaBloqueada $exception) {
+            $document->update(['estado' => DocumentoGeneradoEstado::Fallido, 'error_codigo' => 'EmpresaNoOperativa',
+                'error_mensaje' => $exception->errors()['empresa'][0]]);
+            $exception->registrar();
+
+            return;
+        }
+
         $snapshot = $paquete?->snapshot;
         if ($paquete && ! hash_equals($paquete->snapshot_hash, hash('sha256', json_encode($snapshot, JSON_THROW_ON_ERROR)))) {
             throw new \RuntimeException('La huella del paquete no coincide.');
@@ -88,7 +106,7 @@ class GenerarDocumentoPdf implements ShouldQueue
             'Documento generado',
             $document->cliente,
             ['related' => ['type' => 'documento_generado', 'id' => $document->id], 'state' => DocumentoGeneradoEstado::Generado->value],
-            $document->creado_por ? User::find($document->creado_por) : null,
+            null, teamId: $document->team_id, sucursalId: $document->sucursal_id, inheritActorContext: false,
         );
     }
 
@@ -108,7 +126,7 @@ class GenerarDocumentoPdf implements ShouldQueue
             'Falló la generación de documento',
             $document->cliente,
             ['related' => ['type' => 'documento_generado', 'id' => $document->id], 'state' => DocumentoGeneradoEstado::Fallido->value],
-            $document->creado_por ? User::find($document->creado_por) : null,
+            null, teamId: $document->team_id, sucursalId: $document->sucursal_id, inheritActorContext: false,
         );
     }
 }

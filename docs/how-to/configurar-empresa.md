@@ -54,3 +54,7 @@ La validacion local del RFC no comprueba que el registro exista o este activo en
 - Ejecutar pruebas Pest del modulo.
 - Ejecutar build frontend si hubo cambios visuales.
 - Actualizar referencia y TODOs si cambia la decision de modelo.
+
+## Comprobar el efecto del estatus
+
+Revisar [la matriz operativa](../reference/estatus-operativo-empresa.md). Borrador permite captura y simulaciones; Suspendida detiene nuevas operaciones y conserva cobranza. Completar datos antes de activar. Un trabajo bloqueado no se reenvia automaticamente al reactivar.

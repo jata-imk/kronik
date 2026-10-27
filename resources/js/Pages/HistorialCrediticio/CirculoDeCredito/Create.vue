@@ -186,7 +186,7 @@ function enviar() {
                             label="Consultar en sandbox"
                             icon="pi pi-search"
                             :loading="form.processing"
-                            :disabled="!habilitado || !form.confirmacion_qa"
+                            v-empresa-operacion="'consultar_sic'" :disabled="!habilitado || !form.confirmacion_qa"
                         />
                     </form>
                     <aside class="k-surface space-y-3 p-5">

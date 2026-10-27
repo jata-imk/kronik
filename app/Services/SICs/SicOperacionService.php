@@ -30,6 +30,7 @@ final class SicOperacionService
         }
 
         return DB::transaction(function () use ($cliente, $data, $actor) {
+            app(\App\Services\EmpresaOperacionService::class)->exigir(\App\Enums\OperacionEmpresa::ConsultarSic, $actor, $cliente);
             $cliente = Cliente::lockForUpdate()->findOrFail($cliente->id);
             $this->autorizar($cliente, $actor);
             $consentimiento = ClienteConsentimientoSic::where('cliente_id', $cliente->id)->findOrFail($data['consentimiento_id']);
@@ -69,11 +70,15 @@ final class SicOperacionService
     public function ejecutar(int $id): void
     {
         $query = DB::transaction(function () use ($id) {
+            $empresa = app(\App\Services\EmpresaOperacionService::class);
+            $empresa->configuracion();
             $q = SicQuery::lockForUpdate()->findOrFail($id);
             if ($q->estado_operacion !== 'preparada') {
                 return null; // Redelivery must never send a second provider POST.
             }
             try {
+                $empresa->exigir(\App\Enums\OperacionEmpresa::ConsultarSic, recurso: $q, equipoId: $q->team_id,
+                    sucursalId: $q->sucursal_id, iniciadorId: $q->actor_id, sistema: true);
                 CirculoSandboxGateway::habilitado();
                 $actor = User::findOrFail($q->actor_id);
                 $actor->forceFill(['current_team_id' => $q->team_id, 'current_sucursal_id' => $q->sucursal_id]);
@@ -87,6 +92,11 @@ final class SicOperacionService
                 $this->transicion($q, 'enviando', 'pending');
 
                 return $q;
+            } catch (\App\Exceptions\OperacionEmpresaBloqueada $exception) {
+                $this->transicion($q, 'cancelada', 'error');
+                $exception->registrar();
+
+                return null;
             } catch (\Throwable) {
                 $this->transicion($q, 'cancelada', 'error');
 
@@ -120,8 +130,9 @@ final class SicOperacionService
                     'fintech' => ActivityEvent::ClientSicFintechScoreQueried,
                     default => ActivityEvent::ClientSicCreditReportFicoQueried,
                 };
-                app(ActivityLogService::class)->log($event, 'Consulta SIC QA finalizada', $q->cliente,
-                    ['related' => ['type' => 'sic_query', 'id' => $q->id]], User::find($q->actor_id), teamId: $q->team_id, sucursalId: $q->sucursal_id);
+                app(ActivityLogService::class)->log($event, 'Consulta SIC QA finalizada', $q,
+                    ['related' => ['type' => 'iniciador', 'id' => $q->actor_id], 'result' => $ok ? 'success' : 'error'],
+                    null, teamId: $q->team_id, sucursalId: $q->sucursal_id, inheritActorContext: false);
             });
         } catch (\Throwable) {
             // Exceptions can contain credentials/payloads: never serialize or log them.

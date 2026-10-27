@@ -117,6 +117,7 @@ function politicaSolicitudDatos(string $modalidad = 'individual', string $sic = 
 
 function prepararSolicitudAprobable($test, string $modalidad = 'individual', string $sic = 'manual_permitido', bool $fiscalidad = true, bool $pagos = false, ?\Closure $prepararCliente = null): array
 {
+    activarEmpresaPrueba();
     \Illuminate\Support\Facades\Storage::fake('local');
     config(['originacion.aprobaciones_habilitadas' => true]);
     $user = actingAsSuperAdmin();

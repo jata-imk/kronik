@@ -39,7 +39,7 @@ function aprobar() {
             <div class="flex flex-col gap-1"><label for="sol-motivo-aprobacion">Motivo de aprobación</label><Textarea id="sol-motivo-aprobacion" v-model="form.motivo" required minlength="10" maxlength="2000" rows="3" /></div>
             <p class="text-sm">Confirma solo tras revisar los dictámenes y las condiciones. El motivo es operativo y visible en la solicitud.</p>
             <Message v-for="(error,key) in form.errors" :key="key" severity="error" :closable="false">{{ error }}</Message>
-            <Button type="submit" label="Confirmar aprobación" :disabled="!estado.puede_aprobar" :loading="form.processing" />
+            <Button v-empresa-operacion="'originar'" type="submit" label="Confirmar aprobación" :disabled="!estado.puede_aprobar" :loading="form.processing" />
         </form>
     </section>
 </template>

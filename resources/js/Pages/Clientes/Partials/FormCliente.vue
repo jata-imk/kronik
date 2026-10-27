@@ -397,7 +397,7 @@ const onSubmit = () => {
                 </div>
             </Fieldset>
 
-            <Button v-if="!readOnly" label="Guardar Cliente" type="submit" :disabled="form.processing" :loading="form.processing" />
+            <Button v-if="!readOnly" v-empresa-operacion="cliente ? 'atender_cartera' : 'capturar'" label="Guardar Cliente" type="submit" :disabled="form.processing" :loading="form.processing" />
         </form>
     </div>
 </template>

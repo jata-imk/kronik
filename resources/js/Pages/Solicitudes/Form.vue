@@ -85,7 +85,7 @@ function save() {
                     <div class="flex flex-col gap-1"><label for="sol-fecha">Fecha estimada de desembolso</label><input id="sol-fecha" type="date" v-model="form.fecha_estimada" class="rounded border border-surface-300 bg-surface-0 p-2 text-surface-900 dark:bg-surface-900 dark:text-surface-0" /><small>Se usa para proyectar el calendario. No programa una transferencia.</small></div>
                 </div>
                 <div class="flex flex-col gap-1"><label for="sol-destino">Destino del crédito</label><Textarea id="sol-destino" v-model="form.destino" rows="3" maxlength="2000" /><small>Explica para qué se utilizarán los recursos, por ejemplo: compra de herramientas para el taller.</small></div>
-                <div class="flex items-center gap-4"><Button type="submit" label="Guardar borrador" :loading="form.processing" /><Link :href="solicitud ? route('solicitudes.show', solicitud.id) : route('solicitudes.index')" class="text-primary underline">Volver</Link></div>
+                <div class="flex items-center gap-4"><Button type="submit" v-empresa-operacion="'capturar'" label="Guardar borrador" :loading="form.processing" /><Link :href="solicitud ? route('solicitudes.show', solicitud.id) : route('solicitudes.index')" class="text-primary underline">Volver</Link></div>
             </form>
         </template>
     </AppLayout>
