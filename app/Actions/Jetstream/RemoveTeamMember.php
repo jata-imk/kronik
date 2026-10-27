@@ -20,7 +20,8 @@ class RemoveTeamMember implements RemovesTeamMembers
     {
         $this->authorize($user, $team, $teamMember);
 
-        DB::transaction(function () use ($team, $teamMember) {
+        $branchId = $user->current_sucursal_id;
+        DB::transaction(function () use ($user, $team, $teamMember, $branchId) {
             $team = Team::whereKey($team->id)->lockForUpdate()->firstOrFail();
             $teamMember = User::whereKey($teamMember->id)->lockForUpdate()->firstOrFail();
             $this->ensureUserDoesNotOwnTeam($teamMember, $team);
@@ -31,11 +32,13 @@ class RemoveTeamMember implements RemovesTeamMembers
             if ((int) $teamMember->current_team_id === (int) $team->id || ! $alternative) {
                 throw ValidationException::withMessages(['team' => 'Asigna otro equipo activo y cambia el equipo actual del usuario antes de quitarlo de este equipo.'])->errorBag('removeTeamMember');
             }
+            $before = app(\App\Services\UserAccessAuditService::class)->snapshot($teamMember);
             $team->removeUser($teamMember);
             foreach (['model_has_roles', 'model_has_permissions'] as $table) {
                 DB::table(config("permission.table_names.{$table}"))->where('team_id', $team->id)
                     ->where('model_id', $teamMember->id)->where('model_type', $teamMember->getMorphClass())->delete();
             }
+            app(\App\Services\UserAccessAuditService::class)->recordChanges($teamMember, $before, $user, $branchId);
             TeamMemberRemoved::dispatch($team, $teamMember);
         });
         app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();

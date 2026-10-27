@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ActivityEvent;
 use App\Enums\UserStatus;
 use App\Models\User;
 use App\Notifications\UserInvitation;
@@ -17,9 +18,12 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class UserInvitationService
 {
-    public function send(User $user): void
+    public function send(User $user, ?User $actor = null): void
     {
         abort_unless($user->status === UserStatus::Pending, 422, 'Solo se pueden reenviar invitaciones pendientes.');
+        $teamId = $actor ? $actor->current_team_id : $user->current_team_id;
+        $branchId = $actor ? $actor->current_sucursal_id : $user->current_sucursal_id;
+        $resent = $user->invited_at !== null;
         try {
             $status = Password::broker('invitaciones')->sendResetLink(
                 ['email' => $user->email, 'status' => UserStatus::Pending->value],
@@ -27,9 +31,15 @@ class UserInvitationService
             );
         } catch (TransportExceptionInterface $exception) {
             Password::broker('invitaciones')->deleteToken($user);
+            $this->auditSend(ActivityEvent::InvitationFailed, $user, $actor, $teamId, $branchId, 'transport_failed');
             throw ValidationException::withMessages(['email' => 'No se pudo enviar la invitación. La cuenta sigue pendiente; puedes reenviarla desde el listado.']);
+        } catch (\Throwable $exception) {
+            $this->auditSend(ActivityEvent::InvitationFailed, $user, $actor, $teamId, $branchId, 'failed');
+            throw $exception;
         }
         if ($status !== Password::RESET_LINK_SENT) {
+            $this->auditSend($status === Password::RESET_THROTTLED ? ActivityEvent::InvitationThrottled : ActivityEvent::InvitationFailed,
+                $user, $actor, $teamId, $branchId, $status === Password::RESET_THROTTLED ? 'throttled' : 'rejected');
             throw ValidationException::withMessages(['email' => $status === Password::RESET_THROTTLED
                 ? 'Espera un minuto antes de reenviar la invitación.'
                 : 'No se pudo enviar la invitación. La cuenta sigue pendiente; puedes reenviarla desde el listado.']);
@@ -37,6 +47,13 @@ class UserInvitationService
         // A resend also retires short-lived links issued by the previous flow.
         Password::broker('users')->deleteToken($user);
         $user->forceFill(['invited_at' => now()])->save();
+        $this->auditSend($resent ? ActivityEvent::InvitationResent : ActivityEvent::InvitationSent, $user, $actor, $teamId, $branchId, 'transport_accepted');
+    }
+
+    private function auditSend(ActivityEvent $event, User $user, ?User $actor, ?int $teamId, ?int $branchId, string $result): void
+    {
+        app(ActivityLogService::class)->log($event, $event->label(), $user,
+            ['state' => 'pending', 'result' => $result], $actor, $teamId, $branchId, inheritActorContext: false);
     }
 
     public function accept(array $input): string

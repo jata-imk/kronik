@@ -44,6 +44,12 @@ retira su membresía, roles y permisos directos. No aplica al responsable; el
 equipo actual o único activo exige reasignación previa. No se ofrece quitarse
 a uno mismo desde este panel. Véase [ADR 0028](../explanation/adr-0028-acciones-cuenta-membresia.md).
 
+Las acciones de cuenta, invitación y membresía emiten auditoría con actor,
+identificadores, resultado y contexto original; la contraseña nunca se registra.
+Desactivar desde el formulario también revoca sesiones y tokens de acceso.
+Reenviar se audita como aceptado por el transporte, no como correo entregado.
+Consultar la [matriz de eventos](auditoria-eventos.md).
+
 La configuración distingue equipo actual de seleccionado. Desde ella se consultan
 integrantes, invitaciones pendientes, resumen de roles y actividad del equipo,
 según permisos. Los enlaces a Roles y Bitácora conservan la selección sin cambiar

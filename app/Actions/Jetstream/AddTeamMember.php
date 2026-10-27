@@ -26,14 +26,19 @@ class AddTeamMember implements AddsTeamMembers
 
         $newTeamMember = Jetstream::findUserByEmailOrFail($email);
 
-        AddingTeamMember::dispatch($team, $newTeamMember);
+        $branchId = $user->current_sucursal_id;
+        \Illuminate\Support\Facades\DB::transaction(function () use ($user, $team, $newTeamMember, $role, $branchId) {
+            $before = app(\App\Services\UserAccessAuditService::class)->snapshot($newTeamMember);
+            AddingTeamMember::dispatch($team, $newTeamMember);
 
-        $team->users()->attach(
-            $newTeamMember,
-            ['role' => $role]
-        );
+            $team->users()->attach(
+                $newTeamMember,
+                ['role' => $role]
+            );
 
-        TeamMemberAdded::dispatch($team, $newTeamMember);
+            TeamMemberAdded::dispatch($team, $newTeamMember);
+            app(\App\Services\UserAccessAuditService::class)->recordChanges($newTeamMember, $before, $user, $branchId);
+        });
     }
 
     /**

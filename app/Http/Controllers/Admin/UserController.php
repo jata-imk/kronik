@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\ActivityEvent;
-use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
@@ -16,8 +15,6 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class UserController extends Controller implements HasMiddleware
@@ -80,7 +77,7 @@ class UserController extends Controller implements HasMiddleware
     public function store(StoreUserRequest $request, UserManagementService $service)
     {
         $user = $service->create($request->validated(), $request->user());
-        app(UserInvitationService::class)->send($user);
+        app(UserInvitationService::class)->send($user, $request->user());
 
         return back()->with('success', 'Usuario creado e invitación enviada');
     }
@@ -116,26 +113,14 @@ class UserController extends Controller implements HasMiddleware
      */
     public function destroy(Request $request, User $user)
     {
-        if ($user->is_super_admin && ! $request->user()->is_super_admin) {
-            abort(403, 'Solo un Super Admin global puede desactivar otra cuenta global.');
-        }
-
-        if ($request->user()->is($user)) {
-            throw ValidationException::withMessages([
-                'user' => 'No puedes desactivar tu propia cuenta.',
-            ]);
-        }
-
-        $user->forceFill(['status' => UserStatus::Inactive])->save();
-        $user->tokens()->delete();
-        DB::table('sessions')->where('user_id', $user->id)->delete();
+        app(UserManagementService::class)->deactivate($user, $request->user());
 
         return back()->with('success', 'Usuario desactivado');
     }
 
     public function resendInvitation(Request $request, User $user)
     {
-        app(UserInvitationService::class)->send($user);
+        app(UserInvitationService::class)->send($user, $request->user());
 
         return back()->with('success', 'Invitación reenviada');
     }

@@ -104,6 +104,7 @@ class JetstreamServiceProvider extends ServiceProvider
         Jetstream::addTeamMembersUsing(AddTeamMember::class);
         Jetstream::inviteTeamMembersUsing(InviteTeamMember::class);
         Jetstream::removeTeamMembersUsing(RemoveTeamMember::class);
+        $this->app->bind(\Laravel\Jetstream\Actions\UpdateTeamMemberRole::class, \App\Actions\Jetstream\UpdateTeamMemberRole::class);
         Jetstream::deleteTeamsUsing(DeleteTeam::class);
         Jetstream::deleteUsersUsing(DeleteUser::class);
     }

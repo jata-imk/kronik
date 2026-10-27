@@ -4,6 +4,21 @@ namespace App\Enums;
 
 enum ActivityEvent: string
 {
+    case UserCreated = 'user.created';
+    case UserUpdated = 'user.updated';
+    case UserDeactivated = 'user.deactivated';
+    case UserReactivated = 'user.reactivated';
+    case TeamMemberAdded = 'team.member.added';
+    case TeamMemberRemoved = 'team.member.removed';
+    case TeamMemberLegacyRoleUpdated = 'team.member.legacy_role_updated';
+    case UserTeamRolesUpdated = 'user.team_roles.updated';
+    case InvitationSent = 'user.invitation.sent';
+    case InvitationResent = 'user.invitation.resent';
+    case InvitationFailed = 'user.invitation.failed';
+    case InvitationThrottled = 'user.invitation.throttled';
+    case UserActivated = 'user.activated';
+    case PasswordRecovered = 'user.password.recovered';
+    case PasswordChanged = 'user.password.changed';
     case TeamResponsibleTransferred = 'team.responsible_transferred';
     case SicAttemptReconciled = 'sic.attempt_reconciled';
     case Login = 'login';
@@ -73,6 +88,21 @@ enum ActivityEvent: string
     public function label(): string
     {
         return match ($this) {
+            self::UserCreated => 'Cuenta pendiente creada',
+            self::UserUpdated => 'Cuenta actualizada',
+            self::UserDeactivated => 'Cuenta desactivada',
+            self::UserReactivated => 'Cuenta reactivada',
+            self::TeamMemberAdded => 'Integrante agregado al equipo',
+            self::TeamMemberRemoved => 'Integrante retirado del equipo',
+            self::TeamMemberLegacyRoleUpdated => 'Rol genérico de membresía actualizado',
+            self::UserTeamRolesUpdated => 'Roles del integrante actualizados',
+            self::InvitationSent => 'Invitación aceptada por el transporte',
+            self::InvitationResent => 'Reenvío de invitación aceptado por el transporte',
+            self::InvitationFailed => 'Envío de invitación fallido',
+            self::InvitationThrottled => 'Reenvío de invitación limitado por frecuencia',
+            self::UserActivated => 'Cuenta activada con contraseña inicial',
+            self::PasswordRecovered => 'Contraseña recuperada',
+            self::PasswordChanged => 'Contraseña cambiada',
             self::TeamResponsibleTransferred => 'Responsable del equipo transferido',
             self::CreditPaymentRecorded => 'Pago QA registrado',
             self::CreditPaymentReversed => 'Pago QA revertido',

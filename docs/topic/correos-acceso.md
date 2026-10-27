@@ -8,6 +8,7 @@ comprobaciones; la nota conserva la evidencia de la entrega y resultados QA.
 
 - [Probar correos, SMTP y muestras HTML/TXT/EML](../how-to/probar-correos-acceso.md).
 - [Usuarios e invitaciones](../reference/usuarios-equipos-sucursales.md).
+- [Auditoría de invitación, activación y contraseña](../reference/auditoria-eventos.md).
 - [Variables de entorno](../reference/variables-entorno.md).
 - [Comando de muestras y otros comandos Artisan](../reference/comandos-artisan.md).
 

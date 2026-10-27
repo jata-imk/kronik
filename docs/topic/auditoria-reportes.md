@@ -12,6 +12,8 @@ no implican que todos los reportes o controles ya estén implementados.
 
 ## Seguimiento y temas relacionados
 
+- [ADR 0028 y auditoría de acciones de cuenta/membresía](../explanation/adr-0028-acciones-cuenta-membresia.md).
+
 - [Backlog 08: reportes y contabilidad](../todos/08-reportes-contabilidad.md).
 - [Backlog 10: auditoría y trazabilidad](../todos/10-auditoria-y-trazabilidad.md).
 - [Roadmap local](../roadmap-financiero.md).

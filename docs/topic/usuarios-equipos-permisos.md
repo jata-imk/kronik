@@ -15,6 +15,9 @@ propiedad del equipo y bandera global de superadministrador.
 
 ## Decisiones y seguimiento
 
+- [ADR 0028: acciones compartidas de cuenta y membresía](../explanation/adr-0028-acciones-cuenta-membresia.md).
+- [Nota de acciones de integrantes](../agent-notes/equipo-acciones-integrantes.md).
+
 - [ADR 0025: aislamiento y presentación de roles](../explanation/adr-0025-roles-aislamiento-presentacion.md).
 - [ADR 0026: vigencia propia de invitaciones](../explanation/adr-0026-invitaciones-vigencia-propia.md).
 - [ADR 0027: contexto seleccionado y responsable](../explanation/adr-0027-equipo-seleccionado-responsable.md).
