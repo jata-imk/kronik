@@ -4,7 +4,7 @@
 
 - Notion: https://app.notion.com/p/3fe61db7db7f81a1a945fdc60db68fc4
 - Rama: `fix/roles-aislamiento-etiquetas`
-- PR: pendiente; enlace y merge finales en Notion.
+- PR: https://github.com/jata-imk/kronik/pull/47.
 - ADR: [0025](../explanation/adr-0025-roles-aislamiento-presentacion.md).
 
 ## Objetivo
@@ -13,8 +13,8 @@ Cerrar las escrituras entre equipos y corregir gestión y presentación de roles
 
 ## Estado actual
 
-- Estado: entregado; integración y CI final verificables en la PR y Notion.
-- Última actualización: 2026-10-25.
+- Estado: integrado en `main` mediante `f16b3ed` (PR #47), con CI aprobado; sin despliegue acreditado.
+- Última actualización: 2026-10-26.
 - Último punto estable: pruebas, build y revisión medium completados.
 
 ## Decisiones pendientes
@@ -27,12 +27,14 @@ Cerrar las escrituras entre equipos y corregir gestión y presentación de roles
 - Revisión medium: corregidos conflicto de nombre con plantilla global y propagación del clic de ayuda; segunda pasada sin hallazgos. Vitest local pasó independientemente de la restricción del sandbox del revisor.
 - Capturas: [escritorio](../assets/roles-etiquetas-desktop.png) y [móvil oscuro](../assets/roles-etiquetas-mobile-dark.png).
 - Migraciones: `2026_10_25_210000_add_permission_catalog_labels`; agrega metadatos y completa registros existentes.
+- Review medium acumulado de PR #46–#50 sobre `a6057a0..6c30e3c`: sin hallazgos pendientes; 43 pruebas backend focalizadas y 323 aserciones aprobadas. Nueve E2E de la iniciativa aprobados antes del último merge.
+- QA posterior del usuario: no se ha reportado para esta entrega.
 
 ## Siguiente paso
 
-Consultar CI y merge en Notion; continuar con invitaciones tras integrar.
+Aplicar la migración y ejecutar QA cuando se programe el despliegue; el lote de cinco tareas quedó integrado.
 
 ## Cierre
 
-- Commit o merge: consultar PR y Notion.
+- Commit o merge: `f16b3ed`, PR #47.
 - Pendientes diferidos: despliegue independiente.

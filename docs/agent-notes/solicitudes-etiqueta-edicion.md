@@ -13,8 +13,8 @@ Identificar la acción de reanudar un borrador como «Editar solicitud».
 
 ## Estado actual
 
-- Estado: entregado; integración y CI final verificables en la PR.
-- Última actualización: 2026-10-25.
+- Estado: integrado en `main` mediante `ff372d8` (PR #46), con CI aprobado; sin despliegue acreditado.
+- Última actualización: 2026-10-26.
 - Último punto estable: implementación y validación local completas; revisión medium corregida.
 
 ## Decisiones pendientes
@@ -28,12 +28,14 @@ Identificar la acción de reanudar un borrador como «Editar solicitud».
 - Diagnóstico E2E: la traza y captura mostraron que en móvil el folio no es el nombre del enlace. La comprobación de Mi trabajo identifica ahora el destino de la solicitud, conservando la aserción de visibilidad. Sin errores de consola en la traza.
 - Revisión medium: primera pasada sin hallazgos de producto; segunda pasada detectó que el selector nuevo debía usar la URL absoluta de Ziggy. Corregido. El revisor no pudo ejecutar Vitest en su sandbox; la ejecución local independiente sí pasó.
 - Migraciones o seeders: no requiere.
+- Review medium acumulado de PR #46–#50 sobre `a6057a0..6c30e3c`: sin hallazgos pendientes; 43 pruebas backend focalizadas y 323 aserciones aprobadas. Nueve E2E de la iniciativa aprobados antes del último merge.
+- QA posterior del usuario: no se ha reportado para esta entrega.
 
 ## Siguiente paso
 
-Consultar CI e integración en PR #46 y Notion. Continuar con aislamiento y presentación de Roles.
+Despliegue y QA funcional cuando se programe; el lote de cinco tareas quedó integrado.
 
 ## Cierre
 
-- Commit o merge: implementación `c11fb25`, corrección de E2E `b24b9b7`; merge final en PR #46 y Notion.
+- Commit o merge: implementación `c11fb25`, corrección de E2E `b24b9b7`; merge `ff372d8` en PR #46.
 - Pendientes diferidos: despliegue separado de la integración.
