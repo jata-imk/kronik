@@ -1,19 +1,16 @@
 <script setup>
 import PageHeader from "@/Components/PageHeader.vue";
 import { computed, ref } from "vue";
-import { router, usePage } from "@inertiajs/vue3";
+import { usePage } from "@inertiajs/vue3";
 import { FilterMatchMode } from "@primevue/core/api";
-import { useConfirm } from "primevue/useconfirm";
 import ConfirmDialog from "primevue/confirmdialog";
-import { useToast } from "primevue/usetoast";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import CollectionSummary from "@/Components/DataTable/CollectionSummary.vue";
 import TruncatedText from "@/Components/DataTable/TruncatedText.vue";
-import UserForm from "./Form.vue";
+import UserForm from "@/Components/Users/UserFormDialog.vue";
+import UserActions from "@/Components/Users/UserActions.vue";
 
 const page = usePage();
-const toast = useToast();
-const confirm = useConfirm();
 const users = computed(() =>
     (page.props.users ?? []).map((user) => ({
         ...user,
@@ -55,58 +52,6 @@ const openEdit = (user) => {
     selectedUser.value = user;
     activePrefill.value = {};
     showForm.value = true;
-};
-const resendInvitation = (user) => {
-    router.post(
-        route("admin.users.invitation.resend", user.id),
-        {},
-        {
-            preserveScroll: true,
-            onSuccess: () =>
-                toast.add({
-                    severity: "success",
-                    summary: "Invitación reenviada",
-                    life: 3000,
-                }),
-            onError: (errors) =>
-                toast.add({
-                    severity: "error",
-                    summary: "No se pudo reenviar",
-                    detail: Object.values(errors)[0],
-                    life: 6000,
-                }),
-        },
-    );
-};
-const deactivate = (user) => {
-    confirm.require({
-        header: "Desactivar usuario",
-        message: `¿Desactivar la cuenta de ${user.name}? Su historial se conservará.`,
-        icon: "pi pi-exclamation-triangle",
-        rejectLabel: "Cancelar",
-        acceptLabel: "Desactivar",
-        acceptClass: "p-button-danger",
-        accept: () =>
-            router.delete(route("admin.users.destroy", user.id), {
-                preserveScroll: true,
-                onSuccess: () =>
-                    toast.add({
-                        severity: "success",
-                        summary: "Usuario desactivado",
-                        life: 3000,
-                    }),
-                onError: (errors) =>
-                    toast.add({
-                        severity: "error",
-                        summary: "No se pudo desactivar",
-                        detail:
-                            errors.user ??
-                            Object.values(errors)[0] ??
-                            "Revisa los permisos de la cuenta.",
-                        life: 6000,
-                    }),
-            }),
-    });
 };
 </script>
 
@@ -160,7 +105,7 @@ const deactivate = (user) => {
                     <template #filter="{ filterModel, filterCallback }"><InputText v-model="filterModel.value" placeholder="Sucursal" @input="filterCallback()" /></template>
                 </Column>
                 <Column header="Acciones" class="w-44">
-                    <template #body="{ data }"><div class="flex gap-1"><Button v-if="can('update-users')" :aria-label="`Editar ${data.name}`" icon="pi pi-pencil" text @click="openEdit(data)" /><Button v-if="can('create-users') && data.status === 'pending'" :aria-label="`Reenviar invitación a ${data.name}`" icon="pi pi-send" text @click="resendInvitation(data)" /><Button v-if="can('delete-users') && data.status === 'active'" :aria-label="`Desactivar ${data.name}`" icon="pi pi-ban" severity="danger" text @click="deactivate(data)" /></div></template>
+                    <template #body="{ data }"><UserActions :user="data" @edit="openEdit(data)" /></template>
                 </Column>
             </DataTable>
             </div>

@@ -7,7 +7,7 @@ test('team members can be removed from teams', function () {
     grantTeamPermissions($user, $user->currentTeam, ['remove members teams']);
 
     $user->currentTeam->users()->attach(
-        $otherUser = User::factory()->create(), ['role' => 'admin']
+        $otherUser = User::factory()->withPersonalTeam()->create(), ['role' => 'admin']
     );
 
     $this->delete('/teams/'.$user->currentTeam->id.'/members/'.$otherUser->id);

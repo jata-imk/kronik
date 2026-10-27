@@ -93,13 +93,21 @@ class UserManagementService
             ]);
         }
 
-        $invalidTeams = Team::query()->whereIn('id', $teamIds)->where('activo', false)->exists();
-        $invalidSucursales = Sucursal::query()->whereIn('id', $sucursalIds)->where('activa', false)->exists();
+        $existingTeamIds = $user->ownedTeams()->pluck('id')->merge($user->teams()->pluck('teams.id'));
+        $existingBranchIds = $user->sucursales()->pluck('sucursales.id');
+        $invalidTeams = Team::query()->whereIn('id', $teamIds)->whereNotIn('id', $existingTeamIds)->where('activo', false)->exists();
+        $invalidSucursales = Sucursal::query()->whereIn('id', $sucursalIds)->whereNotIn('id', $existingBranchIds)->where('activa', false)->exists();
         if ($invalidTeams) {
             throw ValidationException::withMessages(['team_roles' => 'No se pueden asignar equipos inactivos.']);
         }
         if ($invalidSucursales) {
             throw ValidationException::withMessages(['sucursal_ids' => 'No se pueden asignar sucursales inactivas.']);
+        }
+        if (! Team::whereKey($data['current_team_id'])->where('activo', true)->exists()) {
+            throw ValidationException::withMessages(['current_team_id' => 'Selecciona un equipo actual activo.']);
+        }
+        if (! Sucursal::whereKey($data['sucursal_principal_id'])->where('activa', true)->exists()) {
+            throw ValidationException::withMessages(['sucursal_principal_id' => 'Selecciona una sucursal principal activa.']);
         }
 
         $ownedTeamIds = $user->ownedTeams()->pluck('id')->map(fn ($id) => (int) $id);
@@ -120,6 +128,7 @@ class UserManagementService
                 $roleIds = array_map('intval', Arr::wrap($assignment['role_ids'] ?? []));
                 $validRoleIds = DB::table('roles')
                     ->where('team_id', $teamId)
+                    ->where('guard_name', 'web')
                     ->where('name', '!=', 'Super Admin')
                     ->whereIn('id', $roleIds)
                     ->pluck('id')

@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Notifications\UserInvitation;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\StatefulGuard;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
@@ -58,10 +59,29 @@ class UserInvitationService
 
     public function details(User $user): array
     {
+        return $this->detailsFor(collect([$user]))->get($user->id);
+    }
+
+    public function detailsFor(Collection $users): Collection
+    {
+        $emails = $users->filter(fn (User $user) => $user->status === UserStatus::Pending)->pluck('email');
+        $issued = [];
+        if ($emails->isNotEmpty()) {
+            foreach (['invitaciones', 'users'] as $broker) {
+                $issued[$broker] = DB::table(config("auth.passwords.{$broker}.table"))->whereIn('email', $emails)
+                    ->pluck('created_at', 'email')->all();
+            }
+        }
+
+        return $users->mapWithKeys(fn (User $user) => [$user->id => $this->formatDetails($user, $issued)]);
+    }
+
+    private function formatDetails(User $user, array $issued): array
+    {
         $expiresAt = null;
         if ($user->status === UserStatus::Pending) {
             foreach (['invitaciones', 'users'] as $broker) {
-                $issuedAt = DB::table(config("auth.passwords.{$broker}.table"))->where('email', $user->email)->value('created_at');
+                $issuedAt = $issued[$broker][$user->email] ?? null;
                 if ($issuedAt) {
                     $candidate = Carbon::parse($issuedAt)->addMinutes((int) config("auth.passwords.{$broker}.expire"));
                     if (! $expiresAt || $candidate->greaterThan($expiresAt)) {

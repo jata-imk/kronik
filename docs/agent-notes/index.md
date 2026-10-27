@@ -1,5 +1,7 @@
 # Agent Notes
 
+- [Equipo: acciones de integrantes](equipo-acciones-integrantes.md)
+
 - [Equipo: contexto seleccionado y responsable](equipo-contexto-responsable.md)
 
 - [Invitaciones: vigencia propia](invitaciones-vigencia-propia.md)

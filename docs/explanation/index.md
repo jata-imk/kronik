@@ -1,5 +1,7 @@
 # Explicacion
 
+- [ADR 0028: acciones de cuenta y membresía](adr-0028-acciones-cuenta-membresia.md)
+
 - [ADR 0027: equipo seleccionado y responsable informativo](adr-0027-equipo-seleccionado-responsable.md)
 
 - [ADR 0026: vigencia propia de invitaciones](adr-0026-invitaciones-vigencia-propia.md)

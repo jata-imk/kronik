@@ -29,21 +29,26 @@ class E2eSeeder extends Seeder
 
         DB::transaction(function (): void {
             $admin = User::where('email', 'test@example.com')->firstOrFail();
-            $invited = User::forceCreate([
-                'name' => 'Invitada E2E', 'email' => 'invitada.e2e@example.test',
-                'password' => \Illuminate\Support\Str::random(64),
-                'status' => \App\Enums\UserStatus::Pending, 'email_verified_at' => null,
-                'current_team_id' => $admin->current_team_id,
-                'current_sucursal_id' => $admin->current_sucursal_id,
-                'sucursal_principal_id' => $admin->current_sucursal_id, 'invited_at' => now(),
-            ]);
-            $invited->teams()->attach($admin->current_team_id);
-            $invited->sucursales()->attach($admin->current_sucursal_id);
-            // Synthetic token exists only in the guarded, disposable E2E environment.
-            DB::table('user_invitation_tokens')->insert([
-                'email' => $invited->email,
-                'token' => \Illuminate\Support\Facades\Hash::make('E2E-INVITATION-ONLY'), 'created_at' => now(),
-            ]);
+            foreach ([
+                ['Invitada E2E', 'invitada.e2e@example.test', 'E2E-INVITATION-ONLY'],
+                ['Pendiente de equipo E2E', 'pendiente.equipo@example.test', 'E2E-TEAM-INVITATION-ONLY'],
+            ] as [$inviteName, $inviteEmail, $inviteToken]) {
+                $invited = User::forceCreate([
+                    'name' => $inviteName, 'email' => $inviteEmail,
+                    'password' => \Illuminate\Support\Str::random(64),
+                    'status' => \App\Enums\UserStatus::Pending, 'email_verified_at' => null,
+                    'current_team_id' => $admin->current_team_id,
+                    'current_sucursal_id' => $admin->current_sucursal_id,
+                    'sucursal_principal_id' => $admin->current_sucursal_id, 'invited_at' => now()->subMinutes(2),
+                ]);
+                $invited->teams()->attach($admin->current_team_id);
+                $invited->sucursales()->attach($admin->current_sucursal_id);
+                // Synthetic token exists only in the guarded, disposable E2E environment.
+                DB::table('user_invitation_tokens')->insert([
+                    'email' => $invited->email,
+                    'token' => \Illuminate\Support\Facades\Hash::make($inviteToken), 'created_at' => now()->subMinutes(2),
+                ]);
+            }
             $secondBranch = Sucursal::updateOrCreate(
                 ['clave' => 'NORTE'],
                 [
@@ -75,14 +80,19 @@ class E2eSeeder extends Seeder
                 ['user_id' => $admin->id, 'name' => 'Operaciones E2E'],
                 ['personal_team' => false, 'activo' => true],
             );
-            $responsible = User::forceCreate([
-                'name' => 'Responsable E2E', 'email' => 'responsable.e2e@example.test',
-                'password' => \Illuminate\Support\Str::random(64), 'status' => \App\Enums\UserStatus::Active,
-                'email_verified_at' => now(), 'current_team_id' => $admin->current_team_id,
-                'current_sucursal_id' => $admin->current_sucursal_id, 'sucursal_principal_id' => $admin->current_sucursal_id,
-            ]);
-            $responsible->teams()->attach([$admin->current_team_id, $operationsTeam->id]);
-            $responsible->sucursales()->attach($admin->current_sucursal_id);
+            foreach ([
+                ['Responsable E2E', 'responsable.e2e@example.test'],
+                ['Integrante acciones E2E', 'integrante.acciones@example.test'],
+            ] as [$memberName, $memberEmail]) {
+                $responsible = User::forceCreate([
+                    'name' => $memberName, 'email' => $memberEmail,
+                    'password' => \Illuminate\Support\Str::random(64), 'status' => \App\Enums\UserStatus::Active,
+                    'email_verified_at' => now(), 'current_team_id' => $admin->current_team_id,
+                    'current_sucursal_id' => $admin->current_sucursal_id, 'sucursal_principal_id' => $admin->current_sucursal_id,
+                ]);
+                $responsible->teams()->attach([$admin->current_team_id, $operationsTeam->id]);
+                $responsible->sucursales()->attach($admin->current_sucursal_id);
+            }
 
             app(ActivityLogService::class)->log(
                 event: ActivityEvent::Login,

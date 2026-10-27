@@ -29,6 +29,21 @@ No existen autorregistro, borrado de cuenta por el usuario ni invitaciones de mi
 
 ## Equipos
 
+Desde el equipo se abre el mismo formulario de Usuarios para invitar o editar,
+sin navegar al listado global. Editar conserva equipos, roles y sucursales ajenos
+al equipo visible, incluidas asignaciones históricas inactivas. Estas no pueden
+asignarse a usuarios nuevos ni seleccionarse como equipo actual/sucursal principal.
+
+**Reenviar invitación** requiere `create users`; **Editar/Reactivar cuenta**,
+`update users`; **Desactivar cuenta**, `delete users`. Son acciones centrales y
+no cambian sus permisos por ejecutarse desde un equipo. Desactivar afecta todos
+los equipos y conserva historial; su confirmación explica ese alcance.
+
+**Quitar del equipo** requiere `remove members teams` en el seleccionado y solo
+retira su membresía, roles y permisos directos. No aplica al responsable; el
+equipo actual o único activo exige reasignación previa. No se ofrece quitarse
+a uno mismo desde este panel. Véase [ADR 0028](../explanation/adr-0028-acciones-cuenta-membresia.md).
+
 La configuración distingue equipo actual de seleccionado. Desde ella se consultan
 integrantes, invitaciones pendientes, resumen de roles y actividad del equipo,
 según permisos. Los enlaces a Roles y Bitácora conservan la selección sin cambiar

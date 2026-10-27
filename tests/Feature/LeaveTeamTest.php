@@ -6,7 +6,7 @@ test('users can leave teams', function () {
     $user = User::factory()->withPersonalTeam()->create();
 
     $user->currentTeam->users()->attach(
-        $otherUser = User::factory()->create(), ['role' => 'admin']
+        $otherUser = User::factory()->withPersonalTeam()->create(), ['role' => 'admin']
     );
 
     $this->actingAs($otherUser);
