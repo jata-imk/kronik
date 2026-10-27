@@ -2,6 +2,8 @@
 
 - [Equipo: acciones de integrantes](equipo-acciones-integrantes.md)
 
+- [Documentación viva e índice por temas](documentacion-viva-indice-temas.md)
+- [Backlog 06: PLD y cumplimiento](06-pld-cumplimiento.md)
 - [Equipo: contexto seleccionado y responsable](equipo-contexto-responsable.md)
 
 - [Invitaciones: vigencia propia](invitaciones-vigencia-propia.md)
@@ -37,6 +39,10 @@ Contexto operativo para continuar trabajo entre sesiones o equipos sin depender 
 - Agent Notes registra solamente el estado de ejecucion y el siguiente punto de continuacion.
 
 No guardar secretos, credenciales, datos personales, respuestas sensibles de proveedores ni copias completas del backlog.
+
+La [regla de documentación viva](../reference/documentacion-viva.md) exige
+registrar también integración, despliegue y confirmaciones posteriores de QA.
+Consulta el [índice temático](../topic/index.md) para encontrar material relacionado.
 
 ## Convencion
 

@@ -4,6 +4,11 @@
 
 Toda tarea funcional debe cerrar con codigo, pruebas aplicables, documentacion Diataxis y evidencia en Notion o en la PR.
 
+Aplicar la [regla de documentación viva](documentacion-viva.md): actualizar
+documentos, índices de sección y [temas](../topic/index.md) afectados. Registrar
+también integración, despliegue y confirmaciones posteriores de QA en las notas
+y Notion; esos resultados no deben seguir figurando como pendientes.
+
 ## Pruebas
 
 - Backend Laravel: Pest/PHPUnit para controllers, requests, services, policies, comandos y migraciones con comportamiento observable.
@@ -26,6 +31,7 @@ Checklist minimo:
 - Tests ejecutados y resultado.
 - Capturas o e2e si cambia UI.
 - Documentacion actualizada.
+- Índices de sección y tema actualizados; enlaces locales revisados.
 - Notion actualizado.
 - Agent Note del backlog actualizada o cerrada.
 - Notas de migracion, seeders o variables de entorno.
