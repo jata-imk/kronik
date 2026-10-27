@@ -4,7 +4,7 @@
 
 - Notion: https://app.notion.com/p/3fe61db7db7f81608ffac3898d5fbf9a
 - Rama: `feat/equipo-acciones-integrantes`
-- PR: enlace y merge finales en Notion.
+- PR: https://github.com/jata-imk/kronik/pull/50.
 - ADR: [0028](../explanation/adr-0028-acciones-cuenta-membresia.md).
 
 ## Objetivo
@@ -15,7 +15,7 @@ Gestionar usuarios desde el equipo con formulario y acciones compartidos.
 
 - Estado: implementado y validado localmente; pendiente de CI e integración.
 - Última actualización: 2026-10-26.
-- Integración y despliegue: sin PR todavía; base actualizada a `main` con PR #41 (`86a683a`). Despliegue pendiente.
+- Integración y despliegue: PR #50 publicada, pendiente de CI e integración; base actualizada a `main` con PR #41 (`86a683a`). Sin despliegue.
 - Último punto estable: 471 pruebas backend aprobadas, una omitida (40 808 aserciones); 99 Vue y nueve E2E aprobados; build aprobado.
 
 ## Decisiones pendientes
