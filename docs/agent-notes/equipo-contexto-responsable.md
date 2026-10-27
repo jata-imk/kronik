@@ -4,7 +4,7 @@
 
 - Notion: https://app.notion.com/p/3fe61db7db7f811cb466cc7258dd2246
 - Rama: `feat/equipo-contexto-responsable`
-- PR: enlace y merge finales en Notion.
+- PR: https://github.com/jata-imk/kronik/pull/49.
 - ADR: [0027](../explanation/adr-0027-equipo-seleccionado-responsable.md).
 
 ## Objetivo
@@ -13,13 +13,13 @@ Administrar el equipo seleccionado sin alterar el actual y formalizar al respons
 
 ## Estado actual
 
-- Estado: entregado; integración y CI final verificables en la PR y Notion.
-- Última actualización: 2026-10-25.
+- Estado: integrado en `main` mediante `91b5096` (PR #49), con CI aprobado; sin despliegue acreditado.
+- Última actualización: 2026-10-26.
 - Último punto estable: suite completa, E2E y revisión medium completados.
 
 ## Decisiones pendientes
 
-- Ninguna; responsable informativo e invitaciones separadas. Acciones locales de usuarios en la siguiente tarea.
+- Ninguna; responsable informativo e invitaciones separadas. Acciones locales de usuarios integradas en PR #50.
 
 ## Evidencia
 
@@ -28,12 +28,14 @@ Administrar el equipo seleccionado sin alterar el actual y formalizar al respons
 - CI inicial: detectó la omisión de la ruta de transferencia en el commit; se incluye en el commit correctivo de la misma PR. El código de la ruta ya formaba parte de las pruebas y review locales.
 - Capturas: [escritorio](../assets/equipo-seleccionado-desktop.png) y [móvil](../assets/equipo-seleccionado-mobile.png).
 - Migraciones o seeders: sin migración; fixture E2E activo para transferir responsable.
+- Review medium acumulado de PR #46–#50 sobre `a6057a0..6c30e3c`: sin hallazgos pendientes; 43 pruebas backend focalizadas y 323 aserciones aprobadas. Nueve E2E de la iniciativa aprobados antes del último merge.
+- QA posterior del usuario: no se ha reportado para esta entrega.
 
 ## Siguiente paso
 
-Consultar CI y merge en Notion; continuar con acciones locales de integrantes tras integrar.
+Despliegue y QA funcional cuando se programe; acciones de integrantes también integradas mediante PR #50.
 
 ## Cierre
 
-- Commit o merge: consultar PR y Notion.
-- Pendientes diferidos: despliegue separado; acciones locales de integrantes en el siguiente PR.
+- Commit o merge: `91b5096`, PR #49.
+- Pendientes diferidos: despliegue separado.
