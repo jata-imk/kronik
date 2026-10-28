@@ -97,6 +97,8 @@ preferencias actuales ni se registran valores fiscales/documentales.
 
 `FieldHelp` conserva la interfaz de la ayuda financiera; el import antiguo de
 Productos delega al común. Se utiliza en Empresa/Sucursales con ejemplos vivos.
+Escape cierra primero la ayuda abierta y devuelve el foco al botón; con la ayuda
+cerrada permite que el formulario contenedor procese su cierre habitual.
 Los campos de empresa sin consumidor operativo quedan marcados y deshabilitados.
 Cambios de ayuda, banner o vista previa no añaden eventos de negocio.
 

@@ -10,7 +10,11 @@ const props = defineProps({
 
 const popover = ref();
 const trigger = ref();
-function cerrar() {
+const abierta = ref(false);
+function cerrar(event) {
+    if (!abierta.value) return;
+    event.stopPropagation();
+    abierta.value = false;
     popover.value.hide();
     trigger.value?.$el?.focus();
 }
@@ -27,10 +31,10 @@ function cerrar() {
         class="!h-7 !w-7"
         :aria-label="`Ayuda: ${title}`"
         @click="popover.toggle($event)"
-        @keydown.esc.stop="cerrar"
+        @keydown.esc="cerrar"
     />
-    <Popover ref="popover" :close-on-escape="false">
-        <div class="max-w-80 space-y-2 text-sm" tabindex="-1" autofocus @keydown.esc.stop="cerrar">
+    <Popover ref="popover" :close-on-escape="false" @show="abierta = true" @hide="abierta = false">
+        <div class="max-w-80 space-y-2 text-sm" tabindex="-1" autofocus @keydown.esc="cerrar">
             <p class="font-semibold text-surface-900 dark:text-surface-0">{{ title }}</p>
             <p class="leading-relaxed text-surface-600 dark:text-surface-300">{{ description }}</p>
             <p v-if="example" class="rounded-lg bg-surface-100 p-2 text-xs dark:bg-surface-800">
