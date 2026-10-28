@@ -35,7 +35,7 @@ function ver(item) { archivo.value = item; viewer.value = true; }
     <section class="space-y-4 rounded-2xl border border-surface-200 p-5 dark:border-surface-700" aria-label="Firma del contrato">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div><p class="text-xs font-semibold uppercase tracking-widest text-primary"><i class="pi pi-pencil mr-2" aria-hidden="true" />Firma autógrafa digitalizada</p><h2 class="mt-2 text-xl font-semibold">Recibir y revisar la copia firmada</h2></div>
-            <Button v-if="can.recibirFirma && actual && !pendiente && !formalizacion" label="Recibir copia firmada" icon="pi pi-upload" :disabled="!requisitos?.permitido" @click="drawer = true" />
+            <Button v-if="can.recibirFirma && actual && !pendiente && !formalizacion" v-empresa-operacion="'formalizar'" label="Recibir copia firmada" icon="pi pi-upload" :disabled="!requisitos?.permitido" @click="drawer = true" />
         </div>
         <p class="text-sm text-surface-600 dark:text-surface-300">Descarga el contrato y su tabla, reúne las firmas y digitaliza todas las páginas en un PDF. Cargarlo no lo aprueba: una persona autorizada debe compararlo con el original. El sistema conserva archivos y responsables; no autentica automáticamente una firma ni utiliza firma electrónica.</p>
         <Message v-if="formalizacion" severity="success" :closable="false"><strong>Formalizada en QA.</strong> La copia fue aceptada y quedó ligada al contrato y tabla originales. {{ solicitud.estado === 'desembolsada' ? 'Desembolso QA registrado: consulta el crédito relacionado.' : 'No hay desembolso registrado; continúa desde Registrar desembolso QA si tienes permiso.' }} No autoriza dinero real.</Message>
@@ -72,7 +72,7 @@ function ver(item) { archivo.value = item; viewer.value = true; }
                 <label v-if="revision.estado_firma === 'aceptada'" class="flex items-start gap-3"><Checkbox v-model="revision.confirmacion_revision" binary /><span>Comparé todas las páginas, condiciones, identidad y firmas con el original.</span></label>
                 <label class="flex items-start gap-3"><Checkbox v-model="revision.confirmacion_qa" binary /><span>Confirmo la revisión exclusivamente QA, sin autorización de dinero real.</span></label>
                 <Message v-for="(error,key) in revision.errors" :key="key" severity="error" :closable="false">{{ error }}</Message>
-                <Button type="submit" :label="revision.estado_firma === 'aceptada' ? 'Aceptar firma y formalizar QA' : 'Confirmar rechazo de copia'" :severity="revision.estado_firma === 'aceptada' ? 'success' : 'danger'" :disabled="revision.estado_firma === 'aceptada' && !requisitos?.permitido" :loading="revision.processing" class="w-full" />
+                <Button type="submit" v-empresa-operacion="revision.estado_firma === 'aceptada' ? 'formalizar' : 'atender_cartera'" :label="revision.estado_firma === 'aceptada' ? 'Aceptar firma y formalizar QA' : 'Confirmar rechazo de copia'" :severity="revision.estado_firma === 'aceptada' ? 'success' : 'danger'" :disabled="revision.estado_firma === 'aceptada' && !requisitos?.permitido" :loading="revision.processing" class="w-full" />
             </form>
         </Drawer>
         <PrivateDocumentViewer v-model:visible="viewer" :url="archivo?.view_url ?? ''" :downloadUrl="archivo?.download_url ?? ''" name="Contrato QA" />

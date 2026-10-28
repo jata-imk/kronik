@@ -37,6 +37,7 @@ class ClienteService
     public function store(array $data)
     {
         return DB::transaction(function () use ($data) {
+            app(EmpresaOperacionService::class)->exigir(\App\Enums\OperacionEmpresa::Capturar, Auth::user());
             $sucursalId = Auth::user()?->current_sucursal_id;
             if (! $sucursalId) {
                 throw \Illuminate\Validation\ValidationException::withMessages([

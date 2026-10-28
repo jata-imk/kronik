@@ -25,3 +25,5 @@
 - [Validacion de Formularios](validacion-formularios.md)
 - [Validador de RFC](validacion-rfc.md)
 - [Variables de Entorno](variables-entorno.md)
+
+- [Estatus operativo de empresa](estatus-operativo-empresa.md).

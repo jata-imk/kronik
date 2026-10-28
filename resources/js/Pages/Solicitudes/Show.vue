@@ -72,7 +72,7 @@ function asignar() {
                 </section>
                 <section v-if="can.update && solicitudEditable(solicitud.estado)">
                     <Message v-for="(error, key) in envio.errors" :key="key" severity="error" :closable="false">{{ error }}</Message>
-                    <Button label="Enviar a revisión" :loading="envio.processing" @click="enviar" />
+                    <Button v-empresa-operacion="'originar'" label="Enviar a revisión" :loading="envio.processing" @click="enviar" />
                     <p class="mt-2 text-sm">Al enviar se congela la revisión y se validan las condiciones contra el producto vigente. No genera consultas SIC ni movimientos monetarios.</p>
                 </section>
                 <form v-if="can.assign && !['rechazada', 'cancelada'].includes(solicitud.estado)" class="flex flex-wrap items-end gap-3 rounded-2xl border border-surface-200 p-4 dark:border-surface-700" @submit.prevent="asignar">

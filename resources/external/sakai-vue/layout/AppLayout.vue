@@ -6,6 +6,7 @@ import { Head, usePage } from "@inertiajs/vue3";
 
 import AppTopbar from "./AppTopbar.vue";
 import Banner from "@/Components/Banner.vue";
+import EmpresaOperacionBanner from "@/Components/EmpresaOperacionBanner.vue";
 import AppSidebar from "./AppSidebar.vue";
 import AppFooter from "./AppFooter.vue";
 import AppMenubar from "./AppMenubar.vue";
@@ -92,6 +93,7 @@ onUnmounted(() => {
         
         <div class="layout-main-container">
             <Banner />
+            <EmpresaOperacionBanner />
 
             <!-- Page Heading -->
             <div v-if="$slots.header">

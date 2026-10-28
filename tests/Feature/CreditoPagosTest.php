@@ -24,6 +24,18 @@ function creditoPagableQa($test): array
     return [$actor, $credito, $data];
 }
 
+test('cobranza y reverso permanecen disponibles sin empresa activa', function (string $estatus) {
+    [$actor, $credito, $data] = creditoPagableQa($this);
+    \App\Models\EmpresaConfiguracion::first()->update(['estatus' => $estatus]);
+    $data['previa_hash'] = $this->postJson(route('creditos.pagos.preview', $credito), $data)->assertOk()->json('previa_hash');
+    $this->post(route('creditos.pagos.store', $credito), $data)->assertSessionHasNoErrors();
+    $pago = CreditoPago::sole();
+    $this->post(route('creditos.pagos.reverse', [$credito, $pago]), ['motivo' => 'Corrección sintética de cobranza suspendida.',
+        'idempotency_key' => (string) Str::uuid(), 'confirmacion_qa' => true])->assertSessionHasNoErrors();
+    $this->get(route('creditos.pagos.show', [$credito, $pago]))->assertOk();
+    $this->assertDatabaseCount('credito_pagos', 2);
+})->with(['borrador', 'suspendida']);
+
 test('pago QA integra distribución persistencia idempotencia cifrado y reverso inmutable', function () {
     [$actor, $credito, $data] = creditoPagableQa($this);
     $preview = $this->postJson(route('creditos.pagos.preview', $credito), $data)->assertOk()->assertJsonMissingPath('snapshot')->json();

@@ -57,6 +57,8 @@ class ActivityLogService
 
         if ($causer) {
             $logger->causedBy($causer);
+        } else {
+            $logger->causedByAnonymous();
         }
 
         return $logger->log($description);

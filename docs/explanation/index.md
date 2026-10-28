@@ -36,3 +36,5 @@
 - [ADR 0022: SIC sandbox con evidencia cifrada](adr-0022-sic-qa-evidencia.md)
 - [ADR 0023: anticipos, liquidación y calendarios conservados](adr-0023-anticipos-liquidacion-qa.md)
 - [Auditoría visual de QA — octubre de 2026](auditoria-ui-qa-2026-10.md)
+
+- [ADR 0029: estatus operativo](adr-0029-estatus-operativo-empresa.md).

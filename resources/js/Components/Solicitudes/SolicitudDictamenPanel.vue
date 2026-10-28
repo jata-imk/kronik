@@ -35,7 +35,7 @@ function guardar() {
             <div class="flex flex-col gap-1"><label :for="`${tipo}-fundamento`">Fundamento reservado ({{ tipo }})</label><Textarea :id="`${tipo}-fundamento`" v-model="form.fundamento" required minlength="20" maxlength="4000" rows="3" /></div>
             <p class="text-sm">Cada registro conserva actor, fecha y revisión. Para corregir un dictamen registra otro: no se elimina el anterior. No copies respuestas completas de SIC ni credenciales.</p>
             <Message v-for="(error, key) in form.errors" :key="key" severity="error" :closable="false">{{ error }}</Message>
-            <Button type="submit" :label="pld ? 'Registrar revisión PLD' : 'Registrar evaluación'" :loading="form.processing" />
+            <Button v-empresa-operacion="'originar'" type="submit" :label="pld ? 'Registrar revisión PLD' : 'Registrar evaluación'" :loading="form.processing" />
         </form>
         <details v-if="registros.length">
             <summary class="cursor-pointer">Últimos 20 dictámenes, del más reciente al más antiguo</summary>

@@ -106,3 +106,7 @@ Las sucursales registran:
 - `Sucursal desactivada`
 
 Sus eventos estables son `sucursal.created`, `sucursal.updated` y `sucursal.deactivated`. No se almacenan valores fiscales, de contacto ni de domicilio dentro de las propiedades de auditoria.
+
+## Efecto operativo del estatus
+
+Consultar [la matriz de capacidades](estatus-operativo-empresa.md). El estatus ya restringe servicios y workers, incluso para Super Admin. Cobranza e historia siguen disponibles.

@@ -40,6 +40,7 @@ enum ActivityEvent: string
     case TwoFactorCompleted = 'login.2fa_completed';
     case UserProfileUpdated = 'user.profile.updated';
     case CompanyUpdated = 'empresa.updated';
+    case CompanyOperationBlocked = 'empresa.operacion_bloqueada';
     case BranchCreated = 'sucursal.created';
     case BranchUpdated = 'sucursal.updated';
     case BranchDeactivated = 'sucursal.deactivated';
@@ -123,6 +124,7 @@ enum ActivityEvent: string
             self::TwoFactorCompleted => 'Autenticación de dos factores completada',
             self::UserProfileUpdated => 'Perfil de usuario actualizado',
             self::CompanyUpdated => 'Empresa actualizada',
+            self::CompanyOperationBlocked => 'Operación bloqueada por el estado de la empresa',
             self::BranchCreated => 'Sucursal creada',
             self::BranchUpdated => 'Sucursal actualizada',
             self::BranchDeactivated => 'Sucursal desactivada',

@@ -7,7 +7,6 @@ use App\Jobs\GenerarDocumentoPdf;
 use App\Models\Cliente;
 use App\Models\DocumentoPlantilla;
 use App\Models\DocumentoPlantillaVersion;
-use App\Models\EmpresaConfiguracion;
 use App\Models\User;
 use App\Services\Documentos\DocumentoPlantillaVersionService;
 use Illuminate\Support\Facades\Queue;
@@ -78,7 +77,7 @@ test('generación es idempotente trazable y produce un PDF privado', function ()
     Storage::fake('local');
     Queue::fake();
     $user = actingAsSuperAdmin();
-    EmpresaConfiguracion::create(['singleton_key' => 'default', 'razon_social' => 'Financiera de prueba', 'zona_horaria' => 'America/Mexico_City']);
+    activarEmpresaPrueba();
     $client = Cliente::factory()->create(['primer_nombre' => 'María', 'apellido_paterno' => 'Prueba']);
     $template = app(DocumentoPlantillaVersionService::class)->create(plantillaDocumentoPayload(), $user->id);
     $version = app(DocumentoPlantillaVersionService::class)->activate($template->versiones()->first());
@@ -126,7 +125,7 @@ test('generación es idempotente trazable y produce un PDF privado', function ()
 test('regeneración bloquea trabajos activos y exige confirmar una nueva copia', function () {
     Queue::fake();
     $user = actingAsSuperAdmin();
-    EmpresaConfiguracion::create(['singleton_key' => 'default', 'razon_social' => 'Financiera de prueba', 'zona_horaria' => 'America/Mexico_City']);
+    activarEmpresaPrueba();
     $client = Cliente::factory()->create();
     $template = app(DocumentoPlantillaVersionService::class)->create(plantillaDocumentoPayload(), $user->id);
     $version = app(DocumentoPlantillaVersionService::class)->activate($template->versiones()->firstOrFail());

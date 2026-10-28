@@ -12,6 +12,7 @@ import AnimateOnScroll from "primevue/animateonscroll";
 import ConfirmationService from "primevue/confirmationservice";
 import ToastService from "primevue/toastservice";
 import twemojiDirective from "./Directives/twemoji";
+import empresaOperacionDirective from "./Directives/empresaOperacion";
 
 import "./bootstrap";
 import "@fontsource-variable/inter";
@@ -47,6 +48,7 @@ createInertiaApp({
             .use(ToastService)
             .directive("animateonscroll", AnimateOnScroll)
             .directive("twemoji", twemojiDirective)
+            .directive("empresa-operacion", empresaOperacionDirective)
             .mount(el);
     },
     progress: {

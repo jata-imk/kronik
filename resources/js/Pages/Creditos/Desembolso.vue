@@ -55,7 +55,7 @@ function registrar() {
                         <div><label for="desembolso-referencia" class="mb-2 block font-semibold">Referencia única de transferencia *</label><InputText id="desembolso-referencia" v-model="form.referencia" required minlength="5" maxlength="120" class="w-full" /><p class="mt-2 text-sm text-surface-500">Identificador completo del comprobante sintético (por ejemplo QA-TRANSFERENCIA-001). No lo reutilices en otro crédito ni captures datos bancarios personales.</p></div>
                         <label class="flex items-start gap-3"><Checkbox v-model="form.confirmacion_qa" binary /><span>Verifiqué fecha, cliente e importe. Confirmo el registro exclusivamente QA, sin dinero real.</span></label>
                         <Message v-for="(error, key) in form.errors" :key="key" severity="error" :closable="false">{{ error }}</Message>
-                        <Button type="submit" label="Confirmar registro QA" icon="pi pi-check" :loading="form.processing" :disabled="!preparacion.permitido" class="w-full" />
+                        <Button type="submit" v-empresa-operacion="'desembolsar'" label="Confirmar registro QA" icon="pi pi-check" :loading="form.processing" :disabled="!preparacion.permitido" class="w-full" />
                     </form>
                 </Drawer>
             </div>

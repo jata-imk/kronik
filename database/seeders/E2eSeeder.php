@@ -24,6 +24,11 @@ class E2eSeeder extends Seeder
 
         $this->call(SystemSeeder::class);
         $this->call(DevelopmentSeeder::class);
+        \App\Models\EmpresaConfiguracion::where('singleton_key', 'default')->update([
+            'estatus' => 'activa', 'tipo_persona' => 'fisica', 'rfc' => 'GODE561231GR8',
+            'regimen_fiscal_id' => \App\Models\RegimenFiscal::where('clave', '612')->value('id'),
+            'email' => 'operacion@example.test',
+        ]);
         // Explicit activation belongs to the isolated navigation fixture, not the base catalogue.
         $this->call(ClienteAccesosMenubarSeeder::class);
 

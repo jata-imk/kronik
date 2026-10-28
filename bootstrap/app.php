@@ -26,6 +26,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->render(function (\App\Exceptions\OperacionEmpresaBloqueada $exception) {
+            $exception->registrar();
+
+            return null;
+        });
         $exceptions->render(function (\Spatie\Permission\Exceptions\UnauthorizedException $e, $request) {
             return abort(403, 'No cuentas con los permisos suficientes para realizar esta acción.');
         });

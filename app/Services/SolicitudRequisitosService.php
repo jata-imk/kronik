@@ -21,6 +21,8 @@ class SolicitudRequisitosService
     public function evaluar(Solicitud $solicitud, User $actor, bool $paraPaquete = false, string $permisoPaquete = 'preparePackage', ?SolicitudEstado $estadoEsperado = null): array
     {
         $items = [];
+        $empresa = app(EmpresaOperacionService::class)->compartir();
+        $items[] = ['clave' => 'empresa', 'cumplido' => $empresa['capacidades']['originar'], 'mensaje' => $empresa['motivo'] ?? 'Empresa activa.'];
         $add = function (string $clave, bool $cumplido, string $mensaje) use (&$items): void {
             $items[] = compact('clave', 'cumplido', 'mensaje');
         };

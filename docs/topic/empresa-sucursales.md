@@ -26,3 +26,7 @@ responsable de una operación.
 - [Nota de gestión de usuarios, equipos y sucursales](../agent-notes/01.5-gestion-usuarios-equipos-sucursales.md).
 - [Capturas históricas de configuración](../screenshots/README.md).
 - [Usuarios y permisos](usuarios-equipos-permisos.md) y [despliegue](despliegue-mantenimiento.md).
+
+- [Estatus operativo y restricciones](../reference/estatus-operativo-empresa.md).
+- [ADR 0029](../explanation/adr-0029-estatus-operativo-empresa.md).
+- [Entrega de estatus operativo](../agent-notes/empresa-estatus-operativo.md).

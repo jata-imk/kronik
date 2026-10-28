@@ -48,6 +48,14 @@ function something()
     // ..
 }
 
+function activarEmpresaPrueba(): App\Models\EmpresaConfiguracion
+{
+    return App\Models\EmpresaConfiguracion::updateOrCreate(['singleton_key' => 'default'], [
+        'estatus' => 'activa', 'tipo_persona' => 'fisica', 'razon_social' => 'Financiera de prueba',
+        'rfc' => 'GODE561231GR8', 'email' => 'operacion@example.test', 'zona_horaria' => 'America/Mexico_City',
+    ]);
+}
+
 function actingAsSuperAdmin(): App\Models\User
 {
     $user = App\Models\User::factory()->withPersonalTeam()->create();

@@ -56,6 +56,8 @@ final class DocumentoGeneracionService
         $resolved = $this->resolver->resolve($keys, $cliente, $garantia);
 
         $document = DB::transaction(function () use ($cliente, $version, $garantia, $idempotencyKey, $resolved, $user, $confirmDuplicate) {
+            app(\App\Services\EmpresaOperacionService::class)->exigir(\App\Enums\OperacionEmpresa::Documentar, $user, $cliente);
+            app(\App\Services\EmpresaOperacionService::class)->exigirDatosDocumentales();
             Cliente::query()->whereKey($cliente->id)->lockForUpdate()->firstOrFail();
             $matching = $this->findExisting($cliente, $version, $garantia);
 
@@ -80,6 +82,8 @@ final class DocumentoGeneracionService
                 'metadatos_variables' => $resolved['metadata'],
                 'solicitado_en' => now(),
                 'creado_por' => $user->id,
+                'team_id' => $user->current_team_id,
+                'sucursal_id' => $cliente->sucursal_id,
             ]);
             $document->documentable()->associate($garantia ?? $cliente);
             $document->save();

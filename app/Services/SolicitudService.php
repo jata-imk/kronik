@@ -36,6 +36,7 @@ class SolicitudService
         Gate::forUser($actor)->authorize('create', Solicitud::class);
 
         return DB::transaction(function () use ($data, $actor) {
+            app(EmpresaOperacionService::class)->exigir(\App\Enums\OperacionEmpresa::Capturar, $actor);
             User::query()->lockForUpdate()->findOrFail($actor->id);
             $cliente = Cliente::query()->lockForUpdate()->findOrFail($data['cliente_id']);
             $this->sucursal($cliente->sucursal_id, $actor);
@@ -68,6 +69,7 @@ class SolicitudService
     public function guardar(Solicitud $solicitud, array $data, User $actor): Solicitud
     {
         return DB::transaction(function () use ($solicitud, $data, $actor) {
+            app(EmpresaOperacionService::class)->exigir(\App\Enums\OperacionEmpresa::Capturar, $actor, $solicitud);
             $solicitud = $this->bloquear($solicitud, $actor, 'update', $data['lock_version']);
             if (! $solicitud->estado->editable()) {
                 $this->error('solicitud', 'La solicitud enviada no admite cambios de condiciones.');
@@ -85,6 +87,7 @@ class SolicitudService
     public function enviar(Solicitud $solicitud, int $version, User $actor): Solicitud
     {
         return DB::transaction(function () use ($solicitud, $version, $actor) {
+            app(EmpresaOperacionService::class)->exigir(\App\Enums\OperacionEmpresa::Originar, $actor, $solicitud);
             $solicitud = $this->bloquear($solicitud, $actor, 'update', $version);
             if (! $solicitud->estado->editable()) {
                 $this->error('solicitud', 'Esta solicitud ya fue enviada a revisión.');
@@ -226,6 +229,7 @@ class SolicitudService
         }
 
         return DB::transaction(function () use ($solicitud, $data, $actor, $ability) {
+            app(EmpresaOperacionService::class)->exigir(\App\Enums\OperacionEmpresa::Originar, $actor, $solicitud);
             $solicitud = $this->bloquear($solicitud, $actor, $ability, $data['lock_version']);
             if ($solicitud->estado !== SolicitudEstado::EnRevision) {
                 $this->error('solicitud', 'Solo puedes registrar dictámenes cuando la solicitud está en revisión.');
@@ -253,6 +257,7 @@ class SolicitudService
         Validator::make(['motivo' => $motivo], ['motivo' => 'required|string|min:10|max:2000'])->validate();
 
         return DB::transaction(function () use ($solicitud, $version, $motivo, $actor) {
+            app(EmpresaOperacionService::class)->exigir(\App\Enums\OperacionEmpresa::Originar, $actor, $solicitud);
             $solicitud = $this->bloquear($solicitud, $actor, 'approve', $version);
             Cliente::query()->lockForUpdate()->findOrFail($solicitud->cliente_id);
             if ($solicitud->producto_version_id) {

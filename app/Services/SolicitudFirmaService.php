@@ -47,6 +47,7 @@ class SolicitudFirmaService
         $disk = config('documentos.disk');
         try {
             return DB::transaction(function () use ($solicitud, $paquete, $data, $archivo, $actor, $disk, &$path) {
+                app(EmpresaOperacionService::class)->exigir(\App\Enums\OperacionEmpresa::Formalizar, $actor, $solicitud);
                 $solicitud = $this->bloquear($solicitud, $paquete, $actor, 'receiveSignature');
                 $hash = hash_file('sha256', $archivo->getRealPath());
                 $existing = SolicitudFirma::where('idempotency_key', $data['idempotency_key'])->first();
@@ -96,6 +97,9 @@ class SolicitudFirmaService
     public function revisar(Solicitud $solicitud, SolicitudFirma $firma, array $data, User $actor): void
     {
         DB::transaction(function () use ($solicitud, $firma, $data, $actor) {
+            if ($data['estado_firma'] === 'aceptada') {
+                app(EmpresaOperacionService::class)->exigir(\App\Enums\OperacionEmpresa::Formalizar, $actor, $solicitud);
+            }
             $paquete = $firma->paquete;
             $solicitud = $this->bloquear($solicitud, $paquete, $actor, 'reviewSignature');
             $firma = SolicitudFirma::lockForUpdate()->findOrFail($firma->id);

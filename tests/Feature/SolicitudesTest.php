@@ -12,7 +12,10 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia as Assert;
 
-beforeEach(fn () => $this->withoutVite());
+beforeEach(function () {
+    $this->withoutVite();
+    activarEmpresaPrueba();
+});
 
 test('desembolso QA crea un crédito calendario y movimiento inmutables sin duplicados', function () {
     [$user, $solicitud, $paquete, , $data] = prepararDesembolsoQa($this);

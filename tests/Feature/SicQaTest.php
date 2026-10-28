@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 
 function sicQaFixture(?Cliente $cliente = null, ?\App\Models\User $actor = null): array
 {
+    activarEmpresaPrueba();
     $actor ??= actingAsSuperAdmin();
     $nuevoCliente = $cliente === null;
     $cliente ??= Cliente::factory()->create(['sucursal_id' => $actor->current_sucursal_id, 'primer_nombre' => 'JUAN', 'apellido_paterno' => 'PRUEBA', 'fecha_nacimiento' => '1990-01-01']);
@@ -33,6 +34,21 @@ function sicQaFixture(?Cliente $cliente = null, ?\App\Models\User $actor = null)
 
     return [$actor, $cliente, ['api' => 'fico_score_v2', 'consentimiento_id' => $c->id, 'idempotency_key' => (string) Str::uuid(), 'confirmacion_qa' => true], $c];
 }
+
+test('suspender cancela una consulta preparada antes de llamar al proveedor', function () {
+    [$actor, $cliente, $data] = sicQaFixture();
+    Http::fake();
+    $this->actingAs($actor)->post(route('circulo-credito.store', $cliente), $data)->assertSessionHasNoErrors();
+    $query = SicQuery::sole();
+    \App\Models\EmpresaConfiguracion::first()->update(['estatus' => 'suspendida']);
+    app(SicOperacionService::class)->ejecutar($query->id);
+    app(SicOperacionService::class)->ejecutar($query->id);
+    Http::assertNothingSent();
+    expect($query->fresh()->estado_operacion)->toBe('cancelada');
+    $event = \App\Models\Activity::where('event', 'empresa.operacion_bloqueada')->sole();
+    expect($event->causer_id)->toBeNull()->and($event->team_id)->toBe($query->team_id)
+        ->and($event->sucursal_id)->toBe($query->sucursal_id)->and($event->properties['related']['id'])->toBe($actor->id);
+});
 
 test('SIC QA preserves encrypted evidence and never duplicates a provider POST', function (string $api) {
     [$actor, $cliente, $data] = sicQaFixture();
