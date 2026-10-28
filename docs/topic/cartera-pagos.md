@@ -25,3 +25,5 @@ los límites QA en cada guía antes de operar.
 - [Backlog 07: amortización, pagos y cobranza](../todos/07-amortizacion-pagos-cobranza.md).
 - [Nota de amortización y pagos](../agent-notes/07-amortizacion-pagos-cobranza.md).
 - [Productos](productos-simulacion.md), [fiscalidad](fiscalidad-cumplimiento.md) y [reportes](auditoria-reportes.md).
+
+- [Números de crédito y recibo](../reference/folios.md).

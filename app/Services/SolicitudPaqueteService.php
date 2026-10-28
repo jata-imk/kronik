@@ -89,10 +89,13 @@ class SolicitudPaqueteService
             }
             $revision = $solicitud->revisiones()->latest('numero')->firstOrFail();
             $compiler = app(CompiladorPlantillaDocumento::class);
+            $folioContrato = app(FolioService::class)->siguiente(\App\Enums\TipoFolio::Contrato, $solicitud->sucursal);
             $resolved = app(ResolverVariablesDocumento::class)->resolve(
-                $compiler->variables($version->encabezado_html ?? '', $version->contenido_html, $version->pie_html ?? ''), $cliente);
+                $compiler->variables($version->encabezado_html ?? '', $version->contenido_html, $version->pie_html ?? ''), $cliente,
+                contextoFolios: ['solicitud.folio' => $solicitud->folio, 'contrato.folio' => $folioContrato]);
             $snapshot = [
                 'formato' => 2, 'modo' => 'qa', 'fiscalidad' => 'proyeccion', 'solicitud_id' => $solicitud->id,
+                'solicitud_folio' => $solicitud->folio, 'contrato_folio' => $folioContrato,
                 'revision_id' => $revision->id, 'revision_hash' => $revision->snapshot_hash,
                 'condiciones' => $revision->snapshot['condiciones'], 'producto' => $revision->snapshot['producto'],
                 'tabla' => $this->tablaFiscal($solicitud),
@@ -101,6 +104,7 @@ class SolicitudPaqueteService
                 'variables' => $resolved['values'],
             ];
             $paquete = SolicitudPaquete::create([
+                'folio' => $folioContrato,
                 'solicitud_id' => $solicitud->id, 'solicitud_revision_id' => $revision->id,
                 'solicitud_resolucion_id' => $resolucion->id, 'documento_plantilla_version_id' => $version->id,
                 'creado_por' => $actor->id, 'snapshot' => $snapshot,
@@ -119,7 +123,7 @@ class SolicitudPaqueteService
             GenerarDocumentoPdf::dispatch($documento->id)->afterCommit();
 
             return $paquete;
-        });
+        }, attempts: 5);
     }
 
     public function reintentar(Solicitud $solicitud, SolicitudPaquete $paquete, User $actor): void

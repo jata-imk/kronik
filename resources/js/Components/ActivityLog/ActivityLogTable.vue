@@ -63,7 +63,7 @@ const openProperties = (log) => {
                 </Column>
                 <Column field="description" header="Descripción">
                     <template #body="{ data }">
-                        <TruncatedText :value="data.subject.id ? `${data.description} · ${data.subject.type} #${data.subject.id}` : data.description" max-width="19rem" />
+                        <TruncatedText :value="data.subject.id ? `${data.description} · ${data.subject.type} ${data.subject.folio ?? `#${data.subject.id}`}` : data.description" max-width="19rem" />
                     </template>
                 </Column>
                 <Column header="Acciones" :frozen="true" align-frozen="right" class="w-28" :pt="{ columnHeaderContent: { class: 'whitespace-nowrap' } }">
@@ -88,6 +88,7 @@ const openProperties = (log) => {
             <div><dt class="font-medium">Sucursal</dt><dd>{{ selectedLog.sucursal.clave ? `${selectedLog.sucursal.clave} · ${selectedLog.sucursal.name}` : selectedLog.sucursal.name }}</dd></div>
             <div class="md:col-span-2"><dt class="font-medium">Descripción</dt><dd>{{ selectedLog.description }}</dd></div>
             <div><dt class="font-medium">Sujeto</dt><dd>{{ selectedLog.subject.type }}</dd></div>
+            <div v-if="selectedLog.subject.folio"><dt class="font-medium">Folio</dt><dd>{{ selectedLog.subject.folio }}</dd></div>
             <div><dt class="font-medium">ID sujeto</dt><dd>{{ selectedLog.subject.id ?? "—" }}</dd></div>
         </dl>
     </Dialog>

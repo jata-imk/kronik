@@ -4,12 +4,14 @@
 
 - Notion: https://app.notion.com/p/3fe61db7db7f81ef99efd2e8ed6e3a3c
 - Entrega previa: [estatus operativo](empresa-estatus-operativo.md), PR #52.
-- Rama/PR de esta tarea: todavía no creadas.
+- Rama: `feat/folios-ayuda-contextual`, base integrada `234ec3d`; PR pendiente de apertura.
 
 ## Estado actual
 
-- 2026-10-26: plan aprobado; implementación no iniciada. Pausa explícita del usuario al terminar la jornada.
-- Se inspeccionaron sucursales, servicios de originación/pagos, documentos y reinicio QA; no hay código de folios agregado.
+- 2026-10-27: retomado por el usuario; implementación y pruebas en curso, sin integración ni despliegue de folios.
+- Implementados ámbitos estables, secuencias/reservas, asignación atómica y migración histórica; configuración, ayudas, variables documentales y referencias visibles.
+- Verificación inicial del árbol de trabajo: 508 backend aprobadas y una omitida; 102 Vue y build aprobados. Se añadieron después pruebas y ajustes; registrar conteos del commit final al cerrar.
+- E2E dual de originación/PDF/firma/desembolso/pago/reverso aprobado con folios. Corregida propagación de Escape de la ayuda; se repite el caso de configuración.
 
 ## Decisiones confirmadas por el usuario
 
@@ -25,8 +27,14 @@
 
 ## Siguiente paso y riesgos comprobados
 
-- Primero consultar CI/integración de PR #52. Después crear rama y PR independientes para esta tarea, con revisión medium, correcciones y pasada final acumulada contra `bc28e5e`.
+- PR #52 integrada con CI aprobado. Completar E2E de configuración, review medium, PR y concurrencia MariaDB en CI; después pasada final acumulada contra `bc28e5e`.
 - Preservar asignaciones, reservas y contadores en reinicios QA, incluido modo demo que recrea sucursales. Resolver su identidad de numeración antes de definir las claves foráneas; el modo mínimo conserva Matriz.
 - Usar MariaDB aislada y procesos/conexiones independientes para acreditar concurrencia; SQLite no prueba bloqueos de filas.
 - El esquema público CDC DT-03-0001 v25 define `CuentaActual` alfanumérica de hasta 25 caracteres; contrastar con especificaciones contratadas de CDC/Buró antes de reporteo productivo. No habilitar reporteo ni dinero real.
 - Mantener auditoría en la entrega: configuración de secuencias, asignaciones ligadas al evento de negocio, contexto original y ausencia de datos sensibles. Actualizar matriz única, ADR, referencias, índices y Notion.
+
+## Verificación antes de PR
+
+- E2E de configuración aprobado: ayuda/Escape, vista previa, persistencia, móvil y error visible de prefijo reservado.
+- Capturas: [escritorio](../assets/folios-desktop.png) y [móvil](../assets/folios-mobile.png).
+- Review medium: corregidas lectura del ámbito conservado y visibilidad de errores; se incorporaron reintentos exteriores y barreras de concurrencia para el cruce actor/numeración. CI MariaDB pendiente de ejecutar.

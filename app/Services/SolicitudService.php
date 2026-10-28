@@ -63,7 +63,7 @@ class SolicitudService
             $this->evento($solicitud, $actor, 'creada', ActivityEvent::ApplicationCreated);
 
             return $solicitud;
-        });
+        }, attempts: 5);
     }
 
     public function guardar(Solicitud $solicitud, array $data, User $actor): Solicitud

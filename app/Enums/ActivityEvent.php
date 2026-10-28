@@ -43,6 +43,8 @@ enum ActivityEvent: string
     case CompanyOperationBlocked = 'empresa.operacion_bloqueada';
     case BranchCreated = 'sucursal.created';
     case BranchUpdated = 'sucursal.updated';
+    case BranchFolioConfigurationUpdated = 'sucursal.folios.updated';
+    case HistoricalFolioAssigned = 'folio.historical_assigned';
     case BranchDeactivated = 'sucursal.deactivated';
     case ClientCreated = 'cliente.created';
     case ClientUpdated = 'cliente.updated';
@@ -127,6 +129,8 @@ enum ActivityEvent: string
             self::CompanyOperationBlocked => 'Operación bloqueada por el estado de la empresa',
             self::BranchCreated => 'Sucursal creada',
             self::BranchUpdated => 'Sucursal actualizada',
+            self::BranchFolioConfigurationUpdated => 'Numeración de sucursal actualizada',
+            self::HistoricalFolioAssigned => 'Folio asignado a registro histórico',
             self::BranchDeactivated => 'Sucursal desactivada',
             self::ClientCreated => 'Cliente creado',
             self::ClientUpdated => 'Cliente actualizado',

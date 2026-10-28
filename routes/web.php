@@ -190,6 +190,7 @@ Route::middleware([
         Route::resource('sucursales', SucursalController::class)
             ->only(['index', 'store', 'update', 'destroy'])
             ->parameters(['sucursales' => 'sucursal']);
+        Route::put('sucursales/{sucursal}/folios', [\App\Http\Controllers\Admin\SucursalFolioController::class, 'update'])->name('sucursales.folios.update');
         Route::resource('teams', AdminTeamController::class)->only(['index', 'store', 'update', 'destroy']);
         Route::get('menubar-items/routes', [MenubarItemController::class, 'availableRoutes'])->name('menubar-items.available-routes');
         Route::resource('menubar-items', MenubarItemController::class);

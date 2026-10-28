@@ -1,4 +1,6 @@
 <script setup>
+import FoliosSucursalForm from "@/Components/Sucursales/FoliosSucursalForm.vue";
+import FieldHelp from "@/Components/FieldHelp.vue";
 import PageHeader from "@/Components/PageHeader.vue";
 import CodigoPostalAutocomplete from "@/Components/CodigoPostalAutocomplete.vue";
 import IntlTelInput from "@/Components/IntlTelInput.vue";
@@ -25,6 +27,10 @@ const toast = useToast();
 const confirm = useConfirm();
 const visible = ref(false);
 const selectedSucursal = ref(null);
+const foliosId = ref(null);
+const foliosVisible = ref(false);
+const sucursalFolios = computed(() => props.sucursales.find((sucursal) => sucursal.id === foliosId.value));
+const openFolios = (sucursal) => { foliosId.value = sucursal.id; foliosVisible.value = true; };
 const formatAddress = (domicilio) => {
     if (!domicilio) return "";
     return [
@@ -121,10 +127,6 @@ const emptySucursal = () => ({
         domingo: "",
     },
     prefijo_folio: "",
-    consecutivo_solicitud: 1,
-    consecutivo_contrato: 1,
-    consecutivo_credito: 1,
-    consecutivo_recibo: 1,
     activa: true,
 });
 
@@ -273,7 +275,7 @@ const deactivate = (sucursal) => {
                 <section class="k-mobile-records px-4 pb-4" aria-label="Sucursales">
                     <div class="flex flex-wrap gap-2"><Select v-model="filters.estado_label.value" aria-label="Filtrar sucursales por estado" :options="['Activa', 'Inactiva']" placeholder="Todos los estados" show-clear class="w-full" /><InputText v-model="filters.global.value" aria-label="Buscar sucursales" placeholder="Buscar sucursales" class="w-full" /></div>
                     <div v-if="!sucursalesMobile.length" class="k-empty k-surface"><i class="pi pi-map-marker" aria-hidden="true" /><strong>Sin sucursales con estos filtros</strong></div>
-                    <article v-for="sucursal in sucursalesMobile" :key="sucursal.id" class="k-surface k-record-card"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><h3 class="font-semibold truncate">{{ sucursal.nombre }}</h3><p class="text-sm text-surface-500">{{ sucursal.clave }} · {{ sucursal.estado_label }}</p></div><span class="size-2.5 shrink-0 rounded-full mt-2" :class="sucursal.activa ? 'bg-green-500' : 'bg-surface-400'" /></div><p class="text-sm">{{ sucursal.telefono || 'Sin teléfono' }}</p><p class="text-sm break-all">{{ sucursal.email || 'Sin correo' }}</p><p class="text-sm text-surface-500">{{ sucursal.domicilio_display }}</p><div class="flex flex-wrap gap-2"><Button v-if="can('update-sucursales')" label="Editar" icon="pi pi-pencil" outlined size="small" @click="openEdit(sucursal)" /><Button v-if="can('delete-sucursales') && sucursal.activa" label="Desactivar" icon="pi pi-ban" outlined severity="danger" size="small" @click="deactivate(sucursal)" /></div></article>
+                    <article v-for="sucursal in sucursalesMobile" :key="sucursal.id" class="k-surface k-record-card"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><h3 class="font-semibold truncate">{{ sucursal.nombre }}</h3><p class="text-sm text-surface-500">{{ sucursal.clave }} · {{ sucursal.estado_label }}</p></div><span class="size-2.5 shrink-0 rounded-full mt-2" :class="sucursal.activa ? 'bg-green-500' : 'bg-surface-400'" /></div><p class="text-sm">{{ sucursal.telefono || 'Sin teléfono' }}</p><p class="text-sm break-all">{{ sucursal.email || 'Sin correo' }}</p><p class="text-sm text-surface-500">{{ sucursal.domicilio_display }}</p><div class="flex flex-wrap gap-2"><Button v-if="can('update-sucursales')" label="Editar" icon="pi pi-pencil" outlined size="small" @click="openEdit(sucursal)" /><Button label="Folios" icon="pi pi-hashtag" outlined size="small" @click="openFolios(sucursal)" /><Button v-if="can('delete-sucursales') && sucursal.activa" label="Desactivar" icon="pi pi-ban" outlined severity="danger" size="small" @click="deactivate(sucursal)" /></div></article>
                 </section>
 
                 <DataTable class="k-desktop-records" v-model:filters="filters" :value="sucursales" :global-filter-fields="['nombre', 'domicilio_display', 'email', 'telefono', 'horario_search', 'summary_search', 'estado_label']" filter-display="row" paginator :rows="10" striped-rows scrollable responsive-layout="scroll" :table-style="{ tableLayout: 'fixed', minWidth: '60rem' }">
@@ -297,9 +299,10 @@ const deactivate = (sucursal) => {
                         <template #body="{ data }"><div class="flex flex-nowrap gap-2 whitespace-nowrap"><Chip :label="`${data.users_count} usuarios`" icon="pi pi-users" /><Chip :label="`${data.clientes_count} clientes`" icon="pi pi-id-card" /></div></template>
                         <template #filter="{ filterModel, filterCallback }"><InputText v-model="filterModel.value" class="w-full" placeholder="Resumen" @input="filterCallback()" /></template>
                     </Column>
-                    <Column header="Acciones" :frozen="true" align-frozen="right" style="width: 7%">
+                    <Column header="Acciones" :frozen="true" align-frozen="right" style="width: 10%">
                         <template #body="{ data }">
                             <div class="flex flex-nowrap items-center gap-1 whitespace-nowrap">
+                                <Button :aria-label="`Folios de ${data.nombre}`" icon="pi pi-hashtag" text size="small" @click="openFolios(data)" />
                                 <Button v-if="can('update-sucursales')" :aria-label="`Editar ${data.nombre}`" icon="pi pi-pencil" text size="small" @click="openEdit(data)" />
                                 <Button v-if="can('delete-sucursales') && data.activa" :aria-label="`Desactivar ${data.nombre}`" icon="pi pi-ban" text size="small" severity="danger" @click="deactivate(data)" />
                             </div>
@@ -308,17 +311,21 @@ const deactivate = (sucursal) => {
                 </DataTable>
             </div>
 
+            <Dialog v-model:visible="foliosVisible" :header="`Folios de ${sucursalFolios?.nombre ?? 'sucursal'}`" modal class="!w-full sm:!w-[42rem]">
+                <FoliosSucursalForm v-if="sucursalFolios && foliosVisible" :key="sucursalFolios.id" :sucursal="sucursalFolios" :editable="can('update-sucursales')" />
+            </Dialog>
+
             <Dialog v-model:visible="visible" :header="selectedSucursal ? 'Editar sucursal' : 'Crear sucursal'" modal :style="{ width: '720px' }">
                 <form class="flex flex-col gap-5" @submit.prevent="submit">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium mb-1">Nombre *</label>
-                            <InputText v-model="form.nombre" fluid />
+                            <label for="sucursal-nombre" class="block text-sm font-medium mb-1">Nombre *</label>
+                            <InputText id="sucursal-nombre" v-model="form.nombre" fluid />
                             <small v-if="form.errors.nombre" class="text-red-500">{{ form.errors.nombre }}</small>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium mb-1">Clave *</label>
-                            <InputText v-model="form.clave" fluid />
+                            <label for="sucursal-clave" class="block text-sm font-medium mb-1">Clave *</label>
+                            <InputText id="sucursal-clave" v-model="form.clave" fluid />
                             <small v-if="form.errors.clave" class="text-red-500">{{ form.errors.clave }}</small>
                         </div>
                         <div>
@@ -339,9 +346,10 @@ const deactivate = (sucursal) => {
                             <InputText v-model="form.email" fluid />
                             <small v-if="form.errors.email" class="text-red-500">{{ form.errors.email }}</small>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Prefijo de folio</label>
-                            <InputText v-model="form.prefijo_folio" fluid placeholder="MTY, CDMX, MATRIZ" />
+                        <div v-if="!selectedSucursal">
+                            <label for="sucursal-prefijo" class="block text-sm font-medium mb-1">Prefijo de folio</label>
+                            <InputText id="sucursal-prefijo" v-model="form.prefijo_folio" :invalid="!!form.errors.prefijo_folio" fluid placeholder="MTZ" /><FieldHelp title="Prefijo inicial" description="Distingue los folios de esta sucursal. Si lo dejas vacío se utiliza la clave; luego puedes configurar la numeración desde Folios." example="MTZ-SOL-000001" />
+                            <small v-if="form.errors.prefijo_folio" role="alert" class="text-red-500">{{ form.errors.prefijo_folio }}</small>
                         </div>
                         <div class="flex items-center gap-3 pt-6">
                             <Checkbox v-model="form.activa" input-id="sucursal-activa" binary />
@@ -414,7 +422,7 @@ const deactivate = (sucursal) => {
                     </div>
 
                     <div>
-                        <h3 class="text-base font-semibold mb-3">Horarios y folios</h3>
+                        <h3 class="text-base font-semibold mb-3">Horarios</h3>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-sm font-medium mb-1">Lunes a viernes</label>
@@ -427,22 +435,6 @@ const deactivate = (sucursal) => {
                             <div>
                                 <label class="block text-sm font-medium mb-1">Domingo</label>
                                 <InputText v-model="form.horario.domingo" fluid placeholder="Cerrado" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Consecutivo solicitud</label>
-                                <InputNumber v-model="form.consecutivo_solicitud" fluid :min="1" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Consecutivo contrato</label>
-                                <InputNumber v-model="form.consecutivo_contrato" fluid :min="1" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Consecutivo credito</label>
-                                <InputNumber v-model="form.consecutivo_credito" fluid :min="1" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Consecutivo recibo</label>
-                                <InputNumber v-model="form.consecutivo_recibo" fluid :min="1" />
                             </div>
                         </div>
                     </div>

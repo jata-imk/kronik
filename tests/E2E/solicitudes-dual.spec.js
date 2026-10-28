@@ -7,7 +7,7 @@ test("dual bloquea capturista y permite aprobar a otra persona sin superadmin", 
     const assertConsole = await failOnConsoleErrors(page);
     await login(page, { email: "captura.dual@example.test", password: "password" });
     await page.goto("/solicitudes");
-    await page.getByRole("link", { name: /^SOL-/ }).first().click();
+    await page.getByRole("link", { name: /-SOL-\d+$/ }).first().click();
     await expect(page).toHaveURL(/\/solicitudes\/\d+$/);
     const detalle = page.url();
     await expect(page.getByText("En modalidad dual debe aprobar una persona que no haya capturado ni enviado la solicitud.", { exact: true })).toBeVisible();
@@ -119,14 +119,14 @@ test("dual bloquea capturista y permite aprobar a otra persona sin superadmin", 
         await aprobador.screenshot({ path: testInfo.outputPath("pago-qa-mobile.png"), fullPage: true });
         await aprobador.getByRole("checkbox").check();
         await aprobador.getByRole("button", { name: "Confirmar pago QA" }).click();
-        await expect(aprobador.getByRole("heading", { name: /^Recibo interno #/ })).toBeVisible();
+        await expect(aprobador.getByRole("heading", { name: /^Recibo interno .*-REC-\d+$/ })).toBeVisible();
         await expect(aprobador.getByText("Referencia: QA-PAGO-E2E-001", { exact: true })).toBeVisible();
         await aprobador.screenshot({ path: testInfo.outputPath("recibo-qa-mobile.png"), fullPage: true });
         await aprobador.getByRole("button", { name: "Revertir último pago" }).click();
         await aprobador.getByLabel("Motivo del reverso", { exact: false }).fill("Corrección sintética del escenario E2E.");
         await aprobador.getByRole("checkbox").check();
         await aprobador.getByRole("button", { name: "Confirmar reverso QA" }).click();
-        await expect(aprobador.getByRole("heading", { name: /^Reverso #/ })).toBeVisible();
+        await expect(aprobador.getByRole("heading", { name: /^Reverso .*-REC-\d+$/ })).toBeVisible();
         await expect(aprobador.getByRole("link", { name: /^Consultar pago original/ })).toBeVisible();
         await aprobador.getByRole("link", { name: /^Volver al crédito/ }).click();
         await aprobador.getByRole("link", { name: "Anticipos y liquidación", exact: true }).click();
@@ -154,7 +154,7 @@ test("dual bloquea capturista y permite aprobar a otra persona sin superadmin", 
         await aprobador.getByRole("link", { name: /^Volver al crédito/ }).click();
         await expect(aprobador.getByText("Liquidado · QA", { exact: true })).toBeVisible();
         await expect(aprobador.getByRole("link", { name: "Registrar pago QA", exact: true })).toHaveCount(0);
-        await aprobador.getByRole("link", { name: /^Liquidación #/ }).click();
+        await aprobador.getByRole("link", { name: /^Liquidación .*-REC-\d+$/ }).click();
         await aprobador.getByRole("button", { name: "Revertir último pago" }).click();
         await aprobador.getByLabel("Motivo del reverso", { exact: false }).fill("Reverso sintético de la liquidación E2E.");
         await aprobador.getByRole("checkbox").check();

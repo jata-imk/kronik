@@ -38,13 +38,14 @@ function asignar() {
 </script>
 
 <template>
-    <AppLayout :title="`Solicitud SOL-${solicitud.id}`">
+    <AppLayout :title="`Solicitud ${solicitud.folio ?? `SOL-${solicitud.id}`}`">
         <template #card-header>
-            <PageHeader eyebrow="Operación · Originación" :title="`Solicitud SOL-${solicitud.id}`" :description="`${solicitud.cliente.primer_nombre} ${solicitud.cliente.apellido_paterno} · ${solicitud.sucursal.nombre}`">
+            <PageHeader eyebrow="Operación · Originación" :title="`Solicitud ${solicitud.folio ?? `SOL-${solicitud.id}`}`" :description="`${solicitud.cliente.primer_nombre} ${solicitud.cliente.apellido_paterno} · ${solicitud.sucursal.nombre}`">
                 <template #actions><Link :href="route('solicitudes.index')" class="text-primary underline">Volver a solicitudes</Link></template>
             </PageHeader>
         </template>
         <template #card-content>
+            <Message v-if="solicitud.folio_historico" severity="info" :closable="false">Folio asignado posteriormente. Los documentos y evidencias históricos conservan su contenido original.</Message>
             <div class="originacion-content space-y-6 p-4 md:p-6">
                 <Message severity="info" :closable="false">{{ solicitudEditable(solicitud.estado) ? 'Siguiente paso: completa la captura y envía a revisión. Guardar el borrador todavía no habilita Evaluación ni PLD.' : solicitudEstados[solicitud.estado]?.siguiente }}</Message>
                 <Message v-if="aprobacionVencida" severity="warn" :closable="false">La aprobación venció. Devuelve y reenvía para obtener nuevos dictámenes y resolución antes de formalizar.</Message>

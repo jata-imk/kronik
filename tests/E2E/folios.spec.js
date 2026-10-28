@@ -1,0 +1,37 @@
+import { test, expect } from "@playwright/test";
+import { login, failOnConsoleErrors } from "./support/auth.js";
+
+test("configura folios con ayuda y vista previa sin emitir registros", async ({ page }, testInfo) => {
+    const assertConsole = await failOnConsoleErrors(page);
+    await login(page);
+    await page.goto("/admin/sucursales");
+    await page.getByRole("button", { name: "Folios de Matriz", exact: true }).click();
+    const dialog = page.getByRole("dialog", { name: "Folios de Matriz", exact: true });
+    await dialog.getByRole("button", { name: "Ayuda: Prefijo de folios", exact: true }).click();
+    await expect(page.getByText("Se permiten letras A–Z, números y guiones entre grupos.", { exact: false })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeVisible();
+    await page.getByLabel("Prefijo de folios", { exact: true }).fill("QA-FOL");
+    await page.getByLabel("Siguiente solicitud", { exact: true }).press("ControlOrMeta+A");
+    await page.getByLabel("Siguiente solicitud", { exact: true }).pressSequentially("42");
+    await expect(dialog.getByText("Próximo folio: QA-FOL-SOL-000042", { exact: true })).toBeVisible();
+    await dialog.getByRole("button", { name: "Guardar numeración", exact: true }).click();
+    await expect(dialog.getByRole("button", { name: "Guardar numeración", exact: true })).toBeEnabled();
+    await page.reload();
+    await page.getByRole("button", { name: "Folios de Matriz", exact: true }).click();
+    await expect(page.getByLabel("Prefijo de folios", { exact: true })).toHaveValue("QA-FOL");
+    await expect(page.getByLabel("Siguiente solicitud", { exact: true })).toHaveValue("42");
+    await page.screenshot({ path: testInfo.outputPath("folios-desktop.png"), fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath("folios-mobile.png"), fullPage: true });
+    await dialog.getByRole("button", { name: "Close", exact: true }).click();
+    await page.getByRole("button", { name: "Crear sucursal", exact: true }).click();
+    const nueva = page.getByRole("dialog", { name: "Crear sucursal", exact: true });
+    await nueva.getByLabel("Nombre *", { exact: true }).fill("Otra sucursal E2E");
+    await nueva.getByLabel("Clave *", { exact: true }).fill("E2EFOL");
+    await nueva.getByLabel("Prefijo de folio", { exact: true }).fill("QA-FOL");
+    await nueva.getByRole("button", { name: "Guardar", exact: true }).click();
+    await expect(nueva.getByRole("alert")).toContainText("reservado");
+    assertConsole();
+});

@@ -40,3 +40,7 @@ El visor obtiene un blob de una ruta autenticada y descarta su URL al cerrarse. 
 La generación usa la cola configurada de Laravel. Un identificador UUID de idempotencia evita repetir una misma solicitud técnica. Para la misma combinación de cliente, versión y garantía, una generación pendiente o en proceso bloquea otra; un PDF terminado exige confirmación explícita antes de crear una copia nueva. Cada copia conserva su propio snapshot, hash, archivo y auditoría. Los intentos y archivos no se eliminan, y el expediente los pagina de diez en diez del más reciente al más antiguo. Los errores visibles no incluyen HTML, datos personales, paths ni salida del proceso.
 
 La configuración relacionada se encuentra en `config/documentos.php` y usa `DOCUMENTOS_DISK`, `DOCUMENTOS_PDF_RENDERER`, `DOCUMENTOS_PDF_TIMEOUT` y `DOCUMENTOS_MAX_UPLOAD_KB`.
+
+## Identificadores conservados
+
+Los contratos nuevos admiten `solicitud.folio` y `contrato.folio`, congelados al preparar. El anexo los imprime también. Los PDF históricos no se reescriben al completar folios. [Contrato de folios](folios.md).

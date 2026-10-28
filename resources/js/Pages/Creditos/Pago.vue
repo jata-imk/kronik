@@ -34,7 +34,7 @@ function guardar() {
 <template>
     <AppLayout title="Registrar pago QA"><template #card-header><PageHeader eyebrow="Operación · Cartera" title="Registrar pago" :description="`${credito.cliente.primer_nombre} ${credito.cliente.apellido_paterno} · ${credito.sucursal.nombre}`" /></template><template #card-content>
         <div class="space-y-6 p-4 md:p-6">
-            <Link :href="route('creditos.show', credito.id)" class="inline-flex items-center gap-2 text-primary hover:underline"><i class="pi pi-arrow-left" aria-hidden="true" />Volver al crédito CR-{{ credito.id }}</Link>
+            <Link :href="route('creditos.show', credito.id)" class="inline-flex items-center gap-2 text-primary hover:underline"><i class="pi pi-arrow-left" aria-hidden="true" />Volver al crédito {{ credito.folio ?? `CR-${credito.id}` }}</Link>
             <section class="k-feature p-6"><Tag value="Solo registro manual QA" severity="warn" /><h2 class="mt-4 text-xl font-semibold text-white">Primero revisa, después confirma</h2><p class="mt-2">Captura la fecha y el importe realmente recibidos en el escenario sintético. La vista previa no registra dinero.</p><p v-if="situacion.resumen" class="mt-4">Exigible hoy: <strong class="text-xl">{{ money(situacion.resumen.exigible) }}</strong> · Capital insoluto: {{ money(situacion.resumen.capital_insoluto) }}</p></section>
             <Message v-if="!habilitado" severity="warn" :closable="false">El administrador técnico debe habilitar ORIGINACION_PAGOS_QA_HABILITADOS y reconstruir la caché exclusivamente en QA.</Message>
             <Message v-if="situacion.error" severity="warn" :closable="false">{{ situacion.error }}</Message>

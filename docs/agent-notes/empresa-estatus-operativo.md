@@ -9,7 +9,7 @@
 
 ## Estado actual
 
-- 2026-10-26: pausado por solicitud del usuario al terminar la jornada. Implementación publicada en `6e57010`, PR #52 abierta; sin integración ni despliegue acreditados.
+- 2026-10-27: integrado mediante PR #52, merge `234ec3d`. CI de PR y `main` aprobado; sin despliegue ni QA posterior del usuario acreditados.
 - Decisiones pendientes: ninguna; captura/simulación en Borrador, suspensión de
   toda originación y RFC/correo obligatorios en documentos finales.
 - Reporteo SIC y monitoreo/reporte PLD de cartera previa permitidos en Suspendida;
@@ -24,11 +24,11 @@
 - Review medium: corregidos sujeto UUID incompatible con auditoria numerica y admision atomica del PDF; regression de orden transaccional aprobada.
 - Captura: [empresa suspendida](../assets/empresa-suspendida.png).
 - Revision medium final sin hallazgos accionables. Regresion atomica y 23 pruebas de estatus aprobadas.
-- Siguiente paso al retomar: consultar CI de PR #52 y corregir si corresponde; integrar solo con checks aprobados. Continuar después con folios y ayuda contextual y cerrar con review medium del conjunto contra `bc28e5e`.
-- La pausa se registró después de crear PR #52. No se comprobó todavía su CI; no se hizo merge.
+- Siguiente paso: aplicar migración y comprobar entorno cuando se programe despliegue; la implementación de folios continúa en otra PR con revisión final acumulada contra `bc28e5e`.
 - Migración: contexto original documental; no reconstruye historia. Sin nuevas
   variables ni seeders productivos; el fixture E2E activa su empresa explícitamente.
 
-## Continuacion 2026-10-27
+## Cierre de implementación
 
-- Retomado por el usuario. CI de PR #52 aprobado sobre `6e57010` (run 40454032328); merge pendiente de completar en esta sesion.
+- Implementación `6e57010`, notas `a41b769`, integración `234ec3d`.
+- CI de PR: runs `40454032328` y `40626605579`; CI de `main`: `40627021433`, aprobado.

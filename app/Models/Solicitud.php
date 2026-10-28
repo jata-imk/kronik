@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Solicitud extends Model
 {
+    use \App\Models\Concerns\TieneFolio;
+
     protected $table = 'solicitudes';
 
     protected $guarded = [];

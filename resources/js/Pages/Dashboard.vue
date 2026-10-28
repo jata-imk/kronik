@@ -49,7 +49,7 @@ const accesos = computed(() => [
                     <section class="k-surface k-panel" aria-labelledby="pendientes-title">
                         <div class="k-panel-heading"><div><p class="k-eyebrow">Seguimiento</p><h2 id="pendientes-title">Mis solicitudes pendientes</h2></div><Link v-if="accesos.some((item) => item.to === 'solicitudes.index')" :href="route('solicitudes.trabajo')">Ver todas <i class="pi pi-arrow-right" aria-hidden="true" /></Link></div>
                         <ul v-if="pendientes.length" class="k-work-list">
-                            <li v-for="solicitud in pendientes" :key="solicitud.id"><Link :href="route('solicitudes.show', solicitud.id)"><span class="k-work-id">#{{ solicitud.id }}</span><span class="k-work-name">{{ solicitud.cliente || 'Cliente' }}</span><span class="k-work-state">{{ solicitud.estado }}</span><i class="pi pi-chevron-right" aria-hidden="true" /></Link></li>
+                            <li v-for="solicitud in pendientes" :key="solicitud.id"><Link :href="route('solicitudes.show', solicitud.id)"><span class="k-work-id">{{ solicitud.folio ?? `#${solicitud.id}` }}</span><span class="k-work-name">{{ solicitud.cliente || 'Cliente' }}</span><span class="k-work-state">{{ solicitud.estado }}</span><i class="pi pi-chevron-right" aria-hidden="true" /></Link></li>
                         </ul>
                         <div v-else class="k-empty"><i class="pi pi-check-circle" aria-hidden="true" /><strong>Sin pendientes asignados</strong><span>Cuando tengas solicitudes por atender, aparecerán aquí.</span></div>
                     </section>

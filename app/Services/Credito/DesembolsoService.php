@@ -138,7 +138,7 @@ class DesembolsoService
                     ['related' => ['type' => 'credito', 'id' => $credito->id]], $actor, sucursalId: $solicitud->sucursal_id);
 
                 return $credito;
-            });
+            }, attempts: 5);
         } catch (UniqueConstraintViolationException $exception) {
             $this->error('El desembolso o su referencia ya fue registrado por otra operación. Actualiza la página y revisa el crédito; no repitas la transferencia.');
         }

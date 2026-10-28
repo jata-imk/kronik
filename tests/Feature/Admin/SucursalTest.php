@@ -112,7 +112,11 @@ test('super admin can create and update branches', function () {
         ->assertRedirect();
 
     expect($sucursal->fresh()->nombre)->toBe('Sucursal Norte Actualizada')
-        ->and($sucursal->fresh()->consecutivo_credito)->toBe(25);
+        ->and($sucursal->fresh()->consecutivo_credito)->toBe(1);
+    $folios = app(\App\Services\FolioService::class)->configuracion($sucursal->fresh());
+    $this->put(route('admin.sucursales.folios.update', $sucursal), [...$folios,
+        'siguientes' => [...$folios['siguientes'], 'credito' => 25]])->assertSessionHasNoErrors();
+    expect(app(\App\Services\FolioService::class)->configuracion($sucursal->fresh())['siguientes']['credito'])->toBe(25);
 });
 
 test('super admin can deactivate branches', function () {

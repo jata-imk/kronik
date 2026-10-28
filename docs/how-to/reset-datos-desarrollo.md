@@ -117,3 +117,7 @@ php artisan test --filter=ResetDevelopmentData
 ```
 
 Las pruebas locales usan SQLite en memoria y discos simulados; CI ejecuta también el comportamiento sobre MariaDB aislada. No ejecutes un reinicio manual para probar el código sobre la base configurada en `.env`. Consulta [Restaurar catálogos](restaurar-catalogos.md) si faltan SAT/SEPOMEX: el modo mínimo no los descarga ni reconstruye.
+
+## Numeración conservada
+
+Los modos de reinicio conservan ámbitos, secuencias, prefijos y asignaciones de folios. Recrear Matriz recupera su numeración anterior, sin reutilizar folios de los datos retirados. Los contadores antiguos no gobiernan emisiones. [Reglas de folios](../reference/folios.md).

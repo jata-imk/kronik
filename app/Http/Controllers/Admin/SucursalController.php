@@ -33,30 +33,36 @@ class SucursalController extends Controller implements HasMiddleware
             'sucursales' => fn () => Sucursal::orderByDesc('activa')
                 ->orderBy('nombre')
                 ->withCount(['users', 'clientes'])
-                ->get(),
+                ->get()->map(fn ($sucursal) => [...$sucursal->toArray(), 'folios' => app(\App\Services\FolioService::class)->configuracion($sucursal)]),
         ]);
     }
 
     public function store(Request $request)
     {
-        $fields = $this->validateSucursal($request);
-        $sucursal = Sucursal::create($fields);
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+            $fields = $this->validateSucursal($request);
+            $sucursal = Sucursal::create($fields);
+            app(\App\Services\FolioService::class)->inicializar($sucursal);
 
-        $activityLog = app(ActivityLogService::class);
-        $activityLog->log(
-            event: ActivityEvent::BranchCreated,
-            description: 'Sucursal creada',
-            subject: $sucursal,
-            metadata: ['changed_fields' => $activityLog->fieldNames($fields)],
-            causer: Auth::user(),
-        );
+            $activityLog = app(ActivityLogService::class);
+            $activityLog->log(
+                event: ActivityEvent::BranchCreated,
+                description: 'Sucursal creada',
+                subject: $sucursal,
+                metadata: ['changed_fields' => $activityLog->fieldNames($fields)],
+                causer: Auth::user(),
+                sucursalId: $sucursal->id,
+            );
 
-        return redirect()->back()->with('success', 'Sucursal creada');
+            return redirect()->back()->with('success', 'Sucursal creada');
+        });
     }
 
     public function update(Request $request, Sucursal $sucursal)
     {
-        $fields = $this->validateSucursal($request, $sucursal);
+        $fields = \Illuminate\Support\Arr::except($this->validateSucursal($request, $sucursal), [
+            'prefijo_folio', 'consecutivo_solicitud', 'consecutivo_contrato', 'consecutivo_credito', 'consecutivo_recibo',
+        ]);
         $sucursal->update($fields);
 
         $activityLog = app(ActivityLogService::class);
@@ -66,6 +72,7 @@ class SucursalController extends Controller implements HasMiddleware
             subject: $sucursal,
             metadata: ['changed_fields' => $activityLog->fieldNames($fields)],
             causer: Auth::user(),
+            sucursalId: $sucursal->id,
         );
 
         return redirect()->back()->with('success', 'Sucursal actualizada');
@@ -89,6 +96,7 @@ class SucursalController extends Controller implements HasMiddleware
             subject: $sucursal,
             metadata: ['changed_fields' => ['activa'], 'state' => 'inactiva'],
             causer: Auth::user(),
+            sucursalId: $sucursal->id,
         );
 
         return redirect()->back()->with('success', 'Sucursal desactivada');
@@ -142,10 +150,10 @@ class SucursalController extends Controller implements HasMiddleware
             'horario.sabado' => ['nullable', 'string', 'max:80'],
             'horario.domingo' => ['nullable', 'string', 'max:80'],
             'prefijo_folio' => ['nullable', 'string', 'max:20'],
-            'consecutivo_solicitud' => ['required', 'integer', 'min:1'],
-            'consecutivo_contrato' => ['required', 'integer', 'min:1'],
-            'consecutivo_credito' => ['required', 'integer', 'min:1'],
-            'consecutivo_recibo' => ['required', 'integer', 'min:1'],
+            'consecutivo_solicitud' => ['sometimes', 'integer', 'min:1'],
+            'consecutivo_contrato' => ['sometimes', 'integer', 'min:1'],
+            'consecutivo_credito' => ['sometimes', 'integer', 'min:1'],
+            'consecutivo_recibo' => ['sometimes', 'integer', 'min:1'],
             'activa' => ['required', 'boolean'],
         ], [
             'clave.unique' => 'La clave de sucursal ya está en uso.',

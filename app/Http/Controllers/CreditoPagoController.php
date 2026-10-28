@@ -62,8 +62,10 @@ class CreditoPagoController extends Controller
             throw \Illuminate\Validation\ValidationException::withMessages(['pago' => 'La evidencia del recibo cambió. Solicita revisión al administrador.']);
         }
 
-        return Inertia::render('Creditos/Recibo', ['credito' => $credito->only(['id', 'solicitud_id']),
-            'pago' => [...$pago->only(['id', 'tipo', 'importe', 'fecha_efectiva', 'created_at', 'actor_id', 'reversa_de']),
+        return Inertia::render('Creditos/Recibo', ['credito' => $credito->only(['id', 'folio', 'solicitud_id']),
+            'pago' => [...$pago->only(['id', 'folio', 'folio_historico', 'folio_asignado_en', 'tipo', 'importe', 'fecha_efectiva', 'created_at', 'actor_id', 'reversa_de']),
+                'original_folio' => $pago->reversa_de ? CreditoPago::find($pago->reversa_de)?->folio : null,
+                'reverso_folio' => $pago->reverso?->folio,
                 'referencia' => $pago->referencia, 'motivo' => $pago->motivo, 'asignaciones' => $pago->snapshot['asignaciones'], 'reverso_id' => $pago->reverso?->id,
                 'cronograma_version' => $pago->snapshot['despues']['cronograma_version'] ?? 1,
                 'estado_operativo' => app(\App\Services\Credito\MotorPagos::class)->resumen($pago->snapshot['despues'])['estado_operativo']],

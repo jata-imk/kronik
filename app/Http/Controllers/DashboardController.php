@@ -38,9 +38,10 @@ class DashboardController extends Controller
                 ->where('responsable_id', $user->id)
                 ->whereIn('estado', [SolicitudEstado::Borrador, SolicitudEstado::Devuelta, SolicitudEstado::EnRevision, SolicitudEstado::Aprobada])
                 ->with('cliente:id,primer_nombre,apellido_paterno')
-                ->latest('updated_at')->limit(5)->get(['id', 'cliente_id', 'estado', 'updated_at'])
+                ->latest('updated_at')->limit(5)->get(['id', 'folio', 'cliente_id', 'estado', 'updated_at'])
                 ->map(fn ($solicitud) => [
                     'id' => $solicitud->id,
+                    'folio' => $solicitud->folio,
                     'cliente' => trim(($solicitud->cliente?->primer_nombre ?? '').' '.($solicitud->cliente?->apellido_paterno ?? '')),
                     'estado' => $solicitud->estado->label(),
                     'actualizada' => $solicitud->updated_at?->toIso8601String(),

@@ -16,12 +16,13 @@ final class ResolverVariablesDocumento
     ) {}
 
     /** @return array{values: array<string, string>, metadata: array<string, array<string, string>>} */
-    public function resolve(array $keys, Cliente $cliente, ?ClienteGarantia $garantia = null): array
+    public function resolve(array $keys, Cliente $cliente, ?ClienteGarantia $garantia = null, array $contextoFolios = []): array
     {
         $cliente->loadMissing(['datosFiscales']);
         $garantia?->loadMissing('propietario');
         $empresa = EmpresaConfiguracion::query()->first();
         $raw = [
+            ...array_intersect_key($contextoFolios, array_flip(['solicitud.folio', 'contrato.folio', 'credito.folio', 'recibo.folio'])),
             'documento.fecha_generacion' => $this->fechaEmpresa->hoy(),
             'empresa.razon_social' => $empresa?->razon_social,
             'empresa.nombre_comercial' => $empresa?->nombre_comercial,

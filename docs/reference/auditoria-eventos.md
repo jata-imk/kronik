@@ -88,6 +88,8 @@ Los resultados de estas pruebas corresponden al código, no a QA desplegado.
 | Perfil (transversal) | Guardar perfil | `user.profile.updated` | Titular autenticado | Usuario | Cambio registrado | Contexto del actor | Nombres de campos | Q | Existente; no confundir con alta administrativa | `UpdateUserProfileInformation` | Pruebas de perfil y `AccountMailTest` |
 | Procesos automáticos/colas | Ejecutar en nombre de un iniciador | Según dominio | Sistema / iniciador separados | Recurso de dominio | Según proceso | Capturar al iniciar; no reconstruir desde preferencias | Contrato; sin secretos | Q | Reconciliación general pendiente; los emisores de cuenta de esta entrega son síncronos | Revisar por proceso | Pendiente por proceso |
 | `configuracion-empresa` y procesos transversales | Bloqueo operativo | `empresa.operacion_bloqueada` | Usuario HTTP o sistema ejecutor / iniciador por ID | Recurso afectado | `blocked` | Equipo/sucursal originales | `state`, `product`, `result`, `related`; sin datos sensibles | Q | Implementado | `OperacionEmpresaBloqueada`, workers | `EmpresaOperacionTest`, `SicQaTest` |
+| `sucursales` | Configurar numeracion | `sucursal.folios.updated` | Administrador autorizado | Sucursal seleccionada | `applied` | Equipo del actor / sucursal afectada | Nombres de campos; sin valores | Q | Implementado; no-op sin evento | `FolioService` | `FoliosTest` |
+| Transversal (folios) | Asignar a historia | `folio.historical_assigned` | Sistema | Registro de negocio | `assigned` | Equipo desconocido / sucursal original | Tipo e ID de asignacion | Q | Implementado; reintento no duplica | Migracion / `folios:completar` | `FoliosTest` |
 
 ## Registros históricos
 

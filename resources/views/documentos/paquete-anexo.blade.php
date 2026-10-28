@@ -1,5 +1,8 @@
 <section style="page-break-before: always; font-size: 9pt">
-    <h1>Anexo informativo · Solicitud SOL-{{ $snapshot['solicitud_id'] }}</h1>
+    <h1>Anexo informativo · Solicitud {{ $snapshot['solicitud_folio'] ?? 'SOL-'.$snapshot['solicitud_id'] }}</h1>
+    @if (isset($snapshot['contrato_folio']))
+        <p><strong>Contrato {{ $snapshot['contrato_folio'] }}</strong></p>
+    @endif
     <p><strong>Documento de prueba QA — sin validez contractual.</strong></p>
     @php($conImpuestos = ($snapshot['fiscalidad'] ?? null) === 'proyeccion')
     @if ($conImpuestos)

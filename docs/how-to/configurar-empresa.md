@@ -58,3 +58,7 @@ La validacion local del RFC no comprueba que el registro exista o este activo en
 ## Comprobar el efecto del estatus
 
 Revisar [la matriz operativa](../reference/estatus-operativo-empresa.md). Borrador permite captura y simulaciones; Suspendida detiene nuevas operaciones y conserva cobranza. Completar datos antes de activar. Un trabajo bloqueado no se reenvia automaticamente al reactivar.
+
+## Configurar folios
+
+Abrir **Sucursales → Folios** para consultar o cambiar la numeración. Revisar ejemplos y el siguiente número; la vista previa no reserva. Cambiar prefijo afecta solo futuras emisiones. Si la captura quedó desactualizada, cargar la numeración vigente y revisar antes de guardar. [Reglas y migración de folios](../reference/folios.md).

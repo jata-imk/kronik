@@ -38,3 +38,5 @@
 - [Auditoría visual de QA — octubre de 2026](auditoria-ui-qa-2026-10.md)
 
 - [ADR 0029: estatus operativo](adr-0029-estatus-operativo-empresa.md).
+
+- [ADR 0030: folios y ámbitos estables](adr-0030-folios-negocio.md).
