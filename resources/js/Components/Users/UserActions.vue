@@ -10,7 +10,7 @@ const { resendInvitation, deactivate, reactivate, removeFromTeam } = useUserActi
 </script>
 
 <template>
-    <div class="flex flex-wrap gap-1">
+    <div class="inline-flex shrink-0 flex-nowrap items-center gap-1">
         <Button v-if="can('update-users')" :aria-label="`Editar ${user.name}`" icon="pi pi-pencil" text @click="$emit('edit')" />
         <Button v-if="can('create-users') && user.status === 'pending'" :aria-label="`Reenviar invitación a ${user.name}`" icon="pi pi-send" text @click="resendInvitation(user)" />
         <Button v-if="can('delete-users') && user.status === 'active' && user.id !== page.props.auth.user.id" :aria-label="`Desactivar cuenta de ${user.name}`" icon="pi pi-ban" severity="danger" text @click="deactivate(user)" />

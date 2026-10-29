@@ -99,6 +99,19 @@ class E2eSeeder extends Seeder
                 $responsible->sucursales()->attach($admin->current_sucursal_id);
             }
 
+            $roleModel = config('permission.models.role');
+            $operator = User::where('email', 'integrante.acciones@example.test')->firstOrFail();
+            foreach (['Operador E2E', 'Auditor E2E', 'Supervisión E2E de operaciones y seguimiento de colaboradores en varias sucursales'] as $name) {
+                $role = $roleModel::firstOrCreate(['name' => $name, 'guard_name' => 'web', 'team_id' => $operationsTeam->id]);
+                DB::table('model_has_roles')->insertOrIgnore(['role_id' => $role->id, 'model_type' => $operator->getMorphClass(),
+                    'model_id' => $operator->id, 'team_id' => $operationsTeam->id]);
+            }
+            $roleModel::firstOrCreate(['name' => 'Rol vacío E2E', 'guard_name' => 'web', 'team_id' => $operationsTeam->id]);
+            foreach ([$admin->current_sucursal_id, $secondBranch->id] as $branchId) {
+                app(ActivityLogService::class)->log(ActivityEvent::Login, 'Actividad de equipo E2E '.$branchId,
+                    causer: $admin, teamId: $operationsTeam->id, sucursalId: $branchId, inheritActorContext: false);
+            }
+
             app(ActivityLogService::class)->log(
                 event: ActivityEvent::Login,
                 description: 'Actividad determinista E2E',

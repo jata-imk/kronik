@@ -40,3 +40,4 @@
 - [ADR 0029: estatus operativo](adr-0029-estatus-operativo-empresa.md).
 
 - [ADR 0030: folios y ámbitos estables](adr-0030-folios-negocio.md).
+- [ADR 0031: consulta de actividad por equipo y sucursal](adr-0031-consulta-actividad-equipo-sucursal.md).

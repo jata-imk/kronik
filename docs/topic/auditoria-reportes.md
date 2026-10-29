@@ -12,6 +12,8 @@ no implican que todos los reportes o controles ya estén implementados.
 
 ## Seguimiento y temas relacionados
 
+- [ADR 0031: alcance de consulta de actividad por equipo y sucursal](../explanation/adr-0031-consulta-actividad-equipo-sucursal.md).
+- [Nota del ajuste de Equipo y filtros de actividad](../agent-notes/equipo-tarjetas-bitacora.md).
 - [ADR 0028 y auditoría de acciones de cuenta/membresía](../explanation/adr-0028-acciones-cuenta-membresia.md).
 
 - [Backlog 08: reportes y contabilidad](../todos/08-reportes-contabilidad.md).

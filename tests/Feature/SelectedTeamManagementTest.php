@@ -8,6 +8,30 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 use Spatie\Permission\Models\Role;
 
+test('el resumen del equipo muestra solo roles con integrantes activos y conserva el catálogo para invitar', function () {
+    $admin = actingAsSuperAdmin();
+    $selected = Team::factory()->create();
+    $active = User::factory()->create();
+    $inactive = User::factory()->create(['status' => UserStatus::Inactive]);
+    $pending = User::factory()->create(['status' => UserStatus::Pending]);
+    $outsider = User::factory()->create();
+    $selected->users()->attach([$active->id, $inactive->id, $pending->id]);
+    $visible = Role::create(['name' => 'Rol con personas activas', 'guard_name' => 'web', 'team_id' => $selected->id]);
+    $hidden = Role::create(['name' => 'Rol sin personas activas', 'guard_name' => 'web', 'team_id' => $selected->id]);
+    $empty = Role::create(['name' => 'Rol vacío', 'guard_name' => 'web', 'team_id' => $selected->id]);
+    foreach ([[$selected->owner, $visible], [$active, $visible], [$inactive, $visible], [$pending, $visible], [$outsider, $hidden], [$inactive, $hidden], [$pending, $hidden]] as [$member, $role]) {
+        DB::table('model_has_roles')->insert(['role_id' => $role->id, 'model_id' => $member->id,
+            'model_type' => $member->getMorphClass(), 'team_id' => $selected->id]);
+    }
+    $this->actingAs($admin)->get(route('teams.show', $selected))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->has('teamRoles', 1)
+            ->where('teamRoles.0.id', $visible->id)->where('teamRoles.0.members_count', 2)
+            ->has('roles', 3)->missing('recentActivity'));
+    $this->get(route('admin.roles.index', ['team' => $selected->id]))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->has('roles', 3));
+    expect($admin->fresh()->current_team_id)->not->toBe($selected->id);
+});
+
 test('selected team permissions govern role operations without changing current team or navigation', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $current = $user->currentTeam;

@@ -51,8 +51,14 @@ Reenviar se audita como aceptado por el transporte, no como correo entregado.
 Consultar la [matriz de eventos](auditoria-eventos.md).
 
 La configuración distingue equipo actual de seleccionado. Desde ella se consultan
-integrantes, invitaciones pendientes, resumen de roles y actividad del equipo,
-según permisos. Los enlaces a Roles y Bitácora conservan la selección sin cambiar
+integrantes, invitaciones pendientes y resumen de roles con al menos una persona
+activa del equipo, incluido el responsable cuando tiene asignación explícita.
+Los conteos excluyen pendientes e inactivos. Las tarjetas cuadradas se adaptan
+al ancho disponible; la primera abre la configuración completa y los roles no
+visibles en el resumen. El catálogo para invitar conserva todos los roles.
+Las acciones de integrantes se presentan en una fila horizontal. La actividad
+se consulta mediante el botón a Bitácora, sin cargar un listado en Equipo.
+Los enlaces a Roles y Bitácora conservan la selección sin cambiar
 el equipo actual. Sucursales y configuración de empresa mantienen sus ámbitos.
 
 El responsable es informativo: sus facultades dependen de roles Spatie, sin

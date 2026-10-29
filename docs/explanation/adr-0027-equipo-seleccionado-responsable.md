@@ -25,9 +25,13 @@ la membresía duplicada del nuevo owner y conserva roles y contextos actuales.
 La bitácora registra actor, equipo afectado y cambio de responsable.
 
 La configuración separa integrantes e invitaciones pendientes. Incluye resumen
-de roles y actividad reciente según permisos. La bitácora acepta `team_id`,
+de roles y acceso a Bitácora según permisos. La bitácora acepta `team_id`,
 autoriza ese equipo y mantiene el filtro al paginar o exportar. No se amplía la
 matriz de auditoría diferida.
+
+El ajuste de presentación del 2026-10-28 retira el listado de actividad en Equipo.
+La consulta por equipo/sucursal y su alcance quedan definidos en
+[ADR 0031](adr-0031-consulta-actividad-equipo-sucursal.md).
 
 Las rutas de actualización y desactivación comparten la regla de equipo sin
 usuarios actuales; no es posible eludirla enviando `activo=false` al actualizar.

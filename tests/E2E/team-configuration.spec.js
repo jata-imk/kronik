@@ -24,10 +24,11 @@ test("administra el equipo seleccionado sin cambiar el actual y transfiere su re
     await page.getByRole("option", { name: "Responsable E2E", exact: true }).click();
     await page.getByRole("button", { name: "Transferir responsable", exact: true }).click();
     await page.getByRole("button", { name: "Transferir", exact: true }).click();
-    await expect(page.getByText("Responsable transferido del usuario", { exact: false })).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: "responsable.e2e@example.test" }).locator('[aria-label="Responsable del equipo"]')).toBeVisible();
     await page.getByRole("link", { name: "Ver bitácora del equipo", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`team_id=${teamId}`));
     await expect(page.getByText("Actividad del equipo Operaciones E2E", { exact: true })).toBeVisible();
+    await expect(page.getByRole("row").filter({ hasText: "Responsable transferido del usuario" })).toBeVisible();
     await page.getByRole("link", { name: "Volver", exact: true }).click();
     await page.getByRole("button", { name: "Desactivar equipo", exact: true }).click();
     await page.getByRole("button", { name: "Confirmar", exact: true }).click();
