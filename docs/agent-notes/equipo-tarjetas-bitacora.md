@@ -3,15 +3,15 @@
 ## Referencias
 
 - Solicitud del usuario y decisiones confirmadas el 2026-10-28.
-- Rama: `feat/equipo-tarjetas-bitacora`; base `f5455e6`. PR pendiente.
+- Rama: `feat/equipo-tarjetas-bitacora`; base `f5455e6`.
+  [PR #55](https://github.com/jata-imk/kronik/pull/55).
 - Decisión: [ADR 0031](../explanation/adr-0031-consulta-actividad-equipo-sucursal.md).
 
 ## Estado actual
 
-- 2026-10-28: retomado por solicitud explícita del usuario desde `9c8d2d0`.
-  La pausa detuvo el push y la suite backend completa sin resultado final;
-  se vuelve a ejecutar el pre-push antes de publicar y abrir PR.
-- En implementación; sin integración ni despliegue de este ajuste.
+- 2026-10-28: retomado desde `9c8d2d0`; publicado con hooks completos.
+  PR abierta, primera revisión medium sin hallazgos; CI y revisión final pendientes.
+  Sin integración ni despliegue de este ajuste.
 - Acciones horizontales, resumen de roles con personas activas en tarjetas
   cuadradas y tarjeta administrativa primera. Se conserva el catálogo completo
   de roles para administrar/invitar y solo el enlace contextual a bitácora.
@@ -23,8 +23,12 @@
 
 ## Evidencia
 
-- Backend dirigido: 22 pruebas aprobadas, 328 aserciones. Suite completa Vue:
-  112 pruebas aprobadas. Build y Pint aprobados; 111 enlaces locales sin faltantes.
+- HEAD `81e38ce`: backend completo aprobado, 528 pruebas, 1 omitida y 41 431
+  aserciones. Build aprobado en el pre-push. Backend dirigido: 22 pruebas,
+  328 aserciones, también aprobadas en revisión medium.
+- Suite completa Vue: 112 pruebas aprobadas en la implementación `9c8d2d0`.
+  Pint aprobado; 115 enlaces locales sin faltantes. El revisor no pudo iniciar
+  Vue por el sandbox de Vite; se conserva la evidencia local completa independiente.
 - Tres E2E Chromium aprobados: tarjetas/acciones/filtros/CSV, contexto/transferencia
   de responsable y acciones de integrantes. Tarjetas cuadradas entre 320 y 1440 px
   con nombres largos. El evento de transferencia se comprueba en Bitácora tras
@@ -41,9 +45,8 @@
 
 ## Siguiente paso
 
-Publicar con hooks completos, sin ejecutar suites backend simultáneas; abrir PR y realizar
-review medium, correcciones y pasada
-final antes de integrar con CI aprobado. Registrar el merge y dejar pendiente
+Completar pasada final y CI antes de integrar. No hubo correcciones necesarias
+en la primera revisión medium. Registrar el merge y dejar pendiente
 únicamente el despliegue/QA de esta mejora nueva.
 
 Logs locales: `storage/framework/testing/equipo-push.log`, `equipo-vue.log`,
