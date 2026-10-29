@@ -113,3 +113,6 @@ jobs:
 
       - name: Run backend tests
         run: php artisan test
+
+      - name: Verify folio concurrency on isolated MariaDB
+        run: php tests/Concurrency/folios.php

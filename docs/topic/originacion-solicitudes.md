@@ -25,3 +25,5 @@ sus documentos específicos.
 - [SIC](sic-circulo-credito.md), [cumplimiento](fiscalidad-cumplimiento.md), [contratos y firmas](documentos-contratos-firmas.md), [cartera](cartera-pagos.md).
 
 - [Nota de la etiqueta Editar solicitud](../agent-notes/solicitudes-etiqueta-edicion.md).
+
+- [Identificadores de solicitud y contrato](../reference/folios.md).

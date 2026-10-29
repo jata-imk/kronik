@@ -133,8 +133,18 @@ class UserController extends Controller implements HasMiddleware
         $filters = $this->validatedActivityFilters($request);
         $activityLogs = $this->activityQuery($filters)
             ->paginate($filters['per_page'] ?? 20)
-            ->withQueryString()
-            ->through(fn ($activity) => $this->activityPayload($activity));
+            ->withQueryString();
+        $registros = $activityLogs->getCollection();
+        $folios = \Illuminate\Support\Facades\DB::table('folio_asignaciones')
+            ->whereIn('modelo', $registros->pluck('subject_type')->filter()->unique())
+            ->whereIn('registro_id', $registros->pluck('subject_id')->filter()->unique())
+            ->get()->keyBy(fn ($folio) => $folio->modelo.'|'.$folio->registro_id);
+        $activityLogs->through(function ($activity) use ($folios) {
+            $payload = $this->activityPayload($activity);
+            $payload['subject']['folio'] = $folios[$activity->subject_type.'|'.$activity->subject_id]->folio ?? null;
+
+            return $payload;
+        });
 
         return Inertia::render('Admin/Logs/UserActivity', [
             'activityLogs' => $activityLogs,

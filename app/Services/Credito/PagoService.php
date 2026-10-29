@@ -115,7 +115,7 @@ final class PagoService
                     ['related' => ['type' => 'credito_pago', 'id' => $pago->id]], $actor, sucursalId: $credito->sucursal_id);
 
                 return $pago;
-            });
+            }, attempts: 5);
         } catch (UniqueConstraintViolationException $e) {
             $this->error('Otra operación ya registró este pago o referencia. Actualiza la página y revisa el historial.');
         }
@@ -160,7 +160,7 @@ final class PagoService
                     ['related' => ['type' => 'credito_pago', 'id' => $reverso->id]], $actor, sucursalId: $credito->sucursal_id);
 
                 return $reverso;
-            });
+            }, attempts: 5);
         } catch (UniqueConstraintViolationException $e) {
             $this->error('Otra operación ya registró esta corrección. Actualiza la página y revisa el historial antes de continuar.');
         }

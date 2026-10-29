@@ -13,6 +13,8 @@ class Sucursal extends Model
 
     protected $table = 'sucursales';
 
+    protected $hidden = ['folio_ambito_id', 'consecutivo_solicitud', 'consecutivo_contrato', 'consecutivo_credito', 'consecutivo_recibo'];
+
     protected $fillable = [
         'nombre',
         'clave',

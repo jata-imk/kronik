@@ -63,7 +63,7 @@ class ResetDevelopmentDataService
         $tables = [...self::TABLES, config('activitylog.table_name', 'activity_log'),
             config('permission.table_names.model_has_roles'), config('permission.table_names.model_has_permissions')];
         $preserved = [...self::CATALOGS, 'migrations', 'development_data_resets', 'modules',
-            'sics', 'sic_apis', 'conceptos_comision',
+            'sics', 'sic_apis', 'conceptos_comision', 'folio_ambitos', 'folio_secuencias', 'folio_prefijos', 'folio_asignaciones',
             ...array_values(config('permission.table_names')), 'users', 'teams', 'sucursales', 'empresa_configuraciones'];
         $unknown = array_diff(Schema::getTableListing(), $tables, $preserved);
         if ($unknown) {

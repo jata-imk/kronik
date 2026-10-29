@@ -66,9 +66,11 @@ class GenerarDocumentoPdf implements ShouldQueue
                 $document->update(['estado' => DocumentoGeneradoEstado::Procesando, 'error_codigo' => null, 'error_mensaje' => null]);
             });
         } catch (\App\Exceptions\OperacionEmpresaBloqueada $exception) {
-            $document->update(['estado' => DocumentoGeneradoEstado::Fallido, 'error_codigo' => 'EmpresaNoOperativa',
-                'error_mensaje' => $exception->errors()['empresa'][0]]);
-            $exception->registrar();
+            \Illuminate\Support\Facades\DB::transaction(function () use ($document, $exception) {
+                $document->update(['estado' => DocumentoGeneradoEstado::Fallido, 'error_codigo' => 'EmpresaNoOperativa',
+                    'error_mensaje' => $exception->errors()['empresa'][0]]);
+                $exception->registrar();
+            });
 
             return;
         }

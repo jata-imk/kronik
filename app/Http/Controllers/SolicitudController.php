@@ -43,8 +43,9 @@ class SolicitudController extends Controller
             ->when($mine, fn ($q) => $q->where('responsable_id', $request->user()->id))
             ->when($mine && empty($filters['estado']), fn ($q) => $q->whereNotIn('estado', [SolicitudEstado::Rechazada, SolicitudEstado::Cancelada, SolicitudEstado::Desembolsada]))
             ->when($filters['estado'] ?? null, fn ($q, $estado) => $q->where('estado', $estado))
-            ->when($filters['buscar'] ?? null, fn ($q, $buscar) => $q->whereHas('cliente', fn ($c) => $c->where(fn ($n) => $n
-                ->where('primer_nombre', 'like', '%'.$buscar.'%')->orWhere('apellido_paterno', 'like', '%'.$buscar.'%'))))
+            ->when($filters['buscar'] ?? null, fn ($q, $buscar) => $q->where(fn ($b) => $b->where('folio', 'like', '%'.$buscar.'%')
+                ->orWhereHas('cliente', fn ($c) => $c->where(fn ($n) => $n
+                    ->where('primer_nombre', 'like', '%'.$buscar.'%')->orWhere('apellido_paterno', 'like', '%'.$buscar.'%')))))
             ->orderBy('id', ($filters['orden'] ?? 'recientes') === 'antiguas' ? 'asc' : 'desc')
             ->paginate($filters['por_pagina'] ?? 25)->withQueryString();
 

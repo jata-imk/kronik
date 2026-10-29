@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class CreditoPago extends Model
 {
+    use \App\Models\Concerns\TieneFolio;
     use ConservaRegistroCredito;
 
     protected $guarded = [];

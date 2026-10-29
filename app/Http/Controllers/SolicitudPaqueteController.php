@@ -39,7 +39,7 @@ class SolicitudPaqueteController extends Controller
             $doc = $paquete->documento;
             $ready = $doc?->estado === DocumentoGeneradoEstado::Generado;
 
-            return ['id' => $paquete->id, 'actual' => $paquete->solicitud_resolucion_id === $resolucionId,
+            return ['id' => $paquete->id, 'folio' => $paquete->folio, 'folio_historico' => $paquete->folio_historico, 'actual' => $paquete->solicitud_resolucion_id === $resolucionId,
                 'created_at' => $paquete->created_at, 'snapshot_hash' => $paquete->snapshot_hash,
                 'plantilla' => $paquete->snapshot['plantilla']['nombre'], 'version' => $paquete->snapshot['plantilla']['numero'],
                 'documento' => $doc ? ['id' => $doc->id, 'estado' => $doc->estado->value, 'error_mensaje' => $doc->error_mensaje,
@@ -49,7 +49,7 @@ class SolicitudPaqueteController extends Controller
         };
 
         return Inertia::render('Solicitudes/Paquete', [
-            'solicitud' => ['id' => $solicitud->id, 'estado' => $solicitud->estado->value, 'lock_version' => $solicitud->lock_version,
+            'solicitud' => ['id' => $solicitud->id, 'folio' => $solicitud->folio, 'estado' => $solicitud->estado->value, 'lock_version' => $solicitud->lock_version,
                 'cliente_id' => $solicitud->cliente_id, 'cliente' => trim($solicitud->cliente->primer_nombre.' '.$solicitud->cliente->apellido_paterno.' '.$solicitud->cliente->apellido_materno),
                 'sucursal' => $solicitud->sucursal->nombre],
             'preparacion' => $service->requisitos($solicitud, $request->user()),

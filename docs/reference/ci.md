@@ -72,3 +72,7 @@ produccion. `migrate:fresh` forma parte deliberada de este entorno descartable.
 ## Politica
 
 Una PR no debe considerarse lista si CI falla. Si un cambio de codigo no requiere documentacion, debe quedar justificado en la PR.
+
+## Concurrencia de folios
+
+Después de Pest, `php tests/Concurrency/folios.php` ejecuta ocho procesos independientes sobre la MariaDB aislada `kronik_test`; exige `APP_ENV=testing`. Comprueba 40 creaciones paralelas y otras dos con barreras que fuerzan un cruce de bloqueos de actor y numeración, con 42 folios consecutivos únicos y reservas persistidas. No utilizar la base de `.env` para esta prueba.

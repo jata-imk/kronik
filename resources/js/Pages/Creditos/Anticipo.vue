@@ -117,7 +117,7 @@ function guardar() {
             ><PageHeader
                 eyebrow="Operación · Créditos"
                 title="Anticipos y liquidación"
-                :description="`${credito.cliente.primer_nombre} ${credito.cliente.apellido_paterno} · CR-${credito.id}`"
+                :description="`${credito.cliente.primer_nombre} ${credito.cliente.apellido_paterno} · ${credito.folio ?? `CR-${credito.id}`}`"
                 ><template #actions
                     ><Link :href="route('creditos.show', credito.id)" class="k-action-link"
                         >Volver al crédito</Link

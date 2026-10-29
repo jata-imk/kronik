@@ -28,3 +28,5 @@ aceptación documental y desembolso.
 
 - [Nota de documentos digitales](../agent-notes/03.5-documentos-digitales-y-plantillas.md).
 - [Originación](originacion-solicitudes.md) y [desembolso](cartera-pagos.md).
+
+- [Folios congelados en contrato y tabla](../reference/folios.md).

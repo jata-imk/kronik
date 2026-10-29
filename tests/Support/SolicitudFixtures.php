@@ -7,6 +7,20 @@ use App\Services\FechaEmpresa;
 use App\Services\ProductoVersionService;
 use Illuminate\Support\Str;
 
+function creditoPagableQa($test): array
+{
+    [$actor, $solicitud, , , $desembolso] = prepararDesembolsoQa($test, pagos: true);
+    $test->post(route('solicitudes.desembolso.store', $solicitud), $desembolso)->assertSessionHasNoErrors();
+    $credito = \App\Models\Credito::firstOrFail();
+    $fecha = $credito->cronogramas()->first()->snapshot['tabla'][1]['fecha'];
+    $test->travelTo(\Carbon\CarbonImmutable::parse($fecha.' 12:00:00', 'America/Mexico_City'));
+    config(['originacion.pagos_qa_habilitados' => true]);
+    $data = ['fecha_pago' => $fecha, 'importe' => '500.00', 'referencia' => 'PAGO-'.Str::uuid(),
+        'idempotency_key' => (string) Str::uuid(), 'confirmacion_qa' => true];
+
+    return [$actor, $credito, $data];
+}
+
 function prepararDesembolsoQa($test, bool $pagos = false): array
 {
     [$user, $solicitud, $paquete] = prepararContratoParaFirma($test, $pagos);

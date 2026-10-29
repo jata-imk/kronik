@@ -7,6 +7,8 @@ use Illuminate\Validation\ValidationException;
 
 class SolicitudPaquete extends Model
 {
+    use \App\Models\Concerns\TieneFolio;
+
     protected $table = 'solicitud_paquetes';
 
     protected $guarded = [];

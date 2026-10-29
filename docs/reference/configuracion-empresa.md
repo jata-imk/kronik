@@ -110,3 +110,7 @@ Sus eventos estables son `sucursal.created`, `sucursal.updated` y `sucursal.deac
 ## Efecto operativo del estatus
 
 Consultar [la matriz de capacidades](estatus-operativo-empresa.md). El estatus ya restringe servicios y workers, incluso para Super Admin. Cobranza e historia siguen disponibles.
+
+## Ayuda contextual
+
+La empresa y sucursales comparten `FieldHelp`. Los parámetros guardados que todavía no tienen consumidor se muestran deshabilitados y marcados; no prometen efectos operativos. La numeración se administra en [Sucursales: Folios](folios.md).

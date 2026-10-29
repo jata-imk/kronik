@@ -22,7 +22,8 @@ class CreditoController extends Controller
         $creditos = Credito::with(['cliente:id,primer_nombre,apellido_paterno,apellido_materno', 'sucursal:id,nombre', 'responsable:id,name', 'ultimoPago'])
             ->when($filters['sucursal_id'] ?? null, fn ($q, $id) => $q->where('sucursal_id', $id))
             ->when($filters['buscar'] ?? null, fn ($q, $buscar) => $q->where(fn ($q) => $q
-                ->where('id', ctype_digit($buscar) ? $buscar : 0)
+                ->where('folio', 'like', '%'.$buscar.'%')
+                ->orWhere('id', ctype_digit($buscar) ? $buscar : 0)
                 ->orWhereHas('cliente', fn ($c) => $c->where('primer_nombre', 'like', '%'.$buscar.'%')->orWhere('apellido_paterno', 'like', '%'.$buscar.'%'))))
             ->orderBy('id', ($filters['orden'] ?? 'recientes') === 'antiguos' ? 'asc' : 'desc')->paginate($filters['por_pagina'] ?? 25)->withQueryString();
 
@@ -83,7 +84,7 @@ class CreditoController extends Controller
             'cronograma' => ['version' => $cronograma->version, 'snapshot_hash' => $cronograma->snapshot_hash, 'tabla' => $cronograma->snapshot],
             'cronogramas' => $credito->cronogramas()->orderByDesc('version')->get(['id', 'version', 'fecha_efectiva', 'credito_pago_id']),
             'movimientos' => $credito->movimientos()->latest('id')->paginate(25),
-            'pagos' => $credito->pagos()->latest('id')->paginate(10, ['id', 'credito_id', 'tipo', 'importe', 'fecha_efectiva', 'created_at', 'reversa_de'], 'pagos_page'),
+            'pagos' => $credito->pagos()->latest('id')->paginate(10, ['id', 'folio', 'credito_id', 'tipo', 'importe', 'fecha_efectiva', 'created_at', 'reversa_de'], 'pagos_page'),
             'situacion' => $situacion,
             'puedePagar' => Gate::allows('pay', $credito) && ($situacion['resumen']['estado_operativo'] ?? null) === 'activo',
             'puedeAnticipar' => (Gate::allows('prepay', $credito) || Gate::allows('settle', $credito)) && ($situacion['resumen']['estado_operativo'] ?? null) === 'activo',

@@ -12,6 +12,8 @@ final class CatalogoVariablesDocumento
         $todas = array_map(fn (DocumentoPlantillaTipo $tipo) => $tipo->value, DocumentoPlantillaTipo::cases());
 
         return [
+            'solicitud.folio' => $this->definition('Folio de solicitud', 'texto', 'solicitud', 'texto', true, [DocumentoPlantillaTipo::Contrato->value]),
+            'contrato.folio' => $this->definition('Número de contrato', 'texto', 'contrato preparado', 'texto', true, [DocumentoPlantillaTipo::Contrato->value]),
             'documento.fecha_generacion' => $this->definition('Fecha de generación', 'fecha', 'sistema', 'fecha_corta', true, $todas),
             'empresa.razon_social' => $this->definition('Razón social', 'texto', 'configuración de empresa', 'texto', true, $todas),
             'empresa.nombre_comercial' => $this->definition('Nombre comercial', 'texto', 'configuración de empresa', 'texto', false, $todas),

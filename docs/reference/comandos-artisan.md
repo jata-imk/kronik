@@ -92,3 +92,7 @@ php artisan up
 
 No use `migrate:fresh`, `dev:reset-data` o `DevelopmentSeeder` sobre una
 instancia con datos reales.
+
+## Completar folios históricos
+
+`php artisan folios:completar --dry-run` valida prefijos y cuenta pendientes sin escribir. `php artisan folios:completar` asigna los pendientes sin regenerar documentos. Confirmar entorno y respaldo, activar mantenimiento y detener workers. [Contrato y recuperación](folios.md).

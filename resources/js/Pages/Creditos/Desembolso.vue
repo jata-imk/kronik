@@ -20,7 +20,7 @@ function registrar() {
         <template #card-content>
             <div class="space-y-6 p-4 md:p-6">
                 <nav class="flex flex-wrap gap-4 text-sm" aria-label="Contexto del desembolso">
-                    <Link :href="route('solicitudes.show', solicitud.id)" class="text-primary hover:underline"><i class="pi pi-arrow-left mr-2" />Solicitud SOL-{{ solicitud.id }}</Link>
+                    <Link :href="route('solicitudes.show', solicitud.id)" class="text-primary hover:underline"><i class="pi pi-arrow-left mr-2" />Solicitud {{ solicitud.folio ?? `SOL-${solicitud.id}` }}</Link>
                     <Link :href="route('solicitudes.paquete.show', solicitud.id)" class="text-primary hover:underline"><i class="pi pi-file-pdf mr-2" />Contrato y tabla de pagos</Link>
                 </nav>
                 <section v-if="resumen" class="k-feature p-6" aria-label="Importes firmados">

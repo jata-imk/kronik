@@ -54,7 +54,7 @@ function save() {
 
 <template>
     <AppLayout :title="solicitud ? 'Editar borrador' : 'Nueva solicitud'">
-        <template #card-header><PageHeader eyebrow="Operación · Captura" :title="solicitud ? `Editar SOL-${solicitud.id}` : 'Nueva solicitud'" description="Relaciona un cliente y un producto para comenzar su evaluación." /></template>
+        <template #card-header><PageHeader eyebrow="Operación · Captura" :title="solicitud ? `Editar ${solicitud.folio ?? `SOL-${solicitud.id}`}` : 'Nueva solicitud'" description="Relaciona un cliente y un producto para comenzar su evaluación." /></template>
         <template #card-content>
             <form class="originacion-content originacion-captura space-y-5 p-4 md:p-6" @submit.prevent="save">
                 <Message severity="info" :closable="false">Solo se muestran clientes de tu sucursal activa. Guarda un borrador con el cliente y completa las condiciones después. Evaluación y PLD se habilitan al enviar a revisión, no al guardar.</Message>

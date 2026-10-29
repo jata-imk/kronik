@@ -30,3 +30,7 @@ responsable de una operación.
 - [Estatus operativo y restricciones](../reference/estatus-operativo-empresa.md).
 - [ADR 0029](../explanation/adr-0029-estatus-operativo-empresa.md).
 - [Entrega de estatus operativo](../agent-notes/empresa-estatus-operativo.md).
+
+- [Folios de negocio](../reference/folios.md).
+- [ADR 0030: numeración estable](../explanation/adr-0030-folios-negocio.md).
+- [Entrega de folios y ayuda](../agent-notes/folios-ayuda-contextual.md).

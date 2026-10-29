@@ -144,3 +144,39 @@ test('el PDF queda admitido antes de liberar el bloqueo que permite suspender la
     app()->call([new GenerarDocumentoPdf($documento->id), 'handle']);
     expect($observada)->toBeTrue()->and($documento->fresh()->estado)->toBe(\App\Enums\DocumentoGeneradoEstado::Generado);
 });
+
+test('el bloqueo del PDF y su auditoría se revierten y reintentan juntos ante un fallo transitorio', function () {
+    [$actor, $solicitud, , , , , $data] = prepararSolicitudConContrato($this);
+    $this->post(route('solicitudes.paquete.store', $solicitud), $data)->assertSessionHasNoErrors();
+    $documento = \App\Models\DocumentoGenerado::sole();
+    $estadoInicial = $documento->estado;
+    $team = $documento->team_id;
+    $sucursal = $documento->sucursal_id;
+    EmpresaConfiguracion::first()->update(['estatus' => 'suspendida']);
+    $actor->forceFill(['current_team_id' => null, 'current_sucursal_id' => null])->save();
+    $fallar = true;
+    Activity::creating(function (Activity $actividad) use (&$fallar) {
+        if ($actividad->event === 'empresa.operacion_bloqueada' && $fallar) {
+            $fallar = false;
+            throw new RuntimeException('Fallo transitorio sintético de auditoría');
+        }
+    });
+    $this->mock(DocumentoPdfRenderer::class)->shouldNotReceive('render');
+    $job = new GenerarDocumentoPdf($documento->id);
+    expect(fn () => app()->call([$job, 'handle']))->toThrow(RuntimeException::class, 'Fallo transitorio sintético de auditoría');
+    expect($documento->fresh()->estado)->toBe($estadoInicial)
+        ->and($documento->fresh()->error_codigo)->toBeNull();
+    expect(Activity::where('event', 'empresa.operacion_bloqueada')->count())->toBe(0);
+
+    app()->call([$job, 'handle']);
+    app()->call([$job, 'handle']);
+    $actividad = Activity::where('event', 'empresa.operacion_bloqueada')->sole();
+    expect($documento->fresh()->error_codigo)->toBe('EmpresaNoOperativa')
+        ->and($actividad->causer_id)->toBeNull()
+        ->and($actividad->team_id)->toBe($team)
+        ->and($actividad->sucursal_id)->toBe($sucursal)
+        ->and((int) $actividad->subject_id)->toBe($documento->cliente_id)
+        ->and($actividad->properties['related']['id'])->toBe($documento->id)
+        ->and($actividad->properties->toJson())->not->toContain('password', 'token', 'datos_utilizados');
+    Storage::disk('local')->assertMissing('documentos-generados/'.$documento->cliente_id.'/'.$documento->id.'.pdf');
+});

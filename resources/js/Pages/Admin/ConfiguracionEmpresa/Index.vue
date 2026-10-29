@@ -1,4 +1,5 @@
 <script setup>
+import FieldHelp from "@/Components/FieldHelp.vue";
 import PageHeader from "@/Components/PageHeader.vue";
 import CodigoPostalAutocomplete from "@/Components/CodigoPostalAutocomplete.vue";
 import IntlTelInput from "@/Components/IntlTelInput.vue";
@@ -150,9 +151,9 @@ const error = (field) => form.errors[field];
                     </h3>
 
                     <div>
-                        <label for="razon_social" class="block text-sm font-medium mb-1">
+                        <div class="flex items-center gap-1"><label for="razon_social" class="block text-sm font-medium mb-1">
                             Razón social
-                        </label>
+                        </label><FieldHelp title="Razón social" description="Identifica a la entidad en los documentos finales. Debe coincidir con sus datos fiscales." example="Financiera Ejemplo SA de CV" /></div>
                         <InputText
                             id="razon_social"
                             v-model="form.razon_social"
@@ -190,7 +191,7 @@ const error = (field) => form.errors[field];
                     </div>
 
                     <div>
-                        <label for="rfc" class="block text-sm font-medium mb-1">RFC</label>
+                        <div class="flex items-center gap-1"><label for="rfc" class="block text-sm font-medium mb-1">RFC</label><FieldHelp title="RFC de la empresa" description="Se valida con el tipo de persona y es obligatorio para generar documentos finales, aunque la plantilla no lo muestre." example="" /></div>
                         <InputText
                             id="rfc"
                             v-model="form.rfc"
@@ -234,7 +235,7 @@ const error = (field) => form.errors[field];
                     </div>
 
                     <div>
-                        <label for="estatus" class="block text-sm font-medium mb-1">Estatus</label>
+                        <div class="flex items-center gap-1"><label for="estatus" class="block text-sm font-medium mb-1">Estatus</label><FieldHelp title="Estatus operativo" description="Borrador permite captura y simulaciones. Suspendida detiene la originación y conserva la cobranza. Activa permite avanzar con los permisos y requisitos vigentes." example="" /></div>
                         <Select
                             id="estatus"
                             v-model="form.estatus"
@@ -392,7 +393,7 @@ const error = (field) => form.errors[field];
                     </div>
 
                     <div>
-                        <label for="email" class="block text-sm font-medium mb-1">Email</label>
+                        <div class="flex items-center gap-1"><label for="email" class="block text-sm font-medium mb-1">Email</label><FieldHelp title="Correo operativo" description="Es obligatorio para activar la empresa y generar documentos finales. No acredita que el servidor pueda enviar correo." example="operacion@ejemplo.mx" /></div>
                         <InputText
                             id="email"
                             v-model="form.email"
@@ -415,14 +416,14 @@ const error = (field) => form.errors[field];
                     </div>
 
                     <div>
-                        <label for="moneda" class="block text-sm font-medium mb-1">Moneda</label>
+                        <div class="flex items-center gap-1"><label for="moneda" class="block text-sm font-medium mb-1">Moneda</label><FieldHelp title="Moneda de la empresa" description="Identifica la moneda configurada de la entidad. Cada producto conserva sus propias condiciones; cambiarla no convierte saldos anteriores." example="MXN" /></div>
                         <InputText id="moneda" v-model="form.moneda" maxlength="3" fluid />
                     </div>
 
                     <div>
-                        <label for="zona_horaria" class="block text-sm font-medium mb-1">
+                        <div class="flex items-center gap-1"><label for="zona_horaria" class="block text-sm font-medium mb-1">
                             Zona horaria
-                        </label>
+                        </label><FieldHelp title="Zona horaria" description="Determina la fecha de negocio al simular, validar fechas y registrar operaciones. No modifica las fechas o documentos conservados." example="America/Mexico_City" /></div>
                         <Select
                             id="zona_horaria"
                             v-model="form.zona_horaria"
@@ -460,10 +461,12 @@ const error = (field) => form.errors[field];
                         <InputNumber
                             id="dias_gracia"
                             v-model="form.parametros_operativos.dias_gracia_default"
+                            disabled
                             :min="0"
                             :max="365"
                             fluid
                         />
+                        <small class="text-surface-500">Guardado como referencia; pendiente de aplicación operativa.</small>
                     </div>
 
                     <div>
@@ -473,9 +476,11 @@ const error = (field) => form.errors[field];
                         <InputText
                             id="hora_corte"
                             v-model="form.parametros_operativos.hora_corte_operativo"
+                            disabled
                             placeholder="18:00"
                             fluid
                         />
+                        <small class="text-surface-500">Guardado como referencia; pendiente de aplicación operativa.</small>
                     </div>
 
                     <div>
@@ -485,9 +490,11 @@ const error = (field) => form.errors[field];
                         <InputText
                             id="logotipo_path"
                             v-model="form.logotipo_path"
+                            disabled
                             placeholder="/images/logo.png"
                             fluid
                         />
+                        <small class="text-surface-500">Guardado como referencia; pendiente de aplicación operativa.</small>
                     </div>
                 </section>
 

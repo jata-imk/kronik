@@ -109,6 +109,7 @@ class DocumentoPlantillaController extends Controller implements HasMiddleware
     {
         return [
             'documento.fecha_generacion' => '23/08/2026', 'empresa.razon_social' => 'Financiera Ejemplo, S.A. de C.V.',
+            'solicitud.folio' => 'MTZ-SOL-000124', 'contrato.folio' => 'MTZ-CTO-000045',
             'empresa.nombre_comercial' => 'Financiera Ejemplo', 'empresa.rfc' => 'FEX010101AB1',
             'empresa.telefono' => '+52 55 0000 0000', 'empresa.email' => 'contacto@ejemplo.test',
             'cliente.nombre_completo' => 'María Ejemplo López', 'cliente.rfc' => 'EILM900101AB1',
