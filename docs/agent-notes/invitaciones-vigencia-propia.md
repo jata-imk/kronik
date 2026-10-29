@@ -13,8 +13,8 @@ Separar emisión y aceptación de invitaciones de la recuperación corta.
 
 ## Estado actual
 
-- Estado: integrado en `main` mediante `554d690` (PR #48), con CI aprobado; sin despliegue acreditado.
-- Última actualización: 2026-10-26.
+- Estado: integrado en `main` mediante `554d690` (PR #48), con CI aprobado; despliegue normal en VPS y QA general satisfactorio reportados por el usuario.
+- Última actualización: 2026-10-28.
 - Último punto estable: implementación, validaciones locales y review medium completados.
 
 ## Decisiones pendientes
@@ -29,13 +29,13 @@ Separar emisión y aceptación de invitaciones de la recuperación corta.
 - Migraciones: tabla propia de tokens; requiere migrar antes de enviar invitaciones.
 - Configuración: `INVITATION_EXPIRE_MINUTES=4320`; sin credenciales nuevas.
 - Review medium acumulado de PR #46–#50 sobre `a6057a0..6c30e3c`: sin hallazgos pendientes; 43 pruebas backend focalizadas y 323 aserciones aprobadas. Nueve E2E de la iniciativa aprobados antes del último merge.
-- QA posterior del usuario: no se ha reportado para este cambio de vigencia; las confirmaciones históricas de correo no lo validan.
+- QA posterior del usuario: confirmación general del 2026-10-28 («ya comprobé todo y quedó re bien»); su consulta posterior incluye esta entrega en el lote de siete. Sin SHA desplegado ni versiones informados; no se atribuyen resultados individuales o entrega efectiva de correo no descritos.
 
 ## Siguiente paso
 
-Aplicar la migración y validar invitación/recuperación cuando se programe el despliegue; el lote de cinco tareas quedó integrado.
+Sin pendientes de esta entrega. Notion conserva estado Done y cierre de QA; la mejora posterior de Equipo/bitácora (PR #55) se sigue por separado.
 
 ## Cierre
 
 - Commit o merge: `554d690`, PR #48.
-- Pendientes diferidos: despliegue independiente.
+- Pendientes diferidos: ninguno dentro de esta entrega.
