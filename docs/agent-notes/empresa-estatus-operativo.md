@@ -17,6 +17,7 @@
 
 ## Evidencia y siguiente paso
 
+- 2026-10-28: la revisión acumulada con folios (PR #53) detectó que el estado PDF bloqueado podía persistir sin auditoría ante fallo transitorio. Se corrigen juntos estado/evento en una transacción, con regresión de rollback, reintento, contexto y ausencia de duplicados; pendiente publicación e integración de esta corrección.
 - Suite backend del hook pre-push sobre `6e57010`: 497 aprobadas, una omitida, 41057 aserciones; build aprobado.
 - Corregida atribución automática de Spatie: ejecutor sistema no hereda al usuario
   autenticado cuando se ejecuta síncronamente.

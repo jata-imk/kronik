@@ -42,6 +42,9 @@ de ejecutar workers.
 fiscales ni contenido. En HTTP se emite después del rollback. En cola ejecuta
 el sistema. `related` identifica la consulta/iniciador o el documento cuyo `creado_por` conserva al iniciador, con contexto original. El cambio
 de estatus conserva `empresa.updated`.
+El estado terminal del PDF bloqueado y su evento se confirman en la misma
+transacción. Si falla la inserción de auditoría, ambos se revierten y la cola
+puede reintentarlos; una redelivery posterior al éxito no duplica el evento.
 
 `reportar_cartera` queda definido para módulos futuros: Activa/Suspendida permiten
 reporte SIC y monitoreo/reporte PLD de cartera existente. Borrador permite

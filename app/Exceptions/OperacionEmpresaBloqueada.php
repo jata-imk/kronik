@@ -30,7 +30,7 @@ final class OperacionEmpresaBloqueada extends ValidationException
     }
 
     // HTTP calls record after their transaction has rolled back. Workers record
-    // only after persisting their terminal blocked state.
+    // atomically with their terminal blocked state.
     public function registrar(): void
     {
         if ($this->registrada) {

@@ -8,6 +8,8 @@
 
 ## Estado actual
 
+- CI `40800399214` aprobado sobre `c1a3b3b`: concurrencia real de 40 creaciones, cruce de bloqueos con dos operaciones y fechas explícitas aprobados, además de frontend/backend/build. La revisión medium acumulada detectó después falta de atomicidad entre estado PDF bloqueado y auditoría; se corrige en esta misma entrega con fallo/reintento y ausencia de duplicados.
+- Regresión de auditoría y suite de empresa/RFC: 30 pruebas aprobadas, 262 aserciones. Fixtures fiscales compartidos extraídos para ejecutar las pruebas de empresa sin depender de otros archivos; Pint aprobado. Pendientes hooks/CI y revisión final de esta última corrección.
 - 2026-10-28: retomado por el usuario. Se añaden regresiones de previews HTML/PDF y fechas explícitas fuera de la transacción de Pest; se publicará el diagnóstico sanitizado del proceso hijo para resolver CI antes de integrar.
 - Regresiones locales de reanudación: 24 pruebas de editor documental/folios aprobadas (229 aserciones), Pint aprobado. El helper compartido de crédito pagable ya se carga desde fixtures, sin depender del orden de descubrimiento de pruebas. La fecha explícita requiere aún el caso MariaDB sin transacción exterior.
 - `3ca914e`: hooks 511 backend aprobadas, una omitida, 41219 aserciones y build aprobado. Review medium acumulada contra `bc28e5e` sin hallazgos, 72 pruebas/585 aserciones aprobadas. CI `40798934304` vuelve a fallar solo en concurrencia: el hijo arroja PDOException al revertir un savepoint. Se amplía el diagnóstico del harness para conservar la excepción original que podría estar ocultando la reversión, sin alterar la semántica transaccional.
