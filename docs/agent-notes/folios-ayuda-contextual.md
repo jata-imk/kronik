@@ -4,7 +4,9 @@
 
 - Integrado el 2026-10-28 (America/Mexico_City) mediante [PR #53](https://github.com/jata-imk/kronik/pull/53), merge `2cc3f4a`; HEAD funcional `f0c3459`.
 - [Tarea Notion](https://app.notion.com/p/3fe61db7db7f81ef99efd2e8ed6e3a3c). Base: estatus operativo integrado en `234ec3d`, [PR #52](https://github.com/jata-imk/kronik/pull/52).
-- Implementación completa; sin decisiones pendientes. Sin despliegue ni QA posterior del usuario acreditados.
+- Implementación completa; sin decisiones pendientes. Despliegue normal en VPS
+  y QA satisfactorio reportados por el usuario el 2026-10-28: «ya comprobé todo y
+  quedó re bien». No se informó SHA desplegado ni versiones del entorno.
 - Contrato canónico: [folios](../reference/folios.md); arquitectura: [ADR 0030](../explanation/adr-0030-folios-negocio.md). Inventario posterior fuera de v1 documentado allí.
 
 ## Comportamiento y decisiones
@@ -26,7 +28,9 @@
 - Pasada acumulada contra `bc28e5e`: corregida atomicidad del PDF bloqueado y su auditoría, con fallo/reintento/contexto y ausencia de duplicados. Última revisión medium sobre `f0c3459` sin hallazgos accionables; no ejecutó pruebas, respaldadas por hooks/CI.
 - Matriz única, contratos, ADR, índices y 178 enlaces locales revisados sin faltantes. Auditoría de numeración y asignación histórica incluida; ayuda y vistas previas no añaden acciones auditables.
 
-## Pendientes reales
+## Cierre de QA y alcance posterior
 
-- Programar despliegue con respaldo, mantenimiento y workers detenidos; aplicar migraciones documentales, esquema de folios y relleno histórico. Comprobar prefijos antes del relleno y contrastar conteos. No se ejecutaron sobre la BD del usuario.
-- Validar con el usuario el entorno desplegado. No habilitar SIC productivo ni dinero real; validar especificaciones contratadas antes del reporteo futuro.
+- Sin pendientes de despliegue o QA de esta tarea tras la confirmación del usuario.
+  El ajuste visual de Equipo y sus filtros se sigue en [su propia nota](equipo-tarjetas-bitacora.md).
+- No habilitar SIC productivo ni dinero real; validar especificaciones contratadas
+  antes del reporteo futuro. Los otros tipos de folio siguen fuera de v1.

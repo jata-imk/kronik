@@ -8,18 +8,17 @@ const props = defineProps({
 
 const emit = defineEmits(["apply", "clear"]);
 const localFilters = reactive({ ...props.filters });
-const dateRange = ref(
-    props.filters.date_from && props.filters.date_to
-        ? [
-              new Date(`${props.filters.date_from}T00:00:00`),
-              new Date(`${props.filters.date_to}T00:00:00`),
-          ]
-        : [],
-);
+const datesFromFilters = () => props.filters.date_from
+    ? [new Date(`${props.filters.date_from}T00:00:00`), props.filters.date_to ? new Date(`${props.filters.date_to}T00:00:00`) : null]
+    : [];
+const dateRange = ref(datesFromFilters());
 
 watch(
     () => props.filters,
-    (nextFilters) => Object.assign(localFilters, nextFilters),
+    (nextFilters) => {
+        Object.assign(localFilters, nextFilters);
+        dateRange.value = datesFromFilters();
+    },
     { deep: true },
 );
 
@@ -28,16 +27,30 @@ const apply = () => {
 };
 
 const updateDates = () => {
-    localFilters.date_from =
-        dateRange.value?.[0]?.toISOString().slice(0, 10) ?? "";
-    localFilters.date_to =
-        dateRange.value?.[1]?.toISOString().slice(0, 10) ?? "";
+    const localDate = (date) => date
+        ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+        : "";
+    localFilters.date_from = localDate(dateRange.value?.[0]);
+    localFilters.date_to = localDate(dateRange.value?.[1]);
+};
+const changeContext = (teamChanged = false) => {
+    if (teamChanged) localFilters.sucursal_id = null;
+    Object.assign(localFilters, { user_id: null, event: null, subject_type: null });
+    apply();
 };
 </script>
 
 <template>
     <Panel header="Filtros" toggleable class="mb-4">
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div>
+                <label for="activity-team" class="block text-sm font-medium mb-2">Equipo</label>
+                <Select id="activity-team" v-model="localFilters.team_id" :options="filterOptions.teams" option-label="name" option-value="id" class="w-full" filter :show-clear="filterOptions.allowAllTeams" :placeholder="filterOptions.allowAllTeams ? 'Todos los equipos' : 'Seleccionar equipo'" @change="changeContext(true)" />
+            </div>
+            <div>
+                <label for="activity-branch" class="block text-sm font-medium mb-2">Sucursal</label>
+                <Select id="activity-branch" v-model="localFilters.sucursal_id" :options="filterOptions.sucursales" option-label="name" option-value="id" class="w-full" filter show-clear placeholder="Todas las sucursales" @change="changeContext()" />
+            </div>
             <div>
                 <label for="activity-search" class="block text-sm font-medium mb-2">Buscar</label>
                 <InputText id="activity-search" v-model="localFilters.search" class="w-full" placeholder="Evento, descripción o usuario" @keyup.enter="apply" />

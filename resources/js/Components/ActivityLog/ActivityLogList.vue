@@ -27,7 +27,7 @@ const visit = (overrides = {}) => {
     router.get(route("admin.users.activity"), filters, {
         preserveScroll: true,
         preserveState: true,
-        only: ["activityLogs", "filters", "filterOptions"],
+        only: ["activityLogs", "filters", "filterOptions", "activityTeam"],
         onFinish: () => {
             loading.value = false;
         },
@@ -42,11 +42,13 @@ const applyFilters = (nextFilters) => {
 const clearFilters = () => {
     Object.assign(filters, {
         search: "",
+        sucursal_id: null,
         user_id: null,
         event: null,
         subject_type: null,
         date_from: "",
         date_to: "",
+        per_page: 20,
         page: 1,
     });
     visit();

@@ -70,7 +70,7 @@ Los resultados de estas pruebas corresponden al código, no a QA desplegado.
 | `menubar-items` | Cambios administrativos del menú | Pendiente | Administrador | Menú | Pendiente | Pendiente | Contrato | Q | Pendiente de reconciliación | Sin emisor específico verificado | Pendiente |
 | `dashboard` | Consulta del tablero | No aplica nuevo evento | Usuario | Sin mutación | Lectura | Contexto operativo | Ninguno adicional | Permiso del módulo | No aplica en esta entrega: navegación/lectura sin acción nueva | No requiere emisor adicional | QA/E2E de navegación |
 | `admin` | Entrada a administración | No aplica nuevo evento | Administrador | Sin mutación | Navegación | Contexto operativo | Ninguno adicional | `access admin` | No aplica en esta entrega; cada acción se audita en su dominio | No requiere emisor adicional | `TeamHubTest` |
-| `activity-log` | Consulta y CSV | Pendiente política de auditoría de consulta/exportación | Lector autorizado | Actividad | Lectura/exportación | Equipo autorizado | No se copian registros consultados | Q | Aislamiento implementado; política adicional pendiente | `UserController` | `Admin/ActivityLogTest`, `SelectedTeamManagementTest` |
+| `activity-log` | Consulta y CSV | Pendiente política de auditoría de consulta/exportación | Lector autorizado | Actividad | Lectura/exportación | Equipo autorizado; sucursal como filtro | No se copian registros consultados | Q | Aislamiento y filtros implementados; política adicional pendiente | `UserController`, `ActivityLogQueryService` | `Admin/ActivityLogTest`, `SelectedTeamManagementTest` |
 | `configuracion-empresa` | Guardado de configuración | `empresa.updated` | Administrador | Configuración | Cambio registrado | Contexto del actor | Nombres de campos | Q | Emisor existente; reconciliación general pendiente | `EmpresaConfiguracionController` | `Admin/EmpresaConfiguracionTest` |
 | `sucursales` | Alta, edición y desactivación | `sucursal.created`, `.updated`, `.deactivated` | Administrador | Sucursal | Cambio registrado | Contexto del actor | Contrato | Q | Emisores existentes; reconciliación general pendiente | `SucursalController` | `Admin/SucursalTest` |
 | `clientes` | Cliente, KYC, referencias, vínculos, garantías, documentos y consentimiento | Familias `cliente.*`, `cliente.documento.*`, `cliente.consentimiento_sic.*` | Operador autorizado | Cliente/recurso de expediente | Cambio o acceso registrado | Equipo y sucursal de la operación | Identificadores y campos; sin expediente | Q | Emisores existentes; reconciliar cada acción en backlog general | Servicios de cliente/expediente y controllers privados | `tests/Feature/Clientes/` |
@@ -100,8 +100,20 @@ Los registros antiguos cuyo campo `event` es nulo no se reescriben ni eliminan. 
 Super Admin global consulta todos los equipos. Un usuario normal necesita
 pertenencia y `read activity-log` en el equipo consultado; sin filtro se usa el
 actual. `team_id` conserva el seleccionado al filtrar, paginar o exportar sin
-cambiar las preferencias. El acceso por sucursal y la política de exportación
-adicional siguen pendientes del backlog de auditoría. Los valores CSV que
+cambiar las preferencias. El selector ofrece solo equipos autorizados. El
+permiso del equipo permite consultar todas sus sucursales, sin limitar a las
+asignadas al lector. `sucursal_id` filtra listado y CSV; las opciones incluyen
+sucursales inactivas con historial. Super Admin puede limpiar Equipo para
+consultar todos, incluidos registros sin equipo. Cambiar Equipo limpia Sucursal,
+Usuario, Evento y Sujeto, conservando búsqueda y periodo. Limpiar filtros conserva
+el equipo seleccionado y restablece el resto, incluido tamaño de página a 20.
+Las opciones de usuario, eventos históricos y sujetos se derivan del contexto
+Equipo/Sucursal; una combinación sin registros devuelve vacío. El encabezado y
+el regreso se actualizan junto con el contexto sin alterar la navegación global.
+Véase [ADR 0031](../explanation/adr-0031-consulta-actividad-equipo-sucursal.md).
+La política adicional de auditoría de consulta/exportación sigue pendiente del
+backlog de auditoría. No se añaden eventos por esta mejora de consulta y UI.
+Los valores CSV que
 podrían interpretarse como fórmulas se prefijan para tratarlos como texto.
 
 ## Agregar un evento

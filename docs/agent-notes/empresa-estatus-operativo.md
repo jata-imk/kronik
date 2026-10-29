@@ -5,7 +5,10 @@
 - [Tarea Notion](https://app.notion.com/p/3fe61db7db7f81f8a941ffe166235c8b).
 - Implementación `6e57010`, integrada el 2026-10-27 mediante [PR #52](https://github.com/jata-imk/kronik/pull/52), merge `234ec3d`; base `bc28e5e`.
 - Corrección posterior de auditoría `f0c3459`, integrada el 2026-10-28 mediante [PR #53](https://github.com/jata-imk/kronik/pull/53), merge `2cc3f4a`.
-- Decisiones pendientes: ninguna. Sin despliegue ni QA posterior del usuario acreditados.
+- Decisiones pendientes: ninguna. Despliegue normal en VPS y QA satisfactorio
+  reportados por el usuario el 2026-10-28: «ya comprobé todo y quedó re bien».
+  No se informó SHA desplegado ni versiones del entorno; la revisión visual de
+  Equipo solicitada después se sigue por separado.
 - Contrato: [estatus operativo](../reference/estatus-operativo-empresa.md); decisión: [ADR 0029](../explanation/adr-0029-estatus-operativo-empresa.md).
 
 ## Resultado
@@ -31,10 +34,10 @@ un fallo transitorio revierte ambos y el reintento no duplica actividad.
 - Review medium corrigió sujeto UUID de auditoría, admisión atómica de PDF y persistencia atómica de bloqueo/evento. Regresiones de fallo/reintento, actor/sujeto y contexto original aprobadas. Revisión acumulada final contra `bc28e5e` sin hallazgos accionables.
 - Captura: [empresa suspendida](../assets/empresa-suspendida.png). Matriz única y documentación actualizadas.
 
-## Pendientes reales
+## Cierre de QA
 
-Aplicar migración de contexto documental cuando se programe despliegue; conserva
-historia desconocida sin inferir preferencias actuales. Verificar después el
-entorno desplegado. Sin variables nuevas ni seeders productivos; no habilitar
+Sin pendientes de despliegue o QA de esta tarea tras la confirmación del usuario.
+La migración conserva historia desconocida sin inferir preferencias actuales.
+Sin variables nuevas ni seeders productivos; esta validación no habilita
 proveedores productivos ni dinero real. Seguimiento de la entrega conjunta en
 [folios y ayuda](folios-ayuda-contextual.md).

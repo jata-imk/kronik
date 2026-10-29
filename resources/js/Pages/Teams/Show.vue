@@ -8,6 +8,7 @@ import UpdateTeamNameForm from "@/Pages/Teams/Partials/UpdateTeamNameForm.vue";
 import CollectionSummary from "@/Components/DataTable/CollectionSummary.vue";
 import TruncatedText from "@/Components/DataTable/TruncatedText.vue";
 import TeamGeneralActions from "@/Components/Teams/TeamGeneralActions.vue";
+import TeamRoleCards from "@/Components/Teams/TeamRoleCards.vue";
 import UserFormDialog from "@/Components/Users/UserFormDialog.vue";
 import UserActions from "@/Components/Users/UserActions.vue";
 
@@ -20,7 +21,6 @@ const props = defineProps({
     teamCapabilities: { type: Object, default: () => ({}) },
     responsibleCandidates: { type: Array, default: () => [] },
     teamRoles: { type: Array, default: () => [] },
-    recentActivity: { type: Array, default: () => [] },
     pendingInvitations: { type: Array, default: () => [] },
     userFormOptions: { type: Object, default: () => ({}) },
 });
@@ -166,7 +166,7 @@ const statuses = ["Activo", "Pendiente", "Inactivo"];
                                 <InputText v-model="filterModel.value" placeholder="Sucursal" @input="filterCallback()" />
                             </template>
                         </Column>
-                        <Column header="Acciones">
+                        <Column header="Acciones" class="w-44 min-w-44">
                             <template #body="{ data }">
                                 <UserActions :user="data" :team="team" :can-remove="teamCapabilities['remove-members-teams']" @edit="editUser(data)" />
                             </template>
@@ -205,22 +205,12 @@ const statuses = ["Activo", "Pendiente", "Inactivo"];
             <Card v-if="teamCapabilities['read-roles']" class="mt-8">
                 <template #title>Roles y permisos</template>
                 <template #content>
-                    <Button label="Administrar roles" as="a" :href="route('admin.roles.index', { team: team.id })" />
-                    <p v-if="!teamRoles.length" class="mt-4">Este equipo aún no tiene roles.</p>
-                    <div v-for="role in teamRoles" :key="role.id" class="mt-4 rounded-lg border border-surface-200 p-4 dark:border-surface-700">
-                        <p class="font-medium">{{ role.name }}</p><p>{{ role.members_count }} personas asignadas</p>
-                        <CollectionSummary :items="role.modules" max-width="24rem" />
-                    </div>
+                    <TeamRoleCards :team-id="team.id" :roles="teamRoles" />
                 </template>
             </Card>
-            <Card v-if="teamCapabilities['read-activity-log']" class="mt-8">
-                <template #title>Actividad reciente</template>
-                <template #content>
-                    <Button label="Ver bitácora del equipo" as="a" :href="route('admin.users.activity', { team_id: team.id })" />
-                    <p v-if="!recentActivity.length" class="mt-4">No hay actividad reciente.</p>
-                    <p v-for="activity in recentActivity" :key="activity.id" class="mt-3">{{ activity.description }} · {{ new Date(activity.created_at).toLocaleString('es-MX') }}</p>
-                </template>
-            </Card>
+            <div v-if="teamCapabilities['read-activity-log']" class="mt-8">
+                <Button label="Ver bitácora del equipo" icon="pi pi-history" as="a" :href="route('admin.users.activity', { team_id: team.id })" />
+            </div>
         </div>
         <ConfirmDialog />
         <UserFormDialog v-if="showUserForm" :user="selectedUser" v-bind="userFormOptions" :prefill="userPrefill" @close="showUserForm = false" />

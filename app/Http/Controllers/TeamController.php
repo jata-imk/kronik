@@ -46,6 +46,9 @@ class TeamController extends InertiaTeamController
             ->groupBy('model_id');
 
         $userPayloads = $canManageUsers ? app(\App\Services\UserAdministrationData::class)->users($members) : collect();
+        $activeMembers = $members->filter(fn ($user) => $user->status === \App\Enums\UserStatus::Active)->pluck('id');
+        $activeRoleCounts = $roleAssignments->only($activeMembers->all())->flatten(1)->groupBy('id')
+            ->map(fn ($assignments) => $assignments->pluck('model_id')->unique()->count());
         $memberPayload = fn (User $user) => [
             ...$userPayloads->get($user->id, []),
             'id' => $user->id,
@@ -94,13 +97,12 @@ class TeamController extends InertiaTeamController
             'responsibleCandidates' => $capabilities['update-teams'] ? $members
                 ->filter(fn ($user) => $user->status === \App\Enums\UserStatus::Active && $user->id !== $team->user_id)
                 ->map->only(['id', 'name'])->values() : [],
-            'teamRoles' => $capabilities['read-roles'] ? $team->ownedRoles()->where('guard_name', 'web')->with('permissions.module')->get()->map(fn ($role) => [
-                'id' => $role->id, 'name' => $role->name,
-                'members_count' => $roleAssignments->flatten(1)->where('id', $role->id)->pluck('model_id')->unique()->count(),
-                'modules' => $role->permissions->pluck('module.etiqueta')->filter()->unique()->values(),
-            ]) : [],
-            'recentActivity' => $capabilities['read-activity-log'] ? config('activitylog.activity_model')::where('team_id', $team->id)
-                ->latest()->limit(10)->get(['id', 'description', 'created_at']) : [],
+            'teamRoles' => $capabilities['read-roles'] ? $team->ownedRoles()->where('guard_name', 'web')
+                ->whereIn('id', $activeRoleCounts->keys())->with('permissions.module')->orderBy('name')->get()->map(fn ($role) => [
+                    'id' => $role->id, 'name' => $role->name,
+                    'members_count' => $activeRoleCounts[$role->id],
+                    'modules' => $role->permissions->pluck('module.etiqueta')->filter()->unique()->values(),
+                ]) : [],
         ]);
     }
 

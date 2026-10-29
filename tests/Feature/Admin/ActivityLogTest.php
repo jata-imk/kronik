@@ -7,6 +7,89 @@ use App\Services\ActivityLogService;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
 
+test('filtros y CSV permiten todas las sucursales del equipo aunque no estén asignadas al lector', function () {
+    $auditor = actingAsActivityAuditor();
+    $other = actingAsActivityAuditor();
+    $branch = \App\Models\Sucursal::create(['clave' => 'ARCHIVO-LOG', 'nombre' => 'Archivo', 'activa' => false]);
+    $second = \App\Models\Sucursal::create(['clave' => 'NORTE-LOG', 'nombre' => 'Norte', 'activa' => true]);
+    $foreign = \App\Models\Sucursal::create(['clave' => 'AJENA-LOG', 'nombre' => 'Ajena', 'activa' => true]);
+    foreach ([[$auditor, $branch, 'archivo visible'], [$auditor, $second, 'norte visible'], [$other, $foreign, 'evento ajeno']] as [$actor, $sucursal, $description]) {
+        app(ActivityLogService::class)->log(ActivityEvent::Login, $description, causer: $actor,
+            teamId: $actor->current_team_id, sucursalId: $sucursal->id, inheritActorContext: false);
+    }
+    expect($auditor->sucursales()->count())->toBe(0);
+    $this->actingAs($auditor)->get(route('admin.users.activity'))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('filters.team_id', $auditor->current_team_id)
+            ->where('filterOptions.allowAllTeams', false)->has('activityLogs.data', 2)
+            ->has('filterOptions.sucursales', 2)->where('filterOptions.sucursales.0.id', $branch->id));
+    $filters = ['team_id' => $auditor->current_team_id, 'sucursal_id' => $branch->id];
+    $this->get(route('admin.users.activity', $filters))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->has('activityLogs.data', 1)
+            ->where('activityLogs.data.0.description', 'archivo visible')->where('filters.sucursal_id', $branch->id));
+    $csv = $this->get(route('admin.users.activity.export', $filters))->assertOk()->streamedContent();
+    expect($csv)->toContain('archivo visible')->not->toContain('norte visible', 'evento ajeno');
+    $this->get(route('admin.users.activity', ['sucursal_id' => $foreign->id]))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('activityLogs.total', 0));
+    $this->get(route('admin.users.activity.export', ['team_id' => $other->current_team_id, 'sucursal_id' => $branch->id]))->assertForbidden();
+});
+
+test('el selector solo ofrece equipos con pertenencia y permiso propio sin alterar preferencias ni navegación', function () {
+    $auditor = actingAsActivityAuditor();
+    $current = $auditor->current_team_id;
+    $selected = \App\Models\Team::factory()->create(['name' => 'Equipo autorizado']);
+    $selected->users()->attach($auditor);
+    grantTeamPermissions($auditor, $selected, ['read activity-log']);
+    $withoutPermission = \App\Models\Team::factory()->create(['name' => 'Equipo sin permiso']);
+    $withoutPermission->users()->attach($auditor);
+    $outside = \App\Models\Team::factory()->create();
+    $this->actingAs($auditor)->get(route('admin.users.activity', ['team_id' => $selected->id]))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->where('activityTeam.id', $selected->id)
+            ->has('filterOptions.teams', 2)
+            ->where('filterOptions.teams', fn ($teams) => collect($teams)->pluck('id')->sort()->values()->all() === collect([$current, $selected->id])->sort()->values()->all())
+            ->where('auth.user.current_team_id', $current));
+    expect($auditor->fresh()->current_team_id)->toBe($current)->and(getPermissionsTeamId())->toBe($current);
+    $this->get(route('admin.users.activity', ['team_id' => $withoutPermission->id]))->assertForbidden();
+    $this->get(route('admin.users.activity', ['team_id' => $outside->id]))->assertForbidden();
+});
+
+test('opciones dependientes y paginación respetan equipo y sucursal seleccionados', function () {
+    $admin = actingAsSuperAdmin();
+    $actor = User::factory()->withPersonalTeam()->create();
+    $actor->switchTeam($actor->ownedTeams()->firstOrFail());
+    $branch = \App\Models\Sucursal::create(['clave' => 'LOG-A', 'nombre' => 'Sucursal A', 'activa' => true]);
+    $otherBranch = \App\Models\Sucursal::create(['clave' => 'LOG-B', 'nombre' => 'Sucursal B', 'activa' => true]);
+    for ($i = 0; $i < 11; $i++) {
+        app(ActivityLogService::class)->log(ActivityEvent::Login, 'Evento paginado '.$i, causer: $actor,
+            teamId: $actor->current_team_id, sucursalId: $branch->id, inheritActorContext: false);
+    }
+    activity()->event('solo.otra.sucursal')->tap(function ($activity) use ($actor, $otherBranch) {
+        $activity->team_id = $actor->current_team_id;
+        $activity->sucursal_id = $otherBranch->id;
+    })->causedBy($admin)->log('Otro usuario y evento');
+    $filters = ['team_id' => $actor->current_team_id, 'sucursal_id' => $branch->id, 'per_page' => 10];
+    $this->actingAs($admin)->get(route('admin.users.activity', $filters))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->has('activityLogs.data', 10)->where('activityLogs.total', 11)
+            ->has('filterOptions.users', 1)->where('filterOptions.users.0.id', $actor->id)
+            ->where('filterOptions.events', fn ($events) => ! collect($events)->contains('value', 'solo.otra.sucursal'))
+            ->where('activityLogs.next_page_url', fn ($url) => str_contains($url, 'team_id='.$actor->current_team_id) && str_contains($url, 'sucursal_id='.$branch->id)));
+    $this->get(route('admin.users.activity', [...$filters, 'page' => 2]))->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->has('activityLogs.data', 1)->where('filterOptions.allowAllTeams', true));
+    expect($admin->fresh()->current_team_id)->not->toBe($actor->current_team_id);
+});
+
+test('filtros de actividad rechazan datos inválidos con mensajes españoles', function (string $field, mixed $value, string $attribute) {
+    $admin = actingAsSuperAdmin();
+    foreach (['admin.users.activity', 'admin.users.activity.export'] as $route) {
+        $response = $this->actingAs($admin)->getJson(route($route, [$field => $value]));
+        $response->assertUnprocessable()->assertJsonValidationErrors($field);
+        expect($response->json('errors.'.$field.'.0'))->toContain($attribute)->not->toContain('validation.');
+    }
+})->with([
+    ['team_id', 'incorrecto', 'equipo seleccionado'], ['sucursal_id', 'incorrecta', 'sucursal seleccionada'],
+    ['sucursal_id', 999999, 'sucursal seleccionada'], ['per_page', 13, 'registros por página'],
+    ['date_to', 'incorrecta', 'fecha final'],
+]);
+
 function actingAsActivityAuditor(): User
 {
     $user = User::factory()->withPersonalTeam()->create();

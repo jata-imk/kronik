@@ -15,6 +15,8 @@ propiedad del equipo y bandera global de superadministrador.
 
 ## Decisiones y seguimiento
 
+- [ADR 0031: consulta de actividad por equipo y sucursal](../explanation/adr-0031-consulta-actividad-equipo-sucursal.md).
+- [Nota de tarjetas de Equipo y filtros de bitácora](../agent-notes/equipo-tarjetas-bitacora.md).
 - [ADR 0028: acciones compartidas de cuenta y membresía](../explanation/adr-0028-acciones-cuenta-membresia.md).
 - [Nota de acciones de integrantes](../agent-notes/equipo-acciones-integrantes.md).
 
