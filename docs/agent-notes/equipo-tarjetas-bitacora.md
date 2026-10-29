@@ -8,6 +8,9 @@
 
 ## Estado actual
 
+- 2026-10-28: retomado por solicitud explícita del usuario desde `9c8d2d0`.
+  La pausa detuvo el push y la suite backend completa sin resultado final;
+  se vuelve a ejecutar el pre-push antes de publicar y abrir PR.
 - En implementación; sin integración ni despliegue de este ajuste.
 - Acciones horizontales, resumen de roles con personas activas en tarjetas
   cuadradas y tarjeta administrativa primera. Se conserva el catálogo completo
@@ -38,6 +41,13 @@
 
 ## Siguiente paso
 
-Publicar la PR con hooks completos; realizar review medium, correcciones y pasada
+Publicar con hooks completos, sin ejecutar suites backend simultáneas; abrir PR y realizar
+review medium, correcciones y pasada
 final antes de integrar con CI aprobado. Registrar el merge y dejar pendiente
 únicamente el despliegue/QA de esta mejora nueva.
+
+Logs locales: `storage/framework/testing/equipo-push.log`, `equipo-vue.log`,
+`equipo-build-final.log` y `equipo-e2e-responsive.log`. La descripción preparada
+está en `storage/framework/testing/pr-equipo-bitacora.md`. El QA anterior de
+Empresa/Folios ya está registrado en sus dos páginas Notion y en las notas del
+commit; no reabrirlo ni solicitar otra confirmación.
