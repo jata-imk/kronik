@@ -13,10 +13,18 @@
   `74d9657add8d20ac0d817f65bad6e0daa799e6a6`, HEAD revisado `f2512e3`.
   Revisión medium y pasada final medium sin hallazgos; no se necesitaron
   correcciones de código. CI de la PR aprobado, incluida concurrencia MariaDB.
-  Despliegue y QA de esta mejora pendientes de confirmación del usuario.
+  El usuario confirmó su despliegue en VPS y revisión: solo reportó tarjetas
+  demasiado grandes cuando hay pocos roles. Sin SHA desplegado ni versiones
+  informados. La corrección visual se sigue en `fix/equipo-tarjetas-pocos-roles`.
 - Acciones horizontales, resumen de roles con personas activas en tarjetas
   cuadradas y tarjeta administrativa primera. Se conserva el catálogo completo
   de roles para administrar/invitar y solo el enlace contextual a bitácora.
+- Corrección visual: reservar las columnas disponibles aunque haya una o dos
+  tarjetas, conservando el tamaño de la cuadrícula con más roles. No cambia
+  filtrado, permisos ni acciones; no requiere nuevos eventos auditables.
+- Cierre autorizado por el usuario: completar e integrar la corrección y dejar
+  `main` local limpio. El despliegue posterior de la corrección queda a su cargo;
+  la autorización de cierre no constituye verificación de ese despliegue.
 - Equipo/Sucursal compartidos en listado y CSV. Permiso del equipo permite todas
   sus sucursales; Super Admin global conserva historia sin equipo. Consulta y
   opciones centralizadas; no cambia equipo/sucursal actuales.
@@ -38,6 +46,10 @@
   de responsable y acciones de integrantes. Tarjetas cuadradas entre 320 y 1440 px
   con nombres largos. El evento de transferencia se comprueba en Bitácora tras
   retirar el listado de Equipo conforme a lo solicitado.
+- Corrección de pocas tarjetas: build y E2E Chromium de Equipo/bitácora aprobados.
+  La regresión visual comprueba que una y dos tarjetas conservan el ancho de la
+  cuadrícula con cuatro a 1920 px; mantiene cuadrados y recorridos entre 320 y
+  1440 px. [Captura con dos tarjetas](../assets/equipo-dos-tarjetas-desktop.png).
 - Capturas: [escritorio](../assets/equipo-tarjetas-desktop.png),
   [móvil](../assets/equipo-tarjetas-mobile.png),
   [oscuro](../assets/equipo-tarjetas-dark.png),
@@ -50,9 +62,11 @@
 
 ## Siguiente paso
 
-Desplegar esta mejora por el procedimiento normal de la VPS y revisar Equipo
-y filtros Equipo/Sucursal de Bitácora. No requiere migraciones, seeders ni
-variables nuevas. Registrar la confirmación cuando el usuario la proporcione.
+Validar el ajuste de pocas tarjetas en navegador, publicar PR, revisión medium
+y pasada final antes de integrar con CI aprobado. Después desplegar únicamente
+esta corrección visual y comprobar el tamaño con pocos roles. El despliegue y
+revisión de PR #55 ya fueron reportados por el usuario; no volver a dejarlos
+como pendientes. No requiere migraciones, seeders ni variables nuevas.
 
 Logs locales: `storage/framework/testing/equipo-push-final.log`,
 `equipo-review-medium.log`, `equipo-review-final.log`, `equipo-vue.log` y

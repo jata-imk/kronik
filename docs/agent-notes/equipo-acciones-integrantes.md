@@ -35,7 +35,7 @@ Gestionar usuarios desde el equipo con formulario y acciones compartidos.
 
 ## Siguiente paso
 
-Sin pendientes de esta entrega. Notion conserva estado Done y cierre de QA. Mantener separados el backlog general de auditoría del 31/10/2026 y el despliegue/QA de la mejora posterior de Equipo/bitácora (PR #55).
+Sin pendientes de esta entrega. Notion conserva estado Done y cierre de QA. El backlog general de auditoría del 31/10/2026 sigue separado. El usuario ya reportó despliegue y revisión de PR #55; la corrección visual posterior y su cierre autorizado constan en la [nota de Equipo y bitácora](equipo-tarjetas-bitacora.md).
 
 ## Cierre
 
