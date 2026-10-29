@@ -9,9 +9,11 @@
 
 ## Estado actual
 
-- 2026-10-28: retomado desde `9c8d2d0`; publicado con hooks completos.
-  PR abierta, primera revisión medium sin hallazgos; CI y revisión final pendientes.
-  Sin integración ni despliegue de este ajuste.
+- 2026-10-28: integrado en `main` mediante PR #55, merge
+  `74d9657add8d20ac0d817f65bad6e0daa799e6a6`, HEAD revisado `f2512e3`.
+  Revisión medium y pasada final medium sin hallazgos; no se necesitaron
+  correcciones de código. CI de la PR aprobado, incluida concurrencia MariaDB.
+  Despliegue y QA de esta mejora pendientes de confirmación del usuario.
 - Acciones horizontales, resumen de roles con personas activas en tarjetas
   cuadradas y tarjeta administrativa primera. Se conserva el catálogo completo
   de roles para administrar/invitar y solo el enlace contextual a bitácora.
@@ -23,12 +25,15 @@
 
 ## Evidencia
 
-- HEAD `81e38ce`: backend completo aprobado, 528 pruebas, 1 omitida y 41 431
+- HEAD `f2512e3`: backend completo aprobado, 528 pruebas, 1 omitida y 41 431
   aserciones. Build aprobado en el pre-push. Backend dirigido: 22 pruebas,
   328 aserciones, también aprobadas en revisión medium.
 - Suite completa Vue: 112 pruebas aprobadas en la implementación `9c8d2d0`.
   Pint aprobado; 115 enlaces locales sin faltantes. El revisor no pudo iniciar
   Vue por el sandbox de Vite; se conserva la evidencia local completa independiente.
+- [CI del HEAD integrado](https://github.com/jata-imk/kronik/actions/runs/40816334356)
+  aprobado: documentación, build, Vue, backend y concurrencia real MariaDB.
+  La pasada final fue estática sobre `main...HEAD`, sin modificar archivos.
 - Tres E2E Chromium aprobados: tarjetas/acciones/filtros/CSV, contexto/transferencia
   de responsable y acciones de integrantes. Tarjetas cuadradas entre 320 y 1440 px
   con nombres largos. El evento de transferencia se comprueba en Bitácora tras
@@ -45,12 +50,12 @@
 
 ## Siguiente paso
 
-Completar pasada final y CI antes de integrar. No hubo correcciones necesarias
-en la primera revisión medium. Registrar el merge y dejar pendiente
-únicamente el despliegue/QA de esta mejora nueva.
+Desplegar esta mejora por el procedimiento normal de la VPS y revisar Equipo
+y filtros Equipo/Sucursal de Bitácora. No requiere migraciones, seeders ni
+variables nuevas. Registrar la confirmación cuando el usuario la proporcione.
 
-Logs locales: `storage/framework/testing/equipo-push.log`, `equipo-vue.log`,
-`equipo-build-final.log` y `equipo-e2e-responsive.log`. La descripción preparada
-está en `storage/framework/testing/pr-equipo-bitacora.md`. El QA anterior de
-Empresa/Folios ya está registrado en sus dos páginas Notion y en las notas del
-commit; no reabrirlo ni solicitar otra confirmación.
+Logs locales: `storage/framework/testing/equipo-push-final.log`,
+`equipo-review-medium.log`, `equipo-review-final.log`, `equipo-vue.log` y
+`equipo-e2e-responsive.log`. El QA anterior de Empresa/Folios ya está registrado
+en sus dos páginas Notion y notas; ambas tareas permanecen cerradas. Este ajuste
+posterior se acredita en PR #55 sin atribuirle el despliegue anterior.
