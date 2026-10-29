@@ -19,13 +19,15 @@ trait TieneFolio
     {
         if (! $this->exists && DB::transactionLevel() === 0) {
             $attributes = $this->getAttributes();
+            $original = $this->getRawOriginal();
 
-            return DB::transaction(function () use ($options, $attributes) {
+            return DB::transaction(function () use ($options, $attributes, $original) {
                 // A deadlock may occur after INSERT but before the ledger is
                 // linked. Restore the new instance as well as the DB rollback.
                 $this->exists = false;
                 $this->wasRecentlyCreated = false;
-                $this->setRawAttributes($attributes, true);
+                $this->original = $original;
+                $this->setRawAttributes($attributes);
 
                 return parent::save($options);
             }, attempts: 5);

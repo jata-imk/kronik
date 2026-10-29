@@ -76,6 +76,7 @@ try {
     }
     foreach ($procesos as $process) {
         if ($process->wait() !== 0) {
+            fwrite(STDERR, $process->getErrorOutput());
             throw new RuntimeException('Un proceso independiente no pudo confirmar sus cinco solicitudes.');
         }
     }
@@ -95,6 +96,7 @@ try {
     }
     foreach ($mixtos as $process) {
         if ($process->wait() !== 0) {
+            fwrite(STDERR, $process->getErrorOutput());
             throw new RuntimeException('Los dos caminos deben confirmar después de resolver el cruce de bloqueos.');
         }
     }
@@ -106,9 +108,26 @@ try {
     if ($folios !== $esperados || DB::table('folio_asignaciones')->where('sucursal_id', $sucursal->id)->count() !== 42) {
         throw new RuntimeException('Las cuarenta creaciones deben tener identificadores consecutivos únicos y reservas persistidas.');
     }
+    // No enclosing test transaction: exercise TieneFolio's direct save wrapper.
+    $fechada = Solicitud::create(['cliente_id' => $cliente->id, 'sucursal_id' => $sucursal->id,
+        'creada_por' => $actor->id, 'responsable_id' => $actor->id,
+        'clave_creacion' => (string) Str::uuid(), 'creacion_hash' => str_repeat('a', 64),
+        'created_at' => '2020-01-01 10:00:00', 'updated_at' => '2020-01-02 11:00:00'])->fresh();
+    if ($fechada->created_at->format('Y-m-d H:i:s') !== '2020-01-01 10:00:00'
+        || $fechada->updated_at->format('Y-m-d H:i:s') !== '2020-01-02 11:00:00'
+        || $fechada->folio !== $sucursal->prefijo_folio.'-SOL-000043'
+        || DB::table('folio_asignaciones')->where('sucursal_id', $sucursal->id)->count() !== 43) {
+        throw new RuntimeException('La creación directa debe conservar fechas explícitas y asignar el siguiente folio.');
+    }
     fwrite(STDOUT, "Concurrencia MariaDB aprobada: 40 creaciones paralelas y 2 caminos con cruce de bloqueos; 42 folios consecutivos únicos.\n");
+    fwrite(STDOUT, "Creación directa con fechas explícitas aprobada; folio 43 persistido.\n");
 } catch (Throwable $exception) {
     // Never dump environment, connection arguments or arbitrary exception data.
     fwrite(STDERR, 'Falló la comprobación de concurrencia: '.get_class($exception).' en línea '.$exception->getLine().".\n");
+    if ($exception instanceof \Illuminate\Validation\ValidationException) {
+        fwrite(STDERR, json_encode($exception->errors(), JSON_UNESCAPED_UNICODE)."\n");
+    } elseif ($exception instanceof \Illuminate\Database\QueryException) {
+        fwrite(STDERR, 'SQLSTATE '.($exception->errorInfo[0] ?? '?').' / código '.($exception->errorInfo[1] ?? '?')."\n");
+    }
     exit(1);
 }

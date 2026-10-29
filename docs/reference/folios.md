@@ -81,6 +81,7 @@ ejecutar un reinicio QA para preparar una migración. Los folios asignados impid
 retirar destructivamente el esquema; una reversión requiere copia consistente.
 
 Las nuevas plantillas de contrato pueden usar `solicitud.folio` y `contrato.folio`;
+las vistas previas HTML/PDF los ilustran con datos sintéticos sin reservar números.
 el anexo también los imprime aunque la plantilla no los incluya. Se congelan
 antes del renderizado. Crédito y recibo nacen después de preparar el contrato y
 se muestran en cartera/comprobantes; no se insertan retrospectivamente en PDF
@@ -121,3 +122,5 @@ auditoría y más de un lote histórico. `tests/Concurrency/folios.php` usa ocho
 procesos independientes, fuerza además el cruce de bloqueos actor/numeración entre un servicio y una inserción de modelo, y exige `APP_ENV=testing`, driver MySQL/MariaDB y base
 `kronik_test`. CI lo ejecuta después de Pest. SQLite local valida comportamiento;
 no acredita bloqueos de filas. Véase [ADR 0030](../explanation/adr-0030-folios-negocio.md).
+El mismo caso aislado comprueba que la creación directa conserva las fechas
+explícitas aportadas por el llamador, fuera de la transacción de Pest.

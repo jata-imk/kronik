@@ -119,3 +119,32 @@ test('error del motor de previsualización no revela rutas ni contenido', functi
     });
     $this->actingAs($user)->postJson(route('plantillas-documentos.preview-draft'), editorPayload())->assertStatus(503)->assertJsonPath('message', 'No fue posible preparar el PDF. Inténtelo nuevamente.');
 });
+
+test('previsualizaciones HTML y PDF muestran folios sintéticos sin reservar numeración', function () {
+    $user = actingAsSuperAdmin();
+    $payload = editorPayload([
+        'tipo' => 'contrato',
+        'contenido_html' => '<p>{{solicitud.folio}} / {{contrato.folio}}</p>',
+    ]);
+    $template = app(DocumentoPlantillaVersionService::class)->create($payload, $user->id);
+    $version = $template->versiones->first();
+    $hash = $version->contenido_hash;
+    $reservas = \Illuminate\Support\Facades\DB::table('folio_asignaciones')->count();
+
+    $this->actingAs($user)->getJson(route('plantillas-documentos.preview', $version))
+        ->assertOk()->assertJsonPath('body', '<p>MTZ-SOL-000124 / MTZ-CTO-000045</p>');
+    app()->instance(DocumentoPdfRenderer::class, new class implements DocumentoPdfRenderer
+    {
+        public function render(string $bodyHtml, ?string $headerHtml = null, ?string $footerHtml = null, array $options = []): string
+        {
+            expect($bodyHtml)->toContain('MTZ-SOL-000124', 'MTZ-CTO-000045')->not->toContain('{{');
+
+            return "%PDF-1.4\n%%EOF";
+        }
+    });
+    $this->get(route('plantillas-documentos.preview-pdf', $version))->assertOk();
+    $this->postJson(route('plantillas-documentos.preview-draft'), $payload)->assertOk();
+    expect(DocumentoGenerado::count())->toBe(0)
+        ->and($version->fresh()->contenido_hash)->toBe($hash)
+        ->and(\Illuminate\Support\Facades\DB::table('folio_asignaciones')->count())->toBe($reservas);
+});
