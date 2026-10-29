@@ -56,4 +56,4 @@ Consulta el [índice temático](../topic/index.md) para encontrar material relac
 - [Backlog 01.5 - Gestion de usuarios, equipos y sucursales](01.5-gestion-usuarios-equipos-sucursales.md)
 
 - [Estatus operativo de empresa](empresa-estatus-operativo.md).
-- [Folios y ayuda contextual: decisiones y continuación](folios-ayuda-contextual.md).
+- [Folios y ayuda contextual: entrega integrada y evidencia](folios-ayuda-contextual.md).

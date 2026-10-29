@@ -1,35 +1,40 @@
 # Estatus operativo de empresa
 
-## Referencias
+## Entrega integrada
 
-- Notion: https://app.notion.com/p/3fe61db7db7f81f8a941ffe166235c8b
-- Rama: `feat/empresa-estatus-operativo`; base `bc28e5e`.
-- PR: https://github.com/jata-imk/kronik/pull/52.
-- Decisión: [ADR 0029](../explanation/adr-0029-estatus-operativo-empresa.md).
+- [Tarea Notion](https://app.notion.com/p/3fe61db7db7f81f8a941ffe166235c8b).
+- Implementación `6e57010`, integrada el 2026-10-27 mediante [PR #52](https://github.com/jata-imk/kronik/pull/52), merge `234ec3d`; base `bc28e5e`.
+- Corrección posterior de auditoría `f0c3459`, integrada el 2026-10-28 mediante [PR #53](https://github.com/jata-imk/kronik/pull/53), merge `2cc3f4a`.
+- Decisiones pendientes: ninguna. Sin despliegue ni QA posterior del usuario acreditados.
+- Contrato: [estatus operativo](../reference/estatus-operativo-empresa.md); decisión: [ADR 0029](../explanation/adr-0029-estatus-operativo-empresa.md).
 
-## Estado actual
+## Resultado
 
-- 2026-10-27: integrado mediante PR #52, merge `234ec3d`. CI de PR y `main` aprobado; sin despliegue ni QA posterior del usuario acreditados.
-- Decisiones pendientes: ninguna; captura/simulación en Borrador, suspensión de
-  toda originación y RFC/correo obligatorios en documentos finales.
-- Reporteo SIC y monitoreo/reporte PLD de cartera previa permitidos en Suspendida;
-  esta tarea no implementa esos módulos.
+Borrador permite configuración, captura y simulación. Suspendida bloquea toda
+originación y conserva mantenimiento, historia, cancelaciones y atención de
+cartera. Los documentos finales exigen razón social, RFC válido y correo incluso
+si la plantilla no los utiliza. Super Admin respeta las invariantes operativas.
+Reporteo SIC y monitoreo/reporte PLD de cartera previa quedan permitidos en
+Suspendida para módulos futuros; no se implementan envíos en esta entrega.
 
-## Evidencia y siguiente paso
+Backend/API y workers aplican la política central; el banner y los controles
+explican el motivo. Auditoría distingue sistema e iniciador y conserva el
+contexto original. Estado terminal del PDF bloqueado y evento se confirman juntos;
+un fallo transitorio revierte ambos y el reintento no duplica actividad.
 
-- 2026-10-28: la revisión acumulada con folios (PR #53) detectó que el estado PDF bloqueado podía persistir sin auditoría ante fallo transitorio. Se corrigen juntos estado/evento en una transacción, con regresión de rollback, reintento, contexto y ausencia de duplicados; pendiente publicación e integración de esta corrección.
-- Suite backend del hook pre-push sobre `6e57010`: 497 aprobadas, una omitida, 41057 aserciones; build aprobado.
-- Corregida atribución automática de Spatie: ejecutor sistema no hereda al usuario
-  autenticado cuando se ejecuta síncronamente.
-- Frontend: 100 pruebas Vue aprobadas, build aprobado; E2E Chromium aprobado.
-- Review medium: corregidos sujeto UUID incompatible con auditoria numerica y admision atomica del PDF; regression de orden transaccional aprobada.
-- Captura: [empresa suspendida](../assets/empresa-suspendida.png).
-- Revision medium final sin hallazgos accionables. Regresion atomica y 23 pruebas de estatus aprobadas.
-- Siguiente paso: aplicar migración y comprobar entorno cuando se programe despliegue; la implementación de folios continúa en otra PR con revisión final acumulada contra `bc28e5e`.
-- Migración: contexto original documental; no reconstruye historia. Sin nuevas
-  variables ni seeders productivos; el fixture E2E activa su empresa explícitamente.
+## Evidencia final
 
-## Cierre de implementación
+- `6e57010`: 497 pruebas backend aprobadas, una omitida, 41057 aserciones; 100 Vue, build, Pint y E2E Chromium aprobados.
+- CI inicial de PR: `40454032328`/`40626605579`; main `40627021433`, aprobado.
+- Corrección final `f0c3459`: hook con 519 backend aprobadas, una omitida, 41261 aserciones; build/Pint aprobados. [CI de PR #53](https://github.com/jata-imk/kronik/actions/runs/40801112168) aprobado, con 103 Vue y concurrencia MariaDB.
+- [CI del merge final](https://github.com/jata-imk/kronik/actions/runs/40801550026) aprobado sobre `2cc3f4a`.
+- Review medium corrigió sujeto UUID de auditoría, admisión atómica de PDF y persistencia atómica de bloqueo/evento. Regresiones de fallo/reintento, actor/sujeto y contexto original aprobadas. Revisión acumulada final contra `bc28e5e` sin hallazgos accionables.
+- Captura: [empresa suspendida](../assets/empresa-suspendida.png). Matriz única y documentación actualizadas.
 
-- Implementación `6e57010`, notas `a41b769`, integración `234ec3d`.
-- CI de PR: runs `40454032328` y `40626605579`; CI de `main`: `40627021433`, aprobado.
+## Pendientes reales
+
+Aplicar migración de contexto documental cuando se programe despliegue; conserva
+historia desconocida sin inferir preferencias actuales. Verificar después el
+entorno desplegado. Sin variables nuevas ni seeders productivos; no habilitar
+proveedores productivos ni dinero real. Seguimiento de la entrega conjunta en
+[folios y ayuda](folios-ayuda-contextual.md).
