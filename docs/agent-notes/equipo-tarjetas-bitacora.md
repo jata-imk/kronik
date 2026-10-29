@@ -5,6 +5,9 @@
 - Solicitud del usuario y decisiones confirmadas el 2026-10-28.
 - Rama: `feat/equipo-tarjetas-bitacora`; base `f5455e6`.
   [PR #55](https://github.com/jata-imk/kronik/pull/55).
+- Corrección de pocas tarjetas: rama `fix/equipo-tarjetas-pocos-roles`, base
+  `f605618`; [PR #58](https://github.com/jata-imk/kronik/pull/58). El estado de
+  integración, CI y commit de merge se acredita en esa PR.
 - Decisión: [ADR 0031](../explanation/adr-0031-consulta-actividad-equipo-sucursal.md).
 
 ## Estado actual
@@ -50,6 +53,9 @@
   La regresión visual comprueba que una y dos tarjetas conservan el ancho de la
   cuadrícula con cuatro a 1920 px; mantiene cuadrados y recorridos entre 320 y
   1440 px. [Captura con dos tarjetas](../assets/equipo-dos-tarjetas-desktop.png).
+- Corrección `548146c`: hooks completos con 528 backend aprobadas, 1 omitida y
+  41 431 aserciones; build aprobado. Revisión medium y pasada final estáticas
+  sin hallazgos accionables. Trece enlaces locales válidos en la entrega.
 - Capturas: [escritorio](../assets/equipo-tarjetas-desktop.png),
   [móvil](../assets/equipo-tarjetas-mobile.png),
   [oscuro](../assets/equipo-tarjetas-dark.png),
@@ -62,11 +68,11 @@
 
 ## Siguiente paso
 
-Validar el ajuste de pocas tarjetas en navegador, publicar PR, revisión medium
-y pasada final antes de integrar con CI aprobado. Después desplegar únicamente
-esta corrección visual y comprobar el tamaño con pocos roles. El despliegue y
-revisión de PR #55 ya fueron reportados por el usuario; no volver a dejarlos
-como pendientes. No requiere migraciones, seeders ni variables nuevas.
+Cierre autorizado por el usuario; sin nueva confirmación requerida. La entrega
+de la corrección se acredita en PR #58 y el despliegue posterior queda a cargo
+del usuario. El despliegue y revisión de PR #55 ya fueron reportados, con este
+único defecto visual señalado. No requiere migraciones, seeders ni variables
+nuevas. Conservar `main` local sincronizado y limpio para la siguiente sesión.
 
 Logs locales: `storage/framework/testing/equipo-push-final.log`,
 `equipo-review-medium.log`, `equipo-review-final.log`, `equipo-vue.log` y
