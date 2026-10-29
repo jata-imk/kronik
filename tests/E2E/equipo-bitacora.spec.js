@@ -65,5 +65,17 @@ test("equipo muestra tarjetas cuadradas, acciones horizontales y bitácora filtr
     await checkSquares();
     await page.screenshot({ path: testInfo.outputPath("equipo-tarjetas-mobile.png"), animations: "disabled", fullPage: true });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    const fullGridCard = await roles.locator("li").first().boundingBox();
+    // Isolate CSS layout with fewer cards; business filtering is covered by backend tests.
+    await roles.locator(":scope > li").evaluateAll((cards) => cards.slice(2).forEach((card) => card.remove()));
+    await checkSquares();
+    const sparseGridCard = await roles.locator("li").first().boundingBox();
+    expect(Math.abs(sparseGridCard.width - fullGridCard.width)).toBeLessThanOrEqual(2);
+    await page.screenshot({ path: testInfo.outputPath("equipo-dos-tarjetas-desktop.png"), animations: "disabled", fullPage: true });
+    await roles.locator(":scope > li").last().evaluate((card) => card.remove());
+    await checkSquares();
+    const singleCard = await roles.locator("li").first().boundingBox();
+    expect(Math.abs(singleCard.width - fullGridCard.width)).toBeLessThanOrEqual(2);
     assertNoConsoleErrors();
 });

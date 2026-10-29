@@ -54,7 +54,8 @@ La configuración distingue equipo actual de seleccionado. Desde ella se consult
 integrantes, invitaciones pendientes y resumen de roles con al menos una persona
 activa del equipo, incluido el responsable cuando tiene asignación explícita.
 Los conteos excluyen pendientes e inactivos. Las tarjetas cuadradas se adaptan
-al ancho disponible; la primera abre la configuración completa y los roles no
+al ancho disponible y conservan las columnas vacías para no agrandarse cuando
+hay pocos roles; la primera abre la configuración completa y los roles no
 visibles en el resumen. El catálogo para invitar conserva todos los roles.
 Las acciones de integrantes se presentan en una fila horizontal. La actividad
 se consulta mediante el botón a Bitácora, sin cargar un listado en Equipo.
