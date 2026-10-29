@@ -13,8 +13,8 @@ Cerrar las escrituras entre equipos y corregir gestión y presentación de roles
 
 ## Estado actual
 
-- Estado: integrado en `main` mediante `f16b3ed` (PR #47), con CI aprobado; sin despliegue acreditado.
-- Última actualización: 2026-10-26.
+- Estado: integrado en `main` mediante `f16b3ed` (PR #47), con CI aprobado; despliegue normal en VPS y QA general satisfactorio reportados por el usuario.
+- Última actualización: 2026-10-28.
 - Último punto estable: pruebas, build y revisión medium completados.
 
 ## Decisiones pendientes
@@ -28,13 +28,13 @@ Cerrar las escrituras entre equipos y corregir gestión y presentación de roles
 - Capturas: [escritorio](../assets/roles-etiquetas-desktop.png) y [móvil oscuro](../assets/roles-etiquetas-mobile-dark.png).
 - Migraciones: `2026_10_25_210000_add_permission_catalog_labels`; agrega metadatos y completa registros existentes.
 - Review medium acumulado de PR #46–#50 sobre `a6057a0..6c30e3c`: sin hallazgos pendientes; 43 pruebas backend focalizadas y 323 aserciones aprobadas. Nueve E2E de la iniciativa aprobados antes del último merge.
-- QA posterior del usuario: no se ha reportado para esta entrega.
+- QA posterior del usuario: confirmación general del 2026-10-28 («ya comprobé todo y quedó re bien»); su consulta posterior incluye esta entrega en el lote de siete. Sin SHA desplegado ni versiones informados; no se atribuyen resultados individuales no descritos.
 
 ## Siguiente paso
 
-Aplicar la migración y ejecutar QA cuando se programe el despliegue; el lote de cinco tareas quedó integrado.
+Sin pendientes de esta entrega. Notion conserva estado Done y cierre de QA; la mejora posterior de Equipo/bitácora (PR #55) se sigue por separado.
 
 ## Cierre
 
 - Commit o merge: `f16b3ed`, PR #47.
-- Pendientes diferidos: despliegue independiente.
+- Pendientes diferidos: ninguno dentro de esta entrega.

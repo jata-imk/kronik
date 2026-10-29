@@ -13,8 +13,8 @@ Administrar el equipo seleccionado sin alterar el actual y formalizar al respons
 
 ## Estado actual
 
-- Estado: integrado en `main` mediante `91b5096` (PR #49), con CI aprobado; sin despliegue acreditado.
-- Última actualización: 2026-10-26.
+- Estado: integrado en `main` mediante `91b5096` (PR #49), con CI aprobado; despliegue normal en VPS y QA general satisfactorio reportados por el usuario.
+- Última actualización: 2026-10-28.
 - Último punto estable: suite completa, E2E y revisión medium completados.
 
 ## Decisiones pendientes
@@ -29,13 +29,13 @@ Administrar el equipo seleccionado sin alterar el actual y formalizar al respons
 - Capturas: [escritorio](../assets/equipo-seleccionado-desktop.png) y [móvil](../assets/equipo-seleccionado-mobile.png).
 - Migraciones o seeders: sin migración; fixture E2E activo para transferir responsable.
 - Review medium acumulado de PR #46–#50 sobre `a6057a0..6c30e3c`: sin hallazgos pendientes; 43 pruebas backend focalizadas y 323 aserciones aprobadas. Nueve E2E de la iniciativa aprobados antes del último merge.
-- QA posterior del usuario: no se ha reportado para esta entrega.
+- QA posterior del usuario: confirmación general del 2026-10-28 («ya comprobé todo y quedó re bien»); su consulta posterior incluye esta entrega en el lote de siete. Sin SHA desplegado ni versiones informados; no se atribuyen resultados individuales no descritos.
 
 ## Siguiente paso
 
-Despliegue y QA funcional cuando se programe; acciones de integrantes también integradas mediante PR #50.
+Sin pendientes de esta entrega. Notion conserva estado Done y cierre de QA; la mejora posterior de Equipo/bitácora (PR #55) se sigue por separado.
 
 ## Cierre
 
 - Commit o merge: `91b5096`, PR #49.
-- Pendientes diferidos: despliegue separado.
+- Pendientes diferidos: ninguno dentro de esta entrega.

@@ -13,8 +13,8 @@ Identificar la acción de reanudar un borrador como «Editar solicitud».
 
 ## Estado actual
 
-- Estado: integrado en `main` mediante `ff372d8` (PR #46), con CI aprobado; sin despliegue acreditado.
-- Última actualización: 2026-10-26.
+- Estado: integrado en `main` mediante `ff372d8` (PR #46), con CI aprobado; despliegue normal en VPS y QA general satisfactorio reportados por el usuario.
+- Última actualización: 2026-10-28.
 - Último punto estable: implementación y validación local completas; revisión medium corregida.
 
 ## Decisiones pendientes
@@ -29,13 +29,13 @@ Identificar la acción de reanudar un borrador como «Editar solicitud».
 - Revisión medium: primera pasada sin hallazgos de producto; segunda pasada detectó que el selector nuevo debía usar la URL absoluta de Ziggy. Corregido. El revisor no pudo ejecutar Vitest en su sandbox; la ejecución local independiente sí pasó.
 - Migraciones o seeders: no requiere.
 - Review medium acumulado de PR #46–#50 sobre `a6057a0..6c30e3c`: sin hallazgos pendientes; 43 pruebas backend focalizadas y 323 aserciones aprobadas. Nueve E2E de la iniciativa aprobados antes del último merge.
-- QA posterior del usuario: no se ha reportado para esta entrega.
+- QA posterior del usuario: confirmación general del 2026-10-28 («ya comprobé todo y quedó re bien»); su consulta posterior incluye esta entrega en el lote de siete. Sin SHA desplegado ni versiones informados; no se atribuyen resultados individuales no descritos.
 
 ## Siguiente paso
 
-Despliegue y QA funcional cuando se programe; el lote de cinco tareas quedó integrado.
+Sin pendientes de esta entrega. Notion conserva estado Done y cierre de QA; la mejora posterior de Equipo/bitácora (PR #55) se sigue por separado.
 
 ## Cierre
 
 - Commit o merge: implementación `c11fb25`, corrección de E2E `b24b9b7`; merge `ff372d8` en PR #46.
-- Pendientes diferidos: despliegue separado de la integración.
+- Pendientes diferidos: ninguno dentro de esta entrega.
