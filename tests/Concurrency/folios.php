@@ -3,6 +3,34 @@
 // Standalone integration test: committed rows and genuinely separate database
 // connections cannot be exercised inside RefreshDatabase's outer transaction.
 require __DIR__.'/../../vendor/autoload.php';
+
+function diagnosticarErrorFolio(Throwable $exception): void
+{
+    fwrite(STDERR, get_class($exception).' en '.basename($exception->getFile()).':'.$exception->getLine().".\n");
+    if ($exception instanceof \Illuminate\Validation\ValidationException) {
+        fwrite(STDERR, json_encode($exception->errors(), JSON_UNESCAPED_UNICODE)."\n");
+    } elseif ($exception instanceof PDOException) {
+        fwrite(STDERR, 'SQLSTATE '.($exception->errorInfo[0] ?? $exception->getCode()).' / código '.($exception->errorInfo[1] ?? '?')."\n");
+    }
+}
+
+// Preserve the original diagnostic if a failed rollback masks it. Only this
+// synthetic harness uses the subclass; transaction behavior stays unchanged.
+\Illuminate\Database\Connection::resolverFor('mysql', fn (...$args) => new class(...$args) extends \Illuminate\Database\MySqlConnection
+{
+    protected function handleTransactionException(Throwable $exception, $currentAttempt, $maxAttempts)
+    {
+        try {
+            parent::handleTransactionException($exception, $currentAttempt, $maxAttempts);
+        } catch (Throwable $failure) {
+            if ($failure !== $exception) {
+                diagnosticarErrorFolio($exception);
+            }
+            throw $failure;
+        }
+    }
+});
+
 $app = require __DIR__.'/../../bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
@@ -123,11 +151,6 @@ try {
     fwrite(STDOUT, "Creación directa con fechas explícitas aprobada; folio 43 persistido.\n");
 } catch (Throwable $exception) {
     // Never dump environment, connection arguments or arbitrary exception data.
-    fwrite(STDERR, 'Falló la comprobación de concurrencia: '.get_class($exception).' en línea '.$exception->getLine().".\n");
-    if ($exception instanceof \Illuminate\Validation\ValidationException) {
-        fwrite(STDERR, json_encode($exception->errors(), JSON_UNESCAPED_UNICODE)."\n");
-    } elseif ($exception instanceof \Illuminate\Database\QueryException) {
-        fwrite(STDERR, 'SQLSTATE '.($exception->errorInfo[0] ?? '?').' / código '.($exception->errorInfo[1] ?? '?')."\n");
-    }
+    diagnosticarErrorFolio($exception);
     exit(1);
 }

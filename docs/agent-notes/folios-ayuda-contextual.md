@@ -10,6 +10,7 @@
 
 - 2026-10-28: retomado por el usuario. Se añaden regresiones de previews HTML/PDF y fechas explícitas fuera de la transacción de Pest; se publicará el diagnóstico sanitizado del proceso hijo para resolver CI antes de integrar.
 - Regresiones locales de reanudación: 24 pruebas de editor documental/folios aprobadas (229 aserciones), Pint aprobado. El helper compartido de crédito pagable ya se carga desde fixtures, sin depender del orden de descubrimiento de pruebas. La fecha explícita requiere aún el caso MariaDB sin transacción exterior.
+- `3ca914e`: hooks 511 backend aprobadas, una omitida, 41219 aserciones y build aprobado. Review medium acumulada contra `bc28e5e` sin hallazgos, 72 pruebas/585 aserciones aprobadas. CI `40798934304` vuelve a fallar solo en concurrencia: el hijo arroja PDOException al revertir un savepoint. Se amplía el diagnóstico del harness para conservar la excepción original que podría estar ocultando la reversión, sin alterar la semántica transaccional.
 - 2026-10-27: pausado de nuevo por solicitud explícita del usuario al terminar la jornada. PR #53 abierta, sin integración ni despliegue de folios.
 - Implementados ámbitos estables, secuencias/reservas, asignación atómica y migración histórica; configuración, ayudas, variables documentales y referencias visibles.
 - Verificación inicial del árbol de trabajo: 508 backend aprobadas y una omitida; 102 Vue y build aprobados. Se añadieron después pruebas y ajustes; registrar conteos del commit final al cerrar.
