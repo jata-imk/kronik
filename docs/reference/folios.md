@@ -122,5 +122,9 @@ auditoría y más de un lote histórico. `tests/Concurrency/folios.php` usa ocho
 procesos independientes, fuerza además el cruce de bloqueos actor/numeración entre un servicio y una inserción de modelo, y exige `APP_ENV=testing`, driver MySQL/MariaDB y base
 `kronik_test`. CI lo ejecuta después de Pest. SQLite local valida comportamiento;
 no acredita bloqueos de filas. Véase [ADR 0030](../explanation/adr-0030-folios-negocio.md).
+Las conexiones MySQL/MariaDB reconocen el conflicto snapshot `HY000/1020` como
+concurrencia para reintentar la transacción exterior con el límite configurado;
+no intentan recuperar un savepoint eliminado por el motor. `MariaDbConcurrencyTest`
+simula el aborto total y cubre reversión, reintentos agotados y otros errores SQL.
 El mismo caso aislado comprueba que la creación directa conserva las fechas
 explícitas aportadas por el llamador, fuera de la transacción de Pest.

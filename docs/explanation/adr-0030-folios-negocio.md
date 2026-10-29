@@ -39,3 +39,11 @@ concurrencia real en MariaDB; SQLite no demuestra esta propiedad. Contrato,
 operación e inventario posterior en [Folios](../reference/folios.md).
 
 Las transacciones exteriores que emiten folios reintentan deadlocks hasta cinco veces, porque los locks de usuarios/recursos y las claves foráneas pueden cruzarse con la numeración. No se reintenta solo un fragmento dentro de una transacción abortada. Las creaciones directas restauran su estado Eloquent antes de repetir. El CI fuerza este cruce con procesos independientes.
+
+El CI real detectó también conflictos MariaDB `HY000/1020`, que abortan toda
+la transacción y eliminan savepoints. Laravel 11 no los reconoce. Los adaptadores
+de conexión MySQL/MariaDB los clasifican como concurrencia, incluida la cadena
+de causas de una transacción anidada, para conservar el reintento exterior y su
+límite. La lectura de sucursal para numerar adquiere el lock antes de abrir un
+snapshot consistente. No se desactiva el aislamiento ni se reintentan otros
+errores SQL. Véase el [reporte y corrección de Laravel](https://github.com/laravel/framework/issues/56944).

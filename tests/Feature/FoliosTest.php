@@ -14,6 +14,11 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(fn () => $this->withoutVite());
 
+test('los drivers de producción registran el manejo de conflictos snapshot', function () {
+    expect(DB::connection('mysql'))->toBeInstanceOf(\App\Database\MySqlConnection::class)
+        ->and(DB::connection('mariadb'))->toBeInstanceOf(\App\Database\MariaDbConnection::class);
+});
+
 function datosSolicitudFolio(User $actor, ?Cliente $cliente = null): array
 {
     $cliente ??= Cliente::factory()->create(['sucursal_id' => $actor->current_sucursal_id]);

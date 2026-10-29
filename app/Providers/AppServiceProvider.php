@@ -34,6 +34,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        \Illuminate\Database\Connection::resolverFor('mysql', fn (...$args) => new \App\Database\MySqlConnection(...$args));
+        \Illuminate\Database\Connection::resolverFor('mariadb', fn (...$args) => new \App\Database\MariaDbConnection(...$args));
         $this->app->bind(\App\Services\SICs\SicGateway::class, \App\Services\SICs\CirculoSandboxGateway::class);
         if ($this->app->environment('e2e') && filter_var(env('E2E_SIC_FIXTURES'), FILTER_VALIDATE_BOOL)) {
             $this->app->bind(\App\Services\SICs\SicGateway::class, \Tests\Support\SicFixtureGateway::class);

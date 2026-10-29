@@ -54,7 +54,9 @@ trait TieneFolio
             default => $this->sucursal_id,
         };
 
-        return Sucursal::findOrFail($sucursalId);
+        // Lock before opening a consistent read snapshot. Otherwise waiting
+        // for this same branch can invalidate MariaDB's earlier snapshot.
+        return Sucursal::lockForUpdate()->findOrFail($sucursalId);
     }
 
     protected static function bootTieneFolio(): void

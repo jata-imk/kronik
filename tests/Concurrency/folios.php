@@ -14,23 +14,6 @@ function diagnosticarErrorFolio(Throwable $exception): void
     }
 }
 
-// Preserve the original diagnostic if a failed rollback masks it. Only this
-// synthetic harness uses the subclass; transaction behavior stays unchanged.
-\Illuminate\Database\Connection::resolverFor('mysql', fn (...$args) => new class(...$args) extends \Illuminate\Database\MySqlConnection
-{
-    protected function handleTransactionException(Throwable $exception, $currentAttempt, $maxAttempts)
-    {
-        try {
-            parent::handleTransactionException($exception, $currentAttempt, $maxAttempts);
-        } catch (Throwable $failure) {
-            if ($failure !== $exception) {
-                diagnosticarErrorFolio($exception);
-            }
-            throw $failure;
-        }
-    }
-});
-
 $app = require __DIR__.'/../../bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
