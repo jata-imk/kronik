@@ -6,6 +6,8 @@ no implican que todos los reportes o controles ya estén implementados.
 
 ## Referencia y operación
 
+- [Core: proyecciones, evidencia y separación de cortes](../reference/core-crediticio.md).
+
 - [Eventos de auditoría](../reference/auditoria-eventos.md).
 - [Glosario de negocio](../reference/glosario-negocio.md).
 - [Actividad y evidencias en el recorrido QA](../how-to/qa-credito-simple.md).

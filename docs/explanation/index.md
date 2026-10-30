@@ -2,6 +2,9 @@
 
 [Buscar por tema](../topic/index.md) · [Índice general](../index.md)
 
+- [ADR 0032: responsabilidades y evolución del core crediticio](adr-0032-core-crediticio-extensible.md)
+- [Contraste de auditoría del core — octubre de 2026](contraste-auditoria-core-crediticio-2026-10.md)
+
 - [ADR 0028: acciones de cuenta y membresía](adr-0028-acciones-cuenta-membresia.md)
 
 - [ADR 0027: equipo seleccionado y responsable informativo](adr-0027-equipo-seleccionado-responsable.md)

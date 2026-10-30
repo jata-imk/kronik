@@ -2,6 +2,7 @@
 
 namespace App\Services\Credito;
 
+use App\Enums\VersionMotorCredito;
 use App\Support\Decimal as D;
 use App\Support\PoliticaMora;
 use Carbon\CarbonImmutable;
@@ -10,10 +11,13 @@ use Illuminate\Validation\ValidationException;
 /** Pure QA ledger calculator. Never uses projected interest as accrued debt. */
 final class MotorPagos
 {
-    public function __construct(private ImpuestoConceptoService $impuestos, private RepartoProporcional $reparto) {}
+    public function __construct(private ImpuestoConceptoService $impuestos, private RepartoProporcional $reparto, private InteresAct360 $intereses) {}
 
     public function iniciar(array $producto, array $tabla): array
     {
+        if (VersionMotorCredito::desdeSnapshot($producto) !== VersionMotorCredito::desdeSnapshot($tabla)) {
+            $this->error('El producto y el calendario conservan versiones de cálculo diferentes. Solicita revisión de la evidencia.');
+        }
         if (empty($producto['politica_mora'])) {
             $this->error('Este crédito no conserva una política de atraso explícita. No se pueden asignar reglas nuevas al contrato histórico.');
         }
@@ -55,6 +59,7 @@ final class MotorPagos
             return $state;
         }
         $producto = $state['producto'];
+        $racional = VersionMotorCredito::desdeSnapshot($producto) === VersionMotorCredito::Act360Racional;
         $policy = $producto['politica_mora'];
         $diasGracia = (int) $producto['dias_gracia_mora'];
         $fin = CarbonImmutable::parse($fecha, 'UTC')->startOfDay();
@@ -74,27 +79,30 @@ final class MotorPagos
                 $numero = $cuota['numero'];
                 $vencida = $fechaDia > $cuota['fecha'];
                 $fueraGracia = $fechaDia > CarbonImmutable::parse($cuota['fecha'], 'UTC')->addDays($diasGracia)->toDateString();
-                $ordinario = D::div(D::mul($cuota['capital'], (string) $producto['tasa_ordinaria_anual']), '36000');
-                $moratorio = D::div(D::mul($cuota['capital'], (string) $producto['tasa_moratoria_anual']), '36000');
+                $ordinario = $racional ? $this->intereses->numerador($cuota['capital'], (string) $producto['tasa_ordinaria_anual'], 1)
+                    : D::div(D::mul($cuota['capital'], (string) $producto['tasa_ordinaria_anual']), '36000');
+                $moratorio = $racional ? $this->intereses->numerador($cuota['capital'], (string) $producto['tasa_moratoria_anual'], 1)
+                    : D::div(D::mul($cuota['capital'], (string) $producto['tasa_moratoria_anual']), '36000');
                 if ($vencida && ! $fueraGracia) {
-                    $cuota['gracia_ordinario'] = D::add($cuota['gracia_ordinario'], $ordinario);
-                    $cuota['gracia_moratorio'] = D::add($cuota['gracia_moratorio'], $moratorio);
+                    $this->acumular($cuota, 'gracia_ordinario', $ordinario, $racional);
+                    $this->acumular($cuota, 'gracia_moratorio', $moratorio, $racional);
                 }
                 if ($fueraGracia && ! $cuota['mora_activada']) {
                     if ($policy['gracia'] === 'retroactiva') {
-                        $state['cargos'][$numero.':moratorio']['generado'] = D::add($state['cargos'][$numero.':moratorio']['generado'], $cuota['gracia_moratorio']);
+                        $this->acumular($state['cargos'][$numero.':moratorio'], 'generado', $racional ? ($cuota['gracia_moratorio_numerador'] ?? '0') : $cuota['gracia_moratorio'], $racional);
                         if ($policy['intereses'] === 'sustituye') {
-                            $state['cargos'][$numero.':ordinario']['generado'] = D::sub($state['cargos'][$numero.':ordinario']['generado'], $cuota['gracia_ordinario']);
+                            $retroactivo = $racional ? ($cuota['gracia_ordinario_numerador'] ?? '0') : $cuota['gracia_ordinario'];
+                            $this->acumular($state['cargos'][$numero.':ordinario'], 'generado', D::sub('0', $retroactivo), $racional);
                         }
                     }
                     $cuota['mora_activada'] = true;
                 }
                 if ($fueraGracia) {
-                    $state['cargos'][$numero.':moratorio']['generado'] = D::add($state['cargos'][$numero.':moratorio']['generado'], $moratorio);
+                    $this->acumular($state['cargos'][$numero.':moratorio'], 'generado', $moratorio, $racional);
                 }
                 if (! $fueraGracia || $policy['intereses'] === 'ambos') {
                     $key = ($vencida ? $numero : $periodo).':ordinario';
-                    $state['cargos'][$key]['generado'] = D::add($state['cargos'][$key]['generado'], $ordinario);
+                    $this->acumular($state['cargos'][$key], 'generado', $ordinario, $racional);
                 }
             }
             unset($cuota);
@@ -180,6 +188,21 @@ final class MotorPagos
         }
 
         return ['estado' => $state, 'asignaciones' => $asignaciones, 'resumen' => $this->resumen($state)];
+    }
+
+    private function acumular(array &$registro, string $campo, string $incremento, bool $racional): void
+    {
+        if (! $racional) {
+            $registro[$campo] = D::add($registro[$campo], $incremento);
+
+            return;
+        }
+        $clave = $campo.'_numerador';
+        if (! isset($registro[$clave]) && D::compare($registro[$campo], '0') !== 0) {
+            $this->error('La evidencia del devengo no conserva su acumulador de cálculo. Solicita revisión sin reconstruirlo desde importes redondeados.');
+        }
+        $registro[$clave] = D::add($registro[$clave] ?? '0', $incremento);
+        $registro[$campo] = $this->intereses->desdeNumerador($registro[$clave]);
     }
 
     private function pendiente(array $cargo): array

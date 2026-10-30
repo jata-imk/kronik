@@ -23,6 +23,14 @@ preparación productiva. La reconciliación general continúa en la
 
 ## Contrato
 
+El incremento inicial del core (29/10/2026,
+[ADR 0032](../explanation/adr-0032-core-crediticio-extensible.md)) añade versión de
+cálculo y precisión/guardas internas, sin nuevas acciones de negocio. Conserva los
+emisores de activación, desembolso, pago y reverso; no registra un evento por cada
+cálculo puro. Las versiones nuevas se identifican en evidencia de dominio, sin
+copiar capital, intereses o snapshots al log técnico. Los incrementos siguientes
+mantendrán esta misma matriz con sus emisores y pruebas.
+
 Cada evento nuevo debe declararse en `App\Enums\ActivityEvent` y registrarse mediante `App\Services\ActivityLogService`. El servicio agrega automáticamente:
 
 - `event`: código estable y apto para filtros.

@@ -1,5 +1,7 @@
 # Agent Notes
 
+- [Core crediticio extensible](core-crediticio-extensible.md)
+
 - [Equipo: acciones de integrantes](equipo-acciones-integrantes.md)
 
 - [Documentación viva e índice por temas](documentacion-viva-indice-temas.md)
