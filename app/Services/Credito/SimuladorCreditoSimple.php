@@ -4,6 +4,7 @@ namespace App\Services\Credito;
 
 use App\Enums\MetodoAmortizacion;
 use App\Enums\PeriodicidadCredito;
+use App\Enums\VersionMotorCredito;
 use App\Models\ProductoVersion;
 use App\Support\Decimal;
 use Carbon\CarbonImmutable;
@@ -41,7 +42,8 @@ final class SimuladorCreditoSimple
         $this->validar($version, $saldoFinanciado, $periodicidad, $plazo, $metodo);
 
         $fechas = $this->calendario->fechas($fecha, $periodicidad, $plazo);
-        $resultado = $this->amortizacion->calcular($saldoFinanciado, (string) $version->tasa_ordinaria_anual, $fecha, $fechas, $metodo);
+        $motor = $this->versionMotor($version);
+        $resultado = $this->amortizacion->calcular($saldoFinanciado, (string) $version->tasa_ordinaria_anual, $fecha, $fechas, $metodo, $motor);
         $tabla = $resultado['tabla'];
         $cadaPago = $comisiones->where('momento_cobro', 'cada_pago');
         $acumulados = ['capital' => '0.00', 'interes' => '0.00', 'comisiones' => '0.00', 'pagado' => '0.00'];
@@ -117,6 +119,7 @@ final class SimuladorCreditoSimple
         $totalComisiones = Decimal::round(Decimal::add($comisionesIniciales, $this->sumar($tabla, 'comisiones')));
 
         $respuesta = [
+            'motor_calculo_version' => $motor->value,
             'monto' => Decimal::round($monto),
             'monto_recibido_cat' => $montoRecibidoCat,
             'comisiones_iniciales' => $comisionesIniciales,
@@ -245,7 +248,7 @@ final class SimuladorCreditoSimple
         $financiadas = $this->totalPorModalidad($iniciales, $monto, 'financiada');
         $saldo = Decimal::round(Decimal::add($monto, $financiadas));
         $fechas = $this->calendario->fechas($fecha, $periodicidad, $plazo);
-        $resultado = $this->amortizacion->calcular($saldo, (string) $version->tasa_ordinaria_anual, $fecha, $fechas, $metodo);
+        $resultado = $this->amortizacion->calcular($saldo, (string) $version->tasa_ordinaria_anual, $fecha, $fechas, $metodo, $this->versionMotor($version));
         $cadaPago = $comisiones->where('momento_cobro', 'cada_pago');
         $pagos = array_map(function (array $fila) use ($cadaPago, $monto): string {
             $comisionesCat = $cadaPago->reduce(
@@ -261,6 +264,11 @@ final class SimuladorCreditoSimple
         );
 
         return [Decimal::round(Decimal::sub($saldo, $inicialCat)), $pagos];
+    }
+
+    private function versionMotor(ProductoVersion $version): VersionMotorCredito
+    {
+        return $version->snapshot === null ? VersionMotorCredito::actual() : VersionMotorCredito::desdeSnapshot($version->snapshot);
     }
 
     private function sumar(array $filas, string $campo): string

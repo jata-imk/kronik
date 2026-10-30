@@ -32,6 +32,11 @@ Respaldo, detención de procesos, alcance y recuperación de archivos pendientes
 esa configuración con una base MariaDB aislada. Las pruebas no deben usar la
 base configurada para la aplicación.
 
+La suite completa configura `memory_limit=512M` únicamente en PHPUnit/Pest.
+La ampliación evita agotar el límite PHP de 128 MB al acumular fixtures y evidencia
+cifrada de la suite; no modifica PHP-FPM, el servidor de aplicación ni acredita
+capacidad de cartera. `php artisan test` y `vendor/bin/pest` usan esa configuración.
+
 ## Catalogos
 
 ```bash

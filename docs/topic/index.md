@@ -8,6 +8,7 @@ temas cuando se comparte entre módulos.
 
 | Tema | Qué encontrarás |
 | --- | --- |
+| [Core crediticio y extensibilidad](core-crediticio.md) | Responsabilidades financieras, compatibilidad histórica y evolución hacia Bullet, Revolvente y Nómina |
 | [Crédito simple y revisión del producto](credito-simple.md) | Recorrido completo QA, alcance y preparación de pruebas |
 | [Empresa y sucursales](empresa-sucursales.md) | Configuración institucional, sucursales y contextos operativos |
 | [Usuarios, equipos y permisos](usuarios-equipos-permisos.md) | Acceso, superadministrador, roles y membresías |

@@ -6,15 +6,23 @@ Plataforma configurable para prestamistas personales y pequeñas instituciones f
 
 ## Estado Actual del Sistema
 
+Actualización de coordinación del 29/10/2026: el
+[roadmap del core en Notion](https://app.notion.com/p/40961db7db7f819a8af1d7c3cfec2df7)
+define las ventanas aprobadas para integridad/arquitectura, Bullet, Revolvente y
+Nómina. El [ADR 0032](explanation/adr-0032-core-crediticio-extensible.md) conserva
+los límites de responsabilidades; no acredita esas ampliaciones implementadas.
+
 Ya existe una base funcional para usuarios, equipos, permisos, sucursales, clientes, datos fiscales, domicilios y consultas de historial crediticio. Los `teams` representan departamentos o contextos de permisos y las sucursales representan unidades operativas separadas. Un usuario puede operar en varias sucursales con una principal y una actual; cada cliente conserva una sucursal responsable. Los clientes ya tienen datos personales, fiscales, direcciones y relación con consultas SIC. Círculo de Crédito tiene un adaptador QA para tres APIs, lectura histórica y evidencia cifrada; los SDK heredados siguen cerrados.
 
 Actualización del 10/10/2026: P0–P6 integrados, con solicitudes, expediente y consentimiento SIC, evaluación manual/PLD, aprobación, contrato y tabla congelados, revisión de firma digitalizada, desembolso y pagos QA con devengo/reversos. Productos, fiscalidad y documentos están versionados. Los SDK SIC anteriores permanecen cerrados; P7 recupera consultas por un adaptador seguro y el historial.
 
 P7 recupera FICO v2, Fintech y Reporte de Crédito + FICO en simulación y su lectura
-histórica; P8 incorpora anticipos, liquidación y cierre. Implementados y verificados
-localmente en la rama de entrega, pendientes de revisión/integración. 2FA y revisión
-manual aprobadas. Cumplimiento/cobranza ampliados, reportes, contabilidad y crédito
-revolvente siguen pendientes; Backlog 02.5 diferido.
+histórica; P8 incorpora anticipos, liquidación y cierre. P0–P8 integrados para QA
+mediante PR #36; 2FA y revisión manual aprobadas. Cumplimiento/cobranza ampliados,
+reportes, contabilidad y crédito revolvente siguen pendientes. La reconciliación
+de auditoría/actividad (referencia histórica 02.5) fue repriorizada para revisión el
+31/10/2026 y permanece pendiente; PLD/SIC/corte mensual tienen revisión el
+16/01/2027. Estos estados no habilitan SIC productivo ni operaciones reales.
 [Notion](https://app.notion.com/p/3e161db7db7f817a8c89ec30767d4666) define prioridades.
 Las secciones siguientes describen el objetivo funcional sin acreditar cumplimiento universal.
 
@@ -56,7 +64,10 @@ Los reportes mínimos son colocación, cartera vigente/vencida, morosidad, pagos
 - CNBV PLD/FT para SOFOM ENR: obligaciones de cumplimiento, dictamen técnico y supervisión en materia de PLD/FT.
 - SAT Actividades Vulnerables: referencia si el modelo cambia a prestamista no financiero fuera del sistema financiero.
 
-## Roadmap por Fases
+## Roadmap por Fases (contexto histórico)
+
+Esta secuencia conserva el contexto inicial. Las prioridades y fechas vigentes
+permanecen en Notion; no usarla como segunda lista de trabajo.
 
 1. Documentar alcance, fuentes y TODOs.
 2. Implementar configuración global de empresa y sucursales.

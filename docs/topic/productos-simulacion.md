@@ -17,6 +17,10 @@ consultan también desde el tema de fiscalidad.
 
 ## Decisiones y fuentes
 
+- [Responsabilidades y contratos del core](../reference/core-crediticio.md).
+- [Bullet: casos independientes para definición](../reference/bullet-casos-definicion.md).
+- [ADR 0032: extensibilidad financiera](../explanation/adr-0032-core-crediticio-extensible.md).
+
 - [ADR 0006: versiones y motor de cálculo](../explanation/adr-0006-versionado-productos-y-motor-calculo.md).
 - [ADR 0007: comisiones y redondeo](../explanation/adr-0007-flujos-comisiones-y-redondeo-creditos.md).
 - [ADR 0016: fiscalidad versionada](../explanation/adr-0016-fiscalidad-producto-versionada.md).
