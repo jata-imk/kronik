@@ -4,7 +4,8 @@
 
 - Notion: [iniciativa y roadmap](https://app.notion.com/p/40961db7db7f819a8af1d7c3cfec2df7).
 - Rama: `feat/core-crediticio-extensible`, base main `9106a6e`.
-- PR: pendiente.
+- PR: [#59](https://github.com/jata-imk/kronik/pull/59).
+- Código del incremento: `78de880`, base funcional/revisada `9106a6e`.
 - ADR: 0032; relacionados 0006, 0012, 0020 y 0023.
 
 ## Objetivo
@@ -50,8 +51,8 @@ Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
   pago/reverso, anticipo y liquidación/reapertura. Primer intento rechazado por
   permisos de perfil temporal Chrome en sandbox; repetición ampliada aprobada con
   SQLite `storage/framework/testing/kronik-e2e.sqlite`, sin base operativa.
-- Pint de nueve archivos y `git diff --check` aprobados. Revisión de 188 enlaces
-  locales en 16 documentos sin enlaces rotos; verificar enlaces nuevos del cierre.
+- Pint de nueve archivos y `git diff --check` aprobados. Revisión final de 208
+  enlaces locales en 19 documentos sin enlaces rotos.
 - No acciones auditables nuevas por los calculadores internos; se mantienen
   emisores de aplicación. Ver matriz y pruebas de comportamiento existentes.
 - Sin migraciones ni seeders nuevos. Único ajuste de configuración: memoria del
@@ -59,17 +60,30 @@ Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
 - `codex review --uncommitted -c model_reasoning_effort=medium` (Codex CLI 0.165.0,
   gpt-6.1-sol): sin regresiones accionables. El revisor ejecutó 42 pruebas/689
   aserciones de integridad, versiones, pagos y anticipos, aprobadas. Revisión
-  previa al commit; el barrido contra base se registrará con la PR.
+  previa al commit.
+- `codex review --base origin/main -c model_reasoning_effort=medium`, base
+  `9106a6e` y código `78de880`: sin regresiones accionables; 27 pruebas/397
+  aserciones dirigidas aprobadas por el revisor. Barrido actual de PR #59, única
+  PR de este incremento; no acredita cierre del conjunto futuro de la iniciativa.
+- Hook pre-push aprobado sin omitir controles: 555 pruebas/41828 aserciones, una
+  omitida, y build frontend. Advertencias de recursos/chunks del build no impiden
+  la compilación; no se cambiaron dependencias ni recursos en este incremento.
+- [GitHub Actions de validación del código](https://github.com/jata-imk/kronik/actions/runs/41007708535).
+  Resultado y checks vigentes se consultan en PR #59 y en Notion; los commits de
+  cierre posteriores a `78de880` solo actualizan evidencia documental.
 
 ## Siguiente paso
 
-Publicar PR y verificar CI/barrido contra main del incremento actual. Después, en
-otra sesión, cerrar definición funcional Bullet antes de implementar comportamiento
-dependiente. La separación completa de estrategias/capacidades continúa pendiente.
+Revisar checks y decidir integración de PR #59; no se ha integrado ni desplegado.
+Las demás tareas quedan en espera por indicación del usuario. Al retomarlas en
+otra sesión, leer Notion y esta nota: cerrar definición funcional Bullet antes de
+implementar comportamiento dependiente. La separación completa de estrategias y
+capacidades del roadmap continúa pendiente.
 
 ## Cierre
 
-Pendientes review/PR e integración. Las tareas técnicas/funcionales permanecen
-abiertas; el incremento inicial no completa toda la iniciativa. El flujo de
+Incremento inicial publicado en PR #59 y revisado medium, pendiente de integración
+y despliegue. Las tareas técnicas/funcionales permanecen abiertas; este incremento
+no completa toda la iniciativa. El flujo de
 [sesiones y revisiones](../reference/flujo-tareas-pruebas-pr.md) exige review medium
 por PR y barrido acumulado de todas las PR al cerrar cada funcionalidad.
