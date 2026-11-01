@@ -137,4 +137,3 @@ la base `ee94025`; «actual» describe esta entrega. La matriz no sustituye la
 
 Para comandos, cifras y revisión del commit consultar la
 [Agent Note](../agent-notes/contexto-sucursal-transversal.md).
-
