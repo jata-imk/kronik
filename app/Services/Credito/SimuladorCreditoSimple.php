@@ -2,6 +2,7 @@
 
 namespace App\Services\Credito;
 
+use App\Enums\ConvencionInteres;
 use App\Enums\MetodoAmortizacion;
 use App\Enums\PeriodicidadCredito;
 use App\Enums\VersionMotorCredito;
@@ -43,7 +44,8 @@ final class SimuladorCreditoSimple
 
         $fechas = $this->calendario->fechas($fecha, $periodicidad, $plazo);
         $motor = $this->versionMotor($version);
-        $resultado = $this->amortizacion->calcular($saldoFinanciado, (string) $version->tasa_ordinaria_anual, $fecha, $fechas, $metodo, $motor);
+        $convencion = $this->convencion($version);
+        $resultado = $this->amortizacion->calcular($saldoFinanciado, (string) $version->tasa_ordinaria_anual, $fecha, $fechas, $metodo, $motor, $convencion);
         $tabla = $resultado['tabla'];
         $cadaPago = $comisiones->where('momento_cobro', 'cada_pago');
         $acumulados = ['capital' => '0.00', 'interes' => '0.00', 'comisiones' => '0.00', 'pagado' => '0.00'];
@@ -120,6 +122,7 @@ final class SimuladorCreditoSimple
 
         $respuesta = [
             'motor_calculo_version' => $motor->value,
+            'convencion_interes' => $convencion->value,
             'monto' => Decimal::round($monto),
             'monto_recibido_cat' => $montoRecibidoCat,
             'comisiones_iniciales' => $comisionesIniciales,
@@ -248,7 +251,7 @@ final class SimuladorCreditoSimple
         $financiadas = $this->totalPorModalidad($iniciales, $monto, 'financiada');
         $saldo = Decimal::round(Decimal::add($monto, $financiadas));
         $fechas = $this->calendario->fechas($fecha, $periodicidad, $plazo);
-        $resultado = $this->amortizacion->calcular($saldo, (string) $version->tasa_ordinaria_anual, $fecha, $fechas, $metodo, $this->versionMotor($version));
+        $resultado = $this->amortizacion->calcular($saldo, (string) $version->tasa_ordinaria_anual, $fecha, $fechas, $metodo, $this->versionMotor($version), $this->convencion($version));
         $cadaPago = $comisiones->where('momento_cobro', 'cada_pago');
         $pagos = array_map(function (array $fila) use ($cadaPago, $monto): string {
             $comisionesCat = $cadaPago->reduce(
@@ -269,6 +272,11 @@ final class SimuladorCreditoSimple
     private function versionMotor(ProductoVersion $version): VersionMotorCredito
     {
         return $version->snapshot === null ? VersionMotorCredito::actual() : VersionMotorCredito::desdeSnapshot($version->snapshot);
+    }
+
+    private function convencion(ProductoVersion $version): ConvencionInteres
+    {
+        return ConvencionInteres::desdeProducto($version->snapshot ?? ['reglas' => $version->reglas?->toArray() ?? []]);
     }
 
     private function sumar(array $filas, string $campo): string

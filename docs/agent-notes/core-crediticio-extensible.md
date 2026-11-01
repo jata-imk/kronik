@@ -4,6 +4,8 @@
 
 - Notion: [iniciativa y roadmap](https://app.notion.com/p/40961db7db7f819a8af1d7c3cfec2df7).
 - Rama: `feat/core-crediticio-extensible`, base main `9106a6e`.
+- Incremento de convenciones: `feat/core-convencion-dias`, base `c815f62` (PR #59
+  abierta al retomar el 31/10/2026); PR dependiente por registrar al publicar.
 - PR: [#59](https://github.com/jata-imk/kronik/pull/59).
 - Código del incremento: `78de880`, base funcional/revisada `9106a6e`.
 - ADR: 0032; relacionados 0006, 0012, 0020 y 0023.
@@ -14,6 +16,32 @@ Consolidar integridad y responsabilidades reutilizables para Bullet, Revolvente 
 Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
 
 ## Estado actual
+
+- 31/10/2026: usuario autorizó preparar el punto de extensión de convenciones de
+  días. Implementados contrato de conteo por fechas/base fija, selección
+  tipada sobre `reglas.convencion_interes` existente y cálculo compartido por
+  periodo. Act/360 sigue siendo la única convención habilitada; otras capacidades
+  del roadmap permanecen en espera. Ver [ADR 0033](../explanation/adr-0033-convenciones-dias-base-fija.md).
+
+## Validación del incremento de convenciones — 31/10/2026
+
+- Base de la entrega: `c815f62` (PR #59). Convenciones/motor compatibles de forma
+  explícita; la UI conserva opciones y no se reescribe evidencia histórica.
+- 79 pruebas dirigidas/649 aserciones aprobadas; incluye cálculo independiente,
+  calendarios, gracia, ambos motores, anticipos/liquidación, validación española,
+  convenciones inválidas, actor/contexto y ausencia de actividad duplicada.
+- E2E `solicitudes-dual.spec.js`: 1 aprobado, recorrido integral con PDF,
+  desembolso, pago/reverso, anticipo, liquidación y reapertura. SQLite aislada
+  recreada por el harness; sin base operativa ni proveedores externos.
+- Pint de 16 archivos y `git diff --check` aprobados. Ocho documentos y 66 enlaces
+  locales revisados sin roturas; ADR registrado en índice de explicación y tema.
+- `codex review --base c815f6210b24b746e6d99c8e02af2ddadffc7525 -c
+  model_reasoning_effort=medium`: sin regresiones accionables; 79 pruebas/649
+  aserciones verificadas por el revisor, con código final de compatibilidad.
+  Se repitió con acceso de red tras bloqueo de socket en sandbox.
+- Suite completa en ejecución; commit/PR, barrido conjunto y CI por registrar al
+  publicar. Sin migraciones, seeders nuevos, variables ni eventos auditables
+  adicionales. Revisar [matriz](../reference/auditoria-eventos.md).
 
 - 29/10/2026: roadmap autorizado; iniciativa y cuatro tareas técnicas creadas en
   Notion. Ocho tareas existentes coordinadas/reprogramadas, sin borrar historial.
@@ -73,6 +101,11 @@ Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
   cierre posteriores a `78de880` solo actualizan evidencia documental.
 
 ## Siguiente paso
+
+Finalizar incremento de convenciones con pruebas/review medium y PR dependiente
+de #59. Registrar evidencia y revisar el conjunto desde `9106a6e`. No habilitar
+Act/365 Fixed ni 30/360 por añadir solo estrategias: requieren definición,
+compatibilidad por motor y pruebas de segmentación/contexto contractual.
 
 Revisar checks y decidir integración de PR #59; no se ha integrado ni desplegado.
 Las demás tareas quedan en espera por indicación del usuario. Al retomarlas en

@@ -31,6 +31,14 @@ cálculo puro. Las versiones nuevas se identifican en evidencia de dominio, sin
 copiar capital, intereses o snapshots al log técnico. Los incrementos siguientes
 mantendrán esta misma matriz con sus emisores y pruebas.
 
+La extensión de convenciones de días del 31/10/2026
+([ADR 0033](../explanation/adr-0033-convenciones-dias-base-fija.md)) extrae conteo y
+valida condiciones sin crear una acción auditable nueva. Se mantienen los eventos
+de producto/pago existentes; no se duplican por resolver una estrategia ni por
+simular. `VersionMotorCreditoTest` verifica actor/contexto/idempotencia y que una
+convención no soportada no crea producto ni registra activación. Esas pruebas no
+acreditan la cobertura general todavía pendiente de la matriz.
+
 Cada evento nuevo debe declararse en `App\Enums\ActivityEvent` y registrarse mediante `App\Services\ActivityLogService`. El servicio agrega automáticamente:
 
 - `event`: código estable y apto para filtros.

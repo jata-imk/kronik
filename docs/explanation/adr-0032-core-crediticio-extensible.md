@@ -4,6 +4,8 @@
 - Fecha: 2026-10-29.
 - Iniciativa: [Core crediticio extensible](https://app.notion.com/p/40961db7db7f819a8af1d7c3cfec2df7).
 - Complementa ADR 0006, 0012, 0020 y 0023. No sustituye sus restricciones operativas vigentes.
+- [ADR 0033](adr-0033-convenciones-dias-base-fija.md) concreta la extensión de
+  convenciones de días; conserva Act/360 como única opción habilitada.
 
 ## Contexto
 

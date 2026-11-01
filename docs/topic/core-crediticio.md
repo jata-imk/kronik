@@ -9,6 +9,7 @@ Los documentos distinguen diseño aprobado de capacidades implementadas.
 - [Responsabilidades, invariantes y contratos del core](../reference/core-crediticio.md).
 - [Bullet: propuestas y decisiones funcionales pendientes](../reference/bullet-casos-definicion.md).
 - [ADR 0032: evolución modular del core](../explanation/adr-0032-core-crediticio-extensible.md).
+- [ADR 0033: extensión de convenciones de días](../explanation/adr-0033-convenciones-dias-base-fija.md).
 - [Contraste de auditoría de octubre de 2026](../explanation/contraste-auditoria-core-crediticio-2026-10.md).
 - [Productos y condiciones vigentes](../reference/productos-crediticios.md).
 

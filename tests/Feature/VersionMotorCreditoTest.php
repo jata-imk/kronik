@@ -24,11 +24,12 @@ test('la activación congela el motor nuevo y simulación y uso conservan su ver
     $servicio = app(ProductoVersionService::class);
     $producto = $servicio->crear(productoParaVersionMotor(), $actor->id);
     $version = $servicio->activar($producto->versiones()->first(), '2026-01-01');
-    expect($version->snapshot['motor_calculo_version'])->toBe(2);
+    expect($version->snapshot['motor_calculo_version'])->toBe(2)
+        ->and($version->snapshot['reglas']['convencion_interes'])->toBe('dias_reales_360');
     $antes = $version->getRawOriginal('snapshot');
     $this->actingAs($actor)->postJson(route('productos-crediticios.simular', $version), [
         'monto' => '100', 'periodicidad' => 'semanal', 'plazo' => 1, 'metodo' => 'capital_fijo', 'fecha' => '2026-01-01',
-    ])->assertOk()->assertJsonPath('motor_calculo_version', 2)->assertJsonPath('tabla.1.interes', '0.18');
+    ])->assertOk()->assertJsonPath('motor_calculo_version', 2)->assertJsonPath('convencion_interes', 'dias_reales_360')->assertJsonPath('tabla.1.interes', '0.18');
     $uso = $servicio->registrarUso($version, 'prueba_version_motor', 1);
     expect($uso->snapshot['motor_calculo_version'])->toBe(2)
         ->and($version->fresh()->getRawOriginal('snapshot'))->toBe($antes);
@@ -41,6 +42,7 @@ test('la evidencia antigua conserva su motor hasta crear una nueva versión de p
     $version = $servicio->activar($producto->versiones()->first(), '2026-01-01');
     $snapshot = $version->snapshot;
     unset($snapshot['motor_calculo_version']);
+    unset($snapshot['reglas']['convencion_interes']);
     // Simula evidencia anterior a esta entrega; no es un procedimiento operativo.
     $json = json_encode($snapshot, JSON_THROW_ON_ERROR);
     DB::table('producto_versiones')->where('id', $version->id)->update(['snapshot' => $json, 'snapshot_hash' => hash('sha256', $json)]);
@@ -85,7 +87,9 @@ test('activar el motor corregido conserva un solo evento con actor contexto y me
 test('el pago real conserva motor y numeradores sin duplicar auditoría al reintentar', function () {
     [$actor, $credito, $data] = creditoPagableQa($this);
     expect($credito->condiciones['producto']['motor_calculo_version'])->toBe(2)
-        ->and($credito->cronogramas()->first()->snapshot['motor_calculo_version'])->toBe(2);
+        ->and($credito->cronogramas()->first()->snapshot['motor_calculo_version'])->toBe(2)
+        ->and($credito->condiciones['producto']['reglas']['convencion_interes'])->toBe('dias_reales_360')
+        ->and($credito->cronogramas()->first()->snapshot['convencion_interes'])->toBe('dias_reales_360');
     $data['previa_hash'] = $this->postJson(route('creditos.pagos.preview', $credito), $data)->assertOk()->json('previa_hash');
     $this->post(route('creditos.pagos.store', $credito), $data)->assertSessionHasNoErrors();
     $this->post(route('creditos.pagos.store', $credito), $data)->assertSessionHasNoErrors();
@@ -96,4 +100,48 @@ test('el pago real conserva motor y numeradores sin duplicar auditoría al reint
     expect($evento->causer_id)->toBe($actor->id)->and($evento->subject_id)->toBe($credito->id)
         ->and($evento->sucursal_id)->toBe($credito->sucursal_id)
         ->and($evento->properties->all())->not->toHaveKeys(['snapshot', 'referencia', 'importe', 'capital', 'intereses']);
+});
+
+test('no acepta una convención futura al guardar un producto ni emite actividad por el intento', function () {
+    $actor = actingAsSuperAdmin();
+    $data = productoParaVersionMotor();
+    $data['version']['reglas']['convencion_interes'] = 'dias_reales_365';
+    $eventos = \App\Models\Activity::count();
+    $respuesta = $this->actingAs($actor)->postJson(route('productos-crediticios.store'), $data)
+        ->assertUnprocessable()->assertJsonValidationErrors('version.reglas.convencion_interes');
+    expect($respuesta->json('errors')['version.reglas.convencion_interes'][0])
+        ->toBe('La convención de días seleccionada no está habilitada. Actualmente solo se admiten días reales sobre base 360.');
+    $this->assertDatabaseCount('productos_crediticios', 0);
+    expect(\App\Models\Activity::count())->toBe($eventos);
+});
+
+test('simular y activar bloquean una convención no soportada sin cambiar estado ni emitir activación', function () {
+    $actor = actingAsSuperAdmin();
+    $producto = app(ProductoVersionService::class)->crear(productoParaVersionMotor(), $actor->id);
+    $version = $producto->versiones()->first();
+    $version->reglas()->update(['convencion_interes' => '30e_360']);
+    $this->actingAs($actor)->postJson(route('productos-crediticios.simular', $version), [
+        'monto' => '100', 'periodicidad' => 'semanal', 'plazo' => 1, 'metodo' => 'capital_fijo', 'fecha' => '2026-01-01',
+    ])->assertUnprocessable()->assertJsonValidationErrors('convencion_interes')
+        ->assertJsonPath('errors.convencion_interes.0', 'La convención de días de este registro no está soportada. Solicita revisión sin modificar sus condiciones históricas.');
+    $this->postJson(route('productos-crediticios.activar', $version), [
+        'vigente_desde' => app(\App\Services\FechaEmpresa::class)->hoy()->toDateString(),
+    ])->assertUnprocessable()->assertJsonValidationErrors('convencion_interes');
+    expect($version->fresh()->estado)->toBe(ProductoVersionEstado::Borrador)
+        ->and($version->fresh()->snapshot)->toBeNull()
+        ->and(\App\Models\Activity::where('event', \App\Enums\ActivityEvent::CreditProductActivated->value)->count())->toBe(0);
+});
+
+test('la simulación toma la convención congelada aunque se altere la fila mutable de reglas', function () {
+    $actor = actingAsSuperAdmin();
+    $servicio = app(ProductoVersionService::class);
+    $producto = $servicio->crear(productoParaVersionMotor(), $actor->id);
+    $version = $servicio->activar($producto->versiones()->first(), '2026-01-01');
+    $antes = $version->getRawOriginal('snapshot');
+    // Alteración sintética para comprobar qué evidencia consume; no es una operación soportada.
+    $version->reglas()->update(['convencion_interes' => '30e_360']);
+    $this->actingAs($actor)->postJson(route('productos-crediticios.simular', $version), [
+        'monto' => '100', 'periodicidad' => 'semanal', 'plazo' => 1, 'metodo' => 'capital_fijo', 'fecha' => '2026-01-01',
+    ])->assertOk()->assertJsonPath('convencion_interes', 'dias_reales_360')->assertJsonPath('tabla.1.interes', '0.18');
+    expect($version->fresh()->getRawOriginal('snapshot'))->toBe($antes);
 });

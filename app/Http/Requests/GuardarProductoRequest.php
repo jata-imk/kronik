@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\ConvencionInteres;
 use App\Models\ProductoCrediticio;
 use App\Support\FiscalidadProducto;
 use App\Support\PoliticaMora;
@@ -41,6 +42,7 @@ class GuardarProductoRequest extends FormRequest
             'version.periodicidades.*.plazo_maximo' => ['required', 'integer', 'gte:version.periodicidades.*.plazo_minimo', 'max:600'],
             'version.periodicidades.*.plazo_predeterminado' => ['required', 'integer', 'min:1', 'max:600'],
             'version.reglas' => ['required', 'array'],
+            'version.reglas.convencion_interes' => ['sometimes', 'required', 'string', Rule::in(array_column(ConvencionInteres::cases(), 'value'))],
             'version.reglas.metodos_amortizacion' => ['required', 'array', 'min:1'],
             'version.reglas.metodos_amortizacion.*' => ['required', Rule::in(['cuota_nivelada', 'capital_fijo']), 'distinct'],
             'version.reglas.permite_prepago_parcial' => ['required', 'boolean'],
@@ -105,6 +107,7 @@ class GuardarProductoRequest extends FormRequest
             'version.monto_maximo' => 'monto máximo', 'version.tasa_ordinaria_anual' => 'tasa ordinaria anual',
             'version.tasa_moratoria_anual' => 'tasa moratoria anual', 'version.periodicidades' => 'periodicidades',
             'version.reglas.metodos_amortizacion' => 'métodos de amortización',
+            'version.reglas.convencion_interes' => 'convención de días para intereses',
             'version.comisiones.*.modalidad_cobro' => 'modalidad de cobro inicial',
             'version.comisiones.*.evento_cobro' => 'evento que genera la comisión',
             'version.comisiones.*.base_calculo' => 'base de cálculo de la comisión',
@@ -115,6 +118,7 @@ class GuardarProductoRequest extends FormRequest
     {
         return [
             ...PoliticaMora::messages(),
+            'version.reglas.convencion_interes.in' => 'La convención de días seleccionada no está habilitada. Actualmente solo se admiten días reales sobre base 360.',
             'version.monto_maximo.gte' => 'El monto máximo debe ser mayor o igual que el monto mínimo.',
             'version.periodicidades.*.plazo_maximo.gte' => 'El plazo máximo debe ser mayor o igual que el plazo mínimo.',
         ];

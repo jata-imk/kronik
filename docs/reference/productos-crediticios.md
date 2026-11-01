@@ -8,6 +8,10 @@ Las periodicidades de Buró de Crédito o Círculo de Crédito son códigos de r
 
 ## Convenciones de cálculo
 
+`reglas.convencion_interes` conserva la selección contractual. Act/360 sigue siendo
+la única opción habilitada; el [punto de extensión de convenciones](core-crediticio.md#convenciones-de-días)
+prepara otras bases sin ofrecerlas todavía en el editor ni cambiar contratos.
+
 Las activaciones/programaciones nuevas congelan `motor_calculo_version = 2`.
 Las versiones históricas sin marca reproducen el motor 1; para nuevas condiciones
 corregidas se duplica/activa una versión, sin editar historia. El contrato exacto,

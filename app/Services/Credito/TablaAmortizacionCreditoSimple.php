@@ -2,6 +2,7 @@
 
 namespace App\Services\Credito;
 
+use App\Enums\ConvencionInteres;
 use App\Enums\MetodoAmortizacion;
 use App\Enums\VersionMotorCredito;
 use App\Support\Decimal;
@@ -10,21 +11,22 @@ use Illuminate\Validation\ValidationException;
 
 final class TablaAmortizacionCreditoSimple
 {
-    public function __construct(private readonly InteresAct360 $intereses) {}
+    public function __construct(private readonly InteresPorPeriodo $intereses) {}
 
     /**
      * @param  array<int, CarbonImmutable>  $fechas
      * @return array{tabla: array<int, array<string, int|string>>, cuota_exacta: ?string, cuota_redondeada: ?string}
      */
-    public function calcular(string $principal, string $tasaAnualPorcentaje, CarbonImmutable $inicio, array $fechas, MetodoAmortizacion $metodo, VersionMotorCredito $motor = VersionMotorCredito::Historico): array
+    public function calcular(string $principal, string $tasaAnualPorcentaje, CarbonImmutable $inicio, array $fechas, MetodoAmortizacion $metodo, VersionMotorCredito $motor = VersionMotorCredito::Historico, ConvencionInteres $convencion = ConvencionInteres::DiasReales360): array
     {
+        $motor->validarConvencion($convencion);
         if ($motor !== VersionMotorCredito::Historico && ($fechas === [] || Decimal::compare(Decimal::round($principal), '0') <= 0)) {
             $this->error('Indica un capital de al menos un centavo y un calendario con vencimientos.');
         }
         if ($motor !== VersionMotorCredito::Historico && Decimal::compare($tasaAnualPorcentaje, '0') < 0) {
             $this->error('La tasa ordinaria anual no puede ser negativa.');
         }
-        $factores = $this->factores($tasaAnualPorcentaje, $inicio, $fechas, $motor);
+        $factores = $this->factores($tasaAnualPorcentaje, $inicio, $fechas, $motor, $convencion);
         $cuotaExacta = $metodo === MetodoAmortizacion::CuotaNivelada
             ? Decimal::div($principal, array_reduce($factores, fn (string $total, array $factor) => Decimal::add($total, $factor['descuento']), '0'))
             : null;
@@ -37,7 +39,7 @@ final class TablaAmortizacionCreditoSimple
             $saldoInicial = $saldo;
             $interes = Decimal::round($motor === VersionMotorCredito::Historico
                 ? Decimal::mul($saldoInicial, $factor['tasa'])
-                : $this->intereses->calcular($saldoInicial, $tasaAnualPorcentaje, $factor['dias']));
+                : $this->intereses->calcular($saldoInicial, $tasaAnualPorcentaje, $factor['inicio'], $factor['fecha'], $convencion));
             $ultimo = $index === array_key_last($factores);
             $capital = $ultimo
                 ? $saldoInicial
@@ -72,7 +74,7 @@ final class TablaAmortizacionCreditoSimple
     }
 
     /** @param array<int, CarbonImmutable> $fechas */
-    private function factores(string $tasaAnualPorcentaje, CarbonImmutable $inicio, array $fechas, VersionMotorCredito $motor): array
+    private function factores(string $tasaAnualPorcentaje, CarbonImmutable $inicio, array $fechas, VersionMotorCredito $motor, ConvencionInteres $convencion): array
     {
         $anterior = $inicio;
         $acumulado = '1';
@@ -85,9 +87,10 @@ final class TablaAmortizacionCreditoSimple
             }
             $tasa = $motor === VersionMotorCredito::Historico
                 ? Decimal::mul(Decimal::div($tasaAnualPorcentaje, '100'), Decimal::div((string) $dias, '360'))
-                : $this->intereses->calcular('1', $tasaAnualPorcentaje, $dias);
+                : $this->intereses->calcular('1', $tasaAnualPorcentaje, $anterior, $fecha, $convencion);
             $acumulado = Decimal::mul($acumulado, Decimal::add('1', $tasa));
             $factores[] = [
+                'inicio' => $anterior,
                 'fecha' => $fecha,
                 'dias' => $dias,
                 'tasa' => $tasa,

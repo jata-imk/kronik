@@ -1,10 +1,11 @@
 <?php
 
+use App\Enums\ConvencionInteres;
 use App\Enums\MetodoAmortizacion;
 use App\Enums\PeriodicidadCredito;
 use App\Enums\VersionMotorCredito;
 use App\Services\Credito\CalendarioCreditoSimple;
-use App\Services\Credito\InteresAct360;
+use App\Services\Credito\InteresPorPeriodo;
 use App\Services\Credito\MotorPagos;
 use App\Services\Credito\TablaAmortizacionCreditoSimple;
 use App\Support\Decimal;
@@ -43,14 +44,16 @@ test('la evidencia sin versión conserva la proyección histórica sin reescribi
 });
 
 test('conserva numeradores completos en lugar de sumar cocientes diarios truncados', function () {
-    $calculo = app(InteresAct360::class);
+    $calculo = app(InteresPorPeriodo::class);
+    $convencion = ConvencionInteres::DiasReales360;
+    $inicio = CarbonImmutable::parse('2026-01-01');
     $numerador = '0';
     for ($dia = 0; $dia < 9; $dia++) {
-        $numerador = Decimal::add($numerador, $calculo->numerador('1', '20', 1));
+        $numerador = Decimal::add($numerador, $calculo->numerador('1', '20', $inicio->addDays($dia), $inicio->addDays($dia + 1), $convencion));
     }
     // 1 × 20 × 9 / 36000 = 0.005. Sumar nueve cocientes truncados pierde ese borde.
-    expect(Decimal::round($calculo->desdeNumerador($numerador)))->toBe('0.01')
-        ->and(Decimal::round($calculo->calcular('1', '20', 9)))->toBe('0.01');
+    expect(Decimal::round($calculo->desdeNumerador($numerador, $convencion)))->toBe('0.01')
+        ->and(Decimal::round($calculo->calcular('1', '20', $inicio, $inicio->addDays(9), $convencion)))->toBe('0.01');
     $motor = app(MotorPagos::class);
     $estado = $motor->iniciar(productoMotorRacional('20'), ['motor_calculo_version' => 2,
         'escenario' => ['fecha_disposicion' => '2026-01-01'], 'tabla' => [
