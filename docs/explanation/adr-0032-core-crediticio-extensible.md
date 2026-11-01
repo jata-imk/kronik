@@ -1,6 +1,6 @@
 # ADR 0032: responsabilidades y evolución del core crediticio
 
-- Estado: aceptado como dirección arquitectónica; implementación incremental pendiente.
+- Estado: aceptado como dirección arquitectónica; implementación parcial integrada.
 - Fecha: 2026-10-29.
 - Iniciativa: [Core crediticio extensible](https://app.notion.com/p/40961db7db7f819a8af1d7c3cfec2df7).
 - Complementa ADR 0006, 0012, 0020 y 0023. No sustituye sus restricciones operativas vigentes.
@@ -73,9 +73,11 @@ extensión, pero no justifica sustituir el monolito ni duplicar todo el motor.
 
 ## Límites y estado
 
-Primer incremento local: motor 2 versionado para precisión Act/360 y guardas de
-los métodos existentes. La referencia explica su adopción sin cambiar evidencia
-histórica. Esto no acredita Bullet, Revolvente, Nómina, proyecciones ni capacidad
+Integrados en `main` el 31/10/2026: motor 2 versionado para precisión Act/360 y
+guardas de los métodos existentes (PR #59), y punto de extensión de convenciones
+de días (PR #60, ADR 0033). Solo Act/360 habilitada, sin despliegue acreditado.
+La referencia explica su adopción sin cambiar evidencia histórica.
+Esto no acredita Bullet, Revolvente, Nómina, proyecciones ni capacidad
 productiva implementados. Tasas variables/TIIE,
 Flat operativo, capitalización, calendarios arbitrarios, editor de fórmulas y
 proveedores bancarios siguen fuera del alcance inmediato. KYC/PLD/SIC condicionan

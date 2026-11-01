@@ -3,9 +3,12 @@
 Dirección aprobada el 29/10/2026: [ADR 0032](../explanation/adr-0032-core-crediticio-extensible.md).
 El [roadmap de Notion](https://app.notion.com/p/40961db7db7f819a8af1d7c3cfec2df7)
 conserva alcance, dependencias y fechas. Esta referencia no acredita nuevas
-capacidades implementadas. Estado de base: main `9106a6e`; primer incremento de
-integridad implementado localmente en `feat/core-crediticio-extensible`, todavía
-sin integración ni despliegue acreditados.
+capacidades por sí sola. Integridad Act/360 y punto de extensión de convenciones
+integrados en `main` el 31/10/2026: [PR #59](https://github.com/jata-imk/kronik/pull/59)
+en `872d464` y [PR #60](https://github.com/jata-imk/kronik/pull/60) en `942541a`.
+Solo Act/360 está habilitada. No hay despliegue acreditado; la arquitectura
+completa y las capacidades futuras siguen pendientes. Evidencia en la
+[Agent Note](../agent-notes/core-crediticio-extensible.md).
 
 ## Implementación actual y objetivo
 
