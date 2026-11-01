@@ -11,6 +11,7 @@ test("crea, reanuda y envía una solicitud sin aprobar ni consultar SIC", async 
     await page.getByRole("button", { name: "Guardar borrador", exact: true }).click();
     await expect(page).toHaveURL(/\/solicitudes\/\d+$/);
     const detail = page.url();
+    const tituloSolicitud = await page.getByRole("heading", { level: 1 }).innerText();
     await page.screenshot({ path: testInfo.outputPath("solicitud-editar-desktop.png"), fullPage: true });
     await page.getByRole("button", { name: "Enviar a revisión", exact: true }).click();
     await expect(page.getByText("Completa este dato antes de enviar la solicitud a revisión.")).toBeVisible();
@@ -81,7 +82,7 @@ test("crea, reanuda y envía una solicitud sin aprobar ni consultar SIC", async 
     await page.screenshot({ path: testInfo.outputPath("solicitud-revision-desktop.png"), fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.evaluate(() => window.scrollTo(0, 0));
-    await expect(page.getByRole("heading", { name: /Solicitud SOL-/ })).toBeVisible();
+    await expect(page.getByRole("heading", { name: tituloSolicitud, exact: true })).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath("solicitud-revision-mobile.png"), fullPage: true, animations: "disabled" });
     await page.getByLabel("Acción", { exact: true }).click();
     await page.getByRole("option", { name: "Devolver para corrección", exact: true }).click();

@@ -21,8 +21,9 @@ Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
 - 31/10/2026: incremento autorizado de catálogo backend/Vue implementado en
   `feat/catalogo-capacidades-credito`, base `d002037`. Catálogo de código,
   compatibilidad explícita por motor y opciones desde snapshot; Vue consume
-  etiquetas/ayudas en Productos y Solicitudes. ADR 0035. Pendientes publicación,
-  revisión final y cierre de evidencia; sin integración ni despliegue.
+  etiquetas/ayudas en Productos y Solicitudes. ADR 0035. Publicado en
+  [PR #64](https://github.com/jata-imk/kronik/pull/64), código `ea1a0cd`.
+  Pruebas y review medium/barrido aprobados; sin integración ni despliegue.
 
 - 31/10/2026: incremento de amortización reutilizable completado e integrado
   mediante [PR #62](https://github.com/jata-imk/kronik/pull/62) en `15bdc8d` por
@@ -142,12 +143,10 @@ Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
 
 ## Siguiente paso
 
-Integradas PR #59, #60 y #62: precisión, convenciones y amortización reutilizable
-de los métodos actuales. Las demás tareas permanecen en espera. Al retomarlas,
-leer Notion y esta nota: catálogo de capacidades, otros contratos/exigibilidad y
-diagnóstico de cartera histórica siguen pendientes. Se recomienda continuar con
-el catálogo backend/Vue en una sesión posterior. Cerrar definición funcional
-Bullet antes de implementar sus reglas.
+Revisar el estado de [PR #64](https://github.com/jata-imk/kronik/pull/64) y su CI
+para la integración del catálogo backend/Vue. Las demás implementaciones siguen
+en espera: otros contratos/exigibilidad, diagnóstico histórico y capacidades futuras.
+Cerrar definición funcional Bullet antes de implementar sus reglas.
 Act/365 Fixed y 30/360 requieren definición, compatibilidad por motor y pruebas de
 segmentación/contexto contractual antes de habilitarlas. Despliegue y QA operativo
 posterior no se han realizado por esta entrega.
@@ -225,3 +224,45 @@ En Notion se completa el incremento y los criterios demostrados (versión de mot
 independiente del formato y ejemplo ejecutable simple/disposición). La iniciativa,
 la tarea arquitectónica y la validación transversal siguen abiertas por capacidades
 todavía pendientes; no se acredita línea operativa, capacidad ni despliegue.
+
+## Catálogo backend/Vue — 31/10/2026
+
+[PR #64](https://github.com/jata-imk/kronik/pull/64), rama
+`feat/catalogo-capacidades-credito`, base funcional `d002037`, código `ea1a0cd`.
+Implementado y publicado, sin integración ni despliegue. Mantiene métodos,
+periodicidades, Act/360 y aplicaciones contractuales del prepago actuales.
+Catálogo puro, compatibilidad explícita por motor y resolvedor desde snapshot;
+opciones/etiquetas/ayudas compartidas con Vue. Conserva orden contractual de
+opciones, borradores incompletos, snapshots, hashes y reproducción histórica.
+
+- Hook pre-push ejecutado en secuencia: 599 backend aprobadas, una omitida y
+  42047 aserciones, más build aprobado. Sin omitir controles. Primera ejecución
+  simultánea con pruebas del revisor tuvo colisiones de archivos documentales;
+  repetición secuencial aprobada. No se modificó lógica para ocultar esos fallos.
+- Frontend: 114 pruebas aprobadas en 43 archivos. Pint y diff-check aprobados;
+  siete documentos/74 enlaces locales revisados sin roturas.
+- E2E aislados: tres de Productos (incluido móvil), uno de Solicitudes y uno
+  dual integral aprobados. El dual incluye PDF, desembolso, pago/reverso, anticipo,
+  liquidación y reapertura. Sin base operativa ni proveedores externos.
+- Solicitudes actualiza expectativas a la etiqueta backend `Mensual` y conserva
+  el título real al pasar a móvil, sin asumir el prefijo histórico de folios.
+  Un intento intermedio tuvo `ERR_NO_BUFFER_SPACE` de Chromium; repetición
+  aislada aprobada. Se revisaron captura, contexto y traza de los fallos.
+- Review medium y barrido de esta única PR contra `d002037`, código `ea1a0cd`:
+  sin hallazgos accionables; 58 pruebas backend dirigidas y dos frontend aprobadas
+  por el revisor. Su ejecución amplia simultánea tuvo fallos de fixtures compartidos;
+  la suite principal secuencial aprobada es la evidencia de regresión completa.
+- Auditoría: sin eventos adicionales por consulta/resolución; pruebas verifican
+  ausencia de actividad y persistencia ante rechazo. Se conservan pruebas de
+  actor/contexto/idempotencia de activación y pagos. Matriz y ADR 0035 actualizados.
+- Sin migraciones, seeders nuevos ni variables. Advertencias existentes de recursos,
+  Browserslist y tamaño de chunks no impiden build. CI se consulta en la PR.
+- [CI del código `ea1a0cd`](https://github.com/jata-imk/kronik/actions/runs/41265945206)
+  aprobada, incluidos backend/frontend y folios en MariaDB aislada. Review medium
+  del cierre contra `ea1a0cd` (evidencia y aserción del título): sin hallazgos
+  accionables. El cierre no modifica código ejecutable; CI del head final en la PR.
+
+La iniciativa, arquitectura amplia y validación transversal siguen abiertas. La
+consulta completa de versiones y mejoras de política de originación conservan su
+tarea separada. Bullet mantiene pendientes reducción de plazo y mora; diagnóstico
+de créditos demo y demás capacidades continúan en espera.
