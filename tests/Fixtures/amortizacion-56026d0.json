@@ -1,0 +1,378 @@
+[
+    {
+        "motor": 1,
+        "principal": "100",
+        "tasa": "9",
+        "inicio": "2026-01-01",
+        "fechas": [
+            "2026-01-08"
+        ],
+        "metodo": "cuota_nivelada",
+        "resultado": {
+            "tabla": [
+                {
+                    "numero": 1,
+                    "tipo": "pago",
+                    "fecha": "2026-01-08",
+                    "dias": 7,
+                    "saldo_inicial": "100.00",
+                    "disposicion": "0.00",
+                    "capital": "100.00",
+                    "interes": "0.17",
+                    "comisiones": "0.00",
+                    "pago_total": "100.17",
+                    "pago_cat": "100.17",
+                    "saldo_final": "0.00",
+                    "saldo": "0.00"
+                }
+            ],
+            "cuota_exacta": "100.1749999999999921",
+            "cuota_redondeada": "100.17"
+        }
+    },
+    {
+        "motor": 1,
+        "principal": "1234.56",
+        "tasa": "35.99999999",
+        "inicio": "2028-01-31",
+        "fechas": [
+            "2028-02-29",
+            "2028-03-31",
+            "2028-04-30"
+        ],
+        "metodo": "cuota_nivelada",
+        "resultado": {
+            "tabla": [
+                {
+                    "numero": 1,
+                    "tipo": "pago",
+                    "fecha": "2028-02-29",
+                    "dias": 29,
+                    "saldo_inicial": "1234.56",
+                    "disposicion": "0.00",
+                    "capital": "400.51",
+                    "interes": "35.80",
+                    "comisiones": "0.00",
+                    "pago_total": "436.31",
+                    "pago_cat": "436.31",
+                    "saldo_final": "834.05",
+                    "saldo": "834.05"
+                },
+                {
+                    "numero": 2,
+                    "tipo": "pago",
+                    "fecha": "2028-03-31",
+                    "dias": 31,
+                    "saldo_inicial": "834.05",
+                    "disposicion": "0.00",
+                    "capital": "410.45",
+                    "interes": "25.86",
+                    "comisiones": "0.00",
+                    "pago_total": "436.31",
+                    "pago_cat": "436.31",
+                    "saldo_final": "423.60",
+                    "saldo": "423.60"
+                },
+                {
+                    "numero": 3,
+                    "tipo": "pago",
+                    "fecha": "2028-04-30",
+                    "dias": 30,
+                    "saldo_inicial": "423.60",
+                    "disposicion": "0.00",
+                    "capital": "423.60",
+                    "interes": "12.71",
+                    "comisiones": "0.00",
+                    "pago_total": "436.31",
+                    "pago_cat": "436.31",
+                    "saldo_final": "0.00",
+                    "saldo": "0.00"
+                }
+            ],
+            "cuota_exacta": "436.3086400732588581",
+            "cuota_redondeada": "436.31"
+        }
+    },
+    {
+        "motor": 1,
+        "principal": "100",
+        "tasa": "9",
+        "inicio": "2026-01-01",
+        "fechas": [
+            "2026-01-08"
+        ],
+        "metodo": "capital_fijo",
+        "resultado": {
+            "tabla": [
+                {
+                    "numero": 1,
+                    "tipo": "pago",
+                    "fecha": "2026-01-08",
+                    "dias": 7,
+                    "saldo_inicial": "100.00",
+                    "disposicion": "0.00",
+                    "capital": "100.00",
+                    "interes": "0.17",
+                    "comisiones": "0.00",
+                    "pago_total": "100.17",
+                    "pago_cat": "100.17",
+                    "saldo_final": "0.00",
+                    "saldo": "0.00"
+                }
+            ],
+            "cuota_exacta": null,
+            "cuota_redondeada": null
+        }
+    },
+    {
+        "motor": 1,
+        "principal": "1234.56",
+        "tasa": "35.99999999",
+        "inicio": "2028-01-31",
+        "fechas": [
+            "2028-02-29",
+            "2028-03-31",
+            "2028-04-30"
+        ],
+        "metodo": "capital_fijo",
+        "resultado": {
+            "tabla": [
+                {
+                    "numero": 1,
+                    "tipo": "pago",
+                    "fecha": "2028-02-29",
+                    "dias": 29,
+                    "saldo_inicial": "1234.56",
+                    "disposicion": "0.00",
+                    "capital": "411.52",
+                    "interes": "35.80",
+                    "comisiones": "0.00",
+                    "pago_total": "447.32",
+                    "pago_cat": "447.32",
+                    "saldo_final": "823.04",
+                    "saldo": "823.04"
+                },
+                {
+                    "numero": 2,
+                    "tipo": "pago",
+                    "fecha": "2028-03-31",
+                    "dias": 31,
+                    "saldo_inicial": "823.04",
+                    "disposicion": "0.00",
+                    "capital": "411.52",
+                    "interes": "25.51",
+                    "comisiones": "0.00",
+                    "pago_total": "437.03",
+                    "pago_cat": "437.03",
+                    "saldo_final": "411.52",
+                    "saldo": "411.52"
+                },
+                {
+                    "numero": 3,
+                    "tipo": "pago",
+                    "fecha": "2028-04-30",
+                    "dias": 30,
+                    "saldo_inicial": "411.52",
+                    "disposicion": "0.00",
+                    "capital": "411.52",
+                    "interes": "12.35",
+                    "comisiones": "0.00",
+                    "pago_total": "423.87",
+                    "pago_cat": "423.87",
+                    "saldo_final": "0.00",
+                    "saldo": "0.00"
+                }
+            ],
+            "cuota_exacta": null,
+            "cuota_redondeada": null
+        }
+    },
+    {
+        "motor": 2,
+        "principal": "100",
+        "tasa": "9",
+        "inicio": "2026-01-01",
+        "fechas": [
+            "2026-01-08"
+        ],
+        "metodo": "cuota_nivelada",
+        "resultado": {
+            "tabla": [
+                {
+                    "numero": 1,
+                    "tipo": "pago",
+                    "fecha": "2026-01-08",
+                    "dias": 7,
+                    "saldo_inicial": "100.00",
+                    "disposicion": "0.00",
+                    "capital": "100.00",
+                    "interes": "0.18",
+                    "comisiones": "0.00",
+                    "pago_total": "100.18",
+                    "pago_cat": "100.18",
+                    "saldo_final": "0.00",
+                    "saldo": "0.00"
+                }
+            ],
+            "cuota_exacta": "100.1750000000000021",
+            "cuota_redondeada": "100.18"
+        }
+    },
+    {
+        "motor": 2,
+        "principal": "1234.56",
+        "tasa": "35.99999999",
+        "inicio": "2028-01-31",
+        "fechas": [
+            "2028-02-29",
+            "2028-03-31",
+            "2028-04-30"
+        ],
+        "metodo": "cuota_nivelada",
+        "resultado": {
+            "tabla": [
+                {
+                    "numero": 1,
+                    "tipo": "pago",
+                    "fecha": "2028-02-29",
+                    "dias": 29,
+                    "saldo_inicial": "1234.56",
+                    "disposicion": "0.00",
+                    "capital": "400.51",
+                    "interes": "35.80",
+                    "comisiones": "0.00",
+                    "pago_total": "436.31",
+                    "pago_cat": "436.31",
+                    "saldo_final": "834.05",
+                    "saldo": "834.05"
+                },
+                {
+                    "numero": 2,
+                    "tipo": "pago",
+                    "fecha": "2028-03-31",
+                    "dias": 31,
+                    "saldo_inicial": "834.05",
+                    "disposicion": "0.00",
+                    "capital": "410.45",
+                    "interes": "25.86",
+                    "comisiones": "0.00",
+                    "pago_total": "436.31",
+                    "pago_cat": "436.31",
+                    "saldo_final": "423.60",
+                    "saldo": "423.60"
+                },
+                {
+                    "numero": 3,
+                    "tipo": "pago",
+                    "fecha": "2028-04-30",
+                    "dias": 30,
+                    "saldo_inicial": "423.60",
+                    "disposicion": "0.00",
+                    "capital": "423.60",
+                    "interes": "12.71",
+                    "comisiones": "0.00",
+                    "pago_total": "436.31",
+                    "pago_cat": "436.31",
+                    "saldo_final": "0.00",
+                    "saldo": "0.00"
+                }
+            ],
+            "cuota_exacta": "436.3086400732588581",
+            "cuota_redondeada": "436.31"
+        }
+    },
+    {
+        "motor": 2,
+        "principal": "100",
+        "tasa": "9",
+        "inicio": "2026-01-01",
+        "fechas": [
+            "2026-01-08"
+        ],
+        "metodo": "capital_fijo",
+        "resultado": {
+            "tabla": [
+                {
+                    "numero": 1,
+                    "tipo": "pago",
+                    "fecha": "2026-01-08",
+                    "dias": 7,
+                    "saldo_inicial": "100.00",
+                    "disposicion": "0.00",
+                    "capital": "100.00",
+                    "interes": "0.18",
+                    "comisiones": "0.00",
+                    "pago_total": "100.18",
+                    "pago_cat": "100.18",
+                    "saldo_final": "0.00",
+                    "saldo": "0.00"
+                }
+            ],
+            "cuota_exacta": null,
+            "cuota_redondeada": null
+        }
+    },
+    {
+        "motor": 2,
+        "principal": "1234.56",
+        "tasa": "35.99999999",
+        "inicio": "2028-01-31",
+        "fechas": [
+            "2028-02-29",
+            "2028-03-31",
+            "2028-04-30"
+        ],
+        "metodo": "capital_fijo",
+        "resultado": {
+            "tabla": [
+                {
+                    "numero": 1,
+                    "tipo": "pago",
+                    "fecha": "2028-02-29",
+                    "dias": 29,
+                    "saldo_inicial": "1234.56",
+                    "disposicion": "0.00",
+                    "capital": "411.52",
+                    "interes": "35.80",
+                    "comisiones": "0.00",
+                    "pago_total": "447.32",
+                    "pago_cat": "447.32",
+                    "saldo_final": "823.04",
+                    "saldo": "823.04"
+                },
+                {
+                    "numero": 2,
+                    "tipo": "pago",
+                    "fecha": "2028-03-31",
+                    "dias": 31,
+                    "saldo_inicial": "823.04",
+                    "disposicion": "0.00",
+                    "capital": "411.52",
+                    "interes": "25.51",
+                    "comisiones": "0.00",
+                    "pago_total": "437.03",
+                    "pago_cat": "437.03",
+                    "saldo_final": "411.52",
+                    "saldo": "411.52"
+                },
+                {
+                    "numero": 3,
+                    "tipo": "pago",
+                    "fecha": "2028-04-30",
+                    "dias": 30,
+                    "saldo_inicial": "411.52",
+                    "disposicion": "0.00",
+                    "capital": "411.52",
+                    "interes": "12.35",
+                    "comisiones": "0.00",
+                    "pago_total": "423.87",
+                    "pago_cat": "423.87",
+                    "saldo_final": "0.00",
+                    "saldo": "0.00"
+                }
+            ],
+            "cuota_exacta": null,
+            "cuota_redondeada": null
+        }
+    }
+]

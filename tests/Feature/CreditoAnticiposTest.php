@@ -56,6 +56,12 @@ test('QA anticipo and liquidation conserve schedule history and reversal reopens
     $pago = CreditoPago::firstOrFail();
     $this->post(route('creditos.anticipos.store', $credito), $data)->assertSessionHasNoErrors();
     $this->assertDatabaseCount('credito_pagos', 1);
+    $evento = \App\Models\Activity::where('event', \App\Enums\ActivityEvent::CreditPaymentRecorded->value)->sole();
+    expect($evento->causer_id)->toBe($actor->id)
+        ->and($evento->subject_id)->toBe($credito->id)
+        ->and($evento->team_id)->toBe($actor->current_team_id)
+        ->and($evento->sucursal_id)->toBe($credito->sucursal_id)
+        ->and($evento->properties->all())->not->toHaveKeys(['snapshot', 'referencia', 'importe', 'capital', 'intereses']);
     $liquidacion = [...$data, 'operacion' => 'liquidacion', 'importe' => null, 'referencia' => 'LIQ-'.Str::uuid(), 'idempotency_key' => (string) Str::uuid()];
     $p = $this->postJson(route('creditos.anticipos.preview', $credito), $liquidacion)->assertOk()->json();
     $liquidacion['importe'] = $p['importe'];
@@ -65,5 +71,5 @@ test('QA anticipo and liquidation conserve schedule history and reversal reopens
     expect(app(\App\Services\Credito\PagoService::class)->consultar($credito)['resumen']['estado_operativo'])->toBe('liquidado');
     $this->post(route('creditos.pagos.reverse', [$credito, $liquidado]), ['motivo' => 'Corrección sintética de liquidación.', 'confirmacion_qa' => true, 'idempotency_key' => (string) Str::uuid()])->assertSessionHasNoErrors();
     expect(app(\App\Services\Credito\PagoService::class)->consultar($credito)['resumen']['estado_operativo'])->toBe('activo');
-    $this->assertDatabaseCount('credito_cronogramas',4);
+    $this->assertDatabaseCount('credito_cronogramas', 4);
 });

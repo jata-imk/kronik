@@ -45,3 +45,5 @@
 
 - [ADR 0030: folios y ámbitos estables](adr-0030-folios-negocio.md).
 - [ADR 0031: consulta de actividad por equipo y sucursal](adr-0031-consulta-actividad-equipo-sucursal.md).
+
+- [ADR 0034: amortización reutilizable de los métodos actuales](adr-0034-amortizacion-reutilizable.md).
