@@ -2,7 +2,9 @@
 
 ## Estado
 
-Aceptado el 2026-11-01; implementación transversal en rama de entrega, pendiente de integración.
+Aceptado el 2026-11-01; implementación integrada en `main` mediante
+[PR #66](https://github.com/jata-imk/kronik/pull/66), merge `ae4f398`.
+Despliegue y QA del usuario pendientes.
 
 ## Contexto
 

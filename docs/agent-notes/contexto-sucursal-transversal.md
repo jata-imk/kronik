@@ -11,9 +11,12 @@
 
 ## Estado — 2026-11-01
 
-Implementación completa publicada en PR #66; validación acumulada terminada.
-Sin integración ni despliegue. La tarea de Notion permanece Doing hasta completar
-la entrega y su seguimiento de integración/QA. No hay decisiones de negocio abiertas.
+Implementación integrada en `main` mediante [PR #66](https://github.com/jata-imk/kronik/pull/66)
+el 2026-11-01, merge `ae4f398553b37907fb0009900354650d3385f523`, autorizado
+por el usuario. Se integró el head revisado `007fdcf` sin conflictos, con
+[CI aprobado](https://github.com/jata-imk/kronik/actions/runs/41332496120).
+Validación acumulada terminada. Sin despliegue ni QA del usuario acreditados;
+Notion permanece Doing por ese seguimiento. No hay decisiones de negocio abiertas.
 
 Se reprodujo la mezcla de sucursales en Solicitudes, Mi trabajo,
 Evaluación/Cumplimiento e historial SIC; API dependía del contexto Spatie anterior;
@@ -95,10 +98,11 @@ recorridos aprobaron nuevamente en la tanda ampliada.
 
 ## Siguiente paso
 
-Integrar PR #66 mediante el flujo habitual y después validar en el entorno de
-QA. No quedan incrementos técnicos del plan sin implementar ni decisiones de
-negocio pendientes. Notion conserva Doing porque aún no hay integración,
-despliegue ni QA del usuario. La cobertura general del backlog de auditoría
+Desplegar `main` con el procedimiento habitual y validar en el entorno de QA:
+cambio entre dos sucursales, consulta institucional y operaciones de la sucursal
+responsable. La integración ya está confirmada; no quedan incrementos técnicos
+del plan sin implementar ni decisiones de negocio pendientes. Notion conserva
+Doing por despliegue y QA del usuario pendientes. La cobertura general del backlog de auditoría
 permanece abierta; esta entrega mantiene sus emisores pertinentes sin atribuirse
 el cierre de aquel backlog. PR #65, Bullet y políticas financieras pendientes
 continúan separados.
