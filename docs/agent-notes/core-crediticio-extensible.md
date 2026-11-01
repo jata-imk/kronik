@@ -18,6 +18,13 @@ Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
 
 ## Estado actual
 
+- 31/10/2026: incremento de amortización reutilizable completado e integrado
+  mediante [PR #62](https://github.com/jata-imk/kronik/pull/62) en `15bdc8d` por
+  autorización del usuario. Árbol idéntico a `f48d739`; se conserva la evidencia
+  de pruebas y reviews del código `c5b8422`. Sin despliegue. La tarea amplia de
+  arquitectura permanece abierta; siguiente incremento recomendado: catálogo
+  de capacidades backend/Vue, en una sesión posterior.
+
 - 31/10/2026: usuario autorizó integrar ambas PR. #59 integrada en `872d464`,
   #60 retargeteada a `main` e integrada en `942541a`. Se usaron commits de merge
   para conservar la dependencia. Árbol de `872d464` idéntico a `c815f62` y árbol
@@ -129,10 +136,12 @@ Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
 
 ## Siguiente paso
 
-Integración de ambos incrementos completada. Las demás tareas permanecen en espera
-por indicación del usuario. Al retomarlas, leer Notion y esta nota: la separación
-completa de estrategias/capacidades y el diagnóstico de cartera histórica siguen
-pendientes. Cerrar definición funcional Bullet antes de implementar sus reglas.
+Integradas PR #59, #60 y #62: precisión, convenciones y amortización reutilizable
+de los métodos actuales. Las demás tareas permanecen en espera. Al retomarlas,
+leer Notion y esta nota: catálogo de capacidades, otros contratos/exigibilidad y
+diagnóstico de cartera histórica siguen pendientes. Se recomienda continuar con
+el catálogo backend/Vue en una sesión posterior. Cerrar definición funcional
+Bullet antes de implementar sus reglas.
 Act/365 Fixed y 30/360 requieren definición, compatibilidad por motor y pruebas de
 segmentación/contexto contractual antes de habilitarlas. Despliegue y QA operativo
 posterior no se han realizado por esta entrega.
@@ -146,13 +155,13 @@ mayores permanecen abiertas. El flujo de
 [sesiones y revisiones](../reference/flujo-tareas-pruebas-pr.md) exige review medium
 por PR y barrido acumulado de todas las PR al cerrar cada funcionalidad.
 
-## Incremento de amortización reutilizable ? 31/10/2026
+## Incremento de amortización reutilizable — 31/10/2026
 
 Usuario eligió estrategias actuales antes del catálogo de capacidades. Rama
 `refactor/amortizacion-reutilizable`, base `56026d0`; preparación arquitectónica,
 sin nueva habilitación funcional. Contrato y estrategias puros, condiciones y
 resultado inmutables, tabla adaptadora y decisiones compartidas con anticipos.
-Se mantienen ambos ?rdenes de operaciones históricos y la serialización.
+Se mantienen ambos órdenes de operaciones históricos y la serialización.
 ADR 0034 documenta límites y diagrama. Solo Act/360; no habilita Bullet/Revolvente.
 
 Base verificada limpia/sincronizada; 92 pruebas dirigidas/770 aserciones aprobadas
@@ -165,10 +174,10 @@ revisión/tratamiento puede ser acotado, pero no se ha inspeccionado ni modifica
 esa cartera. El catálogo, diagnóstico histórico y demás implementaciones siguen
 en espera. La tarea amplia de arquitectura continúa abierta.
 
-### Evidencia final del incremento ? PR #62
+### Evidencia final del incremento — PR #62
 
 [PR #62](https://github.com/jata-imk/kronik/pull/62), código `c5b8422`, base
-`56026d0`. Implementado y publicado, sin integración ni despliegue.
+`56026d0`. Implementado e integrado en `15bdc8d`, sin despliegue.
 
 - `php artisan test --compact`: 587 aprobadas, una omitida, 41996 aserciones.
 - E2E `solicitudes-dual.spec.js`: 1 aprobado sobre SQLite aislada, con PDF,
@@ -192,3 +201,18 @@ arquitectónica. Próximo incremento por elegir en Notion: catálogo de capacida
 u otros contratos pendientes; no iniciarlos en esta sesión. Revisar separadamente
 los aproximadamente cuatro créditos demo. Bullet aún requiere mecanismo de
 reducción de plazo y definición funcional de mora. Solo Act/360 habilitada.
+
+### Cierre e integración autorizada — 31/10/2026
+
+PR #62 integrada con merge, conservando historial y árbol aprobado `f48d739`.
+[CI del head](https://github.com/jata-imk/kronik/actions/runs/41260792874) aprobada.
+Reviews medium individual, acumulada contra `9106a6e` y del cierre documental
+sin hallazgos accionables. La igualdad de árboles preserva esa evidencia sin
+presentarla como nueva ejecución. CI de main y cierre documental se consultan
+en las PR correspondientes. Este cierre solo actualiza estados/textos: no requiere
+pruebas funcionales nuevas; se revisan contenido y enlaces locales.
+
+En Notion se completa el incremento y los criterios demostrados (versión de motor
+independiente del formato y ejemplo ejecutable simple/disposición). La iniciativa,
+la tarea arquitectónica y la validación transversal siguen abiertas por capacidades
+todavía pendientes; no se acredita línea operativa, capacidad ni despliegue.
