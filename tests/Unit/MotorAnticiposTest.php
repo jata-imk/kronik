@@ -5,7 +5,7 @@ use App\Services\Credito\MotorPagos;
 
 uses(Tests\TestCase::class);
 
-function escenarioAnticipo(string $modo, string $metodo = 'capital_fijo', string $tasa = '0'): array
+function escenarioAnticipo(string $modo, string $metodo = 'capital_fijo', string $tasa = '0', int $motor = 1): array
 {
     $p = ['politica_mora' => ['gracia' => 'efectiva', 'intereses' => 'ambos'], 'dias_gracia_mora' => 3,
         'tasa_ordinaria_anual' => $tasa, 'tasa_moratoria_anual' => '72', 'comisiones' => [],
@@ -16,10 +16,35 @@ function escenarioAnticipo(string $modo, string $metodo = 'capital_fijo', string
         ['numero' => 2, 'fecha' => '2026-03-01', 'capital' => '1000.00', 'interes' => '0.00'],
         ['numero' => 3, 'fecha' => '2026-04-01', 'capital' => '1000.00', 'interes' => '0.00'],
     ]];
+    if ($motor === 2) {
+        $p['motor_calculo_version'] = $tabla['motor_calculo_version'] = 2;
+        $p['reglas']['convencion_interes'] = $tabla['convencion_interes'] = 'dias_reales_360';
+    }
     $state = app(MotorPagos::class)->avanzar(app(MotorPagos::class)->iniciar($p, $tabla), '2026-01-11');
 
     return [$state, $tabla];
 }
+
+test('anticipos y liquidación conservan la convención contractual y el algoritmo de cada evidencia', function (string $modo, string $metodo, int $motor) {
+    [$state, $tabla] = escenarioAnticipo($modo, $metodo, '36', $motor);
+    $r = app(MotorAnticipos::class)->calcular($state, $tabla, 'prepago', '1030.00');
+    expect($r['capital_anticipado'])->toBe('1000.00')
+        ->and($r['despues']['capital_insoluto'])->toBe('2000.00')
+        ->and($r['cronograma']['convencion_interes'])->toBe('dias_reales_360')
+        ->and($r['cronograma']['motor_calculo_version'])->toBe($motor);
+    $siguiente = app(MotorPagos::class)->avanzar($r['estado'], '2026-01-12');
+    $liquidacion = app(MotorAnticipos::class)->calcular($siguiente, $r['cronograma'], 'liquidacion', null);
+    expect($liquidacion['importe'])->toBe('2002.00')
+        ->and($liquidacion['despues']['estado_operativo'])->toBe('liquidado')
+        ->and($liquidacion['cronograma']['convencion_interes'])->toBe('dias_reales_360');
+})->with(['reducir_pago', 'reducir_plazo'])->with(['capital_fijo', 'cuota_nivelada'])->with([1, 2]);
+
+test('un anticipo no interpreta una convención desconocida del cronograma', function () {
+    [$state, $tabla] = escenarioAnticipo('reducir_pago');
+    $tabla['convencion_interes'] = '30e_360';
+    expect(fn () => app(MotorAnticipos::class)->calcular($state, $tabla, 'prepago', '1000.00'))
+        ->toThrow(\Illuminate\Validation\ValidationException::class, 'La convención de días de este registro no está soportada.');
+});
 
 test('anticipo with zero rate conserves principal and changes only contractual mode', function ($modo, $metodo, $count, $first) {
     [$state, $tabla] = escenarioAnticipo($modo, $metodo);

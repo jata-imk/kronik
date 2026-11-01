@@ -2,6 +2,7 @@
 
 namespace App\Services\Credito;
 
+use App\Enums\ConvencionInteres;
 use App\Enums\MetodoAmortizacion;
 use App\Enums\VersionMotorCredito;
 use App\Support\Decimal as D;
@@ -11,10 +12,14 @@ use Illuminate\Validation\ValidationException;
 /** Pure calculator: accrued debt first, event charges second, future capital last. */
 final class MotorAnticipos
 {
-    public function __construct(private MotorPagos $pagos, private ImpuestoConceptoService $impuestos, private TablaAmortizacionCreditoSimple $amortizacion, private InteresAct360 $intereses) {}
+    public function __construct(private MotorPagos $pagos, private ImpuestoConceptoService $impuestos, private TablaAmortizacionCreditoSimple $amortizacion, private InteresPorPeriodo $intereses) {}
 
     public function calcular(array $antes, array $tabla, string $tipo, ?string $importe, array $opcionales = []): array
     {
+        VersionMotorCredito::desdeSnapshot($antes['producto'])->validarConvencion(ConvencionInteres::desdeProducto($antes['producto']));
+        if (ConvencionInteres::desdeProducto($antes['producto']) !== ConvencionInteres::desdeCronograma($tabla)) {
+            $this->error('El producto y el calendario conservan convenciones de días diferentes. Solicita revisión de la evidencia.');
+        }
         $reglas = $antes['producto']['reglas'];
         if (($antes['estado_operativo'] ?? null) === 'liquidado' || D::compare($this->pagos->resumen($antes)['capital_insoluto'], '0') <= 0) {
             $this->error('El crédito ya no tiene capital pendiente. Revisa su cierre y recibos.');
@@ -199,6 +204,7 @@ final class MotorAnticipos
         $fechas = array_values(array_filter(array_column($state['cuotas'], 'fecha'), fn ($f) => $f > $state['fecha']));
         $metodo = MetodoAmortizacion::from($tabla['metodo']);
         $motor = VersionMotorCredito::desdeSnapshot($state['producto']);
+        $convencion = ConvencionInteres::desdeProducto($state['producto']);
         $base = $tabla['cuota_base'] ?? null;
         if ($base === null) {
             $primera = collect($tabla['tabla'])->first(fn ($f) => $f['numero'] > 0);
@@ -212,7 +218,7 @@ final class MotorAnticipos
             $inicio = CarbonImmutable::parse($state['fecha'], 'UTC');
             if ($modo === 'reducir_pago') {
                 $calculo = $this->amortizacion->calcular($saldo, $state['producto']['tasa_ordinaria_anual'], $inicio,
-                    array_map(fn ($f) => CarbonImmutable::parse($f, 'UTC'), $fechas), $metodo, $motor);
+                    array_map(fn ($f) => CarbonImmutable::parse($f, 'UTC'), $fechas), $metodo, $motor, $convencion);
                 $filas = $calculo['tabla'];
                 $base = $calculo['cuota_redondeada'] ?? ($filas[0]['capital'] ?? '0.00');
             } else {
@@ -221,7 +227,7 @@ final class MotorAnticipos
                     $dias = (int) $inicio->diffInDays($fin);
                     $interes = D::round($motor === VersionMotorCredito::Historico
                         ? D::div(D::mul(D::mul($saldo, $state['producto']['tasa_ordinaria_anual']), (string) $dias), '36000')
-                        : $this->intereses->calcular($saldo, $state['producto']['tasa_ordinaria_anual'], $dias));
+                        : $this->intereses->calcular($saldo, $state['producto']['tasa_ordinaria_anual'], $inicio, $fin, $convencion));
                     $capital = $metodo === MetodoAmortizacion::CapitalFijo ? $base : D::sub($base, $interes, 2);
                     if (D::compare($capital, '0') <= 0) {
                         $this->error('La cuota contractual no amortiza el saldo recalculado. Solicita revisión.');
@@ -260,7 +266,7 @@ final class MotorAnticipos
         }
         unset($f);
 
-        return ['formato' => 2, 'motor_calculo_version' => $motor->value, 'metodo' => $metodo->value, 'cuota_base' => $base, 'tabla' => $filas];
+        return ['formato' => 2, 'motor_calculo_version' => $motor->value, 'convencion_interes' => $convencion->value, 'metodo' => $metodo->value, 'cuota_base' => $base, 'tabla' => $filas];
     }
 
     private function error(string $message): never

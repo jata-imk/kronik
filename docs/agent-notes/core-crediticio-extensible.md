@@ -4,6 +4,9 @@
 
 - Notion: [iniciativa y roadmap](https://app.notion.com/p/40961db7db7f819a8af1d7c3cfec2df7).
 - Rama: `feat/core-crediticio-extensible`, base main `9106a6e`.
+- Incremento de convenciones: `feat/core-convencion-dias`, base `c815f62` (PR #59
+  abierta al retomar el 31/10/2026); [PR #60](https://github.com/jata-imk/kronik/pull/60)
+  dependiente, código `70de5c3`.
 - PR: [#59](https://github.com/jata-imk/kronik/pull/59).
 - Código del incremento: `78de880`, base funcional/revisada `9106a6e`.
 - ADR: 0032; relacionados 0006, 0012, 0020 y 0023.
@@ -14,6 +17,46 @@ Consolidar integridad y responsabilidades reutilizables para Bullet, Revolvente 
 Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
 
 ## Estado actual
+
+- 31/10/2026: usuario autorizó preparar el punto de extensión de convenciones de
+  días. Implementados contrato de conteo por fechas/base fija, selección
+  tipada sobre `reglas.convencion_interes` existente y cálculo compartido por
+  periodo. Act/360 sigue siendo la única convención habilitada; otras capacidades
+  del roadmap permanecen en espera. Ver [ADR 0033](../explanation/adr-0033-convenciones-dias-base-fija.md).
+
+## Validación del incremento de convenciones — 31/10/2026
+
+- Base de la entrega: `c815f62` (PR #59). Convenciones/motor compatibles de forma
+  explícita; la UI conserva opciones y no se reescribe evidencia histórica.
+- Código publicado: `70de5c3`, PR #60 abierta contra la rama de #59. Los commits
+  posteriores de esta entrega solo registran evidencia documental. Sin integrar
+  ni desplegar.
+- Regresión completa: `php artisan test --compact`, 583 aprobadas, una omitida y
+  41963 aserciones. El hook pre-push repitió la suite y compiló el frontend,
+  ambos aprobados sin omitir controles. Advertencias de recursos/chunks del build
+  ya existentes; sin cambios a recursos ni dependencias en este incremento.
+- 79 pruebas dirigidas/649 aserciones aprobadas; incluye cálculo independiente,
+  calendarios, gracia, ambos motores, anticipos/liquidación, validación española,
+  convenciones inválidas, actor/contexto y ausencia de actividad duplicada.
+- E2E `solicitudes-dual.spec.js`: 1 aprobado, recorrido integral con PDF,
+  desembolso, pago/reverso, anticipo, liquidación y reapertura. SQLite aislada
+  recreada por el harness; sin base operativa ni proveedores externos.
+- Pint de 16 archivos y `git diff --check` aprobados. Ocho documentos y 67 enlaces
+  locales revisados sin roturas; ADR registrado en índice de explicación y tema.
+- `codex review --base c815f6210b24b746e6d99c8e02af2ddadffc7525 -c
+  model_reasoning_effort=medium`: sin regresiones accionables; 79 pruebas/649
+  aserciones verificadas por el revisor, con código final de compatibilidad.
+  Se repitió con acceso de red tras bloqueo de socket en sandbox.
+- Barrido `codex review --base 9106a6efbbff2c1d25851d0d6392e0cac6349701 -c
+  model_reasoning_effort=medium`: sin regresiones accionables; 79 pruebas/649
+  aserciones aprobadas por el revisor. Código `70de5c3`, conjunto de PR #59 y #60;
+  no acredita cierre de la tarea completa de arquitectura ni de Bullet/Revolvente.
+- [CI del código publicado](https://github.com/jata-imk/kronik/actions/runs/41256290113).
+  Resultado y checks del cierre documental se consultan en PR #60 y Notion.
+- Sin migraciones, seeders nuevos, variables ni eventos auditables
+  adicionales. Revisar [matriz](../reference/auditoria-eventos.md).
+
+## Antecedentes — 29/10/2026
 
 - 29/10/2026: roadmap autorizado; iniciativa y cuatro tareas técnicas creadas en
   Notion. Ocho tareas existentes coordinadas/reprogramadas, sin borrar historial.
@@ -38,7 +81,7 @@ Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
   expresamente diferidos a revisión funcional. No habilitar Bullet con supuestos.
 - Reglas específicas Revolvente y reconocimiento entre retención/recepción Nómina.
 
-## Evidencia
+## Evidencia del incremento inicial — PR #59
 
 - Investigación sobre `9106a6e`:
   [contraste fechado](../explanation/contraste-auditoria-core-crediticio-2026-10.md).
@@ -74,6 +117,12 @@ Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
 
 ## Siguiente paso
 
+Revisar integración de #59 antes de #60; tras integrar la dependencia, revisar
+la base de #60 y repetir los controles que correspondan. Ambas siguen abiertas,
+sin despliegue acreditado. El punto de extensión queda entregado en PR #60;
+Act/365 Fixed y 30/360 requieren definición, compatibilidad por motor y pruebas
+de segmentación/contexto contractual antes de habilitarlas.
+
 Revisar checks y decidir integración de PR #59; no se ha integrado ni desplegado.
 Las demás tareas quedan en espera por indicación del usuario. Al retomarlas en
 otra sesión, leer Notion y esta nota: cerrar definición funcional Bullet antes de
@@ -82,8 +131,9 @@ capacidades del roadmap continúa pendiente.
 
 ## Cierre
 
-Incremento inicial publicado en PR #59 y revisado medium, pendiente de integración
-y despliegue. Las tareas técnicas/funcionales permanecen abiertas; este incremento
-no completa toda la iniciativa. El flujo de
+Incrementos publicados en PR #59 y #60, con revisiones medium individuales y
+barrido conjunto contra `9106a6e`. Pendientes de integración y despliegue. La
+extensión autorizada el 31/10 queda implementada; las tareas técnicas/funcionales
+mayores permanecen abiertas. El flujo de
 [sesiones y revisiones](../reference/flujo-tareas-pruebas-pr.md) exige review medium
 por PR y barrido acumulado de todas las PR al cerrar cada funcionalidad.

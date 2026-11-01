@@ -81,7 +81,7 @@ class ProductoVersionService
             ...$origen->only(['moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual', 'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica', 'cat_no_aplica_motivo', 'fiscalidad', 'politica_mora']),
             'vigente_desde' => null,
             'periodicidades' => $origen->periodicidades->map->only(['periodicidad', 'plazo_minimo', 'plazo_maximo', 'plazo_predeterminado'])->all(),
-            'reglas' => $origen->reglas->only(['metodos_amortizacion', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago']),
+            'reglas' => $origen->reglas->only(['metodos_amortizacion', 'convencion_interes', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago']),
             'comisiones' => $origen->comisiones->map->only(['concepto_comision_id', 'tipo_importe', 'importe', 'base_calculo', 'momento_cobro', 'evento_cobro', 'modalidad_cobro', 'obligatoria', 'fiscalidad'])->all(),
         ];
 
@@ -166,7 +166,7 @@ class ProductoVersionService
 
     private function camposReglas(array $data): array
     {
-        return [...Arr::only($data, ['metodos_amortizacion', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago']), 'convencion_interes' => 'dias_reales_360', 'base_moratoria' => 'capital_vencido', 'ajuste_dia_inhabil' => 'sin_ajuste', 'redondeo' => 'half_up'];
+        return [...Arr::only($data, ['metodos_amortizacion', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago']), 'convencion_interes' => \App\Enums\ConvencionInteres::desdeReglas($data)->value, 'base_moratoria' => 'capital_vencido', 'ajuste_dia_inhabil' => 'sin_ajuste', 'redondeo' => 'half_up'];
     }
 
     private function asegurarEditable(ProductoVersion $version): void
@@ -179,6 +179,8 @@ class ProductoVersionService
     private function snapshot(ProductoVersion $version): array
     {
         $version->loadMissing(['periodicidades', 'reglas', 'comisiones.concepto']);
+
+        \App\Enums\ConvencionInteres::desdeReglas($version->reglas?->toArray() ?? []);
 
         return json_decode(json_encode($version->only(['numero', 'moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual', 'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica', 'cat_no_aplica_motivo', 'fiscalidad', 'politica_mora']) + [
             'motor_calculo_version' => \App\Enums\VersionMotorCredito::actual()->value,

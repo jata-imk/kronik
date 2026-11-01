@@ -14,7 +14,7 @@ sin integración ni despliegue acreditados.
 | Producto/condiciones | Versiones y snapshots conservados | Congelar condiciones efectivas, capacidades y versión del motor |
 | Estructura financiera | Crédito simple y desembolso único | Simple y línea revolvente; saldo global o por disposición |
 | Amortización | Cuota nivelada y capital fijo | Estrategias reutilizables; Bullet con capital intermedio cero |
-| Intereses | Motor histórico y motor 2 con acumulación de numeradores Act/360 | Extender políticas independientemente de frecuencia de pago |
+| Intereses | Motor histórico y motor 2 con numeradores; contrato de convenciones por fechas, solo Act/360 habilitada | Extender políticas independientemente de frecuencia de pago |
 | Exigibilidad | Cargos fechados y atraso de capital | Obligaciones diferenciadas; intereses pueden vencer antes del capital |
 | Clasificación comercial | Catálogo de productos | Nómina no impone otra fórmula ni otro configurador |
 | Cobranza/recepción | Registro manual QA junto a aplicación | Retenciones, remesas, recepción y aplicación distinguibles |
@@ -90,7 +90,8 @@ versiones diferentes. Una marca desconocida o nula explícita se rechaza en espa
 | Nueva activación o programación | Congela motor 2; no actualiza versiones anteriores |
 
 El motor 2 conserva el numerador `capital × tasa_porcentual × días` y divide entre
-36000 después de acumular. Tabla, devengo y anticipos comparten `InteresAct360`.
+36000 después de acumular. Tabla, devengo y anticipos comparten `InteresPorPeriodo`
+y la estrategia `DiasReales360`; el refactor del 31/10 no cambia sus cifras.
 Los campos de numerador del estado no son cantidades cobradas: permiten conservar
 precisión entre consultas/pagos. Si se pierde un acumulador ya usado, el motor
 rechaza avanzar; no lo inventa multiplicando un interés truncado.
@@ -110,6 +111,48 @@ código antes de retroceder una aplicación que ya conserve estados del motor 2.
 
 Se conservan las restricciones vigentes de referencia reservada, fechas pasadas,
 reverso y gracia. Su ampliación necesita decisión funcional y pruebas propias.
+
+## Convenciones de días
+
+Decisión: [ADR 0033](../explanation/adr-0033-convenciones-dias-base-fija.md).
+`reglas.convencion_interes` sigue siendo el único campo contractual de selección
+del producto. `ConvencionInteres` valida su valor y `ConvencionesDias` resuelve la
+estrategia pura `ConvencionDias`, que cuenta entre fechas y declara la base anual
+fija. `InteresPorPeriodo` combina esa información con capital y tasa porcentual,
+sin decidir amortización, base de capital, periodicidad ni exigibilidad.
+
+| Evidencia/entrada | Tratamiento |
+| --- | --- |
+| `dias_reales_360` | Única convención habilitada; días civiles reales, base 360 incluso en bisiestos |
+| Ausencia de marca histórica | Interpretación Act/360 sin reescribir evidencia ni cambiar algoritmo |
+| Nulo explícito, código desconocido o convención futura | Rechazo español en `convencion_interes`; no sustituir por Act/360 |
+| Producto nuevo | El campo opcional acepta únicamente Act/360; omitirlo conserva el valor actual |
+| Simulación/cronograma nuevo o regenerado | Explicita `convencion_interes`, conservando la del producto |
+
+Guardar el producto valida `version.reglas.convencion_interes` mediante Form
+Request y servicio. Activar valida las reglas antes de congelarlas; simular una
+versión congelada toma esa selección del snapshot. Pagos y anticipos validan la
+convención de ambas evidencias; avanzar valida la del estado antes de usar sus
+acumuladores. Copiar una versión conserva la selección; no existe preferencia
+global que cambie los contratos anteriores.
+
+El contrato recibe fechas, no solamente un número de días. En Act/360 se cuentan
+fechas civiles sin que cambios de hora alteren los días. Los acumuladores del motor
+2 mantienen su significado y precisión. El contrato actual tiene denominador fijo;
+no acredita soporte de Act/Act ni convenciones variables.
+
+`VersionMotorCredito::validarConvencion` exige una combinación admitida en tabla,
+inicio/avance de pagos y anticipos. Los motores 1 y 2 solo admiten Act/360; agregar
+un caso al enum de convenciones no habilita su uso en esos algoritmos.
+
+Act/365 Fixed y variantes específicas de 30/360 quedan pendientes. Antes de
+habilitarlas, definir reglas y contexto contractual, compatibilidad de motor,
+devengo por segmentos ante pagos/cambios de capital y equivalencia con la tabla.
+En 30/360 no se debe presumir que sumar intervalos diarios equivale al periodo
+completo. Probar febrero, fin de mes, bisiestos, periodos incompletos, pagos,
+anticipos, liquidación y reversos. No basta cambiar el divisor o añadir un caso al
+catálogo. El CAT conserva su cálculo independiente. La UI mantiene las opciones
+actuales hasta contar con nuevas convenciones aprobadas y probadas.
 
 ## Definiciones pendientes antes de operación
 
