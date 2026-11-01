@@ -30,18 +30,28 @@ class RoleController extends Controller implements HasMiddleware
         $team = app(\App\Services\TeamContext::class)->resolve($request);
         $teamId = $team->id;
         abort_unless($teamId, 403);
-        $roles = config('permission.models.role')::where(config('permission.column_names.team_foreign_key', 'team_id'), $teamId)->where('guard_name', 'web')->with('permissions.module')->get();
-        $membersByRole = DB::table('model_has_roles')
-            ->join('users', 'users.id', '=', 'model_has_roles.model_id')
-            ->where('model_has_roles.team_id', $teamId)
-            ->where('model_has_roles.model_type', (new User)->getMorphClass())
-            ->whereIn('model_has_roles.role_id', $roles->pluck('id'))
-            ->orderBy('users.name')
-            ->get(['model_has_roles.role_id', 'users.id', 'users.name'])
-            ->groupBy('role_id');
+        $request->validate(['selected_role_id' => 'nullable|integer|min:1', 'integrantes_page' => 'nullable|integer|min:1',
+            'integrantes_buscar' => 'nullable|string|max:100', 'integrantes_por_pagina' => ['nullable', 'integer', \Illuminate\Validation\Rule::in([10, 25, 50])]]);
+        $params = app(\App\Services\ListadoParametros::class);
+        $filters = ['global' => fn ($q, $v) => $q->where('name', 'like', '%'.$v.'%')];
+        $sorts = ['name' => 'name'];
+        $values = $params->resolver($request, $filters, $sorts);
+        $query = config('permission.models.role')::where(config('permission.column_names.team_foreign_key', 'team_id'), $teamId)->where('guard_name', 'web')->with('permissions.module');
+        $page = $params->aplicar(clone $query, $values, $filters, $sorts, 'name')->paginate($values['por_pagina'])->withQueryString();
+        $roles = $page->getCollection();
+        $id = $request->input('selected_role_id', $roles->first()?->id);
+        $selected = $id ? (clone $query)->findOrFail($id) : null;
+        $members = $selected ? User::query()->whereIn('id', DB::table('model_has_roles')->select('model_id')
+            ->where('team_id', $teamId)->where('role_id', $selected->id)->where('model_type', (new User)->getMorphClass()))
+            ->when($request->filled('integrantes_buscar'), fn ($q) => $q->where('name', 'like', '%'.$request->input('integrantes_buscar').'%'))
+            ->orderBy('name')->orderBy('id')->paginate($request->integer('integrantes_por_pagina', 25), ['id', 'name'], 'integrantes_page')->withQueryString() : null;
+        $membersByRole = $selected ? [$selected->id => $members->getCollection()] : [];
 
         return Inertia::render('Admin/Roles/Index', [
             'roles' => fn () => $roles,
+            'selectedRole' => $selected,
+            'listado' => $params->metadata($page, $values),
+            'roleMembersListado' => $members ? $params->metadata($members, []) : null,
             'roleMembers' => fn () => $membersByRole,
             'permissions' => Permission::where('guard_name', 'web')->with('module')->get(),
             'modules' => Module::with(['permissions' => fn ($query) => $query->where('guard_name', 'web')])->get(),
@@ -128,7 +138,7 @@ class RoleController extends Controller implements HasMiddleware
 
             $role->delete();
 
-            return redirect()->back()->with('success', 'Rol eliminado');
+            return redirect()->route('admin.roles.index', ['team' => $role->team_id])->with('success', 'Rol eliminado');
         });
     }
 

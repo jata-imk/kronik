@@ -45,6 +45,9 @@ class ClienteConsentimientoSicService
                         'state' => 'vigente',
                     ],
                     causer: $user,
+                    teamId: $user->current_team_id,
+                    sucursalId: $cliente->sucursal_id,
+                    inheritActorContext: false,
                 );
 
                 return $consentimiento;
@@ -68,6 +71,9 @@ class ClienteConsentimientoSicService
                 'state' => 'revocado',
             ],
             causer: $user,
+            teamId: $user->current_team_id,
+            sucursalId: $consentimiento->cliente->sucursal_id,
+            inheritActorContext: false,
         );
 
         return $consentimiento->refresh();

@@ -157,6 +157,9 @@ class ClienteExpedienteService
             subject: $cliente,
             metadata: $metadata,
             causer: Auth::user(),
+            teamId: Auth::user()?->current_team_id,
+            sucursalId: $cliente->sucursal_id,
+            inheritActorContext: false,
         );
     }
 }

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\RegistrarDesembolsoRequest;
 use App\Models\Credito;
 use App\Models\Solicitud;
-use App\Models\Sucursal;
 use App\Services\Credito\DesembolsoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -17,10 +16,12 @@ class CreditoController extends Controller
     public function index(Request $request)
     {
         Gate::authorize('viewAny', Credito::class);
+        $consulta = app(\App\Services\ConsultaSucursal::class);
+        $scope = $consulta->resolver($request);
         $filters = $request->validate(['buscar' => 'nullable|string|max:100', 'sucursal_id' => 'nullable|integer|exists:sucursales,id',
             'por_pagina' => ['nullable', 'integer', Rule::in([10, 25, 50])], 'orden' => ['nullable', Rule::in(['recientes', 'antiguos'])]]);
-        $creditos = Credito::with(['cliente:id,primer_nombre,apellido_paterno,apellido_materno', 'sucursal:id,nombre', 'responsable:id,name', 'ultimoPago'])
-            ->when($filters['sucursal_id'] ?? null, fn ($q, $id) => $q->where('sucursal_id', $id))
+        $creditos = $consulta->aplicar(Credito::query(), $scope)->with(['cliente:id,primer_nombre,apellido_paterno,apellido_materno', 'sucursal:id,nombre', 'responsable:id,name', 'ultimoPago'])
+
             ->when($filters['buscar'] ?? null, fn ($q, $buscar) => $q->where(fn ($q) => $q
                 ->where('folio', 'like', '%'.$buscar.'%')
                 ->orWhere('id', ctype_digit($buscar) ? $buscar : 0)
@@ -40,7 +41,7 @@ class CreditoController extends Controller
             $c->unsetRelation('ultimoPago');
         });
 
-        return Inertia::render('Creditos/Index', ['creditos' => $creditos, 'filters' => $filters, 'sucursales' => Sucursal::orderBy('nombre')->get(['id', 'nombre'])]);
+        return Inertia::render('Creditos/Index', ['creditos' => $creditos, 'filters' => [...$filters, ...$scope], 'sucursales' => $consulta->opciones()]);
     }
 
     public function preparar(Solicitud $solicitud, DesembolsoService $service)
@@ -54,7 +55,7 @@ class CreditoController extends Controller
         return Inertia::render('Creditos/Desembolso', [
             'solicitud' => $solicitud->load(['cliente:id,primer_nombre,apellido_paterno', 'sucursal:id,nombre']),
             'preparacion' => $service->requisitos($solicitud, request()->user()),
-            'puedeRegistrar' => Gate::allows('disburse', $solicitud),
+            'puedeRegistrar' => request()->user()->operaEnSucursal($solicitud->sucursal_id) && Gate::allows('disburse', $solicitud),
         ]);
     }
 
@@ -86,8 +87,8 @@ class CreditoController extends Controller
             'movimientos' => $credito->movimientos()->latest('id')->paginate(25),
             'pagos' => $credito->pagos()->latest('id')->paginate(10, ['id', 'folio', 'credito_id', 'tipo', 'importe', 'fecha_efectiva', 'created_at', 'reversa_de'], 'pagos_page'),
             'situacion' => $situacion,
-            'puedePagar' => Gate::allows('pay', $credito) && ($situacion['resumen']['estado_operativo'] ?? null) === 'activo',
-            'puedeAnticipar' => (Gate::allows('prepay', $credito) || Gate::allows('settle', $credito)) && ($situacion['resumen']['estado_operativo'] ?? null) === 'activo',
+            'puedePagar' => request()->user()->operaEnSucursal($credito->sucursal_id) && Gate::allows('pay', $credito) && ($situacion['resumen']['estado_operativo'] ?? null) === 'activo',
+            'puedeAnticipar' => request()->user()->operaEnSucursal($credito->sucursal_id) && (Gate::allows('prepay', $credito) || Gate::allows('settle', $credito)) && ($situacion['resumen']['estado_operativo'] ?? null) === 'activo',
             'puedeVerContrato' => Gate::allows('viewPackage', $credito->solicitud),
         ]);
     }

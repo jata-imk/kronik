@@ -101,3 +101,9 @@ Una sucursal no puede desactivarse mientras tenga usuarios activos o clientes. P
 Antes de ejecutar la migración en un entorno con datos debe existir una sucursal activa con clave `MATRIZ`. La migración asigna allí usuarios, clientes y actividad histórica sin sucursal. No ejecutar seeders para preparar producción: crear o verificar `MATRIZ` de forma controlada y respaldar la base primero.
 
 Relacionado: [ADR 0005](../explanation/adr-0005-contextos-equipo-sucursal.md).
+
+## Consulta y paginación
+
+El [contrato transversal de contexto y listados](contexto-sucursal-consultas.md)
+describe parámetros de consulta, paginadores y selección independiente de la
+página, conservando los permisos y la naturaleza global o por equipo del módulo.

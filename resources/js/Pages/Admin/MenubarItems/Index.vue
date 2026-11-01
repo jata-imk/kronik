@@ -1,4 +1,6 @@
 <script setup>
+import ListadoPaginador from "@/Components/ListadoPaginador.vue";
+import { useListadoServidor } from "@/Composables/useListadoServidor";
 import { ref, watch } from "vue";
 import { NodeService } from "@sakai-vue/service/NodeService";
 import { router, usePage } from "@inertiajs/vue3";
@@ -8,6 +10,8 @@ import PageHeader from "@/Components/PageHeader.vue";
 import MenubarItemForm from "./Form.vue";
 
 const page = usePage();
+const filters = ref({ global: { value: null } });
+useListadoServidor(filters);
 
 const items = ref([]);
 const modules = ref(page.props.modules);
@@ -39,7 +43,7 @@ const editItem = (item) => {
 const deleteItem = (item) => {
     if (confirm("¿Seguro que deseas eliminar este item?")) {
         router.delete(route("admin.menubar-items.destroy", item.id), {
-            only: ["menubarCatalogo", "menubarItems"],
+            only: ["menubarCatalogo", "menubarItems", "listado"],
         });
     }
 };
@@ -54,11 +58,12 @@ const deleteItem = (item) => {
         </template>
 
         <template #card-content>
+            <div class="p-4"><InputText v-model="filters.global.value" aria-label="Buscar acciones de menú" placeholder="Buscar acciones de menú" /><ListadoPaginador /></div>
             <div class="flex justify-end pb-8">
                 <Button label="Crear nuevo" icon="pi pi-plus" class="mt-3" @click="createItem" />
             </div>
 
-            <TreeTable :value="items" paginator :rows="10" :loading="loading" responsiveLayout="scroll">
+            <TreeTable :value="items" lazy :rows="10" :loading="loading" responsiveLayout="scroll">
                 <Column field="label" header="Etiqueta" expander>
                     <template #body="{ node }">
                         <span :class="node.data.icon"></span>

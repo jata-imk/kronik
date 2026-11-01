@@ -33,3 +33,5 @@ propiedad del equipo y bandera global de superadministrador.
 ## Temas relacionados
 
 - [Correos](correos-acceso.md), [empresa](empresa-sucursales.md) y [navegación por permisos](diseno-navegacion.md).
+
+- [Contexto operativo, lectura institucional y listados en servidor](../reference/contexto-sucursal-consultas.md).

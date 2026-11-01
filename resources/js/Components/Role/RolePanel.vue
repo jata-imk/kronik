@@ -1,11 +1,13 @@
 <script setup>
 import { ref, computed, watch } from "vue";
+import { router } from "@inertiajs/vue3";
 
 import RoleSidebar from "@components/Role/RoleSidebar.vue";
 import RoleForm from "@components/Role/RoleForm.vue";
 
 const props = defineProps({
     roles: Array,
+    selectedRole: Object,
     teamId: Number,
     roleMembers: Object,
     modules: Array,
@@ -20,7 +22,16 @@ const roles = ref(props.roles);
 const modules = ref(props.modules);
 const permissions = ref(props.permissions);
 
-const selectedRole = ref(null);
+const selectedRole = ref(props.selectedRole ?? null);
+watch(() => props.selectedRole, value => {
+    if (JSON.stringify(value) !== JSON.stringify(selectedRole.value)) selectedRole.value = value;
+});
+function selectRole(role) {
+    if (!role || role.id === selectedRole.value?.id) return;
+    selectedRole.value = role;
+    const url = new URL(window.location.href);
+    router.get(url.pathname, { ...Object.fromEntries(url.searchParams.entries()), selected_role_id: role.id, integrantes_page: 1 }, { preserveState: true, preserveScroll: true, replace: true });
+}
 const editRoleNameMode = ref(false);
 
 watch(
@@ -37,6 +48,7 @@ watch(
         props.formRolePermissions.permissions =
             selectedRole.value?.permissions?.map((p) => p.id) || [];
     },
+    { immediate: true },
 );
 
 const modelHasChanged = computed({
@@ -55,7 +67,7 @@ const modelHasChanged = computed({
     },
     set(value) {
         props.formRolePermissions.permissions = value;
-        selectedRole.value = roles.value.find(
+        selectedRole.value = props.selectedRole ?? roles.value.find(
             (role) => role.id === selectedRole.value.id,
         );
     },
@@ -105,7 +117,7 @@ watch(
             :roles="roles"
             :can-create="capabilities.create"
             :selectedRole="selectedRole"
-            @update:selectedRole="selectedRole = $event"
+            @update:selectedRole="selectRole($event)"
             @add-role="emit('add-role')"
         />
 

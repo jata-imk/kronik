@@ -23,7 +23,7 @@ class SolicitudPaqueteController extends Controller
         Gate::authorize('viewPackage', $solicitud);
         $solicitud->load(['cliente', 'sucursal']);
         $resolucionId = $solicitud->resoluciones()->latest('id')->value('id');
-        $paquetes = SolicitudPaquete::where('solicitud_id', $solicitud->id)->with('documento')->latest('id')->paginate(10);
+        $paquetes = SolicitudPaquete::where('solicitud_id', $solicitud->id)->with('documento')->latest('id')->paginate(10)->withQueryString();
         $actual = SolicitudPaquete::where('solicitud_resolucion_id', $resolucionId)->with('documento')->first();
         $firmas = SolicitudFirma::with(['receptor:id,name', 'revisor:id,name'])->whereIn('solicitud_paquete_id', SolicitudPaquete::where('solicitud_id', $solicitud->id)->select('id'))
             ->latest('id')->paginate(10, ['*'], 'firmas_page')->withQueryString()->through(fn ($firma) => [
@@ -62,14 +62,14 @@ class SolicitudPaqueteController extends Controller
             'firmaPendiente' => $actual?->firmas()->where('estado', 'recibida')->exists() ?? false,
             'maxArchivoKb' => config('documentos.max_upload_kb'),
             'paquetes' => $paquetes->through($serialize),
-            'plantillas' => Gate::allows('preparePackage', $solicitud) ? DocumentoPlantillaVersion::with('plantilla:id,nombre')
+            'plantillas' => ($request->user()->operaEnSucursal($solicitud->sucursal_id) && Gate::allows('preparePackage', $solicitud)) ? DocumentoPlantillaVersion::with('plantilla:id,nombre')
                 ->where('estado', DocumentoPlantillaVersionEstado::Activa)
                 ->whereHas('plantilla', fn ($q) => $q->where('tipo', DocumentoPlantillaTipo::Contrato)->where('activa', true))
                 ->get()->map(fn ($v) => ['id' => $v->id, 'label' => $v->plantilla->nombre.' · v'.$v->numero]) : [],
-            'can' => ['preparar' => Gate::allows('preparePackage', $solicitud),
+            'can' => ['preparar' => ($request->user()->operaEnSucursal($solicitud->sucursal_id) && Gate::allows('preparePackage', $solicitud)),
                 'desembolso' => Gate::allows('viewAny', \App\Models\Credito::class),
-                'recibirFirma' => Gate::allows('receiveSignature', $solicitud),
-                'revisarFirma' => Gate::allows('reviewSignature', $solicitud)],
+                'recibirFirma' => $request->user()->operaEnSucursal($solicitud->sucursal_id) && Gate::allows('receiveSignature', $solicitud),
+                'revisarFirma' => $request->user()->operaEnSucursal($solicitud->sucursal_id) && Gate::allows('reviewSignature', $solicitud)],
         ]);
     }
 

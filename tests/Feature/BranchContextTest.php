@@ -67,8 +67,8 @@ test('client reading is cross branch while writes use the current responsible br
         ->get(route('clientes.index'))
         ->assertInertia(fn (Assert $page) => $page
             ->component('Clientes/Index')
-            ->has('clientes', 1)
-            ->where('clientes.0.id', $local->id));
+            ->has('clientes.data', 1)
+            ->where('clientes.data.0.id', $local->id));
 
     $this->actingAs($user)->get(route('clientes.edit', $remote))->assertForbidden();
 });

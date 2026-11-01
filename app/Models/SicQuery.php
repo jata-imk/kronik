@@ -9,6 +9,11 @@ class SicQuery extends Model
 {
     use HasFactory;
 
+    public function sucursal()
+    {
+        return $this->belongsTo(Sucursal::class);
+    }
+
     protected $table = 'sic_queries';
 
     protected $hidden = ['response_data', 'mensaje_error', 'idempotency_key', 'payload_hash', 'identidad_hash', 'consentimiento_hash'];

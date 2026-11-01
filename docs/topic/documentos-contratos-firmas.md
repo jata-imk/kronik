@@ -30,3 +30,5 @@ aceptación documental y desembolso.
 - [Originación](originacion-solicitudes.md) y [desembolso](cartera-pagos.md).
 
 - [Folios congelados en contrato y tabla](../reference/folios.md).
+
+- [Contexto operativo, lectura institucional y listados en servidor](../reference/contexto-sucursal-consultas.md).

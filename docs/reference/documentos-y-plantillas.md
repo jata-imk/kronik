@@ -44,3 +44,9 @@ La configuración relacionada se encuentra en `config/documentos.php` y usa `DOC
 ## Identificadores conservados
 
 Los contratos nuevos admiten `solicitud.folio` y `contrato.folio`, congelados al preparar. El anexo los imprime también. Los PDF históricos no se reescriben al completar folios. [Contrato de folios](folios.md).
+
+## Consulta y paginación
+
+El [contrato transversal de contexto y listados](contexto-sucursal-consultas.md)
+describe parámetros de consulta, paginadores y selección independiente de la
+página, conservando los permisos y la naturaleza global o por equipo del módulo.

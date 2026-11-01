@@ -1,11 +1,13 @@
 <script setup>
+import ConsultaSucursalFilter from "@/Components/ConsultaSucursalFilter.vue";
 import { Link, router } from "@inertiajs/vue3";
-import { reactive, ref } from "vue";
+import { reactive, ref, watch } from "vue";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import PageHeader from "@/Components/PageHeader.vue";
 import { formatMoneyWithCents as money } from "@/Pages/ProductosCrediticios/productValidation";
 const props = defineProps({ creditos: Object, filters: Object, sucursales: Array });
-const filters = reactive({ buscar: "", sucursal_id: null, orden: "recientes", por_pagina: 25, ...props.filters });
+const filters = reactive({ scope: "current", buscar: "", sucursal_id: null, orden: "recientes", por_pagina: 25, ...props.filters });
+watch(() => props.filters, value => Object.assign(filters, { scope: "current", sucursal_id: null, buscar: "", estado: null, por_pagina: 25, ...value }));
 const loading = ref(false);
 const estado = (credito) => ({ activo: "Activo · QA", liquidado: "Liquidado · QA", por_revisar: "Requiere revisión" })[credito.estado_operativo] ?? "Requiere revisión";
 const severidad = (credito) => credito.estado_operativo === "por_revisar" ? "warn" : credito.estado_operativo === "liquidado" ? "info" : "success";
@@ -19,9 +21,10 @@ function buscar(page = 1) { router.get(route("creditos.index"), { ...filters, pa
         <template #card-content>
             <div class="space-y-6 p-4 md:p-6">
                 <section class="k-feature flex flex-wrap items-center justify-between gap-4 p-6"><div><Tag severity="warn" value="Solo pruebas QA" /><p class="mt-3 text-3xl font-bold k-financial">{{ creditos.total }}</p><p>Créditos con estos filtros</p></div><Link :href="route('solicitudes.index')" class="rounded-lg bg-white px-4 py-3 font-semibold text-surface-900"><i class="pi pi-folder-open mr-2" />Ir a solicitudes</Link></section>
+                <ConsultaSucursalFilter :model-value="filters" :sucursales="sucursales" />
                 <form class="flex flex-wrap items-end gap-3" @submit.prevent="buscar()">
                     <div><label for="credito-buscar" class="mb-2 block">Cliente o número de crédito</label><InputText id="credito-buscar" v-model="filters.buscar" maxlength="100" /></div>
-                    <div><label for="credito-sucursal" class="mb-2 block">Sucursal</label><Select inputId="credito-sucursal" aria-label="Sucursal" v-model="filters.sucursal_id" :options="sucursales" optionLabel="nombre" optionValue="id" showClear placeholder="Todas" /></div>
+
                     <div><label for="credito-orden" class="mb-2 block">Orden</label><Select inputId="credito-orden" aria-label="Orden" v-model="filters.orden" :options="[{label:'Más recientes',value:'recientes'},{label:'Más antiguos',value:'antiguos'}]" optionLabel="label" optionValue="value" /></div>
                     <Button type="submit" label="Buscar" icon="pi pi-search" :loading="loading" />
                 </form>

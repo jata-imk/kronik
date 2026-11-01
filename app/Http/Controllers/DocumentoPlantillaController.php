@@ -33,14 +33,12 @@ class DocumentoPlantillaController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index(CatalogoVariablesDocumento $catalogo)
+    public function index(CatalogoVariablesDocumento $catalogo, \Illuminate\Http\Request $request)
     {
         $this->authorize('viewAny', DocumentoPlantilla::class);
 
         return Inertia::render('Documentos/Plantillas/Index', [
-            'plantillas' => fn () => DocumentoPlantilla::query()
-                ->with(['versiones' => fn ($query) => $query->withCount('documentosGenerados')->orderByDesc('numero')])
-                ->orderBy('nombre')->get(),
+            ...app(\App\Services\CatalogoListadoService::class)->plantillas($request),
             'tipos' => collect(DocumentoPlantillaTipo::cases())->map(fn ($type) => ['value' => $type->value, 'label' => $type->label()]),
             'variables' => collect(DocumentoPlantillaTipo::cases())->mapWithKeys(fn ($type) => [$type->value => $catalogo->forType($type)]),
         ]);
@@ -52,7 +50,7 @@ class DocumentoPlantillaController extends Controller implements HasMiddleware
         $template = $service->create($request->validated(), Auth::id());
         $this->log(ActivityEvent::DocumentTemplateCreated, 'Plantilla documental creada', $template, ['clave', 'nombre', 'tipo']);
 
-        return back()->with('success', 'Plantilla creada como borrador.');
+        return redirect()->route('plantillas-documentos.index', ['plantilla_id' => $template->id])->with('success', 'Plantilla creada como borrador.');
     }
 
     public function update(GuardarDocumentoPlantillaRequest $request, DocumentoPlantilla $plantilla, DocumentoPlantillaVersion $version, DocumentoPlantillaVersionService $service)
@@ -70,7 +68,7 @@ class DocumentoPlantillaController extends Controller implements HasMiddleware
         $new = $service->duplicate($plantilla, $version, Auth::id());
         $this->log(ActivityEvent::DocumentTemplateVersioned, 'Nueva versión de plantilla creada', $plantilla, ['version']);
 
-        return back()->with('success', "Versión {$new->numero} creada como borrador.");
+        return redirect()->route('plantillas-documentos.index', ['plantilla_id' => $plantilla->id, 'version_id' => $new->id])->with('success', "Versión {$new->numero} creada como borrador.");
     }
 
     public function activar(DocumentoPlantillaVersion $version, DocumentoPlantillaVersionService $service)

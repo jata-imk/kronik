@@ -56,6 +56,9 @@ class ClienteDocumentoService
                         'state' => ClienteDocumentoEstado::Recibido->value,
                     ],
                     causer: auth()->user(),
+                    teamId: auth()->user()?->current_team_id,
+                    sucursalId: $cliente->sucursal_id,
+                    inheritActorContext: false,
                 );
 
                 return $documento;
@@ -113,6 +116,9 @@ class ClienteDocumentoService
                 'state' => $estado->value,
             ],
             causer: $reviewer,
+            teamId: $reviewer->current_team_id,
+            sucursalId: $documento->cliente->sucursal_id,
+            inheritActorContext: false,
         );
 
         return $documento->refresh();

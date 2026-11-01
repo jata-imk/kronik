@@ -188,3 +188,11 @@ Pendientes: tareas por especialidad/asignación independiente, requisitos calcul
 consulta paginada de toda la historia y prueba concurrente multi-conexión.
 Sin SIC productivo, selección de comisiones opcionales, exportación, acción masiva,
 alertas externas ni movimientos monetarios en este incremento.
+
+## Alcance de consulta por sucursal
+
+Consultar el [contrato transversal de contexto y consultas](contexto-sucursal-consultas.md)
+para alcance actual/institucional, paginación en servidor y conservación del
+contexto histórico. La entrega transversal sigue en progreso; su
+[Agent Note](../agent-notes/contexto-sucursal-transversal.md) distingue implementación,
+regresión local y pendientes, sin acreditar integración ni despliegue.

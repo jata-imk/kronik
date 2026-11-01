@@ -33,3 +33,5 @@ consultan también desde el tema de fiscalidad.
 - [Backlog 03: productos](../todos/03-productos-crediticios.md).
 - [Nota de entrega de productos](../agent-notes/03-productos-crediticios.md).
 - [Fiscalidad y cumplimiento](fiscalidad-cumplimiento.md).
+
+- [Contexto operativo, lectura institucional y listados en servidor](../reference/contexto-sucursal-consultas.md).

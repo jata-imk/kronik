@@ -1,4 +1,6 @@
 <script setup>
+import { useListadoServidor } from "@/Composables/useListadoServidor";
+import ListadoPaginador from "@/Components/ListadoPaginador.vue";
 import FoliosSucursalForm from "@/Components/Sucursales/FoliosSucursalForm.vue";
 import FieldHelp from "@/Components/FieldHelp.vue";
 import PageHeader from "@/Components/PageHeader.vue";
@@ -17,6 +19,7 @@ import TruncatedText from "@/Components/DataTable/TruncatedText.vue";
 
 const props = defineProps({
     sucursales: Array,
+    sucursalSeleccionada: Object,
 });
 
 const page = usePage();
@@ -29,8 +32,8 @@ const visible = ref(false);
 const selectedSucursal = ref(null);
 const foliosId = ref(null);
 const foliosVisible = ref(false);
-const sucursalFolios = computed(() => props.sucursales.find((sucursal) => sucursal.id === foliosId.value));
-const openFolios = (sucursal) => { foliosId.value = sucursal.id; foliosVisible.value = true; };
+const sucursalFolios = computed(() => props.sucursalSeleccionada?.id === foliosId.value ? props.sucursalSeleccionada : props.sucursales.find((sucursal) => sucursal.id === foliosId.value));
+const openFolios = (sucursal) => { foliosId.value = sucursal.id; foliosVisible.value = true; serverList.visit({ selected_sucursal_id: sucursal.id, page: page.props.listado?.current_page ?? 1 }); };
 const formatAddress = (domicilio) => {
     if (!domicilio) return "";
     return [
@@ -91,14 +94,9 @@ const filters = ref({
     summary_search: { value: null, matchMode: FilterMatchMode.CONTAINS },
     estado_label: { value: "Activa", matchMode: FilterMatchMode.EQUALS },
 });
-const sucursalesMobile = computed(() => {
-    const estado = filters.value.estado_label.value;
-    const buscar = String(filters.value.global.value ?? "").trim().toLocaleLowerCase("es-MX");
-    return sucursales.value.filter((sucursal) =>
-        (!estado || sucursal.estado_label === estado) &&
-        (!buscar || `${sucursal.sucursal_search} ${sucursal.domicilio_display} ${sucursal.horario_search}`.toLocaleLowerCase("es-MX").includes(buscar)),
-    );
-});
+const serverList = useListadoServidor(filters);
+
+const sucursalesMobile = sucursales;
 
 const emptySucursal = () => ({
     nombre: "",
@@ -194,7 +192,7 @@ const closeDialog = () => {
 const submit = () => {
     const options = {
         preserveScroll: true,
-        only: ["sucursales"],
+        only: ["sucursales", "sucursalSeleccionada", "listado"],
         onSuccess: () => {
             visible.value = false;
             toast.add({
@@ -236,7 +234,7 @@ const deactivate = (sucursal) => {
         accept: () =>
             router.delete(route("admin.sucursales.destroy", sucursal.id), {
                 preserveScroll: true,
-                only: ["sucursales"],
+                only: ["sucursales", "sucursalSeleccionada", "listado"],
                 onSuccess: () =>
                     toast.add({
                         severity: "success",
@@ -266,6 +264,7 @@ const deactivate = (sucursal) => {
         </template>
 
         <template #card-content>
+            <ListadoPaginador />
             <ConfirmDialog />
             <div>
                 <div class="flex justify-end pb-6">
@@ -278,7 +277,7 @@ const deactivate = (sucursal) => {
                     <article v-for="sucursal in sucursalesMobile" :key="sucursal.id" class="k-surface k-record-card"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><h3 class="font-semibold truncate">{{ sucursal.nombre }}</h3><p class="text-sm text-surface-500">{{ sucursal.clave }} · {{ sucursal.estado_label }}</p></div><span class="size-2.5 shrink-0 rounded-full mt-2" :class="sucursal.activa ? 'bg-green-500' : 'bg-surface-400'" /></div><p class="text-sm">{{ sucursal.telefono || 'Sin teléfono' }}</p><p class="text-sm break-all">{{ sucursal.email || 'Sin correo' }}</p><p class="text-sm text-surface-500">{{ sucursal.domicilio_display }}</p><div class="flex flex-wrap gap-2"><Button v-if="can('update-sucursales')" label="Editar" icon="pi pi-pencil" outlined size="small" @click="openEdit(sucursal)" /><Button label="Folios" icon="pi pi-hashtag" outlined size="small" @click="openFolios(sucursal)" /><Button v-if="can('delete-sucursales') && sucursal.activa" label="Desactivar" icon="pi pi-ban" outlined severity="danger" size="small" @click="deactivate(sucursal)" /></div></article>
                 </section>
 
-                <DataTable class="k-desktop-records" v-model:filters="filters" :value="sucursales" :global-filter-fields="['nombre', 'domicilio_display', 'email', 'telefono', 'horario_search', 'summary_search', 'estado_label']" filter-display="row" paginator :rows="10" striped-rows scrollable responsive-layout="scroll" :table-style="{ tableLayout: 'fixed', minWidth: '60rem' }">
+                <DataTable class="k-desktop-records" v-model:filters="filters" :value="sucursales" :global-filter-fields="['nombre', 'domicilio_display', 'email', 'telefono', 'horario_search', 'summary_search', 'estado_label']" filter-display="row" lazy @sort="serverList.sort" :rows="10" striped-rows scrollable responsive-layout="scroll" :table-style="{ tableLayout: 'fixed', minWidth: '60rem' }">
                     <template #header><div class="flex flex-wrap items-center justify-between gap-3"><span class="text-sm text-surface-500">Se muestran activas por defecto; usa el filtro Estado para consultar el archivo.</span><div class="flex flex-wrap gap-2"><Select v-model="filters.estado_label.value" aria-label="Filtrar sucursales por estado" :options="['Activa', 'Inactiva']" placeholder="Todos los estados" show-clear class="w-44" /><IconField><InputIcon class="pi pi-search" /><InputText v-model="filters.global.value" placeholder="Buscar sucursales" /></IconField></div></div></template>
                     <Column field="sucursal_search" header="Sucursal" sortable :show-filter-menu="false" style="width: 26%">
                         <template #body="{ data }">

@@ -196,6 +196,7 @@ final class SicOperacionService
     {
         $registrar = app(\Spatie\Permission\PermissionRegistrar::class);
         $original = $registrar->getPermissionsTeamId();
+        $relations = array_intersect_key($actor->getRelations(), array_flip(['roles', 'permissions']));
         try {
             $registrar->setPermissionsTeamId($actor->current_team_id);
             $actor->unsetRelation('roles')->unsetRelation('permissions');
@@ -209,14 +210,39 @@ final class SicOperacionService
             }
         } finally {
             $registrar->setPermissionsTeamId($original);
+            $actor->unsetRelation('roles')->unsetRelation('permissions');
+            foreach ($relations as $name => $value) {
+                $actor->setRelation($name, $value);
+            }
         }
+    }
+
+    public function puedeConciliar(SicQuery $query, User $actor): bool
+    {
+        if (! $actor->currentTeam) {
+            return false;
+        }
+
+        return app(\App\Services\TeamContext::class)->run($actor, $actor->currentTeam, function () use ($query, $actor) {
+            return $actor->can('reconcile circulo-credito') && $actor->can('read historial-crediticio')
+                && $actor->can('create circulo-credito') && $actor->can('read clientes') && $actor->can('update clientes')
+                && $actor->isActive() && $actor->currentTeam?->activo && $actor->currentSucursal?->activa
+                && $query->sucursal_id !== null && (int) $actor->current_sucursal_id === (int) $query->sucursal_id
+                && $actor->belongsToSucursal($actor->currentSucursal);
+        });
     }
 
     public function conciliar(SicQuery $query, array $data, User $actor): void
     {
-        Gate::forUser($actor)->authorize('reconcile circulo-credito');
-        Gate::forUser($actor)->authorize('read historial-crediticio');
-        $this->autorizar($query->cliente, $actor);
+        if ($actor->currentTeam) {
+            app(\App\Services\TeamContext::class)->run($actor, $actor->currentTeam, function () use ($actor) {
+                Gate::forUser($actor)->authorize('reconcile circulo-credito');
+                Gate::forUser($actor)->authorize('read historial-crediticio');
+            });
+        }
+        if (! $actor->currentTeam || ! $this->puedeConciliar($query, $actor)) {
+            $this->error('Selecciona un equipo autorizado y la sucursal original del intento SIC para conciliarlo.');
+        }
         DB::transaction(function () use ($query, $data, $actor) {
             $q = SicQuery::lockForUpdate()->findOrFail($query->id);
             if ($q->ambiente !== 'qa' || $q->estado_operacion !== 'incierta') {
@@ -226,7 +252,8 @@ final class SicOperacionService
             $q->forceFill(['estado_operacion' => 'conciliada_sin_resultado', 'status' => 'error'])->save();
             SicEvento::create(['sic_query_id' => $q->id, 'estado' => 'conciliada_sin_resultado', 'actor_id' => $actor->id]);
             app(ActivityLogService::class)->log(ActivityEvent::SicAttemptReconciled, 'Intento SIC QA conciliado sin resultado acreditable', $q->cliente,
-                ['related' => ['type' => 'sic_query', 'id' => $q->id]], $actor);
+                ['related' => ['type' => 'sic_query', 'id' => $q->id]], $actor,
+                teamId: $actor->current_team_id, sucursalId: $q->sucursal_id, inheritActorContext: false);
         });
     }
 

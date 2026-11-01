@@ -203,3 +203,41 @@ test('visor rechaza MIME activo y recorridos de ruta', function () {
     $document->update(['path' => '../secreto.pdf']);
     $this->actingAs($user)->get(route('documentos-generados.view', $document))->assertNotFound();
 });
+
+test('PDF conserva contexto original y no reconstruye sucursal histórica desconocida', function (bool $unknown) {
+    Storage::fake('local');
+    Queue::fake();
+    $user = actingAsSuperAdmin();
+    activarEmpresaPrueba();
+    $branch = \App\Models\Sucursal::factory()->create();
+    $client = Cliente::factory()->create(['sucursal_id' => $branch->id]);
+    $service = app(DocumentoPlantillaVersionService::class);
+    $template = $service->create(plantillaDocumentoPayload(), $user->id);
+    $version = $service->activate($template->versiones()->first());
+    $this->actingAs($user)->post(route('documentos-generados.store', $client), [
+        'version_id' => $version->id, 'idempotency_key' => (string) str()->uuid(),
+    ])->assertSessionHasNoErrors();
+    $document = $client->documentosGenerados()->sole();
+    $requestEvent = \App\Models\Activity::where('event', \App\Enums\ActivityEvent::DocumentGenerationRequested->value)->sole();
+    expect($requestEvent->sucursal_id)->toBe($branch->id);
+    if ($unknown) {
+        $document->update(['sucursal_id' => null]);
+    }
+    $expectedBranch = $document->sucursal_id;
+    $team = \App\Models\Team::factory()->create(['user_id' => $user->id]);
+    $user->forceFill(['current_team_id' => $team->id, 'current_sucursal_id' => null])->save();
+    $client->update(['sucursal_id' => $user->fresh()->current_sucursal_id]);
+    app()->instance(DocumentoPdfRenderer::class, new class implements DocumentoPdfRenderer
+    {
+        public function render(string $bodyHtml, ?string $headerHtml = null, ?string $footerHtml = null, array $options = []): string
+        {
+            return "%PDF-1.4\n% contexto sintético\n%%EOF";
+        }
+    });
+    app()->call([new GenerarDocumentoPdf($document->id), 'handle']);
+    app()->call([new GenerarDocumentoPdf($document->id), 'handle']);
+    $event = \App\Models\Activity::where('event', \App\Enums\ActivityEvent::DocumentGenerated->value)->sole();
+    expect($document->fresh()->estado)->toBe(DocumentoGeneradoEstado::Generado)
+        ->and($event->team_id)->toBe($document->team_id)->and($event->sucursal_id)->toBe($expectedBranch)
+        ->and($event->causer_id)->toBeNull()->and($document->creado_por)->toBe($user->id);
+})->with([false, true]);

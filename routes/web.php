@@ -52,6 +52,11 @@ Route::middleware([
     'verified',
     'active',
 ])->group(function () {
+    Route::get('contexto-operativo', fn (\Illuminate\Http\Request $request) => response()->json([
+        'team_id' => $request->user()->current_team_id,
+        'sucursal_id' => $request->user()->current_sucursal_id,
+    ])->header('Cache-Control', 'private, no-store, max-age=0'))->name('contexto-operativo.show');
+
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('mi-trabajo', [\App\Http\Controllers\SolicitudController::class, 'index'])->name('solicitudes.trabajo');
@@ -70,6 +75,7 @@ Route::middleware([
     Route::get('evaluacion-solicitudes', [\App\Http\Controllers\SolicitudController::class, 'index'])->name('evaluacion-solicitudes.index');
     Route::get('cumplimiento', [\App\Http\Controllers\SolicitudController::class, 'index'])->name('cumplimiento.index');
     Route::get('solicitudes/clientes', [\App\Http\Controllers\SolicitudController::class, 'clientes'])->name('solicitudes.clientes');
+    Route::get('solicitudes/{solicitud}/responsables', [\App\Http\Controllers\SolicitudController::class, 'responsables'])->name('solicitudes.responsables.index');
     Route::get('solicitudes/{solicitud}/paquete', [\App\Http\Controllers\SolicitudPaqueteController::class, 'show'])->name('solicitudes.paquete.show');
     Route::post('solicitudes/{solicitud}/paquete', [\App\Http\Controllers\SolicitudPaqueteController::class, 'store'])->name('solicitudes.paquete.store');
     Route::post('solicitudes/{solicitud}/paquetes/{paquete}/reintentar', [\App\Http\Controllers\SolicitudPaqueteController::class, 'retry'])->name('solicitudes.paquete.retry');
@@ -102,6 +108,7 @@ Route::middleware([
     Route::get('clientes/{cliente}/circulo-credito/create', [CirculoCreditoController::class, 'create'])->whereNumber('cliente');
     Route::post('clientes/{cliente}/circulo-credito', [CirculoCreditoController::class, 'store'])->whereNumber('cliente');
 
+    Route::get('clientes/{cliente}/expediente/clientes', [ClienteExpedienteController::class, 'clientes'])->name('clientes.expediente.clientes');
     Route::get('clientes/{cliente}/expediente', [ClienteExpedienteController::class, 'show'])->name('clientes.expediente.show');
     Route::patch('clientes/{cliente}/expediente/perfil', [ClienteExpedienteController::class, 'updateProfile'])->name('clientes.expediente.perfil.update');
 
@@ -171,6 +178,7 @@ Route::middleware([
         return Inertia::render('Componentes');
     })->name('componentes');
 
+    Route::get('/teams/{team}/responsables', [TeamController::class, 'responsables'])->name('teams.responsables.index');
     Route::get('/teams/{team}', [TeamController::class, 'show'])->name('teams.show');
     Route::put('/teams/{team}/responsible', [\App\Http\Controllers\TeamResponsibleController::class, 'update'])->name('teams.responsible.update');
     Route::post('/teams', [TeamController::class, 'store'])->name('teams.store');
@@ -181,6 +189,7 @@ Route::middleware([
             return Inertia::render('Admin/Dashboard');
         })->middleware('permission:access admin')->name('dashboard');
 
+        Route::get('users/opciones', [UserController::class, 'options'])->name('users.options');
         Route::get('users/activity', [UserController::class, 'usersActivity'])->name('users.activity');
         Route::get('users/activity/export', [UserController::class, 'exportActivity'])->name('users.activity.export');
         Route::post('users/{user}/invitation', [UserController::class, 'resendInvitation'])->name('users.invitation.resend');

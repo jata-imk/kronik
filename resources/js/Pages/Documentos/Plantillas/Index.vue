@@ -1,4 +1,6 @@
 <script setup>
+import { useListadoServidor } from "@/Composables/useListadoServidor";
+import ListadoPaginador from "@/Components/ListadoPaginador.vue";
 import PageHeader from "@/Components/PageHeader.vue";
 import DocumentEditor from "@/Components/Documents/DocumentEditor.vue";
 import DocumentPdfPreview from "@/Components/Documents/DocumentPdfPreview.vue";
@@ -11,6 +13,8 @@ import { useToast } from "primevue/usetoast";
 import { computed, nextTick, ref, watch } from "vue";
 
 const props = defineProps({
+    plantillaSeleccionada: Object,
+    resumenListado: Object,
     plantillas: { type: Array, default: () => [] },
     tipos: { type: Array, default: () => [] },
     variables: { type: Object, default: () => ({}) },
@@ -30,9 +34,9 @@ const typeFilters = computed(() => [
         label: tipo.value === "consentimiento_sic" ? "SIC" : tipo.label,
     })),
 ]);
-const preferredVersion = (item) => item?.versiones?.find(v => v.estado === "activa") ?? item?.versiones?.[0];
-const selectedId = ref(props.plantillas[0]?.id ?? null);
-const selectedVersionId = ref(preferredVersion(props.plantillas[0])?.id ?? null);
+const preferredVersion = (item) => item?.versionPreferida ?? item?.versiones?.find(v => v.estado === "activa") ?? item?.versiones?.[0];
+const selectedId = ref(props.plantillaSeleccionada?.id ?? props.plantillas[0]?.id ?? null);
+const selectedVersionId = ref((props.plantillaSeleccionada?.versionSeleccionada ?? preferredVersion(props.plantillas[0]))?.id ?? null);
 const editorVisible = ref(false);
 const previewVisible = ref(false);
 const previewSource = ref(null);
@@ -44,24 +48,21 @@ const sections = [{label:"Encabezado",value:"encabezado_html"},{label:"Contenido
 const can = (permission) =>
     page.props.auth.is_super_admin ||
     page.props.auth.permissions?.[permission.replaceAll(" ", "-")] === true;
-const filtered = computed(() =>
-    props.plantillas.filter((item) => {
-        const matchesText = `${item.nombre} ${item.clave}`
-            .toLowerCase()
-            .includes(query.value.toLowerCase());
-        return (
-            matchesText && (!typeFilter.value || item.tipo === typeFilter.value)
-        );
-    }),
-);
-const selected = computed(
-    () =>
-        props.plantillas.find((item) => item.id === selectedId.value) ??
-        filtered.value[0] ??
-        null,
-);
+const remoteFilters = ref({ global: { value: query.value }, tipo: { value: typeFilter.value } });
+const serverList = useListadoServidor(remoteFilters);
+query.value = remoteFilters.value.global.value ?? "";
+typeFilter.value = remoteFilters.value.tipo.value;
+watch(query, value => { remoteFilters.value.global.value = value; }, { flush: "sync" });
+watch(() => remoteFilters.value.global.value, value => { query.value = value ?? ""; }, { flush: "sync" });
+watch(typeFilter, value => { remoteFilters.value.tipo.value = value; }, { flush: "sync" });
+watch(() => remoteFilters.value.tipo.value, value => { typeFilter.value = value; }, { flush: "sync" });
+const filtered = computed(() => props.plantillas);
+const selected = computed(() => props.plantillaSeleccionada
+    ? (props.plantillaSeleccionada.id === selectedId.value ? props.plantillaSeleccionada : null)
+    : props.plantillas.find(item => item.id === selectedId.value) ?? filtered.value[0] ?? null);
 const selectedVersion = computed(
     () =>
+        (selected.value?.versionSeleccionada?.id === selectedVersionId.value ? selected.value.versionSeleccionada : null) ??
         selected.value?.versiones?.find(
             (item) => item.id === selectedVersionId.value,
         ) ??
@@ -77,33 +78,9 @@ const typeIcon = (value) =>
         contrato: "pi-briefcase",
     })[value] ?? "pi-file";
 const tokenLabel = (key) => `{${`{${key}}`}}`;
-const activeCount = computed(
-    () =>
-        props.plantillas.filter((item) =>
-            item.versiones.some((version) => version.estado === "activa"),
-        ).length,
-);
-const draftCount = computed(() =>
-    props.plantillas.reduce(
-        (total, item) =>
-            total +
-            item.versiones.filter((version) => version.estado === "borrador")
-                .length,
-        0,
-    ),
-);
-const usedCount = computed(() =>
-    props.plantillas.reduce(
-        (total, item) =>
-            total +
-            item.versiones.reduce(
-                (sum, version) =>
-                    sum + Number(version.documentos_generados_count ?? 0),
-                0,
-            ),
-        0,
-    ),
-);
+const activeCount = computed(() => props.resumenListado?.activas ?? 0);
+const draftCount = computed(() => props.resumenListado?.borradores ?? 0);
+const usedCount = computed(() => props.resumenListado?.generados ?? 0);
 const availableVariables = computed(() => props.variables[form.tipo] ?? []);
 const normalizedVariableQuery = computed(() =>
     variableQuery.value.trim().toLocaleLowerCase("es-MX"),
@@ -182,6 +159,7 @@ const handleKeyInput = (event) => {
 const selectTemplate = (item) => {
     selectedId.value = item.id;
     selectedVersionId.value = preferredVersion(item)?.id ?? null;
+    serverList.visit({ plantilla_id: item.id, version_id: null, versiones_page: 1, page: page.props.listado?.current_page ?? 1 });
 };
 const openCreate = () => {
     editingVersion.value = null;
@@ -334,10 +312,11 @@ const retire = (version) =>
         route("plantillas-documentos.retirar", version.id),
         "Versión retirada",
     );
+watch(() => props.plantillaSeleccionada, (item) => { if (item) { selectedId.value = item.id; selectedVersionId.value = item.versionSeleccionada?.id ?? preferredVersion(item)?.id; } });
 watch(selected, (item) => {
     if (
         item &&
-        !item.versiones.some(
+        !item.versionSeleccionada && !item.versiones.some(
             (version) => version.id === selectedVersionId.value,
         )
     )
@@ -372,11 +351,12 @@ watch(selected, (item) => {
                     <div v-if="filtered.length" class="mt-3 space-y-2">
                         <button v-for="item in filtered" :key="item.id" type="button" class="template-nav" :class="selected?.id === item.id && 'template-nav-active'" @click="selectTemplate(item)">
                             <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-surface-100 text-primary dark:bg-surface-700"><i class="pi" :class="typeIcon(item.tipo)" /></span>
-                            <span class="min-w-0 flex-1"><span class="block truncate font-semibold">{{ item.nombre }}</span><span class="block truncate text-xs text-surface-500">{{ typeLabel(item.tipo) }} · {{ item.versiones.length }} v.</span></span>
+                            <span class="min-w-0 flex-1"><span class="block truncate font-semibold">{{ item.nombre }}</span><span class="block truncate text-xs text-surface-500">{{ typeLabel(item.tipo) }} · {{ item.versiones_count ?? item.versiones.length }} v.</span></span>
                             <span class="size-2 rounded-full" :class="item.versiones.some((v) => v.estado === 'activa') ? 'bg-emerald-500' : 'bg-surface-300'" />
                         </button>
                     </div>
                     <div v-else class="px-5 py-14 text-center"><i class="pi pi-file-edit text-4xl text-surface-300" /><p class="mt-3 font-semibold">Sin plantillas</p><p class="mt-1 text-sm text-surface-500">Ajusta los filtros o crea la primera.</p></div>
+                    <ListadoPaginador />
                 </aside>
 
                 <main v-if="selected" class="min-w-0 space-y-5">
@@ -404,8 +384,9 @@ watch(selected, (item) => {
                         <aside class="rounded-2xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-700 dark:bg-surface-900">
                             <h3 class="font-semibold">Historial</h3><p class="mb-4 text-sm text-surface-500">Selecciona una versión.</p>
                             <ol class="space-y-1" aria-label="Versiones de la plantilla">
-                                <li v-for="version in selected.versiones" :key="version.id"><button type="button" class="version-row" :class="selectedVersion?.id === version.id && 'version-row-active'" @click="selectedVersionId = version.id"><span class="version-dot" :class="version.estado === 'activa' ? 'bg-emerald-500' : version.estado === 'borrador' ? 'bg-amber-500' : 'bg-surface-400'" /><span class="min-w-0 flex-1"><span class="flex flex-wrap items-center gap-1.5"><strong class="shrink-0 text-sm">V{{ version.numero }}</strong><DocumentVersionStatus :status="version.estado" compact /><span class="ml-auto shrink-0 text-[.68rem] text-surface-500">{{ new Date(version.created_at).toLocaleDateString('es-MX') }}</span></span><span class="mt-1 block truncate text-xs text-surface-500">{{ version.resumen_cambios || 'Sin resumen de cambios' }} · {{ version.documentos_generados_count ?? 0 }} usos</span></span></button></li>
+                                <li v-for="version in selected.versiones" :key="version.id"><button type="button" class="version-row" :class="selectedVersion?.id === version.id && 'version-row-active'" @click="selectedVersionId = version.id; serverList.visit({ plantilla_id: selected.id, version_id: version.id, page: page.props.listado?.current_page ?? 1, versiones_page: page.props.versionesListado?.current_page ?? 1 })"><span class="version-dot" :class="version.estado === 'activa' ? 'bg-emerald-500' : version.estado === 'borrador' ? 'bg-amber-500' : 'bg-surface-400'" /><span class="min-w-0 flex-1"><span class="flex flex-wrap items-center gap-1.5"><strong class="shrink-0 text-sm">V{{ version.numero }}</strong><DocumentVersionStatus :status="version.estado" compact /><span class="ml-auto shrink-0 text-[.68rem] text-surface-500">{{ new Date(version.created_at).toLocaleDateString('es-MX') }}</span></span><span class="mt-1 block truncate text-xs text-surface-500">{{ version.resumen_cambios || 'Sin resumen de cambios' }} · {{ version.documentos_generados_count ?? 0 }} usos</span></span></button></li>
                             </ol>
+                            <ListadoPaginador :metadata="page.props.versionesListado" page-name="versiones_page" per-page-name="versiones_por_pagina" />
                         </aside>
                     </section>
                 </main>

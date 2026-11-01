@@ -35,17 +35,22 @@ class MenubarItemController extends Controller implements HasMiddleware
         return response()->json($routes);
     }
 
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
+        $params = app(\App\Services\ListadoParametros::class);
+        $match = fn ($q, $v) => $q->where('label', 'like', '%'.$v.'%');
+        $filters = ['global' => fn ($q, $v) => $q->where(fn ($q) => $q->where(fn ($q) => $match($q, $v))
+            ->orWhereHas('children', fn ($q) => $match($q, $v))
+            ->orWhereHas('children.children', fn ($q) => $match($q, $v)))];
+        $sorts = ['label' => 'label', 'sort_order' => 'sort_order'];
+        $values = $params->resolver($request, $filters, $sorts);
+        $query = MenubarItem::with(['modules', 'children.modules', 'children.children.modules'])->whereNull('parent_id');
+        $page = $params->aplicar($query, $values, $filters, $sorts, 'sort_order')->paginate($values['por_pagina'])->withQueryString();
+
         return Inertia::render('Admin/MenubarItems/Index', [
             'modules' => fn () => Module::with('menubarItems')->get(),
-            'menubarCatalogo' => fn () => MenubarItem::with(
-                [
-                    'modules',
-                    'children.modules',
-                    'children.children.modules',
-                ]
-            )->whereNull('parent_id')->get(),
+            'menubarCatalogo' => $page->getCollection(),
+            'listado' => $params->metadata($page, $values),
         ]);
     }
 

@@ -19,8 +19,13 @@ class ClienteService
 
     public function readAll(?int $sucursalId = null)
     {
+        return $this->query()->when($sucursalId, fn ($q) => $q->where('sucursal_id', $sucursalId))->get();
+    }
+
+    public function query(): \Illuminate\Database\Eloquent\Builder
+    {
         return Cliente::query()
-            ->when($sucursalId, fn ($query) => $query->where('sucursal_id', $sucursalId))
+
             ->with(['sucursal:id,nombre,clave',
                 'paisNacimiento',
                 'datosFiscales.regimenFiscal',
@@ -31,7 +36,7 @@ class ClienteService
                     'divisionAdministrativaDos',
                     'divisionAdministrativaTres',
                 ],
-            ])->withCount(['vinculos', 'vinculosEntrantes'])->get();
+            ])->withCount(['vinculos', 'vinculosEntrantes']);
     }
 
     public function store(array $data)
@@ -39,7 +44,7 @@ class ClienteService
         return DB::transaction(function () use ($data) {
             app(EmpresaOperacionService::class)->exigir(\App\Enums\OperacionEmpresa::Capturar, Auth::user());
             $sucursalId = Auth::user()?->current_sucursal_id;
-            if (! $sucursalId) {
+            if (! $sucursalId || ! Auth::user()?->currentSucursal?->activa) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     'sucursal_id' => 'Selecciona una sucursal activa antes de crear un cliente.',
                 ]);
@@ -78,6 +83,9 @@ class ClienteService
                 subject: $cliente,
                 metadata: ['changed_fields' => $this->activityLog->fieldNames($data)],
                 causer: Auth::user(),
+                teamId: Auth::user()?->current_team_id,
+                sucursalId: $cliente->sucursal_id,
+                inheritActorContext: false,
             );
 
             return $cliente;
@@ -122,6 +130,9 @@ class ClienteService
                 subject: $cliente,
                 metadata: ['changed_fields' => $this->activityLog->fieldNames($data)],
                 causer: Auth::user(),
+                teamId: Auth::user()?->current_team_id,
+                sucursalId: $cliente->sucursal_id,
+                inheritActorContext: false,
             );
 
             return $cliente;
@@ -154,6 +165,9 @@ class ClienteService
                 subject: $cliente,
                 metadata: ['result' => 'deleted'],
                 causer: Auth::user(),
+                teamId: Auth::user()?->current_team_id,
+                sucursalId: $cliente->sucursal_id,
+                inheritActorContext: false,
             );
         });
     }

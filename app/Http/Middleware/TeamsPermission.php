@@ -8,17 +8,23 @@ use Symfony\Component\HttpFoundation\Response;
 
 class TeamsPermission
 {
-
     public function handle(Request $request, Closure $next): Response
     {
-        if (!empty($request->user()) && function_exists('setPermissionsTeamId')) {
-            // set actual team_id to spatie/laravel-permission package
-            setPermissionsTeamId($request->user()->current_team_id);
+        $previous = getPermissionsTeamId();
+        $user = $request->user();
+        try {
+            setPermissionsTeamId($user?->current_team_id);
+            $user?->unsetRelation('roles')->unsetRelation('permissions');
 
-            $request->user()->setRelation('permissions', $request->user()->getAllPermissions());
-            $request->user()->load(['roles.permissions']);
+            $response = $next($request);
+            if ($user) {
+                $response->headers->set('Cache-Control', 'private, no-store, max-age=0');
+            }
+
+            return $response;
+        } finally {
+            setPermissionsTeamId($previous);
+            $user?->unsetRelation('roles')->unsetRelation('permissions');
         }
-
-        return $next($request);
     }
 }

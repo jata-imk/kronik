@@ -27,14 +27,9 @@ class SucursalController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        return Inertia::render('Admin/Sucursales/Index', [
-            'sucursales' => fn () => Sucursal::orderByDesc('activa')
-                ->orderBy('nombre')
-                ->withCount(['users', 'clientes'])
-                ->get()->map(fn ($sucursal) => [...$sucursal->toArray(), 'folios' => app(\App\Services\FolioService::class)->configuracion($sucursal)]),
-        ]);
+        return Inertia::render('Admin/Sucursales/Index', app(\App\Services\AdministracionListadoService::class)->sucursales($request));
     }
 
     public function store(Request $request)

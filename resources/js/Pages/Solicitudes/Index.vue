@@ -1,13 +1,15 @@
 <script setup>
+import ConsultaSucursalFilter from "@/Components/ConsultaSucursalFilter.vue";
 import { Link, router } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import PageHeader from "@/Components/PageHeader.vue";
-import { reactive, ref } from "vue";
+import { reactive, ref, watch } from "vue";
 import { solicitudEstados } from "@/Utils/solicitudEstados";
 import "../../../css/originacion.css";
 
-const props = defineProps({ solicitudes: Object, filters: Object, miTrabajo: Boolean, puedeCrear: Boolean, bandeja: String, rutaBandeja: String });
-const filters = reactive({ buscar: props.filters.buscar ?? "", estado: props.filters.estado ?? null, orden: props.filters.orden ?? "recientes", por_pagina: Number(props.filters.por_pagina ?? 25) });
+const props = defineProps({ solicitudes: Object, sucursales: Array, filters: Object, miTrabajo: Boolean, puedeCrear: Boolean, bandeja: String, rutaBandeja: String });
+const filters = reactive({ scope: "current", sucursal_id: null, ...props.filters, buscar: props.filters.buscar ?? "", estado: props.filters.estado ?? null, orden: props.filters.orden ?? "recientes", por_pagina: Number(props.filters.por_pagina ?? 25) });
+watch(() => props.filters, value => Object.assign(filters, { scope: "current", sucursal_id: null, buscar: "", estado: null, orden: "recientes", por_pagina: 25, ...value }));
 const loading = ref(false);
 const estados = [{ label: "Todos", value: null }, ...Object.entries(solicitudEstados).map(([value, { label }]) => ({ label, value }))];
 function buscar(page = 1) {
@@ -32,6 +34,7 @@ function buscar(page = 1) {
             <div class="originacion-content space-y-5 p-4 md:p-6">
                 <Message v-if="bandeja" severity="info" :closable="false">Abre la solicitud para registrar tu dictamen sobre la revisión actual. Esta bandeja no sustituye la política de aprobación ni acredita cumplimiento legal por sí sola.</Message>
                 <p>{{ miTrabajo ? "Pendientes bajo tu responsabilidad. Las solicitudes cerradas se consultan con el filtro de estado." : "Captura, revisión, devoluciones y resolución. Aprobar exige políticas y habilitación explícitas; no permite desembolsar." }}</p>
+                <ConsultaSucursalFilter :model-value="filters" :sucursales="sucursales" />
                 <form class="flex flex-wrap items-end gap-3" @submit.prevent="buscar()">
                     <div class="flex flex-col gap-1"><label for="buscar">Cliente</label><InputText id="buscar" v-model="filters.buscar" maxlength="100" /></div>
                     <div class="flex flex-col gap-1"><label for="estado">Estado</label><Select input-id="estado" aria-label="Estado" v-model="filters.estado" :options="estados" option-label="label" option-value="value" /></div>

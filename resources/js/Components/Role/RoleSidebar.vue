@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from "vue";
+import { computed } from "vue";
 
 const props = defineProps({
     roles: Array,
@@ -8,17 +8,11 @@ const props = defineProps({
 });
 const emit = defineEmits(["update:selectedRole", "add-role"]);
 
-const localSelectedRole = ref(props.selectedRole);
-
-watch(
-    () => props.selectedRole,
-    (val) => {
-        localSelectedRole.value = val;
+const localSelectedRole = computed({
+    get: () => props.selectedRole,
+    set: (value) => {
+        if (value && value.id !== props.selectedRole?.id) emit("update:selectedRole", value);
     },
-);
-
-watch(localSelectedRole, (val) => {
-    emit("update:selectedRole", val);
 });
 </script>
 
@@ -33,6 +27,7 @@ watch(localSelectedRole, (val) => {
                 v-model="localSelectedRole"
                 :options="roles"
                 optionLabel="name"
+                dataKey="id"
                 placeholder="Seleccione un rol"
                 class="w-full xl:!border-none"
                 :pt="{ listContainer: '!max-h-auto xl:!max-h-full' }"

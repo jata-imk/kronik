@@ -37,10 +37,13 @@ class HistorialCrediticioController extends Controller
             'estado.in' => 'Selecciona un estado de consulta válido.',
             'por_pagina.in' => 'Selecciona 10, 25 o 50 registros por página.',
         ]);
-        $queries = SicQuery::query()
-            ->select(['id', 'cliente_id', 'sic_id', 'sic_api_id', 'fecha_consulta', 'status'])
+        $consultaSucursal = app(\App\Services\ConsultaSucursal::class);
+        $scope = $consultaSucursal->resolver($request, $cliente ? 'all' : 'current');
+        $queries = $consultaSucursal->aplicar(SicQuery::query(), $scope)
+            ->select(['id', 'cliente_id', 'sic_id', 'sic_api_id', 'fecha_consulta', 'status', 'sucursal_id'])
             ->with([
                 'cliente:id,primer_nombre,apellido_paterno,apellido_materno',
+                'sucursal:id,nombre',
                 'sic:id,nombre',
                 'api:id,nombre',
             ])
@@ -56,9 +59,10 @@ class HistorialCrediticioController extends Controller
         return Inertia::render('HistorialCrediticio/Index', [
             'cliente' => $cliente?->only(['id', 'primer_nombre', 'apellido_paterno', 'apellido_materno']),
             'consultas' => $queries,
-            'filters' => $filters,
-            'puedeConsultar' => Gate::allows('create circulo-credito')
-                && (! $cliente || Gate::allows('update', $cliente)),
+            'filters' => [...$filters, ...$scope],
+            'sucursales' => $consultaSucursal->opciones(),
+            'puedeConsultar' => $request->user()->currentSucursal?->activa && Gate::allows('create circulo-credito')
+                && (! $cliente || ($request->user()->operaEnSucursal($cliente->sucursal_id) && Gate::allows('update', $cliente))),
         ]);
     }
 
@@ -67,7 +71,8 @@ class HistorialCrediticioController extends Controller
         Gate::authorize('read historial-crediticio');
         Gate::authorize('view', $consulta->cliente);
         app(\App\Services\ActivityLogService::class)->log(\App\Enums\ActivityEvent::SicEvidenceViewed, 'Resultado SIC visualizado', $consulta->cliente,
-            ['related' => ['type' => 'sic_query', 'id' => $consulta->id]], request()->user());
+            ['related' => ['type' => 'sic_query', 'id' => $consulta->id]], request()->user(),
+            teamId: request()->user()->current_team_id, sucursalId: $consulta->sucursal_id, inheritActorContext: false);
         $resultado = $service->leer($consulta, 'resultado');
         if (! $resultado) {
             $resultado = app(\App\Services\SICs\SicResultado::class)->historico($consulta);
@@ -90,7 +95,7 @@ class HistorialCrediticioController extends Controller
         return Inertia::render('HistorialCrediticio/Show', [
             'resumen' => $resultado ? app(\App\Services\SICs\SicResumen::class)->construir($resultado) : null,
             'puedeConciliar' => $consulta->ambiente === 'qa' && $consulta->estado_operacion === 'incierta'
-                && Gate::allows('reconcile circulo-credito') && Gate::allows('create circulo-credito') && Gate::allows('update', $consulta->cliente),
+                && Gate::allows('reconcile circulo-credito') && Gate::allows('create circulo-credito') && app(\App\Services\SICs\SicOperacionService::class)->puedeConciliar($consulta, request()->user()),
             'evolucion' => $evolucion,
             'consulta' => [...$consulta->only(['id', 'fecha_consulta', 'status', 'ambiente', 'estado_operacion', 'http_status', 'solicitud_revision_id']),
                 'cliente' => $consulta->cliente->only(['id', 'primer_nombre', 'apellido_paterno']), 'servicio' => $consulta->api?->nombre],

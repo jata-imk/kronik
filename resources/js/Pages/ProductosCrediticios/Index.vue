@@ -1,4 +1,6 @@
 <script setup>
+import { useListadoServidor } from "@/Composables/useListadoServidor";
+import ListadoPaginador from "@/Components/ListadoPaginador.vue";
 import PageHeader from "@/Components/PageHeader.vue";
 import PoliticaMoraEditor from "@/Components/Products/PoliticaMoraEditor.vue";
 import FinancialFieldHelp from "@/Components/Products/FinancialFieldHelp.vue";
@@ -26,6 +28,7 @@ import {
 } from "./productValidation";
 
 const props = defineProps({
+    productoSeleccionado: Object,
     productos: { type: Array, default: () => [] },
     capacidadesCredito: { type: Object, required: true },
     conceptosComision: { type: Array, default: () => [] },
@@ -36,7 +39,7 @@ const page = usePage();
 const toast = useToast();
 const confirm = useConfirm();
 const query = ref("");
-const selectedId = ref(props.productos[0]?.id ?? null);
+const selectedId = ref(props.productoSeleccionado?.id ?? props.productos[0]?.id ?? null);
 const editorVisible = ref(false);
 const simulatorVisible = ref(false);
 const catalogVisible = ref(false);
@@ -66,20 +69,18 @@ const activatingVersion = ref(null);
 const can = (permission) =>
     page.props.auth.is_super_admin ||
     page.props.auth.permissions?.[permission.replaceAll(" ", "-")] === true;
-const products = computed(() =>
-    props.productos.filter((product) =>
-        `${product.nombre} ${product.clave}`
-            .toLowerCase()
-            .includes(query.value.toLowerCase()),
-    ),
-);
-const selected = computed(
-    () =>
-        props.productos.find((product) => product.id === selectedId.value) ??
-        products.value[0] ??
-        null,
-);
-const latest = computed(() => selected.value?.versiones?.[0] ?? null);
+const products = computed(() => props.productos);
+const remoteFilters = ref({ global: { value: query.value } });
+const serverList = useListadoServidor(remoteFilters);
+query.value = remoteFilters.value.global.value ?? "";
+watch(query, value => { remoteFilters.value.global.value = value; }, { flush: "sync" });
+watch(() => remoteFilters.value.global.value, value => { query.value = value ?? ""; }, { flush: "sync" });
+const selected = computed(() => props.productoSeleccionado ? (props.productoSeleccionado.id === selectedId.value ? props.productoSeleccionado : null) : props.productos.find(p => p.id === selectedId.value));
+const latest = computed(() => selected.value?.ultimaVersion ?? selected.value?.versiones?.[0] ?? null);
+function selectProduct(product) {
+    selectedId.value = product.id;
+    serverList.visit({ producto_id: product.id, page: page.props.listado?.current_page ?? 1, versiones_page: 1 });
+}
 const money = formatMoneyWithCents;
 const moneyCompact = (value) =>
     new Intl.NumberFormat("es-MX", {
@@ -349,7 +350,7 @@ const submit = () => {
     form.submit(editing ? "put" : "post", url, {
         preserveScroll: true,
         errorBag: "productoCrediticio",
-        only: ["productos"],
+        only: ["productos", "productoSeleccionado", "listado", "versionesListado"],
         onSuccess: () => {
             editorVisible.value = false;
             toast.add({
@@ -448,7 +449,7 @@ const versionCopy = (version) =>
         {},
         {
             preserveScroll: true,
-            only: ["productos"],
+            only: ["productos", "productoSeleccionado", "listado", "versionesListado"],
             onSuccess: () =>
                 toast.add({
                     severity: "success",
@@ -476,7 +477,7 @@ const submitActivation = () => {
         {
             preserveScroll: true,
             errorBag: "activarProductoVersion",
-            only: ["productos"],
+            only: ["productos", "productoSeleccionado", "listado", "versionesListado"],
             onSuccess: () => {
                 activationVisible.value = false;
                 toast.add({
@@ -508,7 +509,7 @@ const retire = (version) =>
                 {},
                 {
                     preserveScroll: true,
-                    only: ["productos"],
+                    only: ["productos", "productoSeleccionado", "listado", "versionesListado"],
                     onSuccess: () =>
                         toast.add({
                             severity: "success",
@@ -597,7 +598,8 @@ watch(simForm, () => {
 watch(
     () => props.productos,
     (value) => {
-        if (!value.some((product) => product.id === selectedId.value))
+        if (props.productoSeleccionado) selectedId.value = props.productoSeleccionado.id;
+        else if (!value.some((product) => product.id === selectedId.value))
             selectedId.value = value[0]?.id ?? null;
     },
 );
@@ -616,12 +618,13 @@ watch(
                 <aside class="min-w-0 rounded-2xl border border-surface-200 bg-surface-50/70 p-3 dark:border-surface-700 dark:bg-surface-900/50">
                     <IconField class="mb-3"><InputIcon class="pi pi-search" /><InputText v-model="query" aria-label="Buscar productos" placeholder="Buscar producto" fluid /></IconField>
                     <div v-if="products.length" class="space-y-2">
-                        <button v-for="product in products" :key="product.id" type="button" class="w-full rounded-xl border p-3 text-left transition" :class="selected?.id === product.id ? 'border-primary bg-primary-50 shadow-sm dark:bg-primary-950/30' : 'border-transparent bg-surface-0 hover:border-surface-300 dark:bg-surface-800'" @click="selectedId = product.id">
+                        <button v-for="product in products" :key="product.id" type="button" class="w-full rounded-xl border p-3 text-left transition" :class="selected?.id === product.id ? 'border-primary bg-primary-50 shadow-sm dark:bg-primary-950/30' : 'border-transparent bg-surface-0 hover:border-surface-300 dark:bg-surface-800'" @click="selectProduct(product)">
                             <div class="flex items-start justify-between gap-2"><div class="min-w-0"><p class="truncate font-semibold">{{ product.nombre }}</p><p class="truncate text-xs text-surface-500">{{ product.clave }}</p></div><ProductVersionStatus :state="product.versiones[0]?.estado ?? 'borrador'" /></div>
-                            <div class="mt-3 flex items-center gap-2 text-xs text-surface-500"><i class="pi pi-clone" /><span>{{ product.versiones.length }} {{ product.versiones.length === 1 ? 'versión' : 'versiones' }}</span><span>·</span><span>{{ product.versiones[0] ? moneyCompact(product.versiones[0].monto_maximo) : 'Sin configurar' }}</span></div>
+                            <div class="mt-3 flex items-center gap-2 text-xs text-surface-500"><i class="pi pi-clone" /><span>{{ product.versiones_count ?? product.versiones.length }} {{ (product.versiones_count ?? product.versiones.length) === 1 ? 'versión' : 'versiones' }}</span><span>·</span><span>{{ product.versiones[0] ? moneyCompact(product.versiones[0].monto_maximo) : 'Sin configurar' }}</span></div>
                         </button>
                     </div>
                     <div v-else class="px-4 py-12 text-center"><i class="pi pi-wallet text-3xl text-surface-300" /><p class="mt-3 font-medium">Sin productos</p><p class="mt-1 text-sm text-surface-500">Crea el primer producto de crédito simple.</p></div>
+                    <ListadoPaginador />
                 </aside>
 
                 <main v-if="selected" class="min-w-0 space-y-5">
@@ -631,6 +634,7 @@ watch(
                     </section>
                     <section class="rounded-2xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-700 dark:bg-surface-900">
                         <div class="mb-4"><h3 class="font-semibold">Versiones y vigencia</h3><p class="text-sm text-surface-500">Las versiones activadas son históricas e inmutables.</p></div>
+                        <ListadoPaginador :metadata="page.props.versionesListado" page-name="versiones_page" per-page-name="versiones_por_pagina" />
                         <DataTable :value="selected.versiones" striped-rows scrollable :table-style="{ minWidth: '72rem' }">
                             <Column v-if="can('manage origination productos-crediticios')" header="Originación"><template #body="{ data }"><Link :href="route('originacion-politicas.show', data.id)" class="text-primary underline">Política v{{ data.numero }}</Link></template></Column>
                             <Column header="Versión" style="width:16%"><template #body="{ data }"><div class="flex items-center gap-2"><Avatar :label="`v${data.numero}`" shape="circle" class="bg-primary-100 font-bold text-primary-700" /><ProductVersionStatus :state="data.estado" :used="data.usos_count > 0" /></div></template></Column>

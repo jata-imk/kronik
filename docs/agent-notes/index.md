@@ -60,3 +60,5 @@ Consulta el [índice temático](../topic/index.md) para encontrar material relac
 - [Estatus operativo de empresa](empresa-estatus-operativo.md).
 - [Folios y ayuda contextual: entrega integrada y evidencia](folios-ayuda-contextual.md).
 - [Equipo: tarjetas de roles y filtros de bitácora](equipo-tarjetas-bitacora.md).
+
+- [Contexto de sucursal: revisión transversal en progreso](contexto-sucursal-transversal.md).

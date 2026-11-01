@@ -34,3 +34,7 @@ responsable de una operación.
 - [Folios de negocio](../reference/folios.md).
 - [ADR 0030: numeración estable](../explanation/adr-0030-folios-negocio.md).
 - [Entrega de folios y ayuda](../agent-notes/folios-ayuda-contextual.md).
+
+- [Contexto de sucursal y consultas](../reference/contexto-sucursal-consultas.md).
+- [ADR 0036](../explanation/adr-0036-alcance-consulta-sucursal.md).
+- [Seguimiento transversal](../agent-notes/contexto-sucursal-transversal.md).
