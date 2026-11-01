@@ -5,12 +5,71 @@ producto aprobada ni acredita implementación Bullet. Fuente de alcance:
 [subtarea funcional](https://app.notion.com/p/40861db7db7f81d1ab37cc46ea320c3c).
 La separación sigue [ADR 0032](../explanation/adr-0032-core-crediticio-extensible.md).
 
+## Revisión con contadores: qué está decidido y qué deben responder
+
+Preparación solicitada por José el 31/10/2026, después de integrar el catálogo
+backend/Vue (PR #64). Esta revisión no habilita Bullet ni aprueba los escenarios.
+El objetivo es que negocio y contabilidad definan qué entra en la primera entrega,
+qué se rechaza y qué se difiere. Una regla contractual o de cumplimiento puede
+requerir además revisión del responsable de producto o jurídico correspondiente.
+
+Ya está aprobado como alcance del sistema:
+
+- Capital al vencimiento, con dos políticas: intereses periódicos o al vencimiento.
+  Cada versión del producto deberá autorizar la política correspondiente.
+- Anticipos con reducción de plazo incluidos, todavía sin mecanismo aprobado.
+- Separar principal, interés devengado, exigible, vencido, pagado y proyectado;
+  comisiones e impuestos por concepto. Sin capitalización implícita.
+- Reutilizar el core y conservar condiciones versionadas e historia. La base
+  técnica actual es MXN, tasa fija y Act/360; no se han habilitado reglas Bullet.
+
+Ya hay ejemplos independientes de flujo normal, liquidación temprana y una
+propuesta de anticipo con vencimiento conservado, desarrollados abajo. Falta la
+aceptación funcional y completar resultados de atraso, reversos y fiscalidad.
+
+| Tema | Pregunta para decidir qué entra | Caso que deben devolver resuelto |
+| --- | --- | --- |
+| Producto y políticas | ¿Qué productos ofrecerán intereses periódicos, al vencimiento o ambas alternativas? ¿Qué límites de monto, tasa y duración aplican? Confirmar tasa fija/Act/360 para la primera entrega. | Identificar producto y política; confirmar el flujo normal de 12000 al 24 % del ejemplo. Las dos políticas son alcance del sistema, no una obligación de ofrecerlas juntas en todos los productos. |
+| Calendario | ¿Cómo se fija la primera fecha y el vencimiento final? ¿Qué frecuencias actuales se usarán? ¿Se aceptan periodos incompletos? ¿Se mueve el cobro en inhábiles y cambia también el periodo de interés? | Disposición en fin de mes, febrero bisiesto y periodo final incompleto: fechas exactas, días y cantidades. Distinguir cada 15 días de quincena calendario; las frecuencias nuevas requieren su propio incremento. |
+| Pagos parciales | ¿Cuál es el orden entre impuestos, comisiones, interés vencido, interés devengado aún no exigible y principal? ¿Se exige pagar devengado para abonar a capital? | Pago de 100 el 01/02 cuando vencen 248 de interés: importe aplicado a cada concepto y saldo posterior. Indicar si queda remanente y cómo se trata. |
+| Anticipo conservando vencimiento | ¿Se permite? ¿Un abono anunciado de 3000 significa capital neto o dinero total recibido? ¿Cuándo se paga el interés devengado y cómo se presenta en el recibo? | Aceptar o corregir el ejemplo del 16/01: recibido 3120, interés 120, capital 3000, saldo 9000 y nuevo flujo hasta el 01/03. |
+| Anticipo reduciendo plazo | ¿Quién determina la nueva fecha, con qué fórmula o regla y qué límites/autorización? ¿Cómo cambia el siguiente pago periódico y el periodo final incompleto? | Con 9000 de principal pendiente después del anticipo, dar una nueva fecha concreta, explicar cómo se obtuvo y detallar el flujo restante para ambas políticas. No existe una cuota periódica de capital que determine por sí sola esa fecha. |
+| Atraso y mora | Si solo vence interés, ¿qué obligación genera atraso y sobre qué base se calcula mora, a qué tasa y desde qué día? ¿Hay gracia? ¿El ordinario continúa, se sustituye o coexiste con moratorio? ¿Qué cambia al vencer el principal? | Resolver desde el 02/02 los 148 de interés pendientes con 12000 de principal todavía no vencido, y resolver por separado el impago del vencimiento final. Mostrar conceptos y bases sin sumarlos al principal. |
+| Liquidación anticipada | ¿Se permite en ambas políticas? ¿Qué devengado, vencido, comisiones e impuestos se cobran? ¿Se elimina todo el interés futuro proyectado? ¿Hasta qué fecha es válida la cotización? | Aceptar o corregir la cotización aritmética de 12120 al 16/01, sin cargos/impuestos del ejemplo; resolver también una liquidación después de un pago parcial o con interés vencido. |
+| Comisiones y fiscalidad | Para esta entidad y producto, ¿qué tratamiento, tasa, base, momento de reconocimiento/cobro y comprobante corresponde a cada concepto? ¿Qué cargos aplican a anticipo, atraso y liquidación? | Una tabla por concepto con fundamento o referencia aprobada y un recibo completo. No asumir IVA universal, exención ni tasa cero a partir del ejemplo sin impuestos. |
+| Correcciones y reversos | ¿Aceptan los límites actuales de fecha y reverso del último movimiento admisible? ¿Qué evidencia y autorización requiere una corrección? | Revertir un anticipo y una liquidación: saldos, obligaciones y calendario que se restauran. Si necesitan corregir movimientos con operaciones posteriores, declararlo como ampliación, no asumir que ya se permite. |
+
+### Formato de respuesta solicitado
+
+Para cada tema, responder **entra / no entra / se difiere**, por producto y
+política. Si entra, entregar regla exacta, condiciones/límites, ejemplo con fechas
+y desglose de capital, ordinario, moratorio, comisiones, impuestos y total. Indicar
+saldo posterior, próximo vencimiento, responsable que valida y fecha de aceptación.
+Si se difiere, indicar qué operación debe bloquearse mientras no exista regla.
+
+Para lo fiscal/contable, identificar entidad y producto aplicables y conservar la
+referencia de la decisión; una opinión sobre un ejemplo no aprueba todas las
+operaciones ni sustituye la validación contractual correspondiente.
+
+### Qué falta antes de implementar
+
+1. Recibir y conciliar estas respuestas, especialmente reducción de plazo y mora.
+2. Completar los casos numéricos de ambas políticas, incluidos atraso, pagos
+   parciales, anticipo, liquidación y reverso con conceptos e impuestos separados.
+3. Registrar aceptación funcional y alcance de la primera entrega en Notion.
+4. Planificar desde esos casos la separación de obligaciones/exigibilidad, campos,
+   validaciones y UI. Recepción, conciliación y aplicación conservan sus límites.
+
+Ninguna fila queda aceptada por la sola preparación de este cuestionario. Flat,
+tasas variables, capitalización, calendarios arbitrarios, Revolvente y Nómina
+permanecen fuera de esta preparación.
+
 ## Datos sintéticos de referencia
 
 Principal 12000 MXN, tasa fija 24 % anual, días reales/360. Disposición 01/01/2027,
 vencimiento 01/03/2027. Para intereses periódicos: vencimientos 01/02 y 01/03.
-Sin comisiones y con tratamiento `no_causa` exclusivamente como fixture aritmético;
-no prescribe fiscalidad para productos reales. Gracia/mora deben definirse por
+Sin comisiones ni impuestos exclusivamente para aislar la aritmética del ejemplo;
+no prescribe tratamiento fiscal para productos reales. Gracia/mora deben definirse por
 separado. Las cifras se obtienen por las operaciones explícitas siguientes, sin
 copiar resultados del motor ni de los PDF de referencia.
 
