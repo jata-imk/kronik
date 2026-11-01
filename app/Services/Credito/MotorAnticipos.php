@@ -5,6 +5,7 @@ namespace App\Services\Credito;
 use App\Enums\ConvencionInteres;
 use App\Enums\MetodoAmortizacion;
 use App\Enums\VersionMotorCredito;
+use App\Services\Credito\Amortizacion\EstrategiasAmortizacion;
 use App\Support\Decimal as D;
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
@@ -12,7 +13,7 @@ use Illuminate\Validation\ValidationException;
 /** Pure calculator: accrued debt first, event charges second, future capital last. */
 final class MotorAnticipos
 {
-    public function __construct(private MotorPagos $pagos, private ImpuestoConceptoService $impuestos, private TablaAmortizacionCreditoSimple $amortizacion, private InteresPorPeriodo $intereses) {}
+    public function __construct(private MotorPagos $pagos, private ImpuestoConceptoService $impuestos, private TablaAmortizacionCreditoSimple $amortizacion, private InteresPorPeriodo $intereses, private EstrategiasAmortizacion $estrategias) {}
 
     public function calcular(array $antes, array $tabla, string $tipo, ?string $importe, array $opcionales = []): array
     {
@@ -205,10 +206,11 @@ final class MotorAnticipos
         $metodo = MetodoAmortizacion::from($tabla['metodo']);
         $motor = VersionMotorCredito::desdeSnapshot($state['producto']);
         $convencion = ConvencionInteres::desdeProducto($state['producto']);
+        $estrategia = $this->estrategias->resolver($metodo);
         $base = $tabla['cuota_base'] ?? null;
         if ($base === null) {
             $primera = collect($tabla['tabla'])->first(fn ($f) => $f['numero'] > 0);
-            $base = $metodo === MetodoAmortizacion::CapitalFijo ? $primera['capital'] : D::add($primera['capital'], $primera['interes'], 2);
+            $base = $estrategia->baseDesdeCuota($primera['capital'], $primera['interes']);
         }
         $filas = [];
         if (D::compare($saldo, '0') > 0) {
@@ -228,7 +230,7 @@ final class MotorAnticipos
                     $interes = D::round($motor === VersionMotorCredito::Historico
                         ? D::div(D::mul(D::mul($saldo, $state['producto']['tasa_ordinaria_anual']), (string) $dias), '36000')
                         : $this->intereses->calcular($saldo, $state['producto']['tasa_ordinaria_anual'], $inicio, $fin, $convencion));
-                    $capital = $metodo === MetodoAmortizacion::CapitalFijo ? $base : D::sub($base, $interes, 2);
+                    $capital = $estrategia->capital($base, $interes);
                     if (D::compare($capital, '0') <= 0) {
                         $this->error('La cuota contractual no amortiza el saldo recalculado. Solicita revisión.');
                     }

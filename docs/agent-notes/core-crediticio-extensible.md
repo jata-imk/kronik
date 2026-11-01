@@ -145,3 +145,22 @@ despliegue. La extensión autorizada el 31/10 queda implementada; las tareas té
 mayores permanecen abiertas. El flujo de
 [sesiones y revisiones](../reference/flujo-tareas-pruebas-pr.md) exige review medium
 por PR y barrido acumulado de todas las PR al cerrar cada funcionalidad.
+
+## Incremento de amortizaci?n reutilizable ? 31/10/2026
+
+Usuario eligi? estrategias actuales antes del cat?logo de capacidades. Rama
+`refactor/amortizacion-reutilizable`, base `56026d0`; preparaci?n arquitect?nica,
+sin nueva habilitaci?n funcional. Contrato y estrategias puros, condiciones y
+resultado inmutables, tabla adaptadora y decisiones compartidas con anticipos.
+Se mantienen ambos ?rdenes de operaciones hist?ricos y la serializaci?n.
+ADR 0034 documenta l?mites y diagrama. Solo Act/360; no habilita Bullet/Revolvente.
+
+Base verificada limpia/sincronizada; 92 pruebas dirigidas/770 aserciones aprobadas
+antes del cambio y tras extracci?n inicial. Fixtures capturados de `56026d0` con
+datos sint?ticos; cuatro pruebas nuevas/24 aserciones aprobadas. Evidencia final,
+PR y revisiones se registrar?n al completar validaci?n.
+
+El usuario reporta aproximadamente cuatro cr?ditos hist?ricos de demo. Su
+revisi?n/tratamiento puede ser acotado, pero no se ha inspeccionado ni modificado
+esa cartera. El cat?logo, diagn?stico hist?rico y dem?s implementaciones siguen
+en espera. La tarea amplia de arquitectura contin?a abierta.

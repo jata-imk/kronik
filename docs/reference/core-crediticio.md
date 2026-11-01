@@ -185,3 +185,29 @@ Los ejemplos PDF son referencias de flujo, no resultados matemáticos obligatori
 
 Relacionadas: [productos](productos-crediticios.md), [auditoría](auditoria-eventos.md),
 [contraste de auditoría](../explanation/contraste-auditoria-core-crediticio-2026-10.md).
+
+## Amortizaci?n reutilizable
+
+Preparaci?n arquitect?nica en rama `refactor/amortizacion-reutilizable`, todav?a
+sin integraci?n ni despliegue. [ADR 0034](../explanation/adr-0034-amortizacion-reutilizable.md).
+`EstrategiaAmortizacion` separa preparaci?n de base y distribuci?n de principal.
+`CuotaNivelada` y `CapitalFijo` se resuelven sin estado por m?todo; tabla y ambos
+modos de anticipo usan estas decisiones comunes.
+
+`CalculadorAmortizacion::calcular(CondicionesAmortizacion)` recibe principal,
+tasa porcentual, inicio, fechas, m?todo, motor y convenci?n. Devuelve
+`ResultadoAmortizacion` con filas y base contractual inmutables. No conoce
+cr?ditos, l?neas, actores, equipos, Eloquent ni auditor?a. No crea calendarios,
+no decide cu?ndo son exigibles los intereses ni cambia la base de devengo.
+
+El adaptador `TablaAmortizacionCreditoSimple` conserva firma, arrays y errores
+en `metodo`. Anticipos conserva errores en `pago`, la recuperaci?n hist?rica de
+`cuota_base`, el l?mite del calendario y su serializaci?n. Reducir plazo conserva
+base, limita la ?ltima amortizaci?n al saldo y rechaza un calendario insuficiente.
+Los intereses hist?ricos de tabla y de reducci?n de plazo mantienen sus ?rdenes
+de operaciones originales. No se agrega versi?n de motor ni formato.
+
+Pruebas sin Laravel muestran un simple y una disposici?n equivalente, adem?s de
+dos disposiciones simuladas con m?todos distintos sin contaminar resultados.
+No acredita Revolvente operativo ni su validaci?n de combinaciones. Cat?logo de
+capacidades, Bullet, exigibilidad independiente y cartera hist?rica siguen pendientes.
