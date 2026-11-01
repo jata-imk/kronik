@@ -21,4 +21,4 @@ Los documentos distinguen diseño aprobado de capacidades implementadas.
 - [Cartera, pagos y anticipos](cartera-pagos.md).
 - [Auditoría, reportes y contabilidad](auditoria-reportes.md).
 
-- [ADR 0034: estrategias compartidas de amortizaci?n](../explanation/adr-0034-amortizacion-reutilizable.md).
+- [ADR 0034: estrategias compartidas de amortización](../explanation/adr-0034-amortizacion-reutilizable.md).

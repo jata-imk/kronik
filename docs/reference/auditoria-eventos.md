@@ -140,11 +140,11 @@ podrían interpretarse como fórmulas se prefijan para tratarlos como texto.
 4. Agregar una prueba que verifique código, equipo, sujeto y ausencia de datos sensibles.
 5. Actualizar esta matriz.
 
-## Incremento de amortizaci?n reutilizable ? 31/10/2026
+## Incremento de amortización reutilizable ? 31/10/2026
 
-El [ADR 0034](../explanation/adr-0034-amortizacion-reutilizable.md) separa c?lculo
-sin nuevas acciones auditables. Permanecen los emisores de aplicaci?n de producto,
-desembolso, pago/anticipo, liquidaci?n y reverso. No se emiten eventos por resolver
+El [ADR 0034](../explanation/adr-0034-amortizacion-reutilizable.md) separa cálculo
+sin nuevas acciones auditables. Permanecen los emisores de aplicación de producto,
+desembolso, pago/anticipo, liquidación y reverso. No se emiten eventos por resolver
 estrategias ni por calcular tablas. `CreditoAnticiposTest` comprueba evento ?nico
 tras reintento, actor, sujeto, equipo/sucursal originales y ausencia de importes,
 referencias o snapshots en metadatos. Se conserva la cobertura parcial de la

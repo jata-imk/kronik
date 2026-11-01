@@ -11,7 +11,7 @@ use App\Services\Credito\Amortizacion\CondicionesAmortizacion;
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
 
-/** Adaptador del contrato de tabla existente al c?lculo reutilizable. */
+/** Adaptador del contrato de tabla existente al cálculo reutilizable. */
 final class TablaAmortizacionCreditoSimple
 {
     public function __construct(private readonly CalculadorAmortizacion $calculador) {}

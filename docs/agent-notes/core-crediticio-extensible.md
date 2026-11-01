@@ -146,49 +146,49 @@ mayores permanecen abiertas. El flujo de
 [sesiones y revisiones](../reference/flujo-tareas-pruebas-pr.md) exige review medium
 por PR y barrido acumulado de todas las PR al cerrar cada funcionalidad.
 
-## Incremento de amortizaci?n reutilizable ? 31/10/2026
+## Incremento de amortización reutilizable ? 31/10/2026
 
-Usuario eligi? estrategias actuales antes del cat?logo de capacidades. Rama
-`refactor/amortizacion-reutilizable`, base `56026d0`; preparaci?n arquitect?nica,
-sin nueva habilitaci?n funcional. Contrato y estrategias puros, condiciones y
+Usuario eligió estrategias actuales antes del catálogo de capacidades. Rama
+`refactor/amortizacion-reutilizable`, base `56026d0`; preparación arquitectónica,
+sin nueva habilitación funcional. Contrato y estrategias puros, condiciones y
 resultado inmutables, tabla adaptadora y decisiones compartidas con anticipos.
-Se mantienen ambos ?rdenes de operaciones hist?ricos y la serializaci?n.
-ADR 0034 documenta l?mites y diagrama. Solo Act/360; no habilita Bullet/Revolvente.
+Se mantienen ambos ?rdenes de operaciones históricos y la serialización.
+ADR 0034 documenta límites y diagrama. Solo Act/360; no habilita Bullet/Revolvente.
 
 Base verificada limpia/sincronizada; 92 pruebas dirigidas/770 aserciones aprobadas
-antes del cambio y tras extracci?n inicial. Fixtures capturados de `56026d0` con
-datos sint?ticos; cuatro pruebas nuevas/24 aserciones aprobadas. Evidencia final,
-PR y revisiones finales registradas a continuaci?n.
+antes del cambio y tras extracción inicial. Fixtures capturados de `56026d0` con
+datos sintéticos; cuatro pruebas nuevas/24 aserciones aprobadas. Evidencia final,
+PR y revisiones finales registradas a continuación.
 
-El usuario reporta aproximadamente cuatro cr?ditos hist?ricos de demo. Su
-revisi?n/tratamiento puede ser acotado, pero no se ha inspeccionado ni modificado
-esa cartera. El cat?logo, diagn?stico hist?rico y dem?s implementaciones siguen
-en espera. La tarea amplia de arquitectura contin?a abierta.
+El usuario reporta aproximadamente cuatro créditos históricos de demo. Su
+revisión/tratamiento puede ser acotado, pero no se ha inspeccionado ni modificado
+esa cartera. El catálogo, diagnóstico histórico y demás implementaciones siguen
+en espera. La tarea amplia de arquitectura continúa abierta.
 
 ### Evidencia final del incremento ? PR #62
 
-[PR #62](https://github.com/jata-imk/kronik/pull/62), c?digo `c5b8422`, base
-`56026d0`. Implementado y publicado, sin integraci?n ni despliegue.
+[PR #62](https://github.com/jata-imk/kronik/pull/62), código `c5b8422`, base
+`56026d0`. Implementado y publicado, sin integración ni despliegue.
 
 - `php artisan test --compact`: 587 aprobadas, una omitida, 41996 aserciones.
 - E2E `solicitudes-dual.spec.js`: 1 aprobado sobre SQLite aislada, con PDF,
-  desembolso, pago/reverso, anticipo, liquidaci?n y reapertura. Sin BD operativa.
+  desembolso, pago/reverso, anticipo, liquidación y reapertura. Sin BD operativa.
 - Build, Pint de 14 archivos y `git diff --check` aprobados. Seis documentos y
   68 enlaces locales revisados sin roturas. Advertencias de recursos/chunks ya
-  existentes; sin cambios de dependencias. Hook pre-push repiti? suite/build
+  existentes; sin cambios de dependencias. Hook pre-push repitió suite/build
   aprobados sin omitir controles para `c5b8422`.
 - `/review medium` mediante `codex review --base 56026d0 -c
-  model_reasoning_effort=medium`: sin hallazgos accionables; revisor verific?
+  model_reasoning_effort=medium`: sin hallazgos accionables; revisor verificó
   70 pruebas dirigidas. Barrido acumulado contra `9106a6e` de #59/#60/#61/#62:
   sin regresiones accionables, 86 pruebas dirigidas verificadas por el revisor.
-  Ambas revisiones cubren el contenido de c?digo `c5b8422`.
-- Auditor?a revisada sin nuevos eventos; prueba de anticipo verifica reintentos,
+  Ambas revisiones cubren el contenido de código `c5b8422`.
+- Auditoría revisada sin nuevos eventos; prueba de anticipo verifica reintentos,
   actor/sujeto, contexto y ausencia de metadatos sensibles. Sin migraciones,
-  seeders nuevos, variables ni cambios de UI. CI y revisi?n del cierre documental
-  se consultan en PR #62; no confundir CI con despliegue o medici?n de capacidad.
+  seeders nuevos, variables ni cambios de UI. CI y revisión del cierre documental
+  se consultan en PR #62; no confundir CI con despliegue o medición de capacidad.
 
-Este incremento completa la extracci?n de estrategias actuales, no toda la tarea
-arquitect?nica. Pr?ximo incremento por elegir en Notion: cat?logo de capacidades
-u otros contratos pendientes; no iniciarlos en esta sesi?n. Revisar separadamente
-los aproximadamente cuatro cr?ditos demo. Bullet a?n requiere mecanismo de
-reducci?n de plazo y definici?n funcional de mora. Solo Act/360 habilitada.
+Este incremento completa la extracción de estrategias actuales, no toda la tarea
+arquitectónica. Próximo incremento por elegir en Notion: catálogo de capacidades
+u otros contratos pendientes; no iniciarlos en esta sesión. Revisar separadamente
+los aproximadamente cuatro créditos demo. Bullet aún requiere mecanismo de
+reducción de plazo y definición funcional de mora. Solo Act/360 habilitada.
