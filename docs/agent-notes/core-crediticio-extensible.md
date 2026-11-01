@@ -18,6 +18,12 @@ Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
 
 ## Estado actual
 
+- 31/10/2026: incremento autorizado de catálogo backend/Vue implementado en
+  `feat/catalogo-capacidades-credito`, base `d002037`. Catálogo de código,
+  compatibilidad explícita por motor y opciones desde snapshot; Vue consume
+  etiquetas/ayudas en Productos y Solicitudes. ADR 0035. Pendientes publicación,
+  revisión final y cierre de evidencia; sin integración ni despliegue.
+
 - 31/10/2026: incremento de amortización reutilizable completado e integrado
   mediante [PR #62](https://github.com/jata-imk/kronik/pull/62) en `15bdc8d` por
   autorización del usuario. Árbol idéntico a `f48d739`; se conserva la evidencia
@@ -147,6 +153,9 @@ segmentación/contexto contractual antes de habilitarlas. Despliegue y QA operat
 posterior no se han realizado por esta entrega.
 
 ## Cierre
+
+El cierre histórico siguiente corresponde a incrementos anteriores. El catálogo
+backend/Vue iniciado el 31/10/2026 mantiene su propia evidencia al final de la nota.
 
 Incrementos integrados en `main` mediante PR #59 y #60, con revisiones medium
 individuales, barrido conjunto contra `9106a6e` y CI de main aprobada. Sin

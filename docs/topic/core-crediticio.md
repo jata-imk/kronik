@@ -6,6 +6,8 @@ Los documentos distinguen diseño aprobado de capacidades implementadas.
 
 ## Referencia y decisiones
 
+- [ADR 0035: catálogo de capacidades backend/Vue](../explanation/adr-0035-catalogo-capacidades-credito.md).
+
 - [Responsabilidades, invariantes y contratos del core](../reference/core-crediticio.md).
 - [Bullet: propuestas y decisiones funcionales pendientes](../reference/bullet-casos-definicion.md).
 - [ADR 0032: evolución modular del core](../explanation/adr-0032-core-crediticio-extensible.md).

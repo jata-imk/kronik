@@ -187,15 +187,17 @@ final class SimuladorCreditoSimple
 
     private function validar(ProductoVersion $version, string $saldoFinanciado, PeriodicidadCredito $periodicidad, int $plazo, MetodoAmortizacion $metodo): void
     {
-        $config = $version->periodicidades->firstWhere('periodicidad', $periodicidad->value);
+        $condiciones = CapacidadesProducto::condiciones($version);
+        CapacidadesProducto::validar($condiciones, $this->versionMotor($version));
+        $config = collect($condiciones['periodicidades'])->firstWhere('periodicidad', $periodicidad->value);
         $errores = [];
         if (Decimal::compare($saldoFinanciado, (string) $version->monto_minimo) < 0 || Decimal::compare($saldoFinanciado, (string) $version->monto_maximo) > 0) {
             $errores['monto'] = 'El saldo total financiado, incluidas las comisiones y los impuestos financiados del escenario, debe estar dentro del rango del producto.';
         }
-        if (! $config || $plazo < $config->plazo_minimo || $plazo > $config->plazo_maximo) {
+        if (! $config || $plazo < $config['plazo_minimo'] || $plazo > $config['plazo_maximo']) {
             $errores['plazo'] = 'El plazo no está permitido para la periodicidad seleccionada.';
         }
-        if (! in_array($metodo->value, $version->reglas?->metodos_amortizacion ?? [], true)) {
+        if (! in_array($metodo->value, $condiciones['reglas']['metodos_amortizacion'] ?? [], true)) {
             $errores['metodo'] = 'El método de amortización no está habilitado para esta versión.';
         }
         if ($errores !== []) {

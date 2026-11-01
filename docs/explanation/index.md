@@ -47,3 +47,5 @@
 - [ADR 0031: consulta de actividad por equipo y sucursal](adr-0031-consulta-actividad-equipo-sucursal.md).
 
 - [ADR 0034: amortización reutilizable de los métodos actuales](adr-0034-amortizacion-reutilizable.md).
+
+- [ADR 0035: catálogo de capacidades backend/Vue](adr-0035-catalogo-capacidades-credito.md).

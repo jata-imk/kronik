@@ -1,5 +1,31 @@
 # Core crediticio: responsabilidades y contratos de evolución
 
+## Catálogo de capacidades
+
+`CatalogoCapacidadesCredito` declara opciones `{value, label, ayuda}` para métodos,
+periodicidades, convenciones y aplicaciones del prepago. `paraMotor()` mantiene
+compatibilidad explícita para motores 1 y 2; solo Act/360 está habilitada.
+La guarda y el catálogo comparten `VersionMotorCredito::admiteConvencion`.
+
+Productos y captura de Solicitudes reciben `capacidadesCredito` con `catalogo`
+y `configuracion` (motor actual, opciones y predeterminados actuales). Cada versión
+incluye `capacidades`: `motor_calculo_version`, `opciones` y `problemas`.
+Las periodicidades incluyen límites y plazo predeterminado. Estos datos de
+presentación quedan fuera del snapshot y no constituyen condiciones persistidas.
+
+El resolvedor usa el snapshot existente; para borradores sin snapshot usa
+reglas/periodicidades y motor actual. Ausencia histórica de marcas conserva motor 1
+y Act/360; nulos explícitos o códigos desconocidos bloquean operación y muestran
+advertencia en consulta. Se conservan valores originales, snapshots y hashes.
+
+Guardar/copiar productos y congelar versiones valida capacidades en servicio.
+Simular/enviar solicitudes comprueba las opciones contractuales del snapshot.
+Se conserva el guardado incompleto del borrador. Cambiar producto limpia selecciones
+incompatibles con aviso. Quincenal conserva cada 15 días, sin habilitar catorcenal
+ni quincena calendario. Prepago conserva su aplicación contractual por operación.
+Decisión: [ADR 0035](../explanation/adr-0035-catalogo-capacidades-credito.md).
+Estado y evidencia en la Agent Note; este contrato no acredita despliegue.
+
 Dirección aprobada el 29/10/2026: [ADR 0032](../explanation/adr-0032-core-crediticio-extensible.md).
 El [roadmap de Notion](https://app.notion.com/p/40961db7db7f819a8af1d7c3cfec2df7)
 conserva alcance, dependencias y fechas. Esta referencia no acredita nuevas

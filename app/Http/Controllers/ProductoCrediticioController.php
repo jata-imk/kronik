@@ -44,7 +44,12 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
         $this->authorize('viewAny', ProductoCrediticio::class);
 
         return Inertia::render('ProductosCrediticios/Index', [
-            'productos' => fn () => ProductoCrediticio::query()->with(['versiones' => fn ($query) => $query->with(['periodicidades', 'reglas', 'comisiones.concepto'])->withCount('usos')->orderByDesc('numero')])->orderBy('nombre')->get(),
+            'capacidadesCredito' => \App\Services\Credito\CatalogoCapacidadesCredito::paraVue(),
+            'productos' => fn () => ProductoCrediticio::query()->with(['versiones' => fn ($query) => $query->with(['periodicidades', 'reglas', 'comisiones.concepto'])->withCount('usos')->orderByDesc('numero')])->orderBy('nombre')->get()->map(function ($producto) {
+                $producto->versiones->each(fn ($version) => $version->setAttribute('capacidades', \App\Services\Credito\CapacidadesProducto::paraVersion($version)));
+
+                return $producto;
+            }),
             'conceptosComision' => fn () => ConceptoComision::query()->where('activo', true)->orderBy('nombre')->get(),
             'simuladorDefaults' => fn () => [
                 'fecha_disposicion' => $fechaEmpresa->hoy()->toDateString(),

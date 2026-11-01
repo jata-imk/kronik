@@ -21,7 +21,7 @@ test("crea, reanuda y envía una solicitud sin aprobar ni consultar SIC", async 
     await page.getByLabel("Monto solicitado (MXN)").blur();
     await expect(page.getByLabel("Monto solicitado (MXN)")).toHaveValue(/10,000\.00/);
     await page.getByLabel("Periodicidad", { exact: true }).click();
-    await page.getByRole("option", { name: "mensual", exact: true }).click();
+    await page.getByRole("option", { name: "Mensual", exact: true }).click();
     await page.getByLabel("Número de pagos").fill("12");
     await page.getByLabel("Amortización", { exact: true }).click();
     await page.getByRole("option", { name: "Cuota nivelada", exact: true }).click();
