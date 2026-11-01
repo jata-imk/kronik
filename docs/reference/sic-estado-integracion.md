@@ -70,3 +70,11 @@ Guard de QA/sandbox/host/key y redirecciones rechazadas. Firma nativa P384/SHA25
 probada; transporte productivo cerrado. Migración conserva respuestas existentes.
 `sic:cifrar-historico` archiva y verifica; retirar texto plano requiere respaldo.
 [Guía SIC QA](../how-to/qa-sic.md).
+
+## Alcance de consulta por sucursal
+
+Consultar el [contrato transversal de contexto y consultas](contexto-sucursal-consultas.md)
+para alcance actual/institucional, paginación en servidor y conservación del
+contexto histórico. La entrega transversal sigue en progreso; su
+[Agent Note](../agent-notes/contexto-sucursal-transversal.md) distingue implementación,
+regresión local y pendientes, sin acreditar integración ni despliegue.

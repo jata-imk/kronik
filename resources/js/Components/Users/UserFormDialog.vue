@@ -1,9 +1,11 @@
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, onMounted, onUnmounted } from "vue";
 import { useForm } from "@inertiajs/vue3";
+import axios from "axios";
 import { useToast } from "primevue/usetoast";
 
 const props = defineProps({
+    remoteOptions: Boolean,
     user: { type: Object, default: null },
     teams: { type: Array, default: () => [] },
     roles: { type: Array, default: () => [] },
@@ -15,10 +17,44 @@ const props = defineProps({
 const emit = defineEmits(["close"]);
 const toast = useToast();
 const visible = ref(true);
+const teams = ref(props.teams);
+const roles = ref(props.roles);
+const sucursales = ref(props.sucursales);
+const optionError = ref("");
+const optionLoading = ref(false);
+const controllers = new Map();
+const revisions = new Map();
+async function lookup(type, event = {}, teamId = null) {
+    if (!props.remoteOptions) return;
+    const key = type + (teamId ?? "");
+    controllers.get(key)?.abort();
+    const controller = new AbortController();
+    controllers.set(key, controller);
+    const revision = (revisions.get(key) ?? 0) + 1;
+    revisions.set(key, revision);
+    const target = { teams, roles, sucursales }[type];
+    const included = type === "teams" ? selectedTeamIds.value : type === "sucursales" ? form.sucursal_ids : form.team_roles.flatMap(item => item.role_ids);
+    try {
+        const response = await axios.get(route("admin.users.options"), { signal: controller.signal, params: { tipo: type, buscar: event.value ?? "", team_id: teamId, usuario_id: props.user?.id, incluidos: included.slice(0, 100) } });
+        if (revisions.get(key) !== revision) return;
+        const retained = target.value.filter(item => included.includes(item.id) || (type === "roles" && teamId && item.team_id !== teamId));
+        target.value = [...new Map([...retained, ...response.data].map(item => [item.id, item])).values()];
+    } catch (error) {
+        if (!axios.isCancel(error)) optionError.value = "No fue posible cargar las opciones. Reintenta antes de guardar.";
+    }
+}
+async function loadOptions() {
+    optionLoading.value = true;
+    optionError.value = "";
+    await Promise.all([lookup("teams"), lookup("sucursales"), ...form.team_roles.map(item => lookup("roles", {}, item.team_id))]);
+    optionLoading.value = false;
+}
+onMounted(() => { if (props.remoteOptions) loadOptions(); });
+onUnmounted(() => { for (const controller of controllers.values()) controller.abort(); });
 
-const prefillTeam = props.teams.find((team) => team.id === Number(props.prefill.team_id));
-const prefillRole = props.roles.find((role) => role.id === Number(props.prefill.role_id) && role.team_id === prefillTeam?.id);
-const prefillBranch = props.sucursales.find((branch) => branch.id === Number(props.prefill.sucursal_id));
+const prefillTeam = props.teams.find((team) => team.id === Number(props.prefill.team_id)) ?? (props.remoteOptions && props.prefill.team_id ? { id: Number(props.prefill.team_id) } : null);
+const prefillRole = props.roles.find((role) => role.id === Number(props.prefill.role_id) && role.team_id === prefillTeam?.id) ?? (props.remoteOptions && props.prefill.role_id ? { id: Number(props.prefill.role_id) } : null);
+const prefillBranch = props.sucursales.find((branch) => branch.id === Number(props.prefill.sucursal_id)) ?? (props.remoteOptions && props.prefill.sucursal_id ? { id: Number(props.prefill.sucursal_id) } : null);
 const initialTeamRoles = props.user?.team_roles?.length
     ? props.user.team_roles.map((item) => ({ ...item, role_ids: [...item.role_ids] }))
     : prefillTeam
@@ -54,6 +90,7 @@ watch(
         form.team_roles = ids.map(
             (teamId) => existing.get(teamId) ?? { team_id: teamId, role_ids: [] },
         );
+        if (props.remoteOptions) for (const id of ids) lookup("roles", {}, id);
         if (!ids.includes(form.current_team_id)) {
             form.current_team_id = ids[0] ?? null;
         }
@@ -74,15 +111,15 @@ watch(
 const selectedTeams = computed(() =>
     form.team_roles.map((assignment) => ({
         assignment,
-        team: props.teams.find((team) => team.id === assignment.team_id),
-        roles: props.roles.filter((role) => role.team_id === assignment.team_id),
+        team: teams.value.find((team) => team.id === assignment.team_id),
+        roles: roles.value.filter((role) => role.team_id === assignment.team_id),
     })),
 );
 const availableCurrentTeams = computed(() =>
-    props.teams.filter((team) => team.activo !== false && selectedTeamIds.value.includes(team.id)),
+    teams.value.filter((team) => team.activo !== false && selectedTeamIds.value.includes(team.id)),
 );
 const availablePrincipalBranches = computed(() =>
-    props.sucursales.filter((branch) => branch.activa !== false && form.sucursal_ids.includes(branch.id)),
+    sucursales.value.filter((branch) => branch.activa !== false && form.sucursal_ids.includes(branch.id)),
 );
 const errorMessages = computed(() => [...new Set(Object.values(form.errors).flat())]);
 
@@ -121,6 +158,7 @@ const submit = () => {
         :style="{ width: '760px', maxWidth: '95vw' }"
         @hide="emit('close')"
     >
+        <Message v-if="optionError" severity="error">{{ optionError }} <Button label="Reintentar carga" text @click="loadOptions" /></Message>
         <form class="flex flex-col gap-5" @submit.prevent="submit">
             <Message v-if="errorMessages.length" severity="error">
                 <div class="font-medium">No se pudo guardar:</div>
@@ -166,7 +204,7 @@ const submit = () => {
                         v-model="selectedTeamIds"
                         aria-label="Equipos asignados"
                         :option-disabled="(team) => team.activo === false && !originalTeamIds.includes(team.id)"
-                        :options="teams"
+                        :options="teams" @filter="event => lookup('teams', event)"
                         option-label="name"
                         option-value="id"
                         display="chip"
@@ -179,7 +217,7 @@ const submit = () => {
                     <label class="mb-2 block text-sm font-medium">Roles en {{ item.team?.name }}{{ item.team?.activo === false ? " (inactivo; asignación conservada)" : "" }}</label>
                     <MultiSelect
                         v-model="item.assignment.role_ids"
-                        :options="item.roles"
+                        :options="item.roles" @filter="event => lookup('roles', event, item.assignment.team_id)"
                         option-label="name"
                         option-value="id"
                         display="chip"
@@ -212,7 +250,7 @@ const submit = () => {
                         v-model="form.sucursal_ids"
                         aria-label="Sucursales asignadas"
                         :option-disabled="(branch) => branch.activa === false && !originalBranchIds.includes(branch.id)"
-                        :options="sucursales"
+                        :options="sucursales" @filter="event => lookup('sucursales', event)"
                         option-label="nombre"
                         option-value="id"
                         display="chip"
@@ -236,7 +274,7 @@ const submit = () => {
 
             <div class="flex justify-end gap-2">
                 <Button label="Cancelar" severity="secondary" @click.prevent="emit('close')" />
-                <Button label="Guardar" icon="pi pi-check" type="submit" :loading="form.processing" />
+                <Button label="Guardar" icon="pi pi-check" type="submit" :loading="form.processing || optionLoading" :disabled="Boolean(optionError) || optionLoading" />
             </div>
         </form>
     </Dialog>

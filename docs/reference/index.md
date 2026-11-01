@@ -32,3 +32,5 @@
 - [Estatus operativo de empresa](estatus-operativo-empresa.md).
 
 - [Folios de negocio y contrato de numeración](folios.md).
+
+- [Contexto de sucursal y consultas](contexto-sucursal-consultas.md).

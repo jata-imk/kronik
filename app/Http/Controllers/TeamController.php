@@ -27,8 +27,6 @@ class TeamController extends InertiaTeamController
         $team = $team->load(
             'owner.sucursales',
             'owner.sucursalPrincipal',
-            'users.sucursales',
-            'users.sucursalPrincipal',
         );
         $context = app(\App\Services\TeamContext::class);
         $context->ensureAccess($request->user(), $team);
@@ -36,7 +34,9 @@ class TeamController extends InertiaTeamController
             'update teams', 'delete teams', 'read roles', 'read activity-log', 'remove members teams',
         ])->mapWithKeys(fn ($permission) => [str_replace(' ', '-', $permission) => $request->user()->can($permission)]));
         $canManageUsers = $request->user()->can('read users');
-        $members = collect([$team->owner])->merge($team->users)->unique('id');
+        [$membersPage, $pendingPage, $memberCount, $activeRoleCounts, $membersMeta, $pendingMeta] = app(\App\Services\EquipoListadoService::class)->paginas($request, $team);
+        $members = $canManageUsers ? $membersPage->getCollection()->concat($pendingPage->getCollection())->unique('id') : collect();
+        $members->loadMissing(['sucursales', 'sucursalPrincipal']);
         $roleAssignments = DB::table('model_has_roles')
             ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
             ->where('model_has_roles.model_type', (new User)->getMorphClass())
@@ -46,9 +46,6 @@ class TeamController extends InertiaTeamController
             ->groupBy('model_id');
 
         $userPayloads = $canManageUsers ? app(\App\Services\UserAdministrationData::class)->users($members) : collect();
-        $activeMembers = $members->filter(fn ($user) => $user->status === \App\Enums\UserStatus::Active)->pluck('id');
-        $activeRoleCounts = $roleAssignments->only($activeMembers->all())->flatten(1)->groupBy('id')
-            ->map(fn ($assignments) => $assignments->pluck('model_id')->unique()->count());
         $memberPayload = fn (User $user) => [
             ...$userPayloads->get($user->id, []),
             'id' => $user->id,
@@ -69,6 +66,15 @@ class TeamController extends InertiaTeamController
             'sucursales' => $user->sucursales->map->only(['id', 'nombre', 'clave'])->values(),
         ];
 
+        $request->validate(['invitar_roles_page' => 'nullable|integer|min:1', 'invitar_roles_buscar' => 'nullable|string|max:100', 'invitar_roles_por_pagina' => ['nullable', 'integer', \Illuminate\Validation\Rule::in([10, 25, 50])]]);
+        $inviteRoles = $canManageUsers ? $team->ownedRoles()->where('guard_name', 'web')->where('name', '!=', 'Super Admin')
+            ->when($request->filled('invitar_roles_buscar'), fn ($q) => $q->where('name', 'like', '%'.$request->input('invitar_roles_buscar').'%'))
+            ->orderBy('name')->orderBy('id')->paginate($request->integer('invitar_roles_por_pagina', 25), ['id', 'name'], 'invitar_roles_page')->withQueryString() : null;
+        $request->validate(['roles_page' => 'nullable|integer|min:1', 'roles_por_pagina' => ['nullable', 'integer', \Illuminate\Validation\Rule::in([10, 25, 50])]]);
+        $rolePage = $capabilities['read-roles'] ? $team->ownedRoles()->where('guard_name', 'web')
+            ->whereIn('id', $activeRoleCounts->keys())->with('permissions.module')->orderBy('name')->orderBy('id')
+            ->paginate($request->integer('roles_por_pagina', 25), ['*'], 'roles_page')->withQueryString() : null;
+
         return Jetstream::inertia()->render($request, 'Teams/Show', [
             'team' => [
                 'id' => $team->id,
@@ -76,34 +82,38 @@ class TeamController extends InertiaTeamController
                 'activo' => $team->activo,
                 'personal_team' => $team->personal_team,
                 'owner' => $team->owner,
-                'members_count' => $members->count(),
+                'members_count' => $memberCount,
             ],
-            'members' => $canManageUsers ? $members->reject(fn ($user) => $user->status === \App\Enums\UserStatus::Pending)->map($memberPayload)->values() : [],
-            'pendingInvitations' => $canManageUsers ? $members->filter(fn ($user) => $user->status === \App\Enums\UserStatus::Pending)->map($memberPayload)->values() : [],
-            'roles' => $canManageUsers
-                ? config('permission.models.role')::query()
-                    ->where('guard_name', 'web')
-                    ->where(config('permission.column_names.team_foreign_key', 'team_id'), $team->id)
-                    ->where('name', '!=', 'Super Admin')
-                    ->orderBy('name')
-                    ->get(['id', 'name'])
-                : [],
+            'listado' => $canManageUsers ? $membersMeta : null,
+            'pendingListado' => $canManageUsers ? $pendingMeta : null,
+            'members' => $canManageUsers ? $membersPage->getCollection()->map($memberPayload)->values() : [],
+            'pendingInvitations' => $canManageUsers ? $pendingPage->getCollection()->map($memberPayload)->values() : [],
+            'roles' => $inviteRoles?->getCollection() ?? [],
+            'inviteRolesListado' => $inviteRoles ? app(\App\Services\ListadoParametros::class)->metadata($inviteRoles, []) : null,
             'sucursales' => $canManageUsers
                 ? Sucursal::query()->where('activa', true)->orderBy('nombre')->get(['id', 'nombre', 'clave'])
                 : [],
             'canManageUsers' => $canManageUsers,
             'userFormOptions' => $canManageUsers ? app(\App\Services\UserAdministrationData::class)->formOptions($request->user()) : [],
             'teamCapabilities' => $capabilities,
-            'responsibleCandidates' => $capabilities['update-teams'] ? $members
-                ->filter(fn ($user) => $user->status === \App\Enums\UserStatus::Active && $user->id !== $team->user_id)
-                ->map->only(['id', 'name'])->values() : [],
-            'teamRoles' => $capabilities['read-roles'] ? $team->ownedRoles()->where('guard_name', 'web')
-                ->whereIn('id', $activeRoleCounts->keys())->with('permissions.module')->orderBy('name')->get()->map(fn ($role) => [
-                    'id' => $role->id, 'name' => $role->name,
-                    'members_count' => $activeRoleCounts[$role->id],
-                    'modules' => $role->permissions->pluck('module.etiqueta')->filter()->unique()->values(),
-                ]) : [],
+            'responsibleCandidates' => $capabilities['update-teams'] ? app(\App\Services\EquipoListadoService::class)->miembros($team)->where('status', 'active')->where('id', '!=', $team->user_id)->orderBy('name')->limit(20)->get(['id', 'name']) : [],
+            'teamRolesListado' => $rolePage ? app(\App\Services\ListadoParametros::class)->metadata($rolePage, []) : null,
+            'teamRoles' => $rolePage ? $rolePage->getCollection()->map(fn ($role) => [
+                'id' => $role->id, 'name' => $role->name, 'members_count' => (int) $activeRoleCounts[$role->id],
+                'modules' => $role->permissions->pluck('module.etiqueta')->filter()->unique()->values(),
+            ]) : [],
         ]);
+    }
+
+    public function responsables(Request $request, \App\Models\Team $team)
+    {
+        Gate::authorize('view', $team);
+        app(\App\Services\TeamContext::class)->authorize($request->user(), $team, 'update teams');
+        $data = $request->validate(['buscar' => 'nullable|string|max:100']);
+
+        return app(\App\Services\EquipoListadoService::class)->miembros($team)->where('status', 'active')->where('id', '!=', $team->user_id)
+            ->when($data['buscar'] ?? null, fn ($q, $v) => $q->where('name', 'like', '%'.$v.'%'))
+            ->orderBy('name')->orderBy('id')->limit(20)->get(['id', 'name']);
     }
 
     /**

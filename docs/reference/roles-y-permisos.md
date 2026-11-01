@@ -58,3 +58,9 @@ sus permisos respectivos. Véase [ADR 0025](../explanation/adr-0025-roles-aislam
 ## Pruebas
 
 La suite de Jetstream debe permanecer verde porque CI ejecuta `php artisan test` completo.
+
+## Consulta y paginación
+
+El [contrato transversal de contexto y listados](contexto-sucursal-consultas.md)
+describe parámetros de consulta, paginadores y selección independiente de la
+página, conservando los permisos y la naturaleza global o por equipo del módulo.

@@ -807,7 +807,7 @@ test('asignación genera tarea visible al responsable y rechaza usuarios inactiv
     $recipient = actingAsSuperAdmin();
     $recipient->sucursales()->attach($actor->current_sucursal_id);
     $this->actingAs($actor)->patch(route('solicitudes.asignar', $solicitud), ['lock_version' => 0, 'responsable_id' => $recipient->id])->assertSessionHasNoErrors();
-    $this->actingAs($recipient)->get(route('solicitudes.trabajo'))->assertInertia(fn (Assert $page) => $page->where('solicitudes.total', 1));
+    $this->actingAs($recipient)->get(route('solicitudes.trabajo', ['scope' => 'all']))->assertInertia(fn (Assert $page) => $page->where('solicitudes.total', 1));
     $this->actingAs($actor)->get(route('solicitudes.trabajo'))->assertInertia(fn (Assert $page) => $page->where('solicitudes.total', 0));
     $recipient->update(['status' => 'inactive']);
     $this->patch(route('solicitudes.asignar', $solicitud), ['lock_version' => 1, 'responsable_id' => $recipient->id])->assertSessionHasErrors('responsable_id');

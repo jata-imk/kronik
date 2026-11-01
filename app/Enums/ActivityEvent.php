@@ -4,6 +4,7 @@ namespace App\Enums;
 
 enum ActivityEvent: string
 {
+    case ActiveBranchChanged = 'user.active_branch_changed';
     case UserCreated = 'user.created';
     case UserUpdated = 'user.updated';
     case UserDeactivated = 'user.deactivated';
@@ -91,6 +92,7 @@ enum ActivityEvent: string
     public function label(): string
     {
         return match ($this) {
+            self::ActiveBranchChanged => 'Sucursal activa cambiada',
             self::UserCreated => 'Cuenta pendiente creada',
             self::UserUpdated => 'Cuenta actualizada',
             self::UserDeactivated => 'Cuenta desactivada',

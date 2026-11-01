@@ -8,8 +8,8 @@ const { clientes, can, filters, sucursales, view } = defineProps({
     confirmsTwoFactorAuthentication: Boolean,
     sessions: Array,
     clientes: {
-        type: Array,
-        default: () => [],
+        type: Object,
+        default: () => ({ data: [] }),
     },
     can: {
         type: Object,

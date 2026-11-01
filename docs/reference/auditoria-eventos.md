@@ -86,6 +86,7 @@ Los resultados de estas pruebas corresponden al código, no a QA desplegado.
 
 | Módulo | Acción/disparador | Código | Actor/iniciador | Sujeto | Resultado | Equipo/sucursal | Metadatos | Consulta | Estado | Emisor | Prueba |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `users` / contexto | Cambio efectivo de sucursal activa | `user.active_branch_changed` | Usuario autenticado, incluido Super Admin | Usuario | `changed` | Equipo iniciador y sucursal anterior, incluso desconocida | `related` sucursal destino, `result` | Q | Implementado localmente, sin integración | `CurrentSucursalController` | `ConsultaSucursalTest`; no-op no duplica |
 | `users` | Alta pendiente, edición y estado, incluidos cambios de acceso global y sucursales secundarias | `user.created`, `user.updated`, `user.deactivated`, `user.reactivated` | Administrador, incluido Super Admin | Usuario | `created` / `applied` | C | `changed_fields`, `state`, `result` | Q | Implementado para rutas de alta, PUT y DELETE; reintentos sin cambio no duplican eventos | `UserManagementService` | `AccountAdministrationAuditTest`, `UserLifecycleTest` |
 | `users` | Envío/reenvío, fallo y throttle de invitación | `user.invitation.sent`, `.resent`, `.failed`, `.throttled` | Administrador; sistema si no se proporciona actor | Usuario pendiente | `transport_accepted`, `transport_failed`, `failed`, `rejected`, `throttled` | C; sistema conserva contexto de la cuenta capturado al enviar | `state`, `result` | Q | Implementado; aceptación del transporte no es entrega efectiva | `UserInvitationService` | `AccountAdministrationAuditTest`, `UserInvitationTest` |
 | `users` / `teams` | Asignaciones Spatie de un integrante existente | `user.team_roles.updated` | Administrador, incluido Super Admin | Usuario | `applied` | T | `changed_fields`, `related`, `result` | Q | Implementado para cambios reales; no copia nombres ni valores de identidad | `UserAccessAuditService` desde `UserManagementService` | `AccountAdministrationAuditTest` |
@@ -160,3 +161,18 @@ estrategias ni por calcular tablas. `CreditoAnticiposTest` comprueba evento ?nic
 tras reintento, actor, sujeto, equipo/sucursal originales y ausencia de importes,
 referencias o snapshots en metadatos. Se conserva la cobertura parcial de la
 matriz general; este refactor no la completa.
+
+## Contexto de sucursal — 01/11/2026
+
+La consulta de evidencia SIC y archivos generados usa la sucursal almacenada del
+recurso; cambiar preferencias o trasladar al cliente no reescribe esa historia.
+Conciliar un intento usa su sucursal original; `SicQaTest` cubre traslado, emisión
+y cola tras cambiar preferencias. Las acciones de expediente usan sucursal del
+cliente, incluso en acceso administrativo remoto; transferir conserva el origen.
+`ConsultaSucursalTest` cubre actor/contexto de KYC y traslado; las suites de
+expediente, documentos y consentimiento mantienen el resto de emisores.
+`Documentos/DocumentoPlantillaTest` cubre solicitud remota, worker, reintento y
+sucursal histórica desconocida. El iniciador sigue referenciado por el documento,
+el ejecutor automático tiene causer null. No se copian snapshots ni datos sensibles.
+No se añaden eventos por filtros, búsqueda o paginación. El backlog general de
+reconciliación permanece abierto. Ver [contrato](contexto-sucursal-consultas.md).

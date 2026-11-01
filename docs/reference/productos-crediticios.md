@@ -79,3 +79,9 @@ En local o para Super Admin, el simulador permite abrir “Fórmulas y sustituci
 - Banxico, explicación del CAT: https://www.banxico.org.mx/sistema-financiero/d/%7B5BD610E5-EE24-04AA-A21E-53B2176C2228%7D.pdf
 - CONDUSEF, glosario RECO: https://registros.condusef.gob.mx/reco/glosario.php
 - Héctor Manuel Vidaurri Aguirre, *Matemáticas financieras*, 6.ª ed., Cengage Learning, capítulo de amortización.
+
+## Consulta y paginación
+
+El [contrato transversal de contexto y listados](contexto-sucursal-consultas.md)
+describe parámetros de consulta, paginadores y selección independiente de la
+página, conservando los permisos y la naturaleza global o por equipo del módulo.

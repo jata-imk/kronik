@@ -1,4 +1,7 @@
 <script setup>
+import ListadoPaginador from "@/Components/ListadoPaginador.vue";
+import { usePage } from "@inertiajs/vue3";
+const page = usePage();
 defineProps({
     role: { type: Object, required: true },
     members: { type: Array, default: () => [] },
@@ -18,5 +21,6 @@ defineProps({
                 <p class="min-w-0 truncate font-medium">{{ member.name }}</p>
             </li>
         </ul>
+        <ListadoPaginador :metadata="page.props.roleMembersListado ?? null" page-name="integrantes_page" per-page-name="integrantes_por_pagina" />
     </section>
 </template>

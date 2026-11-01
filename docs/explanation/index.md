@@ -49,3 +49,5 @@
 - [ADR 0034: amortización reutilizable de los métodos actuales](adr-0034-amortizacion-reutilizable.md).
 
 - [ADR 0035: catálogo de capacidades backend/Vue](adr-0035-catalogo-capacidades-credito.md).
+
+- [ADR 0036: alcance de consulta y sucursal operativa](adr-0036-alcance-consulta-sucursal.md).

@@ -1,4 +1,6 @@
 <script setup>
+import { useListadoServidor } from "@/Composables/useListadoServidor";
+import ListadoPaginador from "@/Components/ListadoPaginador.vue";
 import PageHeader from "@/Components/PageHeader.vue";
 import { computed, ref } from "vue";
 import { usePage } from "@inertiajs/vue3";
@@ -26,7 +28,7 @@ const can = (permission) =>
     page.props.auth.permissions?.[permission] === true;
 const initialPrefill = page.props.prefill ?? {};
 const selectedUser = ref(
-    users.value.find(
+    page.props.selectedUser ?? users.value.find(
         (user) => user.id === Number(initialPrefill.edit_user_id),
     ) ?? null,
 );
@@ -39,6 +41,8 @@ const filters = ref({
     team_search: { value: null, matchMode: FilterMatchMode.CONTAINS },
     sucursal_search: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
+const serverList = useListadoServidor(filters);
+
 const statusLabels = computed(() =>
     (page.props.statusOptions ?? []).map((status) => status.label),
 );
@@ -64,9 +68,10 @@ const openEdit = (user) => {
         </template>
 
         <template #card-content>
+            <ListadoPaginador />
             <ConfirmDialog />
             <div>
-            <DataTable v-model:filters="filters" :value="users" :global-filter-fields="['name', 'email', 'status_label', 'team_search', 'sucursal_search']" filter-display="row" paginator :rows="10" striped-rows scrollable responsive-layout="scroll">
+            <DataTable v-model:filters="filters" :value="users" :global-filter-fields="['name', 'email', 'status_label', 'team_search', 'sucursal_search']" filter-display="row" lazy @sort="serverList.sort" :rows="10" striped-rows scrollable responsive-layout="scroll">
                 <template #header><div class="flex justify-end p-2"><IconField><InputIcon class="pi pi-search" /><InputText v-model="filters.global.value" placeholder="Buscar por nombre, correo, estado, equipo o sucursal" class="w-96 max-w-full" /></IconField></div></template>
                 <Column field="user_search" header="Usuario" sortable :show-filter-menu="false">
                     <template #body="{ data }">
@@ -110,7 +115,7 @@ const openEdit = (user) => {
             </DataTable>
             </div>
 
-            <UserForm v-if="showForm" :user="selectedUser" :teams="page.props.teams" :roles="page.props.roles" :sucursales="page.props.sucursales" :status-options="page.props.statusOptions" :can-manage-super-admin="page.props.canManageSuperAdmin" :prefill="activePrefill" @close="showForm = false" />
+            <UserForm v-if="showForm" :user="selectedUser" :teams="page.props.teams" :roles="page.props.roles" :sucursales="page.props.sucursales" :status-options="page.props.statusOptions" :can-manage-super-admin="page.props.canManageSuperAdmin" :remote-options="page.props.remoteOptions" :prefill="activePrefill" @close="showForm = false" />
         </template>
     </AppLayout>
 </template>

@@ -1,4 +1,5 @@
 <script setup>
+import { useOpcionesRemotas } from "@/Composables/useOpcionesRemotas";
 import PageHeader from "@/Components/PageHeader.vue";
 import { Link, router, useForm } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
@@ -12,6 +13,7 @@ import { formatMoneyWithCents as money } from "@/Pages/ProductosCrediticios/prod
 const props = defineProps({ solicitud: Object, creditoId: Number, revision: { type: Object, default: null }, can: Object, responsables: Array, resoluciones: { type: Array, default: () => [] }, dictamenes: { type: Object, default: () => ({ evaluacion: null, pld: null }) }, aprobacion: { type: Object, default: null }, aprobacionVencida: Boolean });
 const envio = useForm({ lock_version: props.solicitud.lock_version });
 const assignment = useForm({ lock_version: props.solicitud.lock_version, responsable_id: props.solicitud.responsable_id });
+const choices = useOpcionesRemotas(() => [...(props.responsables ?? []), ...(props.solicitud.responsable ? [props.solicitud.responsable] : [])], () => route("solicitudes.responsables.index", props.solicitud.id), () => assignment.responsable_id);
 const campos = { producto_version_id: "Producto y versión", monto: "Monto", plazo: "Número de pagos", periodicidad: "Periodicidad", metodo: "Amortización", destino: "Destino", fecha_estimada: "Fecha estimada" };
 const completos = computed(() => Object.keys(campos).filter((k) => props.solicitud[k] !== null && props.solicitud[k] !== "").length);
 const actualizando = ref(false);
@@ -77,7 +79,7 @@ function asignar() {
                     <p class="mt-2 text-sm">Al enviar se congela la revisión y se validan las condiciones contra el producto vigente. No genera consultas SIC ni movimientos monetarios.</p>
                 </section>
                 <form v-if="can.assign && !['rechazada', 'cancelada'].includes(solicitud.estado)" class="flex flex-wrap items-end gap-3 rounded-2xl border border-surface-200 p-4 dark:border-surface-700" @submit.prevent="asignar">
-                    <div class="flex min-w-0 flex-1 flex-col gap-1 sm:max-w-80"><label for="sol-responsable">Responsable</label><Select input-id="sol-responsable" aria-label="Responsable" v-model="assignment.responsable_id" :options="responsables" option-label="name" option-value="id" filter filter-placeholder="Buscar por nombre" empty-filter-message="No hay responsables con ese nombre." fluid /><small>Usuarios activos autorizados de esta sucursal.</small></div>
+                    <div class="flex min-w-0 flex-1 flex-col gap-1 sm:max-w-80"><label for="sol-responsable">Responsable</label><Select input-id="sol-responsable" aria-label="Responsable" v-model="assignment.responsable_id" :options="choices.options.value" @filter="choices.search" :loading="choices.loading.value" option-label="name" option-value="id" filter filter-placeholder="Buscar por nombre" empty-filter-message="No hay responsables con ese nombre." fluid /><small>Usuarios activos autorizados de esta sucursal.</small><small v-if="choices.error.value" class="text-red-500">{{ choices.error.value }}</small></div>
                     <Button type="submit" label="Asignar responsable" :loading="assignment.processing" class="w-full sm:w-auto" />
                     <Message v-for="(error, key) in assignment.errors" :key="key" severity="error" :closable="false">{{ error }}</Message>
                 </form>

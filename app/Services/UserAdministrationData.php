@@ -13,12 +13,34 @@ use Spatie\Permission\Models\Role;
 
 class UserAdministrationData
 {
-    public function formOptions(User $actor): array
+    public function opciones(string $type, string $search = '', array $ids = [], ?User $selected = null, ?int $teamId = null)
+    {
+        [$query, $fields, $label] = match ($type) {
+            'teams' => [Team::orderByDesc('activo'), ['id', 'name', 'activo'], 'name'],
+            'roles' => [Role::whereNotNull('team_id')->where('guard_name', 'web')->where('name', '!=', 'Super Admin')->when($teamId, fn ($q) => $q->where('team_id', $teamId)), ['id', 'name', 'team_id'], 'name'],
+            'sucursales' => [Sucursal::orderByDesc('activa'), ['id', 'nombre', 'clave', 'activa'], 'nombre'],
+        };
+        if ($selected) {
+            $ids = array_merge($ids, match ($type) {
+                'teams' => $selected->ownedTeams->merge($selected->teams)->modelKeys(),
+                'sucursales' => $selected->sucursales->modelKeys(),
+                'roles' => DB::table('model_has_roles')->where('model_type', $selected->getMorphClass())->where('model_id', $selected->id)->pluck('role_id')->all(),
+            });
+        }
+        $matches = (clone $query)->when($search !== '', fn ($q) => $q->where($label, 'like', '%'.$search.'%'))
+            ->orderBy($label)->orderBy('id')->limit(20)->get($fields);
+        $retained = $ids ? (clone $query)->whereKey($ids)->get($fields) : collect();
+
+        return $retained->concat($matches)->unique('id')->values();
+    }
+
+    public function formOptions(User $actor, ?User $selected = null, array $prefill = []): array
     {
         return [
-            'teams' => Team::orderByDesc('activo')->orderBy('name')->get(['id', 'name', 'activo']),
-            'roles' => Role::whereNotNull('team_id')->where('guard_name', 'web')->where('name', '!=', 'Super Admin')->orderBy('name')->get(['id', 'name', 'team_id']),
-            'sucursales' => Sucursal::orderByDesc('activa')->orderBy('nombre')->get(['id', 'nombre', 'clave', 'activa']),
+            'teams' => $this->opciones('teams', ids: isset($prefill['team_id']) ? [$prefill['team_id']] : [], selected: $selected),
+            'roles' => $this->opciones('roles', ids: isset($prefill['role_id']) ? [$prefill['role_id']] : [], selected: $selected),
+            'sucursales' => $this->opciones('sucursales', ids: isset($prefill['sucursal_id']) ? [$prefill['sucursal_id']] : [], selected: $selected),
+            'remoteOptions' => true,
             'statusOptions' => collect(UserStatus::cases())->map(fn ($status) => ['value' => $status->value, 'label' => $status->label()]),
             'canManageSuperAdmin' => (bool) $actor->is_super_admin,
         ];

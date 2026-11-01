@@ -67,11 +67,7 @@ class ClienteExpedienteController extends Controller
         return Inertia::render('Clientes/Expediente', [
             'cliente' => $cliente,
             'relaciones' => $relaciones,
-            'clientesDisponibles' => Cliente::query()
-                ->whereKeyNot($cliente->id)
-                ->with('datosFiscales:id,cliente_id,rfc')
-                ->orderBy('primer_nombre')
-                ->get(['id', 'primer_nombre', 'segundo_nombre', 'apellido_paterno', 'apellido_materno']),
+            'clientesDisponibles' => $this->candidatos($cliente, ''),
             'resumen' => [
                 'perfil_completado' => $perfil,
                 'perfil_total' => 5,
@@ -118,6 +114,30 @@ class ClienteExpedienteController extends Controller
                     ->orderBy('nombre')->get()->filter(fn ($plantilla) => $plantilla->versiones->isNotEmpty())->values()
                 : [],
         ]);
+    }
+
+    public function clientes(\Illuminate\Http\Request $request, Cliente $cliente)
+    {
+        Gate::authorize('view', $cliente);
+        $data = $request->validate(['buscar' => 'nullable|string|max:100']);
+
+        return $this->candidatos($cliente, $data['buscar'] ?? '');
+    }
+
+    private function candidatos(Cliente $cliente, string $buscar)
+    {
+        return Cliente::query()->whereKeyNot($cliente->id)
+            ->with('datosFiscales:id,cliente_id,rfc')
+            ->when($buscar !== '', fn ($query) => $query->where(function ($query) use ($buscar) {
+                foreach (preg_split('/\s+/u', trim($buscar), -1, PREG_SPLIT_NO_EMPTY) as $term) {
+                    $query->where(fn ($q) => $q->where('primer_nombre', 'like', "%{$term}%")
+                        ->orWhere('segundo_nombre', 'like', "%{$term}%")->orWhere('apellido_paterno', 'like', "%{$term}%")
+                        ->orWhere('apellido_materno', 'like', "%{$term}%")
+                        ->orWhereHas('datosFiscales', fn ($fiscal) => $fiscal->where('rfc', 'like', "%{$term}%")));
+                }
+            }))
+            ->orderBy('primer_nombre')->orderBy('id')->limit(20)
+            ->get(['id', 'primer_nombre', 'segundo_nombre', 'apellido_paterno', 'apellido_materno']);
     }
 
     public function updateProfile(UpdateClienteKycRequest $request, Cliente $cliente, ClienteExpedienteService $service)

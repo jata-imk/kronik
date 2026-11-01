@@ -1,4 +1,6 @@
 <script setup>
+import { useOperationalContext } from "@/Composables/useOperationalContext";
+useOperationalContext();
 import { useLayout } from "@sakai-vue/layout/composables/layout";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { Head, usePage } from "@inertiajs/vue3";
@@ -90,7 +92,7 @@ onUnmounted(() => {
     <div class="layout-wrapper" :class="containerClass">
         <app-topbar></app-topbar>
         <app-sidebar></app-sidebar>
-        
+
         <div class="layout-main-container">
             <Banner />
             <EmpresaOperacionBanner />

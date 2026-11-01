@@ -21,7 +21,7 @@ class UserController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('permission:read users', only: ['index']),
+            new Middleware('permission:read users', only: ['index', 'options']),
             new Middleware('permission:create users', only: ['store', 'resendInvitation']),
             new Middleware('permission:update users', only: ['update']),
             new Middleware('permission:delete users', only: ['destroy']),
@@ -49,17 +49,29 @@ class UserController extends Controller implements HasMiddleware
             $prefill['invite'] = (bool) $prefill['invite'];
         }
 
+        if (isset($prefill['team_id'], $prefill['role_id']) && ! \Spatie\Permission\Models\Role::whereKey($prefill['role_id'])->where('team_id', $prefill['team_id'])->exists()) {
+            $prefill['role_id'] = null;
+        }
         $data = app(\App\Services\UserAdministrationData::class);
 
         return Inertia::render('Admin/Users/Index', [
-            'users' => fn () => $data->users(User::query()
-                ->with(['ownedTeams', 'teams', 'sucursales', 'sucursalPrincipal', 'currentSucursal'])
-                ->orderBy('name')
-                ->get()
-            )->values(),
-            ...$data->formOptions($request->user()),
+            ...app(\App\Services\AdministracionListadoService::class)->usuarios($request),
+            'selectedUser' => isset($prefill['edit_user_id']) ? $data->user(User::findOrFail($prefill['edit_user_id'])->load(['ownedTeams', 'teams', 'sucursales', 'sucursalPrincipal', 'currentSucursal'])) : null,
+            ...$data->formOptions($request->user(), isset($prefill['edit_user_id']) ? User::findOrFail($prefill['edit_user_id']) : null, $prefill),
             'prefill' => $prefill,
         ]);
+    }
+
+    public function options(Request $request)
+    {
+        $data = $request->validate([
+            'tipo' => ['required', \Illuminate\Validation\Rule::in(['teams', 'roles', 'sucursales'])],
+            'buscar' => 'nullable|string|max:100', 'usuario_id' => 'nullable|integer|exists:users,id',
+            'team_id' => 'nullable|integer|exists:teams,id', 'incluidos' => 'nullable|array|max:100', 'incluidos.*' => 'integer|min:1',
+        ]);
+
+        return app(\App\Services\UserAdministrationData::class)->opciones($data['tipo'], $data['buscar'] ?? '', $data['incluidos'] ?? [],
+            isset($data['usuario_id']) ? User::findOrFail($data['usuario_id']) : null, $data['team_id'] ?? null);
     }
 
     /**

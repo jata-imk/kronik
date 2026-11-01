@@ -39,17 +39,13 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index(FechaEmpresa $fechaEmpresa)
+    public function index(FechaEmpresa $fechaEmpresa, \Illuminate\Http\Request $request)
     {
         $this->authorize('viewAny', ProductoCrediticio::class);
 
         return Inertia::render('ProductosCrediticios/Index', [
             'capacidadesCredito' => \App\Services\Credito\CatalogoCapacidadesCredito::paraVue(),
-            'productos' => fn () => ProductoCrediticio::query()->with(['versiones' => fn ($query) => $query->with(['periodicidades', 'reglas', 'comisiones.concepto'])->withCount('usos')->orderByDesc('numero')])->orderBy('nombre')->get()->map(function ($producto) {
-                $producto->versiones->each(fn ($version) => $version->setAttribute('capacidades', \App\Services\Credito\CapacidadesProducto::paraVersion($version)));
-
-                return $producto;
-            }),
+            ...app(\App\Services\CatalogoListadoService::class)->productos($request),
             'conceptosComision' => fn () => ConceptoComision::query()->where('activo', true)->orderBy('nombre')->get(),
             'simuladorDefaults' => fn () => [
                 'fecha_disposicion' => $fechaEmpresa->hoy()->toDateString(),
@@ -67,7 +63,7 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
         $producto = $service->crear($request->validated(), Auth::id());
         $this->actividad(ActivityEvent::CreditProductCreated, 'Producto crediticio creado', $producto, ['clave', 'nombre']);
 
-        return back()->with('success', 'Producto creado como borrador.');
+        return redirect()->route('productos-crediticios.index', ['producto_id' => $producto->id])->with('success', 'Producto creado como borrador.');
     }
 
     public function update(GuardarProductoRequest $request, ProductoCrediticio $producto, ProductoVersion $version, ProductoVersionService $service)
@@ -87,7 +83,7 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
         $nueva = $service->nuevaVersion($producto, $version, Auth::id());
         $this->actividad(ActivityEvent::CreditProductVersioned, 'Nueva versión de producto creada', $producto, ['version']);
 
-        return back()->with('success', "Versión {$nueva->numero} creada como borrador.");
+        return redirect()->route('productos-crediticios.index', ['producto_id' => $producto->id])->with('success', "Versión {$nueva->numero} creada como borrador.");
     }
 
     public function activar(ActivarProductoVersionRequest $request, ProductoVersion $version, ProductoVersionService $service)

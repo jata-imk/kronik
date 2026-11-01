@@ -52,6 +52,9 @@ class ClienteDocumentoController extends Controller
             subject: $cliente,
             metadata: ['related' => ['type' => 'cliente_documento', 'id' => $documento->id]],
             causer: request()->user(),
+            teamId: request()->user()?->current_team_id,
+            sucursalId: $cliente->sucursal_id,
+            inheritActorContext: false,
         );
 
         return $files->make($documento->disk, $documento->path, $documento->nombre_original);
@@ -69,6 +72,9 @@ class ClienteDocumentoController extends Controller
             subject: $cliente,
             metadata: ['related' => ['type' => 'cliente_documento', 'id' => $documento->id]],
             causer: request()->user(),
+            teamId: request()->user()?->current_team_id,
+            sucursalId: $cliente->sucursal_id,
+            inheritActorContext: false,
         );
 
         return $files->make($documento->disk, $documento->path, $documento->nombre_original, true);

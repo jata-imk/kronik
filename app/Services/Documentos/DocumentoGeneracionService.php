@@ -97,6 +97,9 @@ final class DocumentoGeneracionService
             $cliente,
             ['related' => ['type' => 'documento_generado', 'id' => $document->id], 'state' => DocumentoGeneradoEstado::Pendiente->value],
             $user,
+            teamId: $document->team_id,
+            sucursalId: $document->sucursal_id,
+            inheritActorContext: false,
         );
         GenerarDocumentoPdf::dispatch($document->id)->afterCommit();
 

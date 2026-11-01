@@ -39,6 +39,7 @@ test('selected team permissions govern role operations without changing current 
     $selected->users()->attach($user);
     grantTeamPermissions($user, $selected, ['read roles', 'create roles', 'update roles', 'delete roles']);
     $role = Role::query()->create(['name' => 'Rol seleccionado', 'guard_name' => 'web', 'team_id' => $selected->id]);
+    $previousContext = getPermissionsTeamId();
     $this->actingAs($user)->get(route('admin.roles.index', ['team' => $selected->id]))->assertOk()
         ->assertInertia(fn (Assert $page) => $page->where('roleTeam.id', $selected->id)->where('roleCapabilities.update', true)
             ->where('auth.permissions.read-roles', false)->where('roles.0.id', $role->id));
@@ -46,7 +47,7 @@ test('selected team permissions govern role operations without changing current 
     $this->assertDatabaseHas('roles', ['name' => 'Nuevo', 'team_id' => $selected->id]);
     $this->put(route('admin.roles.update', ['role' => $role, 'team' => $selected->id]), ['name' => 'Renombrado', 'permissions' => []])->assertSessionHasNoErrors();
     $this->delete(route('admin.roles.destroy', ['role' => $role, 'team' => $selected->id]))->assertSessionHas('success', 'Rol eliminado');
-    expect($user->fresh()->current_team_id)->toBe($current->id)->and(getPermissionsTeamId())->toBe($current->id);
+    expect($user->fresh()->current_team_id)->toBe($current->id)->and(getPermissionsTeamId())->toBe($previousContext);
     $this->get(route('admin.roles.index'))->assertForbidden();
 });
 

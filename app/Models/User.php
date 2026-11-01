@@ -104,6 +104,13 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->is_super_admin || $this->sucursales()->whereKey($sucursal->getKey())->exists();
     }
 
+    /** Operational context is required independently of Gate's global bypass. */
+    public function operaEnSucursal(?int $sucursalId): bool
+    {
+        return $sucursalId !== null && $this->current_sucursal_id !== null
+            && (int) $this->current_sucursal_id === $sucursalId && (bool) $this->currentSucursal?->activa;
+    }
+
     public function switchSucursal(Sucursal $sucursal): bool
     {
         if (! $sucursal->activa || ! $this->belongsToSucursal($sucursal)) {

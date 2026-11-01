@@ -257,3 +257,40 @@ test('incomplete SIC address is rejected in Spanish before creating or sending a
     Http::assertNothingSent();
     Queue::assertNothingPushed();
 });
+
+test('conciliar un cliente trasladado exige la sucursal original del intento', function () {
+    [$actor, $cliente, $data] = sicQaFixture();
+    $this->actingAs($actor);
+    $service = app(SicOperacionService::class);
+    $q = $service->preparar($cliente, $data, $actor);
+    $q->update(['estado_operacion' => 'incierta']);
+    $original = $actor->current_sucursal_id;
+    $target = \App\Models\Sucursal::factory()->create();
+    $cliente->update(['sucursal_id' => $target->id]);
+    $actor->forceFill(['current_sucursal_id' => $target->id])->save();
+    expect($service->puedeConciliar($q->fresh(), $actor->fresh()))->toBeFalse();
+    $actor->forceFill(['current_sucursal_id' => $original])->save();
+    $service->conciliar($q->fresh(), ['motivo' => 'Revisión sintética del intento original.', 'referencia' => 'QA-TRASLADO'], $actor->fresh());
+    $log = \App\Models\Activity::where('event', \App\Enums\ActivityEvent::SicAttemptReconciled->value)->sole();
+    expect($q->fresh()->sucursal_id)->toBe($original)->and($log->sucursal_id)->toBe($original);
+    Http::assertNothingSent();
+});
+
+test('cola SIC conserva equipo y sucursal originales aunque el iniciador cambie preferencias', function () {
+    [$actor, $cliente, $data] = sicQaFixture();
+    $service = app(SicOperacionService::class);
+    $q = $service->preparar($cliente, $data, $actor);
+    $otherTeam = \App\Models\Team::factory()->create(['user_id' => $actor->id]);
+    $otherBranch = \App\Models\Sucursal::factory()->create();
+    $actor->forceFill(['current_team_id' => $otherTeam->id, 'current_sucursal_id' => $otherBranch->id])->save();
+    setPermissionsTeamId($otherTeam->id);
+    Http::fake(['*' => Http::response(['folioConsulta' => '123', 'score' => ['nombreScore' => 'FICO', 'valor' => 680]])]);
+    $service->ejecutar($q->id);
+    $service->ejecutar($q->id);
+    Http::assertSentCount(1);
+    expect($q->fresh()->estado_operacion)->toBe('completada')->and(getPermissionsTeamId())->toBe($otherTeam->id)
+        ->and($actor->fresh()->current_sucursal_id)->toBe($otherBranch->id);
+    $event = \App\Models\Activity::where('event', \App\Enums\ActivityEvent::ClientSicFicoScoreV2Queried->value)->sole();
+    expect($event->team_id)->toBe($q->team_id)->and($event->sucursal_id)->toBe($q->sucursal_id)
+        ->and($event->causer_id)->toBeNull()->and($event->properties['related']['id'])->toBe($actor->id);
+});

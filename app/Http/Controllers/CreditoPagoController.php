@@ -16,6 +16,7 @@ class CreditoPagoController extends Controller
     public function create(Credito $credito, PagoService $service)
     {
         Gate::authorize('pay', $credito);
+        abort_unless(request()->user()->operaEnSucursal($credito->sucursal_id), 403, 'Selecciona la sucursal responsable del crédito.');
 
         return Inertia::render('Creditos/Pago', ['credito' => $credito->load(['cliente:id,primer_nombre,apellido_paterno', 'sucursal:id,nombre']),
             'situacion' => $service->consultar($credito), 'hoy' => app(FechaEmpresa::class)->hoy()->toDateString(),
@@ -33,6 +34,7 @@ class CreditoPagoController extends Controller
     public function anticipo(Credito $credito, PagoService $service)
     {
         abort_unless(Gate::allows('prepay', $credito) || Gate::allows('settle', $credito), 403);
+        abort_unless(request()->user()->operaEnSucursal($credito->sucursal_id), 403, 'Selecciona la sucursal responsable del crédito.');
         $ops = [];
         if (Gate::allows('prepay', $credito)) {
             $ops[] = ['value' => 'prepago', 'label' => 'Anticipo parcial'];
@@ -69,7 +71,7 @@ class CreditoPagoController extends Controller
                 'referencia' => $pago->referencia, 'motivo' => $pago->motivo, 'asignaciones' => $pago->snapshot['asignaciones'], 'reverso_id' => $pago->reverso?->id,
                 'cronograma_version' => $pago->snapshot['despues']['cronograma_version'] ?? 1,
                 'estado_operativo' => app(\App\Services\Credito\MotorPagos::class)->resumen($pago->snapshot['despues'])['estado_operativo']],
-            'puedeReversar' => Gate::allows('reversePayment', $credito) && in_array($pago->tipo, ['pago', 'prepago', 'liquidacion'], true) && ! $pago->reverso
+            'puedeReversar' => request()->user()->operaEnSucursal($credito->sucursal_id) && Gate::allows('reversePayment', $credito) && in_array($pago->tipo, ['pago', 'prepago', 'liquidacion'], true) && ! $pago->reverso
                 && $credito->pagos()->latest('id')->value('id') === $pago->id]);
     }
 

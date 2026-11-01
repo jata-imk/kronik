@@ -1,4 +1,6 @@
 <script setup>
+import { useListadoServidor } from "@/Composables/useListadoServidor";
+import ListadoPaginador from "@/Components/ListadoPaginador.vue";
 import PageHeader from "@/Components/PageHeader.vue";
 import { computed, ref } from "vue";
 import { router, useForm, usePage } from "@inertiajs/vue3";
@@ -39,6 +41,8 @@ const filters = ref({
     summary_search: { value: null, matchMode: FilterMatchMode.CONTAINS },
     status_label: { value: "Activo", matchMode: FilterMatchMode.EQUALS },
 });
+const serverList = useListadoServidor(filters);
+
 
 const openCreate = () => {
     form.defaults({ name: "" });
@@ -111,9 +115,10 @@ const reactivate = (team) =>
     <AppLayout title="Equipos">
         <template #card-header><PageHeader eyebrow="Administración · Organización" title="Equipos y departamentos" description="Contextos organizativos y de permisos."><template #actions><Button icon="pi pi-arrow-left" label="Volver" severity="secondary" as="a" :href="route('admin.dashboard')" /><Button v-if="can('create-teams')" label="Crear equipo" icon="pi pi-plus" @click="openCreate" /></template></PageHeader></template>
         <template #card-content>
+            <ListadoPaginador />
             <ConfirmDialog />
             <div>
-            <DataTable v-model:filters="filters" :value="teams" :global-filter-fields="['name', 'owner_display', 'status_label', 'type_label', 'summary_search']" filter-display="row" paginator :rows="10" striped-rows scrollable responsive-layout="scroll" :table-style="{ tableLayout: 'fixed', minWidth: '64rem' }">
+            <DataTable v-model:filters="filters" :value="teams" :global-filter-fields="['name', 'owner_display', 'status_label', 'type_label', 'summary_search']" filter-display="row" lazy @sort="serverList.sort" :rows="10" striped-rows scrollable responsive-layout="scroll" :table-style="{ tableLayout: 'fixed', minWidth: '64rem' }">
                 <template #header><div class="flex flex-wrap justify-end gap-2"><Select v-model="filters.status_label.value" aria-label="Filtrar por estado" :options="['Activo', 'Inactivo']" placeholder="Todos los estados" show-clear class="w-44" /><IconField><InputIcon class="pi pi-search" /><InputText v-model="filters.global.value" placeholder="Buscar equipos" /></IconField></div></template>
                 <Column field="name" header="Equipo" sortable :show-filter-menu="false" style="width: 29%">
                     <template #body="{ data }">

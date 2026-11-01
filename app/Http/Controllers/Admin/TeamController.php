@@ -22,28 +22,9 @@ class TeamController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
-        return Inertia::render('Admin/Teams/Index', [
-            'teams' => fn () => Team::query()
-                ->with('owner:id,name,email,profile_photo_path')
-                ->withCount(['users', 'ownedRoles'])
-                ->orderByDesc('activo')
-                ->orderBy('name')
-                ->get()
-                ->map(fn (Team $team) => [
-                    'id' => $team->id,
-                    'name' => $team->name,
-                    'activo' => $team->activo,
-                    'personal_team' => $team->personal_team,
-                    'status_label' => $team->activo ? 'Activo' : 'Inactivo',
-                    'type_label' => $team->personal_team ? 'Personal' : 'Institucional',
-                    'owner' => $team->owner,
-                    'members_count' => $team->users_count + 1,
-                    'roles_count' => $team->owned_roles_count,
-                    'current_users_count' => $team->currentUsers()->count(),
-                ]),
-        ]);
+        return Inertia::render('Admin/Teams/Index', app(\App\Services\AdministracionListadoService::class)->equipos($request));
     }
 
     public function store(StoreTeamRequest $request)

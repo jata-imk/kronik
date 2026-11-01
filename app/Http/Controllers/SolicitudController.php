@@ -3,12 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Enums\SolicitudEstado;
-use App\Enums\UserStatus;
 use App\Http\Requests\GuardarSolicitudRequest;
 use App\Models\Cliente;
 use App\Models\ProductoVersion;
 use App\Models\Solicitud;
-use App\Models\User;
 use App\Services\FechaEmpresa;
 use App\Services\SolicitudService;
 use Illuminate\Http\Request;
@@ -21,6 +19,8 @@ class SolicitudController extends Controller
     public function index(Request $request)
     {
         Gate::authorize('viewAny', Solicitud::class);
+        $consulta = app(\App\Services\ConsultaSucursal::class);
+        $scope = $consulta->resolver($request);
         $mine = $request->routeIs('solicitudes.trabajo');
         $bandeja = null;
         if ($request->routeIs('cumplimiento.index')) {
@@ -39,7 +39,7 @@ class SolicitudController extends Controller
         if ($bandeja && ! $request->has('estado')) {
             $filters['estado'] = SolicitudEstado::EnRevision->value;
         }
-        $solicitudes = Solicitud::query()->with($this->relations())
+        $solicitudes = $consulta->aplicar(Solicitud::query(), $scope)->with($this->relations())
             ->when($mine, fn ($q) => $q->where('responsable_id', $request->user()->id))
             ->when($mine && empty($filters['estado']), fn ($q) => $q->whereNotIn('estado', [SolicitudEstado::Rechazada, SolicitudEstado::Cancelada, SolicitudEstado::Desembolsada]))
             ->when($filters['estado'] ?? null, fn ($q, $estado) => $q->where('estado', $estado))
@@ -50,7 +50,7 @@ class SolicitudController extends Controller
             ->paginate($filters['por_pagina'] ?? 25)->withQueryString();
 
         return Inertia::render('Solicitudes/Index', [
-            'solicitudes' => $solicitudes, 'filters' => $filters, 'miTrabajo' => $mine,
+            'solicitudes' => $solicitudes, 'filters' => [...$filters, ...$scope], 'sucursales' => $consulta->opciones(), 'miTrabajo' => $mine,
             'puedeCrear' => ! $bandeja && Gate::allows('create', Solicitud::class),
             'bandeja' => $bandeja, 'rutaBandeja' => $request->route()->getName(),
         ]);
@@ -75,6 +75,10 @@ class SolicitudController extends Controller
     {
         Gate::authorize('create', Solicitud::class);
         $data = $request->validate(['buscar' => 'required|string|min:2|max:100']);
+
+        if (! $request->user()->currentSucursal?->activa) {
+            return response()->json([]);
+        }
 
         return Cliente::query()->where('sucursal_id', $request->user()->current_sucursal_id)
             ->where(fn ($q) => $q->where('primer_nombre', 'like', '%'.$data['buscar'].'%')
@@ -117,29 +121,35 @@ class SolicitudController extends Controller
             'resoluciones' => $solicitud->resoluciones()->with('actor:id,name')->latest('id')->limit(30)->get()
                 ->map(fn ($item) => [...$item->toArray(), 'motivo' => $item->motivo]),
             'can' => [
-                'update' => Gate::allows('update', $solicitud),
-                'assign' => Gate::allows('assign', $solicitud),
+                'update' => auth()->user()->operaEnSucursal($solicitud->sucursal_id) && Gate::allows('update', $solicitud),
+                'assign' => auth()->user()->operaEnSucursal($solicitud->sucursal_id) && Gate::allows('assign', $solicitud),
                 'sic' => Gate::allows('read historial-crediticio'),
-                'review' => Gate::allows('review', $solicitud),
-                'cancel' => Gate::allows('cancel', $solicitud),
-                'evaluate' => Gate::allows('evaluate', $solicitud),
-                'compliance' => Gate::allows('compliance', $solicitud),
-                'approve' => Gate::allows('approve', $solicitud),
+                'review' => auth()->user()->operaEnSucursal($solicitud->sucursal_id) && Gate::allows('review', $solicitud),
+                'cancel' => auth()->user()->operaEnSucursal($solicitud->sucursal_id) && Gate::allows('cancel', $solicitud),
+                'evaluate' => auth()->user()->operaEnSucursal($solicitud->sucursal_id) && Gate::allows('evaluate', $solicitud),
+                'compliance' => auth()->user()->operaEnSucursal($solicitud->sucursal_id) && Gate::allows('compliance', $solicitud),
+                'approve' => auth()->user()->operaEnSucursal($solicitud->sucursal_id) && Gate::allows('approve', $solicitud),
                 'paquete' => Gate::allows('viewPackage', $solicitud),
                 'desembolso' => Gate::allows('viewAny', \App\Models\Credito::class) && Gate::allows('viewPackage', $solicitud),
                 'politica' => Gate::check(['read productos-crediticios', 'manage origination productos-crediticios']),
             ],
-            'responsables' => (Gate::allows('assign', $solicitud) || Gate::allows('review', $solicitud)) ? User::query()->where('status', UserStatus::Active)
-                ->whereHas('sucursales', fn ($q) => $q->whereKey($solicitud->sucursal_id))
-                ->orderBy('name')->get(['id', 'name', 'is_super_admin'])
-                ->filter(fn ($user) => Gate::forUser($user)->allows('viewAny', Solicitud::class))
-                ->map(fn ($user) => $user->only(['id', 'name']))->values() : [],
+            'responsables' => auth()->user()->operaEnSucursal($solicitud->sucursal_id) && (Gate::allows('assign', $solicitud) || Gate::allows('review', $solicitud))
+                ? app(\App\Services\SolicitudResponsablesService::class)->buscar($solicitud, auth()->user()) : [],
         ]);
+    }
+
+    public function responsables(Request $request, Solicitud $solicitud, \App\Services\SolicitudResponsablesService $service)
+    {
+        Gate::authorize('view', $solicitud);
+        $data = $request->validate(['buscar' => 'nullable|string|max:100']);
+
+        return $service->buscar($solicitud, $request->user(), $data['buscar'] ?? '');
     }
 
     public function edit(Solicitud $solicitud)
     {
         Gate::authorize('update', $solicitud);
+        abort_unless(auth()->user()->operaEnSucursal($solicitud->sucursal_id), 403, 'Selecciona la sucursal responsable de la solicitud.');
         if (! $solicitud->estado->editable()) {
             return redirect()->route('solicitudes.show', $solicitud);
         }

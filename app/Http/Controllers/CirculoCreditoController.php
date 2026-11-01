@@ -17,6 +17,7 @@ class CirculoCreditoController extends Controller
         $selected = $cliente ? Cliente::findOrFail($cliente) : null;
         if ($selected) {
             Gate::authorize('update', $selected);
+            abort_unless($request->user()->operaEnSucursal($selected->sucursal_id), 403, 'Selecciona la sucursal responsable del cliente.');
         }
 
         return Inertia::render('HistorialCrediticio/CirculoDeCredito/Create', [
@@ -59,6 +60,10 @@ class CirculoCreditoController extends Controller
         Gate::authorize('create circulo-credito');
         Gate::authorize('viewAny', Cliente::class);
         $data = $request->validate(['buscar' => ['required', 'string', 'min:2', 'max:100']]);
+
+        if (! $request->user()->currentSucursal?->activa) {
+            return response()->json([])->header('Cache-Control', 'private, no-store');
+        }
 
         return response()->json(Cliente::where('sucursal_id', $request->user()->current_sucursal_id)
             ->where(fn ($q) => $q->where('primer_nombre', 'like', '%'.$data['buscar'].'%')->orWhere('apellido_paterno', 'like', '%'.$data['buscar'].'%'))
