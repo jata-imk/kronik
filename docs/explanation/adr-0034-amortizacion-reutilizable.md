@@ -1,6 +1,6 @@
 # ADR 0034: amortización reutilizable de los métodos actuales
 
-- Estado: aceptado; implementación en rama, pendiente de integración.
+- Estado: aceptado; implementación integrada en main mediante PR #62 (`15bdc8d`).
 - Fecha: 2026-10-31.
 - Complementa [ADR 0032](adr-0032-core-crediticio-extensible.md), [ADR 0033](adr-0033-convenciones-dias-base-fija.md) y ADR 0023.
 
@@ -9,7 +9,7 @@
 Tabla y anticipos deciden entre cuota nivelada y capital fijo. Las futuras
 disposiciones necesitan las mismas estrategias sin depender de Eloquent ni de
 una estructura financiera concreta. El motor histórico calcula interés con
-?rdenes de operaciones distintos en tabla y reducción de plazo; homogeneizarlos
+órdenes de operaciones distintos en tabla y reducción de plazo; homogeneizarlos
 cambiaría evidencia contractual.
 
 ## Decisión

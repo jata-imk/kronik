@@ -188,8 +188,10 @@ Relacionadas: [productos](productos-crediticios.md), [auditoría](auditoria-even
 
 ## Amortización reutilizable
 
-Preparación arquitectónica publicada en [PR #62](https://github.com/jata-imk/kronik/pull/62),
-código `c5b8422`, sin integración ni despliegue. [ADR 0034](../explanation/adr-0034-amortizacion-reutilizable.md).
+Preparación arquitectónica integrada mediante [PR #62](https://github.com/jata-imk/kronik/pull/62)
+en `15bdc8d` el 31/10/2026 (hora de México), código `c5b8422` y head revisado
+`f48d739`. El árbol integrado coincide con el head aprobado. Sin despliegue.
+[ADR 0034](../explanation/adr-0034-amortizacion-reutilizable.md).
 `EstrategiaAmortizacion` separa preparación de base y distribución de principal.
 `CuotaNivelada` y `CapitalFijo` se resuelven sin estado por método; tabla y ambos
 modos de anticipo usan estas decisiones comunes.
@@ -203,8 +205,8 @@ no decide cuándo son exigibles los intereses ni cambia la base de devengo.
 El adaptador `TablaAmortizacionCreditoSimple` conserva firma, arrays y errores
 en `metodo`. Anticipos conserva errores en `pago`, la recuperación histórica de
 `cuota_base`, el límite del calendario y su serialización. Reducir plazo conserva
-base, limita la ?ltima amortización al saldo y rechaza un calendario insuficiente.
-Los intereses históricos de tabla y de reducción de plazo mantienen sus ?rdenes
+base, limita la última amortización al saldo y rechaza un calendario insuficiente.
+Los intereses históricos de tabla y de reducción de plazo mantienen sus órdenes
 de operaciones originales. No se agrega versión de motor ni formato.
 
 Pruebas sin Laravel muestran un simple y una disposición equivalente, además de
