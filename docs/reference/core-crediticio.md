@@ -188,8 +188,8 @@ Relacionadas: [productos](productos-crediticios.md), [auditoría](auditoria-even
 
 ## Amortizaci?n reutilizable
 
-Preparaci?n arquitect?nica en rama `refactor/amortizacion-reutilizable`, todav?a
-sin integraci?n ni despliegue. [ADR 0034](../explanation/adr-0034-amortizacion-reutilizable.md).
+Preparaci?n arquitect?nica publicada en [PR #62](https://github.com/jata-imk/kronik/pull/62),
+c?digo `c5b8422`, sin integraci?n ni despliegue. [ADR 0034](../explanation/adr-0034-amortizacion-reutilizable.md).
 `EstrategiaAmortizacion` separa preparaci?n de base y distribuci?n de principal.
 `CuotaNivelada` y `CapitalFijo` se resuelven sin estado por m?todo; tabla y ambos
 modos de anticipo usan estas decisiones comunes.
