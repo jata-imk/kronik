@@ -294,3 +294,23 @@ esperan respuestas de contadores y responsables funcionales. Solo Act/360.
 No requiere eventos adicionales: no hay acciones operativas nuevas. Referencia
 del core y estado de ADR 0035 actualizados. Se revisan contenido, cifras y enlaces;
 una entrega documental no requiere pruebas funcionales nuevas.
+
+### Contraste y reducción del cuestionario — 01/11/2026
+
+El usuario aclaró que los productos los crea/configura quien usa Kronik y confirmó
+anticipos conservando vencimiento. Se sustituye el cuestionario amplio por evidencia
+del código y tres consultas específicas: devengado no exigible durante anticipo,
+regla del nuevo vencimiento al reducir plazo y mora de interés vencido antes del
+principal. Fechas/importes de QA los prepara el equipo con tasa fija y Act/360.
+
+Orden comprobado: cuota antigua primero; dentro de cuota comisión, moratorio,
+ordinario y capital. Concepto/impuesto se reparten proporcionalmente; no hay una
+bolsa global de impuestos primero. El anticipo actual cubre vencidos/devengos y
+cargos antes del capital; se reduce solo interés futuro, sin borrar lo generado.
+Liquidación, fiscalidad configurable y reversos conservan reglas actuales; ya no
+son preguntas funcionales genéricas para contadores. CFDI/contabilidad no se añaden.
+
+Contraste de `MotorPagos`, `MotorAnticipos`, `RepartoProporcional`, calendario,
+`PagoService`, fiscalidad y ADR 0012/0023. Pruebas dirigidas existentes: 65 aprobadas,
+37095 aserciones. No se cambia código financiero ni se aprueba regla Bullet pendiente.
+Corrección documental en la misma PR #65, todavía abierta; revisar head actualizado.

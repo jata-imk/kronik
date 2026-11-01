@@ -1,68 +1,92 @@
 # Bullet: casos para cerrar la definición funcional
 
-Estado: propuesta numérica para revisión, 29/10/2026. No es una política de
-producto aprobada ni acredita implementación Bullet. Fuente de alcance:
+Estado: contraste con código revisado el 01/11/2026 y propuesta numérica del 29/10.
+No es una política completa de producto aprobada ni acredita implementación Bullet. Fuente de alcance:
 [subtarea funcional](https://app.notion.com/p/40861db7db7f81d1ab37cc46ea320c3c).
 La separación sigue [ADR 0032](../explanation/adr-0032-core-crediticio-extensible.md).
 
-## Revisión con contadores: qué está decidido y qué deben responder
+## Contraste con el proyecto y preguntas que siguen abiertas
 
-Preparación solicitada por José el 31/10/2026, después de integrar el catálogo
-backend/Vue (PR #64). Esta revisión no habilita Bullet ni aprueba los escenarios.
-El objetivo es que negocio y contabilidad definan qué entra en la primera entrega,
-qué se rechaza y qué se difiere. Una regla contractual o de cumplimiento puede
-requerir además revisión del responsable de producto o jurídico correspondiente.
+Revisión del 01/11/2026 tras la aclaración del usuario. Sustituye el cuestionario
+amplio del 31/10: no se vuelve a consultar lo que ya está decidido o implementado.
+Esta entrega solo documenta evidencia y pendientes; no modifica reglas del motor.
 
-Ya está aprobado como alcance del sistema:
+El usuario crea y nombra sus productos, configurando las opciones soportadas por
+la interfaz/API. El motor valida compatibilidad y conserva la versión contractual.
+No hace falta pedir a contadores un catálogo de productos o autorización por nombre
+comercial. El nombre no selecciona una fórmula: Bullet y su política de intereses
+serán opciones explícitas cuando se implementen. Las dos políticas son alcance
+aprobado. El usuario confirmó permitir anticipos conservando vencimiento; reducir
+plazo también está incluido, pero su mecanismo sigue pendiente.
 
-- Capital al vencimiento, con dos políticas: intereses periódicos o al vencimiento.
-  Cada versión del producto deberá autorizar la política correspondiente.
-- Anticipos con reducción de plazo incluidos, todavía sin mecanismo aprobado.
-- Separar principal, interés devengado, exigible, vencido, pagado y proyectado;
-  comisiones e impuestos por concepto. Sin capitalización implícita.
-- Reutilizar el core y conservar condiciones versionadas e historia. La base
-  técnica actual es MXN, tasa fija y Act/360; no se han habilitado reglas Bullet.
+### Qué ya responde el código
 
-Ya hay ejemplos independientes de flujo normal, liquidación temprana y una
-propuesta de anticipo con vencimiento conservado, desarrollados abajo. Falta la
-aceptación funcional y completar resultados de atraso, reversos y fiscalidad.
-
-| Tema | Pregunta para decidir qué entra | Caso que deben devolver resuelto |
+| Tema | Regla existente que se conserva | Evidencia |
 | --- | --- | --- |
-| Producto y políticas | ¿Qué productos ofrecerán intereses periódicos, al vencimiento o ambas alternativas? ¿Qué límites de monto, tasa y duración aplican? Confirmar tasa fija/Act/360 para la primera entrega. | Identificar producto y política; confirmar el flujo normal de 12000 al 24 % del ejemplo. Las dos políticas son alcance del sistema, no una obligación de ofrecerlas juntas en todos los productos. |
-| Calendario | ¿Cómo se fija la primera fecha y el vencimiento final? ¿Qué frecuencias actuales se usarán? ¿Se aceptan periodos incompletos? ¿Se mueve el cobro en inhábiles y cambia también el periodo de interés? | Disposición en fin de mes, febrero bisiesto y periodo final incompleto: fechas exactas, días y cantidades. Distinguir cada 15 días de quincena calendario; las frecuencias nuevas requieren su propio incremento. |
-| Pagos parciales | ¿Cuál es el orden entre impuestos, comisiones, interés vencido, interés devengado aún no exigible y principal? ¿Se exige pagar devengado para abonar a capital? | Pago de 100 el 01/02 cuando vencen 248 de interés: importe aplicado a cada concepto y saldo posterior. Indicar si queda remanente y cómo se trata. |
-| Anticipo conservando vencimiento | ¿Se permite? ¿Un abono anunciado de 3000 significa capital neto o dinero total recibido? ¿Cuándo se paga el interés devengado y cómo se presenta en el recibo? | Aceptar o corregir el ejemplo del 16/01: recibido 3120, interés 120, capital 3000, saldo 9000 y nuevo flujo hasta el 01/03. |
-| Anticipo reduciendo plazo | ¿Quién determina la nueva fecha, con qué fórmula o regla y qué límites/autorización? ¿Cómo cambia el siguiente pago periódico y el periodo final incompleto? | Con 9000 de principal pendiente después del anticipo, dar una nueva fecha concreta, explicar cómo se obtuvo y detallar el flujo restante para ambas políticas. No existe una cuota periódica de capital que determine por sí sola esa fecha. |
-| Atraso y mora | Si solo vence interés, ¿qué obligación genera atraso y sobre qué base se calcula mora, a qué tasa y desde qué día? ¿Hay gracia? ¿El ordinario continúa, se sustituye o coexiste con moratorio? ¿Qué cambia al vencer el principal? | Resolver desde el 02/02 los 148 de interés pendientes con 12000 de principal todavía no vencido, y resolver por separado el impago del vencimiento final. Mostrar conceptos y bases sin sumarlos al principal. |
-| Liquidación anticipada | ¿Se permite en ambas políticas? ¿Qué devengado, vencido, comisiones e impuestos se cobran? ¿Se elimina todo el interés futuro proyectado? ¿Hasta qué fecha es válida la cotización? | Aceptar o corregir la cotización aritmética de 12120 al 16/01, sin cargos/impuestos del ejemplo; resolver también una liquidación después de un pago parcial o con interés vencido. |
-| Comisiones y fiscalidad | Para esta entidad y producto, ¿qué tratamiento, tasa, base, momento de reconocimiento/cobro y comprobante corresponde a cada concepto? ¿Qué cargos aplican a anticipo, atraso y liquidación? | Una tabla por concepto con fundamento o referencia aprobada y un recibo completo. No asumir IVA universal, exención ni tasa cero a partir del ejemplo sin impuestos. |
-| Correcciones y reversos | ¿Aceptan los límites actuales de fecha y reverso del último movimiento admisible? ¿Qué evidencia y autorización requiere una corrección? | Revertir un anticipo y una liquidación: saldos, obligaciones y calendario que se restauran. Si necesitan corregir movimientos con operaciones posteriores, declararlo como ampliación, no asumir que ya se permite. |
+| Configuración | Montos, tasas, plazos, métodos, comisiones, fiscalidad y permisos de prepago se configuran por versión de producto. Los nombres comerciales son libres. | `ProductoVersionService`, `CatalogoCapacidadesCredito`, `GuardarProductoRequest`. |
+| Calendario | Semanal +7 días, quincenal +15 días y mensual con ancla y fin de mes; sin ajuste por inhábiles. Los días/centavos se prueban con datos sintéticos de tasa fija y Act/360. | `CalendarioCreditoSimple`, `TablaAmortizacionCreditoSimpleTest`. |
+| Pago ordinario/parcial | Cuota más antigua primero; dentro de cada cuota: comisión, moratorio, ordinario y capital. Cada abono se reparte entre el concepto y su impuesto proporcionalmente. No existe una bolsa global de impuestos que se liquide primero. | `MotorPagos::resumen/aplicar`, `RepartoProporcional`, ADR 0012 y pruebas homónimas. |
+| Anticipo actual | Se captura el total recibido; primero vencidos, devengos y cargos aplicables, luego capital futuro. El mínimo aplica al capital anticipado; el saldo reducido determina los intereses futuros desde el día siguiente. | `MotorAnticipos::calcular`, ADR 0023, `MotorAnticiposTest`. |
+| Liquidación | Cubre deuda devengada, capital pendiente y cargos/impuestos aplicables, sin convertir interés futuro proyectado en deuda. Coincidencia exacta con previa; un cambio de captura/estado invalida su hash. | `MotorAnticipos`, `PagoService::previa/registrar`, `MotorAnticiposTest`. |
+| Mora actual | Base de capital vencido; gracia efectiva o retroactiva y ambos intereses o sustitución se configuran en contrato. Existe un límite explícito a parcialidades durante gracia B con sustitución. | `MotorPagos::avanzar/aplicar`, `PoliticaMora`, ADR 0012 y decisiones fiscales/contractuales. |
+| Comisiones/fiscalidad | Eventos y bases de comisión explícitos; tratamiento y tasa/base de impuesto por concepto. La institución configura lo que corresponda. No se abre una nueva definición fiscal universal para Bullet ni se incorpora CFDI/contabilización en este incremento. | `MotorAnticipos::comisiones`, `ImpuestoConceptoService`, ADR 0023. |
+| Correcciones | Solo último movimiento admisible, sin posteriores; reversos compensatorios con historia/recibos conservados. Fechas entre desembolso y hoy, sin insertar pagos entre movimientos posteriores ni anticipos automáticos por excedentes. | `PagoService::reversar/validarFecha`, `MotorPagos::aplicar`, ADR 0023. |
 
-### Formato de respuesta solicitado
+Este contraste demuestra las reglas de los métodos actuales, no Bullet operativo.
+La separación entre devengo, exigibilidad y principal necesita adaptación técnica
+para pagos periódicos de solo interés. Esa adaptación no reabre las reglas comunes.
 
-Para cada tema, responder **entra / no entra / se difiere**, por producto y
-política. Si entra, entregar regla exacta, condiciones/límites, ejemplo con fechas
-y desglose de capital, ordinario, moratorio, comisiones, impuestos y total. Indicar
-saldo posterior, próximo vencimiento, responsable que valida y fecha de aceptación.
-Si se difiere, indicar qué operación debe bloquearse mientras no exista regla.
+### Fechas de prueba y trabajo técnico
 
-Para lo fiscal/contable, identificar entidad y producto aplicables y conservar la
-referencia de la decisión; una opinión sobre un ejemplo no aprueba todas las
-operaciones ni sustituye la validación contractual correspondiente.
+Nosotros elegimos fechas e importes sintéticos para verificar los resultados; no
+necesitamos créditos reales ni tasas variables para diseñar/probar Bullet fijo.
+Los ejemplos de abajo usan 24 % fijo y Act/360. Probaremos fin de mes, bisiesto,
+parcialidades y periodos incompletos contra expectativas independientes.
 
-### Qué falta antes de implementar
+La captura de duración/vencimiento y periodicidad de intereses se precisará al
+planificar la interfaz, reutilizando el calendario vigente. No se introduce un
+selector de calendarios arbitrarios ni se pide a contadores elegir fechas de QA.
+Una necesidad de calendario distinta debe declararse como ampliación explícita.
 
-1. Recibir y conciliar estas respuestas, especialmente reducción de plazo y mora.
-2. Completar los casos numéricos de ambas políticas, incluidos atraso, pagos
-   parciales, anticipo, liquidación y reverso con conceptos e impuestos separados.
-3. Registrar aceptación funcional y alcance de la primera entrega en Notion.
-4. Planificar desde esos casos la separación de obligaciones/exigibilidad, campos,
-   validaciones y UI. Recepción, conciliación y aplicación conservan sus límites.
+### Tres consultas funcionales pendientes
 
-Ninguna fila queda aceptada por la sola preparación de este cuestionario. Flat,
-tasas variables, capitalización, calendarios arbitrarios, Revolvente y Nómina
-permanecen fuera de esta preparación.
+1. **Anticipo Bullet y devengado aún no exigible.** Permitirlo y reducir principal
+   para recalcular interés futuro ya está definido. La consulta es: ¿el anticipo
+   cobra también el interés acumulado hasta ese día, como hace el motor actual,
+   aunque su vencimiento contractual sea posterior, o el dinero se aplica solo a
+   capital y el interés devengado conserva su vencimiento? Caso sin cargos/impuestos:
+   al 16/01 hay 120 de interés acumulado. Con 3120 recibidos, el recorrido actual
+   aplica 120 a interés y 3000 a capital, quedando 9000. Una alternativa de solo
+   capital dejaría 8880 de principal y los 120 pendientes para su fecha contractual.
+   No se adopta esa alternativa sin aprobación; no se borra interés ya generado.
+2. **Reducción de plazo.** En Bullet no hay una amortización periódica de capital
+   que permita eliminar cuotas al conservar su importe, como en capital fijo o
+   cuota nivelada. Tras el anticipo, pueden quedar 9000 de capital con vencimiento
+   01/03: el saldo menor por sí solo no determina si vence el 01/02, 15/02 u otra
+   fecha. ¿Qué regla establece el nuevo vencimiento? ¿Quién lo elige y con qué
+   límites? Explicar efecto sobre el siguiente interés y periodo final incompleto.
+3. **Interés vencido antes de vencer el capital.** Las opciones de tasa/gracia y
+   coexistencia ya existen. Falta definir si el impago de interés Bullet genera
+   únicamente atraso de esa obligación mientras la base de mora sigue siendo
+   capital vencido (todavía cero), o si se necesita otra base explícita. Caso:
+   vencen 248 de interés el 01/02, se pagan 100 y quedan 148; el principal de 12000
+   vence el 01/03. ¿Qué sucede desde el 02/02? No aplicar mora a principal aún no
+   vencido ni capitalizar el interés por inferencia. Si se solicita otra base,
+   precisar fórmula, inicio/gracia y efecto sin alterar contratos anteriores.
+
+### Respuesta necesaria para cada consulta
+
+Entregar regla, ejemplo con fechas/importes y saldo posterior. Indicar quién
+valida y si una alternativa entra o se difiere. Para reducción de plazo, los
+contadores o responsables funcionales deben proporcionar el criterio para obtener
+la nueva fecha; nosotros construimos los casos que lo prueben. Lo que siga pendiente
+bloquea únicamente las operaciones que dependan de esa decisión.
+
+No se solicitan nuevamente configuración de productos, orden de pagos, fiscalidad
+genérica, liquidación ni límites de reverso. Las pruebas de esos comportamientos
+se mantienen. Bullet, Flat, tasas variables, capitalización, calendarios nuevos,
+Revolvente y Nómina no se habilitan por revisar este documento.
+
 
 ## Datos sintéticos de referencia
 
@@ -92,8 +116,9 @@ de capital e interés del último periodo no constituye otra modalidad mixta.
 
 Al 16/01 transcurrieron 15 días: `12000 × 24 × 15 / 36000 = 120`. Si se admite
 liquidación y no hay cargos/impuestos del escenario, la cotización es 12120.
-El interés futuro proyectado no integra el principal ni la liquidación. Confirmar
-que la política de liquidación conserva este tratamiento antes de implementarlo.
+El interés futuro proyectado no integra el principal ni la liquidación. Se conserva
+el tratamiento del motor actual; este ejemplo será una prueba de regresión al
+adaptar Bullet, sin solicitar nuevamente una decisión genérica de liquidación.
 
 ## Anticipo parcial: propuesta pendiente de aceptación
 
@@ -111,10 +136,11 @@ capital. Quedan 9000; generan 6 diarios por los 44 días restantes: 264.
 | Periódicos | 96 de intereses el 01/02 y 9168 de capital/interés el 01/03 |
 | Al vencimiento | 9264 de capital/interés el 01/03 |
 
-El costo total del escenario sería 12384, incluidos los 3120 iniciales. Esta
-propuesta no autoriza por sí misma conservar fecha ni reducir plazo. Si se desea
-reducir plazo, definir cómo se determina el nuevo vencimiento y qué opciones se
-permiten; no trasladar automáticamente la regla de cuota nivelada.
+El costo total del escenario sería 12384, incluidos los 3120 iniciales. El usuario
+confirmó conservar vencimiento como capacidad; esta propuesta numérica presupone
+cobrar el devengado durante el anticipo, punto específico todavía por revisar.
+Reducir plazo también está incluido: falta determinar la nueva fecha mediante
+una regla propia, sin trasladar automáticamente la de cuota nivelada.
 
 ## Interés vencido con capital todavía no vencido
 
@@ -123,21 +149,23 @@ sin pagar y 12000 de principal no vencido. El seguimiento debe poder expresar
 ambos hechos. No sumar esos 148 al principal. Definir expresamente:
 
 - Qué días de atraso se muestran y qué obligación determina el indicador.
-- Base, tolerancia y política de mora: conservar mora solo sobre capital vencido
-  o autorizar otra regla validada. No elegirla implícitamente.
-- Qué ocurre al pagar después y cómo se distribuye el importe por concepto.
+- Base de mora en esta situación nueva: conservar solo capital vencido (cero
+  hasta el 01/03) o definir expresamente otra base. Las opciones de gracia y
+  coexistencia ya existentes no se vuelven a someter a definición genérica.
+- Adaptar técnicamente la aplicación de pagos conservando el orden existente,
+  sin capitalización ni nuevas prioridades fiscales.
 
 Decisión de José del 29/10/2026: **base y tratamiento de mora pendientes de revisión
 funcional**. No seleccionar una alternativa por defecto ni habilitar operación
 dependiente de esta decisión. El indicador de interés vencido y la prohibición
 de capitalización implícita siguen formando parte del alcance.
 
-## Calendario y correcciones por cerrar
+## Trabajo técnico y regresión
 
-- Definir primera fecha de interés y vencimiento final/duración, no solo número
-  de cuotas. Precisar si el último periodo incompleto se admite y cómo se presenta.
-- Acordar inhábiles, anclas de meses cortos/bisiestos y significado de cada 15 días
-  frente a quincena calendario. No habilitar calendarios arbitrarios por defecto.
+- Planificar captura de duración/vencimiento y periodicidad de interés separadas
+  de la amortización; reutilizar calendario actual y generar casos sintéticos.
+- Conservar anclas, días naturales y ausencia de ajuste por inhábiles. No
+  habilitar calendarios arbitrarios, catorcenal o quincena calendario por defecto.
 - Reverso: mantener límites vigentes del último movimiento admisible. La
   restauración conserva recibos/cronogramas anteriores y nuevas versiones cuando
   corresponda; no editar ni borrar historia.
@@ -146,10 +174,12 @@ de capitalización implícita siguen formando parte del alcance.
 
 ## Aceptación pendiente
 
-- [ ] Acordar calendario de la primera entrega y resultados por fecha.
-- [ ] Resolver anticipo parcial y su efecto en vencimiento e intereses futuros.
+- [x] Confirmar configuración libre del usuario y anticipos conservando vencimiento como capacidad.
+- [ ] Planificar calendario/UI y preparar resultados independientes con fechas sintéticas.
+- [ ] Resolver tratamiento del devengado no exigible durante el anticipo Bullet.
+- [ ] Definir cómo se obtiene la nueva fecha al reducir plazo.
 - [ ] Resolver atraso/mora de intereses sin capital vencido.
-- [ ] Confirmar liquidación, correcciones y límites actuales que se conservan.
+- [ ] Cubrir en regresión liquidación, fiscalidad, orden de pagos y reversos existentes al adaptar Bullet.
 - [ ] Registrar aceptación funcional antes de implementar operaciones dependientes.
 
 Relacionadas: [contratos del core](core-crediticio.md) y
