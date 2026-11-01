@@ -3,6 +3,7 @@
 namespace App\Services\Credito;
 
 use App\Enums\MetodoAmortizacion;
+use App\Enums\VersionMotorCredito;
 use App\Support\Decimal as D;
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
@@ -10,7 +11,7 @@ use Illuminate\Validation\ValidationException;
 /** Pure calculator: accrued debt first, event charges second, future capital last. */
 final class MotorAnticipos
 {
-    public function __construct(private MotorPagos $pagos, private ImpuestoConceptoService $impuestos, private TablaAmortizacionCreditoSimple $amortizacion) {}
+    public function __construct(private MotorPagos $pagos, private ImpuestoConceptoService $impuestos, private TablaAmortizacionCreditoSimple $amortizacion, private InteresAct360 $intereses) {}
 
     public function calcular(array $antes, array $tabla, string $tipo, ?string $importe, array $opcionales = []): array
     {
@@ -197,6 +198,7 @@ final class MotorAnticipos
     {
         $fechas = array_values(array_filter(array_column($state['cuotas'], 'fecha'), fn ($f) => $f > $state['fecha']));
         $metodo = MetodoAmortizacion::from($tabla['metodo']);
+        $motor = VersionMotorCredito::desdeSnapshot($state['producto']);
         $base = $tabla['cuota_base'] ?? null;
         if ($base === null) {
             $primera = collect($tabla['tabla'])->first(fn ($f) => $f['numero'] > 0);
@@ -210,14 +212,16 @@ final class MotorAnticipos
             $inicio = CarbonImmutable::parse($state['fecha'], 'UTC');
             if ($modo === 'reducir_pago') {
                 $calculo = $this->amortizacion->calcular($saldo, $state['producto']['tasa_ordinaria_anual'], $inicio,
-                    array_map(fn ($f) => CarbonImmutable::parse($f, 'UTC'), $fechas), $metodo);
+                    array_map(fn ($f) => CarbonImmutable::parse($f, 'UTC'), $fechas), $metodo, $motor);
                 $filas = $calculo['tabla'];
                 $base = $calculo['cuota_redondeada'] ?? ($filas[0]['capital'] ?? '0.00');
             } else {
                 foreach ($fechas as $fecha) {
                     $fin = CarbonImmutable::parse($fecha, 'UTC');
                     $dias = (int) $inicio->diffInDays($fin);
-                    $interes = D::round(D::div(D::mul(D::mul($saldo, $state['producto']['tasa_ordinaria_anual']), (string) $dias), '36000'));
+                    $interes = D::round($motor === VersionMotorCredito::Historico
+                        ? D::div(D::mul(D::mul($saldo, $state['producto']['tasa_ordinaria_anual']), (string) $dias), '36000')
+                        : $this->intereses->calcular($saldo, $state['producto']['tasa_ordinaria_anual'], $dias));
                     $capital = $metodo === MetodoAmortizacion::CapitalFijo ? $base : D::sub($base, $interes, 2);
                     if (D::compare($capital, '0') <= 0) {
                         $this->error('La cuota contractual no amortiza el saldo recalculado. Solicita revisión.');
@@ -256,7 +260,7 @@ final class MotorAnticipos
         }
         unset($f);
 
-        return ['formato' => 2, 'metodo' => $metodo->value, 'cuota_base' => $base, 'tabla' => $filas];
+        return ['formato' => 2, 'motor_calculo_version' => $motor->value, 'metodo' => $metodo->value, 'cuota_base' => $base, 'tabla' => $filas];
     }
 
     private function error(string $message): never

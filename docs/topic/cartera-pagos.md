@@ -13,6 +13,9 @@ los límites QA en cada guía antes de operar.
 
 ## Referencia y decisiones
 
+- [Responsabilidades e invariantes del core](../reference/core-crediticio.md).
+- [Contraste de auditoría del core](../explanation/contraste-auditoria-core-crediticio-2026-10.md).
+
 - [Decisiones fiscales, contractuales y de mora](../reference/decisiones-fiscales-contractuales-mora.md).
 - [ADR 0007: flujos de comisiones y redondeo](../explanation/adr-0007-flujos-comisiones-y-redondeo-creditos.md).
 - [ADR 0012: movimientos y devengo](../explanation/adr-0012-movimientos-y-devengo.md).

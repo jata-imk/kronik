@@ -181,6 +181,7 @@ class ProductoVersionService
         $version->loadMissing(['periodicidades', 'reglas', 'comisiones.concepto']);
 
         return json_decode(json_encode($version->only(['numero', 'moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual', 'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica', 'cat_no_aplica_motivo', 'fiscalidad', 'politica_mora']) + [
+            'motor_calculo_version' => \App\Enums\VersionMotorCredito::actual()->value,
             'periodicidades' => $version->periodicidades->map->only(['periodicidad', 'plazo_minimo', 'plazo_maximo', 'plazo_predeterminado'])->all(),
             'reglas' => $version->reglas?->only(['metodos_amortizacion', 'convencion_interes', 'base_moratoria', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago', 'ajuste_dia_inhabil', 'redondeo']),
             'comisiones' => $version->comisiones->map(fn ($c) => [...$c->only(['tipo_importe', 'importe', 'base_calculo', 'momento_cobro', 'evento_cobro', 'modalidad_cobro', 'obligatoria', 'incluye_cat', 'fiscalidad']), 'concepto' => $c->concepto->only(['clave', 'nombre'])])->all(),

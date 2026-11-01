@@ -55,6 +55,12 @@ Usar Pest con helpers de Laravel. Las pruebas HTTP, autenticación, equipos y fl
 
 Usar Conventional Commits, preferentemente en español: `feat(modulo): ...`, `fix(modulo): ...`, `refactor: ...`, `docs: ...`. La descripción de la PR debe explicar problema y comportamiento final, enlazar la tarea cuando exista, registrar validaciones y límites, indicar migraciones/seeders/configuración y aportar capturas si cambia la UI. Aplicar la [definición de terminado](docs/reference/definicion-terminado.md) y el [flujo de tareas, pruebas y PR](docs/reference/flujo-tareas-pruebas-pr.md).
 
+Cada PR requiere `/review medium` y resolución de hallazgos antes de integrarse.
+Una funcionalidad puede abarcar varias PR y sesiones: antes de cerrarla, hacer un
+barrido conjunto de todas sus PR contra la base funcional y registrar la evidencia.
+Notion y la Agent Note mantienen el traspaso entre sesiones; no cerrar la tarea
+solo porque una PR esté integrada.
+
 ## Seguridad e integraciones
 
 No versionar secretos de `.env`; documentar nuevas variables en `.env.example` y en su referencia. Usar `env()` en archivos de configuración y `config()` en el resto del código para respetar el caché de configuración. Tratar SIC/Círculo de Crédito, geocodificación y scrapers como superficies sensibles; no fijar credenciales o endpoints en código.

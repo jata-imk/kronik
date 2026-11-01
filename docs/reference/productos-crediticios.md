@@ -8,11 +8,20 @@ Las periodicidades de Buró de Crédito o Círculo de Crédito son códigos de r
 
 ## Convenciones de cálculo
 
+Las activaciones/programaciones nuevas congelan `motor_calculo_version = 2`.
+Las versiones históricas sin marca reproducen el motor 1; para nuevas condiciones
+corregidas se duplica/activa una versión, sin editar historia. El contrato exacto,
+los acumuladores y los límites están en [versión del motor](core-crediticio.md#contratos-históricos-y-versión-de-motor).
+
 - Dinero y tasas se procesan como decimales, nunca como `float`.
 - Las tasas se capturan como porcentaje nominal anual: `36` significa 36 %, no `0.36`.
-- El factor del periodo es `tasa_anual / 100 × días_reales / 360`.
+- El interés Act/360 equivale a `capital × tasa_anual × días_reales / 36000`.
+  El motor 2 conserva el numerador y evita dividir/truncar días antes de multiplicar.
 - En cuota nivelada con factores variables, la cuota exacta resuelve el valor presente de los pagos. La tabla redondea half-up a centavos por periodo y el último capital extingue el saldo.
 - En capital fijo se divide el principal entre el número de pagos y se aplica el mismo criterio de residual final.
+- El motor 2 rechaza combinaciones que generen capital no positivo o superior al
+  saldo en los métodos actuales; no devuelve tablas con intereses/capital negativos
+  para simular una amortización inválida. La restricción no define todavía Bullet.
 - El plazo es número de pagos. Las fechas avanzan +7 días, +15 días o por ancla mensual. El fin de mes permanece como fin de mes; un día inexistente se ajusta solo ese mes y luego recupera el ancla. V1 no ajusta días inhábiles.
 - La mora se configura como tasa anual y se calcula sobre capital vencido cuando el módulo de cobranza la aplique.
 
