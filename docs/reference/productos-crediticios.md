@@ -8,6 +8,12 @@ Las periodicidades de Buró de Crédito o Círculo de Crédito son códigos de r
 
 ## Convenciones de cálculo
 
+Métodos, periodicidades, Act/360 y aplicación del prepago proceden del
+[catálogo backend de capacidades](core-crediticio.md#catálogo-de-capacidades).
+El editor conserva sus valores; al desactivar prepago parcial se deshabilitan sus
+dependencias sin borrarlas. Versiones con evidencia no soportada se consultan con
+advertencia, sin habilitar cálculo ni sustituir sus códigos.
+
 `reglas.convencion_interes` conserva la selección contractual. Act/360 sigue siendo
 la única opción habilitada; el [punto de extensión de convenciones](core-crediticio.md#convenciones-de-días)
 prepara otras bases sin ofrecerlas todavía en el editor ni cambiar contratos.

@@ -50,6 +50,7 @@ class ProductoVersionService
             if (! array_key_exists('politica_mora', $data['version'])) {
                 $data['version']['politica_mora'] = $version->politica_mora;
             }
+            \App\Services\Credito\CapacidadesProducto::validar($data['version'], \App\Enums\VersionMotorCredito::actual(), 'version.');
             PoliticaMora::validate($data['version']);
             $anteriores = $version->comisiones()->get()->keyBy('concepto_comision_id');
             foreach ($data['version']['comisiones'] as &$comision) {
@@ -137,6 +138,7 @@ class ProductoVersionService
 
     private function crearVersion(ProductoCrediticio $producto, array $data, ?int $userId): ProductoVersion
     {
+        \App\Services\Credito\CapacidadesProducto::validar($data, \App\Enums\VersionMotorCredito::actual(), 'version.');
         FiscalidadProducto::validate($data);
         PoliticaMora::validate($data);
         $numero = ((int) $producto->versiones()->lockForUpdate()->max('numero')) + 1;
@@ -180,7 +182,7 @@ class ProductoVersionService
     {
         $version->loadMissing(['periodicidades', 'reglas', 'comisiones.concepto']);
 
-        \App\Enums\ConvencionInteres::desdeReglas($version->reglas?->toArray() ?? []);
+        \App\Services\Credito\CapacidadesProducto::validar(\App\Services\Credito\CapacidadesProducto::condiciones($version), \App\Enums\VersionMotorCredito::actual());
 
         return json_decode(json_encode($version->only(['numero', 'moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual', 'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica', 'cat_no_aplica_motivo', 'fiscalidad', 'politica_mora']) + [
             'motor_calculo_version' => \App\Enums\VersionMotorCredito::actual()->value,

@@ -14,12 +14,16 @@ enum VersionMotorCredito: int
         return self::Act360Racional;
     }
 
-    public function validarConvencion(ConvencionInteres $convencion): void
+    public function admiteConvencion(ConvencionInteres $convencion): bool
     {
-        $compatible = match ($this) {
+        return match ($this) {
             self::Historico, self::Act360Racional => $convencion === ConvencionInteres::DiasReales360,
         };
-        if (! $compatible) {
+    }
+
+    public function validarConvencion(ConvencionInteres $convencion): void
+    {
+        if (! $this->admiteConvencion($convencion)) {
             throw ValidationException::withMessages(['convencion_interes' => 'La convención de días no es compatible con la versión del motor de este registro. Solicita revisión sin modificar su evidencia histórica.']);
         }
     }

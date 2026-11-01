@@ -67,7 +67,7 @@ class SolicitudController extends Controller
                 && (int) $request->user()->current_sucursal_id === (int) $cliente->sucursal_id, 403);
         }
 
-        return Inertia::render('Solicitudes/Form', ['solicitud' => null, 'productos' => $this->productos(),
+        return Inertia::render('Solicitudes/Form', ['solicitud' => null, 'productos' => $this->productos(), 'capacidadesCredito' => \App\Services\Credito\CatalogoCapacidadesCredito::paraVue(),
             'clienteInicial' => $cliente?->only(['id', 'primer_nombre', 'apellido_paterno', 'apellido_materno'])]);
     }
 
@@ -145,7 +145,7 @@ class SolicitudController extends Controller
         }
 
         return Inertia::render('Solicitudes/Form', [
-            'solicitud' => $solicitud->load($this->relations()), 'productos' => $this->productos(),
+            'solicitud' => $solicitud->load($this->relations()), 'productos' => $this->productos(), 'capacidadesCredito' => \App\Services\Credito\CatalogoCapacidadesCredito::paraVue(),
         ]);
     }
 
@@ -202,7 +202,7 @@ class SolicitudController extends Controller
         return ProductoVersion::disponiblesParaOriginacion(app(FechaEmpresa::class)->hoy())
             ->whereHas('producto', fn ($q) => $q->where('activo', true))
             ->with(['producto:id,nombre,clave', 'periodicidades', 'reglas'])
-            ->orderBy('producto_crediticio_id')->get();
+            ->orderBy('producto_crediticio_id')->get()->map(fn ($version) => $version->setAttribute('capacidades', \App\Services\Credito\CapacidadesProducto::paraVersion($version)));
     }
 
     private function relations(): array

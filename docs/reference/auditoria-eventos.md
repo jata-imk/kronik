@@ -1,5 +1,16 @@
 # Eventos de auditoría
 
+## Catálogo de capacidades del core — 31/10/2026
+
+Resolver capacidades y presentar opciones no añade una acción auditable. Se
+conservan emisores de producto, solicitud y operaciones financieras mediante
+ActivityEvent/ActivityLogService, sin eventos por consulta, simulación o rechazo
+de capacidad. `CapacidadesCreditoTest` verifica ausencia de actividad y persistencia
+ante rechazos internos, y ausencia de actividad en consulta Inertia.
+`VersionMotorCreditoTest` mantiene evidencia de actor/sujeto, equipo/sucursal y
+ausencia de datos sensibles en activación/pagos y reintentos. Este incremento no
+acredita cierre de la reconciliación general de la matriz.
+
 ## Alcance actual
 
 La tabla `activity_log` contiene actividad real; la interfaz administrativa permite

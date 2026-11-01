@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\ConvencionInteres;
 use App\Models\ProductoCrediticio;
+use App\Services\Credito\CapacidadesProducto;
 use App\Support\FiscalidadProducto;
 use App\Support\PoliticaMora;
 use Illuminate\Foundation\Http\FormRequest;
@@ -22,6 +22,7 @@ class GuardarProductoRequest extends FormRequest
         $producto = $this->route('producto');
 
         return [
+            ...CapacidadesProducto::reglas(),
             ...FiscalidadProducto::rules((array) $this->input('version', [])),
             ...PoliticaMora::rules(),
             'clave' => ['required', 'string', 'max:40', Rule::unique('productos_crediticios', 'clave')->ignore($producto instanceof ProductoCrediticio ? $producto->id : null)],
@@ -36,19 +37,13 @@ class GuardarProductoRequest extends FormRequest
             'version.cat_aplica' => ['required', 'boolean'],
             'version.cat_no_aplica_motivo' => ['nullable', 'required_if:version.cat_aplica,false', 'string', 'max:255'],
             'version.vigente_desde' => ['nullable', 'date'],
-            'version.periodicidades' => ['required', 'array', 'min:1'],
-            'version.periodicidades.*.periodicidad' => ['required', Rule::in(['semanal', 'quincenal', 'mensual']), 'distinct'],
             'version.periodicidades.*.plazo_minimo' => ['required', 'integer', 'min:1', 'max:600'],
             'version.periodicidades.*.plazo_maximo' => ['required', 'integer', 'gte:version.periodicidades.*.plazo_minimo', 'max:600'],
             'version.periodicidades.*.plazo_predeterminado' => ['required', 'integer', 'min:1', 'max:600'],
             'version.reglas' => ['required', 'array'],
-            'version.reglas.convencion_interes' => ['sometimes', 'required', 'string', Rule::in(array_column(ConvencionInteres::cases(), 'value'))],
-            'version.reglas.metodos_amortizacion' => ['required', 'array', 'min:1'],
-            'version.reglas.metodos_amortizacion.*' => ['required', Rule::in(['cuota_nivelada', 'capital_fijo']), 'distinct'],
             'version.reglas.permite_prepago_parcial' => ['required', 'boolean'],
             'version.reglas.permite_liquidacion_anticipada' => ['required', 'boolean'],
             'version.reglas.monto_minimo_prepago' => ['nullable', 'decimal:0,4', 'min:0'],
-            'version.reglas.aplicacion_prepago' => ['required', Rule::in(['reducir_plazo', 'reducir_pago'])],
             'version.comisiones' => ['present', 'array'],
             'version.comisiones.*.concepto_comision_id' => ['required', 'integer', 'distinct', Rule::exists('conceptos_comision', 'id')->where('activo', true)],
             'version.comisiones.*.tipo_importe' => ['required', Rule::in(['fijo', 'porcentaje'])],
@@ -107,6 +102,9 @@ class GuardarProductoRequest extends FormRequest
             'version.monto_maximo' => 'monto máximo', 'version.tasa_ordinaria_anual' => 'tasa ordinaria anual',
             'version.tasa_moratoria_anual' => 'tasa moratoria anual', 'version.periodicidades' => 'periodicidades',
             'version.reglas.metodos_amortizacion' => 'métodos de amortización',
+            'version.reglas.metodos_amortizacion.*' => 'método de amortización',
+            'version.periodicidades.*.periodicidad' => 'periodicidad',
+            'version.reglas.aplicacion_prepago' => 'aplicación del prepago',
             'version.reglas.convencion_interes' => 'convención de días para intereses',
             'version.comisiones.*.modalidad_cobro' => 'modalidad de cobro inicial',
             'version.comisiones.*.evento_cobro' => 'evento que genera la comisión',
