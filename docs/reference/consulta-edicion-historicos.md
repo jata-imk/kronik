@@ -117,3 +117,10 @@ Menú entrega `menubarSeleccionado` por ID exacto y `modoMenu` efectivo. Se
 conservan `menubarCatalogo` paginado y `menubarItems` de navegación como props
 diferentes. La consulta no reconstruye JSON condicional, parámetros, orden ni rutas
 de activación. El padre seleccionado se conserva aunque quede fuera de página.
+
+
+El cierre conserva temporalmente la identidad descartada del editor. Si una
+acción autorizada cancela la navegación de limpieza y devuelve el modo anterior,
+la respuesta no reabre esa consulta y se vuelve a limpiar el modo. Una apertura
+explícita reinicia la marca; recibir el modo vacío también la limpia. Esto no
+bloquea acciones legítimas ni sustituye autorización del servidor.

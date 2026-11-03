@@ -1,112 +1,83 @@
 # Consulta, edición e históricos
 
-## Referencias
+## Referencias y estado
 
-- Notion: https://app.notion.com/p/3fe61db7db7f81138be2df5cfa15564c
-- Base funcional: 33c79c421451effac723da9d268da0630db3fb0f; PR #66 integrada.
-- Rama actual: feat/consulta-plantillas. PR #65 de Bullet ajena.
-- [Contrato y matriz de 19 módulos](../reference/consulta-edicion-historicos.md).
+[Tarea de Notion](https://app.notion.com/p/3fe61db7db7f81138be2df5cfa15564c).
+Base funcional `33c79c4`, con PR #66 integrada. Inventario contrastado mediante
+SELECT de los 19 módulos de la BD local; sin escrituras operativas. PR #65 de
+Bullet ajena. [Contrato, matriz y módulos](../reference/consulta-edicion-historicos.md).
 
-## Estado — 2026-11-02
+Implementación autorizada completa en cinco incrementos encadenados. Código final
+`5da61d0`; sin migraciones, seeders, variables ni permisos nuevos. Sin integración,
+despliegue ni QA del usuario. Evidencia de Windows/Chromium, 2026-11-02–03,
+America/Mexico_City; datos sintéticos y SQLite aislado para E2E.
 
-Implementación autorizada del plan ampliado. Cinco incrementos: productos,
-plantillas, originación, Usuarios/Sucursales, Empresa/Menú. PR encadenadas para
-revisión; no se integra main sin una entrega concreta revisada. Sin despliegue.
-Incremento 1 implementado y validado; incremento 2 implementado en validación. Sin migraciones ni permisos nuevos.
+| PR | Rama | Base | Código revisado |
+| --- | --- | --- | --- |
+| [#67 Productos](https://github.com/jata-imk/kronik/pull/67) | feat/consulta-productos | main | bc6e533, a1fff7f |
+| [#68 Plantillas](https://github.com/jata-imk/kronik/pull/68) | feat/consulta-plantillas | #67 | bab3553 |
+| [#69 Originación](https://github.com/jata-imk/kronik/pull/69) | feat/originacion-guiada | #68 | 1979abf |
+| [#70 Usuarios/Sucursales](https://github.com/jata-imk/kronik/pull/70) | feat/consulta-administracion | #69 | 37b9c71 |
+| [#71 Empresa/Menú y cierre conjunto](https://github.com/jata-imk/kronik/pull/71) | feat/consulta-empresa-menu | #70 | 5da61d0 |
 
-## Evidencia inicial
+## Resultado
 
-Investigación sobre main 33c79c4 y BD local (SELECT readonly, 19 módulos).
-11 pruebas existentes/137 aserciones pasaron durante planeación; no corresponden
-a una validación de estos cambios. Reproducción en memoria: política en retirada
-permitida; instancia antigua de borrador puede modificar plantilla activa;
-HTTP habitual protegido 422. Empresa GET crea singleton ausente; lectores de
-administración GET 200 y PUT 403. Sin modificar BD operativa ni habilitar dinero.
+Mismos formularios para lectura y captura, con ID exacto fuera de página,
+inmutabilidad en backend y capacidades por estado/permiso. Plantillas activas o
+retiradas consultan contenido completo y PDF existente. Política visible con su
+número independiente e historia; retirada impide políticas nuevas. Captura/envío
+sin política conservados. Empresa GET no crea singleton. Menú agrega auditoría
+transaccional de gestión sin valores sensibles. Consultar estos formularios no
+requiere eventos nuevos; visores y eventos auditables existentes se conservan.
 
-## Siguiente paso
+La última PR incluye correcciones del barrido conjunto: búsqueda de variables
+permitida; recarga solo auth revoca edición/creación/lectura; cerrar consulta y
+retirar enseguida no reabre el formulario por una respuesta con modo anterior.
+Spatie, recursos globales y filtros/paginación de PR #66 conservados.
 
-Validar incremento 1, revisión medium y PR. Continuar incrementos 2–5 y barrido
-acumulado contra base funcional; registrar pruebas, CI, integración y QA reales.
+## Validación y revisión
 
-## Incremento 1
+- Suite backend completa: **639 aprobadas, una omitida, 42 680 aserciones**;
+  pre-push de esta entrega. El PHP no cambia en las correcciones finales de Vue.
+- Frontend completo: **140 aprobadas en 54 archivos** sobre 5da61d0.
+- Pint: 23 archivos PHP aprobados. Build aprobado con avisos preexistentes de
+  fuentes/chunks. Enlaces locales de los 17 documentos cambiados sin destinos faltantes.
+- E2E de entrega: **nueve escenarios distintos aprobados por tandas finales**:
+  Productos/Plantillas/política 6/6 (puerto8108), Usuarios/Sucursales 1/1
+  (8107), Empresa/Menú 2/2 (8015). PDF multipágina/editor real 1/1 aislado.
+  Aprobación dual/paquete QA 1/1 (8109), sin Super Admin aprobador.
+  Total: **11 escenarios distintos aprobados por tandas**; no se afirma una tanda única verde.
+  Intentos previos: PDF503 intermitente, prueba que cerraba con Escape, selección
+  de módulo vacía (ahora checkbox explícito) y carrera cierre/retirada corregidos.
+  Chromium/Windows produjo ERR_NO_BUFFER_SPACE al cargar JS incluso en login;
+  traza/consola revisadas y Usuarios pasó al repetirlo aislado en puerto8107.
+- Una tanda solapada accidentalmente sobre la misma BD E2E fue descartada; se
+  repite secuencialmente. No se acredita esa ejecución como validación.
+- `/review medium` por incremento y barrido acumulado cerrados sin hallazgos
+  pendientes. La CLI agotó cuota durante el barrido; el usuario autorizó revisor
+  delegado medium. Cierre estático final sobre **5da61d0**, última PR contra
+  **37b9c71** y conjunto contra **33c79c4**. Las pruebas las ejecutó el agente principal. Ajuste final E2E de checkboxes
+  de menú también revisado medium sin hallazgos; no cambia producción.
 
-Consulta completa de productos implementada. Backend focalizado: 59 pruebas/511
-aserciones; frontend: tres pruebas. Pint y enlaces locales aprobados. Build aprobado,
-con avisos preexistentes de fuentes/chunks. E2E y revisión final siguen en curso.
-Revisión medium identificó alta de periodicidad visible en consulta y una referencia
-de simulación incorrecta; ambas corregidas. Regresión de validación conservando
-captura cubierta por componente. Continuar revisión tras las correcciones.
+Hallazgos resueltos: controles de alta de periodicidad en consulta, referencia de
+simulación, pérdida de filtros, reapertura por Escape/X, recarga del mismo usuario,
+orden nulo del menú, colonia anterior, permisos obsoletos y carrera cierre→retirada.
+No se modifica dominio financiero, aprobación, históricos ni prioridades de Notion.
 
-## Incremento 2
+## Capturas sintéticas
 
-Rama feat/consulta-plantillas, dependiente de bc6e533. Editor documental en consulta
-y revalidación de estado dentro de bloqueos transaccionales. Incremento 1:
-E2E productos 4/4 aprobado, incluidos consulta móvil y simulación fiscal.
-Validación de plantillas en curso.
+[Producto escritorio](../assets/consulta-edicion-historicos/producto-escritorio.png) ·
+[Producto móvil](../assets/consulta-edicion-historicos/producto-movil.png) ·
+[Plantilla móvil](../assets/consulta-edicion-historicos/plantilla-movil.png) ·
+[Política móvil](../assets/consulta-edicion-historicos/politica-movil.png) ·
+[Usuario móvil](../assets/consulta-edicion-historicos/usuario-movil.png) ·
+[Menú móvil](../assets/consulta-edicion-historicos/menu-movil.png).
 
-Plantillas: 22 backend/193 aserciones y prueba real de Quill readonly aprobadas.
-Build aprobado. Revisión medium sin hallazgos; su intento de Vitest quedó limitado
-por sandbox, pero la ejecución principal sí pasó. E2E detectó espera de guardado
-ausente en el caso nuevo y overflow móvil; corregidos, repetición pendiente.
+## Traspaso
 
-## Incremento 3
-
-Rama feat/originacion-guiada, base bab3553. Política actual con número propio,
-historia exacta y formulario compartido de consulta/nueva revisión. Lectores pueden
-consultar; retirada impide crear incluso con instancia antigua y Super Admin.
-Avisos en producto, captura y requisitos sin nuevos bloqueos de captura/envío.
-Frontend: 41 pruebas aprobadas y build aprobado. Backend/E2E/review en validación.
-Plantillas: E2E nuevo y editor existente aprobados (2/2); corregidos espera de
-creación y desbordamiento móvil. Sin integración ni despliegue.
-
-Incremento 3 validado: 73 backend/1148 aserciones, 41 frontend y E2E de historia
-aprobados. Revisión medium contra bab3553 sin hallazgos accionables. El E2E
-usa pulsaciones reales para el campo monetario PrimeVue. Sin cambios financieros.
-
-## Incremento 4
-
-Rama feat/consulta-administracion, base 1979abf. Usuarios y Sucursales reutilizan
-formularios de consulta por ID, separados de los permisos de escritura. Se conservan
-Folios, búsquedas y paginación de PR #66. Pruebas/revisión en curso.
-
-Incremento 4: 24 backend/281 aserciones, cuatro frontend, build y E2E aprobados.
-Revisión medium encontró pérdida de filtros al consultar usuario y reapertura de
-sucursal tras Escape/X; corregidos y cubiertos en E2E, repetición en curso.
-
-Incremento 4: revisión medium final sin hallazgos accionables; cinco pruebas
-frontend aprobadas, incluida recarga del mismo ID y revocación de capacidad.
-El E2E espera la navegación de cierre antes de recargar para no cancelarla.
-
-## Incremento 5
-
-Rama feat/consulta-empresa-menu, base 37b9c71. GET de Empresa no crea singleton;
-consulta comparte formulario y preserva redacción de secretos. Menú consulta
-ID exacto fuera de página, conserva datos y autoriza acciones existentes.
-Gestión de menú ahora auditable en transacción, sin valores sensibles.
-Incremento 4: E2E final aprobado, incluidos Escape y recarga tras navegación.
-Validaciones focalizadas del incremento 5 en curso; sin integración ni despliegue.
-
-Incremento 5: 19 backend/518 aserciones y siete frontend administrativos aprobados.
-Revisión medium encontró envío de orden nulo al crear menú: retirado del payload
-de captura; consulta muestra el orden guardado. Regresión E2E añadida.
-
-Barrido de contratos: la búsqueda de variables es una acción de consulta; se
-conserva habilitada y separada de la inserción deshabilitada. Cubierta en E2E.
-Recarga parcial de domicilio de Empresa usa la colonia guardada directamente.
-Enlaces locales: 17 documentos modificados, sin destinos inexistentes.
-
-Revisión acumulada manual: recargas parciales solo auth debían retirar edición
-en productos/plantillas/política. Se agregan watchers/capacidad vigente y regresiones
-de componentes; backend conserva autorización y estado. Revisor delegado medium
-autorizado por usuario tras interrupción de CLI por cuota. Se descarta una tanda
-E2E solapada accidentalmente sobre la misma BD aislada y se repite secuencialmente.
-
-Revisor delegado medium: dos casos de revocación auth-only adicionales corregidos:
-revocar creación cierra y limpia altas abiertas; política exige lectura+gestión
-como su FormRequest. Nueve pruebas focalizadas aprobadas, incluida revocación de
-creación/actualización/lectura. Relectura del revisor sin nuevos hallazgos.
-
-E2E final reprodujo carrera cierre→retirar: GET de limpieza cancelado por POST,
-respuesta con modo antiguo reabría consulta. Se conserva identidad descartada
-hasta limpiar modo; petición explícita de apertura la reinicia. Mismo contrato
-en productos y plantillas, con regresión de componente. PDF aislado aprobado.
+Resultados CI y cierre de publicación se enlazan en las descripciones de PR y
+Notion, junto con la evidencia de esta nota. Integrar las PR en orden #67→#71
+cuando corresponda, conservando
+las correcciones acumuladas de #71. Después registrar despliegue y QA reales.
+Históricos ampliados de Solicitudes/Créditos y dictámenes paginados quedan como
+continuación independiente; no implementados en esta entrega. No reabre PR #15.
