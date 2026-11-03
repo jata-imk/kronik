@@ -157,7 +157,7 @@ podrían interpretarse como fórmulas se prefijan para tratarlos como texto.
 El [ADR 0034](../explanation/adr-0034-amortizacion-reutilizable.md) separa cálculo
 sin nuevas acciones auditables. Permanecen los emisores de aplicación de producto,
 desembolso, pago/anticipo, liquidación y reverso. No se emiten eventos por resolver
-estrategias ni por calcular tablas. `CreditoAnticiposTest` comprueba evento ?nico
+estrategias ni por calcular tablas. `CreditoAnticiposTest` comprueba evento único
 tras reintento, actor, sujeto, equipo/sucursal originales y ausencia de importes,
 referencias o snapshots en metadatos. Se conserva la cobertura parcial de la
 matriz general; este refactor no la completa.
@@ -176,3 +176,10 @@ sucursal histórica desconocida. El iniciador sigue referenciado por el document
 el ejecutor automático tiene causer null. No se copian snapshots ni datos sensibles.
 No se añaden eventos por filtros, búsqueda o paginación. El backlog general de
 reconciliación permanece abierto. Ver [contrato](contexto-sucursal-consultas.md).
+
+## Consulta completa de productos ? 2026-11-02
+
+Abrir/cerrar el formulario y seleccionar versiones son consultas sin nuevas acciones
+auditables. Se conservan emisores de mutaciones y la inmutabilidad de servicios/modelos.
+ConsultaProductosTest comprueba lectura sin actividad adicional; no cierra el backlog
+general de reconciliaci?n.

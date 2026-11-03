@@ -20,3 +20,7 @@ destinos de las rutas donde se activa cada entrada.
 ## Temas relacionados
 
 - [Usuarios y permisos](usuarios-equipos-permisos.md), [SIC](sic-circulo-credito.md) y [correos](correos-acceso.md).
+
+- [Contrato de consulta, edición e históricos](../reference/consulta-edicion-historicos.md).
+
+- [Validar formularios de consulta](../how-to/validar-consulta-solo-lectura.md).

@@ -1,6 +1,35 @@
 import { expect, test } from "@playwright/test";
 import { login } from "./support/auth.js";
 
+test("consulta completa no guarda y alterna con borrador sin mezclar datos", async ({ page }, testInfo) => {
+    await login(page);
+    await page.goto("/productos-crediticios");
+    await page.getByRole("button", { name: "Ver versión 1", exact: true }).first().click();
+    const dialog = page.locator("#product-editor");
+    await expect(dialog).toContainText("Consultar versión 1");
+    await expect(dialog.getByRole("button", { name: "Guardar borrador" })).toHaveCount(0);
+    const originalName = await dialog.locator("#product-name").inputValue();
+    await expect(dialog.locator("#product-name")).toHaveAttribute("readonly", "");
+    const writes = [];
+    page.on("request", request => { if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method())) writes.push(request.url()); });
+    await dialog.locator("#product-name").press("Enter");
+    await dialog.getByRole("tab", { name: "Montos y tasas", exact: true }).click();
+    await expect(dialog.getByRole("button", { name: "Agregar", exact: true })).toHaveCount(0);
+    await dialog.getByRole("tab", { name: "Reglas", exact: true }).click();
+    await expect(dialog).toContainText("Convenciones conservadas");
+    await dialog.getByRole("tab", { name: "Comisiones", exact: true }).click();
+    await expect(dialog.getByRole("button", { name: "Agregar comisión" })).toHaveCount(0);
+    expect(writes).toEqual([]);
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(dialog.getByRole("button", { name: "Cerrar consulta" })).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath("consulta-producto-movil.png"), fullPage: true });
+    await dialog.getByRole("button", { name: "Cerrar consulta" }).click();
+    await expect(dialog).toHaveCount(0);
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.getByRole("button", { name: "Ver versión 1", exact: true }).first().click();
+    await expect(page.locator("#product-editor #product-name")).toHaveValue(originalName);
+});
+
 test("configura fiscalidad explícita y conserva la consulta de la versión", async ({ page }) => {
     await login(page);
     await page.goto("/productos-crediticios");

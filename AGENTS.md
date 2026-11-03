@@ -45,6 +45,27 @@ Confirmar entorno y efectos antes de migraciones o seeders. `php artisan migrate
 
 ## Estilo y validación
 
+### Consulta, edición e históricos
+
+La consulta autorizada no debe depender de permisos de creación o actualización.
+Mostrar el detalle del contrato de lectura sin exponer campos ni evidencias reservadas.
+Reutilizar formularios para consultar configuraciones cuando corresponda; conservar
+visores especializados para documentos y operaciones. Evitar formularios paralelos
+y abstracciones universales.
+
+Resolver editabilidad mediante autorización y estado del dominio en backend.
+Consulta no ofrece ni ejecuta mutaciones mediante botones, teclado, watchers,
+autosave, subidas o controles internos. Consultar no crea recursos de negocio;
+conservar los eventos de lectura expresamente auditables.
+
+Resolver el ID exacto independientemente de filtros y páginas, sin sustituirlo
+por la última versión ni reinterpretar históricos con defaults actuales. Limpiar
+datos y permisos al cambiar recurso/modo y descartar respuestas tardías. Explicar
+faltantes y siguiente paso con enlaces autorizados, sin inferir bloqueos nuevos.
+Cubrir acceso directo, permisos, inmutabilidad, teclado, cambios de selección,
+recargas parciales y móvil. Ver [contrato de consulta](docs/reference/consulta-edicion-historicos.md)
+y [validación](docs/how-to/validar-consulta-solo-lectura.md).
+
 Usar cuatro espacios, LF, UTF-8 y salto de línea final según `.editorconfig`. PHP sigue las convenciones de Laravel: clases StudlyCase, modelos singulares y sufijos `Controller`, `Request` y `Service`. Los componentes Vue usan PascalCase, los composables `useNombre.js` y JavaScript usa comillas dobles según `biome.json`.
 
 Todos los errores expuestos al usuario deben estar en español claro. Nunca mostrar claves como `validation.required`, `validation.integer` o `validation.in`. Al cambiar validaciones, revisar `lang/es/validation.php`, mensajes y nombres de atributos del dominio, y añadir una aserción de regresión para los flujos afectados. Ver [validación de formularios](docs/reference/validacion-formularios.md).

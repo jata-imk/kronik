@@ -23,3 +23,5 @@
 - [Reiniciar datos de desarrollo o QA](reset-datos-desarrollo.md)
 - [Restaurar catalogos y datos de desarrollo](restaurar-catalogos.md)
 - [Validar un RFC en Kronik](validar-rfc.md)
+
+- [Validar consulta de solo lectura](validar-consulta-solo-lectura.md).

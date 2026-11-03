@@ -85,3 +85,9 @@ En local o para Super Admin, el simulador permite abrir “Fórmulas y sustituci
 El [contrato transversal de contexto y listados](contexto-sucursal-consultas.md)
 describe parámetros de consulta, paginadores y selección independiente de la
 página, conservando los permisos y la naturaleza global o por equipo del módulo.
+
+## Consulta completa
+
+Ver versión abre el mismo editor en consulta, también para borradores sin permiso
+de actualizaci?n. Incluye condiciones, periodicidades, reglas, comisiones, fiscalidad
+y atraso, preservando valores históricos. Ver [contrato](consulta-edicion-historicos.md).

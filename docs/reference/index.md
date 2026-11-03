@@ -34,3 +34,5 @@
 - [Folios de negocio y contrato de numeración](folios.md).
 
 - [Contexto de sucursal y consultas](contexto-sucursal-consultas.md).
+
+- [Consulta, edición e históricos](consulta-edicion-historicos.md).

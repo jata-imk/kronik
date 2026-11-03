@@ -17,7 +17,7 @@ final class CatalogoListadoService
 
     public function productos(Request $request): array
     {
-        $request->validate(['producto_id' => 'nullable|integer|min:1', 'versiones_page' => 'nullable|integer|min:1', 'versiones_por_pagina' => ['nullable', 'integer', \Illuminate\Validation\Rule::in([10, 25, 50])]]);
+        $request->validate(['producto_id' => 'nullable|integer|min:1', 'version_id' => 'nullable|integer|min:1', 'modo' => ['nullable', \Illuminate\Validation\Rule::in(['consulta', 'edicion'])], 'versiones_page' => 'nullable|integer|min:1', 'versiones_por_pagina' => ['nullable', 'integer', \Illuminate\Validation\Rule::in([10, 25, 50])]]);
         $filters = $this->filtros();
         $sorts = ['nombre' => 'nombre', 'clave' => 'clave'];
         $values = $this->params->resolver($request, $filters, $sorts);
@@ -33,12 +33,15 @@ final class CatalogoListadoService
         if ($selected) {
             $selected->setRelation('versiones', $versionPage->getCollection());
             $selected->setAttribute('ultimaVersion', $versions($selected->versiones())->orderByDesc('numero')->first());
+            $selected->setAttribute('versionSeleccionada', $request->filled('version_id') ? $versions($selected->versiones())->findOrFail($request->integer('version_id')) : null);
         }
-        foreach ($page->getCollection()->pluck('versiones')->flatten()->concat($selected?->versiones ?? collect())->push($selected?->ultimaVersion)->filter() as $version) {
+        foreach ($page->getCollection()->pluck('versiones')->flatten()->concat($selected?->versiones ?? collect())->push($selected?->ultimaVersion)->push($selected?->versionSeleccionada)->filter() as $version) {
             $version->setAttribute('capacidades', \App\Services\Credito\CapacidadesProducto::paraVersion($version));
+            $version->setAttribute('puede_editar', $request->user()->can('update productos-crediticios') && $version->estado === \App\Enums\ProductoVersionEstado::Borrador && $version->usos_count === 0);
         }
 
         return ['productos' => $page->getCollection(), 'productoSeleccionado' => $selected,
+            'modoVersion' => $request->input('modo'),
             'listado' => $this->params->metadata($page, $values),
             'versionesListado' => $versionPage ? $this->params->metadata($versionPage, []) : null];
     }
