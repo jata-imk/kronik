@@ -52,6 +52,7 @@ const catalogVisible = ref(false);
 const helpGuideVisible = ref(false);
 const editingVersion = ref(null);
 const editorReadonly = ref(false);
+const dismissedEditor = ref(null);
 const editorProductId = ref(null);
 const fiscalVersion = ref(null);
 const fiscalVisible = ref(false);
@@ -354,11 +355,13 @@ const openEdit = (version) => {
     editorVisible.value = true;
 };
 const requestVersion = (version, modo = "consulta") => {
+    dismissedEditor.value = null;
     form.cancel();
     editorVisible.value = false;
     serverList.visit({ producto_id: selected.value.id, version_id: version.id, modo, page: page.props.listado?.current_page ?? 1 });
 };
 const closeEditor = () => {
+    dismissedEditor.value = props.modoVersion ? `${editorProductId.value}:${editingVersion.value?.id}:${props.modoVersion}` : null;
     form.cancel();
     editorVisible.value = false;
     editingVersion.value = null;
@@ -369,12 +372,17 @@ watch([() => props.productoSeleccionado, () => props.modoVersion, () => can("upd
     const version = producto?.versionSeleccionada;
     // Validation responses preserve the actor's unsaved draft and field errors.
     if (!modo) {
+        dismissedEditor.value = null;
         if (editingVersion.value && editorVisible.value) {
             form.cancel();
             editorVisible.value = false;
             editingVersion.value = null;
             form.clearErrors();
         }
+        return;
+    }
+    if (dismissedEditor.value === `${producto?.id}:${version?.id}:${modo}`) {
+        serverList.visit({modo:null,page:page.props.listado?.current_page ?? 1});
         return;
     }
     if (modo === "edicion" && can("update productos-crediticios") && editorVisible.value && !editorReadonly.value && version?.puede_editar && editingVersion.value?.id === version.id && editorProductId.value === producto.id) return;

@@ -19,4 +19,7 @@ it("plantillas vuelve a consulta ante recarga parcial de permisos",async()=>{
  w.vm.openCreate();await nextTick();expect(w.vm.editorVisible).toBe(true);
  state.page.props.auth.permissions["create-plantillas-documentos"]=false;await nextTick();
  expect(w.vm.editorVisible).toBe(false);state.submit.mockClear();w.vm.submit();expect(state.submit).not.toHaveBeenCalled();
+ await w.setProps({modoVersion:"consulta"});expect(w.vm.editorVisible).toBe(true);
+ await w.vm.closeEditor();await w.setProps({plantillaSeleccionada:{...plantilla}});expect(w.vm.editorVisible).toBe(false);
+ w.vm.requestVersion(version);await w.setProps({plantillaSeleccionada:{...plantilla}});expect(w.vm.editorVisible).toBe(true);
 });

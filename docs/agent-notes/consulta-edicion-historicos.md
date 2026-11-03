@@ -105,3 +105,8 @@ Revisor delegado medium: dos casos de revocación auth-only adicionales corregid
 revocar creación cierra y limpia altas abiertas; política exige lectura+gestión
 como su FormRequest. Nueve pruebas focalizadas aprobadas, incluida revocación de
 creación/actualización/lectura. Relectura del revisor sin nuevos hallazgos.
+
+E2E final reprodujo carrera cierre→retirar: GET de limpieza cancelado por POST,
+respuesta con modo antiguo reabría consulta. Se conserva identidad descartada
+hasta limpiar modo; petición explícita de apertura la reinicia. Mismo contrato
+en productos y plantillas, con regresión de componente. PDF aislado aprobado.

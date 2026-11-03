@@ -74,3 +74,9 @@ it("cierra alta y cancela envío al retirar creación en recarga parcial",async(
  state.page.props.auth.permissions["create-productos-crediticios"]=false;await w.vm.$nextTick();
  expect(w.vm.editorVisible).toBe(false);submit.mockClear();w.vm.submit();expect(submit).not.toHaveBeenCalled();
 });
+
+it("la respuesta de una acción tras cerrar no reabre la consulta descartada",async()=>{
+ const v=version();const w=render(v);w.vm.closeEditor();await w.vm.$nextTick();
+ await w.setProps({productoSeleccionado:product({...v})});expect(w.vm.editorVisible).toBe(false);
+ w.vm.requestVersion(v);await w.setProps({productoSeleccionado:product({...v})});expect(w.vm.editorVisible).toBe(true);
+});

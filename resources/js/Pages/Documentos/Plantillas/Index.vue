@@ -44,6 +44,7 @@ const previewSource = ref(null);
 const section = ref("contenido_html");
 const editingVersion = ref(null);
 const editorReadonly = ref(false);
+const dismissedEditor = ref(null);
 const editorTemplateId = ref(null);
 const editorRefs = {};
 const sections = [{label:"Encabezado",value:"encabezado_html"},{label:"Contenido",value:"contenido_html"},{label:"Pie de página",value:"pie_html"}];
@@ -201,21 +202,28 @@ const openEdit = (version, readonly = false) => {
     editorVisible.value = true;
 };
 const requestVersion = (version, modo = "consulta") => {
+    dismissedEditor.value = null;
     form.cancel(); editorVisible.value = false;
     serverList.visit({ plantilla_id: selected.value.id, version_id: version.id, modo, page: page.props.listado?.current_page ?? 1 });
 };
 const closeEditor = async () => {
+    dismissedEditor.value = props.modoVersion ? `${editorTemplateId.value}:${editingVersion.value?.id}:${props.modoVersion}` : null;
     document.activeElement?.blur(); form.cancel(); editorVisible.value = false; form.clearErrors();
     if (props.modoVersion) serverList.visit({ modo: null, page: page.props.listado?.current_page ?? 1 });
 };
 watch([() => props.plantillaSeleccionada, () => props.modoVersion, () => can("update plantillas-documentos")], ([item, modo]) => {
     if (!modo) {
+        dismissedEditor.value = null;
         if (editingVersion.value && editorVisible.value) {
             form.cancel(); editorVisible.value = false; editingVersion.value = null; form.clearErrors();
         }
         return;
     }
     const version = item?.versionSeleccionada;
+    if (dismissedEditor.value === `${item?.id}:${version?.id}:${modo}`) {
+        serverList.visit({modo:null,page:page.props.listado?.current_page ?? 1});
+        return;
+    }
     if (modo === "edicion" && can("update plantillas-documentos") && editorVisible.value && !editorReadonly.value && version?.puede_editar && editingVersion.value?.id === version.id && editorTemplateId.value === item.id) return;
     form.cancel(); editorVisible.value = false; form.clearErrors();
     if (!version) return;
