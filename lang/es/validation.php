@@ -84,6 +84,8 @@ return [
     ],
 
     'attributes' => [
+        'politica_id' => 'política seleccionada',
+        'modo' => 'modo de consulta',
         'team' => 'equipo seleccionado',
         'team_id' => 'equipo seleccionado',
         'responsible_id' => 'responsable del equipo',

@@ -73,7 +73,7 @@ function reintentar(paquete) { retry.post(route("solicitudes.paquete.retry", [pr
                         </ul>
                         <p v-if="!pendientes.length" class="mt-5 rounded-xl bg-surface-50 p-4 text-sm text-surface-600 dark:bg-surface-900 dark:text-surface-300"><i class="pi pi-lock mr-2 text-primary" aria-hidden="true" />Se conservan la revisión aprobada, las condiciones, la tabla y la versión del contrato. Los cambios posteriores no actualizan el PDF original.</p>
                         <ul v-else class="mt-4 divide-y divide-surface-200 dark:divide-surface-700">
-                            <li v-for="item in pendientes" :key="item.clave" class="flex gap-3 py-3"><i class="pi pi-exclamation-circle mt-1 text-amber-600" aria-hidden="true" /><div><h3 class="font-semibold">{{ titulos[item.clave] ?? item.clave.replace('documento_', 'Documento: ').replaceAll('_', ' ') }}</h3><p class="mt-1 text-sm text-surface-600 dark:text-surface-300">{{ item.mensaje }}</p></div></li>
+                            <li v-for="item in pendientes" :key="item.clave" class="flex gap-3 py-3"><i class="pi pi-exclamation-circle mt-1 text-amber-600" aria-hidden="true" /><div><h3 class="font-semibold">{{ titulos[item.clave] ?? item.clave.replace('documento_', 'Documento: ').replaceAll('_', ' ') }}</h3><p class="mt-1 text-sm text-surface-600 dark:text-surface-300">{{ item.mensaje }}</p><Link v-if="item.accion" :href="route(item.accion.ruta,item.accion.parametros)" class="mt-2 inline-block text-primary underline">{{ item.accion.etiqueta }}</Link></div></li>
                         </ul>
                     </section>
                     <aside class="rounded-2xl border border-surface-200 bg-surface-50 p-5 dark:border-surface-700 dark:bg-surface-900">

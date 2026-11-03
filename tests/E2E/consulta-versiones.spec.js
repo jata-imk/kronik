@@ -43,3 +43,38 @@ test("plantilla activa y retirada abren el editor exacto sin mutaciones", async 
     await expect(dialog.locator("#watermark")).toHaveValue("VERSIÓN UNO");
     noErrors();
 });
+
+
+test("originación distingue números y conserva políticas históricas en consulta", async ({page}, testInfo) => {
+    await login(page);
+    await page.goto("/productos-crediticios");
+    await page.getByRole("link", {name:"Consultar política",exact:true}).first().click();
+    await page.getByRole("button", {name:"Crear política",exact:true}).click();
+    await page.getByLabel("Separación de funciones", {exact:true}).click();
+    await page.getByRole("option", {name:"Dual: quien capturó no aprueba",exact:true}).click();
+    await page.getByLabel("Requisito SIC", {exact:true}).click();
+    await page.getByRole("option", {name:"Evaluación manual documentada permitida",exact:true}).click();
+    await page.locator("#pol-maximo").pressSequentially("10000");
+    await page.locator("#pol-vigencia").fill("30");
+    await page.locator("fieldset").filter({hasText:"Documentos requeridos por esta política"}).getByRole("checkbox").first().check();
+    await page.locator("#pol-capacidad").fill("Evaluar evidencias de ingresos y egresos conforme al procedimiento interno de QA.");
+    await page.locator("#pol-validacion").fill("Acta interna QA de criterios para pruebas, sin operación real.");
+    await page.locator("#pol-confirmacion").check();
+    await page.getByRole("button",{name:"Guardar nueva versión de política",exact:true}).click();
+    await expect(page.getByText("Consulta · política 1 · versión de producto 1.",{exact:true})).toBeVisible();
+    await page.getByRole("button",{name:"Nueva versión de política",exact:true}).click();
+    await page.locator("#pol-vigencia").fill("31");
+    await page.locator("#pol-validacion").fill("Acta interna QA segunda revisión de criterios de prueba.");
+    await page.locator("#pol-confirmacion").check();
+    await page.getByRole("button",{name:"Guardar nueva versión de política",exact:true}).click();
+    await expect(page.getByText("Política actual: versión 2.",{exact:true})).toBeVisible();
+    await page.getByRole("button",{name:"Consultar política 1",exact:true}).click();
+    await expect(page.locator("#pol-vigencia")).toHaveValue("30");
+    await expect(page.locator("#pol-vigencia")).toHaveAttribute("readonly","");
+    const writes=[];page.on("request",req=>{if(["POST","PUT","PATCH","DELETE"].includes(req.method()))writes.push(req.url());});
+    await page.locator("#pol-vigencia").press("Enter");
+    await expect(page.getByRole("button",{name:"Guardar nueva versión de política"})).toHaveCount(0);
+    expect(writes).toEqual([]);
+    await page.setViewportSize({width:390,height:844});
+    await page.screenshot({path:testInfo.outputPath("politica-historica-movil.png"),fullPage:true});
+});

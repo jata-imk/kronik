@@ -131,7 +131,7 @@ class SolicitudController extends Controller
                 'approve' => auth()->user()->operaEnSucursal($solicitud->sucursal_id) && Gate::allows('approve', $solicitud),
                 'paquete' => Gate::allows('viewPackage', $solicitud),
                 'desembolso' => Gate::allows('viewAny', \App\Models\Credito::class) && Gate::allows('viewPackage', $solicitud),
-                'politica' => Gate::check(['read productos-crediticios', 'manage origination productos-crediticios']),
+                'politica' => Gate::allows('read productos-crediticios'),
             ],
             'responsables' => auth()->user()->operaEnSucursal($solicitud->sucursal_id) && (Gate::allows('assign', $solicitud) || Gate::allows('review', $solicitud))
                 ? app(\App\Services\SolicitudResponsablesService::class)->buscar($solicitud, auth()->user()) : [],
@@ -211,8 +211,10 @@ class SolicitudController extends Controller
     {
         return ProductoVersion::disponiblesParaOriginacion(app(FechaEmpresa::class)->hoy())
             ->whereHas('producto', fn ($q) => $q->where('activo', true))
-            ->with(['producto:id,nombre,clave', 'periodicidades', 'reglas'])
-            ->orderBy('producto_crediticio_id')->get()->map(fn ($version) => $version->setAttribute('capacidades', \App\Services\Credito\CapacidadesProducto::paraVersion($version)));
+            ->with(['producto:id,nombre,clave', 'periodicidades', 'reglas', 'politicaActual:originacion_politicas.id,originacion_politicas.producto_version_id,originacion_politicas.numero,originacion_politicas.created_at'])
+            ->orderBy('producto_crediticio_id')->get()->map(fn ($version) => $version
+            ->setAttribute('capacidades', \App\Services\Credito\CapacidadesProducto::paraVersion($version))
+            ->setAttribute('originacion', app(\App\Services\OriginacionPoliticaService::class)->resumen($version, auth()->user())));
     }
 
     private function relations(): array

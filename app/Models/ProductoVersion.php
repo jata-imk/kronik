@@ -54,6 +54,11 @@ class ProductoVersion extends Model
         return $this->hasMany(ProductoVersionUso::class);
     }
 
+    public function politicaActual()
+    {
+        return $this->hasOne(OriginacionPolitica::class, 'producto_version_id')->latestOfMany('numero');
+    }
+
     public function scopeDisponiblesParaOriginacion(Builder $query, CarbonImmutable $fecha): Builder
     {
         return $query

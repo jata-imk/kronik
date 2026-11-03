@@ -48,3 +48,17 @@ Plantillas: 22 backend/193 aserciones y prueba real de Quill readonly aprobadas.
 Build aprobado. Revisión medium sin hallazgos; su intento de Vitest quedó limitado
 por sandbox, pero la ejecución principal sí pasó. E2E detectó espera de guardado
 ausente en el caso nuevo y overflow móvil; corregidos, repetición pendiente.
+
+## Incremento 3
+
+Rama feat/originacion-guiada, base bab3553. Política actual con número propio,
+historia exacta y formulario compartido de consulta/nueva revisión. Lectores pueden
+consultar; retirada impide crear incluso con instancia antigua y Super Admin.
+Avisos en producto, captura y requisitos sin nuevos bloqueos de captura/envío.
+Frontend: 41 pruebas aprobadas y build aprobado. Backend/E2E/review en validación.
+Plantillas: E2E nuevo y editor existente aprobados (2/2); corregidos espera de
+creación y desbordamiento móvil. Sin integración ni despliegue.
+
+Incremento 3 validado: 73 backend/1148 aserciones, 41 frontend y E2E de historia
+aprobados. Revisión medium contra bab3553 sin hallazgos accionables. El E2E
+usa pulsaciones reales para el campo monetario PrimeVue. Sin cambios financieros.
