@@ -14,7 +14,7 @@ vi.mock("@inertiajs/vue3", () => ({
 }));
 const policy = numero => ({ id: numero, numero, condiciones: { modalidad: "individual", sic: "manual_permitido", monto_maximo: "10000.00", vigencia_dias: numero, referencia_validacion: "Referencia histórica " + numero, criterio_capacidad: "Criterio humano " + numero, documentos: ["ine"] } });
 function render(puedeCrear = false) {
-    state.page=reactive({props:{auth:{permissions:{"manage-origination-productos-crediticios":true}}}});
+    state.page=reactive({props:{auth:{permissions:{"manage-origination-productos-crediticios":true,"read-productos-crediticios":true}}}});
     return shallowMount(Page, { props: { version: { id: 10, numero: 2, producto: { id: 3, nombre: "Producto" } }, politica: policy(3), politicaSeleccionada: policy(1), historial: { data: [policy(1), policy(3)], current_page: 1, per_page: 10, total: 2 }, tiposDocumento: [], puedeCrear, modoPolitica: "consulta" }, global: { renderStubDefaultSlot: true, mocks: { route: () => "/" }, stubs: {
         AppLayout: { template: '<main><slot name="card-content" /></main>' },
         Button: { props: ["label"], template: '<button type="button">{{ label }}</button>' },
@@ -52,4 +52,11 @@ it("política descarta captura cuando se retira gestión en props compartidas",a
     await w.vm.$nextTick();
     expect(w.text()).not.toContain("Guardar nueva versión de política");
     expect(w.vm.form.referencia_validacion).toBe("Referencia histórica 1");
+});
+
+it("política requiere lectura vigente además de gestión",async()=>{
+    const w=render(true);await w.findAll("button").find(b=>b.text()==="Nueva versión de política").trigger("click");
+    state.page.props.auth.permissions["read-productos-crediticios"]=false;await w.vm.$nextTick();
+    expect(w.text()).not.toContain("Guardar nueva versión de política");
+    post.mockClear();await w.get("form").trigger("submit");expect(post).not.toHaveBeenCalled();
 });

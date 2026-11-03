@@ -21,7 +21,7 @@ vi.mock("primevue/usetoast", () => ({ useToast: () => ({ add: vi.fn() }) }));
 const version = (id = 1) => ({ id, numero: id, estado: "activa", puede_editar: false, usos_count: 0, fiscalidad: null, periodicidades: [], comisiones: [], reglas: { metodos_amortizacion: [], permite_prepago_parcial: true } });
 const product = selected => ({ id: 10, clave: "QA", nombre: `Producto ${selected.id}`, versiones: [selected], ultimaVersion: selected, versionSeleccionada: selected });
 function render(selected = version(), modo = "consulta") {
-    state.page=reactive({props:{auth:{permissions:{"update-productos-crediticios":true}},listado:{}}});
+    state.page=reactive({props:{auth:{permissions:{"update-productos-crediticios":true,"create-productos-crediticios":true}},listado:{}}});
     return shallowMount(Index, {
         props: { productoSeleccionado: product(selected), productos: [], modoVersion: modo, capacidadesCredito: {
             catalogo: { periodicidades: [], metodos_amortizacion: [], aplicaciones_prepago: [] },
@@ -67,4 +67,10 @@ it("retira edición cuando solo se recargan permisos compartidos",async()=>{
  const w=render(draft,"edicion");expect(w.text()).toContain("Guardar borrador");
  state.page.props.auth.permissions["update-productos-crediticios"]=false;
  await w.vm.$nextTick();expect(w.text()).toContain("Consultar versión");expect(w.text()).not.toContain("Guardar borrador");
+});
+
+it("cierra alta y cancela envío al retirar creación en recarga parcial",async()=>{
+ const w=render();w.vm.openCreate();await w.vm.$nextTick();expect(w.vm.editorVisible).toBe(true);
+ state.page.props.auth.permissions["create-productos-crediticios"]=false;await w.vm.$nextTick();
+ expect(w.vm.editorVisible).toBe(false);submit.mockClear();w.vm.submit();expect(submit).not.toHaveBeenCalled();
 });

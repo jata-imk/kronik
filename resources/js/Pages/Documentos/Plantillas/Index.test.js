@@ -8,7 +8,7 @@ vi.mock("@/Composables/useListadoServidor",()=>({useListadoServidor:()=>({visit:
 vi.mock("primevue/useconfirm",()=>({useConfirm:()=>({})}));
 vi.mock("primevue/usetoast",()=>({useToast:()=>({add:vi.fn()})}));
 it("plantillas vuelve a consulta ante recarga parcial de permisos",async()=>{
- state.page=reactive({props:{auth:{permissions:{"update-plantillas-documentos":true}}}});
+ state.page=reactive({props:{auth:{permissions:{"update-plantillas-documentos":true,"create-plantillas-documentos":true}}}});
  const version={id:1,numero:1,estado:"borrador",puede_editar:true,contenido_html:"<p>Guardado</p>",presentacion:{marca_agua:"Original"}};
  const plantilla={id:10,clave:"qa",nombre:"QA",versionSeleccionada:version,versiones:[version]};
  const w=shallowMount(Index,{props:{plantillaSeleccionada:plantilla,modoVersion:"edicion"},global:{renderStubDefaultSlot:true,mocks:{route:()=>"/"},stubs:{AppLayout:{template:"<main><slot name='card-content'/></main>"},Dialog:{props:["visible"],template:"<section v-if='visible'><slot/></section>"}}}});
@@ -16,4 +16,7 @@ it("plantillas vuelve a consulta ante recarga parcial de permisos",async()=>{
  expect(w.vm.editorReadonly).toBe(true);expect(w.vm.form.contenido_html).toBe("<p>Guardado</p>");
  state.submit.mockClear();await w.get("form").trigger("submit");expect(state.submit).not.toHaveBeenCalled();
  await w.setProps({modoVersion:null});expect(w.vm.editorVisible).toBe(false);
+ w.vm.openCreate();await nextTick();expect(w.vm.editorVisible).toBe(true);
+ state.page.props.auth.permissions["create-plantillas-documentos"]=false;await nextTick();
+ expect(w.vm.editorVisible).toBe(false);state.submit.mockClear();w.vm.submit();expect(state.submit).not.toHaveBeenCalled();
 });

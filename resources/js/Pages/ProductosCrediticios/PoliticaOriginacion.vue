@@ -8,7 +8,7 @@ import { formatMoneyWithCents as money } from "./productValidation";
 import "../../../css/originacion.css";
 const props = defineProps({ version: Object, politica: Object, politicaSeleccionada: Object, historial: Object, tiposDocumento: Array, puedeCrear: Boolean, modoPolitica: String });
 const page = usePage();
-const puedeCrearAhora = computed(() => props.puedeCrear && (page.props.auth.is_super_admin || page.props.auth.permissions?.["manage-origination-productos-crediticios"] === true));
+const puedeCrearAhora = computed(() => props.puedeCrear && (page.props.auth.is_super_admin || (page.props.auth.permissions?.["manage-origination-productos-crediticios"] === true && page.props.auth.permissions?.["read-productos-crediticios"] === true)));
 const editando = ref(props.modoPolitica === "nueva" && puedeCrearAhora.value);
 const guiaVisible = ref(false);
 const readonly = computed(() => !editando.value || !puedeCrearAhora.value);

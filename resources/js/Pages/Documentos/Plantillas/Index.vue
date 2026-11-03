@@ -164,6 +164,7 @@ const selectTemplate = (item) => {
     serverList.visit({ plantilla_id: item.id, version_id: null, modo: null, versiones_page: 1, page: page.props.listado?.current_page ?? 1 });
 };
 const openCreate = () => {
+    if (!can("create plantillas-documentos")) return;
     form.cancel();
     editorReadonly.value = false;
     editorTemplateId.value = null;
@@ -221,7 +222,12 @@ watch([() => props.plantillaSeleccionada, () => props.modoVersion, () => can("up
     selectedId.value = item.id; selectedVersionId.value = version.id;
     openEdit(version, modo !== "edicion" || !can("update plantillas-documentos"));
 }, { immediate: true });
+watch(() => can("create plantillas-documentos"), allowed => {
+    if (allowed || editingVersion.value || !editorVisible.value) return;
+    form.cancel(); editorVisible.value = false; form.reset(); form.clearErrors();
+});
 const submit = () => {
+    if (!can(editingVersion.value ? "update plantillas-documentos" : "create plantillas-documentos")) return;
     if (editorReadonly.value || (editingVersion.value && !editingVersion.value.puede_editar)) return;
     const options = {
         preserveScroll: true,

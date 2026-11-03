@@ -100,3 +100,8 @@ en productos/plantillas/política. Se agregan watchers/capacidad vigente y regre
 de componentes; backend conserva autorización y estado. Revisor delegado medium
 autorizado por usuario tras interrupción de CLI por cuota. Se descarta una tanda
 E2E solapada accidentalmente sobre la misma BD aislada y se repite secuencialmente.
+
+Revisor delegado medium: dos casos de revocación auth-only adicionales corregidos:
+revocar creación cierra y limpia altas abiertas; política exige lectura+gestión
+como su FormRequest. Nueve pruebas focalizadas aprobadas, incluida revocación de
+creación/actualización/lectura. Relectura del revisor sin nuevos hallazgos.

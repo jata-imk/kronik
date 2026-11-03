@@ -305,6 +305,7 @@ const normalizeCommission = (item) => {
     };
 };
 const openCreate = () => {
+    if (!can("create productos-crediticios")) return;
     form.cancel();
     editorReadonly.value = false;
     editorProductId.value = null;
@@ -391,7 +392,12 @@ watch([() => props.productoSeleccionado, () => props.modoVersion, () => can("upd
     activeEditorTab.value = "general";
     editorVisible.value = true;
 }, { immediate: true });
+watch(() => can("create productos-crediticios"), allowed => {
+    if (allowed || editingVersion.value || !editorVisible.value) return;
+    form.cancel(); editorVisible.value = false; form.reset(); form.clearErrors();
+});
 const submit = () => {
+    if (!can(editingVersion.value ? "update productos-crediticios" : "create productos-crediticios")) return;
     if (editorReadonly.value || (editingVersion.value && !editingVersion.value.puede_editar)) return;
     const editing = Boolean(editingVersion.value);
     const url = editing
