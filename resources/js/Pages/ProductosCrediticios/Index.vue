@@ -366,7 +366,15 @@ const closeEditor = () => {
 watch([() => props.productoSeleccionado, () => props.modoVersion], ([producto, modo]) => {
     const version = producto?.versionSeleccionada;
     // Validation responses preserve the actor's unsaved draft and field errors.
-    if (!modo) return;
+    if (!modo) {
+        if (editingVersion.value && editorVisible.value) {
+            form.cancel();
+            editorVisible.value = false;
+            editingVersion.value = null;
+            form.clearErrors();
+        }
+        return;
+    }
     if (modo === "edicion" && editorVisible.value && !editorReadonly.value && version?.puede_editar && editingVersion.value?.id === version.id && editorProductId.value === producto.id) return;
     form.cancel();
     editorVisible.value = false;

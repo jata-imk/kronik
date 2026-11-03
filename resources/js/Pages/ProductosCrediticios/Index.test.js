@@ -44,6 +44,8 @@ describe("editor de producto", () => {
         await wrapper.setProps({ productoSeleccionado: product(version(2)) });
         expect(wrapper.text()).toContain("Consultar versión 2");
         expect(wrapper.text()).not.toContain("Consultar versión 1");
+        await wrapper.setProps({ modoVersion: null });
+        expect(wrapper.find("#product-editor form").exists()).toBe(false);
     });
     it("no borra errores ni captura ante una recarga de validación del mismo borrador", async () => {
         const draft = { ...version(), estado: "borrador", puede_editar: true, monto_minimo: 5000, monto_maximo: 10000, tasa_ordinaria_anual: 36, tasa_moratoria_anual: 72 };

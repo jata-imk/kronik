@@ -91,3 +91,5 @@ página, conservando los permisos y la naturaleza global o por equipo del módul
 Ver versión abre el mismo editor en consulta, también para borradores sin permiso
 de actualizaci?n. Incluye condiciones, periodicidades, reglas, comisiones, fiscalidad
 y atraso, preservando valores históricos. Ver [contrato](consulta-edicion-historicos.md).
+Al volver por historial a una URL sin modo de formulario se cierra la consulta;
+las respuestas de validación conservan la captura del mismo borrador editable.
