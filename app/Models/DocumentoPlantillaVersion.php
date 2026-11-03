@@ -47,7 +47,7 @@ class DocumentoPlantillaVersion extends Model
     protected static function booted(): void
     {
         static::updating(function (self $version): void {
-            $eraBorrador = $version->getRawOriginal('estado') === DocumentoPlantillaVersionEstado::Borrador->value;
+            $eraBorrador = static::query()->whereKey($version->id)->toBase()->value('estado') === DocumentoPlantillaVersionEstado::Borrador->value;
             if ((! $eraBorrador || $version->documentosGenerados()->exists()) && $version->isDirty(self::IMMUTABLE_FIELDS)) {
                 throw ValidationException::withMessages([
                     'version' => 'Una versión activa, retirada o utilizada no puede modificarse. Cree una nueva versión.',

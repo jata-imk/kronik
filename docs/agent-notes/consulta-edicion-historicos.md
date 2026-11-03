@@ -4,7 +4,7 @@
 
 - Notion: https://app.notion.com/p/3fe61db7db7f81138be2df5cfa15564c
 - Base funcional: 33c79c421451effac723da9d268da0630db3fb0f; PR #66 integrada.
-- Rama actual: feat/consulta-productos. PR #65 de Bullet ajena.
+- Rama actual: feat/consulta-plantillas. PR #65 de Bullet ajena.
 - [Contrato y matriz de 19 módulos](../reference/consulta-edicion-historicos.md).
 
 ## Estado — 2026-11-02
@@ -12,7 +12,7 @@
 Implementación autorizada del plan ampliado. Cinco incrementos: productos,
 plantillas, originación, Usuarios/Sucursales, Empresa/Menú. PR encadenadas para
 revisión; no se integra main sin una entrega concreta revisada. Sin despliegue.
-Incremento 1 en implementación; los demás pendientes. Sin migraciones ni permisos nuevos.
+Incremento 1 implementado y validado; incremento 2 implementado en validación. Sin migraciones ni permisos nuevos.
 
 ## Evidencia inicial
 
@@ -36,3 +36,15 @@ con avisos preexistentes de fuentes/chunks. E2E y revisión final siguen en curs
 Revisión medium identificó alta de periodicidad visible en consulta y una referencia
 de simulación incorrecta; ambas corregidas. Regresión de validación conservando
 captura cubierta por componente. Continuar revisión tras las correcciones.
+
+## Incremento 2
+
+Rama feat/consulta-plantillas, dependiente de bc6e533. Editor documental en consulta
+y revalidación de estado dentro de bloqueos transaccionales. Incremento 1:
+E2E productos 4/4 aprobado, incluidos consulta móvil y simulación fiscal.
+Validación de plantillas en curso.
+
+Plantillas: 22 backend/193 aserciones y prueba real de Quill readonly aprobadas.
+Build aprobado. Revisión medium sin hallazgos; su intento de Vitest quedó limitado
+por sandbox, pero la ejecución principal sí pasó. E2E detectó espera de guardado
+ausente en el caso nuevo y overflow móvil; corregidos, repetición pendiente.

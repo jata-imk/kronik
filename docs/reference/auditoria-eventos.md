@@ -183,3 +183,10 @@ Abrir/cerrar el formulario y seleccionar versiones son consultas sin nuevas acci
 auditables. Se conservan emisores de mutaciones y la inmutabilidad de servicios/modelos.
 ConsultaProductosTest comprueba lectura sin actividad adicional; no cierra el backlog
 general de reconciliaci?n.
+
+## Consulta completa de plantillas — 2026-11-02
+
+Consultar el editor y previsualizar una plantilla con datos sintéticos no crea
+recursos de negocio ni eventos nuevos. Se conservan emisores de gestión y de
+archivos generados. ConsultaPlantillasTest cubre lectura sin actividad y rechazo
+de escritura desde una instancia antigua, sin alterar contenido ni metadatos.

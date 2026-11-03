@@ -48,7 +48,7 @@ final class CatalogoListadoService
 
     public function plantillas(Request $request): array
     {
-        $request->validate(['plantilla_id' => 'nullable|integer|min:1', 'version_id' => 'nullable|integer|min:1', 'versiones_page' => 'nullable|integer|min:1', 'versiones_por_pagina' => ['nullable', 'integer', \Illuminate\Validation\Rule::in([10, 25, 50])]]);
+        $request->validate(['plantilla_id' => 'nullable|integer|min:1', 'modo' => ['nullable', \Illuminate\Validation\Rule::in(['consulta', 'edicion'])], 'version_id' => 'nullable|integer|min:1', 'versiones_page' => 'nullable|integer|min:1', 'versiones_por_pagina' => ['nullable', 'integer', \Illuminate\Validation\Rule::in([10, 25, 50])]]);
         $filters = [...$this->filtros(), 'tipo' => fn ($q, $v) => $q->where('tipo', $v)];
         $sorts = ['nombre' => 'nombre', 'clave' => 'clave'];
         $values = $this->params->resolver($request, $filters, $sorts);
@@ -74,7 +74,11 @@ final class CatalogoListadoService
             $selected->setAttribute('versionSeleccionada', $request->filled('version_id') ? $selected->versiones()->withCount('documentosGenerados')->findOrFail($request->integer('version_id')) : $preferred);
         }
 
-        return ['resumenListado' => $summary, 'plantillas' => $page->getCollection(), 'plantillaSeleccionada' => $selected,
+        foreach (collect($selected?->versiones ?? [])->push($selected?->versionSeleccionada)->push($selected?->versionPreferida)->filter() as $version) {
+            $version->setAttribute('puede_editar', $request->user()->can('update plantillas-documentos') && $version->estado === \App\Enums\DocumentoPlantillaVersionEstado::Borrador && $version->documentos_generados_count === 0);
+        }
+
+        return ['modoVersion' => $request->input('modo'), 'resumenListado' => $summary, 'plantillas' => $page->getCollection(), 'plantillaSeleccionada' => $selected,
             'listado' => $this->params->metadata($page, $values),
             'versionesListado' => $versionPage ? $this->params->metadata($versionPage, []) : null];
     }
