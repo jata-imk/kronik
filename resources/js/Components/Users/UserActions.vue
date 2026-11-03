@@ -5,12 +5,14 @@ import { useUserActions } from "@/Composables/useUserActions";
 defineProps({ user: Object, team: Object, canRemove: Boolean });
 defineEmits(["edit"]);
 const page = usePage();
+const viewHref = user => route("admin.users.index", { ...(page.component === "Admin/Users/Index" ? Object.fromEntries(new URLSearchParams(page.url?.split("?")[1] ?? "")) : {}), edit_user_id:user.id, modo:"consulta" });
 const can = (permission) => page.props.auth.is_super_admin || page.props.auth.permissions?.[permission];
 const { resendInvitation, deactivate, reactivate, removeFromTeam } = useUserActions();
 </script>
 
 <template>
     <div class="inline-flex shrink-0 flex-nowrap items-center gap-1">
+        <Button v-if="can('read-users')" :aria-label="`Ver ${user.name}`" icon="pi pi-eye" text as="a" :href="viewHref(user)" />
         <Button v-if="can('update-users')" :aria-label="`Editar ${user.name}`" icon="pi pi-pencil" text @click="$emit('edit')" />
         <Button v-if="can('create-users') && user.status === 'pending'" :aria-label="`Reenviar invitación a ${user.name}`" icon="pi pi-send" text @click="resendInvitation(user)" />
         <Button v-if="can('delete-users') && user.status === 'active' && user.id !== page.props.auth.user.id" :aria-label="`Desactivar cuenta de ${user.name}`" icon="pi pi-ban" severity="danger" text @click="deactivate(user)" />

@@ -62,3 +62,19 @@ Estado de esta entrega: ver [Agent Note](../agent-notes/consulta-edicion-histori
 
 La matriz de UX no sustituye la [matriz única de auditoría](auditoria-eventos.md).
 No hay permisos nuevos ni aislamiento por sucursal de productos/plantillas.
+
+## Interfaces administrativas
+
+Usuarios conserva `edit_user_id` como ID exacto y añade `modo=consulta|edicion`.
+El servidor entrega `modoUsuario`: sin actualización efectiva fuerza consulta.
+Invitar sigue requiriendo creación; la consulta no usa preselecciones de captura
+para completar asignaciones vacías. Cambiar usuario o capacidad remonta el mismo
+formulario y cancela búsquedas pendientes; errores de la misma edición se conservan.
+
+Sucursales conserva `selected_sucursal_id`, selección independiente y Folios.
+`modoSucursal` distingue el formulario de consulta/edición del panel de folios.
+El modo efectivo también comprueba permisos compartidos; inactiva se puede
+consultar y su edición conserva las reglas existentes. No se montan widgets de
+captura postal ni telefónica en consulta. PUT sigue autorizado en backend.
+Estas consultas no agregan eventos: no cambian usuarios, asignaciones ni folios;
+los eventos existentes de gestión mantienen actor y contexto originales.

@@ -1,0 +1,22 @@
+import {shallowMount} from "@vue/test-utils";
+import {reactive,nextTick} from "vue";
+import {expect,it,vi} from "vitest";
+import Index from "./Index.vue";
+const state=vi.hoisted(()=>({page:null}));
+vi.mock("@inertiajs/vue3",()=>({usePage:()=>state.page}));
+vi.mock("@/Composables/useListadoServidor",()=>({useListadoServidor:()=>({visit:vi.fn()})}));
+const Layout={template:"<div><slot name='card-header'/><slot name='card-content'/></div>"};
+it("refresca la misma consulta y conserva una edición ante recarga parcial",async()=>{
+    state.page=reactive({props:{users:[],selectedUser:{id:9,name:"Original"},prefill:{},modoUsuario:"consulta",auth:{is_super_admin:false,permissions:{"update-users":true}}}});
+    const w=shallowMount(Index,{global:{renderStubDefaultSlot:true,stubs:{AppLayout:Layout,UserForm:{name:"UserForm",props:["user","readonly"],template:"<p>{{user?.name}}</p>"}}}});
+    expect(w.text()).toContain("Original");
+    state.page.props.selectedUser={id:9,name:"Actualizado"};await nextTick();
+    expect(w.text()).toContain("Actualizado");
+    state.page.props.modoUsuario="edicion";await nextTick();
+    state.page.props.selectedUser={id:9,name:"Respuesta parcial"};await nextTick();
+    expect(w.text()).toContain("Actualizado");
+    state.page.props.auth.permissions["update-users"]=false;await nextTick();
+    expect(w.text()).toContain("Respuesta parcial");
+    state.page.props.selectedUser=null;await nextTick();
+    expect(w.text()).not.toContain("Respuesta parcial");
+});

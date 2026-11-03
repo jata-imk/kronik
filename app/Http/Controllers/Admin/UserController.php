@@ -39,6 +39,7 @@ class UserController extends Controller implements HasMiddleware
             'role_id' => ['nullable', 'integer', 'exists:roles,id'],
             'edit_user_id' => ['nullable', 'integer', 'exists:users,id'],
             'invite' => ['nullable', 'boolean'],
+            'modo' => ['nullable', 'in:consulta,edicion'],
         ]);
         foreach (['team_id', 'sucursal_id', 'role_id', 'edit_user_id'] as $key) {
             if (isset($prefill[$key])) {
@@ -59,6 +60,7 @@ class UserController extends Controller implements HasMiddleware
             'selectedUser' => isset($prefill['edit_user_id']) ? $data->user(User::findOrFail($prefill['edit_user_id'])->load(['ownedTeams', 'teams', 'sucursales', 'sucursalPrincipal', 'currentSucursal'])) : null,
             ...$data->formOptions($request->user(), isset($prefill['edit_user_id']) ? User::findOrFail($prefill['edit_user_id']) : null, $prefill),
             'prefill' => $prefill,
+            'modoUsuario' => ($prefill['modo'] ?? 'edicion') === 'edicion' && $request->user()->can('update users') ? 'edicion' : 'consulta',
         ]);
     }
 

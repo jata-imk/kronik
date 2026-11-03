@@ -14,12 +14,13 @@ import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
 import ConfirmDialog from "primevue/confirmdialog";
 import { FilterMatchMode } from "@primevue/core/api";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import TruncatedText from "@/Components/DataTable/TruncatedText.vue";
 
 const props = defineProps({
     sucursales: Array,
     sucursalSeleccionada: Object,
+    modoSucursal: String,
 });
 
 const page = usePage();
@@ -30,10 +31,12 @@ const toast = useToast();
 const confirm = useConfirm();
 const visible = ref(false);
 const selectedSucursal = ref(null);
+const consulta = ref(true);
+const readonly = computed(() => consulta.value || !can(selectedSucursal.value ? 'update-sucursales' : 'create-sucursales'));
 const foliosId = ref(null);
 const foliosVisible = ref(false);
 const sucursalFolios = computed(() => props.sucursalSeleccionada?.id === foliosId.value ? props.sucursalSeleccionada : props.sucursales.find((sucursal) => sucursal.id === foliosId.value));
-const openFolios = (sucursal) => { foliosId.value = sucursal.id; foliosVisible.value = true; serverList.visit({ selected_sucursal_id: sucursal.id, page: page.props.listado?.current_page ?? 1 }); };
+const openFolios = (sucursal) => { foliosId.value = sucursal.id; foliosVisible.value = true; serverList.visit({ selected_sucursal_id: sucursal.id, modo: null, page: page.props.listado?.current_page ?? 1 }); };
 const formatAddress = (domicilio) => {
     if (!domicilio) return "";
     return [
@@ -144,6 +147,8 @@ const {
 } = useTelefonoInternacional(form, { e164Key: "telefono" });
 
 const openCreate = () => {
+    if (!can('create-sucursales')) return;
+    consulta.value = false;
     selectedSucursal.value = null;
     localidades.value = [];
     form.defaults(emptySucursal());
@@ -153,7 +158,7 @@ const openCreate = () => {
     visible.value = true;
 };
 
-const openEdit = (sucursal) => {
+const loadSucursal = (sucursal) => {
     selectedSucursal.value = sucursal;
     localidades.value =
         sucursal.domicilio?.codigo_postal_id &&
@@ -184,15 +189,34 @@ const openEdit = (sucursal) => {
     visible.value = true;
 };
 
+const openVersion = (sucursal, modo) => {
+    serverList.visit({ selected_sucursal_id: sucursal.id, modo, page: page.props.listado?.current_page ?? 1 });
+};
+const openEdit = sucursal => openVersion(sucursal, "edicion");
+const openView = sucursal => openVersion(sucursal, "consulta");
+watch([() => props.sucursalSeleccionada, () => props.modoSucursal, () => can("update-sucursales")], () => {
+    if (!props.modoSucursal || !props.sucursalSeleccionada) {
+        if (selectedSucursal.value) { visible.value = false; selectedSucursal.value = null; form.cancel(); form.reset(); form.clearErrors(); }
+        return;
+    }
+    const read = props.modoSucursal !== "edicion" || !can("update-sucursales");
+    if (visible.value && !read && !consulta.value && selectedSucursal.value?.id === props.sucursalSeleccionada.id) return;
+    form.cancel(); consulta.value = read;
+    loadSucursal(JSON.parse(JSON.stringify(props.sucursalSeleccionada)));
+}, { immediate: true });
+
 const closeDialog = () => {
+    form.cancel();
+    serverList.visit({ modo: null, page: page.props.listado?.current_page ?? 1 });
     form.clearErrors();
     visible.value = false;
 };
 
 const submit = () => {
+    if (readonly.value) return;
     const options = {
         preserveScroll: true,
-        only: ["sucursales", "sucursalSeleccionada", "listado"],
+        only: ["sucursales", "sucursalSeleccionada", "listado", "modoSucursal", "auth"],
         onSuccess: () => {
             visible.value = false;
             toast.add({
@@ -234,7 +258,7 @@ const deactivate = (sucursal) => {
         accept: () =>
             router.delete(route("admin.sucursales.destroy", sucursal.id), {
                 preserveScroll: true,
-                only: ["sucursales", "sucursalSeleccionada", "listado"],
+                only: ["sucursales", "sucursalSeleccionada", "listado", "modoSucursal", "auth"],
                 onSuccess: () =>
                     toast.add({
                         severity: "success",
@@ -274,7 +298,7 @@ const deactivate = (sucursal) => {
                 <section class="k-mobile-records px-4 pb-4" aria-label="Sucursales">
                     <div class="flex flex-wrap gap-2"><Select v-model="filters.estado_label.value" aria-label="Filtrar sucursales por estado" :options="['Activa', 'Inactiva']" placeholder="Todos los estados" show-clear class="w-full" /><InputText v-model="filters.global.value" aria-label="Buscar sucursales" placeholder="Buscar sucursales" class="w-full" /></div>
                     <div v-if="!sucursalesMobile.length" class="k-empty k-surface"><i class="pi pi-map-marker" aria-hidden="true" /><strong>Sin sucursales con estos filtros</strong></div>
-                    <article v-for="sucursal in sucursalesMobile" :key="sucursal.id" class="k-surface k-record-card"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><h3 class="font-semibold truncate">{{ sucursal.nombre }}</h3><p class="text-sm text-surface-500">{{ sucursal.clave }} · {{ sucursal.estado_label }}</p></div><span class="size-2.5 shrink-0 rounded-full mt-2" :class="sucursal.activa ? 'bg-green-500' : 'bg-surface-400'" /></div><p class="text-sm">{{ sucursal.telefono || 'Sin teléfono' }}</p><p class="text-sm break-all">{{ sucursal.email || 'Sin correo' }}</p><p class="text-sm text-surface-500">{{ sucursal.domicilio_display }}</p><div class="flex flex-wrap gap-2"><Button v-if="can('update-sucursales')" label="Editar" icon="pi pi-pencil" outlined size="small" @click="openEdit(sucursal)" /><Button label="Folios" icon="pi pi-hashtag" outlined size="small" @click="openFolios(sucursal)" /><Button v-if="can('delete-sucursales') && sucursal.activa" label="Desactivar" icon="pi pi-ban" outlined severity="danger" size="small" @click="deactivate(sucursal)" /></div></article>
+                    <article v-for="sucursal in sucursalesMobile" :key="sucursal.id" class="k-surface k-record-card"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><h3 class="font-semibold truncate">{{ sucursal.nombre }}</h3><p class="text-sm text-surface-500">{{ sucursal.clave }} · {{ sucursal.estado_label }}</p></div><span class="size-2.5 shrink-0 rounded-full mt-2" :class="sucursal.activa ? 'bg-green-500' : 'bg-surface-400'" /></div><p class="text-sm">{{ sucursal.telefono || 'Sin teléfono' }}</p><p class="text-sm break-all">{{ sucursal.email || 'Sin correo' }}</p><p class="text-sm text-surface-500">{{ sucursal.domicilio_display }}</p><div class="flex flex-wrap gap-2"><Button label="Ver" icon="pi pi-eye" outlined size="small" @click="openView(sucursal)" /><Button v-if="can('update-sucursales')" label="Editar" icon="pi pi-pencil" outlined size="small" @click="openEdit(sucursal)" /><Button label="Folios" icon="pi pi-hashtag" outlined size="small" @click="openFolios(sucursal)" /><Button v-if="can('delete-sucursales') && sucursal.activa" label="Desactivar" icon="pi pi-ban" outlined severity="danger" size="small" @click="deactivate(sucursal)" /></div></article>
                 </section>
 
                 <DataTable class="k-desktop-records" v-model:filters="filters" :value="sucursales" :global-filter-fields="['nombre', 'domicilio_display', 'email', 'telefono', 'horario_search', 'summary_search', 'estado_label']" filter-display="row" lazy @sort="serverList.sort" :rows="10" striped-rows scrollable responsive-layout="scroll" :table-style="{ tableLayout: 'fixed', minWidth: '60rem' }">
@@ -301,6 +325,7 @@ const deactivate = (sucursal) => {
                     <Column header="Acciones" :frozen="true" align-frozen="right" style="width: 10%">
                         <template #body="{ data }">
                             <div class="flex flex-nowrap items-center gap-1 whitespace-nowrap">
+                                <Button :aria-label="`Ver ${data.nombre}`" icon="pi pi-eye" text size="small" @click="openView(data)" />
                                 <Button :aria-label="`Folios de ${data.nombre}`" icon="pi pi-hashtag" text size="small" @click="openFolios(data)" />
                                 <Button v-if="can('update-sucursales')" :aria-label="`Editar ${data.nombre}`" icon="pi pi-pencil" text size="small" @click="openEdit(data)" />
                                 <Button v-if="can('delete-sucursales') && data.activa" :aria-label="`Desactivar ${data.nombre}`" icon="pi pi-ban" text size="small" severity="danger" @click="deactivate(data)" />
@@ -314,26 +339,28 @@ const deactivate = (sucursal) => {
                 <FoliosSucursalForm v-if="sucursalFolios && foliosVisible" :key="sucursalFolios.id" :sucursal="sucursalFolios" :editable="can('update-sucursales')" />
             </Dialog>
 
-            <Dialog v-model:visible="visible" :header="selectedSucursal ? 'Editar sucursal' : 'Crear sucursal'" modal :style="{ width: '720px' }">
+            <Dialog v-model:visible="visible" @hide="closeDialog" :header="readonly ? 'Consultar sucursal' : selectedSucursal ? 'Editar sucursal' : 'Crear sucursal'" modal :style="{ width: '720px', maxWidth: '95vw' }">
+                <Message v-if="readonly" severity="info">Consulta · solo lectura.</Message>
                 <form class="flex flex-col gap-5" @submit.prevent="submit">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label for="sucursal-nombre" class="block text-sm font-medium mb-1">Nombre *</label>
-                            <InputText id="sucursal-nombre" v-model="form.nombre" fluid />
+                            <InputText :readonly="readonly" id="sucursal-nombre" v-model="form.nombre" fluid />
                             <small v-if="form.errors.nombre" class="text-red-500">{{ form.errors.nombre }}</small>
                         </div>
                         <div>
                             <label for="sucursal-clave" class="block text-sm font-medium mb-1">Clave *</label>
-                            <InputText id="sucursal-clave" v-model="form.clave" fluid />
+                            <InputText :readonly="readonly" id="sucursal-clave" v-model="form.clave" fluid />
                             <small v-if="form.errors.clave" class="text-red-500">{{ form.errors.clave }}</small>
                         </div>
                         <div>
                             <label class="block text-sm font-medium mb-1">Telefono</label>
-                            <IntlTelInput
+                            <InputText v-if="readonly" :model-value="form.telefono" readonly fluid />
+                            <IntlTelInput v-else
                                 id="telefono"
                                 v-model="telefonoInternacional"
                                 emit-e164
-                                @change-number="onSucursalTelefonoChange"
+                                @change-number="value => !readonly && onSucursalTelefonoChange(value)"
                                 :intl-tel-input-options="{ initialCountry: 'mx' }"
                                 :invalid="!!form.errors.telefono"
                                 fluid
@@ -342,16 +369,16 @@ const deactivate = (sucursal) => {
                         </div>
                         <div>
                             <label class="block text-sm font-medium mb-1">Email</label>
-                            <InputText v-model="form.email" fluid />
+                            <InputText :readonly="readonly" v-model="form.email" fluid />
                             <small v-if="form.errors.email" class="text-red-500">{{ form.errors.email }}</small>
                         </div>
                         <div v-if="!selectedSucursal">
                             <label for="sucursal-prefijo" class="block text-sm font-medium mb-1">Prefijo de folio</label>
-                            <InputText id="sucursal-prefijo" v-model="form.prefijo_folio" :invalid="!!form.errors.prefijo_folio" fluid placeholder="MTZ" /><FieldHelp title="Prefijo inicial" description="Distingue los folios de esta sucursal. Si lo dejas vacío se utiliza la clave; luego puedes configurar la numeración desde Folios." example="MTZ-SOL-000001" />
+                            <InputText :readonly="readonly" id="sucursal-prefijo" v-model="form.prefijo_folio" :invalid="!!form.errors.prefijo_folio" fluid placeholder="MTZ" /><FieldHelp title="Prefijo inicial" description="Distingue los folios de esta sucursal. Si lo dejas vacío se utiliza la clave; luego puedes configurar la numeración desde Folios." example="MTZ-SOL-000001" />
                             <small v-if="form.errors.prefijo_folio" role="alert" class="text-red-500">{{ form.errors.prefijo_folio }}</small>
                         </div>
                         <div class="flex items-center gap-3 pt-6">
-                            <Checkbox v-model="form.activa" input-id="sucursal-activa" binary />
+                            <Checkbox :disabled="readonly" v-model="form.activa" input-id="sucursal-activa" binary />
                             <label for="sucursal-activa">Sucursal activa</label>
                         </div>
                     </div>
@@ -361,18 +388,19 @@ const deactivate = (sucursal) => {
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-sm font-medium mb-1">Código postal</label>
-                                <CodigoPostalAutocomplete
+                                <InputText v-if="readonly" :model-value="form.domicilio.codigo_postal" readonly fluid />
+                                <CodigoPostalAutocomplete v-else
                                     v-model="form.domicilio.codigo_postal"
                                     input-id="codigo_postal"
                                     :invalid="!!form.errors['domicilio.codigo_postal']"
-                                    @changed="limpiarUbicacionPostal"
-                                    @confirmed="aplicarCodigoPostal"
+                                    @changed="!readonly && limpiarUbicacionPostal()"
+                                    @confirmed="value => !readonly && aplicarCodigoPostal(value)"
                                 />
                                 <small v-if="form.errors['domicilio.codigo_postal']" class="text-red-500">{{ form.errors["domicilio.codigo_postal"] }}</small>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-1">Colonia</label>
-                                <Select
+                                <Select :disabled="readonly"
                                     v-if="localidades.length"
                                     v-model="form.domicilio.codigo_postal_id"
                                     :options="localidades"
@@ -380,7 +408,7 @@ const deactivate = (sucursal) => {
                                     option-value="codigoPostalId"
                                     :invalid="!!(form.errors['domicilio.codigo_postal_id'] || form.errors['domicilio.division_admin_tres_id'])"
                                     fluid
-                                    @change="onLocalidadChange"
+                                    @change="value => !readonly && onLocalidadChange(value)"
                                 />
                                 <InputText
                                     v-else
@@ -398,24 +426,24 @@ const deactivate = (sucursal) => {
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-1">Municipio</label>
-                                <InputText v-model="form.domicilio.municipio" disabled fluid />
+                                <InputText :readonly="readonly" v-model="form.domicilio.municipio" disabled fluid />
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-1">Estado</label>
-                                <InputText v-model="form.domicilio.estado" disabled fluid />
+                                <InputText :readonly="readonly" v-model="form.domicilio.estado" disabled fluid />
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium mb-1">Calle</label>
-                                <InputText v-model="form.domicilio.calle" :invalid="!!form.errors['domicilio.calle']" fluid />
+                                <InputText :readonly="readonly" v-model="form.domicilio.calle" :invalid="!!form.errors['domicilio.calle']" fluid />
                                 <small v-if="form.errors['domicilio.calle']" class="text-red-500">{{ form.errors["domicilio.calle"] }}</small>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-1">Numero exterior</label>
-                                <InputText v-model="form.domicilio.numero_exterior" fluid />
+                                <InputText :readonly="readonly" v-model="form.domicilio.numero_exterior" fluid />
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-1">Numero interior</label>
-                                <InputText v-model="form.domicilio.numero_interior" fluid />
+                                <InputText :readonly="readonly" v-model="form.domicilio.numero_interior" fluid />
                             </div>
                         </div>
                     </div>
@@ -425,22 +453,22 @@ const deactivate = (sucursal) => {
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-sm font-medium mb-1">Lunes a viernes</label>
-                                <InputText v-model="form.horario.lunes_viernes" fluid placeholder="09:00-18:00" />
+                                <InputText :readonly="readonly" v-model="form.horario.lunes_viernes" fluid placeholder="09:00-18:00" />
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-1">Sabado</label>
-                                <InputText v-model="form.horario.sabado" fluid placeholder="09:00-14:00" />
+                                <InputText :readonly="readonly" v-model="form.horario.sabado" fluid placeholder="09:00-14:00" />
                             </div>
                             <div>
                                 <label class="block text-sm font-medium mb-1">Domingo</label>
-                                <InputText v-model="form.horario.domingo" fluid placeholder="Cerrado" />
+                                <InputText :readonly="readonly" v-model="form.horario.domingo" fluid placeholder="Cerrado" />
                             </div>
                         </div>
                     </div>
 
                     <div class="flex justify-end gap-2 pt-3 border-t border-surface-200 dark:border-surface-700">
-                        <Button label="Cancelar" severity="secondary" icon="pi pi-times" @click.prevent="closeDialog" />
-                        <Button label="Guardar" icon="pi pi-check" type="submit" :loading="form.processing" />
+                        <Button :label="readonly ? 'Cerrar consulta' : 'Cancelar'" severity="secondary" icon="pi pi-times" @click.prevent="visible = false" />
+                        <Button v-if="!readonly" label="Guardar" icon="pi pi-check" type="submit" :loading="form.processing" />
                     </div>
                 </form>
             </Dialog>
