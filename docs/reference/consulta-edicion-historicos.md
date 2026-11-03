@@ -33,6 +33,34 @@ el formulario solo edita si puede_editar es verdadero. Sin modo abre el catálog
 Cerrar conserva ID, filtros y páginas. Las mutaciones mantienen sus endpoints y
 validaciones. Consultar no registra actividad de producto.
 
+## Matriz de comportamiento y evidencia
+
+Observación reproducida sobre base `33c79c4`; la nota de entrega distingue
+código local, revisión, integración y QA. Las rutas de modificación conservan
+su autorización: entrar en consulta no concede capacidad de escritura.
+
+| Superficie | Esperado | Observado en la base | Brecha cubierta | Evidencia / pruebas |
+| --- | --- | --- | --- | --- |
+| Producto y versiones | Detalle completo de cualquier ID autorizado | Versiones no editables solo tenían resúmenes; los editores fiscal/mora ya tenían readonly | Mismo editor con datos guardados, capacidad backend y selección exacta | `ConsultaProductosTest`, `ProductosCrediticios/Index.test.js`, E2E productos; conservar pruebas de dominio existentes |
+| Plantilla y versiones | Activa/retirada/histórica consultable, PDF autorizado | UI abría editor solo para borrador; instancia antigua de borrador podía modificar activa por servicio/modelo | Consulta con encabezado/cuerpo/pie/presentación; Quill sin comandos; estado fresco dentro de bloqueos | `Documentos/ConsultaPlantillasTest`, `DocumentEditor.test.js`, E2E consulta-versiones y documentos-editor; PDF/recursos existentes |
+| Política | Número independiente, historia consultable, aviso temprano | GET exigía gestión; número de producto se confundía con política; creación sobre retirada permitida | Lectura separada; ID exacto, condiciones completas, bloqueo de creación en retirada y enlaces estructurados | `ConsultaPoliticasTest`, `SolicitudesTest`, componente política y E2E; aprobación y envío existentes |
+| Usuarios | Leer formulario con asignaciones completas | Solo edición visible; URL directa de lector abría controles de escritura aunque PUT rechazaba | Consulta, sin defaults en asignaciones vacías, cancelación de búsquedas y recarga parcial | `Admin/ConsultaAdministracionTest`, `Admin/Users/*.test.js`, E2E consulta-administracion; ciclo de cuentas existente |
+| Sucursales | Leer incluso inactiva y conservar Folios | Resumen/listado; formulario solo por acción de edición | Mismo formulario readonly, ID fuera de página, cierre completo por botón/Escape/X | `Admin/ConsultaAdministracionTest`, `Admin/SucursalTest`, `ListadosServidorTest` y E2E |
+| Empresa | Consultar sin crear configuración | GET ejecutaba firstOrCreate; lector tenía controles aunque PUT rechazaba | GET puro, ausencia explícita, formulario readonly y secreto redactado | `Admin/ConsultaEmpresaMenuTest`, `Admin/EmpresaConfiguracionTest`, `ConsultaConfiguracion.test.js` y E2E |
+| Menú | Consulta por ID y gestión autorizada/auditable | UI mostraba mutaciones a lectores; middleware protegía; no había emisor específico | Mismo formulario readonly con valor/parámetros exactos y eventos transaccionales de gestión | `Admin/ConsultaEmpresaMenuTest`, `ConsultaConfiguracion.test.js`, E2E; conservar resolución/seeder existentes |
+
+Las consultas nuevas no son acciones de lectura expresamente auditables y no
+requieren eventos adicionales. Se conservan los eventos existentes de PDF privado,
+expediente y evidencia; no se registra contenido documental ni criterios de política.
+El alta, edición y eliminación de menú sí se incorporan a la matriz canónica.
+
+Las navegaciones entre selecciones usan visitas Inertia que cancelan la anterior;
+no aplican respuestas HTTP manuales al formulario. Las búsquedas remotas de usuario
+usan AbortController y revisión por búsqueda, y se cancelan al desmontar. El editor
+se identifica por recurso/modo; la misma consulta se actualiza al recargar props y
+la misma edición conserva captura/errores. El editor Quill se remonta por versión,
+modo y sección para limpiar historial y recursos. No se añaden autosaves.
+
 ## Inventario contrastado
 
 BD local, SELECT de modules, 2026-11-02: 19 módulos, coincidentes con el seeder.
@@ -78,3 +106,14 @@ consultar y su edición conserva las reglas existentes. No se montan widgets de
 captura postal ni telefónica en consulta. PUT sigue autorizado en backend.
 Estas consultas no agregan eventos: no cambian usuarios, asignaciones ni folios;
 los eventos existentes de gestión mantienen actor y contexto originales.
+
+## Empresa y menú: props de consulta
+
+Empresa entrega `configurada`, `puedeEditar` y `modoEmpresa`; GET ausente no
+crea datos y PUT inicial sigue autorizado y auditado. `modo=consulta` permite al
+gestor consultar. Las capacidades compartidas se comprueban también en el formulario.
+
+Menú entrega `menubarSeleccionado` por ID exacto y `modoMenu` efectivo. Se
+conservan `menubarCatalogo` paginado y `menubarItems` de navegación como props
+diferentes. La consulta no reconstruye JSON condicional, parámetros, orden ni rutas
+de activación. El padre seleccionado se conserva aunque quede fuera de página.

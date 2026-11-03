@@ -69,13 +69,14 @@ test('super admin can see singleton company configuration', function () {
             ->component('Admin/ConfiguracionEmpresa/Index')
             ->has('configuracion')
             ->where('configuracion.singleton_key', 'default')
+            ->where('configurada', false)
             ->has('tiposPersona', 2)
             ->has('regimenesFiscales', 1)
             ->has('paises', 1)
             ->has('zonasHorarias')
         );
 
-    expect(EmpresaConfiguracion::where('singleton_key', 'default')->exists())->toBeTrue();
+    expect(EmpresaConfiguracion::where('singleton_key', 'default')->exists())->toBeFalse();
 });
 
 test('super admin can update singleton company configuration without exposing api key', function () {

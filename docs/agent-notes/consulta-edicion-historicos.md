@@ -76,3 +76,21 @@ sucursal tras Escape/X; corregidos y cubiertos en E2E, repetición en curso.
 Incremento 4: revisión medium final sin hallazgos accionables; cinco pruebas
 frontend aprobadas, incluida recarga del mismo ID y revocación de capacidad.
 El E2E espera la navegación de cierre antes de recargar para no cancelarla.
+
+## Incremento 5
+
+Rama feat/consulta-empresa-menu, base 37b9c71. GET de Empresa no crea singleton;
+consulta comparte formulario y preserva redacción de secretos. Menú consulta
+ID exacto fuera de página, conserva datos y autoriza acciones existentes.
+Gestión de menú ahora auditable en transacción, sin valores sensibles.
+Incremento 4: E2E final aprobado, incluidos Escape y recarga tras navegación.
+Validaciones focalizadas del incremento 5 en curso; sin integración ni despliegue.
+
+Incremento 5: 19 backend/518 aserciones y siete frontend administrativos aprobados.
+Revisión medium encontró envío de orden nulo al crear menú: retirado del payload
+de captura; consulta muestra el orden guardado. Regresión E2E añadida.
+
+Barrido de contratos: la búsqueda de variables es una acción de consulta; se
+conserva habilitada y separada de la inserción deshabilitada. Cubierta en E2E.
+Recarga parcial de domicilio de Empresa usa la colonia guardada directamente.
+Enlaces locales: 17 documentos modificados, sin destinos inexistentes.

@@ -24,6 +24,8 @@ test("plantilla activa y retirada abren el editor exacto sin mutaciones", async 
     await expect(dialog.locator(".ql-editor:visible")).toHaveAttribute("contenteditable", "false");
     await expect(dialog.getByRole("button", { name: "Guardar borrador" })).toHaveCount(0);
     await expect(dialog.getByRole("button", { name: "Imagen", exact: true })).toHaveCount(0);
+    await dialog.getByLabel("Buscar variables").fill("cliente");
+    await expect(dialog.getByLabel("Buscar variables")).toHaveValue("cliente");
     const writes = [];
     page.on("request", req => { if (["POST", "PUT", "PATCH", "DELETE"].includes(req.method())) writes.push(req.url()); });
     await dialog.locator("#template-name").press("Enter");

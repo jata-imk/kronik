@@ -114,3 +114,12 @@ Consultar [la matriz de capacidades](estatus-operativo-empresa.md). El estatus y
 ## Ayuda contextual
 
 La empresa y sucursales comparten `FieldHelp`. Los parámetros guardados que todavía no tienen consumidor se muestran deshabilitados y marcados; no prometen efectos operativos. La numeración se administra en [Sucursales: Folios](folios.md).
+
+## Consulta sin escrituras
+
+GET consulta la configuración existente; si aún no existe devuelve
+`configurada=false` y no crea el singleton. El primer PUT autorizado lo crea
+con el evento de configuración existente. Lectores ven el mismo formulario sin
+mutaciones; gestores pueden elegir `modo=consulta` o edición. Se conserva la
+redacción de secretos: solo se informa si la API key está configurada.
+Ver [contrato transversal](consulta-edicion-historicos.md).

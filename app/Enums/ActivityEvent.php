@@ -40,6 +40,9 @@ enum ActivityEvent: string
     case CreditPaymentReversed = 'credito.payment_reversed';
     case TwoFactorCompleted = 'login.2fa_completed';
     case UserProfileUpdated = 'user.profile.updated';
+    case MenubarItemCreated = 'menubar_item.created';
+    case MenubarItemUpdated = 'menubar_item.updated';
+    case MenubarItemDeleted = 'menubar_item.deleted';
     case CompanyUpdated = 'empresa.updated';
     case CompanyOperationBlocked = 'empresa.operacion_bloqueada';
     case BranchCreated = 'sucursal.created';
@@ -127,6 +130,9 @@ enum ActivityEvent: string
             self::Login => 'Inicio de sesión',
             self::TwoFactorCompleted => 'Autenticación de dos factores completada',
             self::UserProfileUpdated => 'Perfil de usuario actualizado',
+            self::MenubarItemCreated => 'Elemento de menú creado',
+            self::MenubarItemUpdated => 'Elemento de menú actualizado',
+            self::MenubarItemDeleted => 'Elemento de menú eliminado',
             self::CompanyUpdated => 'Empresa actualizada',
             self::CompanyOperationBlocked => 'Operación bloqueada por el estado de la empresa',
             self::BranchCreated => 'Sucursal creada',
