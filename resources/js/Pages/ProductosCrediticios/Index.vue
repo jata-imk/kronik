@@ -364,7 +364,7 @@ const closeEditor = () => {
     form.clearErrors();
     if (props.modoVersion) serverList.visit({ modo: null, page: page.props.listado?.current_page ?? 1 });
 };
-watch([() => props.productoSeleccionado, () => props.modoVersion], ([producto, modo]) => {
+watch([() => props.productoSeleccionado, () => props.modoVersion, () => can("update productos-crediticios")], ([producto, modo]) => {
     const version = producto?.versionSeleccionada;
     // Validation responses preserve the actor's unsaved draft and field errors.
     if (!modo) {
@@ -376,13 +376,13 @@ watch([() => props.productoSeleccionado, () => props.modoVersion], ([producto, m
         }
         return;
     }
-    if (modo === "edicion" && editorVisible.value && !editorReadonly.value && version?.puede_editar && editingVersion.value?.id === version.id && editorProductId.value === producto.id) return;
+    if (modo === "edicion" && can("update productos-crediticios") && editorVisible.value && !editorReadonly.value && version?.puede_editar && editingVersion.value?.id === version.id && editorProductId.value === producto.id) return;
     form.cancel();
     editorVisible.value = false;
     form.clearErrors();
     if (!version) return;
     selectedId.value = producto.id;
-    if (modo === "edicion" && version.puede_editar) { openEdit(version); return; }
+    if (modo === "edicion" && can("update productos-crediticios") && version.puede_editar) { openEdit(version); return; }
     editorProductId.value = producto.id;
     editingVersion.value = version;
     editorReadonly.value = true;
@@ -714,7 +714,7 @@ watch(
             </Drawer>
             <Dialog id="product-editor" :visible="editorVisible" @update:visible="$event ? (editorVisible = true) : closeEditor()" :header="editingVersion ? `${editorReadonly ? 'Consultar' : 'Editar'} versión ${editingVersion.numero}` : 'Nuevo producto crediticio'" modal maximizable :style="{ width: 'min(1080px, 96vw)' }">
                 <form v-if="editorVisible" class="space-y-5" @submit.prevent="submit">
-                    <OriginacionAyuda v-if="editingVersion" :info="editingVersion.originacion" consulta /><Message v-if="editorReadonly" severity="info" :closable="false">Consulta · {{ editingVersion.estado }} · {{ editingVersion.usos_count ? 'utilizada' : 'sin usos' }}. Los datos corresponden a esta versión. Las acciones de gestión est?n fuera de este formulario.</Message>
+                    <OriginacionAyuda v-if="editingVersion" :info="editingVersion.originacion" consulta /><Message v-if="editorReadonly" severity="info" :closable="false">Consulta · {{ editingVersion.estado }} · {{ editingVersion.usos_count ? 'utilizada' : 'sin usos' }}. Los datos corresponden a esta versión. Las acciones de gestión están fuera de este formulario.</Message>
                     <p v-if="editorReadonly" class="text-sm">Moneda: {{ form.version.moneda ?? 'Sin registrar' }} · Vigencia: {{ displayDate(form.version.vigente_desde) }} · Motor: {{ form.version.snapshot?.motor_calculo_version ?? 'Histórico sin marca' }}</p>
                     <div class="flex flex-col gap-3 rounded-xl bg-primary-50 p-4 dark:bg-primary-950/30 sm:flex-row sm:items-center sm:justify-between"><div><p class="font-semibold">Configuración segura y explicada</p><p class="text-sm text-surface-600 dark:text-surface-300">El borrador se congela al activarse. Usa los botones de ayuda para revisar cada concepto.</p></div><Button type="button" label="Guía financiera" icon="pi pi-book" text @click="helpGuideVisible = true" /></div>
                     <Tabs v-model:value="activeEditorTab">

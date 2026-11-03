@@ -3,10 +3,10 @@ import { reactive } from "vue";
 import { describe, expect, it, vi } from "vitest";
 import Index from "./Index.vue";
 
-const { submit } = vi.hoisted(() => ({ submit: vi.fn() }));
+const { submit, state } = vi.hoisted(() => ({ submit: vi.fn(), state:{page:null} }));
 vi.mock("@inertiajs/vue3", () => ({
     Link: { template: "<a><slot /></a>" }, router: { get: vi.fn() },
-    usePage: () => ({ props: { auth: { permissions: {} }, listado: {} } }),
+    usePage: () => state.page,
     useForm: data => {
         let defaults = JSON.parse(JSON.stringify(data));
         const form = reactive({ ...data, errors: {}, processing: false });
@@ -21,6 +21,7 @@ vi.mock("primevue/usetoast", () => ({ useToast: () => ({ add: vi.fn() }) }));
 const version = (id = 1) => ({ id, numero: id, estado: "activa", puede_editar: false, usos_count: 0, fiscalidad: null, periodicidades: [], comisiones: [], reglas: { metodos_amortizacion: [], permite_prepago_parcial: true } });
 const product = selected => ({ id: 10, clave: "QA", nombre: `Producto ${selected.id}`, versiones: [selected], ultimaVersion: selected, versionSeleccionada: selected });
 function render(selected = version(), modo = "consulta") {
+    state.page=reactive({props:{auth:{permissions:{"update-productos-crediticios":true}},listado:{}}});
     return shallowMount(Index, {
         props: { productoSeleccionado: product(selected), productos: [], modoVersion: modo, capacidadesCredito: {
             catalogo: { periodicidades: [], metodos_amortizacion: [], aplicaciones_prepago: [] },
@@ -59,4 +60,11 @@ describe("editor de producto", () => {
         expect(wrapper.text()).toContain("Consultar versión 1");
         expect(wrapper.text()).not.toContain("Guardar borrador");
     });
+});
+
+it("retira edición cuando solo se recargan permisos compartidos",async()=>{
+ const draft={...version(),estado:"borrador",puede_editar:true,reglas:{metodos_amortizacion:[]}};
+ const w=render(draft,"edicion");expect(w.text()).toContain("Guardar borrador");
+ state.page.props.auth.permissions["update-productos-crediticios"]=false;
+ await w.vm.$nextTick();expect(w.text()).toContain("Consultar versión");expect(w.text()).not.toContain("Guardar borrador");
 });

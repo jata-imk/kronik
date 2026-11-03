@@ -94,3 +94,9 @@ Barrido de contratos: la búsqueda de variables es una acción de consulta; se
 conserva habilitada y separada de la inserción deshabilitada. Cubierta en E2E.
 Recarga parcial de domicilio de Empresa usa la colonia guardada directamente.
 Enlaces locales: 17 documentos modificados, sin destinos inexistentes.
+
+Revisión acumulada manual: recargas parciales solo auth debían retirar edición
+en productos/plantillas/política. Se agregan watchers/capacidad vigente y regresiones
+de componentes; backend conserva autorización y estado. Revisor delegado medium
+autorizado por usuario tras interrupción de CLI por cuota. Se descarta una tanda
+E2E solapada accidentalmente sobre la misma BD aislada y se repite secuencialmente.

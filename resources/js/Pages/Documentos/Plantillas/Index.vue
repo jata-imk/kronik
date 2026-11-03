@@ -207,7 +207,7 @@ const closeEditor = async () => {
     document.activeElement?.blur(); form.cancel(); editorVisible.value = false; form.clearErrors();
     if (props.modoVersion) serverList.visit({ modo: null, page: page.props.listado?.current_page ?? 1 });
 };
-watch([() => props.plantillaSeleccionada, () => props.modoVersion], ([item, modo]) => {
+watch([() => props.plantillaSeleccionada, () => props.modoVersion, () => can("update plantillas-documentos")], ([item, modo]) => {
     if (!modo) {
         if (editingVersion.value && editorVisible.value) {
             form.cancel(); editorVisible.value = false; editingVersion.value = null; form.clearErrors();
@@ -215,11 +215,11 @@ watch([() => props.plantillaSeleccionada, () => props.modoVersion], ([item, modo
         return;
     }
     const version = item?.versionSeleccionada;
-    if (modo === "edicion" && editorVisible.value && !editorReadonly.value && version?.puede_editar && editingVersion.value?.id === version.id && editorTemplateId.value === item.id) return;
+    if (modo === "edicion" && can("update plantillas-documentos") && editorVisible.value && !editorReadonly.value && version?.puede_editar && editingVersion.value?.id === version.id && editorTemplateId.value === item.id) return;
     form.cancel(); editorVisible.value = false; form.clearErrors();
     if (!version) return;
     selectedId.value = item.id; selectedVersionId.value = version.id;
-    openEdit(version, modo !== "edicion");
+    openEdit(version, modo !== "edicion" || !can("update plantillas-documentos"));
 }, { immediate: true });
 const submit = () => {
     if (editorReadonly.value || (editingVersion.value && !editingVersion.value.puede_editar)) return;
