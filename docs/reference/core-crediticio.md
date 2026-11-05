@@ -133,8 +133,11 @@ de capital cero para Bullet. Los mensajes se devuelven en `metodo` en español.
 La ausencia de marca no se escribe sobre registros inmutables. No se recalcula
 historia. Para originar con las correcciones de un producto histórico se debe
 crear/activar una nueva versión; simular el anterior reproduce el motor 1. La
-cartera previa puede conservar diferencias F-01/F-02: su diagnóstico y tratamiento
-siguen pendientes, no quedan corregidos por desplegar este código. No cambiar
+cartera previa puede conservar diferencias F-01/F-02; desplegar este código no
+las corrige. El 04/11/2026 el usuario confirmó la revisión satisfactoria de su
+cartera de uno o dos clientes sin crédito activo o de prueba, sin tratamiento
+correctivo requerido. Se cierra ese seguimiento concreto, sin acreditar una
+inspección nueva de BD ni generalizar el resultado a otras carteras. No cambiar
 marcas, saldos o recibos manualmente para migrarla. Revisar compatibilidad del
 código antes de retroceder una aplicación que ya conserve estados del motor 2.
 
@@ -237,5 +240,7 @@ de operaciones originales. No se agrega versión de motor ni formato.
 
 Pruebas sin Laravel muestran un simple y una disposición equivalente, además de
 dos disposiciones simuladas con métodos distintos sin contaminar resultados.
-No acredita Revolvente operativo ni su validación de combinaciones. Catálogo de
-capacidades, Bullet, exigibilidad independiente y cartera histórica siguen pendientes.
+No acredita Revolvente operativo ni su validación de combinaciones. El catálogo
+de capacidades está integrado mediante PR #64; la revisión de la cartera de prueba
+fue confirmada por el usuario el 04/11/2026. Bullet y exigibilidad independiente
+conservan sus tareas pendientes.

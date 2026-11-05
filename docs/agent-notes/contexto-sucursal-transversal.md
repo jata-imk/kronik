@@ -9,14 +9,16 @@
 - [Contrato y matriz de los 19 módulos](../reference/contexto-sucursal-consultas.md).
 - Decisiones: ADR 0005, 0031 y [0036](../explanation/adr-0036-alcance-consulta-sucursal.md).
 
-## Estado — 2026-11-01
+## Estado — 2026-11-04
 
 Implementación integrada en `main` mediante [PR #66](https://github.com/jata-imk/kronik/pull/66)
 el 2026-11-01, merge `ae4f398553b37907fb0009900354650d3385f523`, autorizado
 por el usuario. Se integró el head revisado `007fdcf` sin conflictos, con
 [CI aprobado](https://github.com/jata-imk/kronik/actions/runs/41332496120).
-Validación acumulada terminada. Sin despliegue ni QA del usuario acreditados;
-Notion permanece Doing por ese seguimiento. No hay decisiones de negocio abiertas.
+Validación acumulada terminada. El 04/11/2026 el usuario confirmó que ya está
+desplegado y probado en QA, sin incidencias reportadas. No especificó versión
+desplegada ni detalle adicional de escenarios. Notion se cierra con esa evidencia;
+no hay decisiones de negocio abiertas ni seguimiento pendiente de esta entrega.
 
 Se reprodujo la mezcla de sucursales en Solicitudes, Mi trabajo,
 Evaluación/Cumplimiento e historial SIC; API dependía del contexto Spatie anterior;
@@ -96,13 +98,10 @@ presentes en main; se actualizó al contrato QA actual y pasó en ambas tandas.
 Los defectos reales de pestañas y rol seleccionado se corrigieron y sus
 recorridos aprobaron nuevamente en la tanda ampliada.
 
-## Siguiente paso
+## Cierre
 
-Desplegar `main` con el procedimiento habitual y validar en el entorno de QA:
-cambio entre dos sucursales, consulta institucional y operaciones de la sucursal
-responsable. La integración ya está confirmada; no quedan incrementos técnicos
-del plan sin implementar ni decisiones de negocio pendientes. Notion conserva
-Doing por despliegue y QA del usuario pendientes. La cobertura general del backlog de auditoría
-permanece abierta; esta entrega mantiene sus emisores pertinentes sin atribuirse
-el cierre de aquel backlog. PR #65, Bullet y políticas financieras pendientes
-continúan separados.
+Implementado e integrado mediante PR #66; despliegue y QA satisfactorios confirmados
+por el usuario el 04/11/2026. No se requiere repetir esa validación para cerrar la
+tarea. La cobertura general de auditoría conserva su entrega independiente; esta
+entrega mantiene sus emisores pertinentes sin atribuirse el cierre de aquel
+backlog. PR #65, Bullet y sus políticas financieras continúan separados.
