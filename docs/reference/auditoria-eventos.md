@@ -190,3 +190,10 @@ Consultar el editor y previsualizar una plantilla con datos sintéticos no crea
 recursos de negocio ni eventos nuevos. Se conservan emisores de gestión y de
 archivos generados. ConsultaPlantillasTest cubre lectura sin actividad y rechazo
 de escritura desde una instancia antigua, sin alterar contenido ni metadatos.
+
+
+La orientación y consulta histórica de políticas no añaden acciones auditables:
+son GET sin escrituras de negocio. Se conserva el evento de creación de política
+existente y su lista de metadatos, sin criterios ni referencia interna en actividad.
+`ConsultaPoliticasTest` verifica que consultar o rechazar escritura sobre retirada
+no agrega eventos y que captura/envío sin política siguen permitidos.

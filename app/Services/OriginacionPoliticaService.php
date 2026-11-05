@@ -21,11 +21,9 @@ class OriginacionPoliticaService
         return OriginacionPolitica::where('producto_version_id', $productoVersionId)->latest('numero')->first();
     }
 
-    public function crear(ProductoVersion $producto, array $data, User $actor): OriginacionPolitica
+    public static function reglas(): array
     {
-        Gate::forUser($actor)->authorize('manage origination productos-crediticios');
-        Gate::forUser($actor)->authorize('read productos-crediticios');
-        $data = Validator::make($data, [
+        return [
             'version_anterior' => 'required|integer|min:0',
             'modalidad' => ['required', Rule::in(['individual', 'dual'])],
             'sic' => ['required', Rule::in(['requerido', 'manual_permitido'])],
@@ -39,10 +37,36 @@ class OriginacionPoliticaService
             'referencia_validacion' => 'required|string|min:20|max:1000',
             'criterio_capacidad' => 'required|string|min:20|max:1000',
             'confirmacion' => 'accepted',
-        ])->validate();
+        ];
+    }
+
+    public function resumen(ProductoVersion $version, User $actor, ?string $nombre = null): array
+    {
+        $politica = $version->relationLoaded('politicaActual') ? $version->politicaActual : $this->vigente($version->id);
+        $nombre ??= $version->producto->nombre;
+        $lee = Gate::forUser($actor)->allows('read productos-crediticios');
+        $gestiona = $lee && Gate::forUser($actor)->allows('manage origination productos-crediticios') && $version->estado !== \App\Enums\ProductoVersionEstado::Retirada;
+
+        return [
+            'existe' => $politica !== null, 'numero' => $politica?->numero,
+            'mensaje' => $politica ? "Política actual {$politica->numero}." : 'Sin política de originación: se permite capturar y enviar, pero no aprobar solicitudes.',
+            'ubicacion' => "Productos crediticios › {$nombre} › Versión de producto {$version->numero} › Política de originación",
+            'siguiente' => $gestiona ? 'Configura la política y envía una nueva revisión de la solicitud cuando corresponda.' : 'Solicita al administrador de productos la configuración o revisión de la política.',
+            'accion' => $lee ? ['ruta' => 'originacion-politicas.show', 'parametros' => ['version' => $version->id, 'modo' => $gestiona && ! $politica ? 'nueva' : 'consulta'], 'etiqueta' => $gestiona && ! $politica ? 'Configurar política' : 'Consultar política'] : null,
+        ];
+    }
+
+    public function crear(ProductoVersion $producto, array $data, User $actor): OriginacionPolitica
+    {
+        Gate::forUser($actor)->authorize('manage origination productos-crediticios');
+        Gate::forUser($actor)->authorize('read productos-crediticios');
+        $data = Validator::make($data, self::reglas())->validate();
 
         return DB::transaction(function () use ($producto, $data, $actor) {
             $producto = ProductoVersion::query()->lockForUpdate()->findOrFail($producto->id);
+            if ($producto->estado === \App\Enums\ProductoVersionEstado::Retirada) {
+                throw ValidationException::withMessages(['politica' => 'No se pueden crear políticas en versiones retiradas. Su historia sigue disponible para consulta.']);
+            }
             if (($this->vigente($producto->id)?->numero ?? 0) !== (int) $data['version_anterior']) {
                 throw ValidationException::withMessages(['politica' => 'La política cambió. Actualiza la página antes de guardar.']);
             }

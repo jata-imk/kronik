@@ -21,8 +21,9 @@ final class CatalogoListadoService
         $filters = $this->filtros();
         $sorts = ['nombre' => 'nombre', 'clave' => 'clave'];
         $values = $this->params->resolver($request, $filters, $sorts);
-        $page = $this->params->aplicar(ProductoCrediticio::withCount('versiones')->with(['ultimaVersion' => fn ($q) => $q->with(['periodicidades', 'reglas', 'comisiones.concepto'])->withCount('usos')]), $values, $filters, $sorts, 'nombre')->paginate($values['por_pagina'])->withQueryString();
-        $versions = fn ($query) => $query->with(['periodicidades', 'reglas', 'comisiones.concepto'])->withCount('usos');
+        $relations = ['periodicidades', 'reglas', 'comisiones.concepto', 'politicaActual:originacion_politicas.id,originacion_politicas.producto_version_id,originacion_politicas.numero,originacion_politicas.created_at'];
+        $page = $this->params->aplicar(ProductoCrediticio::withCount('versiones')->with(['ultimaVersion' => fn ($q) => $q->with($relations)->withCount('usos')]), $values, $filters, $sorts, 'nombre')->paginate($values['por_pagina'])->withQueryString();
+        $versions = fn ($query) => $query->with($relations)->withCount('usos');
         foreach ($page as $product) {
             $product->setRelation('versiones', collect([$product->ultimaVersion])->filter()->values());
             $product->unsetRelation('ultimaVersion');
@@ -35,9 +36,14 @@ final class CatalogoListadoService
             $selected->setAttribute('ultimaVersion', $versions($selected->versiones())->orderByDesc('numero')->first());
             $selected->setAttribute('versionSeleccionada', $request->filled('version_id') ? $versions($selected->versiones())->findOrFail($request->integer('version_id')) : null);
         }
+        $nombres = $page->pluck('nombre', 'id');
+        if ($selected) {
+            $nombres->put($selected->id, $selected->nombre);
+        }
         foreach ($page->getCollection()->pluck('versiones')->flatten()->concat($selected?->versiones ?? collect())->push($selected?->ultimaVersion)->push($selected?->versionSeleccionada)->filter() as $version) {
             $version->setAttribute('capacidades', \App\Services\Credito\CapacidadesProducto::paraVersion($version));
             $version->setAttribute('puede_editar', $request->user()->can('update productos-crediticios') && $version->estado === \App\Enums\ProductoVersionEstado::Borrador && $version->usos_count === 0);
+            $version->setAttribute('originacion', app(OriginacionPoliticaService::class)->resumen($version, $request->user(), $nombres->get($version->producto_crediticio_id)));
         }
 
         return ['productos' => $page->getCollection(), 'productoSeleccionado' => $selected,

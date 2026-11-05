@@ -518,7 +518,7 @@ test('política requiere permisos confirmación datos explícitos y preserva his
     $this->post(route('originacion-politicas.store', $version), politicaSolicitudDatos())->assertSessionHasErrors('politica');
     $user->forceFill(['is_super_admin' => false])->save();
     $user->givePermissionTo('read productos-crediticios');
-    $this->get(route('originacion-politicas.show', $version))->assertForbidden();
+    $this->get(route('originacion-politicas.show', $version))->assertOk();
     $this->post(route('originacion-politicas.store', $version), [...politicaSolicitudDatos(), 'version_anterior' => 1])->assertForbidden();
 });
 
