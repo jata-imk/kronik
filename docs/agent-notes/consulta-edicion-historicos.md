@@ -7,12 +7,20 @@ Base funcional `33c79c4`, con PR #66 integrada. Inventario contrastado mediante
 SELECT de los 19 módulos de la BD local; sin escrituras operativas. PR #65 de
 Bullet ajena. [Contrato, matriz y módulos](../reference/consulta-edicion-historicos.md).
 
-Implementación autorizada completa en cinco incrementos encadenados. Código final
-`5da61d0`; sin migraciones, seeders, variables ni permisos nuevos. Sin integración,
-despliegue ni QA del usuario. Evidencia de Windows/Chromium, 2026-11-02–03,
+Implementación integrada en `main` el **2026-11-04** mediante PR #67–#71,
+en ese orden y sin conflictos. Merge final
+[`4b983c3`](https://github.com/jata-imk/kronik/commit/4b983c32828c287dd971da254c8c19fdb0dcd51c).
+El árbol completo de ese merge coincide exactamente con el envío validado
+`0ec1824`; cada integración previa conserva el árbol de su incremento revisado.
+Las PR posteriores se cambiaron a base `main` antes de fusionarlas; la tabla
+conserva sus bases de revisión originales.
+
+Código funcional revisado `5da61d0`; sin migraciones, seeders, variables ni permisos
+nuevos. **Pendientes despliegue y QA del usuario en la VPS QA**; el usuario realizará
+el despliegue desde `main`. Evidencia de Windows/Chromium, 2026-11-02–03,
 America/Mexico_City; datos sintéticos y SQLite aislado para E2E.
 
-| PR | Rama | Base | Código revisado |
+| PR | Rama | Base de revisión | Código revisado |
 | --- | --- | --- | --- |
 | [#67 Productos](https://github.com/jata-imk/kronik/pull/67) | feat/consulta-productos | main | bc6e533, a1fff7f |
 | [#68 Plantillas](https://github.com/jata-imk/kronik/pull/68) | feat/consulta-plantillas | #67 | bab3553 |
@@ -37,6 +45,11 @@ Spatie, recursos globales y filtros/paginación de PR #66 conservados.
 
 ## Validación y revisión
 
+- CI de los cinco commits de PR aprobada antes de integrar; incluido
+  [CI del conjunto 0ec1824](https://github.com/jata-imk/kronik/actions/runs/41588660429),
+  con concurrencia de folios en MariaDB. Integración verificada mediante
+  `git diff --exit-code 0ec1824 origin/main` sin diferencias antes de esta
+  actualización exclusivamente documental. No se repiten E2E sin cambios funcionales.
 - Suite backend completa: **639 aprobadas, una omitida, 42 680 aserciones**;
   pre-push de esta entrega. El PHP no cambia en las correcciones finales de Vue.
 - Frontend completo: **140 aprobadas en 54 archivos** sobre 5da61d0.
@@ -75,9 +88,11 @@ No se modifica dominio financiero, aprobación, históricos ni prioridades de No
 
 ## Traspaso
 
-Resultados CI y cierre de publicación se enlazan en las descripciones de PR y
-Notion, junto con la evidencia de esta nota. Integrar las PR en orden #67→#71
-cuando corresponda, conservando
-las correcciones acumuladas de #71. Después registrar despliegue y QA reales.
+La integración está confirmada. Para la VPS QA, actualizar desde `main` y seguir
+el [procedimiento de despliegues posteriores](../how-to/desplegar-vps-nuevo.md#12-despliegues-posteriores),
+incluida la compilación de assets. Esta entrega no exige migraciones ni seeders
+nuevos. Ejecutar la [validación de consulta](../how-to/validar-consulta-solo-lectura.md)
+y registrar después el commit desplegado y los resultados reales de QA. La tarea
+permanece abierta hasta registrar esas etapas.
 Históricos ampliados de Solicitudes/Créditos y dictámenes paginados quedan como
 continuación independiente; no implementados en esta entrega. No reabre PR #15.
