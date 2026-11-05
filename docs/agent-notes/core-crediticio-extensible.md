@@ -23,7 +23,8 @@ Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
   compatibilidad explícita por motor y opciones desde snapshot; Vue consume
   etiquetas/ayudas en Productos y Solicitudes. ADR 0035. Publicado en
   [PR #64](https://github.com/jata-imk/kronik/pull/64), código `ea1a0cd`.
-  Pruebas y review medium/barrido aprobados; sin integración ni despliegue.
+  Pruebas y review medium/barrido aprobados; integrado por autorización del usuario
+  en `ee94025`, árbol idéntico al head `efdddf4`. Sin despliegue.
 
 - 31/10/2026: incremento de amortización reutilizable completado e integrado
   mediante [PR #62](https://github.com/jata-imk/kronik/pull/62) en `15bdc8d` por
@@ -143,10 +144,11 @@ Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
 
 ## Siguiente paso
 
-Revisar el estado de [PR #64](https://github.com/jata-imk/kronik/pull/64) y su CI
-para la integración del catálogo backend/Vue. Las demás implementaciones siguen
-en espera: otros contratos/exigibilidad, diagnóstico histórico y capacidades futuras.
-Cerrar definición funcional Bullet antes de implementar sus reglas.
+PR #64 integrada. Revisar con contadores y responsables de producto el cuestionario
+de [Bullet](../reference/bullet-casos-definicion.md#revisión-con-contadores-qué-está-decidido-y-qué-deben-responder),
+preparado a solicitud del usuario en esta sesión. Recibir casos aceptados antes
+de planificar implementación dependiente. Otros contratos/exigibilidad,
+diagnóstico histórico y demás capacidades mantienen sus pendientes.
 Act/365 Fixed y 30/360 requieren definición, compatibilidad por motor y pruebas de
 segmentación/contexto contractual antes de habilitarlas. Despliegue y QA operativo
 posterior no se han realizado por esta entrega.
@@ -266,3 +268,49 @@ La iniciativa, arquitectura amplia y validación transversal siguen abiertas. La
 consulta completa de versiones y mejoras de política de originación conservan su
 tarea separada. Bullet mantiene pendientes reducción de plazo y mora; diagnóstico
 de créditos demo y demás capacidades continúan en espera.
+
+### Integración y preparación de revisión Bullet — 31/10/2026
+
+Usuario autorizó integrar #64 y preparar las preguntas de Bullet en esta sesión.
+PR #64 integrada con merge en `ee94025`; árbol idéntico a `efdddf4`, comprobado con
+`git diff --exit-code efdddf4 ee94025`. Main local se sincronizó por avance rápido,
+sin cambios al código probado. Sin despliegue ni QA operativo posterior.
+
+[CI de main tras #64](https://github.com/jata-imk/kronik/actions/runs/41276866395)
+aprobada para `ee94025`. La revisión medium del cierre documental contra `ee94025`
+no encontró defectos accionables; cuatro documentos y 20 enlaces locales revisados.
+Cifras de los ejemplos contrastadas independientemente con aritmética decimal.
+
+La CI del head final de #64 y el barrido medium contra `d002037` están aprobados;
+el barrido de `efdddf4` verificó 135 backend/1691 aserciones y dos frontend.
+La evidencia de 599 backend/una omitida/42047 aserciones, 114 frontend y E2E
+pertenece a la entrega identificada, no a una nueva ejecución tras el merge.
+
+Rama de cierre documental: `docs/revision-funcional-bullet`, base `ee94025`.
+Referencia canónica de Bullet ampliada con estado aprobado/pendiente, nueve temas
+de consulta, formato de respuesta entra/no entra/se difiere y ejemplos existentes.
+El cuestionario no aprueba reglas, implementa Bullet ni amplía capacidades; se
+esperan respuestas de contadores y responsables funcionales. Solo Act/360.
+No requiere eventos adicionales: no hay acciones operativas nuevas. Referencia
+del core y estado de ADR 0035 actualizados. Se revisan contenido, cifras y enlaces;
+una entrega documental no requiere pruebas funcionales nuevas.
+
+### Contraste y reducción del cuestionario — 01/11/2026
+
+El usuario aclaró que los productos los crea/configura quien usa Kronik y confirmó
+anticipos conservando vencimiento. Se sustituye el cuestionario amplio por evidencia
+del código y tres consultas específicas: devengado no exigible durante anticipo,
+regla del nuevo vencimiento al reducir plazo y mora de interés vencido antes del
+principal. Fechas/importes de QA los prepara el equipo con tasa fija y Act/360.
+
+Orden comprobado: cuota antigua primero; dentro de cuota comisión, moratorio,
+ordinario y capital. Concepto/impuesto se reparten proporcionalmente; no hay una
+bolsa global de impuestos primero. El anticipo actual cubre vencidos/devengos y
+cargos antes del capital; se reduce solo interés futuro, sin borrar lo generado.
+Liquidación, fiscalidad configurable y reversos conservan reglas actuales; ya no
+son preguntas funcionales genéricas para contadores. CFDI/contabilidad no se añaden.
+
+Contraste de `MotorPagos`, `MotorAnticipos`, `RepartoProporcional`, calendario,
+`PagoService`, fiscalidad y ADR 0012/0023. Pruebas dirigidas existentes: 65 aprobadas,
+37095 aserciones. No se cambia código financiero ni se aprueba regla Bullet pendiente.
+Corrección documental en la misma PR #65, todavía abierta; revisar head actualizado.
