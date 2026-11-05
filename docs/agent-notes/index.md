@@ -62,3 +62,5 @@ Consulta el [índice temático](../topic/index.md) para encontrar material relac
 - [Equipo: tarjetas de roles y filtros de bitácora](equipo-tarjetas-bitacora.md).
 
 - [Contexto de sucursal: revisión transversal en progreso](contexto-sucursal-transversal.md).
+
+- [Consulta, edición e históricos](consulta-edicion-historicos.md).

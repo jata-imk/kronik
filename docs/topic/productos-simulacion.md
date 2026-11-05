@@ -35,3 +35,5 @@ consultan también desde el tema de fiscalidad.
 - [Fiscalidad y cumplimiento](fiscalidad-cumplimiento.md).
 
 - [Contexto operativo, lectura institucional y listados en servidor](../reference/contexto-sucursal-consultas.md).
+
+- [Consulta completa de versiones](../reference/consulta-edicion-historicos.md).
