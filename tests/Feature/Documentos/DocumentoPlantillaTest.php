@@ -312,6 +312,33 @@ test('resultado PDF solo se confirma con auditoría y una reentrega no duplica �
         ->and(\App\Models\Activity::where('event', 'documento.generated')->count())->toBe(1);
 });
 
+test('fallo al regenerar PDF común perdido queda auditable y permite solicitar nueva copia', function () {
+    Queue::fake();
+    Storage::fake('local');
+    $user = actingAsSuperAdmin();
+    activarEmpresaPrueba();
+    $client = Cliente::factory()->create();
+    $templates = app(DocumentoPlantillaVersionService::class);
+    $template = $templates->create(plantillaDocumentoPayload(), $user->id);
+    $version = $templates->activate($template->versiones()->sole());
+    $generation = app(\App\Services\Documentos\DocumentoGeneracionService::class);
+    $document = $generation->request($client, $version, null, (string) str()->uuid(), $user);
+    $hash = str_repeat('a', 64);
+    $document->update(['estado' => DocumentoGeneradoEstado::Generado, 'archivo_hash' => $hash,
+        'disk' => 'local', 'path' => 'documentos/perdido.pdf']);
+    $this->mock(DocumentoPdfRenderer::class)->shouldReceive('render')->once()->andThrow(new RuntimeException('Fallo sintético'));
+    $job = new GenerarDocumentoPdf($document->id);
+    expect(fn () => app()->call([$job, 'handle']))->toThrow(RuntimeException::class)
+        ->and($document->fresh()->estado)->toBe(DocumentoGeneradoEstado::Procesando);
+    $job->failed(new RuntimeException('Fallo sintético'));
+    $job->failed(new RuntimeException('Fallo sintético'));
+    expect($document->fresh()->estado)->toBe(DocumentoGeneradoEstado::Fallido)
+        ->and($document->fresh()->archivo_hash)->toBe($hash)
+        ->and(\App\Models\Activity::where('event', 'documento.generacion.failed')->count())->toBe(1);
+    $new = $generation->request($client, $version, null, (string) str()->uuid(), $user);
+    expect($new->id)->not->toBe($document->id)->and($new->estado)->toBe(DocumentoGeneradoEstado::Pendiente);
+});
+
 test('PDF conserva contexto original y no reconstruye sucursal histórica desconocida', function (bool $unknown) {
     Storage::fake('local');
     Queue::fake();

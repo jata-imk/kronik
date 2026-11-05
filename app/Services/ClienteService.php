@@ -178,6 +178,26 @@ class ClienteService
         });
     }
 
+    public function transferir(Cliente $cliente, int $targetId, \App\Models\User $actor): void
+    {
+        DB::transaction(function () use ($cliente, $targetId, $actor) {
+            $cliente = Cliente::whereKey($cliente->id)->lockForUpdate()->firstOrFail();
+            $sourceId = $cliente->sucursal_id;
+            if (! $actor->is_super_admin) {
+                abort_unless($actor->operaEnSucursal($sourceId) && $actor->sucursales()->whereKey($targetId)->exists(),
+                    403, 'Sólo puedes trasladar clientes entre tus sucursales asignadas.');
+            }
+            if ($sourceId === $targetId) {
+                return;
+            }
+            $cliente->update(['sucursal_id' => $targetId]);
+            $this->activityLog->log(ActivityEvent::ClientTransferred, 'Cliente trasladado de sucursal', $cliente,
+                ['changed_fields' => ['sucursal_id'], 'related' => ['type' => 'sucursal', 'id' => $targetId],
+                    'state' => "from-sucursal:{$sourceId}"],
+                $actor, $actor->current_team_id, $sourceId, inheritActorContext: false);
+        });
+    }
+
     private function completePostalData(array $direccion): array
     {
         if (blank($direccion['codigo_postal_id'] ?? null) && blank($direccion['codigo_postal'] ?? null)) {

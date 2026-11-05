@@ -16,20 +16,32 @@ class MenubarItemService
 
         return DB::transaction(function () use ($item, $fields, $actor) {
             $creating = $item === null;
+            if ($item) {
+                $item = MenubarItem::whereKey($item->id)->lockForUpdate()->firstOrFail();
+            }
             $modules = $fields['modules'] ?? [];
             unset($fields['modules']);
             if (is_string($fields['params'] ?? null) && json_validate($fields['params'])) {
                 $fields['params'] = json_decode($fields['params'], true);
             }
             $item ??= new MenubarItem;
-            $item->fill($fields)->save();
+            $beforeModules = $item->menubarItemModules()->orderBy('module_id')->get(['module_id', 'routes'])->toArray();
+            $item->fill($fields);
+            $changed = array_keys($item->getDirty());
+            $item->save();
             if (count($modules) && count(array_filter($modules, fn ($module) => isset($module['routes'])))) {
                 $item->modules()->sync($modules);
+            }
+            if ($beforeModules !== $item->menubarItemModules()->orderBy('module_id')->get(['module_id', 'routes'])->toArray()) {
+                $changed[] = 'modules';
+            }
+            if (! $creating && $changed === []) {
+                return $item;
             }
             app(ActivityLogService::class)->log(
                 $creating ? ActivityEvent::MenubarItemCreated : ActivityEvent::MenubarItemUpdated,
                 $creating ? 'Elemento de menú creado' : 'Elemento de menú actualizado',
-                $item, ['changed_fields' => [...array_keys($fields), 'modules'], 'result' => $creating ? 'created' : 'applied'], $actor,
+                $item, ['changed_fields' => $changed, 'result' => $creating ? 'created' : 'applied'], $actor,
             );
 
             return $item;
@@ -40,6 +52,7 @@ class MenubarItemService
     {
         Gate::forUser($actor)->authorize('delete menubar-items');
         DB::transaction(function () use ($item, $actor) {
+            $item = MenubarItem::whereKey($item->id)->lockForUpdate()->firstOrFail();
             $item->modules()->detach();
             $item->delete();
             app(ActivityLogService::class)->log(ActivityEvent::MenubarItemDeleted,

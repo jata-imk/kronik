@@ -111,6 +111,20 @@ function fiscalidadPrueba(): array
         'moratorio' => ['tratamiento' => 'gravado', 'tasa' => '16.12345678', 'base' => 'importe_concepto']];
 }
 
+test('cambiar solo vigencia de borrador emite actividad y repetirla no duplica', function () {
+    $actor = actingAsSuperAdmin();
+    $this->actingAs($actor);
+    $service = app(ProductoVersionService::class);
+    $data = productoPayload();
+    $product = $service->crear($data, $actor->id);
+    $version = $product->versiones()->sole();
+    $data['version']['vigente_desde'] = '2027-01-15';
+    $service->actualizar($product, $version, $data);
+    $service->actualizar($product, $version, $data);
+    expect($version->fresh()->vigente_desde->toDateString())->toBe('2027-01-15')
+        ->and(\App\Models\Activity::where('event', 'producto_crediticio.updated')->count())->toBe(1);
+});
+
 function escenarioFiscal(array $extra = []): array
 {
     return ['monto' => '10000', 'periodicidad' => 'mensual', 'plazo' => 3, 'metodo' => 'capital_fijo', 'fecha' => '2026-01-01', 'incluir_impuestos' => true, ...$extra];

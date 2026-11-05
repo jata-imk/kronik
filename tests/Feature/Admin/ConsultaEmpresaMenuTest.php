@@ -61,6 +61,9 @@ test('gestión de menú audita actor contexto y resultado sin copiar rutas ni pa
     $fields = ['label' => 'PRIVATE-LABEL', 'type' => 'route:name', 'value' => 'clientes.index', 'params' => '{"reserved":"PRIVATE-PARAMETER"}', 'modules' => [$module->id => ['routes' => ['clientes.index']]]];
     $this->actingAs($actor)->post(route('admin.menubar-items.store'), $fields)->assertSessionHasNoErrors();
     $item = MenubarItem::where('label', 'PRIVATE-LABEL')->sole();
+    $this->put(route('admin.menubar-items.update', $item), $fields)->assertSessionHasNoErrors();
+    expect(Activity::where('event', 'menubar_item.updated')->count())->toBe(0);
+    $this->put(route('admin.menubar-items.update', $item), [...$fields, 'label' => 'PRIVATE-UPDATED'])->assertSessionHasNoErrors();
     $this->put(route('admin.menubar-items.update', $item), [...$fields, 'label' => 'PRIVATE-UPDATED'])->assertSessionHasNoErrors();
     $this->delete(route('admin.menubar-items.destroy', $item))->assertSessionHasNoErrors();
     foreach (['created', 'updated', 'deleted'] as $suffix) {

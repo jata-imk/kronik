@@ -124,7 +124,8 @@ class GenerarDocumentoPdf implements ShouldQueue
         \Illuminate\Support\Facades\DB::transaction(function () use ($exception) {
             $document = DocumentoGenerado::query()->with('cliente')->whereKey($this->documentoId)->lockForUpdate()->first();
             if (! $document || $document->estado === DocumentoGeneradoEstado::Fallido
-                || $document->estado === DocumentoGeneradoEstado::Generado || $document->archivo_hash !== null) {
+                || $document->estado === DocumentoGeneradoEstado::Generado
+                || ($document->documentable_type === (new SolicitudPaquete)->getMorphClass() && $document->archivo_hash !== null)) {
                 return;
             }
             $document->update([

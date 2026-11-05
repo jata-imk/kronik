@@ -30,11 +30,20 @@ Validaciones en curso: suite MariaDB aislada y concurrencia de productos/folios
 aprobadas en el barrido anterior; regresiones de seguridad posteriores aprobadas.
 Frontend: 140 pruebas y build aprobados. E2E core: 8 aprobados; documentos,
 productos y SIC: 6 aprobados. CI de `3868b1c` aprobada en GitHub Actions.
-Revisión medium interrumpida por límite de uso de Codex, no aprobada.
+Revisión medium del commit `832d922` contra `0707ce9` completada tras
+un primer intento interrumpido por cuota. Dos hallazgos P2: recuperación del
+fallo terminal al regenerar PDF común y detección de cambios solo de vigencia.
+Corregidos con regresiones; revisión del siguiente commit pendiente.
 Cierre de seguridad: 29 pruebas, 360 aserciones; recorrido dual y revisión del
 commit final en curso. Barrido manual acumulado: se corrigió la comparación
 de producto con instancia obsoleta y se alineó el orden de bloqueos producto →
-versión; su regresión conserva un único evento ante reenvío concurrente. Los conteos definitivos
+versión; su regresión conserva un único evento ante reenvío concurrente.
+También se corrigieron la atomicidad del traslado de cliente y los eventos de
+menú sin cambios efectivos. Regresión dirigida: 83 pruebas, 845 aserciones.
+Hook de `832d922`: MariaDB 693 pruebas, una omitida, 43 753 aserciones; build
+aprobado. El E2E dual se repite aislado tras restaurar Browsershot del lockfile
+y comprobar Chrome: un intento anterior agotó el timeout de arranque de 10 s
+durante la ejecución paralela de pruebas completas. No se cuenta como aprobado. Los conteos definitivos
 se registrarán con el commit que corresponda. Las dependencias exactas se
 restauraron mediante npm ci con espejo, conservando lockfile e integridad.
 

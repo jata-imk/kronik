@@ -54,7 +54,7 @@ class ProductoVersionService
             }
             \App\Services\Credito\CapacidadesProducto::validar($data['version'], \App\Enums\VersionMotorCredito::actual(), 'version.');
             PoliticaMora::validate($data['version']);
-            $before = $this->snapshot($version);
+            $before = [$this->snapshot($version), $version->vigente_desde?->toDateString()];
             $productBefore = $producto->only(['clave', 'nombre', 'descripcion']);
             $anteriores = $version->comisiones()->get()->keyBy('concepto_comision_id');
             foreach ($data['version']['comisiones'] as &$comision) {
@@ -75,7 +75,8 @@ class ProductoVersionService
             $version->comisiones()->delete();
             $version->comisiones()->createMany($this->normalizarComisiones($data['version']['comisiones']));
 
-            if ($before !== $this->snapshot($version->fresh()) || $productBefore !== $producto->fresh()->only(['clave', 'nombre', 'descripcion'])) {
+            $version->refresh();
+            if ($before !== [$this->snapshot($version), $version->vigente_desde?->toDateString()] || $productBefore !== $producto->fresh()->only(['clave', 'nombre', 'descripcion'])) {
                 $this->record(\App\Enums\ActivityEvent::CreditProductUpdated, $version, auth()->user());
             }
 
