@@ -33,7 +33,11 @@ productos y SIC: 6 aprobados. CI de `3868b1c` aprobada en GitHub Actions.
 Revisión medium del commit `832d922` contra `0707ce9` completada tras
 un primer intento interrumpido por cuota. Dos hallazgos P2: recuperación del
 fallo terminal al regenerar PDF común y detección de cambios solo de vigencia.
-Corregidos con regresiones; revisión del siguiente commit pendiente.
+Corregidos con regresiones. La revisión de `b882fd1` detectó otra dependencia:
+comparar auditoría no debe validar la configuración anterior de un borrador.
+Se separó la lectura sin validación de la validación al congelar snapshots; la
+regresión permite corregir una convención heredada no soportada. Tres regresiones
+dirigidas aprobadas (54 aserciones); revisión del siguiente commit pendiente.
 Cierre de seguridad: 29 pruebas, 360 aserciones; recorrido dual y revisión del
 commit final en curso. Barrido manual acumulado: se corrigió la comparación
 de producto con instancia obsoleta y se alineó el orden de bloqueos producto →

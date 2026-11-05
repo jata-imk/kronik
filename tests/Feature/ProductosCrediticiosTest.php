@@ -125,6 +125,20 @@ test('cambiar solo vigencia de borrador emite actividad y repetirla no duplica',
         ->and(\App\Models\Activity::where('event', 'producto_crediticio.updated')->count())->toBe(1);
 });
 
+test('auditoría permite corregir una configuración no soportada en un borrador editable', function () {
+    $actor = actingAsSuperAdmin();
+    $this->actingAs($actor);
+    $service = app(ProductoVersionService::class);
+    $data = productoPayload();
+    $product = $service->crear($data, $actor->id);
+    $version = $product->versiones()->sole();
+    $version->reglas()->update(['convencion_interes' => '30e_360']);
+    $service->actualizar($product, $version, $data);
+    $service->actualizar($product, $version, $data);
+    expect($version->fresh()->reglas->convencion_interes)->toBe('dias_reales_360')
+        ->and(\App\Models\Activity::where('event', 'producto_crediticio.updated')->count())->toBe(1);
+});
+
 function escenarioFiscal(array $extra = []): array
 {
     return ['monto' => '10000', 'periodicidad' => 'mensual', 'plazo' => 3, 'metodo' => 'capital_fijo', 'fecha' => '2026-01-01', 'incluir_impuestos' => true, ...$extra];

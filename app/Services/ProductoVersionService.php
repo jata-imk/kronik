@@ -54,7 +54,7 @@ class ProductoVersionService
             }
             \App\Services\Credito\CapacidadesProducto::validar($data['version'], \App\Enums\VersionMotorCredito::actual(), 'version.');
             PoliticaMora::validate($data['version']);
-            $before = [$this->snapshot($version), $version->vigente_desde?->toDateString()];
+            $before = [$this->contenidoVersion($version), $version->vigente_desde?->toDateString()];
             $productBefore = $producto->only(['clave', 'nombre', 'descripcion']);
             $anteriores = $version->comisiones()->get()->keyBy('concepto_comision_id');
             foreach ($data['version']['comisiones'] as &$comision) {
@@ -76,7 +76,7 @@ class ProductoVersionService
             $version->comisiones()->createMany($this->normalizarComisiones($data['version']['comisiones']));
 
             $version->refresh();
-            if ($before !== [$this->snapshot($version), $version->vigente_desde?->toDateString()] || $productBefore !== $producto->fresh()->only(['clave', 'nombre', 'descripcion'])) {
+            if ($before !== [$this->contenidoVersion($version), $version->vigente_desde?->toDateString()] || $productBefore !== $producto->fresh()->only(['clave', 'nombre', 'descripcion'])) {
                 $this->record(\App\Enums\ActivityEvent::CreditProductUpdated, $version, auth()->user());
             }
 
@@ -218,6 +218,13 @@ class ProductoVersionService
         $version->loadMissing(['periodicidades', 'reglas', 'comisiones.concepto']);
 
         \App\Services\Credito\CapacidadesProducto::validar(\App\Services\Credito\CapacidadesProducto::condiciones($version), \App\Enums\VersionMotorCredito::actual());
+
+        return $this->contenidoVersion($version);
+    }
+
+    private function contenidoVersion(ProductoVersion $version): array
+    {
+        $version->loadMissing(['periodicidades', 'reglas', 'comisiones.concepto']);
 
         return json_decode(json_encode($version->only(['numero', 'moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual', 'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica', 'cat_no_aplica_motivo', 'fiscalidad', 'politica_mora']) + [
             'motor_calculo_version' => \App\Enums\VersionMotorCredito::actual()->value,
