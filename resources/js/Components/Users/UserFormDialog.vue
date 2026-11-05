@@ -5,6 +5,7 @@ import axios from "axios";
 import { useToast } from "primevue/usetoast";
 
 const props = defineProps({
+    readonly: Boolean,
     remoteOptions: Boolean,
     user: { type: Object, default: null },
     teams: { type: Array, default: () => [] },
@@ -25,7 +26,7 @@ const optionLoading = ref(false);
 const controllers = new Map();
 const revisions = new Map();
 async function lookup(type, event = {}, teamId = null) {
-    if (!props.remoteOptions) return;
+    if (props.readonly || !props.remoteOptions) return;
     const key = type + (teamId ?? "");
     controllers.get(key)?.abort();
     const controller = new AbortController();
@@ -49,14 +50,14 @@ async function loadOptions() {
     await Promise.all([lookup("teams"), lookup("sucursales"), ...form.team_roles.map(item => lookup("roles", {}, item.team_id))]);
     optionLoading.value = false;
 }
-onMounted(() => { if (props.remoteOptions) loadOptions(); });
-onUnmounted(() => { for (const controller of controllers.values()) controller.abort(); });
+onMounted(() => { if (!props.readonly && props.remoteOptions) loadOptions(); });
+onUnmounted(() => { form.cancel?.(); for (const controller of controllers.values()) controller.abort(); });
 
 const prefillTeam = props.teams.find((team) => team.id === Number(props.prefill.team_id)) ?? (props.remoteOptions && props.prefill.team_id ? { id: Number(props.prefill.team_id) } : null);
 const prefillRole = props.roles.find((role) => role.id === Number(props.prefill.role_id) && role.team_id === prefillTeam?.id) ?? (props.remoteOptions && props.prefill.role_id ? { id: Number(props.prefill.role_id) } : null);
 const prefillBranch = props.sucursales.find((branch) => branch.id === Number(props.prefill.sucursal_id)) ?? (props.remoteOptions && props.prefill.sucursal_id ? { id: Number(props.prefill.sucursal_id) } : null);
-const initialTeamRoles = props.user?.team_roles?.length
-    ? props.user.team_roles.map((item) => ({ ...item, role_ids: [...item.role_ids] }))
+const initialTeamRoles = props.user
+    ? (props.user.team_roles ?? []).map((item) => ({ ...item, role_ids: [...item.role_ids] }))
     : prefillTeam
       ? [{ team_id: prefillTeam.id, role_ids: prefillRole ? [prefillRole.id] : [] }]
     : props.teams[0]
@@ -70,22 +71,23 @@ const form = useForm({
     email: props.user?.email ?? "",
     status: props.user?.status ?? "pending",
     is_super_admin: props.user?.is_super_admin ?? false,
-    current_team_id: props.user?.current_team_id ?? initialTeamRoles[0]?.team_id ?? null,
+    current_team_id: props.user ? props.user.current_team_id : initialTeamRoles[0]?.team_id ?? null,
     team_roles: initialTeamRoles,
-    sucursal_ids: props.user?.sucursal_ids?.length
-        ? [...props.user.sucursal_ids]
+    sucursal_ids: props.user
+        ? [...(props.user.sucursal_ids ?? [])]
         : prefillBranch
           ? [prefillBranch.id]
           : props.sucursales[0]
           ? [props.sucursales[0].id]
           : [],
     sucursal_principal_id:
-        props.user?.sucursal_principal_id ?? prefillBranch?.id ?? props.sucursales[0]?.id ?? null,
+        props.user ? props.user.sucursal_principal_id : prefillBranch?.id ?? props.sucursales[0]?.id ?? null,
 });
 
 watch(
     selectedTeamIds,
     (ids) => {
+        if (props.readonly) return;
         const existing = new Map(form.team_roles.map((item) => [item.team_id, item]));
         form.team_roles = ids.map(
             (teamId) => existing.get(teamId) ?? { team_id: teamId, role_ids: [] },
@@ -101,6 +103,7 @@ watch(
 watch(
     () => form.sucursal_ids,
     (ids) => {
+        if (props.readonly) return;
         if (!ids.includes(form.sucursal_principal_id)) {
             form.sucursal_principal_id = ids[0] ?? null;
         }
@@ -116,14 +119,15 @@ const selectedTeams = computed(() =>
     })),
 );
 const availableCurrentTeams = computed(() =>
-    teams.value.filter((team) => team.activo !== false && selectedTeamIds.value.includes(team.id)),
+    teams.value.filter((team) => (props.readonly || team.activo !== false) && selectedTeamIds.value.includes(team.id)),
 );
 const availablePrincipalBranches = computed(() =>
-    sucursales.value.filter((branch) => branch.activa !== false && form.sucursal_ids.includes(branch.id)),
+    sucursales.value.filter((branch) => (props.readonly || branch.activa !== false) && form.sucursal_ids.includes(branch.id)),
 );
 const errorMessages = computed(() => [...new Set(Object.values(form.errors).flat())]);
 
 const submit = () => {
+    if (props.readonly) return;
     const options = {
         preserveScroll: true,
         onSuccess: () => {
@@ -153,12 +157,13 @@ const submit = () => {
 <template>
     <Dialog
         v-model:visible="visible"
-        :header="user ? 'Editar usuario' : 'Invitar usuario'"
+        :header="readonly ? 'Consultar usuario' : user ? 'Editar usuario' : 'Invitar usuario'"
         modal
         :style="{ width: '760px', maxWidth: '95vw' }"
         @hide="emit('close')"
     >
         <Message v-if="optionError" severity="error">{{ optionError }} <Button label="Reintentar carga" text @click="loadOptions" /></Message>
+        <Message v-if="readonly" severity="info" :closable="false">Consulta · solo lectura.</Message>
         <form class="flex flex-col gap-5" @submit.prevent="submit">
             <Message v-if="errorMessages.length" severity="error">
                 <div class="font-medium">No se pudo guardar:</div>
@@ -168,17 +173,17 @@ const submit = () => {
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                     <label class="mb-1 block text-sm font-medium">Nombre *</label>
-                    <InputText v-model="form.name" aria-label="Nombre" fluid />
+                    <InputText :disabled="readonly" v-model="form.name" aria-label="Nombre" fluid />
                     <small class="text-red-500">{{ form.errors.name }}</small>
                 </div>
                 <div>
                     <label class="mb-1 block text-sm font-medium">Correo electrónico *</label>
-                    <InputText v-model="form.email" aria-label="Correo electrónico" type="email" fluid />
+                    <InputText :disabled="readonly" v-model="form.email" aria-label="Correo electrónico" type="email" fluid />
                     <small class="text-red-500">{{ form.errors.email }}</small>
                 </div>
                 <div v-if="user">
                     <label class="mb-1 block text-sm font-medium">Estado</label>
-                    <Select
+                    <Select :disabled="readonly"
                         v-model="form.status"
                         aria-label="Estado de la cuenta"
                         :options="statusOptions"
@@ -188,8 +193,8 @@ const submit = () => {
                     />
                     <small class="text-red-500">{{ form.errors.status }}</small>
                 </div>
-                <div v-if="canManageSuperAdmin" class="flex items-center gap-2 pt-6">
-                    <Checkbox v-model="form.is_super_admin" input-id="super-admin" binary />
+                <div v-if="canManageSuperAdmin || readonly" class="flex items-center gap-2 pt-6">
+                    <Checkbox :disabled="readonly" v-model="form.is_super_admin" input-id="super-admin" binary />
                     <label for="super-admin">Super Admin global</label>
                     <small v-if="form.errors.is_super_admin" class="text-red-500">{{ form.errors.is_super_admin }}</small>
                 </div>
@@ -200,7 +205,7 @@ const submit = () => {
                 <h3 class="font-semibold">Equipos y roles</h3>
                 <div>
                     <label class="mb-1 block text-sm font-medium">Equipos asignados *</label>
-                    <MultiSelect
+                    <MultiSelect :disabled="readonly"
                         v-model="selectedTeamIds"
                         aria-label="Equipos asignados"
                         :option-disabled="(team) => team.activo === false && !originalTeamIds.includes(team.id)"
@@ -215,7 +220,7 @@ const submit = () => {
                 </div>
                 <div v-for="item in selectedTeams" :key="item.assignment.team_id" class="rounded border p-3">
                     <label class="mb-2 block text-sm font-medium">Roles en {{ item.team?.name }}{{ item.team?.activo === false ? " (inactivo; asignación conservada)" : "" }}</label>
-                    <MultiSelect
+                    <MultiSelect :disabled="readonly"
                         v-model="item.assignment.role_ids"
                         :options="item.roles" @filter="event => lookup('roles', event, item.assignment.team_id)"
                         option-label="name"
@@ -228,7 +233,7 @@ const submit = () => {
                 </div>
                 <div>
                     <label class="mb-1 block text-sm font-medium">Equipo actual inicial *</label>
-                    <Select
+                    <Select :disabled="readonly"
                         v-model="form.current_team_id" aria-label="Equipo actual"
                         :options="availableCurrentTeams"
                         option-label="name"
@@ -246,7 +251,7 @@ const submit = () => {
                 </Message>
                 <div>
                     <label class="mb-1 block text-sm font-medium">Sucursales asignadas *</label>
-                    <MultiSelect
+                    <MultiSelect :disabled="readonly"
                         v-model="form.sucursal_ids"
                         aria-label="Sucursales asignadas"
                         :option-disabled="(branch) => branch.activa === false && !originalBranchIds.includes(branch.id)"
@@ -261,7 +266,7 @@ const submit = () => {
                 </div>
                 <div>
                     <label class="mb-1 block text-sm font-medium">Sucursal principal *</label>
-                    <Select
+                    <Select :disabled="readonly"
                         v-model="form.sucursal_principal_id" aria-label="Sucursal principal"
                         :options="availablePrincipalBranches"
                         option-label="nombre"
@@ -273,8 +278,8 @@ const submit = () => {
             </section>
 
             <div class="flex justify-end gap-2">
-                <Button label="Cancelar" severity="secondary" @click.prevent="emit('close')" />
-                <Button label="Guardar" icon="pi pi-check" type="submit" :loading="form.processing || optionLoading" :disabled="Boolean(optionError) || optionLoading" />
+                <Button :label="readonly ? 'Cerrar consulta' : 'Cancelar'" severity="secondary" @click.prevent="emit('close')" />
+                <Button v-if="!readonly" label="Guardar" icon="pi pi-check" type="submit" :loading="form.processing || optionLoading" :disabled="Boolean(optionError) || optionLoading" />
             </div>
         </form>
     </Dialog>

@@ -62,3 +62,17 @@ creación y desbordamiento móvil. Sin integración ni despliegue.
 Incremento 3 validado: 73 backend/1148 aserciones, 41 frontend y E2E de historia
 aprobados. Revisión medium contra bab3553 sin hallazgos accionables. El E2E
 usa pulsaciones reales para el campo monetario PrimeVue. Sin cambios financieros.
+
+## Incremento 4
+
+Rama feat/consulta-administracion, base 1979abf. Usuarios y Sucursales reutilizan
+formularios de consulta por ID, separados de los permisos de escritura. Se conservan
+Folios, búsquedas y paginación de PR #66. Pruebas/revisión en curso.
+
+Incremento 4: 24 backend/281 aserciones, cuatro frontend, build y E2E aprobados.
+Revisión medium encontró pérdida de filtros al consultar usuario y reapertura de
+sucursal tras Escape/X; corregidos y cubiertos en E2E, repetición en curso.
+
+Incremento 4: revisión medium final sin hallazgos accionables; cinco pruebas
+frontend aprobadas, incluida recarga del mismo ID y revocación de capacidad.
+El E2E espera la navegación de cierre antes de recargar para no cancelarla.

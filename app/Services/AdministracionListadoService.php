@@ -98,7 +98,7 @@ final class AdministracionListadoService
 
     public function sucursales(Request $request): array
     {
-        $request->validate(['selected_sucursal_id' => 'nullable|integer|min:1']);
+        $request->validate(['selected_sucursal_id' => 'nullable|integer|min:1', 'modo' => 'nullable|in:consulta,edicion']);
         $name = $this->texto(['nombre', 'telefono', 'email']);
         $addressSql = $this->jsonTexto('domicilio', ['calle', 'numero_exterior', 'numero_interior', 'colonia', 'municipio', 'estado', 'codigo_postal']);
         $hoursSql = $this->jsonTexto('horario', ['lunes_viernes', 'sabado', 'domingo']);
@@ -115,7 +115,7 @@ final class AdministracionListadoService
         $query = Sucursal::withCount(['users', 'clientes']);
         $page = $this->params->aplicar($query, $values, $filters, $sorts, 'nombre')->paginate($values['por_pagina'])->withQueryString();
 
-        return ['sucursalSeleccionada' => $request->filled('selected_sucursal_id') ? (function () use ($request) {
+        return ['modoSucursal' => $request->input('modo'), 'sucursalSeleccionada' => $request->filled('selected_sucursal_id') ? (function () use ($request) {
             $selected = Sucursal::withCount(['users', 'clientes'])->findOrFail($request->integer('selected_sucursal_id'));
 
             return [...$selected->toArray(), 'folios' => app(FolioService::class)->configuracion($selected)];

@@ -2,7 +2,7 @@
 import { useListadoServidor } from "@/Composables/useListadoServidor";
 import ListadoPaginador from "@/Components/ListadoPaginador.vue";
 import PageHeader from "@/Components/PageHeader.vue";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { usePage } from "@inertiajs/vue3";
 import { FilterMatchMode } from "@primevue/core/api";
 import ConfirmDialog from "primevue/confirmdialog";
@@ -27,13 +27,18 @@ const can = (permission) =>
     page.props.auth.is_super_admin ||
     page.props.auth.permissions?.[permission] === true;
 const initialPrefill = page.props.prefill ?? {};
-const selectedUser = ref(
-    page.props.selectedUser ?? users.value.find(
-        (user) => user.id === Number(initialPrefill.edit_user_id),
-    ) ?? null,
-);
+const selectedUser = ref(null);
 const activePrefill = ref(initialPrefill);
-const showForm = ref(Boolean(initialPrefill.invite || selectedUser.value));
+const showForm = ref(false);
+const formRevision = ref(0);
+const readonly = computed(() => page.props.modoUsuario !== "edicion" || !can("update-users"));
+watch([() => page.props.selectedUser, () => page.props.modoUsuario, () => page.props.prefill?.invite, () => readonly.value], () => {
+    if (showForm.value && selectedUser.value?.id && selectedUser.value.id === page.props.selectedUser?.id && !readonly.value) return;
+    formRevision.value++;
+    selectedUser.value = page.props.selectedUser ?? null;
+    activePrefill.value = page.props.prefill ?? {};
+    showForm.value = Boolean(selectedUser.value || (activePrefill.value.invite && can("create-users")));
+}, { immediate: true });
 const filters = ref({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
     user_search: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -48,14 +53,19 @@ const statusLabels = computed(() =>
 );
 
 const openCreate = () => {
+    if (!can("create-users")) return;
     selectedUser.value = null;
     activePrefill.value = {};
     showForm.value = true;
 };
 const openEdit = (user) => {
-    selectedUser.value = user;
-    activePrefill.value = {};
-    showForm.value = true;
+    if (!can("update-users")) return;
+    serverList.visit({ edit_user_id: user.id, modo: "edicion", invite: null, page: page.props.listado?.current_page ?? 1 });
+};
+const closeForm = () => {
+    showForm.value = false;
+    selectedUser.value = null;
+    serverList.visit({ edit_user_id: null, modo: null, invite: null, page: page.props.listado?.current_page ?? 1 });
 };
 </script>
 
@@ -115,7 +125,7 @@ const openEdit = (user) => {
             </DataTable>
             </div>
 
-            <UserForm v-if="showForm" :user="selectedUser" :teams="page.props.teams" :roles="page.props.roles" :sucursales="page.props.sucursales" :status-options="page.props.statusOptions" :can-manage-super-admin="page.props.canManageSuperAdmin" :remote-options="page.props.remoteOptions" :prefill="activePrefill" @close="showForm = false" />
+            <UserForm v-if="showForm" :key="`${selectedUser?.id ?? 'nuevo'}:${selectedUser ? readonly : false}:${formRevision}`" :readonly="selectedUser ? readonly : !can('create-users')" :user="selectedUser" :teams="page.props.teams" :roles="page.props.roles" :sucursales="page.props.sucursales" :status-options="page.props.statusOptions" :can-manage-super-admin="page.props.canManageSuperAdmin" :remote-options="page.props.remoteOptions" :prefill="activePrefill" @close="closeForm" />
         </template>
     </AppLayout>
 </template>

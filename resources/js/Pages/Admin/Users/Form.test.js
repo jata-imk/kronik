@@ -3,13 +3,14 @@ import { describe, expect, it, vi } from "vitest";
 import UserForm from "@/Components/Users/UserFormDialog.vue";
 
 const formErrors = vi.hoisted(() => ({}));
+const writes = vi.hoisted(() => ({put:vi.fn(), post:vi.fn()}));
 vi.mock("@inertiajs/vue3", () => ({
     useForm: (data) => ({
         ...data,
         errors: formErrors,
         processing: false,
-        put: vi.fn(),
-        post: vi.fn(),
+        put: writes.put,
+        post: writes.post,
     }),
 }));
 vi.mock("primevue/usetoast", () => ({ useToast: () => ({ add: vi.fn() }) }));
@@ -71,4 +72,16 @@ describe("Formulario de usuarios", () => {
         expect(wrapper.text()).toContain("todas las sucursales activas");
         expect(wrapper.text()).toContain("asignaciones explícitas");
     });
+});
+
+
+it("consulta conserva asignaciones vacías y no envía con Enter", async () => {
+    const wrapper=renderForm({readonly:true,user:{id:9,name:"Histórico",team_roles:[],sucursal_ids:[],current_team_id:null,sucursal_principal_id:null}});
+    expect(wrapper.text()).toContain("Consulta · solo lectura");
+    expect(wrapper.findAllComponents(MultiSelectStub)[0].props("modelValue")).toEqual([]);
+    expect(wrapper.findAllComponents(MultiSelectStub)[1].props("modelValue")).toEqual([]);
+    expect(wrapper.find('button-stub[label="Guardar"]').exists()).toBe(false);
+    writes.put.mockClear();writes.post.mockClear();
+    await wrapper.find("form").trigger("submit");
+    expect(writes.put).not.toHaveBeenCalled();expect(writes.post).not.toHaveBeenCalled();
 });
