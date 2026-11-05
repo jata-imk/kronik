@@ -1,7 +1,7 @@
 # Agent Notes
 
 - [Core crediticio extensible](core-crediticio-extensible.md)
-- [Auditoría y actividad: plan integral definido, pausado antes de implementar](auditoria-actividad.md)
+- [Auditoría y actividad: cobertura técnica y validaciones](auditoria-actividad.md)
 
 - [Equipo: acciones de integrantes](equipo-acciones-integrantes.md)
 

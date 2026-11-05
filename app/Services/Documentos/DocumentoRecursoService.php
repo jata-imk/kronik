@@ -38,12 +38,21 @@ final class DocumentoRecursoService
             throw new \RuntimeException('No fue posible almacenar la imagen.');
         }
         try {
-            return DocumentoRecurso::create([
-                'id' => $id, 'nombre' => Str::limit(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME), 160, ''),
-                'disk' => $disk, 'path' => $path, 'mime_type' => 'image/png',
-                'ancho' => $info[0], 'alto' => $info[1], 'tamano_bytes' => strlen($bytes),
-                'archivo_hash' => hash('sha256', $bytes), 'creado_por' => $userId,
-            ]);
+            return \Illuminate\Support\Facades\DB::transaction(function () use ($id, $file, $disk, $path, $info, $bytes, $userId) {
+                $resource = DocumentoRecurso::create([
+                    'id' => $id, 'nombre' => Str::limit(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME), 160, ''),
+                    'disk' => $disk, 'path' => $path, 'mime_type' => 'image/png',
+                    'ancho' => $info[0], 'alto' => $info[1], 'tamano_bytes' => strlen($bytes),
+                    'archivo_hash' => hash('sha256', $bytes), 'creado_por' => $userId,
+                ]);
+                $actor = \App\Models\User::find($userId);
+                $event = \App\Enums\ActivityEvent::DocumentResourceCreated;
+                app(\App\Services\ActivityLogService::class)->log($event, $event->label(), metadata: [
+                    'related' => ['type' => 'documento_recurso', 'id' => $resource->id], 'result' => 'created',
+                ], causer: $actor, teamId: $actor?->current_team_id, sucursalId: $actor?->current_sucursal_id, inheritActorContext: false);
+
+                return $resource;
+            });
         } catch (\Throwable $error) {
             Storage::disk($disk)->delete($path);
             throw $error;

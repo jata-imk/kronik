@@ -73,16 +73,10 @@ class RoleController extends Controller implements HasMiddleware
      */
     public function store(StoreRoleRequest $request)
     {
-        DB::transaction(function () use ($request) {
-            $role = Role::query()->create([
-                'name' => $request->validated('name'),
-                'guard_name' => 'web',
-                'team_id' => app(\App\Services\TeamContext::class)->resolve($request)->id,
-            ]);
-            if ($request->boolean('add_all_permissions')) {
-                $role->syncPermissions(Permission::where('guard_name', 'web')->get());
-            }
-        });
+        app(\App\Services\RoleManagementService::class)->create($request->user(), app(\App\Services\TeamContext::class)->resolve($request), [
+            'name' => $request->validated('name'),
+            'permissions' => $request->boolean('add_all_permissions') ? Permission::where('guard_name', 'web')->get() : [],
+        ]);
 
         return redirect()->back()->with('success', 'Rol creado');
     }
@@ -109,12 +103,7 @@ class RoleController extends Controller implements HasMiddleware
     public function update(UpdateRoleRequest $request, Role $role)
     {
         $this->ensureRoleTeam($request, $role);
-        DB::transaction(function () use ($request, $role) {
-            $role->update(['name' => $request->validated('name')]);
-            if ($request->has('permissions')) {
-                $role->syncPermissions(Permission::whereIn('id', $request->validated('permissions'))->get());
-            }
-        });
+        app(\App\Services\RoleManagementService::class)->update($request->user(), $role, $request->validated());
 
         return redirect()->back()->with('success', 'Rol actualizado');
     }
@@ -126,20 +115,9 @@ class RoleController extends Controller implements HasMiddleware
     {
         $this->ensureRoleTeam($request, $role);
 
-        return DB::transaction(function () use ($role) {
-            $permissionsCount = $role->permissions()->count();
-            $usersCount = DB::table('model_has_roles')->where('role_id', $role->id)->count();
+        app(\App\Services\RoleManagementService::class)->delete($request->user(), $role);
 
-            if ($permissionsCount > 0 || $usersCount > 0) {
-                return redirect()->back()->withErrors([
-                    'message' => 'El rol tiene permisos o usuarios asociados, no se puede eliminar',
-                ]);
-            }
-
-            $role->delete();
-
-            return redirect()->route('admin.roles.index', ['team' => $role->team_id])->with('success', 'Rol eliminado');
-        });
+        return redirect()->route('admin.roles.index', ['team' => $role->team_id])->with('success', 'Rol eliminado');
     }
 
     public function createPermission(Request $request)

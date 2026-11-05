@@ -11,16 +11,13 @@ use App\Actions\Jetstream\InviteTeamMember;
 use App\Actions\Jetstream\RemoveTeamMember;
 use App\Actions\Jetstream\UpdateTeamName;
 use App\Enums\ActivityEvent;
-use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Actions\AttemptToAuthenticate;
 use Laravel\Fortify\Actions\CanonicalizeUsername;
 use Laravel\Fortify\Actions\EnsureLoginIsNotThrottled;
 use Laravel\Fortify\Actions\PrepareAuthenticatedSession;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
-use Laravel\Fortify\Events\ValidTwoFactorAuthenticationCodeProvided;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 use Laravel\Jetstream\Jetstream;
@@ -32,7 +29,8 @@ class JetstreamServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(\Laravel\Jetstream\Http\Controllers\Inertia\ApiTokenController::class,
+            \App\Http\Controllers\ApiTokenController::class);
     }
 
     /**
@@ -68,36 +66,16 @@ class JetstreamServiceProvider extends ServiceProvider
                 AttemptToAuthenticate::class,
                 EnsureUserIsActive::class,
                 function (Request $request, $next) {
-                    $user = $request->user();
-
-                    if ($user) {
-                        app(ActivityLogService::class)->log(
-                            event: ActivityEvent::Login,
-                            description: 'Inicio de sesion exitoso',
-                            causer: $user,
-                        );
+                    $response = $next($request);
+                    if ($user = $request->user()) {
+                        app(\App\Services\AccessAuditService::class)->authenticated(ActivityEvent::Login, $user);
                     }
 
-                    return $next($request);
+                    return $response;
                 },
                 PrepareAuthenticatedSession::class,
             ]);
         });
-
-        Event::listen(
-            ValidTwoFactorAuthenticationCodeProvided::class,
-            function ($event) {
-                $user = $event->user;
-
-                if ($user) {
-                    app(ActivityLogService::class)->log(
-                        event: ActivityEvent::TwoFactorCompleted,
-                        description: 'Autenticacion de dos factores completada',
-                        causer: $user,
-                    );
-                }
-            },
-        );
 
         Jetstream::createTeamsUsing(CreateTeam::class);
         Jetstream::updateTeamNamesUsing(UpdateTeamName::class);

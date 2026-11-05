@@ -1,210 +1,240 @@
 # Eventos de auditoría
 
-## Definición del cierre técnico — 04/11/2026
+## Estado y contrato
 
-El usuario autorizó completar la cobertura técnica pendiente y después indicó
-terminar su definición y pausar antes de implementar. El plan integral está en
-la [tarea de Notion](https://app.notion.com/p/21461db7db7f80d5b813c2899522a72b),
-con traspaso en la [Agent Note](../agent-notes/auditoria-actividad.md).
-Esta definición no acredita eventos nuevos ni ejecución de pruebas. La matriz
-siguiente conserva los faltantes hasta que tengan emisor y evidencia funcional.
-Retención, resguardo, integridad/detección de alteraciones y alertas quedan como
-seguimiento separado aprobado; no se cambian plazos ni se activan borrados.
+Reconciliación técnica del 05/11/2026, continuidad `80b2f92`, base funcional
+`0707ce9`. Esta es la única matriz de eventos. El inventario parte de los 19
+módulos de `ModulesAndPermissionsSeeder` y añade autenticación, perfil, API y
+procesos automáticos. No presupone el catálogo de una instalación desplegada.
+La [Agent Note](../agent-notes/auditoria-actividad.md) acredita pruebas, commit,
+PR/revisión y límites; implementación, integración, despliegue y QA son estados
+separados. El [plan integral](https://app.notion.com/p/21461db7db7f80d5b813c2899522a72b)
+conserva el alcance aprobado.
 
-## Catálogo de capacidades del core — 31/10/2026
+Los eventos se declaran en `App\Enums\ActivityEvent` y se persisten mediante
+`App\Services\ActivityLogService`. Dominio y actividad de una mutación comparten
+transacción; un fallo de auditoría revierte la mutación. Las peticiones rechazadas
+no emiten éxito. Cambios sin efecto y reentregas no duplican un resultado ya
+persistido; fallos de acceso, bloqueos operativos e invitaciones tienen sus propios
+resultados auditables. Cada nueva exportación constituye una acción explícita.
 
-Resolver capacidades y presentar opciones no añade una acción auditable. Se
-conservan emisores de producto, solicitud y operaciones financieras mediante
-ActivityEvent/ActivityLogService, sin eventos por consulta, simulación o rechazo
-de capacidad. `CapacidadesCreditoTest` verifica ausencia de actividad y persistencia
-ante rechazos internos, y ausencia de actividad en consulta Inertia.
-`VersionMotorCreditoTest` mantiene evidencia de actor/sujeto, equipo/sucursal y
-ausencia de datos sensibles en activación/pagos y reintentos. Este incremento no
-acredita cierre de la reconciliación general de la matriz.
+Se guardan código estable, descripción fija en español, actor/sujeto cuando aplican,
+equipo/sucursal e IP, user agent y request ID disponibles. La lista funcional
+permitida es `changed_fields` (solo nombres), `related` (tipo e ID), `state`,
+`provider`, `product` y `result`. Las filas indican los metadatos pertinentes;
+no autorizan claves adicionales. No copiar nombres personalizados, correos,
+teléfonos, RFC/CURP, domicilios, contraseñas/hashes, tokens, enlaces, secretos,
+respuestas SIC, contenido documental, motivos reservados, importes ni snapshots.
+Las evidencias y fundamentos conservan sus permisos de dominio.
 
-## Alcance actual
+`inheritActorContext: false` conserva IDs capturados, incluido `null`. No reconstruir
+historia desde preferencias actuales. Los eventos automáticos tienen causer null;
+el iniciador permanece en el recurso o en `related`. Los intentos no autenticados
+son anónimos: sin actor, sujeto ni equipo/sucursal inferidos del correo. La interfaz
+los presenta como **Anónimo**; **Sistema** corresponde a ejecución sin actor de
+usuario. Un desafío 2FA no acredita acceso completado. La revocación de tokens por
+desactivación de cuenta queda representada por la desactivación, sin duplicarla
+como revocación manual.
 
-La tabla `activity_log` contiene actividad real; la interfaz administrativa permite
-filtrar, paginar y exportar CSV. Esta matriz distingue cobertura implementada,
-parcial y pendiente. El inventario parte de los 19 módulos declarados en
-`ModulesAndPermissionsSeeder`, no de una consulta a la instalación desplegada.
-Se añaden autenticación, perfil y procesos transversales. Actualizado el 26/10/2026.
+### Leyenda de la matriz
 
-Originación P2 registra creación, actualización, envío y asignación de solicitudes.
-P3 agrega `solicitud.returned`, `solicitud.rejected`, `solicitud.cancelled` y
-`solicitud.assessment_recorded`. El log técnico no contiene motivos, fundamentos,
-fuentes ni riesgo; el timeline comparte solo identificadores de evidencia/revisión.
-Los dictámenes reservados se leen con permisos de la especialidad, no de auditoría.
-P3 aprobación añade `originacion.politica_created` y `solicitud.approved`.
-La política conserva autor y condiciones; la resolución conserva sus evidencias.
-Los logs técnicos continúan sin copiar motivos ni contenido reservado.
-Los incrementos QA posteriores incorporan firmas, documentos, desembolsos y pagos.
-La existencia de esos emisores no acredita cobertura completa de cada acción ni
-preparación productiva. La reconciliación general continúa en la
-[tarea de auditoría](https://app.notion.com/p/21461db7db7f80d5b813c2899522a72b), repriorizada para el 31/10/2026.
+- **U:** usuario autorizado/titular; incluye Super Admin y delegados según el dominio.
+- **S/I:** sistema ejecutor e iniciador separados; **S:** sistema sin iniciador conocido;
+  **A:** intento anónimo sin identidad atribuida.
+- **C:** contexto del actor capturado antes de mutaciones de preferencias.
+- **T:** equipo afectado/seleccionado y sucursal original del actor, incluido null.
+- **R:** equipo de la operación y sucursal responsable/original del recurso.
+- **J:** contexto persistido de la solicitud/recurso, incluso desconocido; nunca heredado.
+- **P:** contexto de la cuenta que prueba identidad al establecer/restablecer contraseña.
+- **Q:** pertenencia y `read activity-log` del equipo consultado; excepción global de
+  Super Admin. **G:** solo consulta global autorizada de Super Admin.
 
-## Contrato
+## Matriz por acción
 
-El incremento inicial del core (29/10/2026,
-[ADR 0032](../explanation/adr-0032-core-crediticio-extensible.md)) añade versión de
-cálculo y precisión/guardas internas, sin nuevas acciones de negocio. Conserva los
-emisores de activación, desembolso, pago y reverso; no registra un evento por cada
-cálculo puro. Las versiones nuevas se identifican en evidencia de dominio, sin
-copiar capital, intereses o snapshots al log técnico. Los incrementos siguientes
-mantendrán esta misma matriz con sus emisores y pruebas.
+La evidencia es una prueba de comportamiento con actividad persistida; declarar
+un caso del enum o despachar un evento Jetstream no acredita cobertura. Los nombres
+de suites son rutas relativas a `tests/Feature/`. Las filas compartidas conservan
+un solo código por acción, sin crear catálogos paralelos.
 
-La extensión de convenciones de días del 31/10/2026
-([ADR 0033](../explanation/adr-0033-convenciones-dias-base-fija.md)) extrae conteo y
-valida condiciones sin crear una acción auditable nueva. Se mantienen los eventos
-de producto/pago existentes; no se duplican por resolver una estrategia ni por
-simular. `VersionMotorCreditoTest` verifica actor/contexto/idempotencia y que una
-convención no soportada no crea producto ni registra activación. Esas pruebas no
-acreditan la cobertura general todavía pendiente de la matriz.
-
-Cada evento nuevo debe declararse en `App\Enums\ActivityEvent` y registrarse mediante `App\Services\ActivityLogService`. El servicio agrega automáticamente:
-
-- `event`: código estable y apto para filtros.
-- `description`: explicación legible de la acción.
-- actor (`causer`) y sujeto (`subject`) cuando aplican.
-- `team_id` para aislar la consulta por equipo.
-- `sucursal_id` para conservar el contexto operativo en que ocurrio el evento.
-- `ip`, `user_agent` y `request_id` de la petición.
-
-Los metadatos funcionales permitidos son:
-
-- `changed_fields`: nombres de campos modificados, nunca sus valores.
-- `related`: tipo e identificador de un recurso relacionado.
-- `state`: estado no sensible.
-- `provider` y `product`: integración consultada.
-- `result`: resultado operativo.
-
-No se deben registrar nombres, correos, teléfonos, RFC, CURP, domicilios, contenido documental, respuestas SIC, contraseñas, tokens, secretos ni valores anteriores o posteriores de campos sensibles.
-
-Cuando se dispone de contexto capturado, `ActivityLogService::log` acepta
-`inheritActorContext: false`: conserva los IDs proporcionados, incluido `null`,
-sin reconstruirlos desde preferencias posteriores del actor ni desde el usuario
-autenticado por el modelo `Activity`. El valor predeterminado conserva la
-compatibilidad de los emisores anteriores. La captura de contexto no se guarda
-como atributo adicional en la base de datos.
-
-## Inventario y cobertura
-
-**Consulta Q:** permiso `read activity-log` del equipo autorizado o Super Admin
-global. **C:** contexto del actor capturado antes de modificar preferencias.
-**T:** equipo afectado y sucursal original del actor. **P:** contexto de la cuenta
-que prueba su identidad al establecer/restablecer/cambiar contraseña.
-Los resultados de estas pruebas corresponden al código, no a QA desplegado.
-
-| Módulo | Acción/disparador | Código | Actor/iniciador | Sujeto | Resultado | Equipo/sucursal | Metadatos | Consulta | Estado | Emisor | Prueba |
+| Módulo | Acción/disparador | Código | Actor/iniciador | Sujeto | Resultado | Equipo/sucursal | Metadatos permitidos | Consulta | Estado | Emisor | Prueba |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `users` / contexto | Cambio efectivo de sucursal activa | `user.active_branch_changed` | Usuario autenticado, incluido Super Admin | Usuario | `changed` | Equipo iniciador y sucursal anterior, incluso desconocida | `related` sucursal destino, `result` | Q | Integrado en PR #66; despliegue y QA satisfactorios confirmados por usuario el 04/11/2026 | `CurrentSucursalController` | `ConsultaSucursalTest`; no-op no duplica |
-| `users` | Alta pendiente, edición y estado, incluidos cambios de acceso global y sucursales secundarias | `user.created`, `user.updated`, `user.deactivated`, `user.reactivated` | Administrador, incluido Super Admin | Usuario | `created` / `applied` | C | `changed_fields`, `state`, `result` | Q | Implementado para rutas de alta, PUT y DELETE; reintentos sin cambio no duplican eventos | `UserManagementService` | `AccountAdministrationAuditTest`, `UserLifecycleTest` |
-| `users` | Envío/reenvío, fallo y throttle de invitación | `user.invitation.sent`, `.resent`, `.failed`, `.throttled` | Administrador; sistema si no se proporciona actor | Usuario pendiente | `transport_accepted`, `transport_failed`, `failed`, `rejected`, `throttled` | C; sistema conserva contexto de la cuenta capturado al enviar | `state`, `result` | Q | Implementado; aceptación del transporte no es entrega efectiva | `UserInvitationService` | `AccountAdministrationAuditTest`, `UserInvitationTest` |
-| `users` / `teams` | Asignaciones Spatie de un integrante existente | `user.team_roles.updated` | Administrador, incluido Super Admin | Usuario | `applied` | T | `changed_fields`, `related`, `result` | Q | Implementado para cambios reales; no copia nombres ni valores de identidad | `UserAccessAuditService` desde `UserManagementService` | `AccountAdministrationAuditTest` |
-| `teams` | Alta/baja de integrante, incluida ruta genérica | `team.member.added`, `team.member.removed` | Administrador o integrante autorizado que sale | Usuario | `applied` | T | `changed_fields`, `related`, `result` | Q | Implementado; creación, edición y eliminación de asignaciones; transacción con dominio | `UserAccessAuditService`, `AddTeamMember`, `RemoveTeamMember` | `AccountAdministrationAuditTest`, `TeamMemberActionsTest` |
-| `teams` | Cambio del rol genérico de membresía | `team.member.legacy_role_updated` | Administrador autorizado | Usuario | `applied` | T | `changed_fields`, `result` | Q | Implementado; no representa permisos Spatie; un reintento idéntico no agrega actividad | `App/Actions/Jetstream/UpdateTeamMemberRole` | `AccountAdministrationAuditTest`, `UpdateTeamMemberRoleTest` |
-| `teams` | Transferencia del responsable | `team.responsible_transferred` | Administrador autorizado | Equipo | Cambio registrado | T | `changed_fields`, `related` | Q | Implementado | `TeamManagementService` | `SelectedTeamManagementTest` |
-| `teams` | Crear, editar y desactivar equipo | Pendiente | Administrador | Equipo | Pendiente | Por definir en emisor | Contrato | Q | Pendiente de reconciliación general; los eventos de Jetstream no prueban persistencia | Sin emisor específico verificado | Pendiente |
-| `roles` | CRUD y matriz de permisos del rol | Pendiente | Administrador | Rol | Pendiente | Equipo seleccionado | Contrato | Q | Pendiente de auditoría; el aislamiento funcional sí está implementado. Consulta/etiquetas no añaden una acción auditable | `RoleController` sin emisor de CRUD | `RoleManagementTest` acredita funcionalidad, no auditoría |
-| `menubar-items` | Alta, edición y eliminación administrativa | `menubar_item.created`, `.updated`, `.deleted` | Administrador, incluido Super Admin | Elemento de menú | `created`, `applied`, `deleted` | C original del actor; recurso global | `changed_fields` (nombres superiores), `result`; sin valores, parámetros ni rutas | Q | Implementado transaccionalmente; GET no requiere evento nuevo | `MenubarItemService` | `Admin/ConsultaEmpresaMenuTest` (permisos, lectura sin escritura, actor/contexto, secretos y rollback) |
-| `dashboard` | Consulta del tablero | No aplica nuevo evento | Usuario | Sin mutación | Lectura | Contexto operativo | Ninguno adicional | Permiso del módulo | No aplica en esta entrega: navegación/lectura sin acción nueva | No requiere emisor adicional | QA/E2E de navegación |
-| `admin` | Entrada a administración | No aplica nuevo evento | Administrador | Sin mutación | Navegación | Contexto operativo | Ninguno adicional | `access admin` | No aplica en esta entrega; cada acción se audita en su dominio | No requiere emisor adicional | `TeamHubTest` |
-| `activity-log` | Consulta y CSV | Pendiente política de auditoría de consulta/exportación | Lector autorizado | Actividad | Lectura/exportación | Equipo autorizado; sucursal como filtro | No se copian registros consultados | Q | Aislamiento y filtros implementados; política adicional pendiente | `UserController`, `ActivityLogQueryService` | `Admin/ActivityLogTest`, `SelectedTeamManagementTest` |
-| `configuracion-empresa` | Guardado de configuración | `empresa.updated` | Administrador | Configuración | Cambio registrado | Contexto del actor | Nombres de campos | Q | Emisor existente; reconciliación general pendiente | `EmpresaConfiguracionController` | `Admin/EmpresaConfiguracionTest` |
-| `sucursales` | Alta, edición y desactivación | `sucursal.created`, `.updated`, `.deactivated` | Administrador | Sucursal | Cambio registrado | Contexto del actor | Contrato | Q | Emisores existentes; reconciliación general pendiente | `SucursalController` | `Admin/SucursalTest` |
-| `clientes` | Cliente, KYC, referencias, vínculos, garantías, documentos y consentimiento | Familias `cliente.*`, `cliente.documento.*`, `cliente.consentimiento_sic.*` | Operador autorizado | Cliente/recurso de expediente | Cambio o acceso registrado | Equipo y sucursal de la operación | Identificadores y campos; sin expediente | Q | Emisores existentes; reconciliar cada acción en backlog general | Servicios de cliente/expediente y controllers privados | `tests/Feature/Clientes/` |
-| `productos-crediticios` | Versiones, activación y retiro | Familia `producto_crediticio.*` | Operador autorizado | Producto/versión | Cambio registrado | Contexto de la operación | Contrato | Q | Emisores existentes; completar reconciliación | Controllers/servicios de productos | `ProductosCrediticiosTest` |
-| `plantillas-documentos` | Plantilla, versión y recurso | `documento_plantilla.*`, `documento_recurso.created` | Operador autorizado | Plantilla/recurso | Cambio registrado | Contexto de la operación | Sin contenido de plantilla | Q | Emisores existentes; completar reconciliación | Servicios de documentos | `Documentos/DocumentoPlantillaTest` |
-| `documentos` | Generar, fallar, visualizar y descargar | `documento.generacion.*`, `documento.generated`, `documento.viewed`, `documento.downloaded` | Usuario iniciador / ejecutor según emisor | Documento | Resultado operativo | Verificar captura original en cada proceso | Sin contenido documental | Q | Parcial: revisar por proceso, cola y reintento | Servicios/controllers de documentos | `tests/Feature/Documentos/` |
-| `historial-crediticio` | Consulta de evidencia SIC | `cliente.sic.evidence_viewed` | Operador autorizado | Evidencia/cliente | Acceso registrado | Equipo y sucursal de la operación | Identificadores; sin respuesta SIC | Q | Emisor existente; completar reconciliación | Superficie privada SIC | `SicQaTest` |
-| `circulo-credito` | Consultar/reconciliar | `cliente.sic.fico_score_v2.queried`, `.fintech_score.queried`, `.credit_report_fico.queried`, `sic.attempt_reconciled` | Operador autorizado | Cliente/consulta | Resultado operativo | Equipo y sucursal originales | Proveedor/producto/IDs; sin reporte | Q | QA implementado; no acredita SIC productivo | `SicOperacionService` | `SicQaTest`, `SicSafetyTest` |
-| `solicitudes` | Alta, captura, revisión, resolución, firma y aprobación | Familia `solicitud.*` | Operador autorizado | Solicitud/recurso | Resultado operativo | Equipo y sucursal de operación | IDs de evidencia/revisión; sin fundamento reservado | Q | Emisores existentes; cambio de etiqueta de PR #46 no añadió mutación | Servicios de solicitud, firma y política | `SolicitudesTest` y pruebas de originación |
-| `evaluacion-solicitudes` | Dictamen de evaluación | `solicitud.assessment_recorded` | Evaluador | Dictamen/solicitud | Dictamen registrado | Equipo/sucursal de operación | IDs; sin fundamento ni riesgo reservado | Q | Emisor existente; reconciliación general pendiente | Servicio de dictámenes | Pruebas de originación |
-| `cumplimiento` | Dictamen PLD | `solicitud.assessment_recorded` | Operador PLD | Dictamen/solicitud | Dictamen registrado | Equipo/sucursal de operación | IDs; sin fuentes ni fundamento | Q | Emisor existente; reconciliación general pendiente | Servicio de dictámenes | Pruebas de originación |
-| `creditos` | Desembolso, pago y reverso QA | `credito.disbursed`, `credito.payment_recorded`, `credito.payment_reversed` | Operador autorizado | Solicitud/crédito | Resultado operativo QA | Equipo/sucursal de operación | IDs y estado; sin presumir dinero real | Q | Parcial: reconciliar anticipos, liquidación y reintentos | `DesembolsoService`, `PagoService` | `CreditoPagosTest`, `CreditoAnticiposTest` |
-| Autenticación (transversal) | Login y 2FA | `login`, `login.2fa_completed` | Usuario autenticado | Según emisor | Autenticación completada | Contexto de sesión | Contrato | Q | Existente; cierre de sesión y fallos siguen pendientes | `JetstreamServiceProvider` | `AuthenticationTest`, `TwoFactorAuthenticationSettingsTest` |
-| Cuenta/contraseña (transversal) | Activación inicial, recuperación y cambio autenticado | `user.activated`, `user.password.recovered`, `user.password.changed` | Titular que prueba identidad | Usuario | `applied` | P | `result`, estado cuando aplica; sin credenciales | Q | Implementado; un enlace consumido no vuelve a emitir activación | Acciones Fortify de contraseña | `AccountAdministrationAuditTest`, `PasswordResetTest`, `UpdatePasswordTest` |
-| Perfil (transversal) | Guardar perfil | `user.profile.updated` | Titular autenticado | Usuario | Cambio registrado | Contexto del actor | Nombres de campos | Q | Existente; no confundir con alta administrativa | `UpdateUserProfileInformation` | Pruebas de perfil y `AccountMailTest` |
-| Procesos automáticos/colas | Ejecutar en nombre de un iniciador | Según dominio | Sistema / iniciador separados | Recurso de dominio | Según proceso | Capturar al iniciar; no reconstruir desde preferencias | Contrato; sin secretos | Q | Reconciliación general pendiente; los emisores de cuenta de esta entrega son síncronos | Revisar por proceso | Pendiente por proceso |
-| `configuracion-empresa` y procesos transversales | Bloqueo operativo | `empresa.operacion_bloqueada` | Usuario HTTP o sistema ejecutor / iniciador por ID | Recurso afectado | `blocked` | Equipo/sucursal originales | `state`, `product`, `result`, `related`; sin datos sensibles | Q | Implementado; PDF y evento atómicos, fallo/reintento sin duplicación | `OperacionEmpresaBloqueada`, workers | `EmpresaOperacionTest`, `SicQaTest` |
-| `sucursales` | Configurar numeracion | `sucursal.folios.updated` | Administrador autorizado | Sucursal seleccionada | `applied` | Equipo del actor / sucursal afectada | Nombres de campos; sin valores | Q | Implementado; no-op sin evento | `FolioService` | `FoliosTest` |
-| Transversal (folios) | Asignar a historia | `folio.historical_assigned` | Sistema | Registro de negocio | `assigned` | Equipo desconocido / sucursal original | Tipo e ID de asignacion | Q | Implementado; reintento no duplica | Migracion / `folios:completar` | `FoliosTest` |
+| `teams` | Equipo creado | `team.created` | U | Equipo | Cambio aplicado | T | changed_fields, related, result | Q | Implementado; validar entrega en Agent Note | TeamManagementService::create | AuditCoverageTest |
+| `teams` | Equipo actualizado | `team.updated` | U | Equipo | Cambio aplicado | T | changed_fields, related, result | Q | Implementado; validar entrega en Agent Note | TeamManagementService::update | AuditCoverageTest |
+| `teams` | Equipo desactivado | `team.deactivated` | U | Equipo | Cambio aplicado | T | changed_fields, related, result | Q | Implementado; validar entrega en Agent Note | TeamManagementService::update | AuditCoverageTest |
+| `teams` | Equipo reactivado | `team.reactivated` | U | Equipo | Cambio aplicado | T | changed_fields, related, result | Q | Implementado; validar entrega en Agent Note | TeamManagementService::update | AuditCoverageTest |
+| `roles` | Rol creado | `role.created` | U / S (comando) | Rol | Cambio aplicado | T / desconocido en CLI | changed_fields, result | Q | Implementado; validar entrega en Agent Note | CreateRole::handle; RoleManagementService::create | AuditCoverageTest |
+| `roles` | Rol actualizado | `role.updated` | U / S (comando) | Rol | Cambio aplicado | T / desconocido en CLI | changed_fields, result | Q | Implementado; validar entrega en Agent Note | RoleManagementService::update | AuditCoverageTest |
+| `roles` | Rol eliminado | `role.deleted` | U / S (comando) | Rol | Cambio aplicado | T / desconocido en CLI | changed_fields, result | Q | Implementado; validar entrega en Agent Note | RoleManagementService::delete | AuditCoverageTest |
+| `roles` | Permisos del rol actualizados | `role.permissions.updated` | U / S (comando) | Rol | Cambio aplicado | T / desconocido en CLI | changed_fields, result | Q | Implementado; validar entrega en Agent Note | CreateRole::handle; RoleManagementService::update | AuditCoverageTest |
+| `roles` | Permiso creado | `permission.created` | U / S (comando) | Permiso | Cambio aplicado | T / desconocido en CLI | changed_fields, result | Q | Implementado; validar entrega en Agent Note | CreatePermission::handle; CreateRole::handle | AuditCoverageTest |
+| `Autenticación` | Sesión cerrada | `logout` | U | Usuario | Cierre completado | C | result | Q | Implementado; validar entrega en Agent Note | FortifyServiceProvider::boot → AccessAuditService/ActivityLogService | AuditCoverageTest |
+| `Autenticación` | Credenciales de acceso rechazadas | `login.failed` | A | — | Rechazado/limitado | Desconocido explícito | result | G | Implementado; validar entrega en Agent Note | FortifyServiceProvider::boot → AccessAuditService/ActivityLogService | AuditCoverageTest |
+| `Autenticación` | Acceso limitado por frecuencia | `login.throttled` | A | — | Rechazado/limitado | Desconocido explícito | result | G | Implementado; validar entrega en Agent Note | FortifyServiceProvider::boot → AccessAuditService/ActivityLogService | AuditCoverageTest |
+| `Autenticación` | Acceso rechazado por estado de cuenta | `login.rejected` | A | — | Rechazado/limitado | Desconocido explícito | result | G | Implementado; validar entrega en Agent Note | EnsureUserIsActive::handle; TwoFactorSessionController::store; ActivityLogQueryService::payload | AuditCoverageTest |
+| `Acceso/perfil` | Configuración de segundo factor iniciada | `user.2fa.enabled` | U | Usuario | Cambio aplicado | C | result, related (token) | Q | Implementado; validar entrega en Agent Note | AuditSecurityChanges::handle | AuditCoverageTest |
+| `Acceso/perfil` | Segundo factor confirmado | `user.2fa.confirmed` | U | Usuario | Cambio aplicado | C | result, related (token) | Q | Implementado; validar entrega en Agent Note | AuditSecurityChanges::handle | AuditCoverageTest |
+| `Acceso/perfil` | Segundo factor deshabilitado | `user.2fa.disabled` | U | Usuario | Cambio aplicado | C | result, related (token) | Q | Implementado; validar entrega en Agent Note | AuditSecurityChanges::handle | AuditCoverageTest |
+| `Acceso/perfil` | Códigos de recuperación regenerados | `user.2fa.recovery_codes_regenerated` | U | Usuario | Cambio aplicado | C | result, related (token) | Q | Implementado; validar entrega en Agent Note | AuditSecurityChanges::handle | AuditCoverageTest |
+| `Autenticación` | Segundo factor rechazado | `login.2fa_failed` | A | — | Rechazado/limitado | Desconocido explícito | result | G | Implementado; validar entrega en Agent Note | TwoFactorSessionController::store; ActivityLogQueryService::payload | AuditCoverageTest |
+| `Autenticación` | Segundo factor limitado por frecuencia | `login.2fa_throttled` | A | — | Rechazado/limitado | Desconocido explícito | result | G | Implementado; validar entrega en Agent Note | FortifyServiceProvider::boot → AccessAuditService/ActivityLogService | AuditCoverageTest |
+| `Acceso/perfil` | Token API creado | `user.api_token.created` | U | Usuario | Cambio aplicado | C | result, related (token) | Q | Implementado; validar entrega en Agent Note | AuditSecurityChanges::handle | AuditCoverageTest |
+| `Acceso/perfil` | Capacidades del token API actualizadas | `user.api_token.updated` | U | Usuario | Cambio aplicado | C | result, related (token) | Q | Implementado; validar entrega en Agent Note | AuditSecurityChanges::handle | AuditCoverageTest |
+| `Acceso/perfil` | Token API revocado | `user.api_token.revoked` | U | Usuario | Cambio aplicado | C | result, related (token) | Q | Implementado; validar entrega en Agent Note | AuditSecurityChanges::handle | AuditCoverageTest |
+| `Acceso/perfil` | Correo verificado | `user.email_verified` | U | Usuario | Cambio aplicado | C | result, related (token) | Q | Implementado; validar entrega en Agent Note | AuditSecurityChanges::handle | AuditCoverageTest |
+| `activity-log` | Archivo CSV de actividad generado | `activity_log.exported` | U | — | Archivo generado | Equipo consultado / sucursal original; global explícito null | result | Q | Implementado; validar entrega en Agent Note | UserController::exportActivity | AuditCoverageTest |
+| `productos-crediticios` | Activación de producto programada | `producto_crediticio.activation_scheduled` | U / S/I | Producto; versión en ejecución automática | Cambio aplicado | C / J | changed_fields, state, result, related | Q | Implementado; validar entrega en Agent Note | ProductoVersionService::activar | ProductosCrediticiosTest; VersionMotorCreditoTest |
+| `circulo-credito` | Intento SIC solicitado | `sic.requested` | U | Cliente (conciliación) / intento SIC | Cambio aplicado | J | state, result, related; proveedor/producto si aplica | Q | Implementado; validar entrega en Agent Note | SicOperacionService::preparar | SicQaTest; ConsultaSucursalTest (lectura) |
+| `circulo-credito` | Envío SIC iniciado | `sic.sending` | S/I | Cliente (conciliación) / intento SIC | Cambio aplicado | J | state, result, related; proveedor/producto si aplica | Q | Implementado; validar entrega en Agent Note | SicOperacionService::transicion | SicQaTest; ConsultaSucursalTest (lectura) |
+| `circulo-credito` | Intento SIC cancelado antes del envío | `sic.cancelled` | S/I | Cliente (conciliación) / intento SIC | Cambio aplicado | J | state, result, related; proveedor/producto si aplica | Q | Implementado; validar entrega en Agent Note | SicOperacionService::transicion | SicQaTest; ConsultaSucursalTest (lectura) |
+| `circulo-credito` | Intento SIC marcado incierto | `sic.uncertain` | S/I | Cliente (conciliación) / intento SIC | Cambio aplicado | J | state, result, related; proveedor/producto si aplica | Q | Implementado; validar entrega en Agent Note | SicOperacionService::transicion | SicQaTest; ConsultaSucursalTest (lectura) |
+| `circulo-credito` | Respuesta SIC tardía conservada | `sic.late_response` | S/I | Cliente (conciliación) / intento SIC | Cambio aplicado | J | state, result, related; proveedor/producto si aplica | Q | Implementado; validar entrega en Agent Note | SicOperacionService::ejecutar | SicQaTest; ConsultaSucursalTest (lectura) |
+| `users` | Sucursal activa cambiada | `user.active_branch_changed` | U | Usuario | Cambio aplicado | Equipo iniciador / sucursal anterior | related, result | Q | Implementado; validar entrega en Agent Note | CurrentSucursalController::update | ConsultaSucursalTest |
+| `users` | Cuenta pendiente creada | `user.created` | U | Usuario | Cambio aplicado | C | changed_fields, state, result | Q | Implementado; validar entrega en Agent Note | UserManagementService::create | AccountAdministrationAuditTest |
+| `users` | Cuenta actualizada | `user.updated` | U | Usuario | Cambio aplicado | C | changed_fields, state, result | Q | Implementado; validar entrega en Agent Note | UserManagementService::update | AccountAdministrationAuditTest |
+| `users` | Cuenta desactivada | `user.deactivated` | U | Usuario | Cambio aplicado | C | changed_fields, state, result | Q | Implementado; validar entrega en Agent Note | UserManagementService::update | AccountAdministrationAuditTest |
+| `users` | Cuenta reactivada | `user.reactivated` | U | Usuario | Cambio aplicado | C | changed_fields, state, result | Q | Implementado; validar entrega en Agent Note | UserManagementService::update | AccountAdministrationAuditTest |
+| `teams` | Integrante agregado al equipo | `team.member.added` | U | Usuario | Cambio aplicado | T | changed_fields, related, result | Q | Implementado; validar entrega en Agent Note | UserAccessAuditService::recordChanges | AccountAdministrationAuditTest |
+| `teams` | Integrante retirado del equipo | `team.member.removed` | U | Usuario | Cambio aplicado | T | changed_fields, related, result | Q | Implementado; validar entrega en Agent Note | UserAccessAuditService::recordChanges | AccountAdministrationAuditTest |
+| `teams` | Rol genérico de membresía actualizado | `team.member.legacy_role_updated` | U | Usuario | Cambio aplicado | T | changed_fields, related, result | Q | Implementado; validar entrega en Agent Note | UpdateTeamMemberRole::update | AccountAdministrationAuditTest |
+| `users` | Roles del integrante actualizados | `user.team_roles.updated` | U | Usuario | Cambio aplicado | T | changed_fields, related, result | Q | Implementado; validar entrega en Agent Note | UserAccessAuditService::recordChanges | AccountAdministrationAuditTest |
+| `users` | Invitación aceptada por el transporte | `user.invitation.sent` | U / S | Usuario | Aceptado por transporte / fallo / limitación | C | state, result | Q | Implementado; validar entrega en Agent Note | UserInvitationService::send | AccountAdministrationAuditTest |
+| `users` | Reenvío de invitación aceptado por el transporte | `user.invitation.resent` | U / S | Usuario | Aceptado por transporte / fallo / limitación | C | state, result | Q | Implementado; validar entrega en Agent Note | UserInvitationService::send | AccountAdministrationAuditTest |
+| `users` | Envío de invitación fallido | `user.invitation.failed` | U / S | Usuario | Aceptado por transporte / fallo / limitación | C | state, result | Q | Implementado; validar entrega en Agent Note | UserInvitationService::send | AccountAdministrationAuditTest |
+| `users` | Reenvío de invitación limitado por frecuencia | `user.invitation.throttled` | U / S | Usuario | Aceptado por transporte / fallo / limitación | C | state, result | Q | Implementado; validar entrega en Agent Note | UserInvitationService::send | AccountAdministrationAuditTest |
+| `users` | Cuenta activada con contraseña inicial | `user.activated` | Titular con identidad probada | Usuario | Cambio aplicado | P | state, result | Q | Implementado; validar entrega en Agent Note | ResetUserPassword::reset | AccountAdministrationAuditTest |
+| `users` | Contraseña recuperada | `user.password.recovered` | Titular con identidad probada | Usuario | Cambio aplicado | P | state, result | Q | Implementado; validar entrega en Agent Note | ResetUserPassword::reset | AccountAdministrationAuditTest |
+| `users` | Contraseña cambiada | `user.password.changed` | Titular con identidad probada | Usuario | Cambio aplicado | P | state, result | Q | Implementado; validar entrega en Agent Note | UpdateUserPassword::update | AccountAdministrationAuditTest |
+| `teams` | Responsable del equipo transferido | `team.responsible_transferred` | U | Equipo | Cambio aplicado | T | changed_fields, related, result | Q | Implementado; validar entrega en Agent Note | TeamManagementService::transfer | SelectedTeamManagementTest |
+| `circulo-credito` | Intento SIC conciliado | `sic.attempt_reconciled` | U | Cliente (conciliación) / intento SIC | Cambio aplicado | J | state, result, related; proveedor/producto si aplica | Q | Implementado; validar entrega en Agent Note | SicOperacionService::conciliar | SicQaTest; ConsultaSucursalTest (lectura) |
+| `Autenticación` | pi-sign-in | `login` | U | Usuario | Autenticación completada | C | result | Q | Implementado; validar entrega en Agent Note | JetstreamServiceProvider::boot → AccessAuditService::authenticated | AuditCoverageTest |
+| `solicitudes` | Solicitud creada | `solicitud.created` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudService::crear | AuditDomainCoverageTest; SolicitudesTest |
+| `solicitudes` | Borrador de solicitud actualizado | `solicitud.updated` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudService::guardar | AuditDomainCoverageTest; SolicitudesTest |
+| `solicitudes` | Solicitud enviada a revisión | `solicitud.submitted` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudService::enviar | AuditDomainCoverageTest; SolicitudesTest |
+| `solicitudes` | Responsable de solicitud asignado | `solicitud.assigned` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudService::asignar | AuditDomainCoverageTest; SolicitudesTest |
+| `solicitudes` | Solicitud devuelta para corrección | `solicitud.returned` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudService::resolver | AuditDomainCoverageTest; SolicitudesTest |
+| `solicitudes` | Solicitud rechazada | `solicitud.rejected` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudService::resolver | AuditDomainCoverageTest; SolicitudesTest |
+| `solicitudes` | Solicitud cancelada | `solicitud.cancelled` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudService::resolver | AuditDomainCoverageTest; SolicitudesTest |
+| `evaluacion-solicitudes / cumplimiento` | Revisión especializada registrada | `solicitud.assessment_recorded` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudService::dictaminar | AuditDomainCoverageTest; SolicitudesTest |
+| `productos-crediticios` | Política de originación versionada | `originacion.politica_created` | U | Producto | Cambio aplicado | C | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | OriginacionPoliticaService::crear | AuditDomainCoverageTest; SolicitudesTest |
+| `solicitudes` | Solicitud aprobada | `solicitud.approved` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudService::aprobar | AuditDomainCoverageTest; SolicitudesTest |
+| `solicitudes` | Copia firmada recibida | `solicitud.signature_received` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudFirmaService::recibir | AuditDomainCoverageTest; SolicitudesTest |
+| `solicitudes` | Firma revisada | `solicitud.signature_reviewed` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudFirmaService::revisar | AuditDomainCoverageTest; SolicitudesTest |
+| `creditos` | Desembolso QA registrado | `credito.disbursed` | U | Crédito | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | DesembolsoService::registrar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest |
+| `creditos` | Pago QA registrado | `credito.payment_recorded` | U | Crédito | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | PagoService::registrar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest |
+| `creditos` | Pago QA revertido | `credito.payment_reversed` | U | Crédito | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | PagoService::reversar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest |
+| `Autenticación` | pi-shield | `login.2fa_completed` | U | Usuario | Autenticación completada | C | result | Q | Implementado; validar entrega en Agent Note | TwoFactorSessionController::store | AuditCoverageTest |
+| `Perfil` | pi-user-edit | `user.profile.updated` | U | Usuario | Cambio aplicado | C | changed_fields | Q | Implementado; validar entrega en Agent Note | UpdateUserProfileInformation::update | AuditCoverageTest |
+| `menubar-items` | Elemento de menú creado | `menubar_item.created` | U | Elemento de menú | Cambio aplicado | C | changed_fields, result | Q | Implementado; validar entrega en Agent Note | MenubarItemService::guardar | Admin/ConsultaEmpresaMenuTest |
+| `menubar-items` | Elemento de menú actualizado | `menubar_item.updated` | U | Elemento de menú | Cambio aplicado | C | changed_fields, result | Q | Implementado; validar entrega en Agent Note | MenubarItemService::guardar | Admin/ConsultaEmpresaMenuTest |
+| `menubar-items` | Elemento de menú eliminado | `menubar_item.deleted` | U | Elemento de menú | Cambio aplicado | C | changed_fields, result | Q | Implementado; validar entrega en Agent Note | MenubarItemService::eliminar | Admin/ConsultaEmpresaMenuTest |
+| `configuracion-empresa` | pi-building | `empresa.updated` | U | Configuración / recurso bloqueado | Cambio aplicado | C | changed_fields | Q | Implementado; validar entrega en Agent Note | EmpresaConfiguracionController::update | Admin/EmpresaConfiguracionTest |
+| `configuracion-empresa` | Operación bloqueada por el estado de la empresa | `empresa.operacion_bloqueada` | U / S/I | Configuración / recurso bloqueado | blocked | C / J | state, product, result, related | Q | Implementado; validar entrega en Agent Note | OperacionEmpresaBloqueada::registrar | EmpresaOperacionTest; SicQaTest |
+| `sucursales` | pi-plus | `sucursal.created` | U | Sucursal / registro con folio | Cambio aplicado | Equipo iniciador / sucursal afectada | changed_fields, state, related | Q | Implementado; validar entrega en Agent Note | SucursalController::store | Admin/SucursalTest; Admin/ActivityLogTest |
+| `sucursales` | pi-pencil | `sucursal.updated` | U | Sucursal / registro con folio | Cambio aplicado | Equipo iniciador / sucursal afectada | changed_fields, state, related | Q | Implementado; validar entrega en Agent Note | SucursalController::update | Admin/SucursalTest; Admin/ActivityLogTest |
+| `sucursales` | Numeración de sucursal actualizada | `sucursal.folios.updated` | U | Sucursal / registro con folio | Cambio aplicado | Equipo iniciador / sucursal afectada | changed_fields, state, related | Q | Implementado; validar entrega en Agent Note | FolioService::configurar | FoliosTest |
+| `sucursales` | Folio asignado a registro histórico | `folio.historical_assigned` | S | Sucursal / registro con folio | Cambio aplicado | Equipo desconocido / sucursal original | changed_fields, state, related | Q | Implementado; validar entrega en Agent Note | FolioService::completarHistoricos | FoliosTest |
+| `sucursales` | pi-ban | `sucursal.deactivated` | U | Sucursal / registro con folio | Cambio aplicado | Equipo iniciador / sucursal afectada | changed_fields, state, related | Q | Implementado; validar entrega en Agent Note | SucursalController::destroy | Admin/SucursalTest; Admin/ActivityLogTest |
+| `clientes` | pi-user-plus | `cliente.created` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteService::store | AuditDomainCoverageTest; Clientes/ (permisos y validación) |
+| `clientes` | Cliente actualizado | `cliente.updated` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteService::update | AuditDomainCoverageTest; Clientes/ (permisos y validación) |
+| `clientes` | pi-user-minus | `cliente.deleted` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteService::destroy | AuditDomainCoverageTest; Clientes/ (permisos y validación) |
+| `clientes` | pi-arrow-right-arrow-left | `cliente.sucursal.transferred` | U | Cliente | Cambio aplicado | Equipo iniciador / sucursal origen | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteController::transfer | ConsultaSucursalTest |
+| `clientes` | Perfil KYC actualizado | `cliente.kyc.updated` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteExpedienteService::updateProfile | AuditDomainCoverageTest; Clientes/ (permisos y validación) |
+| `clientes` | Referencia de cliente creada | `cliente.referencia.created` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteExpedienteService::storeReferencia | AuditDomainCoverageTest; Clientes/ (permisos y validación) |
+| `clientes` | Referencia de cliente actualizada | `cliente.referencia.updated` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteExpedienteService::updateReferencia | AuditDomainCoverageTest; Clientes/ (permisos y validación) |
+| `clientes` | Referencia de cliente eliminada | `cliente.referencia.deleted` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteExpedienteService::deleteReferencia | AuditDomainCoverageTest; Clientes/ (permisos y validación) |
+| `clientes` | Persona vinculada al expediente | `cliente.vinculo.created` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteExpedienteService::storeVinculo | AuditDomainCoverageTest; Clientes/ (permisos y validación) |
+| `clientes` | Persona desvinculada del expediente | `cliente.vinculo.deleted` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteExpedienteService::deleteVinculo | AuditDomainCoverageTest; Clientes/ (permisos y validación) |
+| `clientes` | Garantía creada | `cliente.garantia.created` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteExpedienteService::storeGarantia | AuditDomainCoverageTest; Clientes/ (permisos y validación) |
+| `clientes` | Garantía actualizada | `cliente.garantia.updated` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteExpedienteService::updateGarantia | AuditDomainCoverageTest; Clientes/ (permisos y validación) |
+| `clientes` | Garantía eliminada | `cliente.garantia.deleted` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteExpedienteService::deleteGarantia | AuditDomainCoverageTest; Clientes/ (permisos y validación) |
+| `documentos` | pi-upload | `cliente.documento.received` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteDocumentoService::upload | AuditDomainCoverageTest; Clientes/ (permisos y validación) |
+| `documentos` | Estado documental actualizado | `cliente.documento.status_updated` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteDocumentoService::changeLockedStatus | AuditDomainCoverageTest; Clientes/ (permisos y validación) |
+| `documentos` | Documento de cliente descargado | `cliente.documento.downloaded` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteDocumentoController::download | AuditDomainCoverageTest; Clientes/ (permisos y validación) |
+| `clientes` | Consentimiento SIC registrado | `cliente.consentimiento_sic.created` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteConsentimientoSicService::store | AuditDomainCoverageTest; Clientes/ClienteConsentimientoSicTest |
+| `clientes` | Consentimiento SIC revocado | `cliente.consentimiento_sic.revoked` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteConsentimientoSicService::revoke | AuditDomainCoverageTest; Clientes/ClienteConsentimientoSicTest |
+| `clientes` | pi-download | `cliente.consentimiento_sic.evidence_downloaded` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteConsentimientoSicController::download | AuditDomainCoverageTest; Clientes/ClienteConsentimientoSicTest |
+| `circulo-credito` | Consulta SIC FICO Score v2 | `cliente.sic.fico_score_v2.queried` | S/I | Cliente (conciliación) / intento SIC | Cambio aplicado | J | state, result, related; proveedor/producto si aplica | Q | Implementado; validar entrega en Agent Note | SicOperacionService::ejecutar | SicQaTest; ConsultaSucursalTest (lectura) |
+| `historial-crediticio` | Resultado SIC visualizado | `cliente.sic.evidence_viewed` | U | Cliente (conciliación) / intento SIC | Cambio aplicado | J | state, result, related; proveedor/producto si aplica | Q | Implementado; validar entrega en Agent Note | HistorialCrediticioController::detalle | SicQaTest; ConsultaSucursalTest (lectura) |
+| `circulo-credito` | Consulta SIC Fintech Score | `cliente.sic.fintech_score.queried` | S/I | Cliente (conciliación) / intento SIC | Cambio aplicado | J | state, result, related; proveedor/producto si aplica | Q | Implementado; validar entrega en Agent Note | SicOperacionService::ejecutar | SicQaTest; ConsultaSucursalTest (lectura) |
+| `circulo-credito` | pi-search | `cliente.sic.credit_report_fico.queried` | S/I | Cliente (conciliación) / intento SIC | Cambio aplicado | J | state, result, related; proveedor/producto si aplica | Q | Implementado; validar entrega en Agent Note | SicOperacionService::ejecutar | SicQaTest; ConsultaSucursalTest (lectura) |
+| `productos-crediticios` | pi-plus | `producto_crediticio.created` | U / S/I | Producto; versión en ejecución automática | Cambio aplicado | C / J | changed_fields, state, result, related | Q | Implementado; validar entrega en Agent Note | ProductoVersionService::crear | ProductosCrediticiosTest; VersionMotorCreditoTest |
+| `productos-crediticios` | pi-pencil | `producto_crediticio.updated` | U / S/I | Producto; versión en ejecución automática | Cambio aplicado | C / J | changed_fields, state, result, related | Q | Implementado; validar entrega en Agent Note | ProductoVersionService::actualizar | ProductosCrediticiosTest; VersionMotorCreditoTest |
+| `productos-crediticios` | pi-copy | `producto_crediticio.versioned` | U / S/I | Producto; versión en ejecución automática | Cambio aplicado | C / J | changed_fields, state, result, related | Q | Implementado; validar entrega en Agent Note | ProductoVersionService::nuevaVersion | ProductosCrediticiosTest; VersionMotorCreditoTest |
+| `productos-crediticios` | pi-check-circle | `producto_crediticio.activated` | U / S/I | Producto; versión en ejecución automática | Cambio aplicado | C / J | changed_fields, state, result, related | Q | Implementado; validar entrega en Agent Note | ProductoVersionService::activar | ProductosCrediticiosTest; VersionMotorCreditoTest |
+| `productos-crediticios` | pi-ban | `producto_crediticio.retired` | U / S/I | Producto; versión en ejecución automática | Cambio aplicado | C / J | changed_fields, state, result, related | Q | Implementado; validar entrega en Agent Note | ProductoVersionService::retirar | ProductosCrediticiosTest; VersionMotorCreditoTest |
+| `plantillas-documentos` | pi-file-plus | `documento_plantilla.created` | U | Plantilla | Cambio aplicado | C | result, related | Q | Implementado; validar entrega en Agent Note | DocumentoPlantillaVersionService::create | Documentos/DocumentoPlantillaTest |
+| `plantillas-documentos` | pi-image | `documento_recurso.created` | U | —; UUID en related | Cambio aplicado | C | result, related | Q | Implementado; validar entrega en Agent Note | DocumentoRecursoService::upload | Documentos/DocumentoEditorTest |
+| `plantillas-documentos` | pi-pencil | `documento_plantilla.updated` | U | Plantilla | Cambio aplicado | C | result, related | Q | Implementado; validar entrega en Agent Note | DocumentoPlantillaVersionService::update | Documentos/DocumentoPlantillaTest |
+| `plantillas-documentos` | pi-copy | `documento_plantilla.versioned` | U | Plantilla | Cambio aplicado | C | result, related | Q | Implementado; validar entrega en Agent Note | DocumentoPlantillaVersionService::duplicate | Documentos/DocumentoPlantillaTest |
+| `plantillas-documentos` | pi-check-circle | `documento_plantilla.activated` | U | Plantilla | Cambio aplicado | C | result, related | Q | Implementado; validar entrega en Agent Note | DocumentoPlantillaVersionService::activate | Documentos/DocumentoPlantillaTest |
+| `plantillas-documentos` | pi-ban | `documento_plantilla.retired` | U | Plantilla | Cambio aplicado | C | result, related | Q | Implementado; validar entrega en Agent Note | DocumentoPlantillaVersionService::activate | Documentos/DocumentoPlantillaTest |
+| `documentos` | pi-clock | `documento.generacion.requested` | U | Cliente; UUID del documento en related | Solicitado / generado / fallido / servido | J | related, state | Q | Implementado; validar entrega en Agent Note | SolicitudPaqueteService::registrar; DocumentoGeneracionService::request | Documentos/DocumentoPlantillaTest; SolicitudesTest (paquete) |
+| `documentos` | pi-file-pdf | `documento.generated` | S/I | Cliente; UUID del documento en related | Solicitado / generado / fallido / servido | J | related, state | Q | Implementado; validar entrega en Agent Note | GenerarDocumentoPdf::handle | Documentos/DocumentoPlantillaTest; SolicitudesTest (paquete) |
+| `documentos` | pi-exclamation-triangle | `documento.generacion.failed` | S/I | Cliente; UUID del documento en related | Solicitado / generado / fallido / servido | J | related, state | Q | Implementado; validar entrega en Agent Note | GenerarDocumentoPdf::failed | Documentos/DocumentoPlantillaTest; SolicitudesTest (paquete) |
+| `documentos` | Documento visualizado | `documento.viewed` | U | Cliente; UUID del documento en related | Solicitado / generado / fallido / servido | J | related, state | Q | Implementado; validar entrega en Agent Note | DocumentoGeneradoController::view; SolicitudFirmaController::file | Documentos/DocumentoPlantillaTest; SolicitudesTest (paquete) |
+| `documentos` | pi-download | `documento.downloaded` | U | Cliente; UUID del documento en related | Solicitado / generado / fallido / servido | J | related, state | Q | Implementado; validar entrega en Agent Note | DocumentoGeneradoController::download; SolicitudFirmaController::file | Documentos/DocumentoPlantillaTest; SolicitudesTest (paquete) |
+| `documentos` | Documento de cliente visualizado | `cliente.documento.viewed` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteDocumentoController::view | AuditDomainCoverageTest; Clientes/ (permisos y validación) |
+| `clientes` | pi-eye | `cliente.consentimiento_sic.evidence_viewed` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteConsentimientoSicController::view | AuditDomainCoverageTest; Clientes/ClienteConsentimientoSicTest |
 
-## Registros históricos
 
-Los registros antiguos cuyo campo `event` es nulo no se reescriben ni eliminan. La interfaz y el filtro los exponen como `legacy.unclassified`, con la etiqueta **Sin clasificar (histórico)**. Los códigos antiguos no reconocidos se conservan y muestran con su valor original.
+## Acciones sin evento adicional
 
-## Consulta y exportación
+| Superficie | Decisión y justificación | Evidencia |
+| --- | --- | --- |
+| `dashboard`, `admin` y bandejas | Consulta, navegación, filtros, búsqueda y paginación no mutan negocio ni generan actividad adicional. | ConsultaSucursalTest, Admin/ActivityLogTest, SelectedTeamManagementTest |
+| `activity-log` listado | Se conserva lectura sin evento; el CSV sí registra generación. | AuditCoverageTest, Admin/ActivityLogTest, E2E auditoria-actividad |
+| Productos, plantillas, políticas, catálogos y simulación | Consulta histórica y cálculo puro no añaden eventos. Previews sintéticos no crean evidencia de negocio. | ConsultaProductosTest, ConsultaPlantillasTest, ConsultaPoliticasTest, CapacidadesCreditoTest |
+| Biblioteca de imágenes | Consultar recursos de configuración no equivale a acceder a evidencia privada de clientes; el alta tiene su evento. | Documentos/DocumentoEditorTest |
+| Autorregistro y eliminación física de cuenta | Deshabilitados en Fortify/Jetstream; no se habilitan para instrumentar auditoría. | AuditCoverageTest, RegistrationTest, DeleteAccountTest |
+| Métodos de permisos sin ruta | createPermission/assignPermission del controlador no están expuestos; no crear rutas nuevas. Las rutas CRUD y comandos operativos sí se auditan. | routes/web.php, AuditCoverageTest, RoleManagementTest |
+| Seeders y mantenimiento técnico | Los catálogos/fixtures no acreditan acciones de usuarios. Cache, compilación, migraciones, importación pública SAT/Sepomex y cifrado de SIC histórico son mantenimiento; no producir actividad de negocio por cada fila. E2E usa únicamente fixtures sintéticas en BD aislada. | Seeders, pruebas Console, SicSafetyTest |
+| Laboratorio SIC | sic:probar-sandbox usa casos sintéticos, no clientes ni evidencia operativa; no sustituye el flujo SIC auditable. No se ejecuta al validar esta entrega. | SicQaTest, SicSafetyTest |
+| Folios/programador | folios:completar audita asignaciones efectivas; productos:activar-versiones y sic:marcar-inciertas auditan transiciones efectivas, sin un evento duplicado por invocación. | FoliosTest, ProductosCrediticiosTest, SicQaTest, Concurrency/auditoria.php |
+| Retención, resguardo, integridad y alertas | Seguimiento separado aprobado. No cambiar plazos, habilitar limpieza automática ni acreditar políticas inexistentes. | Plan integral de Notion |
 
-Super Admin global consulta todos los equipos. Un usuario normal necesita
-pertenencia y `read activity-log` en el equipo consultado; sin filtro se usa el
-actual. `team_id` conserva el seleccionado al filtrar, paginar o exportar sin
-cambiar las preferencias. El selector ofrece solo equipos autorizados. El
-permiso del equipo permite consultar todas sus sucursales, sin limitar a las
-asignadas al lector. `sucursal_id` filtra listado y CSV; las opciones incluyen
-sucursales inactivas con historial. Super Admin puede limpiar Equipo para
-consultar todos, incluidos registros sin equipo. Cambiar Equipo limpia Sucursal,
-Usuario, Evento y Sujeto, conservando búsqueda y periodo. Limpiar filtros conserva
-el equipo seleccionado y restablece el resto, incluido tamaño de página a 20.
-Las opciones de usuario, eventos históricos y sujetos se derivan del contexto
-Equipo/Sucursal; una combinación sin registros devuelve vacío. El encabezado y
-el regreso se actualizan junto con el contexto sin alterar la navegación global.
-Véase [ADR 0031](../explanation/adr-0031-consulta-actividad-equipo-sucursal.md).
-La política adicional de auditoría de consulta/exportación sigue pendiente del
-backlog de auditoría. No se añaden eventos por esta mejora de consulta y UI.
-Los valores CSV que
-podrían interpretarse como fórmulas se prefijan para tratarlos como texto.
+## Consulta, históricos y exportación
 
-## Agregar un evento
+Se conserva [ADR 0031](../explanation/adr-0031-consulta-actividad-equipo-sucursal.md):
+equipo autorizado, sucursal como filtro e históricos de sucursales no asignadas o
+inactivas. Consultar/exportar no cambia preferencias. Los intentos anónimos sin
+equipo permanecen fuera de las consultas de equipos. Se conserva la sanitización
+CSV de valores interpretables como fórmulas.
 
-1. Crear el caso y su etiqueta, severidad e icono en `ActivityEvent`.
-2. Emitirlo exclusivamente con `ActivityLogService`.
-3. Incluir solo metadatos de la lista permitida.
-4. Agregar una prueba que verifique código, equipo, sujeto y ausencia de datos sensibles.
-5. Actualizar esta matriz.
+El CSV se genera por completo en un stream temporal antes de persistir
+`activity_log.exported` y preparar la respuesta. No incluye su propio evento ni
+registra filas, búsqueda o filtros sensibles en metadatos. `generated` acredita
+archivo generado; no recepción ni descarga efectiva por el usuario.
 
-## Incremento de amortización reutilizable ? 31/10/2026
+Los registros cuyo event es null se muestran como `legacy.unclassified` (**Sin
+clasificar (histórico)**). Se conservan códigos desconocidos; no reclasificar,
+reescribir ni completar contexto antiguo por inferencia.
 
-El [ADR 0034](../explanation/adr-0034-amortizacion-reutilizable.md) separa cálculo
-sin nuevas acciones auditables. Permanecen los emisores de aplicación de producto,
-desembolso, pago/anticipo, liquidación y reverso. No se emiten eventos por resolver
-estrategias ni por calcular tablas. `CreditoAnticiposTest` comprueba evento único
-tras reintento, actor, sujeto, equipo/sucursal originales y ausencia de importes,
-referencias o snapshots en metadatos. Se conserva la cobertura parcial de la
-matriz general; este refactor no la completa.
+## Automatismos, esquema y despliegue
 
-## Contexto de sucursal — 01/11/2026
+La migración `2026_11_05_000000` añade `programada_por`, `programada_team_id` y
+`programada_sucursal_id` a `producto_versiones`. Son nullable y conservan IDs sin
+borrado en cascada. Históricos quedan desconocidos. Programar captura contexto;
+el worker revalida estado y fecha bajo bloqueo del producto y versión, y registra
+activación/retiro en la misma transacción. La fecha se interpreta en zona empresarial.
 
-La consulta de evidencia SIC y archivos generados usa la sucursal almacenada del
-recurso; cambiar preferencias o trasladar al cliente no reescribe esa historia.
-Conciliar un intento usa su sucursal original; `SicQaTest` cubre traslado, emisión
-y cola tras cambiar preferencias. Las acciones de expediente usan sucursal del
-cliente, incluso en acceso administrativo remoto; transferir conserva el origen.
-`ConsultaSucursalTest` cubre actor/contexto de KYC y traslado; las suites de
-expediente, documentos y consentimiento mantienen el resto de emisores.
-`Documentos/DocumentoPlantillaTest` cubre solicitud remota, worker, reintento y
-sucursal histórica desconocida. El iniciador sigue referenciado por el documento,
-el ejecutor automático tiene causer null. No se copian snapshots ni datos sensibles.
-No se añaden eventos por filtros, búsqueda o paginación. El backlog general de
-reconciliación permanece abierto. Ver [contrato](contexto-sucursal-consultas.md).
+PDF comparte transacción en solicitud/evento, generación/evento y fallo/evento.
+El archivo privado se escribe antes de confirmar el resultado en BD; un fallo no
+se anuncia como generación completada. Se preserva la política de no regenerar
+originales contractuales con huella existente. La eliminación de evidencias de un
+cliente se pospone hasta confirmar su eliminación; rollback conserva sus archivos.
+SIC registra estados y resultados sin copiar payloads ni excepciones del proveedor.
 
-## Consulta completa de productos ? 2026-11-02
+Aplicar la migración antes de reanudar workers/programador de la nueva versión,
+con el procedimiento de despliegue y entorno confirmado. No requiere seeder ni
+variables nuevas. Las pruebas usan SQLite en memoria y MariaDB aislada; E2E usa
+su base dedicada y proveedores simulados. No habilita SIC productivo ni operaciones
+con dinero real. Véase [ADR 0037](../explanation/adr-0037-cobertura-tecnica-auditoria.md).
 
-Abrir/cerrar el formulario y seleccionar versiones son consultas sin nuevas acciones
-auditables. Se conservan emisores de mutaciones y la inmutabilidad de servicios/modelos.
-ConsultaProductosTest comprueba lectura sin actividad adicional; no cierra el backlog
-general de reconciliaci?n.
+## Mantener la cobertura
 
-## Consulta completa de plantillas — 2026-11-02
-
-Consultar el editor y previsualizar una plantilla con datos sintéticos no crea
-recursos de negocio ni eventos nuevos. Se conservan emisores de gestión y de
-archivos generados. ConsultaPlantillasTest cubre lectura sin actividad y rechazo
-de escritura desde una instancia antigua, sin alterar contenido ni metadatos.
-
-
-La orientación y consulta histórica de políticas no añaden acciones auditables:
-son GET sin escrituras de negocio. Se conserva el evento de creación de política
-existente y su lista de metadatos, sin criterios ni referencia interna en actividad.
-`ConsultaPoliticasTest` verifica que consultar o rechazar escritura sobre retirada
-no agrega eventos y que captura/envío sin política siguen permitidos.
+Toda nueva acción debe añadir/ajustar emisor y prueba en la misma entrega y actualizar
+esta matriz. Cubrir permisos, actor/sujeto, contexto original, resultado, privacidad,
+rechazos y rollback; añadir reintento/concurrencia cuando corresponda. Los cálculos
+puros del core conservan sus eventos de producto/crédito existentes y no generan
+actividad por cada estrategia o proyección. La trazabilidad técnica no acredita
+por sí sola conformidad legal.

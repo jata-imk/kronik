@@ -80,14 +80,19 @@ class EmpresaConfiguracionController extends Controller implements HasMiddleware
             $fields['integraciones'] = $integraciones;
             $fields['singleton_key'] = 'default';
 
-            $configuracion->update($fields);
+            $configuracion->fill($fields);
+            if (! $configuracion->wasRecentlyCreated && ! $configuracion->isDirty()) {
+                return back()->with('success', 'Configuración de empresa actualizada');
+            }
+            $changedFields = array_keys($configuracion->getDirty());
+            $configuracion->save();
 
             $activityLog = app(ActivityLogService::class);
             $activityLog->log(
                 event: ActivityEvent::CompanyUpdated,
                 description: 'Configuracion de empresa actualizada',
                 subject: $configuracion,
-                metadata: ['changed_fields' => $activityLog->fieldNames($fields)],
+                metadata: ['changed_fields' => $changedFields],
                 causer: Auth::user(),
             );
 

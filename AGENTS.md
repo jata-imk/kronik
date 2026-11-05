@@ -39,7 +39,7 @@ Alias de Vite: `@` → `resources/js/`, `@css` → `resources/css/`, `@config` �
 | Ejecutar seeders | `php artisan db:seed` |
 | Actualizar catálogo SAT CFDI | `php artisan catalog:update-sat-cfdi-v4` |
 | Actualizar catálogo Sepomex | `php artisan catalog:update-sepomex` |
-| Crear permiso | `php artisan permission:create` |
+| Crear permiso | `php artisan permission:create-permission` |
 
 Confirmar entorno y efectos antes de migraciones o seeders. `php artisan migrate:fresh --seed` elimina datos: no es un paso rutinario para preparar una revisión. Para QA, seguir la guía de reinicio correspondiente. Consultar [comandos Artisan](docs/reference/comandos-artisan.md) y configuración vigente; no asumir drivers de sesiones/colas a partir de un ejemplo de `.env`.
 

@@ -16,7 +16,11 @@ class EnsureUserIsActive
             return $next($request);
         }
 
-        Auth::guard(config('fortify.guard'))->logout();
+        try {
+            app(\App\Services\AccessAuditService::class)->anonymous(\App\Enums\ActivityEvent::LoginRejected);
+        } finally {
+            Auth::guard(config('fortify.guard'))->logout();
+        }
 
         throw ValidationException::withMessages([
             Fortify::username() => 'Tu cuenta no está activa. Solicita ayuda a un administrador.',

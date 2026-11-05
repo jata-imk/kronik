@@ -96,10 +96,13 @@ class ClienteService
     {
         return DB::transaction(function () use ($cliente, $data) {
             $cliente = Cliente::query()->lockForUpdate()->findOrFail($cliente->id);
-            $cliente->update($data);
+            $cliente->fill($data);
+            $changed = $cliente->isDirty();
+            $cliente->save();
 
             if (isset($data['datos_fiscales'])) {
-                $cliente->datosFiscales()->updateOrCreate([], $data['datos_fiscales']);
+                $fiscal = $cliente->datosFiscales()->updateOrCreate([], $data['datos_fiscales']);
+                $changed = $changed || $fiscal->wasRecentlyCreated || array_diff(array_keys($fiscal->getChanges()), ['updated_at']) !== [];
             }
 
             if (isset($data['direcciones'])) {
@@ -120,20 +123,23 @@ class ClienteService
                         ];
                     }
 
-                    $cliente->direcciones()->updateOrCreate(['tipo' => $direccion['tipo']], $direccion);
+                    $address = $cliente->direcciones()->updateOrCreate(['tipo' => $direccion['tipo']], $direccion);
+                    $changed = $changed || $address->wasRecentlyCreated || array_diff(array_keys($address->getChanges()), ['updated_at']) !== [];
                 }
             }
 
-            $this->activityLog->log(
-                event: ActivityEvent::ClientUpdated,
-                description: 'Cliente actualizado',
-                subject: $cliente,
-                metadata: ['changed_fields' => $this->activityLog->fieldNames($data)],
-                causer: Auth::user(),
-                teamId: Auth::user()?->current_team_id,
-                sucursalId: $cliente->sucursal_id,
-                inheritActorContext: false,
-            );
+            if ($changed) {
+                $this->activityLog->log(
+                    event: ActivityEvent::ClientUpdated,
+                    description: 'Cliente actualizado',
+                    subject: $cliente,
+                    metadata: ['changed_fields' => $this->activityLog->fieldNames($data)],
+                    causer: Auth::user(),
+                    teamId: Auth::user()?->current_team_id,
+                    sucursalId: $cliente->sucursal_id,
+                    inheritActorContext: false,
+                );
+            }
 
             return $cliente;
         });

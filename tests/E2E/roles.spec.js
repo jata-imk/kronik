@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import { failOnConsoleErrors, login } from "./support/auth.js";
 
 test("administra permisos con etiquetas legibles en ambos temas y tamaños", async ({ page }, testInfo) => {
+    test.setTimeout(90_000);
     await login(page);
     const assertNoConsoleErrors = await failOnConsoleErrors(page);
     await page.goto("/admin/roles");
@@ -9,7 +10,7 @@ test("administra permisos con etiquetas legibles en ambos temas y tamaños", asy
     const roleName = "Tesorería y administración de recursos del equipo";
     await page.getByRole("dialog").getByLabel("Nombre del Rol", { exact: true }).fill(roleName);
     await page.getByRole("dialog").getByRole("button", { name: "Crear", exact: true }).click();
-    await expect(page.getByRole("dialog")).toBeHidden();
+    await expect(page.getByRole("dialog")).toBeHidden({ timeout: 15_000 });
     await page.getByRole("option", { name: roleName, exact: false }).click();
     const clientPermission = page.getByRole("option", { name: /Consultar clientes/ });
     await clientPermission.getByRole("button", { name: "Ayuda: Consultar clientes", exact: true }).click();

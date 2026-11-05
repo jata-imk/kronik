@@ -160,30 +160,37 @@ class UserController extends Controller implements HasMiddleware
         $filters = $activity->filters($actor, $request->validated());
         $filename = 'actividad-'.now()->format('Y-m-d-His').'.csv';
 
-        return response()->streamDownload(function () use ($actor, $activity, $filters) {
-            $stream = fopen('php://output', 'w');
-            fputcsv($stream, ['ID', 'Fecha', 'Evento', 'Descripción', 'Usuario', 'Email', 'Equipo', 'Sucursal', 'Sujeto', 'ID sujeto', 'IP', 'Propiedades']);
-
-            $activity->query($actor, $filters)->cursor()->each(function ($record) use ($stream, $activity) {
+        $stream = fopen('php://temp/maxmemory:2097152', 'w+');
+        try {
+            if (fputcsv($stream, ['ID', 'Fecha', 'Evento', 'Descripción', 'Usuario', 'Email', 'Equipo', 'Sucursal', 'Sujeto', 'ID sujeto', 'IP', 'Propiedades']) === false) {
+                throw new \RuntimeException('No fue posible generar el archivo CSV.');
+            }
+            foreach ($activity->query($actor, $filters)->cursor() as $record) {
                 $payload = $activity->payload($record);
-
-                fputcsv($stream, array_map($activity->csvValue(...), [
-                    $payload['id'],
-                    $payload['created_at'],
-                    $payload['event'],
-                    $payload['description'],
-                    $payload['causer']['name'],
-                    $payload['causer']['email'],
-                    $payload['team']['name'],
-                    $payload['sucursal']['name'],
-                    $payload['subject']['type'],
-                    $payload['subject']['id'],
-                    $payload['ip'],
-                    json_encode($payload['properties'], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE),
-                ]));
-            });
-
+                $row = [$payload['id'], $payload['created_at'], $payload['event'], $payload['description'],
+                    $payload['causer']['name'], $payload['causer']['email'], $payload['team']['name'],
+                    $payload['sucursal']['name'], $payload['subject']['type'], $payload['subject']['id'],
+                    $payload['ip'], json_encode($payload['properties'], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE)];
+                if (fputcsv($stream, array_map($activity->csvValue(...), $row)) === false) {
+                    throw new \RuntimeException('No fue posible generar el archivo CSV.');
+                }
+            }
+            rewind($stream);
+            $event = \App\Enums\ActivityEvent::ActivityExported;
+            app(\App\Services\ActivityLogService::class)->log($event, $event->label(), metadata: ['result' => 'generated'],
+                causer: $actor, teamId: $filters['team_id'], sucursalId: $filters['team_id'] ? $actor->current_sucursal_id : null,
+                inheritActorContext: false);
+        } catch (\Throwable $exception) {
             fclose($stream);
+            throw $exception;
+        }
+
+        return response()->streamDownload(function () use ($stream) {
+            try {
+                fpassthru($stream);
+            } finally {
+                fclose($stream);
+            }
         }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 }

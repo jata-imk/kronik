@@ -30,6 +30,79 @@ function productoPayload(array $version = []): array
     ];
 }
 
+test('activación programada y retiro automático conservan iniciador contexto y evento único', function (bool $unknown) {
+    $actor = actingAsSuperAdmin();
+    $this->actingAs($actor);
+    $service = app(ProductoVersionService::class);
+    $product = $service->crear(productoPayload(), $actor->id);
+    $first = $product->versiones()->sole();
+    $service->activar($first, app(\App\Services\FechaEmpresa::class)->hoy()->toDateString());
+    $scheduled = $service->nuevaVersion($product, $first, $actor->id);
+    $service->activar($scheduled, app(\App\Services\FechaEmpresa::class)->hoy()->addDay()->toDateString());
+    $scheduled->refresh();
+    $teamId = $scheduled->programada_team_id;
+    $branchId = $scheduled->programada_sucursal_id;
+    expect($scheduled->programada_por)->toBe($actor->id);
+    if ($unknown) {
+        $scheduled->update(['programada_por' => null, 'programada_team_id' => null, 'programada_sucursal_id' => null]);
+    }
+    $actor->forceFill(['current_team_id' => \App\Models\Team::factory()->create()->id, 'current_sucursal_id' => null])->save();
+    $this->travel(2)->days();
+    expect($service->activarProgramadas())->toBe(1)->and($service->activarProgramadas())->toBe(0)
+        ->and($first->fresh()->estado)->toBe(ProductoVersionEstado::Retirada);
+    $activated = \App\Models\Activity::where('event', \App\Enums\ActivityEvent::CreditProductActivated->value)->whereNull('causer_id')->sole();
+    $retired = \App\Models\Activity::where('event', \App\Enums\ActivityEvent::CreditProductRetired->value)->sole();
+    foreach ([$activated, $retired] as $event) {
+        expect($event->causer_id)->toBeNull()->and($event->team_id)->toBe($unknown ? null : $teamId)
+            ->and($event->sucursal_id)->toBe($unknown ? null : $branchId)
+            ->and($event->properties->all())->not->toHaveKeys(['snapshot', 'tasa_ordinaria_anual', 'monto_minimo']);
+        if (! $unknown) {
+            expect($event->properties['related'])->toBe(['type' => 'iniciador', 'id' => $actor->id]);
+        }
+    }
+    expect($activated->subject_id)->toBe($scheduled->id)->and($retired->subject_id)->toBe($first->id);
+})->with([false, true]);
+
+test('fallo de auditoría revierte activación programada y retiro de la versión anterior', function () {
+    $actor = actingAsSuperAdmin();
+    $this->actingAs($actor);
+    $service = app(ProductoVersionService::class);
+    $product = $service->crear(productoPayload(), $actor->id);
+    $first = $product->versiones()->sole();
+    $service->activar($first, app(\App\Services\FechaEmpresa::class)->hoy()->toDateString());
+    $scheduled = $service->nuevaVersion($product, $first, $actor->id);
+    $service->activar($scheduled, app(\App\Services\FechaEmpresa::class)->hoy()->addDay()->toDateString());
+    $before = \App\Models\Activity::count();
+    $this->travel(2)->days();
+    $this->mock(\App\Services\ActivityLogService::class)->shouldReceive('log')->andThrow(new RuntimeException('Auditoría no disponible'));
+    expect(fn () => $service->activarProgramadas())->toThrow(RuntimeException::class)
+        ->and($first->fresh()->estado)->toBe(ProductoVersionEstado::Activa)
+        ->and($scheduled->fresh()->estado)->toBe(ProductoVersionEstado::Programada)
+        ->and(\App\Models\Activity::count())->toBe($before);
+});
+
+test('ciclo del producto audita cada acción y distingue programación de activación efectiva', function () {
+    $actor = actingAsSuperAdmin();
+    $this->actingAs($actor);
+    $service = app(ProductoVersionService::class);
+    $data = productoPayload();
+    $product = $service->crear($data, $actor->id);
+    $version = $product->versiones()->sole();
+    $data['nombre'] = 'NOMBRE-RESERVADO';
+    $service->actualizar($product, $version, $data);
+    $this->travel(1)->minutes();
+    $service->actualizar($product, $version, $data);
+    expect(\App\Models\Activity::where('event', 'producto_crediticio.updated')->count())->toBe(1);
+    $service->activar($version, app(\App\Services\FechaEmpresa::class)->hoy()->toDateString());
+    $second = $service->nuevaVersion($product, $version, $actor->id);
+    $service->activar($second, app(\App\Services\FechaEmpresa::class)->hoy()->addDay()->toDateString());
+    $service->retirar($second);
+    assertDomainAudit(['producto_crediticio.created', 'producto_crediticio.updated', 'producto_crediticio.versioned',
+        'producto_crediticio.activated', 'producto_crediticio.activation_scheduled', 'producto_crediticio.retired'],
+        $actor, $actor->current_sucursal_id, ['NOMBRE-RESERVADO', '36.00000000']);
+    expect(\App\Models\Activity::where('event', 'producto_crediticio.activated')->count())->toBe(1);
+});
+
 function fiscalidadPrueba(): array
 {
     return ['uso' => 'prueba', 'referencia' => 'Configuración sintética QA',

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -55,46 +56,60 @@ class SucursalController extends Controller implements HasMiddleware
 
     public function update(Request $request, Sucursal $sucursal)
     {
-        $fields = \Illuminate\Support\Arr::except($this->validateSucursal($request, $sucursal), [
-            'prefijo_folio', 'consecutivo_solicitud', 'consecutivo_contrato', 'consecutivo_credito', 'consecutivo_recibo',
-        ]);
-        $sucursal->update($fields);
+        return DB::transaction(function () use ($request, $sucursal) {
+            $fields = \Illuminate\Support\Arr::except($this->validateSucursal($request, $sucursal), [
+                'prefijo_folio', 'consecutivo_solicitud', 'consecutivo_contrato', 'consecutivo_credito', 'consecutivo_recibo',
+            ]);
+            $sucursal = Sucursal::whereKey($sucursal->id)->lockForUpdate()->firstOrFail();
+            $sucursal->fill($fields);
+            if (! $sucursal->isDirty()) {
+                return back()->with('success', 'Sucursal actualizada');
+            }
+            $changedFields = array_keys($sucursal->getDirty());
+            $sucursal->save();
 
-        $activityLog = app(ActivityLogService::class);
-        $activityLog->log(
-            event: ActivityEvent::BranchUpdated,
-            description: 'Sucursal actualizada',
-            subject: $sucursal,
-            metadata: ['changed_fields' => $activityLog->fieldNames($fields)],
-            causer: Auth::user(),
-            sucursalId: $sucursal->id,
-        );
+            $activityLog = app(ActivityLogService::class);
+            $activityLog->log(
+                event: ActivityEvent::BranchUpdated,
+                description: 'Sucursal actualizada',
+                subject: $sucursal,
+                metadata: ['changed_fields' => $changedFields],
+                causer: Auth::user(),
+                sucursalId: $sucursal->id,
+            );
 
-        return redirect()->back()->with('success', 'Sucursal actualizada');
+            return redirect()->back()->with('success', 'Sucursal actualizada');
+        });
     }
 
     public function destroy(Sucursal $sucursal)
     {
-        $activeUsers = $sucursal->users()->where('users.status', 'active')->count();
-        $clientes = $sucursal->clientes()->count();
-        if ($activeUsers > 0 || $clientes > 0) {
-            throw ValidationException::withMessages([
-                'sucursal' => "Reasigna {$activeUsers} usuario(s) activo(s) y {$clientes} cliente(s) antes de desactivar la sucursal.",
-            ]);
-        }
+        return DB::transaction(function () use ($sucursal) {
+            $sucursal = Sucursal::whereKey($sucursal->id)->lockForUpdate()->firstOrFail();
+            if (! $sucursal->activa) {
+                return back()->with('success', 'Sucursal desactivada');
+            }
+            $activeUsers = $sucursal->users()->where('users.status', 'active')->count();
+            $clientes = $sucursal->clientes()->count();
+            if ($activeUsers > 0 || $clientes > 0) {
+                throw ValidationException::withMessages([
+                    'sucursal' => "Reasigna {$activeUsers} usuario(s) activo(s) y {$clientes} cliente(s) antes de desactivar la sucursal.",
+                ]);
+            }
 
-        $sucursal->update(['activa' => false]);
+            $sucursal->update(['activa' => false]);
 
-        app(ActivityLogService::class)->log(
-            event: ActivityEvent::BranchDeactivated,
-            description: 'Sucursal desactivada',
-            subject: $sucursal,
-            metadata: ['changed_fields' => ['activa'], 'state' => 'inactiva'],
-            causer: Auth::user(),
-            sucursalId: $sucursal->id,
-        );
+            app(ActivityLogService::class)->log(
+                event: ActivityEvent::BranchDeactivated,
+                description: 'Sucursal desactivada',
+                subject: $sucursal,
+                metadata: ['changed_fields' => ['activa'], 'state' => 'inactiva'],
+                causer: Auth::user(),
+                sucursalId: $sucursal->id,
+            );
 
-        return redirect()->back()->with('success', 'Sucursal desactivada');
+            return redirect()->back()->with('success', 'Sucursal desactivada');
+        });
     }
 
     private function validateSucursal(Request $request, ?Sucursal $sucursal = null): array

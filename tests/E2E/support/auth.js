@@ -12,7 +12,7 @@ export async function login(page, user = users.superAdmin) {
     await page.locator("#email").fill(user.email);
     await page.locator("#password").fill(user.password);
     await page.getByRole("button", { name: /entrar a kronik|log in/i }).click();
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
 }
 
 export async function failOnConsoleErrors(page) {

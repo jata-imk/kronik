@@ -116,3 +116,6 @@ jobs:
 
       - name: Verify folio concurrency on isolated MariaDB
         run: php tests/Concurrency/folios.php
+
+      - name: Verify audit concurrency on isolated MariaDB
+        run: php tests/Concurrency/auditoria.php

@@ -91,6 +91,8 @@ return [
         'responsible_id' => 'responsable del equipo',
         'confirmation' => 'confirmación de transferencia',
         'token' => 'enlace de acceso',
+        'code' => 'código de autenticación',
+        'recovery_code' => 'código de recuperación',
         'permissions' => 'permisos del rol',
         'permissions.*' => 'permiso del rol',
         'add_all_permissions' => 'asignación de todos los permisos',

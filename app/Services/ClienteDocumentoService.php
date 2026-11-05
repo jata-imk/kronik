@@ -137,10 +137,14 @@ class ClienteDocumentoService
 
     public function deleteFilesFor(Cliente $cliente): void
     {
-        $cliente->documentos()
+        $files = $cliente->documentos()
             ->whereNotNull('path')
-            ->get(['disk', 'path'])
-            ->each(fn (ClienteDocumento $documento) => Storage::disk($documento->disk)->delete($documento->path));
+            ->get(['disk', 'path']);
+        DB::afterCommit(function () use ($files) {
+            foreach ($files as $documento) {
+                Storage::disk($documento->disk)->delete($documento->path);
+            }
+        });
     }
 
     private function findReplacement(Cliente $cliente, ClienteDocumentoTipo $tipo, ?int $replacementId): ?ClienteDocumento

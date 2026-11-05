@@ -24,12 +24,6 @@ class ConsultarSicQa implements ShouldQueue
     public function failed(?\Throwable $exception): void
     {
         // A killed worker may have sent the request. Never resend it on recovery.
-        \Illuminate\Support\Facades\DB::transaction(function () {
-            $q = \App\Models\SicQuery::lockForUpdate()->find($this->consultaId);
-            if ($q?->estado_operacion === 'enviando') {
-                $q->update(['estado_operacion' => 'incierta']);
-                \App\Models\SicEvento::create(['sic_query_id' => $q->id, 'estado' => 'incierta', 'actor_id' => $q->actor_id]);
-            }
-        });
+        app(SicOperacionService::class)->marcarIncierta($this->consultaId);
     }
 }

@@ -76,6 +76,9 @@ class SolicitudService
             }
             $this->productoDisponible(array_key_exists('producto_version_id', $data) ? $data['producto_version_id'] : $solicitud->producto_version_id);
             $solicitud->fill(Arr::only($data, self::CAMPOS));
+            if (! $solicitud->isDirty()) {
+                return $solicitud;
+            }
             $solicitud->lock_version++;
             $solicitud->save();
             $this->evento($solicitud, $actor, 'borrador_actualizado', ActivityEvent::ApplicationUpdated);
@@ -147,6 +150,9 @@ class SolicitudService
                 || ! $responsable->sucursales()->whereKey($solicitud->sucursal_id)->exists()
                 || ! Gate::forUser($responsable)->allows('viewAny', Solicitud::class)) {
                 $this->error('responsable_id', 'Selecciona una persona activa con acceso a solicitudes y a esta sucursal en el equipo actual.');
+            }
+            if ($solicitud->responsable_id === $responsable->id) {
+                return $solicitud;
             }
             $solicitud->update(['responsable_id' => $responsable->id, 'lock_version' => $solicitud->lock_version + 1]);
             $this->evento($solicitud, $actor, 'asignada', ActivityEvent::ApplicationAssigned, ['responsable_id' => $responsable->id]);
