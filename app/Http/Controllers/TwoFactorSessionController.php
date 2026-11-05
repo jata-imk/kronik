@@ -26,6 +26,12 @@ class TwoFactorSessionController extends TwoFactorAuthenticatedSessionController
                     // Return a response so the anonymous rejection survives this transaction.
                     return back()->withErrors(['email' => 'Tu cuenta no está activa. Solicita ayuda a un administrador.']);
                 }
+                if (! $user->two_factor_secret) {
+                    $request->session()->forget(['login.id', 'login.remember']);
+                    throw ValidationException::withMessages([
+                        $request->filled('recovery_code') ? 'recovery_code' : 'code' => 'La configuración del segundo factor cambió. Inicia sesión nuevamente.',
+                    ]);
+                }
                 $response = parent::store($request);
                 if ($this->guard->check()) {
                     app(AccessAuditService::class)->authenticated(ActivityEvent::TwoFactorCompleted, $user);

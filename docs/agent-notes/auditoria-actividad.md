@@ -37,7 +37,10 @@ Corregidos con regresiones. La revisión de `b882fd1` detectó otra dependencia:
 comparar auditoría no debe validar la configuración anterior de un borrador.
 Se separó la lectura sin validación de la validación al congelar snapshots; la
 regresión permite corregir una convención heredada no soportada. Tres regresiones
-dirigidas aprobadas (54 aserciones); revisión del siguiente commit pendiente.
+dirigidas aprobadas (54 aserciones). Revisión medium acumulada de `8e115b8`
+contra `0707ce9`: sin hallazgos. Último ajuste: desafío 2FA revocado durante la
+sesión exige reiniciar acceso sin descifrar null; seguridad 31 pruebas, 380
+aserciones. Se repetirá revisión tras este cambio.
 Cierre de seguridad: 29 pruebas, 360 aserciones; recorrido dual y revisión del
 commit final en curso. Barrido manual acumulado: se corrigió la comparación
 de producto con instancia obsoleta y se alineó el orden de bloqueos producto →

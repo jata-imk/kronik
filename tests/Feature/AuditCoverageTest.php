@@ -370,3 +370,22 @@ test('habilitar 2FA usa estado bloqueado sin sustituir una configuración habili
     $this->post('/user/two-factor-authentication')->assertSessionHasNoErrors();
     expect($user->fresh()->two_factor_secret)->toBe($secret)->and(Activity::count())->toBe(0);
 });
+
+test('desafío obsoleto por revocación 2FA se rechaza y audita sin errores de descifrado', function (string $field) {
+    $user = User::factory()->create(['two_factor_secret' => encrypt('SECRET'), 'two_factor_confirmed_at' => now(),
+        'two_factor_recovery_codes' => encrypt(json_encode(['ANTERIOR']))]);
+    $this->withSession(['login.id' => $user->id]);
+    app()->afterResolving(\Laravel\Fortify\Http\Requests\TwoFactorLoginRequest::class, function ($request) use ($user) {
+        $request->challengedUser();
+        $user->newQuery()->whereKey($user->id)->update(['two_factor_secret' => null, 'two_factor_recovery_codes' => null, 'two_factor_confirmed_at' => null]);
+    });
+    $this->postJson('/two-factor-challenge', [$field => 'ANTERIOR'])->assertUnprocessable()
+        ->assertJsonPath('errors.'.$field.'.0', 'La configuración del segundo factor cambió. Inicia sesión nuevamente.')
+        ->assertSessionMissing('login.id');
+    $this->assertGuest();
+    $event = Activity::where('event', ActivityEvent::TwoFactorFailed->value)->sole();
+    expect($event->causer_id)->toBeNull()->and($event->subject_id)->toBeNull()
+        ->and($event->team_id)->toBeNull()->and($event->sucursal_id)->toBeNull()
+        ->and(Activity::where('event', ActivityEvent::TwoFactorCompleted->value)->count())->toBe(0)
+        ->and($event->toJson())->not->toContain('ANTERIOR', $user->email);
+})->with(['code', 'recovery_code']);

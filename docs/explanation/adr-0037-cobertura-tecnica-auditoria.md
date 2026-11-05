@@ -29,6 +29,8 @@ todos los módulos y procesos transversales sin ampliar reglas financieras.
   completado después del guard, validando estado de cuenta y material 2FA actual
   bajo bloqueo, incluido el usuario memoizado por Fortify. La sesión
   provisional de una cuenta inactiva se cierra incluso si falla su auditoría.
+  Si se revoca el segundo factor mientras hay un desafío abierto, exigir iniciar
+  sesión nuevamente y auditar rechazo anónimo, sin intentar descifrar secretos nulos.
 - Mantener las rutas originales de Fortify/Jetstream. Una frontera transaccional
   específica de seguridad compara cambios efectivos de 2FA, tokens y verificación
   de correo, cambio explícito de equipo y revocación de otras sesiones, sin copiar

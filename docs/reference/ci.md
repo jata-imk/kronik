@@ -60,7 +60,9 @@ respuestas deterministas; un fallo de esos proveedores no vuelve inestable la
 suite ni oculta errores internos de consola.
 
 Las expectativas esperan hasta 15 segundos por su condición observable; cada
-recorrido dispone de 90 segundos salvo que declare otro límite. Estos límites
+recorrido dispone de 90 segundos salvo que declare otro límite. El recorrido dual
+completo (PDF, firmas, desembolso, pagos, anticipos, liquidación y reversos) dispone
+de 300 segundos; mantiene los mismos límites por condición. Estos límites
 permiten completar redirecciones y recargas Inertia en desarrollo sin pausas
 fijas. Una condición incorrecta sigue haciendo fallar la prueba. Revisar traza,
 captura, vídeo y consola ante fallos.

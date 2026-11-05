@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { login, failOnConsoleErrors } from "./support/auth.js";
 
 test("dual bloquea capturista y permite aprobar a otra persona sin superadmin", async ({ page, browser }, testInfo) => {
-    test.setTimeout(180_000);
+    test.setTimeout(300_000);
     test.skip(process.env.E2E_ORIGINACION_DUAL !== "true", "Requiere escenario aislado con aprobación habilitada expresamente.");
     const assertConsole = await failOnConsoleErrors(page);
     await login(page, { email: "captura.dual@example.test", password: "password" });
