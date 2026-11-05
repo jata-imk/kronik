@@ -1,15 +1,17 @@
 <script setup>
 import PageHeader from "@/Components/PageHeader.vue";
 import FieldHelp from "@/Components/FieldHelp.vue";
-import { Link, router, useForm } from "@inertiajs/vue3";
+import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { computed, ref, watch } from "vue";
 import { formatMoneyWithCents as money } from "./productValidation";
 import "../../../css/originacion.css";
 const props = defineProps({ version: Object, politica: Object, politicaSeleccionada: Object, historial: Object, tiposDocumento: Array, puedeCrear: Boolean, modoPolitica: String });
-const editando = ref(props.modoPolitica === "nueva" && props.puedeCrear);
+const page = usePage();
+const puedeCrearAhora = computed(() => props.puedeCrear && (page.props.auth.is_super_admin || (page.props.auth.permissions?.["manage-origination-productos-crediticios"] === true && page.props.auth.permissions?.["read-productos-crediticios"] === true)));
+const editando = ref(props.modoPolitica === "nueva" && puedeCrearAhora.value);
 const guiaVisible = ref(false);
-const readonly = computed(() => !editando.value || !props.puedeCrear);
+const readonly = computed(() => !editando.value || !puedeCrearAhora.value);
 const datos = (politica, nueva = false) => {
     const c = politica?.condiciones ?? {};
     return { version_anterior: props.politica?.numero ?? 0, modalidad: c.modalidad ?? null, sic: c.sic ?? null,
@@ -20,15 +22,15 @@ const datos = (politica, nueva = false) => {
 };
 const form = useForm(datos(editando.value ? props.politica : props.politicaSeleccionada, editando.value));
 function nueva() {
-    if (!props.puedeCrear) return;
+    if (!puedeCrearAhora.value) return;
     form.cancel(); form.defaults(datos(props.politica, true)); form.reset(); form.clearErrors(); editando.value = true;
 }
 function consultar() {
     form.cancel(); editando.value = false; form.defaults(datos(props.politicaSeleccionada)); form.reset(); form.clearErrors();
 }
-watch([() => props.version.id, () => props.politicaSeleccionada?.id, () => props.puedeCrear, () => props.modoPolitica], () => {
+watch([() => props.version.id, () => props.politicaSeleccionada?.id, () => puedeCrearAhora.value, () => props.modoPolitica], () => {
     consultar();
-    if (props.modoPolitica === "nueva" && props.puedeCrear) nueva();
+    if (props.modoPolitica === "nueva" && puedeCrearAhora.value) nueva();
 });
 function guardar() {
     if (readonly.value) return;
@@ -47,7 +49,7 @@ function seleccionar(id) {
             <div class="originacion-content space-y-5 p-4 md:p-6">
                 <p>Las condiciones contractuales del producto se congelan al activar o programar. Esta política define criterios internos de aprobación y tiene versionado independiente: cambiarla exige devolver y reenviar las solicitudes anteriores.</p>
                 <Message severity="warn" :closable="false">Guardar configura criterios internos, no acredita validación jurídica ni habilita operaciones reales. El producto debe estar activo y vigente para seleccionarlo; la política permite comprobar los requisitos de aprobación.</Message>
-                <div class="flex flex-wrap items-center gap-3"><p>Política actual: {{ politica ? 'versión ' + politica.numero : 'Sin configurar; aprobación bloqueada' }}.</p><Button type="button" label="Guía de originación" icon="pi pi-book" outlined @click="guiaVisible = true" /><Button v-if="puedeCrear && !editando" type="button" :label="politica ? 'Nueva versión de política' : 'Crear política'" @click="nueva" /></div>
+                <div class="flex flex-wrap items-center gap-3"><p>Política actual: {{ politica ? 'versión ' + politica.numero : 'Sin configurar; aprobación bloqueada' }}.</p><Button type="button" label="Guía de originación" icon="pi pi-book" outlined @click="guiaVisible = true" /><Button v-if="puedeCrearAhora && !editando" type="button" :label="politica ? 'Nueva versión de política' : 'Crear política'" @click="nueva" /></div>
                 <Message v-if="version.estado === 'retirada'" severity="info" :closable="false">Versión de producto retirada. Su política e historia se consultan; no se crean políticas nuevas.</Message>
                 <Message severity="info" :closable="false">{{ readonly ? ('Consulta · política ' + (politicaSeleccionada?.numero ?? 'sin configurar') + ' · versión de producto ' + version.numero) : ('Nueva política a partir de la actual ' + (politica?.numero ?? 0)) }}.</Message>
                 <form class="space-y-4" @submit.prevent="guardar">

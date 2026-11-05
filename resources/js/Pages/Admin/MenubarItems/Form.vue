@@ -5,6 +5,7 @@ import { useForm } from "@inertiajs/vue3";
 
 const toast = useToast();
 const props = defineProps({
+    readonly: Boolean,
     modules: Array,
     menubarItems: Array,
     item: Object,
@@ -12,16 +13,18 @@ const props = defineProps({
 const emit = defineEmits(["close"]);
 
 const modules = ref(props.modules);
+function itemParent() { return props.item?.parent ? [{label:"Padre guardado",children:[props.item.parent]}] : []; }
 const menubarItemsWithChildren = ref([
     {
         label: "Base",
         children: props.menubarItems.filter((i) => i.children?.length > 0),
     },
+    ...(itemParent()),
     ...props.menubarItems
         .flatMap((i) => [i, ...i.children.flatMap((c) => [c, ...c.children])])
         .filter((i) => i.children?.length > 0),
 ]);
-const item = reactive(props.item ?? {});
+const item = reactive(JSON.parse(JSON.stringify(props.item ?? {})));
 const visible = ref(true);
 
 // --- Tipos con etiquetas de usuario ---
@@ -45,6 +48,7 @@ const availableRoutes = ref([]);
 const routeSuggestions = ref([]);
 
 onMounted(async () => {
+    if (props.readonly) return;
     try {
         const res = await fetch(route("admin.menubar-items.available-routes"));
         availableRoutes.value = await res.json();
@@ -99,6 +103,7 @@ const filteredIcons = computed(() => {
 });
 
 const selectIcon = (iconName) => {
+    if (props.readonly) return;
     form.icon = `pi pi-fw pi-${iconName}`;
     iconPickerVisible.value = false;
     iconSearch.value = "";
@@ -164,13 +169,13 @@ const form = useForm({
     modules:
         item?.id &&
         Object.fromEntries(
-            item?.modules?.map((m) => [m.id, { routes: m.menubar_item_module.routes }]) ?? [],
+            item?.modules?.map((m) => [m.id, { routes: (m.menubar_item_module ?? m.menubarItemModule)?.routes }]) ?? [],
         ),
     label: item?.label || "",
     icon: item?.icon || "",
     type: item?.type || "route:name",
-    value: item?.type !== "route:dynamic" ? (item?.value || "") : "",
-    params: (item?.params && Object.values(item?.params).join(",")) || "",
+    value: props.readonly || item?.type !== "route:dynamic" ? (item?.value ?? "") : "",
+    params: item?.params == null ? "" : typeof item.params === "string" ? item.params : JSON.stringify(item.params),
     parent_id: item?.parent_id || null,
 });
 
@@ -190,6 +195,7 @@ const flagAnyActionModify = ref(false);
 watch(
     () => [modulesSelected, modulesSelectedMenubarItemModule],
     () => {
+        if (props.readonly) return;
         form.modules = Object.fromEntries(
             modulesSelected.value.map((id) => [
                 id,
@@ -221,14 +227,16 @@ watch(
 );
 
 watch(() => form.type, () => {
+    if (props.readonly) return;
     if (form.type !== "route:dynamic") form.value = "";
 });
 
 const submit = () => {
+    if (props.readonly) return;
     if (form.type === "route:dynamic") form.value = buildDynamicValue();
     if (item?.id) {
         form.put(route("admin.menubar-items.update", item.id), {
-            only: ["menubarCatalogo", "menubarItems"],
+            only: ["menubarCatalogo", "menubarItems", "menubarSeleccionado", "modoMenu", "auth", "modules", "listado"],
             onSuccess: () => {
                 toast.add({ severity: "success", summary: "Item actualizado", life: 3000 });
                 emit("close");
@@ -247,14 +255,15 @@ const submit = () => {
 </script>
 
 <template>
-    <Dialog v-model:visible="visible" header="Configurar item de menú" :modal="true" :style="{ width: '600px' }" @hide="emit('close')">
+    <Dialog v-model:visible="visible" :header="readonly ? 'Consultar elemento de menú' : 'Configurar item de menú'" :modal="true" :style="{ width: '600px', maxWidth: '95vw' }" @hide="emit('close')">
+        <Message v-if="readonly" severity="info">Consulta · solo lectura.</Message>
         <form @submit.prevent="submit">
             <div class="flex flex-col gap-5">
 
                 <!-- Título -->
                 <div>
                     <label class="block text-sm font-medium mb-1">Título *</label>
-                    <InputText fluid v-model="form.label" placeholder="Ej: Ver clientes, Nueva consulta..." />
+                    <InputText :disabled="readonly" fluid v-model="form.label" placeholder="Ej: Ver clientes, Nueva consulta..." />
                 </div>
 
                 <!-- Tipo de item -->
@@ -268,7 +277,7 @@ const submit = () => {
                             :class="form.type === t.value
                                 ? 'border-primary bg-primary/5 dark:bg-primary/10'
                                 : 'border-surface-200 dark:border-surface-700 hover:border-primary/40'"
-                            @click="form.type = t.value">
+                            @click="!readonly && (form.type = t.value)">
                             <span :class="[t.icon, 'text-primary flex-shrink-0']"></span>
                             <div class="flex-1 min-w-0">
                                 <div class="font-medium text-sm">{{ t.label }}</div>
@@ -284,8 +293,8 @@ const submit = () => {
                     <label class="block text-sm font-medium mb-1">Ícono</label>
                     <div class="flex gap-2 items-center">
                         <span :class="[form.icon || 'pi pi-question-circle', 'text-2xl w-8 text-center flex-shrink-0', !form.icon && 'text-surface-300']"></span>
-                        <InputText v-model="form.icon" fluid placeholder="pi pi-fw pi-home" />
-                        <Button type="button" icon="pi pi-th-large" @click="iconPickerVisible = true" outlined :title="'Abrir selector de íconos'" />
+                        <InputText :disabled="readonly" v-model="form.icon" fluid placeholder="pi pi-fw pi-home" />
+                        <Button v-if="!readonly" type="button" icon="pi pi-th-large" @click="iconPickerVisible = true" outlined :title="'Abrir selector de íconos'" />
                     </div>
                     <p class="text-xs text-surface-400 mt-1">Escribe la clase directamente o usa el selector visual</p>
                 </div>
@@ -293,9 +302,10 @@ const submit = () => {
                 <!-- Valor según tipo -->
 
                 <!-- route:name -->
-                <div v-if="form.type === 'route:name'">
+                <div v-if="readonly"><label class="block">Valor guardado</label><Textarea :model-value="form.value" readonly rows="6" fluid /><label class="block">Orden</label><InputText :model-value="item.sort_order" readonly fluid /></div>
+                <div v-else-if="form.type === 'route:name'">
                     <label class="block text-sm font-medium mb-1">Página de destino *</label>
-                    <AutoComplete
+                    <AutoComplete :disabled="readonly"
                         v-model="form.value"
                         :suggestions="routeSuggestions"
                         @complete="searchRoutes"
@@ -307,7 +317,7 @@ const submit = () => {
                 <!-- route:static -->
                 <div v-else-if="form.type === 'route:static'">
                     <label class="block text-sm font-medium mb-1">URL *</label>
-                    <InputText v-model="form.value" fluid placeholder="/clientes, https://ejemplo.com/..." />
+                    <InputText :disabled="readonly" v-model="form.value" fluid placeholder="/clientes, https://ejemplo.com/..." />
                 </div>
 
                 <!-- route:referer_fallback -->
@@ -316,7 +326,7 @@ const submit = () => {
                         Ruta de fallback
                         <span class="text-surface-400 font-normal">(si no hay página anterior)</span>
                     </label>
-                    <AutoComplete
+                    <AutoComplete :disabled="readonly"
                         v-model="form.value"
                         :suggestions="routeSuggestions"
                         @complete="searchRoutes"
@@ -336,7 +346,7 @@ const submit = () => {
                         <div class="flex flex-col gap-2">
                             <div>
                                 <label class="text-xs text-surface-500 mb-1 block">Ruta de destino</label>
-                                <AutoComplete
+                                <AutoComplete :disabled="readonly"
                                     v-model="dynamicDefault.routeName"
                                     :suggestions="routeSuggestions"
                                     @complete="searchRoutes"
@@ -345,7 +355,7 @@ const submit = () => {
                             </div>
                             <div>
                                 <label class="text-xs text-surface-500 mb-1 block">Parámetros (JSON, opcional)</label>
-                                <InputText v-model="dynamicDefault.params" fluid placeholder='{"cliente": "{cliente}"}' />
+                                <InputText :disabled="readonly" v-model="dynamicDefault.params" fluid placeholder='{"cliente": "{cliente}"}' />
                             </div>
                         </div>
                     </div>
@@ -361,7 +371,7 @@ const submit = () => {
                         <div class="flex flex-col gap-2">
                             <div>
                                 <label class="text-xs text-surface-500 mb-1 block">Si vengo de (patrón del referer):</label>
-                                <AutoComplete
+                                <AutoComplete :disabled="readonly"
                                     v-model="cond.triggerRouteName"
                                     :suggestions="routeSuggestions"
                                     @complete="searchRoutes"
@@ -370,7 +380,7 @@ const submit = () => {
                             </div>
                             <div>
                                 <label class="text-xs text-surface-500 mb-1 block">Ir a:</label>
-                                <AutoComplete
+                                <AutoComplete :disabled="readonly"
                                     v-model="cond.destinationRouteName"
                                     :suggestions="routeSuggestions"
                                     @complete="searchRoutes"
@@ -379,7 +389,7 @@ const submit = () => {
                             </div>
                             <div>
                                 <label class="text-xs text-surface-500 mb-1 block">Parámetros (JSON, opcional)</label>
-                                <InputText v-model="cond.params" fluid placeholder='{"historial": "{historial}"}' />
+                                <InputText :disabled="readonly" v-model="cond.params" fluid placeholder='{"historial": "{historial}"}' />
                             </div>
                         </div>
                     </div>
@@ -388,16 +398,16 @@ const submit = () => {
                 </div>
 
                 <!-- Parámetros (solo para route:name con show/edit) -->
-                <div v-if="flagAnyActionModify && form.type === 'route:name'">
+                <div v-if="readonly || (flagAnyActionModify && form.type === 'route:name')">
                     <label class="block text-sm font-medium mb-1">Parámetros de ruta</label>
-                    <InputText fluid v-model="form.params" />
+                    <InputText :disabled="readonly" fluid v-model="form.params" />
                     <p class="text-xs text-surface-400 mt-1">Auto-generado a partir de los módulos seleccionados. Formato: <code class="bg-surface-100 dark:bg-surface-700 px-1 rounded">{"clave": "{clave}"}</code></p>
                 </div>
 
                 <!-- Módulos -->
                 <div>
                     <label class="block text-sm font-medium mb-1">Módulo(s) donde aparece *</label>
-                    <MultiSelect
+                    <MultiSelect :disabled="readonly"
                         v-model="modulesSelected"
                         :options="modules"
                         optionLabel="name"
@@ -409,9 +419,10 @@ const submit = () => {
                 <!-- Rutas por módulo -->
                 <div v-for="moduleId in modulesSelected" :key="moduleId">
                     <label class="block text-sm font-medium mb-1">
-                        Vistas de <strong>{{ modules.find((m) => m.id === moduleId)?.name }}</strong> donde aparece
+                        Vistas de <strong>{{ modules.find((m) => m.id === moduleId)?.name ?? moduleId }}</strong> donde aparece
                     </label>
-                    <MultiSelect
+                    <pre v-if="readonly" class="whitespace-pre-wrap break-all">{{ form.modules[moduleId]?.routes }}</pre>
+                    <MultiSelect v-else :disabled="readonly"
                         v-model="modulesSelectedMenubarItemModule[moduleId]"
                         :options="actionTypes"
                         optionLabel="label"
@@ -426,7 +437,7 @@ const submit = () => {
                         Item padre
                         <span class="text-surface-400 font-normal">(opcional — para crear sub-menús)</span>
                     </label>
-                    <Select
+                    <Select :disabled="readonly"
                         v-model="form.parent_id"
                         fluid
                         :options="menubarItemsWithChildren"
@@ -453,17 +464,17 @@ const submit = () => {
 
                 <!-- Acciones del formulario -->
                 <div class="flex justify-end gap-2 pt-2 border-t border-surface-200 dark:border-surface-700">
-                    <Button label="Cancelar" icon="pi pi-times" severity="secondary" @click.prevent="emit('close')" />
-                    <Button label="Guardar" icon="pi pi-check" type="submit" :loading="form.processing" />
+                    <Button :label="readonly ? 'Cerrar consulta' : 'Cancelar'" icon="pi pi-times" severity="secondary" @click.prevent="emit('close')" />
+                    <Button v-if="!readonly" label="Guardar" icon="pi pi-check" type="submit" :loading="form.processing" />
                 </div>
             </div>
         </form>
     </Dialog>
 
     <!-- Dialog selector de íconos -->
-    <Dialog v-model:visible="iconPickerVisible" header="Seleccionar ícono" :modal="true" :style="{ width: '520px' }">
+    <Dialog v-if="!readonly" v-model:visible="iconPickerVisible" header="Seleccionar ícono" :modal="true" :style="{ width: '520px' }">
         <div class="flex flex-col gap-3">
-            <InputText v-model="iconSearch" fluid placeholder="Buscar ícono..." autofocus />
+            <InputText :disabled="readonly" v-model="iconSearch" fluid placeholder="Buscar ícono..." autofocus />
             <div class="grid grid-cols-9 gap-1 max-h-72 overflow-y-auto">
                 <button
                     v-for="icon in filteredIcons"

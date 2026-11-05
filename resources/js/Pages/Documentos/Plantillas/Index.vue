@@ -44,6 +44,7 @@ const previewSource = ref(null);
 const section = ref("contenido_html");
 const editingVersion = ref(null);
 const editorReadonly = ref(false);
+const dismissedEditor = ref(null);
 const editorTemplateId = ref(null);
 const editorRefs = {};
 const sections = [{label:"Encabezado",value:"encabezado_html"},{label:"Contenido",value:"contenido_html"},{label:"Pie de página",value:"pie_html"}];
@@ -164,6 +165,7 @@ const selectTemplate = (item) => {
     serverList.visit({ plantilla_id: item.id, version_id: null, modo: null, versiones_page: 1, page: page.props.listado?.current_page ?? 1 });
 };
 const openCreate = () => {
+    if (!can("create plantillas-documentos")) return;
     form.cancel();
     editorReadonly.value = false;
     editorTemplateId.value = null;
@@ -200,28 +202,40 @@ const openEdit = (version, readonly = false) => {
     editorVisible.value = true;
 };
 const requestVersion = (version, modo = "consulta") => {
+    dismissedEditor.value = null;
     form.cancel(); editorVisible.value = false;
     serverList.visit({ plantilla_id: selected.value.id, version_id: version.id, modo, page: page.props.listado?.current_page ?? 1 });
 };
 const closeEditor = async () => {
+    dismissedEditor.value = props.modoVersion ? `${editorTemplateId.value}:${editingVersion.value?.id}:${props.modoVersion}` : null;
     document.activeElement?.blur(); form.cancel(); editorVisible.value = false; form.clearErrors();
     if (props.modoVersion) serverList.visit({ modo: null, page: page.props.listado?.current_page ?? 1 });
 };
-watch([() => props.plantillaSeleccionada, () => props.modoVersion], ([item, modo]) => {
+watch([() => props.plantillaSeleccionada, () => props.modoVersion, () => can("update plantillas-documentos")], ([item, modo]) => {
     if (!modo) {
+        dismissedEditor.value = null;
         if (editingVersion.value && editorVisible.value) {
             form.cancel(); editorVisible.value = false; editingVersion.value = null; form.clearErrors();
         }
         return;
     }
     const version = item?.versionSeleccionada;
-    if (modo === "edicion" && editorVisible.value && !editorReadonly.value && version?.puede_editar && editingVersion.value?.id === version.id && editorTemplateId.value === item.id) return;
+    if (dismissedEditor.value === `${item?.id}:${version?.id}:${modo}`) {
+        serverList.visit({modo:null,page:page.props.listado?.current_page ?? 1});
+        return;
+    }
+    if (modo === "edicion" && can("update plantillas-documentos") && editorVisible.value && !editorReadonly.value && version?.puede_editar && editingVersion.value?.id === version.id && editorTemplateId.value === item.id) return;
     form.cancel(); editorVisible.value = false; form.clearErrors();
     if (!version) return;
     selectedId.value = item.id; selectedVersionId.value = version.id;
-    openEdit(version, modo !== "edicion");
+    openEdit(version, modo !== "edicion" || !can("update plantillas-documentos"));
 }, { immediate: true });
+watch(() => can("create plantillas-documentos"), allowed => {
+    if (allowed || editingVersion.value || !editorVisible.value) return;
+    form.cancel(); editorVisible.value = false; form.reset(); form.clearErrors();
+});
 const submit = () => {
+    if (!can(editingVersion.value ? "update plantillas-documentos" : "create plantillas-documentos")) return;
     if (editorReadonly.value || (editingVersion.value && !editingVersion.value.puede_editar)) return;
     const options = {
         preserveScroll: true,
@@ -428,7 +442,7 @@ watch(selected, (item) => {
                         <Message v-if="form.errors[section] || form.errors.contenido_html" severity="error" :closable="false">{{ form.errors[section] || form.errors.contenido_html }}</Message>
                         <div><label for="watermark" class="field-label">Marca de agua (opcional)</label><InputText :readonly="editorReadonly" id="watermark" v-model="form.presentacion.marca_agua" maxlength="80" placeholder="Ejemplo: BORRADOR" fluid /><small class="block text-surface-500">Texto tenue en todas las páginas. Déjalo vacío para desactivarlo.</small><Message v-if="form.errors['presentacion.marca_agua']" severity="error">{{ form.errors['presentacion.marca_agua'] }}</Message></div><p v-if="editorReadonly" class="text-sm">Formato conservado: {{ editingVersion.presentacion?.formato ?? 'Sin marca histórica' }} · PDF A4 vertical.</p><div class="flex flex-col-reverse gap-2 border-t border-surface-200 pt-4 sm:flex-row sm:justify-end"><Button type="button" :label="editorReadonly ? 'Cerrar consulta' : 'Cancelar'" severity="secondary" @click="closeEditor" /><Button v-if="editorReadonly" type="button" label="Previsualizar PDF" icon="pi pi-eye" severity="secondary" @click="showPreview(editingVersion)" /><Button v-if="!editorReadonly" type="button" label="Previsualizar cambios" icon="pi pi-eye" severity="secondary" @click="previewDraft" /><Button v-if="!editorReadonly" type="submit" label="Guardar borrador" icon="pi pi-save" :loading="form.processing" /></div>
                     </div>
-                    <aside class="variable-panel rounded-2xl border border-primary-100 bg-primary-50/70 p-4 dark:border-primary-900 dark:bg-primary-950/20"><div class="flex items-center gap-2"><span class="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-contrast"><i class="pi pi-code" /></span><div><h3 class="font-semibold">Variables permitidas</h3><p class="text-xs text-surface-500">{{ editorReadonly ? 'Consulta las variables permitidas; no se insertan en este modo.' : 'Coloca el cursor y selecciona una variable para insertarla.' }}</p></div></div><IconField class="mt-4"><InputIcon class="pi pi-search" /><InputText :readonly="editorReadonly" v-model="variableQuery" aria-label="Buscar variables" placeholder="Buscar variable" fluid /></IconField><div class="mt-3 max-h-[calc(100dvh-19rem)] space-y-4 overflow-auto pr-1"><section v-for="group in groupedVariables" :key="group.key"><h4 class="mb-2 text-xs font-bold uppercase tracking-wide text-surface-500">{{ group.label }}</h4><div class="space-y-2"><button v-for="variable in group.variables" :key="variable.clave" :disabled="editorReadonly" type="button" class="w-full rounded-xl border border-transparent bg-surface-0 p-3 text-left transition hover:border-primary-300 hover:shadow-sm dark:bg-surface-900" @mousedown.prevent @click="insertVariable(variable)"><span class="block text-sm font-medium">{{ variable.nombre }} <span v-if="variable.requerida" class="mt-1 block text-xs font-normal text-amber-700 dark:text-amber-300">Requerida para generar: si falta este dato en el expediente, no podrá generarse el PDF.</span></span><code class="mt-1 block truncate text-xs text-primary">{{ tokenLabel(variable.clave) }}</code><span class="mt-1 block truncate text-xs text-surface-500">{{ variable.origen }} · {{ variable.formato }}</span></button></div></section><p v-if="!groupedVariables.length" class="py-8 text-center text-sm text-surface-500">No hay variables que coincidan con la búsqueda.</p></div><Message class="mt-3" severity="info" size="small" :closable="false">No se admite código HTML libre en las variables ni el acceso a otros datos.</Message></aside>
+                    <aside class="variable-panel rounded-2xl border border-primary-100 bg-primary-50/70 p-4 dark:border-primary-900 dark:bg-primary-950/20"><div class="flex items-center gap-2"><span class="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-contrast"><i class="pi pi-code" /></span><div><h3 class="font-semibold">Variables permitidas</h3><p class="text-xs text-surface-500">{{ editorReadonly ? 'Consulta las variables permitidas; no se insertan en este modo.' : 'Coloca el cursor y selecciona una variable para insertarla.' }}</p></div></div><IconField class="mt-4"><InputIcon class="pi pi-search" /><InputText v-model="variableQuery" aria-label="Buscar variables" placeholder="Buscar variable" fluid /></IconField><div class="mt-3 max-h-[calc(100dvh-19rem)] space-y-4 overflow-auto pr-1"><section v-for="group in groupedVariables" :key="group.key"><h4 class="mb-2 text-xs font-bold uppercase tracking-wide text-surface-500">{{ group.label }}</h4><div class="space-y-2"><button v-for="variable in group.variables" :key="variable.clave" :disabled="editorReadonly" type="button" class="w-full rounded-xl border border-transparent bg-surface-0 p-3 text-left transition hover:border-primary-300 hover:shadow-sm dark:bg-surface-900" @mousedown.prevent @click="insertVariable(variable)"><span class="block text-sm font-medium">{{ variable.nombre }} <span v-if="variable.requerida" class="mt-1 block text-xs font-normal text-amber-700 dark:text-amber-300">Requerida para generar: si falta este dato en el expediente, no podrá generarse el PDF.</span></span><code class="mt-1 block truncate text-xs text-primary">{{ tokenLabel(variable.clave) }}</code><span class="mt-1 block truncate text-xs text-surface-500">{{ variable.origen }} · {{ variable.formato }}</span></button></div></section><p v-if="!groupedVariables.length" class="py-8 text-center text-sm text-surface-500">No hay variables que coincidan con la búsqueda.</p></div><Message class="mt-3" severity="info" size="small" :closable="false">No se admite código HTML libre en las variables ni el acceso a otros datos.</Message></aside>
                 </form>
             </Dialog>
 

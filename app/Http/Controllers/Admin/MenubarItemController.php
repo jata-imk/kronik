@@ -37,6 +37,7 @@ class MenubarItemController extends Controller implements HasMiddleware
 
     public function index(\Illuminate\Http\Request $request)
     {
+        $request->validate(['selected_item_id' => 'nullable|integer|min:1', 'modo' => 'nullable|in:consulta,edicion']);
         $params = app(\App\Services\ListadoParametros::class);
         $match = fn ($q, $v) => $q->where('label', 'like', '%'.$v.'%');
         $filters = ['global' => fn ($q, $v) => $q->where(fn ($q) => $q->where(fn ($q) => $match($q, $v))
@@ -50,26 +51,15 @@ class MenubarItemController extends Controller implements HasMiddleware
         return Inertia::render('Admin/MenubarItems/Index', [
             'modules' => fn () => Module::with('menubarItems')->get(),
             'menubarCatalogo' => $page->getCollection(),
+            'menubarSeleccionado' => $request->filled('selected_item_id') ? MenubarItem::with(['modules', 'parent'])->findOrFail($request->integer('selected_item_id')) : null,
+            'modoMenu' => $request->user()->can('update menubar-items') && $request->input('modo') === 'edicion' ? 'edicion' : 'consulta',
             'listado' => $params->metadata($page, $values),
         ]);
     }
 
     public function store(MenubarItemRequest $request)
     {
-        $fields = $request->validated();
-        $fields['params'] = gettype($fields['params']) == 'string' && json_validate($fields['params']) ? json_decode($fields['params']) : $fields['params'];
-
-        $menubarItem = MenubarItem::create($fields);
-
-        if (
-            isset($fields['modules'])
-            && count($fields['modules'])
-            && count(array_filter($fields['modules'], function ($module) {
-                return isset($module['routes']);
-            }))
-        ) {
-            $menubarItem->modules()->attach($fields['modules']);
-        }
+        app(\App\Services\MenubarItemService::class)->guardar(null, $request->validated(), $request->user());
 
         return redirect()->back()->with('success', 'Item creado');
     }
@@ -77,28 +67,14 @@ class MenubarItemController extends Controller implements HasMiddleware
     public function update(MenubarItemRequest $request, MenubarItem $menubarItem)
     {
 
-        $fields = $request->validated();
-        $fields['params'] = gettype($fields['params']) == 'string' && json_validate($fields['params']) ? json_decode($fields['params']) : $fields['params'];
-
-        $menubarItem->update($fields);
-
-        if (
-            isset($fields['modules'])
-            && count($fields['modules'])
-            && count(array_filter($fields['modules'], function ($module) {
-                return isset($module['routes']);
-            }))
-        ) {
-            $menubarItem->modules()->sync($fields['modules']);
-        }
+        app(\App\Services\MenubarItemService::class)->guardar($menubarItem, $request->validated(), $request->user());
 
         return redirect()->back()->with('success', 'Item actualizado');
     }
 
     public function destroy(MenubarItem $menubarItem)
     {
-        $menubarItem->modules()->detach();
-        $menubarItem->delete();
+        app(\App\Services\MenubarItemService::class)->eliminar($menubarItem, request()->user());
 
         return redirect()->back()->with('success', 'Item eliminado');
     }

@@ -52,6 +52,7 @@ const catalogVisible = ref(false);
 const helpGuideVisible = ref(false);
 const editingVersion = ref(null);
 const editorReadonly = ref(false);
+const dismissedEditor = ref(null);
 const editorProductId = ref(null);
 const fiscalVersion = ref(null);
 const fiscalVisible = ref(false);
@@ -305,6 +306,7 @@ const normalizeCommission = (item) => {
     };
 };
 const openCreate = () => {
+    if (!can("create productos-crediticios")) return;
     form.cancel();
     editorReadonly.value = false;
     editorProductId.value = null;
@@ -353,21 +355,24 @@ const openEdit = (version) => {
     editorVisible.value = true;
 };
 const requestVersion = (version, modo = "consulta") => {
+    dismissedEditor.value = null;
     form.cancel();
     editorVisible.value = false;
     serverList.visit({ producto_id: selected.value.id, version_id: version.id, modo, page: page.props.listado?.current_page ?? 1 });
 };
 const closeEditor = () => {
+    dismissedEditor.value = props.modoVersion ? `${editorProductId.value}:${editingVersion.value?.id}:${props.modoVersion}` : null;
     form.cancel();
     editorVisible.value = false;
     editingVersion.value = null;
     form.clearErrors();
     if (props.modoVersion) serverList.visit({ modo: null, page: page.props.listado?.current_page ?? 1 });
 };
-watch([() => props.productoSeleccionado, () => props.modoVersion], ([producto, modo]) => {
+watch([() => props.productoSeleccionado, () => props.modoVersion, () => can("update productos-crediticios")], ([producto, modo]) => {
     const version = producto?.versionSeleccionada;
     // Validation responses preserve the actor's unsaved draft and field errors.
     if (!modo) {
+        dismissedEditor.value = null;
         if (editingVersion.value && editorVisible.value) {
             form.cancel();
             editorVisible.value = false;
@@ -376,13 +381,17 @@ watch([() => props.productoSeleccionado, () => props.modoVersion], ([producto, m
         }
         return;
     }
-    if (modo === "edicion" && editorVisible.value && !editorReadonly.value && version?.puede_editar && editingVersion.value?.id === version.id && editorProductId.value === producto.id) return;
+    if (dismissedEditor.value === `${producto?.id}:${version?.id}:${modo}`) {
+        serverList.visit({modo:null,page:page.props.listado?.current_page ?? 1});
+        return;
+    }
+    if (modo === "edicion" && can("update productos-crediticios") && editorVisible.value && !editorReadonly.value && version?.puede_editar && editingVersion.value?.id === version.id && editorProductId.value === producto.id) return;
     form.cancel();
     editorVisible.value = false;
     form.clearErrors();
     if (!version) return;
     selectedId.value = producto.id;
-    if (modo === "edicion" && version.puede_editar) { openEdit(version); return; }
+    if (modo === "edicion" && can("update productos-crediticios") && version.puede_editar) { openEdit(version); return; }
     editorProductId.value = producto.id;
     editingVersion.value = version;
     editorReadonly.value = true;
@@ -391,7 +400,12 @@ watch([() => props.productoSeleccionado, () => props.modoVersion], ([producto, m
     activeEditorTab.value = "general";
     editorVisible.value = true;
 }, { immediate: true });
+watch(() => can("create productos-crediticios"), allowed => {
+    if (allowed || editingVersion.value || !editorVisible.value) return;
+    form.cancel(); editorVisible.value = false; form.reset(); form.clearErrors();
+});
 const submit = () => {
+    if (!can(editingVersion.value ? "update productos-crediticios" : "create productos-crediticios")) return;
     if (editorReadonly.value || (editingVersion.value && !editingVersion.value.puede_editar)) return;
     const editing = Boolean(editingVersion.value);
     const url = editing
@@ -714,7 +728,7 @@ watch(
             </Drawer>
             <Dialog id="product-editor" :visible="editorVisible" @update:visible="$event ? (editorVisible = true) : closeEditor()" :header="editingVersion ? `${editorReadonly ? 'Consultar' : 'Editar'} versión ${editingVersion.numero}` : 'Nuevo producto crediticio'" modal maximizable :style="{ width: 'min(1080px, 96vw)' }">
                 <form v-if="editorVisible" class="space-y-5" @submit.prevent="submit">
-                    <OriginacionAyuda v-if="editingVersion" :info="editingVersion.originacion" consulta /><Message v-if="editorReadonly" severity="info" :closable="false">Consulta · {{ editingVersion.estado }} · {{ editingVersion.usos_count ? 'utilizada' : 'sin usos' }}. Los datos corresponden a esta versión. Las acciones de gestión est?n fuera de este formulario.</Message>
+                    <OriginacionAyuda v-if="editingVersion" :info="editingVersion.originacion" consulta /><Message v-if="editorReadonly" severity="info" :closable="false">Consulta · {{ editingVersion.estado }} · {{ editingVersion.usos_count ? 'utilizada' : 'sin usos' }}. Los datos corresponden a esta versión. Las acciones de gestión están fuera de este formulario.</Message>
                     <p v-if="editorReadonly" class="text-sm">Moneda: {{ form.version.moneda ?? 'Sin registrar' }} · Vigencia: {{ displayDate(form.version.vigente_desde) }} · Motor: {{ form.version.snapshot?.motor_calculo_version ?? 'Histórico sin marca' }}</p>
                     <div class="flex flex-col gap-3 rounded-xl bg-primary-50 p-4 dark:bg-primary-950/30 sm:flex-row sm:items-center sm:justify-between"><div><p class="font-semibold">Configuración segura y explicada</p><p class="text-sm text-surface-600 dark:text-surface-300">El borrador se congela al activarse. Usa los botones de ayuda para revisar cada concepto.</p></div><Button type="button" label="Guía financiera" icon="pi pi-book" text @click="helpGuideVisible = true" /></div>
                     <Tabs v-model:value="activeEditorTab">

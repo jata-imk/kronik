@@ -6,12 +6,15 @@ import IntlTelInput from "@/Components/IntlTelInput.vue";
 import PaisSelect from "@/Components/PaisSelect.vue";
 import { useDireccionCodigoPostal } from "@/Composables/useDireccionCodigoPostal";
 import { useTelefonoInternacional } from "@/Composables/useTelefonoInternacional";
-import { useForm } from "@inertiajs/vue3";
+import { Link, useForm, usePage } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { useToast } from "primevue/usetoast";
 import { computed, nextTick, watch } from "vue";
 
 const props = defineProps({
+    configurada: Boolean,
+    puedeEditar: Boolean,
+    modoEmpresa: String,
     configuracion: { type: Object, required: true },
     tiposPersona: { type: Array, default: () => [] },
     regimenesFiscales: { type: Array, default: () => [] },
@@ -20,14 +23,16 @@ const props = defineProps({
 });
 
 const toast = useToast();
-const domicilio = props.configuracion?.domicilio_fiscal ?? {};
-
-const form = useForm({
-    razon_social: props.configuracion?.razon_social ?? "",
-    nombre_comercial: props.configuracion?.nombre_comercial ?? "",
-    tipo_persona: props.configuracion?.tipo_persona ?? "moral",
-    rfc: props.configuracion?.rfc ?? "",
-    regimen_fiscal_id: props.configuracion?.regimen_fiscal_id ?? null,
+const page = usePage();
+const readonly = computed(() => props.modoEmpresa !== "edicion" || !props.puedeEditar || !(page.props.auth.is_super_admin || page.props.auth.permissions?.["update-configuracion-empresa"]));
+const datos = configuracion => {
+const domicilio = configuracion?.domicilio_fiscal ?? {};
+return {
+    razon_social: configuracion?.razon_social ?? "",
+    nombre_comercial: configuracion?.nombre_comercial ?? "",
+    tipo_persona: configuracion?.tipo_persona ?? (readonly.value ? null : "moral"),
+    rfc: configuracion?.rfc ?? "",
+    regimen_fiscal_id: configuracion?.regimen_fiscal_id ?? null,
     domicilio_fiscal: {
         pais_id: domicilio.pais_id ?? null,
         pais_codigo_iso: domicilio.pais_codigo_iso ?? "",
@@ -44,29 +49,35 @@ const form = useForm({
         codigo_postal: domicilio.codigo_postal ?? "",
         pais: domicilio.pais ?? "",
     },
-    telefono: props.configuracion?.telefono ?? "",
-    email: props.configuracion?.email ?? "",
-    sitio_web: props.configuracion?.sitio_web ?? "",
-    moneda: props.configuracion?.moneda ?? "MXN",
-    zona_horaria: props.configuracion?.zona_horaria ?? "America/Mexico_City",
-    pais_base: props.configuracion?.pais_base ?? "MX",
-    logotipo_path: props.configuracion?.logotipo_path ?? "",
+    telefono: configuracion?.telefono ?? "",
+    email: configuracion?.email ?? "",
+    sitio_web: configuracion?.sitio_web ?? "",
+    moneda: configuracion?.moneda ?? (readonly.value ? null : "MXN"),
+    zona_horaria: configuracion?.zona_horaria ?? (readonly.value ? null : "America/Mexico_City"),
+    pais_base: configuracion?.pais_base ?? (readonly.value ? null : "MX"),
+    logotipo_path: configuracion?.logotipo_path ?? "",
     parametros_operativos: {
         dias_gracia_default:
-            props.configuracion?.parametros_operativos?.dias_gracia_default ??
-            0,
+            configuracion?.parametros_operativos?.dias_gracia_default ?? (readonly.value ? null : 0),
         hora_corte_operativo:
-            props.configuracion?.parametros_operativos?.hora_corte_operativo ??
-            "18:00",
+            configuracion?.parametros_operativos?.hora_corte_operativo ??
+            (readonly.value ? null : "18:00"),
     },
     integraciones: {
         circulo_credito_host:
-            props.configuracion?.integraciones?.circulo_credito_host ?? "",
+            configuracion?.integraciones?.circulo_credito_host ?? "",
         circulo_credito_sandbox:
-            props.configuracion?.integraciones?.circulo_credito_sandbox ?? true,
+            configuracion?.integraciones?.circulo_credito_sandbox ?? (readonly.value ? null : true),
         circulo_credito_api_key: "",
     },
-    estatus: props.configuracion?.estatus ?? "borrador",
+    estatus: configuracion?.estatus ?? (readonly.value ? null : "borrador"),
+};
+};
+const form = useForm(datos(props.configuracion));
+
+watch([() => props.configuracion, () => readonly.value], () => {
+    if (!readonly.value) return;
+    form.cancel(); form.defaults(datos(props.configuracion)); form.reset(); form.clearErrors();
 });
 
 const estatusOptions = [
@@ -76,14 +87,15 @@ const estatusOptions = [
 ];
 
 const regimenesCompatibles = computed(() =>
-    props.regimenesFiscales.filter((regimen) =>
+    (readonly.value ? props.regimenesFiscales : props.regimenesFiscales.filter((regimen) =>
         form.tipo_persona === "fisica" ? regimen.fisica : regimen.moral,
-    ),
+    )),
 );
 
 watch(
     () => form.tipo_persona,
     () => {
+        if (readonly.value) return;
         if (
             form.regimen_fiscal_id &&
             !regimenesCompatibles.value.some(
@@ -98,7 +110,7 @@ watch(
 watch(
     () => form.rfc,
     (rfc) => {
-        if (typeof rfc === "string") {
+        if (!readonly.value && typeof rfc === "string") {
             form.rfc = rfc.toUpperCase().trimStart();
         }
     },
@@ -115,6 +127,7 @@ const { telefonoInternacional, onChangeNumber: onEmpresaTelefonoChange } =
     useTelefonoInternacional(form, { e164Key: "telefono" });
 
 const submit = () => {
+    if (readonly.value) return;
     form.put(route("admin.configuracion-empresa.update"), {
         preserveScroll: true,
         onSuccess: () => {
@@ -144,7 +157,8 @@ const error = (field) => form.errors[field];
         </template>
 
         <template #card-content>
-            <form class="p-4 flex flex-col gap-8" @submit.prevent="submit">
+            <div class="flex flex-wrap items-center gap-3 p-4"><Message v-if="readonly" severity="info">Consulta · solo lectura.</Message><Message v-if="!configurada" severity="warn">La empresa aún no está configurada. El primer guardado autorizado crea su configuración.</Message><Link v-if="puedeEditar" :href="route('admin.configuracion-empresa.index', {modo: readonly ? 'edicion' : 'consulta'})" class="underline">{{ readonly ? 'Editar configuración' : 'Consultar configuración' }}</Link></div>
+            <form v-if="configurada || !readonly" class="p-4 flex flex-col gap-8" @submit.prevent="submit">
                 <section class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <h3 class="md:col-span-2 text-lg font-semibold">
                         Datos legales
@@ -154,7 +168,7 @@ const error = (field) => form.errors[field];
                         <div class="flex items-center gap-1"><label for="razon_social" class="block text-sm font-medium mb-1">
                             Razón social
                         </label><FieldHelp title="Razón social" description="Identifica a la entidad en los documentos finales. Debe coincidir con sus datos fiscales." example="Financiera Ejemplo SA de CV" /></div>
-                        <InputText
+                        <InputText :readonly="readonly"
                             id="razon_social"
                             v-model="form.razon_social"
                             :invalid="!!error('razon_social')"
@@ -169,14 +183,14 @@ const error = (field) => form.errors[field];
                         <label for="nombre_comercial" class="block text-sm font-medium mb-1">
                             Nombre comercial
                         </label>
-                        <InputText id="nombre_comercial" v-model="form.nombre_comercial" fluid />
+                        <InputText :readonly="readonly" id="nombre_comercial" v-model="form.nombre_comercial" fluid />
                     </div>
 
                     <div>
                         <label for="tipo_persona" class="block text-sm font-medium mb-1">
                             Tipo de persona
                         </label>
-                        <Select
+                        <Select :disabled="readonly"
                             id="tipo_persona"
                             v-model="form.tipo_persona"
                             :options="tiposPersona"
@@ -192,7 +206,7 @@ const error = (field) => form.errors[field];
 
                     <div>
                         <div class="flex items-center gap-1"><label for="rfc" class="block text-sm font-medium mb-1">RFC</label><FieldHelp title="RFC de la empresa" description="Se valida con el tipo de persona y es obligatorio para generar documentos finales, aunque la plantilla no lo muestre." example="" /></div>
-                        <InputText
+                        <InputText :readonly="readonly"
                             id="rfc"
                             v-model="form.rfc"
                             :maxlength="form.tipo_persona === 'fisica' ? 13 : 12"
@@ -208,7 +222,7 @@ const error = (field) => form.errors[field];
                         <label for="regimen_fiscal_id" class="block text-sm font-medium mb-1">
                             Régimen fiscal
                         </label>
-                        <Select
+                        <Select :disabled="readonly"
                             id="regimen_fiscal_id"
                             v-model="form.regimen_fiscal_id"
                             :options="regimenesCompatibles"
@@ -236,7 +250,7 @@ const error = (field) => form.errors[field];
 
                     <div>
                         <div class="flex items-center gap-1"><label for="estatus" class="block text-sm font-medium mb-1">Estatus</label><FieldHelp title="Estatus operativo" description="Borrador permite captura y simulaciones. Suspendida detiene la originación y conserva la cobranza. Activa permite avanzar con los permisos y requisitos vigentes." example="" /></div>
-                        <Select
+                        <Select :disabled="readonly"
                             id="estatus"
                             v-model="form.estatus"
                             :options="estatusOptions"
@@ -255,12 +269,13 @@ const error = (field) => form.errors[field];
                         <label for="codigo_postal" class="block text-sm font-medium mb-1">
                             Código postal
                         </label>
-                        <CodigoPostalAutocomplete
+                        <InputText v-if="readonly" id="codigo_postal" :model-value="form.domicilio_fiscal.codigo_postal" readonly fluid />
+                        <CodigoPostalAutocomplete v-else
                             v-model="form.domicilio_fiscal.codigo_postal"
                             input-id="codigo_postal"
                             :invalid="!!error('domicilio_fiscal.codigo_postal')"
-                            @changed="limpiarUbicacionPostal"
-                            @confirmed="aplicarCodigoPostal"
+                            @changed="!readonly && limpiarUbicacionPostal()"
+                            @confirmed="value => !readonly && aplicarCodigoPostal(value)"
                         />
                         <Message
                             v-if="error('domicilio_fiscal.codigo_postal')"
@@ -273,8 +288,8 @@ const error = (field) => form.errors[field];
 
                     <div>
                         <label for="colonia" class="block text-sm font-medium mb-1">Colonia</label>
-                        <Select
-                            v-if="localidades.length"
+                        <Select :disabled="readonly"
+                            v-if="!readonly && localidades.length"
                             id="colonia"
                             v-model="form.domicilio_fiscal.codigo_postal_id"
                             :options="localidades"
@@ -282,7 +297,7 @@ const error = (field) => form.errors[field];
                             option-value="codigoPostalId"
                             :invalid="!!(error('domicilio_fiscal.codigo_postal_id') || error('domicilio_fiscal.division_admin_tres_id'))"
                             fluid
-                            @change="onLocalidadChange"
+                            @change="value => !readonly && onLocalidadChange(value)"
                         />
                         <InputText
                             v-else
@@ -333,7 +348,7 @@ const error = (field) => form.errors[field];
 
                     <div class="md:col-span-2">
                         <label for="calle" class="block text-sm font-medium mb-1">Calle</label>
-                        <InputText
+                        <InputText :readonly="readonly"
                             id="calle"
                             v-model="form.domicilio_fiscal.calle"
                             :invalid="!!error('domicilio_fiscal.calle')"
@@ -352,7 +367,7 @@ const error = (field) => form.errors[field];
                         <label for="numero_exterior" class="block text-sm font-medium mb-1">
                             Número exterior
                         </label>
-                        <InputText
+                        <InputText :readonly="readonly"
                             id="numero_exterior"
                             v-model="form.domicilio_fiscal.numero_exterior"
                             fluid
@@ -363,7 +378,7 @@ const error = (field) => form.errors[field];
                         <label for="numero_interior" class="block text-sm font-medium mb-1">
                             Número interior
                         </label>
-                        <InputText
+                        <InputText :readonly="readonly"
                             id="numero_interior"
                             v-model="form.domicilio_fiscal.numero_interior"
                             fluid
@@ -376,11 +391,12 @@ const error = (field) => form.errors[field];
 
                     <div>
                         <label for="telefono" class="block text-sm font-medium mb-1">Teléfono</label>
-                        <IntlTelInput
+                        <InputText v-if="readonly" :model-value="form.telefono" readonly fluid />
+                        <IntlTelInput v-else
                             id="telefono"
                             v-model="telefonoInternacional"
                             emit-e164
-                            @change-number="onEmpresaTelefonoChange"
+                            @change-number="value => !readonly && onEmpresaTelefonoChange(value)"
                             :intl-tel-input-options="{
                                 initialCountry: form.pais_base.toLowerCase(),
                             }"
@@ -394,7 +410,7 @@ const error = (field) => form.errors[field];
 
                     <div>
                         <div class="flex items-center gap-1"><label for="email" class="block text-sm font-medium mb-1">Email</label><FieldHelp title="Correo operativo" description="Es obligatorio para activar la empresa y generar documentos finales. No acredita que el servidor pueda enviar correo." example="operacion@ejemplo.mx" /></div>
-                        <InputText
+                        <InputText :readonly="readonly"
                             id="email"
                             v-model="form.email"
                             :invalid="!!error('email')"
@@ -407,7 +423,7 @@ const error = (field) => form.errors[field];
 
                     <div>
                         <label for="sitio_web" class="block text-sm font-medium mb-1">Sitio web</label>
-                        <InputText
+                        <InputText :readonly="readonly"
                             id="sitio_web"
                             v-model="form.sitio_web"
                             placeholder="https://..."
@@ -417,14 +433,14 @@ const error = (field) => form.errors[field];
 
                     <div>
                         <div class="flex items-center gap-1"><label for="moneda" class="block text-sm font-medium mb-1">Moneda</label><FieldHelp title="Moneda de la empresa" description="Identifica la moneda configurada de la entidad. Cada producto conserva sus propias condiciones; cambiarla no convierte saldos anteriores." example="MXN" /></div>
-                        <InputText id="moneda" v-model="form.moneda" maxlength="3" fluid />
+                        <InputText :readonly="readonly" id="moneda" v-model="form.moneda" maxlength="3" fluid />
                     </div>
 
                     <div>
                         <div class="flex items-center gap-1"><label for="zona_horaria" class="block text-sm font-medium mb-1">
                             Zona horaria
                         </label><FieldHelp title="Zona horaria" description="Determina la fecha de negocio al simular, validar fechas y registrar operaciones. No modifica las fechas o documentos conservados." example="America/Mexico_City" /></div>
-                        <Select
+                        <Select :disabled="readonly"
                             id="zona_horaria"
                             v-model="form.zona_horaria"
                             :options="zonasHorarias"
@@ -441,7 +457,7 @@ const error = (field) => form.errors[field];
 
                     <div>
                         <label for="pais_base" class="block text-sm font-medium mb-1">País base</label>
-                        <PaisSelect
+                        <PaisSelect :disabled="readonly"
                             id="pais_base"
                             v-model="form.pais_base"
                             :options="paises"
@@ -505,7 +521,7 @@ const error = (field) => form.errors[field];
 
                     <div>
                         <label for="cdc_host" class="block text-sm font-medium mb-1">Host</label>
-                        <InputText
+                        <InputText :readonly="readonly"
                             id="cdc_host"
                             v-model="form.integraciones.circulo_credito_host"
                             placeholder="https://services.circulodecredito.com.mx"
@@ -515,7 +531,7 @@ const error = (field) => form.errors[field];
 
                     <div>
                         <label for="cdc_key" class="block text-sm font-medium mb-1">API key</label>
-                        <InputText
+                        <InputText :readonly="readonly"
                             id="cdc_key"
                             v-model="form.integraciones.circulo_credito_api_key"
                             type="password"
@@ -530,7 +546,7 @@ const error = (field) => form.errors[field];
                     </div>
 
                     <div class="flex items-center gap-3">
-                        <Checkbox
+                        <Checkbox :disabled="readonly"
                             v-model="form.integraciones.circulo_credito_sandbox"
                             input-id="cdc-sandbox"
                             binary
@@ -540,7 +556,7 @@ const error = (field) => form.errors[field];
                 </section>
 
                 <div class="flex justify-end border-t border-surface-200 dark:border-surface-700 pt-4">
-                    <Button
+                    <Button v-if="!readonly"
                         label="Guardar configuración"
                         icon="pi pi-save"
                         type="submit"

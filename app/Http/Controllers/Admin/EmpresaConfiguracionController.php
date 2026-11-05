@@ -25,15 +25,12 @@ class EmpresaConfiguracionController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
-        $configuracion = EmpresaConfiguracion::firstOrCreate(
-            ['singleton_key' => 'default'],
-            ['estatus' => 'borrador'],
-        );
-
-        $payload = $configuracion->toArray();
-        $integraciones = $configuracion->integraciones ?? [];
+        $request->validate(['modo' => 'nullable|in:consulta,edicion']);
+        $configuracion = EmpresaConfiguracion::where('singleton_key', 'default')->first();
+        $payload = $configuracion?->toArray() ?? ['singleton_key' => 'default'];
+        $integraciones = $configuracion?->integraciones ?? [];
         $payload['integraciones'] = [
             'circulo_credito_host' => $integraciones['circulo_credito_host'] ?? null,
             'circulo_credito_sandbox' => $integraciones['circulo_credito_sandbox'] ?? true,
@@ -42,6 +39,9 @@ class EmpresaConfiguracionController extends Controller implements HasMiddleware
 
         return Inertia::render('Admin/ConfiguracionEmpresa/Index', [
             'configuracion' => $payload,
+            'configurada' => $configuracion !== null,
+            'puedeEditar' => $request->user()->can('update configuracion-empresa'),
+            'modoEmpresa' => $request->user()->can('update configuracion-empresa') && $request->input('modo') !== 'consulta' ? 'edicion' : 'consulta',
             'tiposPersona' => [
                 ['value' => 'fisica', 'label' => 'Persona física'],
                 ['value' => 'moral', 'label' => 'Persona moral'],

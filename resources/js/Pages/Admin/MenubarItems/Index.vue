@@ -1,7 +1,7 @@
 <script setup>
 import ListadoPaginador from "@/Components/ListadoPaginador.vue";
 import { useListadoServidor } from "@/Composables/useListadoServidor";
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { NodeService } from "@sakai-vue/service/NodeService";
 import { router, usePage } from "@inertiajs/vue3";
 
@@ -11,10 +11,11 @@ import MenubarItemForm from "./Form.vue";
 
 const page = usePage();
 const filters = ref({ global: { value: null } });
-useListadoServidor(filters);
+const serverList = useListadoServidor(filters);
+const can = permission => page.props.auth.is_super_admin || page.props.auth.permissions?.[permission] === true;
 
 const items = ref([]);
-const modules = ref(page.props.modules);
+const modules = computed(() => page.props.modules);
 const menubarItems = ref(null);
 
 watch(
@@ -31,19 +32,29 @@ watch(
 const loading = ref(false);
 const selectedItem = ref(null);
 const showForm = ref(false);
+const readonly = computed(() => selectedItem.value ? page.props.modoMenu !== 'edicion' || !can('update-menubar-items') : !can('create-menubar-items'));
+const formRevision = ref(0);
+watch([() => page.props.menubarSeleccionado, () => page.props.modoMenu, () => readonly.value], () => {
+    if (showForm.value && selectedItem.value?.id === page.props.menubarSeleccionado?.id && !readonly.value) return;
+    selectedItem.value = page.props.menubarSeleccionado ?? null; showForm.value = Boolean(selectedItem.value); formRevision.value++;
+}, {immediate:true});
 
 const createItem = () => {
+    if (!can('create-menubar-items')) return;
     selectedItem.value = null;
     showForm.value = true;
 };
 const editItem = (item) => {
-    selectedItem.value = item;
-    showForm.value = true;
+    if (!can('update-menubar-items')) return;
+    serverList.visit({selected_item_id:item.id,modo:'edicion',page:page.props.listado?.current_page ?? 1});
 };
+const viewItem = item => serverList.visit({selected_item_id:item.id,modo:'consulta',page:page.props.listado?.current_page ?? 1});
+const closeForm = () => { showForm.value = false; serverList.visit({selected_item_id:null,modo:null,page:page.props.listado?.current_page ?? 1}); };
 const deleteItem = (item) => {
+    if (!can('delete-menubar-items')) return;
     if (confirm("¿Seguro que deseas eliminar este item?")) {
         router.delete(route("admin.menubar-items.destroy", item.id), {
-            only: ["menubarCatalogo", "menubarItems", "listado"],
+            only: ["menubarCatalogo", "menubarItems", "menubarSeleccionado", "modoMenu", "listado", "auth"],
         });
     }
 };
@@ -60,7 +71,7 @@ const deleteItem = (item) => {
         <template #card-content>
             <div class="p-4"><InputText v-model="filters.global.value" aria-label="Buscar acciones de menú" placeholder="Buscar acciones de menú" /><ListadoPaginador /></div>
             <div class="flex justify-end pb-8">
-                <Button label="Crear nuevo" icon="pi pi-plus" class="mt-3" @click="createItem" />
+                <Button v-if="can('create-menubar-items')" label="Crear nuevo" icon="pi pi-plus" class="mt-3" @click="createItem" />
             </div>
 
             <TreeTable :value="items" lazy :rows="10" :loading="loading" responsiveLayout="scroll">
@@ -145,15 +156,16 @@ const deleteItem = (item) => {
                 </Column>
                 <Column header="Acciones">
                     <template #body="{ node }">
-                        <Button icon="pi pi-pencil" @click="editItem(node.data)" class="p-button-text p-button-sm" />
-                        <Button icon="pi pi-trash" @click="deleteItem(node.data)"
+                        <Button :aria-label="`Ver ${node.data.label}`" icon="pi pi-eye" @click="viewItem(node.data)" text />
+                        <Button v-if="can('update-menubar-items')" :aria-label="`Editar ${node.data.label}`" icon="pi pi-pencil" @click="editItem(node.data)" class="p-button-text p-button-sm" />
+                        <Button v-if="can('delete-menubar-items')" :aria-label="`Eliminar ${node.data.label}`" icon="pi pi-trash" @click="deleteItem(node.data)"
                             class="p-button-text p-button-sm p-button-danger" />
                     </template>
                 </Column>
             </TreeTable>
 
-            <MenubarItemForm v-if="showForm" :modules="modules" :menubar-items="menubarItems" :item="selectedItem"
-                @close="showForm = false" />
+            <MenubarItemForm v-if="showForm" :key="`${selectedItem?.id ?? 'nuevo'}:${readonly}:${formRevision}`" :readonly="readonly" :modules="modules" :menubar-items="menubarItems" :item="selectedItem"
+                @close="closeForm" />
         </template>
     </AppLayout>
 </template>
