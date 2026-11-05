@@ -31,7 +31,10 @@ todos los módulos y procesos transversales sin ampliar reglas financieras.
   provisional de una cuenta inactiva se cierra incluso si falla su auditoría.
 - Mantener las rutas originales de Fortify/Jetstream. Una frontera transaccional
   específica de seguridad compara cambios efectivos de 2FA, tokens y verificación
-  de correo, sin copiar secretos, capacidades ni nombres personalizados al log.
+  de correo, cambio explícito de equipo y revocación de otras sesiones, sin copiar
+  secretos, capacidades ni nombres personalizados al log. El cambio de equipo
+  conserva el contexto original; la renovación del marcador de sesiones no se
+  confunde con cambio de contraseña ni acredita cierre físico del navegador.
 - Los comandos de permisos/roles tienen contexto explícito de sistema, sin usuario
   supuesto. La opción de equipo se valida; los roles globales y por equipo no se
   confunden. Cache y restauración de contexto no producen eventos adicionales.

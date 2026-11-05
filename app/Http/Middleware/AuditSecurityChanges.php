@@ -13,7 +13,8 @@ class AuditSecurityChanges
     public function handle(Request $request, Closure $next)
     {
         $routes = ['two-factor.enable', 'two-factor.confirm', 'two-factor.disable',
-            'api-tokens.store', 'api-tokens.update', 'api-tokens.destroy', 'verification.verify'];
+            'api-tokens.store', 'api-tokens.update', 'api-tokens.destroy', 'verification.verify',
+            'current-team.update', 'other-browser-sessions.destroy'];
         $recovery = $request->route()?->getActionName() === \Laravel\Fortify\Http\Controllers\RecoveryCodeController::class.'@store';
         if ((! in_array($request->route()?->getName(), $routes, true) && ! $recovery) || ! $request->user()) {
             return $next($request);
@@ -29,6 +30,15 @@ class AuditSecurityChanges
             $response = $next($request);
             $after = $before->fresh();
             $events = [];
+            if ($request->route()->named('current-team.update') && $teamId !== $after->current_team_id) {
+                app(ActivityLogService::class)->log(ActivityEvent::ActiveTeamChanged,
+                    ActivityEvent::ActiveTeamChanged->label(), $after,
+                    ['result' => 'applied', 'related' => ['type' => 'teams', 'id' => $after->current_team_id]],
+                    $user, $teamId, $branchId, inheritActorContext: false);
+            }
+            if ($request->route()->named('other-browser-sessions.destroy') && $before->password !== $after->password) {
+                $events[] = [ActivityEvent::OtherSessionsInvalidated, null];
+            }
             if (! $before->two_factor_secret && $after->two_factor_secret) {
                 $events[] = [ActivityEvent::TwoFactorEnabled, null];
             } elseif ($before->two_factor_secret && ! $after->two_factor_secret) {

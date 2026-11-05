@@ -4,7 +4,8 @@
 
 - Notion: [alcance y plan integral](https://app.notion.com/p/21461db7db7f80d5b813c2899522a72b).
 - Rama: `feat/cierre-auditoria-actividad`, continuidad `80b2f92`, base `0707ce9`.
-- PR de esta entrega: pendiente de publicación; código funcional en validación local.
+- PR de esta entrega: [#72](https://github.com/jata-imk/kronik/pull/72), borrador;
+  implementación principal `3868b1c`, cierre de regresiones en curso.
 - Matriz única: [eventos de auditoría](../reference/auditoria-eventos.md).
 - ADR relacionados: 0028 (cuentas/membresías), 0031 (consulta), 0036 (contexto), [0037](../explanation/adr-0037-cobertura-tecnica-auditoria.md) (cobertura técnica).
 
@@ -18,7 +19,7 @@ criterios por bloque están en Notion; esta nota conserva únicamente el traspas
 
 Implementación reanudada por autorización explícita del usuario. `git fetch origin`
 ejecutado y rama de continuidad seleccionada desde `80b2f92`; se conservan los
-archivos locales sin seguimiento. Notion: Doing. Sin PR ni integración nueva aún.
+archivos locales sin seguimiento. Notion: Doing. PR #72 publicada en borrador, sin integración ni despliegue nuevos.
 
 Implementados localmente equipos/roles, accesos/2FA/tokens, CSV, contexto de
 programación, transiciones automáticas SIC y coherencia transaccional de PDF,
@@ -27,8 +28,13 @@ pruebas y revisión final en curso. No declarar cierre técnico todavía.
 
 Validaciones en curso: suite MariaDB aislada y concurrencia de productos/folios
 aprobadas en el barrido anterior; regresiones de seguridad posteriores aprobadas.
-Frontend: 140 pruebas y build aprobados. E2E core en cierre; falta recorrido de
-productos/documentos/SIC y revisión medium del commit final. Los conteos definitivos
+Frontend: 140 pruebas y build aprobados. E2E core: 8 aprobados; documentos,
+productos y SIC: 6 aprobados. CI de `3868b1c` aprobada en GitHub Actions.
+Revisión medium interrumpida por límite de uso de Codex, no aprobada.
+Cierre de seguridad: 29 pruebas, 360 aserciones; recorrido dual y revisión del
+commit final en curso. Barrido manual acumulado: se corrigió la comparación
+de producto con instancia obsoleta y se alineó el orden de bloqueos producto →
+versión; su regresión conserva un único evento ante reenvío concurrente. Los conteos definitivos
 se registrarán con el commit que corresponda. Las dependencias exactas se
 restauraron mediante npm ci con espejo, conservando lockfile e integridad.
 
@@ -45,7 +51,7 @@ Captura de consulta de un intento anónimo, con fixtures aisladas:
    son anónimos y no infieren equipo desde el correo introducido.
 3. Automatismos: PDF, activación/retiro de versiones y estados SIC; sistema distinto
    de iniciador, contexto persistido incluido null, rollback y reentrega. Capturar
-   contexto al programar puede requerir migración aditiva; no está creada.
+   contexto al programar mediante migración aditiva nullable, sin backfill.
 4. Reconciliar cada acción del inventario vigente con pruebas y la matriz canónica.
    Consultas/filtros/simulación pura sin evento nuevo; exportación CSV auditable
    sin copiar registros ni filtros sensibles y sin afirmar recepción efectiva.

@@ -42,6 +42,7 @@ class ProductoVersionService
         $this->asegurarEditable($version);
 
         return DB::transaction(function () use ($producto, $version, $data) {
+            $producto = ProductoCrediticio::whereKey($producto->id)->lockForUpdate()->firstOrFail();
             $version = ProductoVersion::query()->lockForUpdate()->findOrFail($version->id);
             $this->asegurarEditable($version);
             // Older clients omit fiscal fields; omission must not erase saved policy.

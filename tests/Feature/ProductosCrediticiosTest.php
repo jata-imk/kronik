@@ -88,10 +88,11 @@ test('ciclo del producto audita cada acción y distingue programación de activa
     $data = productoPayload();
     $product = $service->crear($data, $actor->id);
     $version = $product->versiones()->sole();
+    $staleProduct = $product->fresh();
     $data['nombre'] = 'NOMBRE-RESERVADO';
     $service->actualizar($product, $version, $data);
     $this->travel(1)->minutes();
-    $service->actualizar($product, $version, $data);
+    $service->actualizar($staleProduct, $version, $data);
     expect(\App\Models\Activity::where('event', 'producto_crediticio.updated')->count())->toBe(1);
     $service->activar($version, app(\App\Services\FechaEmpresa::class)->hoy()->toDateString());
     $second = $service->nuevaVersion($product, $version, $actor->id);

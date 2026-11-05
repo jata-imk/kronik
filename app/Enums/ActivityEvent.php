@@ -35,6 +35,8 @@ enum ActivityEvent: string
     case SicUncertain = 'sic.uncertain';
     case SicLateResponse = 'sic.late_response';
     case ActiveBranchChanged = 'user.active_branch_changed';
+    case ActiveTeamChanged = 'user.active_team_changed';
+    case OtherSessionsInvalidated = 'user.sessions.invalidated';
     case UserCreated = 'user.created';
     case UserUpdated = 'user.updated';
     case UserDeactivated = 'user.deactivated';
@@ -156,6 +158,8 @@ enum ActivityEvent: string
             self::SicUncertain => 'Intento SIC marcado incierto',
             self::SicLateResponse => 'Respuesta SIC tardía conservada',
             self::ActiveBranchChanged => 'Sucursal activa cambiada',
+            self::ActiveTeamChanged => 'Equipo activo cambiado',
+            self::OtherSessionsInvalidated => 'Otras sesiones invalidadas',
             self::UserCreated => 'Cuenta pendiente creada',
             self::UserUpdated => 'Cuenta actualizada',
             self::UserDeactivated => 'Cuenta desactivada',

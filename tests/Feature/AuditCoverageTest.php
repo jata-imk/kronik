@@ -79,6 +79,9 @@ test('CRUD de roles separa permisos de nombre y no emite ante no-op o rechazo', 
 test('fallo de auditoría revierte dominio de equipos roles y seguridad', function (string $operation) {
     $actor = actingAsSuperAdmin();
     $team = Team::factory()->create();
+    $team->users()->attach($actor);
+    $originalTeam = $actor->current_team_id;
+    $originalPassword = $actor->password;
     $this->actingAs($actor)->withSession(['auth.password_confirmed_at' => time()]);
     $before = Activity::count();
     $this->mock(ActivityLogService::class)->shouldReceive('log')->andThrow(new RuntimeException('Auditoría no disponible'));
@@ -89,6 +92,8 @@ test('fallo de auditoría revierte dominio de equipos roles y seguridad', functi
             'role' => $this->post(route('admin.roles.store'), ['name' => 'Debe revertirse']),
             'token' => $this->post('/user/api-tokens', ['name' => 'Debe revertirse', 'permissions' => ['read']]),
             '2fa' => $this->post('/user/two-factor-authentication'),
+            'switch-team' => $this->put('/current-team', ['team_id' => $team->id]),
+            'sessions' => $this->delete('/user/other-browser-sessions', ['password' => 'password']),
         };
         $this->fail('La operación debía fallar.');
     } catch (RuntimeException $exception) {
@@ -97,8 +102,56 @@ test('fallo de auditoría revierte dominio de equipos roles y seguridad', functi
     expect($team->fresh()->name)->not->toBe('Debe revertirse')
         ->and(Role::where('name', 'Debe revertirse')->exists())->toBeFalse()
         ->and($actor->tokens()->count())->toBe(0)->and($actor->fresh()->two_factor_secret)->toBeNull()
+        ->and($actor->fresh()->current_team_id)->toBe($originalTeam)
+        ->and($actor->fresh()->password)->toBe($originalPassword)
         ->and(Activity::count())->toBe($before);
-})->with(['team', 'role', 'token', '2fa']);
+})->with(['team', 'role', 'token', '2fa', 'switch-team', 'sessions']);
+
+test('cambiar equipo activo audita contexto original y destino solo ante cambio autorizado', function () {
+    $actor = actingAsSuperAdmin();
+    $originalTeam = $actor->current_team_id;
+    $branch = $actor->current_sucursal_id;
+    $selected = Team::factory()->create();
+    $selected->users()->attach($actor);
+    $this->actingAs($actor)->put('/current-team', ['team_id' => $selected->id])->assertRedirect();
+    $this->put('/current-team', ['team_id' => $selected->id])->assertRedirect();
+    $this->put('/current-team', ['team_id' => Team::factory()->create()->id])->assertForbidden();
+    $event = Activity::where('event', ActivityEvent::ActiveTeamChanged->value)->sole();
+    expect($event->causer_id)->toBe($actor->id)->and($event->subject_id)->toBe($actor->id)
+        ->and($event->team_id)->toBe($originalTeam)->and($event->sucursal_id)->toBe($branch)
+        ->and($event->properties['related'])->toBe(['type' => 'teams', 'id' => $selected->id])
+        ->and($actor->fresh()->current_team_id)->toBe($selected->id)
+        ->and($event->toJson())->not->toContain($actor->email, $selected->name);
+});
+
+test('invalidar otras sesiones no registra cambio de contraseña ni secretos y rechaza contraseña incorrecta', function (string $driver) {
+    config(['session.driver' => $driver]);
+    $actor = actingAsSuperAdmin();
+    $other = User::factory()->create();
+    if ($driver === 'database') {
+        foreach ([$actor, $other] as $owner) {
+            \Illuminate\Support\Facades\DB::table('sessions')->insert([
+                'id' => 'other-session-'.$owner->id, 'user_id' => $owner->id,
+                'payload' => base64_encode(''), 'last_activity' => time(),
+            ]);
+        }
+    }
+    $originalPassword = $actor->password;
+    $this->actingAs($actor)->delete('/user/other-browser-sessions', ['password' => 'incorrecta'])
+        ->assertSessionHasErrors(['password' => 'La contraseña es incorrecta.']);
+    expect(Activity::where('event', ActivityEvent::OtherSessionsInvalidated->value)->count())->toBe(0);
+    $this->delete('/user/other-browser-sessions', ['password' => 'password'])->assertSessionHasNoErrors();
+    $event = Activity::where('event', ActivityEvent::OtherSessionsInvalidated->value)->sole();
+    expect($event->causer_id)->toBe($actor->id)->and($event->subject_id)->toBe($actor->id)
+        ->and($event->team_id)->toBe($actor->current_team_id)->and($event->sucursal_id)->toBe($actor->current_sucursal_id)
+        ->and($actor->fresh()->password)->not->toBe($originalPassword)
+        ->and(Activity::where('event', ActivityEvent::PasswordChanged->value)->count())->toBe(0)
+        ->and($event->toJson())->not->toContain($originalPassword, $actor->fresh()->password, 'incorrecta', $actor->email);
+    if ($driver === 'database') {
+        $this->assertDatabaseMissing('sessions', ['id' => 'other-session-'.$actor->id]);
+        $this->assertDatabaseHas('sessions', ['id' => 'other-session-'.$other->id]);
+    }
+})->with(['array', 'database']);
 
 test('fallos de credenciales y limitación son anónimos aun si el correo existe', function () {
     $user = User::factory()->withPersonalTeam()->create();

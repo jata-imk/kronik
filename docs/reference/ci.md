@@ -93,3 +93,7 @@ retiros, sin eventos duplicados y con una sola versión final vigente. No consul
 proveedores ni usa datos de la aplicación. Ver el
 [contrato de auditoría](auditoria-eventos.md) y la evidencia del commit en su
 [Agent Note](../agent-notes/auditoria-actividad.md).
+
+Para E2E que generan PDF puede indicarse `DOCUMENTOS_CHROME_PATH` con la ruta
+del Chrome instalado; preparación y servidor conservan ese valor. No se fija
+una versión ni ruta del equipo de desarrollo en el repositorio.
