@@ -16,8 +16,11 @@ Las PR posteriores se cambiaron a base `main` antes de fusionarlas; la tabla
 conserva sus bases de revisión originales.
 
 Código funcional revisado `5da61d0`; sin migraciones, seeders, variables ni permisos
-nuevos. **Pendientes despliegue y QA del usuario en la VPS QA**; el usuario realizará
-el despliegue desde `main`. Evidencia de Windows/Chromium, 2026-11-02–03,
+nuevos. **Revisión visual favorable del usuario en Kronik QA el 2026-11-04**, con
+dos observaciones UX separadas en tareas nuevas. El usuario autorizó cerrar
+la tarea original como **Done**. Las capturas muestran la entrega en QA;
+no se informó el commit instalado ni la versión de navegador. Evidencia automatizada
+de Windows/Chromium, 2026-11-02–03,
 America/Mexico_City; datos sintéticos y SQLite aislado para E2E.
 
 | PR | Rama | Base de revisión | Código revisado |
@@ -86,13 +89,43 @@ No se modifica dominio financiero, aprobación, históricos ni prioridades de No
 [Usuario móvil](../assets/consulta-edicion-historicos/usuario-movil.png) ·
 [Menú móvil](../assets/consulta-edicion-historicos/menu-movil.png).
 
+## QA del usuario y seguimiento — 2026-11-04
+
+El usuario indica que le gustaron los cambios y que estas son todas sus
+anotaciones. Se registra revisión visual favorable en la interfaz Kronik QA,
+con capturas de consulta de sucursal/producto y listados/versiones de
+productos/plantillas. No equivale a confirmar por separado todos los escenarios
+funcionales y de permisos de la guía. Commit desplegado, navegador y resolución
+exacta no informados. Ambas observaciones quedan **para después**, sin cambios
+funcionales en esta actualización. El usuario aclaró que se creen tareas nuevas
+y se marque Done la entrega original; ambas acciones quedaron registradas.
+Las tareas nuevas permanecen To Do / Someday, sin fecha ni responsable asignado.
+
+- **[Borde superior de mensajes](https://app.notion.com/p/40f61db7db7f8173a428c1c85fe2bb50):** el usuario reporta que no se aprecia completo
+  en algunas pantallas, con ejemplos en Consultar sucursal y Consultar versión
+  de producto. Reproducir y revisar presentación, separación y recorte al retomar;
+  no se ha confirmado la causa. Objetivo: borde completo visible al abrir y
+  desplazar el diálogo, también en móvil.
+  [Sucursal](../assets/consulta-edicion-historicos/qa-2026-11-04-sucursal-mensaje.png) ·
+  [Producto](../assets/consulta-edicion-historicos/qa-2026-11-04-producto-mensaje.png).
+- **[Paginación más compacta](https://app.notion.com/p/40f61db7db7f81b39bf1dfbab656fcfb):** observada en Productos/Versiones y en Historial
+  de Plantillas. Evaluar tamaño fijo por página sin selector, retirar primera/
+  última página, mostrar páginas numeradas y salto mediante número de página
+  con total conocido y validación del destino. Son alternativas, sin diseño
+  definitivo aprobado. Conservar filtros, totales, selección por ID independiente
+  de página y accesibilidad/escritorio/móvil de PR #66.
+  [Productos](../assets/consulta-edicion-historicos/qa-2026-11-04-productos-paginacion.png) ·
+  [Plantillas](../assets/consulta-edicion-historicos/qa-2026-11-04-plantillas-paginacion.png).
+
 ## Traspaso
 
-La integración está confirmada. Para la VPS QA, actualizar desde `main` y seguir
-el [procedimiento de despliegues posteriores](../how-to/desplegar-vps-nuevo.md#12-despliegues-posteriores),
-incluida la compilación de assets. Esta entrega no exige migraciones ni seeders
-nuevos. Ejecutar la [validación de consulta](../how-to/validar-consulta-solo-lectura.md)
-y registrar después el commit desplegado y los resultados reales de QA. La tarea
-permanece abierta hasta registrar esas etapas.
-Históricos ampliados de Solicitudes/Créditos y dictámenes paginados quedan como
-continuación independiente; no implementados en esta entrega. No reabre PR #15.
+**Entrega original cerrada en Notion como Done por autorización del usuario.**
+La integración y la aceptación en QA están registradas. Las dos mejoras futuras
+se gestionan en las tareas independientes enlazadas arriba, que conservan el
+alcance, alternativas y capturas; no son subtareas pendientes de la entrega cerrada.
+Reproducir y definir el diseño al retomarlas, conservando los contratos de PR #66.
+
+La guía de [validación de consulta](../how-to/validar-consulta-solo-lectura.md)
+conserva el recorrido técnico. Históricos ampliados de Solicitudes/Créditos y
+dictámenes paginados siguen como continuación independiente; no implementados
+en esta entrega. No reabre PR #15.
