@@ -2,104 +2,94 @@
 
 ## Referencias
 
-- Notion: [alcance y plan integral](https://app.notion.com/p/21461db7db7f80d5b813c2899522a72b).
-- Rama: `feat/cierre-auditoria-actividad`, continuidad `80b2f92`, base `0707ce9`.
-- PR de esta entrega: [#72](https://github.com/jata-imk/kronik/pull/72), borrador;
-  implementación principal `3868b1c`, cierre de regresiones en curso.
-- Matriz única: [eventos de auditoría](../reference/auditoria-eventos.md).
-- ADR relacionados: 0028 (cuentas/membresías), 0031 (consulta), 0036 (contexto), [0037](../explanation/adr-0037-cobertura-tecnica-auditoria.md) (cobertura técnica).
-
-## Objetivo
-
-Completar la cobertura técnica de todos los módulos vigentes y procesos
-transversales, reconciliando acciones, emisores y pruebas. El plan detallado y los
-criterios por bloque están en Notion; esta nota conserva únicamente el traspaso.
+- Notion: [alcance, plan y validaciones](https://app.notion.com/p/21461db7db7f80d5b813c2899522a72b).
+- Rama: `feat/cierre-auditoria-actividad`; continuidad `80b2f92`; base funcional `0707ce9`.
+- Entrega: [PR #72](https://github.com/jata-imk/kronik/pull/72).
+- Código revisado: [1bd109f](https://github.com/jata-imk/kronik/commit/1bd109f3adc0d394e6674c6dfaa90d65ffa99f68).
+- Contrato único: [matriz por acción](../reference/auditoria-eventos.md).
+- Decisión: [ADR 0037](../explanation/adr-0037-cobertura-tecnica-auditoria.md), continuación de ADR 0028, 0031 y 0036.
 
 ## Estado — 05/11/2026
 
-Implementación reanudada por autorización explícita del usuario. `git fetch origin`
-ejecutado y rama de continuidad seleccionada desde `80b2f92`; se conservan los
-archivos locales sin seguimiento. Notion: Doing. PR #72 publicada en borrador, sin integración ni despliegue nuevos.
+Cobertura técnica implementada en la rama y revisada contra `0707ce9`. La PR
+incluye todos los incrementos de esta funcionalidad desde `80b2f92`. Se conservaron
+los archivos locales preexistentes sin seguimiento. Notion sigue Doing mientras
+se registra la integración y el despliegue/QA de este incremento.
 
-Implementados localmente equipos/roles, accesos/2FA/tokens, CSV, contexto de
-programación, transiciones automáticas SIC y coherencia transaccional de PDF,
-productos, plantillas y operaciones del expediente. Reconciliación, ampliación de
-pruebas y revisión final en curso. No declarar cierre técnico todavía.
+La publicación pasa por el hook pre-push (suite backend y build) y la CI
+(MariaDB, frontend, build y concurrencia). Los resultados del head publicado se
+consultan en [checks de la PR](https://github.com/jata-imk/kronik/pull/72/checks)
+y en Notion; los conteos pertenecen al commit que los produjo. No se integra ni
+se despliega como parte de esta ejecución.
 
-Validaciones en curso: suite MariaDB aislada y concurrencia de productos/folios
-aprobadas en el barrido anterior; regresiones de seguridad posteriores aprobadas.
-Frontend: 140 pruebas y build aprobados. E2E core: 8 aprobados; documentos,
-productos y SIC: 6 aprobados. CI de `3868b1c` aprobada en GitHub Actions.
-Revisión medium del commit `832d922` contra `0707ce9` completada tras
-un primer intento interrumpido por cuota. Dos hallazgos P2: recuperación del
-fallo terminal al regenerar PDF común y detección de cambios solo de vigencia.
-Corregidos con regresiones. La revisión de `b882fd1` detectó otra dependencia:
-comparar auditoría no debe validar la configuración anterior de un borrador.
-Se separó la lectura sin validación de la validación al congelar snapshots; la
-regresión permite corregir una convención heredada no soportada. Tres regresiones
-dirigidas aprobadas (54 aserciones). Revisión medium acumulada de `8e115b8`
-contra `0707ce9`: sin hallazgos. Último ajuste: desafío 2FA revocado durante la
-sesión exige reiniciar acceso sin descifrar null; seguridad 31 pruebas, 380
-aserciones. Se repetirá revisión tras este cambio.
-Cierre de seguridad: 29 pruebas, 360 aserciones; recorrido dual y revisión del
-commit final en curso. Barrido manual acumulado: se corrigió la comparación
-de producto con instancia obsoleta y se alineó el orden de bloqueos producto →
-versión; su regresión conserva un único evento ante reenvío concurrente.
-También se corrigieron la atomicidad del traslado de cliente y los eventos de
-menú sin cambios efectivos. Regresión dirigida: 83 pruebas, 845 aserciones.
-Hook de `832d922`: MariaDB 693 pruebas, una omitida, 43 753 aserciones; build
-aprobado. El E2E dual se repite aislado tras restaurar Browsershot del lockfile
-y comprobar Chrome: un intento anterior agotó el timeout de arranque de 10 s
-durante la ejecución paralela de pruebas completas. No se cuenta como aprobado. Los conteos definitivos
-se registrarán con el commit que corresponda. Las dependencias exactas se
-restauraron mediante npm ci con espejo, conservando lockfile e integridad.
+## Resultado
 
-Captura de consulta de un intento anónimo, con fixtures aisladas:
-[detalle sin identidad atribuida](../assets/auditoria-actividad/actividad-anonima.png).
+- Matriz reconciliada: 119 códigos, 19 módulos del inventario vigente y procesos
+  transversales; una fila por acción, emisor y prueba. Consultas/cálculos puros y
+  mantenimiento técnico tienen justificación expresa de no aplicabilidad.
+- Equipos/roles/permisos comparten servicios y conservan equipo afectado y sucursal
+  original. Incluye administración, Jetstream, Super Admin, delegados y comandos.
+- Accesos, logout, rechazos/limitación, ciclo 2FA, tokens, verificación de correo,
+  cierre de otras sesiones, cambio de equipo y CSV tienen actividad efectiva.
+  Los fallos sin identidad autenticada siguen anónimos, sin inferir identidad
+  ni contexto desde el correo. Generado/aceptado por transporte no significa recibido.
+- Mutaciones de productos, plantillas, expediente, traslado de clientes, menú,
+  solicitudes y configuración conservan actividad en su transacción y comparan
+  cambios efectivos. No copiar evidencias, motivos, valores sensibles ni snapshots.
+- Activaciones programadas, estados SIC y PDF separan sistema ejecutor e iniciador,
+  conservan contexto persistido incluido null y evitan duplicados por reentrega.
+  Concurrencia real se comprueba con conexiones MariaDB independientes.
 
-## Bloques autorizados
+## Validaciones y revisión
 
-1. Equipos/roles/permisos: servicios compartidos, contexto del equipo afectado y
-   sucursal original, transacción con auditoría, rutas administrativas/Jetstream,
-   Super Admin/delegado y cambios efectivos sin duplicación.
-2. Accesos: logout, fallos/limitación/rechazo, 2FA y tokens; conservar ciclos de
-   cuentas/invitaciones/contraseñas existentes. Fallos sin identidad autenticada
-   son anónimos y no infieren equipo desde el correo introducido.
-3. Automatismos: PDF, activación/retiro de versiones y estados SIC; sistema distinto
-   de iniciador, contexto persistido incluido null, rollback y reentrega. Capturar
-   contexto al programar mediante migración aditiva nullable, sin backfill.
-4. Reconciliar cada acción del inventario vigente con pruebas y la matriz canónica.
-   Consultas/filtros/simulación pura sin evento nuevo; exportación CSV auditable
-   sin copiar registros ni filtros sensibles y sin afirmar recepción efectiva.
-5. Pruebas dirigidas y regresión completa, E2E aislados, documentación/ADR pertinentes,
-   review medium por PR y barrido acumulado antes del cierre técnico. Despliegue y
-   QA de la nueva entrega se acreditarán por separado cuando ocurran.
+- `/review medium`, base `0707ce9`, código `1bd109f`: sin hallazgos accionables.
+  Revisión de solo lectura; las pruebas se ejecutan por separado. Barrido acumulado
+  de la PR completa: contratos, permisos, migración, transacciones, contexto,
+  privacidad, históricos, reintentos y navegación de consulta.
+- Hallazgos previos resueltos: PDF común perdido puede quedar fallido tras agotar
+  regeneración; se conserva la protección del original contractual. Cambiar solo
+  vigencia produce actividad. Un borrador con configuración heredada no soportada
+  puede corregirse sin que la comparación de auditoría valide el estado anterior.
+- Barrido manual: comparación de producto bajo bloqueo con orden producto → versión;
+  traslado atómico y menú sin eventos ante no-op. Desafío 2FA revocado mientras
+  está abierto exige reiniciar acceso y audita rechazo, sin descifrar null.
+- Regresiones: 83 pruebas/845 aserciones en `b882fd1`; tres casos de producto/54
+  aserciones en `8e115b8`; seguridad 31 pruebas/380 aserciones en `1bd109f`.
+- Frontend: 140 pruebas aprobadas; build aprobado. CI de `832d922` aprobada,
+  incluyendo MariaDB y ambas comprobaciones de concurrencia. Hook de ese commit:
+  693 pruebas, una omitida y 43 753 aserciones. Evidencia final del head en los checks.
+- E2E Chromium con BD aislada: ocho recorridos de acceso/equipos/roles/auditoría
+  y seis de documentos/productos/SIC aprobados en `3868b1c`; recorrido dual
+  completo aprobado en `1bd109f` (3,5 minutos), con PDF real, firmas, desembolso,
+  pagos, anticipos, liquidación y reversos sintéticos. Sin proveedores externos.
+- Para PDF se usó Chromium headless instalado, mediante `DOCUMENTOS_CHROME_PATH`.
+  Chrome de escritorio agotó el límite de medición en este equipo. El recorrido
+  dual conserva todas sus aserciones y dispone de 300 s para el ciclo completo.
+- Pint sobre PHP cambiado, diff y enlaces locales revisados; cada código tiene una
+  sola fila. Dependencias restauradas desde lockfiles sin modificarlos.
 
-Retención, resguardo, integridad/detección de alteraciones y alertas quedan como
-seguimiento separado aprobado por el usuario. No cambiar plazos ni habilitar
-borrados automáticos. El plan no habilita SIC productivo ni cambia reglas
-financieras, Bullet, canales de notificaciones o capacidades del core.
+Captura con fixtures sintéticas: [detalle de intento anónimo](../assets/auditoria-actividad/actividad-anonima.png).
 
-## Evidencia histórica del traspaso y cierres confirmados — 04/11/2026
+## Despliegue y pendientes reales
 
-- Sin nuevas pruebas funcionales: esta entrega solo define trabajo y actualiza
-  documentación/Notion. No hubo consultas a proveedores ni escrituras de negocio.
-- [Contexto de sucursal](contexto-sucursal-transversal.md): usuario confirma el
-  04/11/2026 despliegue y QA satisfactorio sin incidencias; tarea Notion completada.
-- [Integridad matemática e históricos](core-crediticio-extensible.md): usuario
-  confirma revisión satisfactoria; cartera de uno o dos clientes sin crédito
-  activo o de prueba, sin tratamiento correctivo requerido. Tarea Notion completada.
-  No es una inspección nueva de BD realizada por el agente ni cierra toda la
-  arquitectura del core.
-- Se conserva el cambio documental previo de Bullet en la Agent Note del core.
-- El usuario autoriza commit y push de esta documentación el 04/11/2026 para
-  retomar desde otra PC. Esta publicación no reanuda la implementación financiera
-  ni de auditoría y no integra cambios en `main`.
+Aplicar `2026_11_05_000000_add_scheduling_context_to_producto_versiones` antes de
+reanudar workers/programador del código nuevo. Añade `programada_por`,
+`programada_team_id` y `programada_sucursal_id`, nullable, sin backfill ni cascadas.
+No requiere seeders, permisos ni variables nuevos. El filesystem no comparte
+transacciones SQL; sus límites y la protección de originales están en ADR 0037.
 
-## Siguiente paso
+Pendientes: integrar PR #72 y registrar por separado despliegue y QA de este
+incremento. Retención, resguardo, integridad/detección de alteraciones y alertas
+siguen como seguimiento separado aprobado; no se cambian políticas ni se habilita
+limpieza automática. SIC productivo, dinero real, reglas financieras, Bullet y
+notificaciones de otro compañero conservan su alcance previo.
 
-Completar reconciliación por acción y regresiones de emisores existentes, resolver
-validación frontend/build/E2E, actualizar contrato/matriz y ADR, publicar la PR y
-completar review medium y barrido acumulado. Conservar los cierres de sucursal e
-integridad ya confirmados. Registrar el estado real de cada validación; ninguna
-prueba ni revisión pendiente puede darse por aprobada por inferencia.
+## Cierres anteriores conservados
+
+El usuario confirmó el 04/11/2026 despliegue y QA satisfactorios de
+[contexto de sucursal](contexto-sucursal-transversal.md). También confirmó revisión
+de [integridad matemática e históricos](core-crediticio-extensible.md), con cartera
+de uno o dos clientes sin crédito activo o de prueba y sin tratamiento correctivo.
+Ambas tareas Notion siguen cerradas; esta entrega no las reabre. Se conserva la
+definición documental anterior de Bullet. `80b2f92` fue el traspaso documental
+publicado, previo a la autorización de reanudación del 05/11/2026.
