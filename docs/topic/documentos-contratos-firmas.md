@@ -32,3 +32,5 @@ aceptación documental y desembolso.
 - [Folios congelados en contrato y tabla](../reference/folios.md).
 
 - [Contexto operativo, lectura institucional y listados en servidor](../reference/contexto-sucursal-consultas.md).
+
+- [Consulta de versiones y editores](../reference/consulta-edicion-historicos.md).

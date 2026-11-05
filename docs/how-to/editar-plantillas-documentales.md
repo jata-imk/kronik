@@ -42,3 +42,10 @@ Para la prueba local del binario real en PowerShell: `$env:DOCUMENT_RENDERER_INT
 ## Alcance diferido
 
 No incluye tablas editables ni tabla dinámica de amortización, DOCX, firma electrónica, orientación horizontal, marcas de agua de imagen o una biblioteca general de documentos. Quill ofrece edición documental básica; no es un procesador Word completo. La amortización depende del modelo de solicitud/crédito y debe coordinarse con Backlog 04.
+
+## Consultar una versión
+
+Selecciona la versión, aunque esté en otra página, y pulsa **Ver versión**.
+Cambia entre Encabezado, Contenido y Pie; consulta las variables y usa
+**Previsualizar PDF** para revisar esa versión guardada. Cerrar consulta conserva
+la selección. Editar solo se ofrece para borradores sin usos y con permiso.

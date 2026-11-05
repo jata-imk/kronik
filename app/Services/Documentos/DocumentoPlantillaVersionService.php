@@ -33,6 +33,9 @@ final class DocumentoPlantillaVersionService
         $this->ensureEditable($version);
 
         return DB::transaction(function () use ($plantilla, $version, $data) {
+            $plantilla = DocumentoPlantilla::query()->lockForUpdate()->findOrFail($plantilla->id);
+            $version = $plantilla->versiones()->lockForUpdate()->findOrFail($version->id);
+            $this->ensureEditable($version);
             $plantilla->update(Arr::only($data, ['clave', 'nombre', 'descripcion']));
             $content = $this->content($plantilla->tipo, $data);
             $version->update([...$content, 'resumen_cambios' => $data['resumen_cambios'] ?? null]);
@@ -48,6 +51,8 @@ final class DocumentoPlantillaVersionService
         $source->refresh();
 
         return DB::transaction(function () use ($plantilla, $source, $userId) {
+            $plantilla = DocumentoPlantilla::query()->lockForUpdate()->findOrFail($plantilla->id);
+            $source = $plantilla->versiones()->lockForUpdate()->findOrFail($source->id);
             $next = ((int) $plantilla->versiones()->lockForUpdate()->max('numero')) + 1;
 
             return $this->createVersion($plantilla, [
@@ -62,17 +67,19 @@ final class DocumentoPlantillaVersionService
 
     public function activate(DocumentoPlantillaVersion $version): DocumentoPlantillaVersion
     {
-        $this->ensureEditable($version);
-        $version->loadMissing('plantilla');
-        $this->content($version->plantilla->tipo, $version->toArray());
-        $this->compiler->validateForType(
-            $version->plantilla->tipo,
-            $version->encabezado_html ?? '',
-            $version->contenido_html,
-            $version->pie_html ?? '',
-        );
-
         return DB::transaction(function () use ($version) {
+            $plantilla = DocumentoPlantilla::query()->lockForUpdate()->findOrFail($version->documento_plantilla_id);
+            $version = $plantilla->versiones()->lockForUpdate()->findOrFail($version->id);
+            $this->ensureEditable($version);
+            $version->loadMissing('plantilla');
+            $this->content($version->plantilla->tipo, $version->toArray());
+            $this->compiler->validateForType(
+                $version->plantilla->tipo,
+                $version->encabezado_html ?? '',
+                $version->contenido_html,
+                $version->pie_html ?? '',
+            );
+
             DocumentoPlantillaVersion::query()
                 ->where('documento_plantilla_id', $version->documento_plantilla_id)
                 ->where('estado', DocumentoPlantillaVersionEstado::Activa)
@@ -91,13 +98,17 @@ final class DocumentoPlantillaVersionService
 
     public function retire(DocumentoPlantillaVersion $version): DocumentoPlantillaVersion
     {
-        if ($version->estado !== DocumentoPlantillaVersionEstado::Activa) {
-            throw ValidationException::withMessages(['version' => 'Solo puede retirarse una versión activa.']);
-        }
+        return DB::transaction(function () use ($version) {
+            $plantilla = DocumentoPlantilla::query()->lockForUpdate()->findOrFail($version->documento_plantilla_id);
+            $version = $plantilla->versiones()->lockForUpdate()->findOrFail($version->id);
+            if ($version->estado !== DocumentoPlantillaVersionEstado::Activa) {
+                throw ValidationException::withMessages(['version' => 'Solo puede retirarse una versión activa.']);
+            }
 
-        $version->update(['estado' => DocumentoPlantillaVersionEstado::Retirada, 'retirada_en' => now()]);
+            $version->update(['estado' => DocumentoPlantillaVersionEstado::Retirada, 'retirada_en' => now()]);
 
-        return $version->refresh();
+            return $version->refresh();
+        });
     }
 
     private function createVersion(DocumentoPlantilla $plantilla, array $data, ?int $userId, int $number): DocumentoPlantillaVersion
