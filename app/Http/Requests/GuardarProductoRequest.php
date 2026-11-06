@@ -22,7 +22,7 @@ class GuardarProductoRequest extends FormRequest
         $producto = $this->route('producto');
 
         return [
-            ...CapacidadesProducto::reglas(),
+            ...CapacidadesProducto::reglas(configuracion: true),
             ...FiscalidadProducto::rules((array) $this->input('version', [])),
             ...PoliticaMora::rules(),
             'clave' => ['required', 'string', 'max:40', Rule::unique('productos_crediticios', 'clave')->ignore($producto instanceof ProductoCrediticio ? $producto->id : null)],
@@ -59,6 +59,7 @@ class GuardarProductoRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
+            CapacidadesProducto::validarCombinacion($validator, (array) $this->input('version', []), 'version.');
             foreach ($this->input('version.periodicidades', []) as $index => $periodicidad) {
                 $minimo = (int) ($periodicidad['plazo_minimo'] ?? 0);
                 $maximo = (int) ($periodicidad['plazo_maximo'] ?? 0);
@@ -105,6 +106,9 @@ class GuardarProductoRequest extends FormRequest
             'version.reglas.metodos_amortizacion.*' => 'método de amortización',
             'version.periodicidades.*.periodicidad' => 'periodicidad',
             'version.reglas.aplicacion_prepago' => 'aplicación del prepago',
+            'version.reglas.base_ordinaria' => 'base ordinaria',
+            'version.reglas.base_moratoria' => 'base moratoria',
+            'version.reglas.politica_interes_bullet' => 'política de intereses Bullet',
             'version.reglas.convencion_interes' => 'convención de días para intereses',
             'version.comisiones.*.modalidad_cobro' => 'modalidad de cobro inicial',
             'version.comisiones.*.evento_cobro' => 'evento que genera la comisión',

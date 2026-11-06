@@ -185,6 +185,16 @@ un solo código por acción, sin crear catálogos paralelos.
 
 ## Acciones sin evento adicional
 
+Bullet, condiciones/editor del 05/11/2026: creación, actualización y copia usan
+los emisores `CreditProductCreated`, `CreditProductUpdated` y
+`CreditProductVersioned` de `ProductoVersionService`, con el mismo actor, sujeto,
+resultado/contexto y metadatos de las filas de Productos. `BulletCondicionesTest`
+verifica emisión, contexto, ausencia de valores contractuales en metadatos,
+actualización repetida sin duplicación, consulta sin escrituras y rechazo
+operativo sin actividad ni persistencia. No hay nuevo evento por seleccionar una
+base o resolver capacidades; no son operaciones financieras. Activación y
+simulación Bullet siguen rechazadas. La cobertura no acredita pagos Bullet.
+
 Bullet, incremento puro del 05/11/2026: amortización y proyección de exigibilidad
 no crean operaciones ni actividad. `BulletAmortizacionTest` verifica cálculo y
 exclusión del catálogo operativo; `CapacidadesCreditoTest` conserva evidencia de

@@ -55,3 +55,5 @@
 - [ADR 0036: alcance de consulta y sucursal operativa](adr-0036-alcance-consulta-sucursal.md).
 
 - [ADR 0037: cobertura técnica de auditoría](adr-0037-cobertura-tecnica-auditoria.md).
+
+- [ADR 0039: condiciones Bullet y habilitación por capacidad](adr-0039-condiciones-bullet-y-habilitacion.md).

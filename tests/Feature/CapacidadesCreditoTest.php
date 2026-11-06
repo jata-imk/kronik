@@ -67,7 +67,7 @@ test('las llamadas internas rechazan capacidades futuras sin persistencia ni act
     $this->assertDatabaseCount('productos_crediticios', 0);
     expect(Activity::count())->toBe($eventos);
 })->with([
-    ['reglas.metodos_amortizacion', ['bullet']],
+    ['reglas.metodos_amortizacion', ['desconocido']],
     ['periodicidades.0.periodicidad', 'catorcenal'],
     ['reglas.aplicacion_prepago', 'otro'],
     ['reglas.convencion_interes', '30e_360'],
@@ -79,7 +79,7 @@ test('Inertia publica capacidades derivadas fuera del snapshot y consultar no em
     \App\Models\ConceptoComision::create(['clave' => 'CONSULTA', 'nombre' => 'Comisión de prueba', 'activo' => true]);
     $eventos = Activity::count();
     $this->actingAs($actor)->get(route('productos-crediticios.index'))->assertInertia(fn (Assert $page) => $page
-        ->has('capacidadesCredito.catalogo.metodos_amortizacion', 2)
+        ->has('capacidadesCredito.catalogo.metodos_amortizacion', 3)
         ->has('conceptosComision', 1)
         ->where('productos.0.versiones.0.capacidades.motor_calculo_version', 2)
         ->where('productos.0.versiones.0.snapshot', null));
@@ -89,7 +89,7 @@ test('Inertia publica capacidades derivadas fuera del snapshot y consultar no em
 test('el rechazo HTTP de un método futuro identifica el campo en español', function () {
     $actor = actingAsSuperAdmin();
     $data = productoPayload();
-    $data['version']['reglas']['metodos_amortizacion'] = ['bullet'];
+    $data['version']['reglas']['metodos_amortizacion'] = ['desconocido'];
     $respuesta = $this->actingAs($actor)->postJson(route('productos-crediticios.store'), $data)->assertUnprocessable();
     $mensaje = $respuesta->json('errors')['version.reglas.metodos_amortizacion.0'][0];
     expect($mensaje)->toContain('método de amortización')->not->toContain('validation.');

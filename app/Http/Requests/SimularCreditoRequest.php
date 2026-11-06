@@ -18,7 +18,7 @@ class SimularCreditoRequest extends FormRequest
             'monto' => ['required', 'decimal:0,4', 'gt:0'],
             'periodicidad' => ['required', Rule::in(\App\Services\Credito\CatalogoCapacidadesCredito::valores('periodicidades'))],
             'plazo' => ['required', 'integer', 'min:1', 'max:600'],
-            'metodo' => ['required', Rule::in(\App\Services\Credito\CatalogoCapacidadesCredito::valores('metodos_amortizacion'))],
+            'metodo' => ['required', Rule::in(\App\Services\Credito\CatalogoCapacidadesCredito::valores('metodos_amortizacion', \App\Enums\VersionMotorCredito::actual()))],
             'fecha' => ['required', 'date'],
             'comisiones_opcionales' => ['sometimes', 'array'],
             'comisiones_opcionales.*' => ['integer', 'distinct'],

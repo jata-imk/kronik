@@ -87,6 +87,7 @@ test("configura fiscalidad explícita y conserva la consulta de la versión", as
 test("recorre catálogo, versiones y simulador de crédito simple", async ({ page }) => {
     await login(page);
     await page.goto("/productos-crediticios");
+    await page.getByRole("button", { name: /^Crédito Simple Esencial CS-ESENCIAL/ }).click();
 
     await expect(page.getByRole("heading", { name: "Productos crediticios" })).toBeVisible();
     await expect(page.getByText("Crédito Simple Esencial", { exact: true }).first()).toBeVisible();
@@ -121,6 +122,7 @@ test("catálogo es utilizable en una pantalla móvil", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await login(page);
     await page.goto("/productos-crediticios");
+    await page.getByRole("button", { name: /^Crédito Simple Esencial CS-ESENCIAL/ }).click();
 
     await expect(page.getByRole("heading", { name: "Productos crediticios" })).toBeVisible();
     await expect(page.getByText("Versiones y vigencia")).toBeVisible();

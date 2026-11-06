@@ -1,5 +1,55 @@
 # Core crediticio extensible
 
+## Condiciones Bullet — 05/11/2026
+
+Continuación autorizada desde PR #73, head `6922fb2`, CI aprobada:
+[run 42149395120](https://github.com/jata-imk/kronik/actions/runs/42149395120).
+Git remoto comprobado; PR #73 abierta y sin integrar. Rama `feat/bullet-condiciones`
+sobre ese head, en el mismo worktree `output/bullet-base/worktree`. Publicado en [PR #74](https://github.com/jata-imk/kronik/pull/74), borrador contra
+`feat/bullet-base`; código `c8a916f`, sin integrar ni desplegar. El resultado
+vigente de CI y su head se consultan en la PR. Los cambios
+locales de auditoría en main permanecen intactos; no se reabre #72 ni la definición
+ya aceptada de las tres bases/disparador de mora.
+
+Implementado: condiciones por versión, copia, catálogo de configuración separado
+del operativo y campos en el editor existente. Bullet exige ambas selecciones
+explícitas (política y base moratoria), solo ordinario sobre saldo insoluto y
+prepago `conservar_fecha`. El editor muestra bases efectivas y limpia/avisa ante
+cambios incompatibles. En esta etapa no mezcla Bullet con métodos anteriores.
+Consulta conserva valores originales, sin aplicar defaults ni mutaciones.
+
+Migración aditiva nullable `2026_11_05_220000_add_bullet_conditions_to_product_rules`,
+sin backfill. No aplicada a BD operativa. Sin seeders, variables o permisos nuevos.
+Activación/programación, simulación y uso permanecen bloqueados en backend y UI
+hasta integrar obligaciones, anticipos y mora. No se habilita diaria/capitalización.
+ADR 0039 y referencias/matriz revisados: los eventos existentes de Productos
+cubren cambios; resolución y consulta no añaden actividad.
+
+Validación de publicación del código `c8a916f`: hook pre-push sin omitir controles,
+734 backend aprobadas, una omitida y 44121 aserciones, más build aprobado.
+Selección final de 31 pruebas/338 aserciones aprobada. Frontend final: 145 pruebas en 55 archivos.
+Build y cinco E2E de Productos, incluido Bullet/escritorio/móvil, aprobados en
+SQLite dedicada; no se usó BD operativa ni proveedores externos. Pint,
+`git diff --check` y 141 enlaces locales en 11 documentos sin roturas.
+
+Review medium final mediante `codex review --uncommitted -c
+model_reasoning_effort=medium -c sandbox_mode=danger-full-access`, base `6922fb2`:
+sin hallazgos accionables; revisor verificó 31/338 y 70/535 backend (selecciones
+superpuestas), más 11 pruebas frontend. Primera revisión sin hallazgos, con
+frontend limitado por permisos del proceso hijo; repetición final con acceso
+local completada. Este incremento no cierra Bullet, por lo que el barrido de
+cierre acumulado de la funcionalidad sigue pendiente.
+
+E2E detectó etiquetas accesibles ausentes y un acceso al simulador desde el
+encabezado; corregidos con regresión. Dos pruebas existentes ahora seleccionan
+su producto sintético por nombre accesible al coexistir el nuevo borrador Bullet.
+Se revisaron diagnósticos de los fallos; últimas cinco aprobadas. Hubo una
+interrupción del entorno y corridas incompletas, que no cuentan como evidencia
+aprobada. Capturas conservadas en `output/bullet-base/capturas-condiciones/`.
+No equivale a integración, despliegue ni cierre de Bullet. Siguiente incremento: obligaciones y mora por
+remanente impagado, preservación de devengado por anticipo, ciclo financiero y
+posterior habilitación probada; luego validación transversal y barrido acumulado.
+
 ## Bullet base — incremento independiente, 05/11/2026
 
 Precisión posterior durante implementación: José confirma obligación vencida
@@ -22,8 +72,8 @@ dirigidas verificadas por el revisor. Sin integración ni despliegue.
 Notion vigente del 05/11 sustituye preguntas históricas: anticipo parcial conserva
 vencimiento e interés devengado no exigible; el saldo menor genera interés desde
 el día siguiente. Caso 12000/120/3120: saldo 8880 y 120 pendientes. Reducción de
-plazo fuera de Bullet base; diaria y capitalización separadas. Solo mora conserva
-decisiones de activación, compatibilidad de bases y validación contractual pendientes.
+plazo fuera de Bullet base; diaria y capitalización separadas. Las tres bases y el disparador de mora están aclarados; quedan implementación
+y compatibilidad operativa probada, sin reabrir consultas.
 
 Implementación local inicial: estrategia Bullet, guardas por estrategia y
 proyección pura de intereses periódicos/al vencimiento con numeradores.

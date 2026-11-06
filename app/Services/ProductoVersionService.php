@@ -52,7 +52,7 @@ class ProductoVersionService
             if (! array_key_exists('politica_mora', $data['version'])) {
                 $data['version']['politica_mora'] = $version->politica_mora;
             }
-            \App\Services\Credito\CapacidadesProducto::validar($data['version'], \App\Enums\VersionMotorCredito::actual(), 'version.');
+            \App\Services\Credito\CapacidadesProducto::validar($data['version'], \App\Enums\VersionMotorCredito::actual(), 'version.', configuracion: true);
             PoliticaMora::validate($data['version']);
             $before = [$this->contenidoVersion($version), $version->vigente_desde?->toDateString()];
             $productBefore = $producto->only(['clave', 'nombre', 'descripcion']);
@@ -91,7 +91,7 @@ class ProductoVersionService
             ...$origen->only(['moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual', 'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica', 'cat_no_aplica_motivo', 'fiscalidad', 'politica_mora']),
             'vigente_desde' => null,
             'periodicidades' => $origen->periodicidades->map->only(['periodicidad', 'plazo_minimo', 'plazo_maximo', 'plazo_predeterminado'])->all(),
-            'reglas' => $origen->reglas->only(['metodos_amortizacion', 'convencion_interes', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago']),
+            'reglas' => $this->reglasVersion($origen),
             'comisiones' => $origen->comisiones->map->only(['concepto_comision_id', 'tipo_importe', 'importe', 'base_calculo', 'momento_cobro', 'evento_cobro', 'modalidad_cobro', 'obligatoria', 'fiscalidad'])->all(),
         ];
 
@@ -173,7 +173,7 @@ class ProductoVersionService
 
     private function crearVersion(ProductoCrediticio $producto, array $data, ?int $userId): ProductoVersion
     {
-        \App\Services\Credito\CapacidadesProducto::validar($data, \App\Enums\VersionMotorCredito::actual(), 'version.');
+        \App\Services\Credito\CapacidadesProducto::validar($data, \App\Enums\VersionMotorCredito::actual(), 'version.', configuracion: true);
         FiscalidadProducto::validate($data);
         PoliticaMora::validate($data);
         $numero = ((int) $producto->versiones()->lockForUpdate()->max('numero')) + 1;
@@ -203,7 +203,13 @@ class ProductoVersionService
 
     private function camposReglas(array $data): array
     {
-        return [...Arr::only($data, ['metodos_amortizacion', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago']), 'convencion_interes' => \App\Enums\ConvencionInteres::desdeReglas($data)->value, 'base_moratoria' => 'capital_vencido', 'ajuste_dia_inhabil' => 'sin_ajuste', 'redondeo' => 'half_up'];
+        return [...Arr::only($data, ['metodos_amortizacion', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago']), 'convencion_interes' => \App\Enums\ConvencionInteres::desdeReglas($data)->value, 'base_ordinaria' => $data['base_ordinaria'] ?? 'saldo_insoluto', 'politica_interes_bullet' => $data['politica_interes_bullet'] ?? null, 'base_moratoria' => $data['base_moratoria'] ?? 'capital_vencido', 'ajuste_dia_inhabil' => 'sin_ajuste', 'redondeo' => 'half_up'];
+    }
+
+    private function reglasVersion(ProductoVersion $version): array
+    {
+        return array_filter($version->reglas?->only(['metodos_amortizacion', 'convencion_interes', 'base_ordinaria', 'base_moratoria', 'politica_interes_bullet', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago', 'ajuste_dia_inhabil', 'redondeo']) ?? [],
+            fn ($valor, $clave) => ! in_array($clave, ['base_ordinaria', 'politica_interes_bullet'], true) || $valor !== null, ARRAY_FILTER_USE_BOTH);
     }
 
     private function asegurarEditable(ProductoVersion $version): void
@@ -229,7 +235,7 @@ class ProductoVersionService
         return json_decode(json_encode($version->only(['numero', 'moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual', 'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica', 'cat_no_aplica_motivo', 'fiscalidad', 'politica_mora']) + [
             'motor_calculo_version' => \App\Enums\VersionMotorCredito::actual()->value,
             'periodicidades' => $version->periodicidades->map->only(['periodicidad', 'plazo_minimo', 'plazo_maximo', 'plazo_predeterminado'])->all(),
-            'reglas' => $version->reglas?->only(['metodos_amortizacion', 'convencion_interes', 'base_moratoria', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago', 'ajuste_dia_inhabil', 'redondeo']),
+            'reglas' => $this->reglasVersion($version),
             'comisiones' => $version->comisiones->map(fn ($c) => [...$c->only(['tipo_importe', 'importe', 'base_calculo', 'momento_cobro', 'evento_cobro', 'modalidad_cobro', 'obligatoria', 'incluye_cat', 'fiscalidad']), 'concepto' => $c->concepto->only(['clave', 'nombre'])])->all(),
         ], JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
     }
