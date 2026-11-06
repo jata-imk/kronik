@@ -14,6 +14,11 @@ Rama `feat/bullet-base`, worktree `output/bullet-base/worktree`, base
 `c30c941`. Se preservan los cambios locales de auditoría en main; #72 está
 completada, desplegada y validada en QA por el usuario. No reabrir esa entrega.
 
+Publicado en [PR #73](https://github.com/jata-imk/kronik/pull/73), código
+`3d5a74e`. [CI del código aprobada](https://github.com/jata-imk/kronik/actions/runs/42147415145).
+Review medium del commit publicado sin hallazgos; 41 pruebas/398 aserciones
+dirigidas verificadas por el revisor. Sin integración ni despliegue.
+
 Notion vigente del 05/11 sustituye preguntas históricas: anticipo parcial conserva
 vencimiento e interés devengado no exigible; el saldo menor genera interés desde
 el día siguiente. Caso 12000/120/3120: saldo 8880 y 120 pendientes. Reducción de
