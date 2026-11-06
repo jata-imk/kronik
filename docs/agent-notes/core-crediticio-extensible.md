@@ -1,5 +1,33 @@
 # Core crediticio extensible
 
+## Rama y PR únicas — 05/11/2026
+
+El usuario pide publicar los incrementos e integrarlos en main, o mantenerlos
+concentrados en una misma rama y PR. Para continuar Bullet se adopta una única
+rama `feat/bullet-base` y [PR #73](https://github.com/jata-imk/kronik/pull/73),
+contra main. Los siguientes incrementos se publicarán en esta PR; no abrir una
+cadena adicional por cada incremento. La integración en main se realizará con
+pruebas/CI, review medium y barrido acumulado aprobados, sin pedir de nuevo la
+autorización de publicación/integración ya expresada por el usuario.
+
+[PR #74](https://github.com/jata-imk/kronik/pull/74) integrada en esa rama mediante
+`ea68771`, conservando historial. El árbol del merge es idéntico al head aprobado
+`324944d` (`5cbd616f35bd6bb3d800db7cf34f142bfac92fd7`): se mantienen las pruebas
+y reviews ya registradas, sin presentarlas como ejecuciones nuevas. La CI de
+`324944d` fue comprobada aprobada antes de integrar. El estado vigente de la CI
+de la rama unificada se consulta en PR #73. El worktree de trabajo sigue en
+`output/bullet-base/worktree`, ahora sobre `feat/bullet-base`.
+
+No se ha integrado Bullet en main ni desplegado. Los cambios locales de auditoría
+de main permanecen intactos. Las secciones inferiores conservan el historial de
+las entregas; su organización anterior en dos PR queda sustituida por esta.
+
+Próximo incremento: obligaciones de interés/capital y mora disparada por obligación
+vencida impagada con las tres bases ya aclaradas; después anticipo que conserve
+el devengado no exigible, liquidación/reverso y habilitación probada del ciclo.
+Diaria y capitalización siguen como ampliaciones separadas. No reabrir definiciones
+funcionales aceptadas ni cerrar Bullet por esta consolidación.
+
 ## Condiciones Bullet — 05/11/2026
 
 Continuación autorizada desde PR #73, head `6922fb2`, CI aprobada:

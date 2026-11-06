@@ -1,6 +1,6 @@
 # Agent Notes
 
-- [Core crediticio extensible y condiciones Bullet](core-crediticio-extensible.md)
+- [Core crediticio y Bullet: rama y PR únicas](core-crediticio-extensible.md)
 - [Auditoría y actividad: cobertura técnica y validaciones](auditoria-actividad.md)
 
 - [Equipo: acciones de integrantes](equipo-acciones-integrantes.md)
