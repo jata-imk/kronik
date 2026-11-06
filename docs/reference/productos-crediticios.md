@@ -35,6 +35,40 @@ los acumuladores y los límites están en [versión del motor](core-crediticio.m
 - El plazo es número de pagos. Las fechas avanzan +7 días, +15 días o por ancla mensual. El fin de mes permanece como fin de mes; un día inexistente se ajusta solo ese mes y luego recupera el ancla. V1 no ajusta días inhábiles.
 - La mora se configura como tasa anual y se calcula sobre capital vencido cuando el módulo de cobranza la aplique.
 
+## Preparar condiciones Bullet
+
+Bullet puede prepararse como borrador en el editor existente; activación,
+programación, simulación y registro de uso siguen rechazados hasta completar su
+ciclo financiero. El aviso se muestra en la versión y sus acciones se deshabilitan.
+No está disponible para nuevas Solicitudes. [ADR 0039](../explanation/adr-0039-condiciones-bullet-y-habilitacion.md).
+
+| Condición de reglas | Valores compatibles para Bullet |
+| --- | --- |
+| `metodos_amortizacion` | Solo `bullet` en esta etapa; sin mezcla con métodos actuales |
+| `politica_interes_bullet` | `periodicos` o `al_vencimiento`, selección explícita |
+| `base_ordinaria` | `saldo_insoluto`; no se habilita Flat |
+| `base_moratoria` | `saldo_insoluto`, `capital_inicial`, `obligacion_vencida`; selección explícita |
+| `aplicacion_prepago` | `conservar_fecha`, sin reducción de plazo |
+
+La frecuencia y el número de periodos definen duración/vencimiento del capital.
+En periódicos también determinan pagos de interés; al vencimiento no son pagos
+intermedios. Se conserva el calendario actual. Las bases de mora se preparan con
+el disparador ya aprobado por obligación vencida impagada; su cálculo sigue
+pendiente. «Usar base ordinaria para mora» copia el valor efectivo cuando es
+compatible, sin almacenar una referencia a la otra base.
+
+Cambiar método limpia condiciones incompatibles y avisa; no selecciona base
+moratoria automáticamente. El backend rechaza incompatibilidades incluso con
+payload manipulado. Guardar, actualizar y copiar conservan condiciones por
+versión y usan los eventos auditables existentes. La consulta presenta valores
+originales o «Sin registrar», sin rellenar condiciones ausentes.
+
+Migración `2026_11_05_220000_add_bullet_conditions_to_product_rules`: dos columnas
+nullable, sin backfill ni cambios a snapshots/hashes. Solo ejecutada en bases de
+prueba aisladas para esta entrega. Nuevas activaciones de métodos actuales
+explicitan la base ordinaria cuando fue guardada; ausencia histórica se interpreta
+sin reescribir evidencia. No hay seeders ni variables nuevas.
+
 ## Disposición y comisiones
 
 La fecha de disposición forma parte del escenario; el formulario inicia con la fecha de la financiera. La tabla incluye una fila cero para distinguir:

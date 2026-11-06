@@ -37,3 +37,5 @@ consultan también desde el tema de fiscalidad.
 - [Contexto operativo, lectura institucional y listados en servidor](../reference/contexto-sucursal-consultas.md).
 
 - [Consulta completa de versiones](../reference/consulta-edicion-historicos.md).
+
+- [ADR 0039: preparación y habilitación de condiciones Bullet](../explanation/adr-0039-condiciones-bullet-y-habilitacion.md).

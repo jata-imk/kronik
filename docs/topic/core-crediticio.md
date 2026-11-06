@@ -26,3 +26,5 @@ Los documentos distinguen diseño aprobado de capacidades implementadas.
 - [Auditoría, reportes y contabilidad](auditoria-reportes.md).
 
 - [ADR 0034: estrategias compartidas de amortización](../explanation/adr-0034-amortizacion-reutilizable.md).
+
+- [ADR 0039: condiciones versionadas y editor Bullet](../explanation/adr-0039-condiciones-bullet-y-habilitacion.md).

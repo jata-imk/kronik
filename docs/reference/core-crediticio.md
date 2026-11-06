@@ -9,11 +9,19 @@ motor 2, sin ampliar compatibilidad histórica. Las estrategias actuales mantien
 sus guardas de capital positivo y su serialización.
 
 Este incremento es interno: Bullet sigue fuera del catálogo operativo; todavía
-no integra obligaciones, anticipo, persistencia ni UI. Las decisiones y los casos
+no integra obligaciones, anticipo ni mora. El siguiente incremento prepara
+[condiciones y editor](productos-crediticios.md#preparar-condiciones-bullet) sin
+habilitar operaciones. Las decisiones y los casos
 vigentes del 05/11 están en [Bullet](bullet-casos-definicion.md).
-Se conservan vencimiento e interés no exigible en el anticipo aprobado; mora sigue
-pendiente de compatibilidad y activación explícitas. La auditoría técnica #72 ya
+Se conservan vencimiento e interés no exigible en el anticipo aprobado; el disparador de mora por obligación vencida impagada y las tres bases están
+aclarados; su implementación operativa permanece pendiente. La auditoría técnica #72 ya
 está completada y validada en QA; cada incremento mantiene su propia cobertura.
+
+La configuración usa `paraMotor(..., configuracion: true)` y combinaciones
+explícitas; no habilita el catálogo operativo de Solicitudes. Validar guardado
+usa ese contexto, mientras congelar y simular conservan validación operativa.
+Nulos añadidos por migración no rellenan snapshots históricos. Ver
+[ADR 0039](../explanation/adr-0039-condiciones-bullet-y-habilitacion.md).
 
 ## Catálogo de capacidades
 
@@ -205,7 +213,7 @@ actuales hasta contar con nuevas convenciones aprobadas y probadas.
 
 | Capacidad | Definición necesaria |
 | --- | --- |
-| Bullet | Integración de obligaciones/anticipo/UI; definición pendiente de activación y combinaciones de mora, con validación contractual |
+| Bullet | Integración de obligaciones/anticipo/mora y habilitación operativa; condiciones/editor preparados, validación transversal pendiente |
 | Revolvente | Mínimo, disponibilidad, reservas, distribución, corte/fecha límite y límites por disposición |
 | Nómina | Reconocimiento entre descuento/recepción, remesa parcial/no recibida, reversos y bajas |
 | Escalabilidad | Medición en entorno identificado con 10 mil créditos/líneas activos y disposiciones asociadas |

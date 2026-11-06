@@ -8,8 +8,8 @@
 
 El cálculo reutilizable presupone capital positivo en todos los periodos.
 Bullet requiere capital intermedio cero y dos políticas de interés. El catálogo
-operativo todavía no puede ofrecerlo: la mora de interés vencido conserva
-decisiones pendientes en Notion. No se cambia la historia para admitirlo.
+operativo todavía no puede ofrecerlo: falta integrar pagos, anticipos y mora.
+Las bases y el disparador de mora ya fueron aclarados en Notion. No se cambia la historia para admitirlo.
 
 ## Decisión
 
@@ -44,3 +44,6 @@ implementado anticipo, mora, persistencia o editor.
 BulletAmortizacionTest cubre ambas políticas, redondeo, calendarios y exclusión
 operativa; AmortizacionReutilizableTest y AnticiposCaracterizacionTest preservan
 las cifras anteriores. Pruebas no equivalen a despliegue ni QA operativo.
+
+La preparación posterior de condiciones/editor se documenta en
+[ADR 0039](adr-0039-condiciones-bullet-y-habilitacion.md), manteniendo bloqueo operativo.

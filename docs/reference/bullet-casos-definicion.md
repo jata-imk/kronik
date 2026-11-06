@@ -80,9 +80,11 @@ amortización, devengo, exigibilidad y mora. Preservar numeradores y cargo origi
 al regenerar: no perder interés, duplicarlo ni contabilizarlo de nuevo.
 Para al vencimiento, redondear el acumulado y conservar intervalos sin pago para CAT.
 
-El primer incremento contiene estrategia y proyección pura de ambas políticas;
-no ofrece Bullet en el catálogo operativo. Pagos, anticipo conservando devengado,
-datos/UI y las reglas de mora confirmadas necesitan integración y pruebas.
+El primer incremento contiene estrategia y proyección pura de ambas políticas.
+El segundo prepara condiciones/capacidades/editor en borradores según el
+[contrato de Productos](productos-crediticios.md#preparar-condiciones-bullet), sin
+ofrecer Bullet operativo. Pagos, anticipo conservando devengado y las reglas de
+mora confirmadas necesitan integración y pruebas.
 
 Regresión requerida: calendarios, bisiestos, centavos, métodos actuales,
 históricos sin normalización, borradores, payload incompatible, consulta sin
