@@ -126,8 +126,8 @@ un solo código por acción, sin crear catálogos paralelos.
 | `solicitudes` | Copia firmada recibida | `solicitud.signature_received` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudFirmaService::recibir | AuditDomainCoverageTest; SolicitudesTest |
 | `solicitudes` | Firma revisada | `solicitud.signature_reviewed` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudFirmaService::revisar | AuditDomainCoverageTest; SolicitudesTest |
 | `creditos` | Desembolso QA registrado | `credito.disbursed` | U | Solicitud; crédito en related | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | DesembolsoService::registrar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest |
-| `creditos` | Pago QA registrado | `credito.payment_recorded` | U | Crédito | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | PagoService::registrar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest |
-| `creditos` | Pago QA revertido | `credito.payment_reversed` | U | Crédito | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | PagoService::reversar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest |
+| `creditos` | Pago QA registrado | `credito.payment_recorded` | U | Crédito | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | PagoService::registrar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest; BulletPagosTest (evidencia sintética) |
+| `creditos` | Pago QA revertido | `credito.payment_reversed` | U | Crédito | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | PagoService::reversar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest; BulletPagosTest (evidencia sintética) |
 | `Autenticación` | Autenticación de dos factores completada | `login.2fa_completed` | U | Usuario | Autenticación completada | C | result | Q | Implementado; validar entrega en Agent Note | TwoFactorSessionController::store | AuditCoverageTest |
 | `Perfil` | Perfil de usuario actualizado | `user.profile.updated` | U | Usuario | Cambio aplicado | C | changed_fields | Q | Implementado; validar entrega en Agent Note | UpdateUserProfileInformation::update | AuditCoverageTest |
 | `menubar-items` | Elemento de menú creado | `menubar_item.created` | U | Elemento de menú | Cambio aplicado | C | changed_fields, result | Q | Implementado; validar entrega en Agent Note | MenubarItemService::guardar | Admin/ConsultaEmpresaMenuTest |
@@ -199,8 +199,14 @@ Bullet, incremento puro del 05/11/2026: amortización y proyección de exigibili
 no crean operaciones ni actividad. `BulletAmortizacionTest` verifica cálculo y
 exclusión del catálogo operativo; `CapacidadesCreditoTest` conserva evidencia de
 rechazo HTTP sin creación. Los eventos de negocio mantienen sus emisores actuales.
-Pagos/anticipo y su auditoría Bullet permanecen pendientes de integración; no
-se acredita esa cobertura por la estrategia pura.
+El incremento posterior de obligaciones/mora extiende el cálculo puro sin
+eventos adicionales: consultar y preparar distribuciones no crean recursos.
+`BulletPagosTest` verifica con contratos sintéticos en BD aislada los emisores
+reales de `credito.payment_recorded`/`credito.payment_reversed` de las filas de
+Créditos: actor, sujeto, equipo/sucursal, reintento sin duplicación, cifrado y
+ausencia de referencia, motivo, importes y condiciones en actividad. No añade
+metadatos ni duplica eventos. Anticipo/liquidación Bullet y habilitación integral
+siguen pendientes; esta prueba no acredita originación ni concurrencia financiera.
 
 | Superficie | Decisión y justificación | Evidencia |
 | --- | --- | --- |

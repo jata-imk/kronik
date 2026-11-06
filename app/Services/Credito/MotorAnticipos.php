@@ -17,6 +17,10 @@ final class MotorAnticipos
 
     public function calcular(array $antes, array $tabla, string $tipo, ?string $importe, array $opcionales = []): array
     {
+        if (($antes['metodo'] ?? null) === 'bullet' || ($tabla['metodo'] ?? null) === 'bullet'
+            || in_array('bullet', $antes['producto']['reglas']['metodos_amortizacion'] ?? [], true)) {
+            $this->error('Los anticipos y la liquidación Bullet estarán disponibles al completar la preservación del interés devengado y su calendario.');
+        }
         VersionMotorCredito::desdeSnapshot($antes['producto'])->validarConvencion(ConvencionInteres::desdeProducto($antes['producto']));
         if (ConvencionInteres::desdeProducto($antes['producto']) !== ConvencionInteres::desdeCronograma($tabla)) {
             $this->error('El producto y el calendario conservan convenciones de días diferentes. Solicita revisión de la evidencia.');

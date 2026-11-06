@@ -1,5 +1,59 @@
 # Core crediticio extensible
 
+## Obligaciones y mora Bullet — 05/11/2026
+
+Continuación en `output/bullet-base/worktree`, rama `feat/bullet-base` y
+[PR #73](https://github.com/jata-imk/kronik/pull/73). Base de este incremento
+`ccea858`; Git limpio/sincronizado y [CI de entrada aprobada](https://github.com/jata-imk/kronik/actions/runs/42161579303).
+Notion leído: precisión inicial del 05/11 prevalece sobre preguntas históricas.
+No se reabren disparador ni tres bases moratorias. Los cuatro archivos locales
+de auditoría en main conservan sus cambios; no se reabre #72.
+
+Implementado internamente: obligación periódica/final de interés, atraso de
+interés con capital futuro, tres bases sin duplicar las globales, gracia A/B y
+ambos/sustitución. Se preservan numeradores y base diaria anterior/posterior al
+pago; la sustitución retroactiva retira ordinario provisional del cargo y las
+bases diferidas correctos, incluso si la gracia cruza otro vencimiento.
+El recorrido histórico permanece separado por método exacto. ADR 0040 y contrato
+del core documentan la evidencia nueva del estado, sin tablas nuevas.
+
+`BulletPagosTest` usa evidencia sintética inyectada solo en BD de pruebas para
+verificar persistencia cifrada, previa/consulta sin escritura, reintento y reverso
+compensatorio con actor/sujeto/equipo/sucursal. Conserva los emisores reales de
+pago y reverso, sin eventos adicionales por cálculo ni metadatos sensibles.
+Matriz actualizada. No acredita originación Bullet ni concurrencia financiera.
+
+Validación final: `php artisan test --compact`, 794 aprobadas, una omitida y
+44565 aserciones; build aprobado. E2E `solicitudes-dual.spec.js` aprobado en
+SQLite dedicada: contrato/PDF, desembolso, pago/reverso, anticipo, liquidación y
+reapertura de los métodos existentes. No se usó BD operativa ni proveedores.
+Selección de regresión previa 213/1932 y selección final 60/444 (superpuestas,
+no sumar). Pint de cuatro archivos y diff-check aprobados; siete documentos y
+87 enlaces locales sin roturas, UTF-8/LF. Advertencias de chunks/recursos del
+build ya existentes; sin cambios de dependencias ni frontend.
+
+Una selección inicial omitió el archivo que define `productoPayload`, helper
+existente: repetición incluyendo Productos aprobada. El fixture sintético de
+integración necesitaba formalización después de revisar firma; corregido antes
+de las tres pruebas aprobadas. La primera revisión
+medium encontró P2: el residuo exclusivo de impuesto podía activar mora global
+y sustitución. Corregido el disparador a capital/interés pendientes; seis casos
+de centavos prueban las tres bases con ambos/sustitución. Selección final de
+60 pruebas/444 aserciones aprobada. Review medium final mediante `codex review
+--uncommitted -c model_reasoning_effort=medium -c sandbox_mode=danger-full-access`,
+base `ccea858`: sin hallazgos accionables; verificó las 57 unitarias y tres de
+integración (selección superpuesta). Código y CI vigentes en PR #73; publicación
+con hook pre-push completo, sin omitir controles. No corresponde aún el barrido
+de cierre integral de Bullet.
+
+Sin nuevas migraciones, seeders, variables, permisos o UI en este incremento.
+La migración de condiciones ya incluida en la PR conserva su propio alcance.
+Activación, simulación y originación siguen bloqueadas; `MotorAnticipos` rechaza
+Bullet expresamente. Siguiente incremento: anticipo que conserve cargo,
+numerador, contabilización y vencimiento del devengado no exigible; liquidación,
+reverso y posterior habilitación probada. Diaria/capitalización siguen separadas.
+Sin integración en main, despliegue ni cierre integral de Bullet.
+
 ## Rama y PR únicas — 05/11/2026
 
 El usuario pide publicar los incrementos e integrarlos en main, o mantenerlos
@@ -22,8 +76,7 @@ No se ha integrado Bullet en main ni desplegado. Los cambios locales de auditor�
 de main permanecen intactos. Las secciones inferiores conservan el historial de
 las entregas; su organización anterior en dos PR queda sustituida por esta.
 
-Próximo incremento: obligaciones de interés/capital y mora disparada por obligación
-vencida impagada con las tres bases ya aclaradas; después anticipo que conserve
+El incremento de obligaciones/mora se registra arriba. Después sigue anticipo que conserve
 el devengado no exigible, liquidación/reverso y habilitación probada del ciclo.
 Diaria y capitalización siguen como ampliaciones separadas. No reabrir definiciones
 funcionales aceptadas ni cerrar Bullet por esta consolidación.

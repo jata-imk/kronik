@@ -83,8 +83,26 @@ Para al vencimiento, redondear el acumulado y conservar intervalos sin pago para
 El primer incremento contiene estrategia y proyección pura de ambas políticas.
 El segundo prepara condiciones/capacidades/editor en borradores según el
 [contrato de Productos](productos-crediticios.md#preparar-condiciones-bullet), sin
-ofrecer Bullet operativo. Pagos, anticipo conservando devengado y las reglas de
-mora confirmadas necesitan integración y pruebas.
+ofrecer Bullet operativo. El tercero integra obligaciones y mora internamente
+en `MotorPagos`, con persistencia/reverso probados sobre evidencia sintética.
+Anticipo conservando devengado, liquidación y habilitación del ciclo siguen
+pendientes. Ver [contrato de obligaciones y mora](core-crediticio.md#obligaciones-y-mora-bullet).
+
+Oráculos adicionales, tasa moratoria sintética de 36 % y sin impuestos/comisiones:
+
+- Pagados 100 de los 248 el 01/02, al 02/02 quedan 148 vencidos: mora 0.15 sobre
+  obligación o 12.00 sobre saldo insoluto/capital inicial. Capital vencido cero.
+- Sin pagos, al comenzar el 02/03 la base por obligación es 12472, con incremento
+  moratorio de 12.47; las bases globales generan 12.00 una sola vez ese día.
+- Gracia de tres días, sin pago de enero, al 05/02 sobre saldo insoluto: efectiva
+  genera 12.00 moratorios, retroactiva 48.00. El ordinario de febrero es 32.00
+  con ambos; con sustitución, 24.00 en efectiva y cero en retroactiva. Los 248
+  originales siguen exigibles.
+- Retroactiva con ambos: pago de 100 el 03/02 conserva dos días sobre 248 y dos
+  sobre 148 al 05/02: mora 0.79 sobre obligación. No recalcular todo desde 148.
+
+Estos oráculos acreditan el alcance de las pruebas internas; no sustituyen la
+validación transversal ni habilitan operación por sí solos.
 
 Regresión requerida: calendarios, bisiestos, centavos, métodos actuales,
 históricos sin normalización, borradores, payload incompatible, consulta sin

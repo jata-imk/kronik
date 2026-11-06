@@ -1,6 +1,6 @@
 # Core crediticio: responsabilidades y contratos de evolución
 
-## Bullet: incremento puro y límites vigentes
+## Bullet: cálculo, condiciones y obligaciones
 
 La estrategia Bullet distribuye cero capital intermedio y liquida principal
 al final. `ExigibilidadInteresBullet` proyecta intereses periódicos o al vencimiento
@@ -8,13 +8,13 @@ por separado; conserva numeradores y los intervalos sin pago para CAT. Requiere
 motor 2, sin ampliar compatibilidad histórica. Las estrategias actuales mantienen
 sus guardas de capital positivo y su serialización.
 
-Este incremento es interno: Bullet sigue fuera del catálogo operativo; todavía
-no integra obligaciones, anticipo ni mora. El siguiente incremento prepara
-[condiciones y editor](productos-crediticios.md#preparar-condiciones-bullet) sin
-habilitar operaciones. Las decisiones y los casos
+Bullet sigue fuera del catálogo operativo. Están preparados el cálculo puro,
+[condiciones y editor](productos-crediticios.md#preparar-condiciones-bullet) y
+las obligaciones/mora del motor de pagos. Faltan anticipo que preserve devengado,
+liquidación y habilitación probada del ciclo. Las decisiones y los casos
 vigentes del 05/11 están en [Bullet](bullet-casos-definicion.md).
 Se conservan vencimiento e interés no exigible en el anticipo aprobado; el disparador de mora por obligación vencida impagada y las tres bases están
-aclarados; su implementación operativa permanece pendiente. La auditoría técnica #72 ya
+aclarados e implementados internamente; la habilitación operativa permanece pendiente. La auditoría técnica #72 ya
 está completada y validada en QA; cada incremento mantiene su propia cobertura.
 
 La configuración usa `paraMotor(..., configuracion: true)` y combinaciones
@@ -22,6 +22,53 @@ explícitas; no habilita el catálogo operativo de Solicitudes. Validar guardado
 usa ese contexto, mientras congelar y simular conservan validación operativa.
 Nulos añadidos por migración no rellenan snapshots históricos. Ver
 [ADR 0039](../explanation/adr-0039-condiciones-bullet-y-habilitacion.md).
+
+### Obligaciones y mora Bullet
+
+`MotorPagos` identifica Bullet por el método exacto del cronograma y exige
+motor 2, Act/360 y condiciones explícitas compatibles. Conserva capital inicial,
+método y evidencia diaria de gracia en el estado, sin agregar tablas ni cambiar
+el algoritmo de los contratos anteriores. La ausencia de esos datos o de un
+numerador ya utilizado se rechaza; no se reconstruyen desde importes redondeados.
+
+El ordinario se acumula sobre todo el capital insoluto en el cargo de su fecha
+exigible: siguiente vencimiento periódico o vencimiento final. Los importes
+proyectados de la tabla no se convierten en deuda. Hasta el vencimiento el cargo
+no admite pagos ordinarios. Pagar interés no amortiza capital.
+
+Desde el día posterior al vencimiento, un remanente de capital o interés ordinario
+activa atraso. `capital_vencido` conserva su significado; `interes_vencido`,
+`obligacion_vencida` y `dias_atraso` distinguen interés impagado con capital futuro.
+La gracia afecta el cargo moratorio, sin ocultar los días de atraso.
+
+| Base moratoria | Importe diario antes del nuevo devengo |
+| --- | --- |
+| `obligacion_vencida` | Suma de capital e interés ordinario vencidos impagados de las obligaciones elegibles |
+| `saldo_insoluto` | Principal pendiente total, una sola vez si hay alguna obligación elegible |
+| `capital_inicial` | Principal inicial conservado, una sola vez si hay alguna obligación elegible |
+
+Comisiones, impuestos y moratorio se mantienen separados y no engrosan esas
+bases. Los impuestos siguen la fiscalidad y distribución proporcional de cada
+concepto. Sin remanente de capital/interés vencido no se genera nueva mora;
+el moratorio pendiente por sí solo no vuelve a dispararla. Un residuo exclusivo
+de impuesto sigue siendo exigible, sin activar mora ni suspender el ordinario.
+
+Gracia efectiva cobra desde el primer día posterior a la gracia. Retroactiva
+conserva la base real de cada día y la cobra al incumplirse la gracia, descartando
+las obligaciones cubiertas durante ella. Las bases globales no se repiten por
+varias cuotas. Con `ambos` continúa el ordinario; con `sustituye` se suspende el
+ordinario del principal desde la activación. La sustitución retroactiva retira
+solo los numeradores ordinarios de los días de gracia, del cargo donde se
+generaron; conserva el interés que ya originó el atraso. Si la gracia cruza otro
+vencimiento, también retira ese ordinario provisional de las bases diferidas.
+
+Se mantiene el límite B+sustitución: cubrir completamente la obligación afectada
+durante gracia; no devolver una distribución parcial que luego requiera compensar
+interés pagado. `MotorAnticipos` rechaza expresamente Bullet mientras no preserve
+devengo y calendario. Activación, simulación y originación siguen bloqueadas.
+La persistencia de pagos/reversos se verifica con evidencia sintética inyectada
+en BD de pruebas; no acredita originación Bullet ni concurrencia financiera.
+Decisión y consecuencias en [ADR 0040](../explanation/adr-0040-obligaciones-mora-bullet.md).
 
 ## Catálogo de capacidades
 
