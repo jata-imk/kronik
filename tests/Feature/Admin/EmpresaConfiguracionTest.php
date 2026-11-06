@@ -141,6 +141,11 @@ test('super admin can update singleton company configuration without exposing ap
         'description' => 'Configuracion de empresa actualizada',
     ]);
 
+    $this->travel(1)->minutes();
+    $this->put(route('admin.configuracion-empresa.update'), $payload)->assertSessionHasNoErrors();
+    assertDomainAudit(['empresa.updated'], $user, $user->current_sucursal_id, ['secret-api-key', '002010077777777771']);
+    expect(\App\Models\Activity::where('event', 'empresa.updated')->count())->toBe(1);
+
     $this->actingAs($user)
         ->get(route('admin.configuracion-empresa.index'))
         ->assertOk()

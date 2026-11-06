@@ -24,7 +24,8 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(\Laravel\Fortify\Http\Controllers\TwoFactorAuthenticatedSessionController::class,
+            \App\Http\Controllers\TwoFactorSessionController::class);
     }
 
     /**
@@ -40,14 +41,31 @@ class FortifyServiceProvider extends ServiceProvider
         ResetPassword::toMailUsing(fn (User $user, string $token) => app(AccountMailFactory::class)->passwordReset($user, $token));
         VerifyEmail::toMailUsing(fn (User $user, string $url) => app(AccountMailFactory::class)->verification($user, $url));
 
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Failed::class,
+            fn () => app(\App\Services\AccessAuditService::class)->anonymous(\App\Enums\ActivityEvent::LoginFailed));
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Lockout::class,
+            fn () => app(\App\Services\AccessAuditService::class)->anonymous(\App\Enums\ActivityEvent::LoginThrottled));
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Logout::class, function ($event) {
+            if ($event->user && request()->routeIs('logout')) {
+                app(\App\Services\ActivityLogService::class)->log(\App\Enums\ActivityEvent::Logout, 'Sesión cerrada', $event->user,
+                    ['result' => 'completed'], $event->user, $event->user->current_team_id, $event->user->current_sucursal_id, inheritActorContext: false);
+            }
+        });
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 
-            return Limit::perMinute(5)->by($throttleKey);
-        });
+            return Limit::perMinute(5)->by($throttleKey)->response(function ($request, $headers) {
+                app(\App\Services\AccessAuditService::class)->anonymous(\App\Enums\ActivityEvent::LoginThrottled);
 
+                return response('Ha realizado demasiados intentos. Espere un minuto e inténtelo nuevamente.', 429, $headers);
+            });
+        });
         RateLimiter::for('two-factor', function (Request $request) {
-            return Limit::perMinute(5)->by($request->session()->get('login.id'));
+            return Limit::perMinute(5)->by($request->session()->get('login.id'))->response(function ($request, $headers) {
+                app(\App\Services\AccessAuditService::class)->anonymous(\App\Enums\ActivityEvent::TwoFactorThrottled);
+
+                return response('Ha realizado demasiados intentos. Espere un minuto e inténtelo nuevamente.', 429, $headers);
+            });
         });
     }
 }

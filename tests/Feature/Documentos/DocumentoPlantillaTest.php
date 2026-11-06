@@ -60,6 +60,42 @@ test('activar congela contenido y duplicar conserva el historial', function () {
         ->and($template->versiones()->latest('numero')->first()->estado)->toBe(DocumentoPlantillaVersionEstado::Borrador);
 });
 
+test('ciclo de plantilla audita cada acción y conserva cambios efectivos sin contenido', function () {
+    $actor = actingAsSuperAdmin();
+    $this->actingAs($actor);
+    $service = app(DocumentoPlantillaVersionService::class);
+    $template = $service->create(plantillaDocumentoPayload(), $actor->id);
+    $first = $template->versiones()->sole();
+    $data = plantillaDocumentoPayload(['nombre' => 'NOMBRE-RESERVADO', 'contenido_html' => '<p>CONTENIDO-RESERVADO</p>']);
+    $service->update($template, $first, $data);
+    $this->travel(1)->minutes();
+    $service->update($template, $first, $data);
+    expect(\App\Models\Activity::where('event', 'documento_plantilla.updated')->count())->toBe(1);
+    $service->activate($first);
+    $second = $service->duplicate($template, $first, $actor->id);
+    $service->activate($second);
+    $service->retire($second);
+    assertDomainAudit(['documento_plantilla.created', 'documento_plantilla.updated', 'documento_plantilla.versioned',
+        'documento_plantilla.activated', 'documento_plantilla.retired'], $actor, $actor->current_sucursal_id,
+        ['NOMBRE-RESERVADO', 'CONTENIDO-RESERVADO', '{{cliente.nombre_completo}}']);
+    expect(\App\Models\Activity::where('event', 'documento_plantilla.retired')->count())->toBe(2);
+});
+
+test('auditoría de plantilla revierte activación y retiro automático juntos', function () {
+    $actor = actingAsSuperAdmin();
+    $this->actingAs($actor);
+    $service = app(DocumentoPlantillaVersionService::class);
+    $template = $service->create(plantillaDocumentoPayload(), $actor->id);
+    $first = $service->activate($template->versiones()->sole());
+    $second = $service->duplicate($template, $first, $actor->id);
+    $before = \App\Models\Activity::count();
+    $this->mock(\App\Services\ActivityLogService::class)->shouldReceive('log')->andThrow(new RuntimeException('Auditoría no disponible'));
+    expect(fn () => $service->activate($second))->toThrow(RuntimeException::class)
+        ->and($first->fresh()->estado)->toBe(DocumentoPlantillaVersionEstado::Activa)
+        ->and($second->fresh()->estado)->toBe(DocumentoPlantillaVersionEstado::Borrador)
+        ->and(\App\Models\Activity::count())->toBe($before);
+});
+
 test('usuario sin permiso no administra plantillas y la validación es legible', function () {
     $user = User::factory()->withPersonalTeam()->create();
     $this->actingAs($user)->get(route('plantillas-documentos.index'))->assertForbidden();
@@ -110,6 +146,8 @@ test('generación es idempotente trazable y produce un PDF privado', function ()
         ->and($document->version->id)->toBe($version->id);
     Storage::disk('local')->assertExists($document->path);
     $response = $this->actingAs($user)->get(route('documentos-generados.view', $document))->assertOk();
+    $this->get(route('documentos-generados.download', $document))->assertOk();
+    assertDomainAudit(['documento.viewed', 'documento.downloaded'], $user, $document->sucursal_id, ['María Prueba', 'deterministic test']);
     expect($response->headers->get('Cache-Control'))->toContain('private')->toContain('no-store');
     $this->actingAs($user)
         ->getJson(route('documentos-generados.status', $document))
@@ -202,6 +240,103 @@ test('visor rechaza MIME activo y recorridos de ruta', function () {
     $this->actingAs($user)->get(route('documentos-generados.view', $document))->assertStatus(415);
     $document->update(['path' => '../secreto.pdf']);
     $this->actingAs($user)->get(route('documentos-generados.view', $document))->assertNotFound();
+});
+
+test('solicitud PDF y auditoría se revierten juntas sin despachar trabajo', function () {
+    Queue::fake();
+    $user = actingAsSuperAdmin();
+    activarEmpresaPrueba();
+    $client = Cliente::factory()->create();
+    $service = app(DocumentoPlantillaVersionService::class);
+    $template = $service->create(plantillaDocumentoPayload(), $user->id);
+    $version = $service->activate($template->versiones()->sole());
+    $before = \App\Models\Activity::count();
+    $this->mock(\App\Services\ActivityLogService::class)->shouldReceive('log')->andThrow(new RuntimeException('Auditoría no disponible'));
+    expect(fn () => app(\App\Services\Documentos\DocumentoGeneracionService::class)->request($client, $version, null, (string) str()->uuid(), $user))
+        ->toThrow(RuntimeException::class)->and($client->documentosGenerados()->count())->toBe(0)
+        ->and(\App\Models\Activity::count())->toBe($before);
+    Queue::assertNothingPushed();
+});
+
+test('fallo terminal PDF es atómico y no se duplica ni sustituye un resultado generado', function () {
+    Queue::fake();
+    $user = actingAsSuperAdmin();
+    activarEmpresaPrueba();
+    $client = Cliente::factory()->create();
+    $service = app(DocumentoPlantillaVersionService::class);
+    $template = $service->create(plantillaDocumentoPayload(), $user->id);
+    $version = $service->activate($template->versiones()->sole());
+    $document = app(\App\Services\Documentos\DocumentoGeneracionService::class)->request($client, $version, null, (string) str()->uuid(), $user);
+    $job = new GenerarDocumentoPdf($document->id);
+    $this->mock(\App\Services\ActivityLogService::class)->shouldReceive('log')->andThrow(new RuntimeException('Auditoría no disponible'));
+    expect(fn () => $job->failed(new RuntimeException('error con secreto')))->toThrow(RuntimeException::class)
+        ->and($document->fresh()->estado)->toBe(DocumentoGeneradoEstado::Pendiente);
+    app()->forgetInstance(\App\Services\ActivityLogService::class);
+    $job->failed(new RuntimeException('error con secreto'));
+    $job->failed(new RuntimeException('error con secreto'));
+    expect(\App\Models\Activity::where('event', \App\Enums\ActivityEvent::DocumentGenerationFailed->value)->count())->toBe(1)
+        ->and($document->fresh()->estado)->toBe(DocumentoGeneradoEstado::Fallido)
+        ->and(\App\Models\Activity::all()->toJson())->not->toContain('error con secreto');
+    $document->update(['estado' => DocumentoGeneradoEstado::Generado, 'archivo_hash' => str_repeat('a', 64)]);
+    $job->failed(new RuntimeException('tardío'));
+    expect($document->fresh()->estado)->toBe(DocumentoGeneradoEstado::Generado);
+});
+
+test('resultado PDF solo se confirma con auditoría y una reentrega no duplica éxito', function () {
+    Queue::fake();
+    Storage::fake('local');
+    $user = actingAsSuperAdmin();
+    activarEmpresaPrueba();
+    $client = Cliente::factory()->create();
+    $templates = app(DocumentoPlantillaVersionService::class);
+    $template = $templates->create(plantillaDocumentoPayload(), $user->id);
+    $version = $templates->activate($template->versiones()->sole());
+    $document = app(\App\Services\Documentos\DocumentoGeneracionService::class)->request($client, $version, null, (string) str()->uuid(), $user);
+    app()->instance(DocumentoPdfRenderer::class, new class implements DocumentoPdfRenderer
+    {
+        public function render(string $bodyHtml, ?string $headerHtml = null, ?string $footerHtml = null, array $options = []): string
+        {
+            return "%PDF-1.4\n% resultado sintético\n%%EOF";
+        }
+    });
+    $this->mock(\App\Services\ActivityLogService::class)->shouldReceive('log')->andThrow(new RuntimeException('Auditoría no disponible'));
+    $job = new GenerarDocumentoPdf($document->id);
+    expect(fn () => app()->call([$job, 'handle']))->toThrow(RuntimeException::class)
+        ->and($document->fresh()->estado)->toBe(DocumentoGeneradoEstado::Procesando)
+        ->and($document->fresh()->archivo_hash)->toBeNull()
+        ->and(\App\Models\Activity::where('event', 'documento.generated')->count())->toBe(0);
+    app()->forgetInstance(\App\Services\ActivityLogService::class);
+    app()->call([$job, 'handle']);
+    app()->call([$job, 'handle']);
+    expect($document->fresh()->estado)->toBe(DocumentoGeneradoEstado::Generado)
+        ->and(\App\Models\Activity::where('event', 'documento.generated')->count())->toBe(1);
+});
+
+test('fallo al regenerar PDF común perdido queda auditable y permite solicitar nueva copia', function () {
+    Queue::fake();
+    Storage::fake('local');
+    $user = actingAsSuperAdmin();
+    activarEmpresaPrueba();
+    $client = Cliente::factory()->create();
+    $templates = app(DocumentoPlantillaVersionService::class);
+    $template = $templates->create(plantillaDocumentoPayload(), $user->id);
+    $version = $templates->activate($template->versiones()->sole());
+    $generation = app(\App\Services\Documentos\DocumentoGeneracionService::class);
+    $document = $generation->request($client, $version, null, (string) str()->uuid(), $user);
+    $hash = str_repeat('a', 64);
+    $document->update(['estado' => DocumentoGeneradoEstado::Generado, 'archivo_hash' => $hash,
+        'disk' => 'local', 'path' => 'documentos/perdido.pdf']);
+    $this->mock(DocumentoPdfRenderer::class)->shouldReceive('render')->once()->andThrow(new RuntimeException('Fallo sintético'));
+    $job = new GenerarDocumentoPdf($document->id);
+    expect(fn () => app()->call([$job, 'handle']))->toThrow(RuntimeException::class)
+        ->and($document->fresh()->estado)->toBe(DocumentoGeneradoEstado::Procesando);
+    $job->failed(new RuntimeException('Fallo sintético'));
+    $job->failed(new RuntimeException('Fallo sintético'));
+    expect($document->fresh()->estado)->toBe(DocumentoGeneradoEstado::Fallido)
+        ->and($document->fresh()->archivo_hash)->toBe($hash)
+        ->and(\App\Models\Activity::where('event', 'documento.generacion.failed')->count())->toBe(1);
+    $new = $generation->request($client, $version, null, (string) str()->uuid(), $user);
+    expect($new->id)->not->toBe($document->id)->and($new->estado)->toBe(DocumentoGeneradoEstado::Pendiente);
 });
 
 test('PDF conserva contexto original y no reconstruye sucursal histórica desconocida', function (bool $unknown) {

@@ -23,8 +23,6 @@ class UpdateTeamName implements UpdatesTeamNames
             'name' => ['required', 'string', 'max:255'],
         ])->validateWithBag('updateTeamName');
 
-        $team->forceFill([
-            'name' => $input['name'],
-        ])->save();
+        app(\App\Services\TeamManagementService::class)->update($team, ['name' => $input['name']], $user);
     }
 }

@@ -9,10 +9,13 @@ no implican que todos los reportes o controles ya estén implementados.
 - [Core: proyecciones, evidencia y separación de cortes](../reference/core-crediticio.md).
 
 - [Eventos de auditoría](../reference/auditoria-eventos.md).
+- [ADR 0037: transacciones, accesos anónimos y automatismos auditables](../explanation/adr-0037-cobertura-tecnica-auditoria.md).
 - [Glosario de negocio](../reference/glosario-negocio.md).
 - [Actividad y evidencias en el recorrido QA](../how-to/qa-credito-simple.md).
 
 ## Seguimiento y temas relacionados
+
+- [Auditoría y actividad: implementación, validaciones y continuidad](../agent-notes/auditoria-actividad.md).
 
 - [ADR 0031: alcance de consulta de actividad por equipo y sucursal](../explanation/adr-0031-consulta-actividad-equipo-sucursal.md).
 - [Nota del ajuste de Equipo y filtros de actividad](../agent-notes/equipo-tarjetas-bitacora.md).

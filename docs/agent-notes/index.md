@@ -1,6 +1,7 @@
 # Agent Notes
 
 - [Core crediticio extensible](core-crediticio-extensible.md)
+- [Auditoría y actividad: cobertura técnica y validaciones](auditoria-actividad.md)
 
 - [Equipo: acciones de integrantes](equipo-acciones-integrantes.md)
 
@@ -61,6 +62,6 @@ Consulta el [índice temático](../topic/index.md) para encontrar material relac
 - [Folios y ayuda contextual: entrega integrada y evidencia](folios-ayuda-contextual.md).
 - [Equipo: tarjetas de roles y filtros de bitácora](equipo-tarjetas-bitacora.md).
 
-- [Contexto de sucursal: revisión transversal en progreso](contexto-sucursal-transversal.md).
+- [Contexto de sucursal: integrado, desplegado y validado en QA](contexto-sucursal-transversal.md).
 
 - [Consulta, edición e históricos](consulta-edicion-historicos.md).

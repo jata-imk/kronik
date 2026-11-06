@@ -145,6 +145,20 @@ test('auditoría administrativa de expediente conserva la sucursal del cliente r
     $this->patch(route('clientes.sucursal.transfer', $cliente), ['sucursal_id' => $branches[0]->id])->assertRedirect()->assertSessionHasNoErrors();
     $transfer = Activity::where('event', ActivityEvent::ClientTransferred->value)->sole();
     expect($transfer->sucursal_id)->toBe($branches[1]->id)->and($cliente->fresh()->sucursal_id)->toBe($branches[0]->id);
+    $this->patch(route('clientes.sucursal.transfer', $cliente), ['sucursal_id' => $branches[0]->id])->assertSessionHasNoErrors();
+    expect(Activity::where('event', ActivityEvent::ClientTransferred->value)->count())->toBe(1);
+});
+
+test('fallo de auditoría revierte traslado conservando sucursal de origen', function () {
+    [$actor, $branches] = operadorSucursal();
+    $actor->forceFill(['is_super_admin' => true])->save();
+    $cliente = Cliente::factory()->create(['sucursal_id' => $branches[1]->id]);
+    $this->mock(\App\Services\ActivityLogService::class)->shouldReceive('log')->once()->andThrow(new RuntimeException('Auditoría no disponible'));
+    $this->withoutExceptionHandling();
+    expect(fn () => $this->actingAs($actor)->patch(route('clientes.sucursal.transfer', $cliente), ['sucursal_id' => $branches[0]->id]))
+        ->toThrow(RuntimeException::class)
+        ->and($cliente->fresh()->sucursal_id)->toBe($branches[1]->id)
+        ->and(Activity::where('event', ActivityEvent::ClientTransferred->value)->count())->toBe(0);
 });
 
 test('selector institucional del expediente busca fuera de sus primeras opciones y autoriza acceso directo', function () {

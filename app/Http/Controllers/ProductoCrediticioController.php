@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ActivityEvent;
 use App\Enums\MetodoAmortizacion;
 use App\Enums\PeriodicidadCredito;
 use App\Http\Requests\ActivarProductoVersionRequest;
@@ -11,7 +10,6 @@ use App\Http\Requests\SimularCreditoRequest;
 use App\Models\ConceptoComision;
 use App\Models\ProductoCrediticio;
 use App\Models\ProductoVersion;
-use App\Services\ActivityLogService;
 use App\Services\Credito\SimuladorCreditoSimple;
 use App\Services\FechaEmpresa;
 use App\Services\ProductoVersionService;
@@ -61,7 +59,6 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
     {
         $this->authorize('create', ProductoCrediticio::class);
         $producto = $service->crear($request->validated(), Auth::id());
-        $this->actividad(ActivityEvent::CreditProductCreated, 'Producto crediticio creado', $producto, ['clave', 'nombre']);
 
         return redirect()->route('productos-crediticios.index', ['producto_id' => $producto->id])->with('success', 'Producto creado como borrador.');
     }
@@ -71,7 +68,6 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
         $this->authorize('update', $producto);
         abort_unless($version->producto_crediticio_id === $producto->id, 404);
         $service->actualizar($producto, $version, $request->validated());
-        $this->actividad(ActivityEvent::CreditProductUpdated, 'Borrador de producto actualizado', $producto, ['configuracion_comercial', 'reglas_calculo', 'fiscalidad']);
 
         return back()->with('success', 'Borrador actualizado.');
     }
@@ -81,7 +77,6 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
         $this->authorize('version', $producto);
         abort_unless($version->producto_crediticio_id === $producto->id, 404);
         $nueva = $service->nuevaVersion($producto, $version, Auth::id());
-        $this->actividad(ActivityEvent::CreditProductVersioned, 'Nueva versión de producto creada', $producto, ['version']);
 
         return redirect()->route('productos-crediticios.index', ['producto_id' => $producto->id])->with('success', "Versión {$nueva->numero} creada como borrador.");
     }
@@ -91,7 +86,6 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
         $this->authorize('activate', $version);
         $data = $request->validated();
         $version = $service->activar($version, $data['vigente_desde']);
-        $this->actividad(ActivityEvent::CreditProductActivated, 'Versión de producto activada o programada', $version->producto, ['estado', 'vigente_desde']);
 
         return back()->with('success', $version->estado->value === 'activa' ? 'Versión activada.' : 'Activación programada.');
     }
@@ -100,7 +94,6 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
     {
         $this->authorize('retire', $version);
         $service->retirar($version);
-        $this->actividad(ActivityEvent::CreditProductRetired, 'Versión de producto retirada', $version->producto, ['estado']);
 
         return back()->with('success', 'Versión retirada; su historial se conserva.');
     }
@@ -123,10 +116,5 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
             $incluirFormula,
             (bool) ($data['incluir_impuestos'] ?? false),
         ));
-    }
-
-    private function actividad(ActivityEvent $event, string $description, ProductoCrediticio $producto, array $campos): void
-    {
-        app(ActivityLogService::class)->log($event, $description, $producto, ['changed_fields' => $campos, 'product' => $producto->clave], Auth::user());
     }
 }

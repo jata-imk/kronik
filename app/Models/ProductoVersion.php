@@ -21,6 +21,9 @@ class ProductoVersion extends Model
     protected $guarded = [];
 
     protected $casts = [
+        'programada_por' => 'integer',
+        'programada_team_id' => 'integer',
+        'programada_sucursal_id' => 'integer',
         'fiscalidad' => 'array',
         'politica_mora' => 'array',
         'estado' => ProductoVersionEstado::class,

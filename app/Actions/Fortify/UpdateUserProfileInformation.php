@@ -6,7 +6,6 @@ use App\Enums\ActivityEvent;
 use App\Models\User;
 use App\Services\ActivityLogService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\UpdatesUserProfileInformation;
@@ -26,29 +25,36 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             'photo' => ['nullable', 'mimes:jpg,jpeg,png', 'max:1024'],
         ])->validateWithBag('updateProfileInformation');
 
-        if (isset($input['photo'])) {
-            $user->updateProfilePhoto($input['photo']);
-        }
+        \Illuminate\Support\Facades\DB::transaction(function () use ($user, $input) {
+            $user = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+            if ($user->name === $input['name'] && $user->email === $input['email'] && ! isset($input['photo'])) {
+                return;
+            }
+            if (isset($input['photo'])) {
+                $user->updateProfilePhoto($input['photo']);
+            }
 
-        if (
-            $input['email'] !== $user->email &&
-            $user instanceof MustVerifyEmail
-        ) {
-            $this->updateVerifiedUser($user, $input);
-        } else {
-            $user->forceFill([
-                'name' => $input['name'],
-                'email' => $input['email'],
-            ])->save();
-        }
+            if (
+                $input['email'] !== $user->email &&
+                $user instanceof MustVerifyEmail
+            ) {
+                $this->updateVerifiedUser($user, $input);
+            } else {
+                $user->forceFill([
+                    'name' => $input['name'],
+                    'email' => $input['email'],
+                ])->save();
+            }
 
-        app(ActivityLogService::class)->log(
-            event: ActivityEvent::UserProfileUpdated,
-            description: 'Perfil actualizado',
-            subject: $user,
-            metadata: ['changed_fields' => array_values(array_intersect(['name', 'email', 'photo'], array_keys($input)))],
-            causer: Auth::user(),
-        );
+            app(ActivityLogService::class)->log(
+                event: ActivityEvent::UserProfileUpdated,
+                description: 'Perfil actualizado',
+                subject: $user,
+                metadata: ['changed_fields' => array_values(array_intersect(['name', 'email', 'photo'], array_keys($input)))],
+                causer: $user,
+                teamId: $user->current_team_id, sucursalId: $user->current_sucursal_id, inheritActorContext: false,
+            );
+        });
     }
 
     /**
@@ -64,6 +70,6 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             'email_verified_at' => null,
         ])->save();
 
-        $user->sendEmailVerificationNotification();
+        \Illuminate\Support\Facades\DB::afterCommit(fn () => $user->sendEmailVerificationNotification());
     }
 }

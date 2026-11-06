@@ -68,7 +68,17 @@ Consulta [Cargar el catálogo del menú contextual](../how-to/configurar-menu-co
 
 ```bash
 php artisan permission:create-permission "read clientes" web --module-id=1
+php artisan permission:create-role "Operador" web "read clientes|read solicitudes" --team-id=1
 ```
+
+Los dos comandos persisten actividad en la misma transacción que sus cambios.
+El ejecutor es el sistema; no se atribuyen a un usuario de consola supuesto.
+Crear un rol registra su matriz inicial una sola vez; repetir sin cambios no
+añade eventos. En roles, omitir `--team-id` opera sobre una plantilla global;
+proporcionarlo exige un ID positivo de equipo existente. La opción no cambia
+preferencias de usuarios y no sustituye un rol del equipo por uno global.
+Los nombres personalizados y valores de permisos no se copian a actividad.
+Consultar la [matriz de auditoría](auditoria-eventos.md).
 
 ## Colas
 

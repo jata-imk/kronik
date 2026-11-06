@@ -30,7 +30,8 @@ class ProductoVersionService
     {
         return DB::transaction(function () use ($data, $userId) {
             $producto = ProductoCrediticio::create(Arr::only($data, ['clave', 'nombre', 'descripcion']));
-            $this->crearVersion($producto, $data['version'], $userId);
+            $version = $this->crearVersion($producto, $data['version'], $userId);
+            $this->record(\App\Enums\ActivityEvent::CreditProductCreated, $version, \App\Models\User::find($userId));
 
             return $producto;
         });
@@ -41,6 +42,7 @@ class ProductoVersionService
         $this->asegurarEditable($version);
 
         return DB::transaction(function () use ($producto, $version, $data) {
+            $producto = ProductoCrediticio::whereKey($producto->id)->lockForUpdate()->firstOrFail();
             $version = ProductoVersion::query()->lockForUpdate()->findOrFail($version->id);
             $this->asegurarEditable($version);
             // Older clients omit fiscal fields; omission must not erase saved policy.
@@ -52,6 +54,8 @@ class ProductoVersionService
             }
             \App\Services\Credito\CapacidadesProducto::validar($data['version'], \App\Enums\VersionMotorCredito::actual(), 'version.');
             PoliticaMora::validate($data['version']);
+            $before = [$this->contenidoVersion($version), $version->vigente_desde?->toDateString()];
+            $productBefore = $producto->only(['clave', 'nombre', 'descripcion']);
             $anteriores = $version->comisiones()->get()->keyBy('concepto_comision_id');
             foreach ($data['version']['comisiones'] as &$comision) {
                 if (! array_key_exists('evento_cobro', $comision)) {
@@ -71,6 +75,11 @@ class ProductoVersionService
             $version->comisiones()->delete();
             $version->comisiones()->createMany($this->normalizarComisiones($data['version']['comisiones']));
 
+            $version->refresh();
+            if ($before !== [$this->contenidoVersion($version), $version->vigente_desde?->toDateString()] || $productBefore !== $producto->fresh()->only(['clave', 'nombre', 'descripcion'])) {
+                $this->record(\App\Enums\ActivityEvent::CreditProductUpdated, $version, auth()->user());
+            }
+
             return $producto;
         });
     }
@@ -86,21 +95,31 @@ class ProductoVersionService
             'comisiones' => $origen->comisiones->map->only(['concepto_comision_id', 'tipo_importe', 'importe', 'base_calculo', 'momento_cobro', 'evento_cobro', 'modalidad_cobro', 'obligatoria', 'fiscalidad'])->all(),
         ];
 
-        return DB::transaction(fn () => $this->crearVersion($producto, $data, $userId));
+        return DB::transaction(function () use ($producto, $data, $userId) {
+            $version = $this->crearVersion($producto, $data, $userId);
+            $this->record(\App\Enums\ActivityEvent::CreditProductVersioned, $version, \App\Models\User::find($userId));
+
+            return $version;
+        });
     }
 
     public function activar(ProductoVersion $version, string $vigenteDesde): ProductoVersion
     {
         return DB::transaction(function () use ($version, $vigenteDesde) {
+            ProductoCrediticio::whereKey($version->producto_crediticio_id)->lockForUpdate()->firstOrFail();
             $version = ProductoVersion::query()->lockForUpdate()->findOrFail($version->id);
             $this->asegurarEditable($version);
+            $actor = auth()->user();
             $snapshot = $this->snapshot($version);
             $fechaVigencia = CarbonImmutable::parse($vigenteDesde, $this->fechaEmpresa->zonaHoraria())->startOfDay();
             $programada = $this->fechaEmpresa->hoy()->lt($fechaVigencia);
             if (! $programada) {
-                $this->retirarActivaAnterior($version);
+                $this->retirarActivaAnterior($version, $actor);
             }
             $version->update([
+                'programada_por' => $programada ? $actor?->id : null,
+                'programada_team_id' => $programada ? $actor?->current_team_id : null,
+                'programada_sucursal_id' => $programada ? $actor?->current_sucursal_id : null,
                 'estado' => $programada ? ProductoVersionEstado::Programada : ProductoVersionEstado::Activa,
                 'vigente_desde' => $fechaVigencia->toDateString(),
                 'activada_en' => $programada ? null : now(),
@@ -108,30 +127,46 @@ class ProductoVersionService
                 'snapshot_hash' => hash('sha256', json_encode($snapshot, JSON_THROW_ON_ERROR)),
             ]);
 
+            $this->record($programada ? \App\Enums\ActivityEvent::CreditProductActivationScheduled : \App\Enums\ActivityEvent::CreditProductActivated, $version, $actor);
+
             return $version->refresh();
         });
     }
 
     public function retirar(ProductoVersion $version): ProductoVersion
     {
-        if (! in_array($version->estado, [ProductoVersionEstado::Activa, ProductoVersionEstado::Programada], true)) {
-            throw ValidationException::withMessages(['version' => 'Solo puede retirarse una versión activa o programada.']);
-        }
-        $version->update(['estado' => ProductoVersionEstado::Retirada, 'retirada_en' => now()]);
+        return DB::transaction(function () use ($version) {
+            ProductoCrediticio::whereKey($version->producto_crediticio_id)->lockForUpdate()->firstOrFail();
+            $version = ProductoVersion::whereKey($version->id)->lockForUpdate()->firstOrFail();
+            if (! in_array($version->estado, [ProductoVersionEstado::Activa, ProductoVersionEstado::Programada], true)) {
+                throw ValidationException::withMessages(['version' => 'Solo puede retirarse una versión activa o programada.']);
+            }
+            $version->update(['estado' => ProductoVersionEstado::Retirada, 'retirada_en' => now()]);
+            $this->record(\App\Enums\ActivityEvent::CreditProductRetired, $version, auth()->user());
 
-        return $version;
+            return $version;
+        });
     }
 
     public function activarProgramadas(): int
     {
         $count = 0;
-        ProductoVersion::query()->where('estado', ProductoVersionEstado::Programada)->whereDate('vigente_desde', '<=', $this->fechaEmpresa->hoy()->toDateString())->orderBy('vigente_desde')->each(function ($version) use (&$count) {
-            DB::transaction(function () use ($version, &$count) {
-                $this->retirarActivaAnterior($version);
-                $version->update(['estado' => ProductoVersionEstado::Activa, 'activada_en' => now()]);
-                $count++;
+        ProductoVersion::query()->where('estado', ProductoVersionEstado::Programada)
+            ->whereDate('vigente_desde', '<=', $this->fechaEmpresa->hoy()->toDateString())
+            ->orderBy('vigente_desde')->orderBy('id')->each(function ($candidate) use (&$count) {
+                DB::transaction(function () use ($candidate, &$count) {
+                    ProductoCrediticio::whereKey($candidate->producto_crediticio_id)->lockForUpdate()->firstOrFail();
+                    $version = ProductoVersion::whereKey($candidate->id)->lockForUpdate()->firstOrFail();
+                    if ($version->estado !== ProductoVersionEstado::Programada || $version->vigente_desde->toDateString() > $this->fechaEmpresa->hoy()->toDateString()) {
+                        return;
+                    }
+                    $context = [$version->programada_team_id, $version->programada_sucursal_id, $version->programada_por];
+                    $this->retirarActivaAnterior($version, null, $context);
+                    $version->update(['estado' => ProductoVersionEstado::Activa, 'activada_en' => now()]);
+                    $this->record(\App\Enums\ActivityEvent::CreditProductActivated, $version, null, $context);
+                    $count++;
+                });
             });
-        });
 
         return $count;
     }
@@ -184,6 +219,13 @@ class ProductoVersionService
 
         \App\Services\Credito\CapacidadesProducto::validar(\App\Services\Credito\CapacidadesProducto::condiciones($version), \App\Enums\VersionMotorCredito::actual());
 
+        return $this->contenidoVersion($version);
+    }
+
+    private function contenidoVersion(ProductoVersion $version): array
+    {
+        $version->loadMissing(['periodicidades', 'reglas', 'comisiones.concepto']);
+
         return json_decode(json_encode($version->only(['numero', 'moneda', 'monto_minimo', 'monto_maximo', 'tasa_ordinaria_anual', 'tasa_moratoria_anual', 'dias_gracia_mora', 'cat_aplica', 'cat_no_aplica_motivo', 'fiscalidad', 'politica_mora']) + [
             'motor_calculo_version' => \App\Enums\VersionMotorCredito::actual()->value,
             'periodicidades' => $version->periodicidades->map->only(['periodicidad', 'plazo_minimo', 'plazo_maximo', 'plazo_predeterminado'])->all(),
@@ -192,8 +234,26 @@ class ProductoVersionService
         ], JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
     }
 
-    private function retirarActivaAnterior(ProductoVersion $version): void
+    private function retirarActivaAnterior(ProductoVersion $version, ?\App\Models\User $actor, ?array $context = null): void
     {
-        ProductoVersion::query()->where('producto_crediticio_id', $version->producto_crediticio_id)->where('estado', ProductoVersionEstado::Activa)->whereKeyNot($version->id)->update(['estado' => ProductoVersionEstado::Retirada, 'retirada_en' => now()]);
+        foreach (ProductoVersion::query()->where('producto_crediticio_id', $version->producto_crediticio_id)
+            ->where('estado', ProductoVersionEstado::Activa)->whereKeyNot($version->id)->lockForUpdate()->get() as $previous) {
+            $previous->update(['estado' => ProductoVersionEstado::Retirada, 'retirada_en' => now()]);
+            $this->record(\App\Enums\ActivityEvent::CreditProductRetired, $previous, $actor, $context);
+        }
+    }
+
+    private function record(\App\Enums\ActivityEvent $event, ProductoVersion $version, ?\App\Models\User $actor, ?array $context = null): void
+    {
+        $version->refresh();
+        $metadata = ['changed_fields' => ['version'], 'state' => $version->estado->value, 'result' => 'applied',
+            'related' => ['type' => 'producto_version', 'id' => $version->id]];
+        if ($context !== null && $context[2] !== null) {
+            $metadata['related'] = ['type' => 'iniciador', 'id' => $context[2]];
+        }
+        // Scheduled initiator is retained on the version, including an unknown historical context.
+        app(ActivityLogService::class)->log($event, $event->label(), $context !== null ? $version : $version->producto, $metadata, $actor,
+            $context !== null ? $context[0] : $actor?->current_team_id,
+            $context !== null ? $context[1] : $actor?->current_sucursal_id, inheritActorContext: false);
     }
 }

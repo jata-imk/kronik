@@ -167,36 +167,9 @@ class ClienteController extends Controller implements HasMiddleware
         return response()->redirectToRoute('clientes.index');
     }
 
-    public function transfer(TransferClienteRequest $request, Cliente $cliente)
+    public function transfer(TransferClienteRequest $request, Cliente $cliente, ClienteService $service)
     {
-        $actor = $request->user();
-        $targetId = (int) $request->validated('sucursal_id');
-        $sourceId = $cliente->sucursal_id;
-
-        if (! $actor->is_super_admin) {
-            abort_unless(
-                $actor->operaEnSucursal($cliente->sucursal_id)
-                    && $actor->sucursales()->whereKey($targetId)->exists(),
-                403,
-                'Sólo puedes trasladar clientes entre tus sucursales asignadas.',
-            );
-        }
-
-        $cliente->update(['sucursal_id' => $targetId]);
-        app(\App\Services\ActivityLogService::class)->log(
-            event: \App\Enums\ActivityEvent::ClientTransferred,
-            description: 'Cliente trasladado de sucursal',
-            subject: $cliente,
-            metadata: [
-                'changed_fields' => ['sucursal_id'],
-                'related' => ['type' => 'sucursal', 'id' => $targetId],
-                'state' => "from-sucursal:{$sourceId}",
-            ],
-            causer: $actor,
-            teamId: $actor->current_team_id,
-            sucursalId: $sourceId,
-            inheritActorContext: false,
-        );
+        $service->transferir($cliente, (int) $request->validated('sucursal_id'), $request->user());
 
         return back()->with('success', 'Cliente trasladado');
     }

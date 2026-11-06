@@ -8,9 +8,7 @@ use App\Http\Requests\Admin\UpdateTeamRequest;
 use App\Models\Team;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use Spatie\Permission\PermissionRegistrar;
 
 class TeamController extends Controller implements HasMiddleware
 {
@@ -29,15 +27,7 @@ class TeamController extends Controller implements HasMiddleware
 
     public function store(StoreTeamRequest $request)
     {
-        DB::transaction(function () use ($request) {
-            $team = $request->user()->ownedTeams()->create([
-                'name' => $request->validated('name'),
-                'personal_team' => false,
-                'activo' => true,
-            ]);
-
-            $this->copyGlobalRoles($team);
-        });
+        app(\App\Services\TeamManagementService::class)->create($request->user(), $request->validated());
 
         return back()->with('success', 'Equipo creado');
     }
@@ -55,33 +45,5 @@ class TeamController extends Controller implements HasMiddleware
         app(\App\Services\TeamManagementService::class)->update($team, ['activo' => false]);
 
         return back()->with('success', 'Equipo desactivado');
-    }
-
-    private function copyGlobalRoles(Team $team): void
-    {
-        $roleModel = config('permission.models.role');
-        $teamKey = config('permission.column_names.team_foreign_key', 'team_id');
-        $previousTeamId = getPermissionsTeamId();
-
-        try {
-            setPermissionsTeamId($team->id);
-            $globalRoles = $roleModel::query()
-                ->whereNull($teamKey)
-                ->where('name', '!=', 'Super Admin')
-                ->with('permissions')
-                ->get();
-
-            foreach ($globalRoles as $globalRole) {
-                $teamRole = $roleModel::query()->firstOrCreate([
-                    'name' => $globalRole->name,
-                    'guard_name' => $globalRole->guard_name,
-                    $teamKey => $team->id,
-                ]);
-                $teamRole->syncPermissions($globalRole->permissions);
-            }
-        } finally {
-            setPermissionsTeamId($previousTeamId);
-            app(PermissionRegistrar::class)->forgetCachedPermissions();
-        }
     }
 }

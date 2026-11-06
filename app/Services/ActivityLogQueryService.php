@@ -122,6 +122,8 @@ class ActivityLogQueryService
             ? ActivityEvent::tryFrom($activity->event)
             : null;
         $eventValue = $activity->event ?: 'legacy.unclassified';
+        $anonymousAccess = in_array($event, [ActivityEvent::LoginFailed, ActivityEvent::LoginThrottled,
+            ActivityEvent::LoginRejected, ActivityEvent::TwoFactorFailed, ActivityEvent::TwoFactorThrottled], true);
 
         return [
             'id' => $activity->id,
@@ -134,7 +136,7 @@ class ActivityLogQueryService
             'description' => $activity->description,
             'causer' => [
                 'id' => $causer?->id,
-                'name' => $causer?->name ?? 'Sistema',
+                'name' => $causer?->name ?? ($anonymousAccess ? 'Anónimo' : 'Sistema'),
                 'email' => $causer?->email ?? '',
             ],
             'subject' => [

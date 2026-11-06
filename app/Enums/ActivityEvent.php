@@ -4,7 +4,39 @@ namespace App\Enums;
 
 enum ActivityEvent: string
 {
+    case TeamCreated = 'team.created';
+    case TeamUpdated = 'team.updated';
+    case TeamDeactivated = 'team.deactivated';
+    case TeamReactivated = 'team.reactivated';
+    case RoleCreated = 'role.created';
+    case RoleUpdated = 'role.updated';
+    case RoleDeleted = 'role.deleted';
+    case RolePermissionsUpdated = 'role.permissions.updated';
+    case PermissionCreated = 'permission.created';
+    case Logout = 'logout';
+    case LoginFailed = 'login.failed';
+    case LoginThrottled = 'login.throttled';
+    case LoginRejected = 'login.rejected';
+    case TwoFactorEnabled = 'user.2fa.enabled';
+    case TwoFactorConfirmed = 'user.2fa.confirmed';
+    case TwoFactorDisabled = 'user.2fa.disabled';
+    case RecoveryCodesRegenerated = 'user.2fa.recovery_codes_regenerated';
+    case TwoFactorFailed = 'login.2fa_failed';
+    case TwoFactorThrottled = 'login.2fa_throttled';
+    case ApiTokenCreated = 'user.api_token.created';
+    case ApiTokenUpdated = 'user.api_token.updated';
+    case ApiTokenRevoked = 'user.api_token.revoked';
+    case EmailVerified = 'user.email_verified';
+    case ActivityExported = 'activity_log.exported';
+    case CreditProductActivationScheduled = 'producto_crediticio.activation_scheduled';
+    case SicRequested = 'sic.requested';
+    case SicSending = 'sic.sending';
+    case SicCancelled = 'sic.cancelled';
+    case SicUncertain = 'sic.uncertain';
+    case SicLateResponse = 'sic.late_response';
     case ActiveBranchChanged = 'user.active_branch_changed';
+    case ActiveTeamChanged = 'user.active_team_changed';
+    case OtherSessionsInvalidated = 'user.sessions.invalidated';
     case UserCreated = 'user.created';
     case UserUpdated = 'user.updated';
     case UserDeactivated = 'user.deactivated';
@@ -95,7 +127,39 @@ enum ActivityEvent: string
     public function label(): string
     {
         return match ($this) {
+            self::TeamCreated => 'Equipo creado',
+            self::TeamUpdated => 'Equipo actualizado',
+            self::TeamDeactivated => 'Equipo desactivado',
+            self::TeamReactivated => 'Equipo reactivado',
+            self::RoleCreated => 'Rol creado',
+            self::RoleUpdated => 'Rol actualizado',
+            self::RoleDeleted => 'Rol eliminado',
+            self::RolePermissionsUpdated => 'Permisos del rol actualizados',
+            self::PermissionCreated => 'Permiso creado',
+            self::Logout => 'Sesión cerrada',
+            self::LoginFailed => 'Credenciales de acceso rechazadas',
+            self::LoginThrottled => 'Acceso limitado por frecuencia',
+            self::LoginRejected => 'Acceso rechazado por estado de cuenta',
+            self::TwoFactorEnabled => 'Configuración de segundo factor iniciada',
+            self::TwoFactorConfirmed => 'Segundo factor confirmado',
+            self::TwoFactorDisabled => 'Segundo factor deshabilitado',
+            self::RecoveryCodesRegenerated => 'Códigos de recuperación regenerados',
+            self::TwoFactorFailed => 'Segundo factor rechazado',
+            self::TwoFactorThrottled => 'Segundo factor limitado por frecuencia',
+            self::ApiTokenCreated => 'Token API creado',
+            self::ApiTokenUpdated => 'Capacidades del token API actualizadas',
+            self::ApiTokenRevoked => 'Token API revocado',
+            self::EmailVerified => 'Correo verificado',
+            self::ActivityExported => 'Archivo CSV de actividad generado',
+            self::CreditProductActivationScheduled => 'Activación de producto programada',
+            self::SicRequested => 'Intento SIC solicitado',
+            self::SicSending => 'Envío SIC iniciado',
+            self::SicCancelled => 'Intento SIC cancelado antes del envío',
+            self::SicUncertain => 'Intento SIC marcado incierto',
+            self::SicLateResponse => 'Respuesta SIC tardía conservada',
             self::ActiveBranchChanged => 'Sucursal activa cambiada',
+            self::ActiveTeamChanged => 'Equipo activo cambiado',
+            self::OtherSessionsInvalidated => 'Otras sesiones invalidadas',
             self::UserCreated => 'Cuenta pendiente creada',
             self::UserUpdated => 'Cuenta actualizada',
             self::UserDeactivated => 'Cuenta desactivada',
@@ -188,6 +252,18 @@ enum ActivityEvent: string
     public function severity(): string
     {
         return match ($this) {
+            self::LoginFailed,
+            self::LoginThrottled,
+            self::LoginRejected,
+            self::TwoFactorFailed,
+            self::TwoFactorThrottled,
+            self::SicCancelled,
+            self::SicUncertain => 'warn',
+            self::TeamCreated,
+            self::RoleCreated,
+            self::PermissionCreated,
+            self::TwoFactorConfirmed,
+            self::EmailVerified => 'success',
             self::BranchCreated,
             self::ClientCreated,
             self::ClientReferenceCreated,
@@ -206,6 +282,7 @@ enum ActivityEvent: string
             self::ClientSicConsentRevoked,
             self::DocumentGenerationFailed => 'danger',
             self::Login,
+            self::Logout,
             self::TwoFactorCompleted => 'secondary',
             default => 'info',
         };
@@ -214,6 +291,21 @@ enum ActivityEvent: string
     public function icon(): string
     {
         return match ($this) {
+            self::Logout => 'pi-sign-out',
+            self::LoginFailed,
+            self::LoginThrottled,
+            self::LoginRejected => 'pi-lock',
+            self::TwoFactorEnabled,
+            self::TwoFactorConfirmed,
+            self::TwoFactorDisabled,
+            self::TwoFactorFailed,
+            self::TwoFactorThrottled,
+            self::RecoveryCodesRegenerated => 'pi-shield',
+            self::ApiTokenCreated,
+            self::ApiTokenUpdated,
+            self::ApiTokenRevoked => 'pi-key',
+            self::ActivityExported => 'pi-download',
+            self::CreditProductActivationScheduled => 'pi-clock',
             self::Login => 'pi-sign-in',
             self::TwoFactorCompleted => 'pi-shield',
             self::UserProfileUpdated => 'pi-user-edit',

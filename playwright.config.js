@@ -43,7 +43,7 @@ const e2eEnvironment = {
     DOCUMENTOS_NODE_BINARY: process.execPath,
     DOCUMENTOS_NPM_BINARY: "",
     DOCUMENTOS_NODE_MODULES_PATH: fileURLToPath(new URL("./node_modules", import.meta.url)),
-    DOCUMENTOS_CHROME_PATH: "",
+    DOCUMENTOS_CHROME_PATH: process.env.DOCUMENTOS_CHROME_PATH ?? "",
     DOCUMENTOS_DISK: "e2e_dual",
 };
 
@@ -52,6 +52,8 @@ export default defineConfig({
     outputDir: "test-results",
     fullyParallel: false,
     workers: 1,
+    timeout: 90_000,
+    expect: { timeout: 15_000 },
     retries: process.env.CI ? 1 : 0,
     reporter: [["list"], ["html", { open: "never" }]],
     use: {

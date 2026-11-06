@@ -61,6 +61,7 @@ final class SicOperacionService
             $payload = app(SicPeticion::class)->construir($cliente, $data['api'], (string) $query->id);
             $this->evidencia($query, 'peticion', $payload);
             SicEvento::create(['sic_query_id' => $query->id, 'estado' => 'preparada', 'actor_id' => $actor->id]);
+            $this->audit($query, ActivityEvent::SicRequested, $actor);
             \App\Jobs\ConsultarSicQa::dispatch($query->id)->afterCommit();
 
             return $query;
@@ -89,9 +90,7 @@ final class SicOperacionService
                     $this->error('La identidad o autorización cambió antes del envío.');
                 }
                 $this->revisionValida($q->solicitud_revision_id ? SolicitudRevision::findOrFail($q->solicitud_revision_id) : null, $q->cliente);
-                $this->transicion($q, 'enviando', 'pending');
 
-                return $q;
             } catch (\App\Exceptions\OperacionEmpresaBloqueada $exception) {
                 $this->transicion($q, 'cancelada', 'error');
                 $exception->registrar();
@@ -102,6 +101,9 @@ final class SicOperacionService
 
                 return null;
             }
+            $this->transicion($q, 'enviando', 'pending');
+
+            return $q;
         });
         if (! $query) {
             return;
@@ -116,6 +118,7 @@ final class SicOperacionService
                         $this->evidencia($q, 'respuesta_tardia', $result['respuesta']);
                         $this->evidencia($q, 'resultado_tardio', $result['resultado']);
                         SicEvento::create(['sic_query_id' => $q->id, 'estado' => 'respuesta_tardia', 'actor_id' => $q->actor_id]);
+                        $this->audit($q, ActivityEvent::SicLateResponse);
                     }
 
                     return;
@@ -280,6 +283,35 @@ final class SicOperacionService
     {
         $q->forceFill(['estado_operacion' => $estado, 'status' => $status])->save();
         SicEvento::create(['sic_query_id' => $q->id, 'estado' => $estado, 'actor_id' => $q->actor_id]);
+        $event = match ($estado) {
+            'enviando' => ActivityEvent::SicSending,
+            'cancelada' => ActivityEvent::SicCancelled,
+            'incierta' => ActivityEvent::SicUncertain,
+            default => null,
+        };
+        if ($event) {
+            $this->audit($q, $event);
+        }
+    }
+
+    public function marcarIncierta(int $id): void
+    {
+        DB::transaction(function () use ($id) {
+            $query = SicQuery::whereKey($id)->lockForUpdate()->first();
+            if ($query?->estado_operacion === 'enviando') {
+                $this->transicion($query, 'incierta', 'pending');
+            }
+        });
+    }
+
+    private function audit(SicQuery $query, ActivityEvent $event, ?User $actor = null): void
+    {
+        $metadata = ['state' => $query->estado_operacion, 'result' => 'applied'];
+        if ($query->actor_id) {
+            $metadata['related'] = ['type' => 'iniciador', 'id' => $query->actor_id];
+        }
+        app(ActivityLogService::class)->log($event, $event->label(), $query, $metadata, $actor,
+            $query->team_id, $query->sucursal_id, inheritActorContext: false);
     }
 
     public static function hash(array $data): string

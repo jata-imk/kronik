@@ -22,6 +22,7 @@ El proyecto debe tener CI real en GitHub Actions ademas de hooks locales.
 - `npm run build`.
 - `npm run test:unit` con Vitest, Vue Test Utils y jsdom.
 - `php artisan test`.
+- Concurrencia de folios y auditoría con procesos independientes en MariaDB aislada.
 
 Playwright no se ejecuta en GitHub Actions. Los recorridos E2E son una
 verificacion local deliberada porque requieren un navegador completo y se
@@ -58,6 +59,14 @@ recursos externos de mapas, geocodificacion, fuentes y Twemoji se sustituyen por
 respuestas deterministas; un fallo de esos proveedores no vuelve inestable la
 suite ni oculta errores internos de consola.
 
+Las expectativas esperan hasta 15 segundos por su condición observable; cada
+recorrido dispone de 90 segundos salvo que declare otro límite. El recorrido dual
+completo (PDF, firmas, desembolso, pagos, anticipos, liquidación y reversos) dispone
+de 300 segundos; mantiene los mismos límites por condición. Estos límites
+permiten completar redirecciones y recargas Inertia en desarrollo sin pausas
+fijas. Una condición incorrecta sigue haciendo fallar la prueba. Revisar traza,
+captura, vídeo y consola ante fallos.
+
 ### Proteccion de datos E2E
 
 Por defecto solo puede recrearse el archivo
@@ -76,3 +85,17 @@ Una PR no debe considerarse lista si CI falla. Si un cambio de codigo no requier
 ## Concurrencia de folios
 
 Después de Pest, `php tests/Concurrency/folios.php` ejecuta ocho procesos independientes sobre la MariaDB aislada `kronik_test`; exige `APP_ENV=testing`. Comprueba 40 creaciones paralelas y otras dos con barreras que fuerzan un cruce de bloqueos de actor y numeración, con 42 folios consecutivos únicos y reservas persistidas. Después comprueba una creación directa con fechas explícitas y el folio 43, fuera de una transacción de Pest. No utilizar la base de `.env` para esta prueba.
+
+## Concurrencia de auditoría
+
+`php tests/Concurrency/auditoria.php` exige también `APP_ENV=testing`, driver
+MySQL y base `kronik_test`. Tres procesos leen los mismos candidatos antes de
+competir por los bloqueos: deben producir exactamente dos activaciones y dos
+retiros, sin eventos duplicados y con una sola versión final vigente. No consulta
+proveedores ni usa datos de la aplicación. Ver el
+[contrato de auditoría](auditoria-eventos.md) y la evidencia del commit en su
+[Agent Note](../agent-notes/auditoria-actividad.md).
+
+Para E2E que generan PDF puede indicarse `DOCUMENTOS_CHROME_PATH` con la ruta
+del Chrome instalado; preparación y servidor conservan ese valor. No se fija
+una versión ni ruta del equipo de desarrollo en el repositorio.

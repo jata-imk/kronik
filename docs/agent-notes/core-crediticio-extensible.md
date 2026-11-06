@@ -16,7 +16,16 @@
 Consolidar integridad y responsabilidades reutilizables para Bullet, Revolvente y
 Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
 
-## Estado actual
+## Estado actual — 04/11/2026
+
+La tarea de [integridad matemática y compatibilidad histórica](https://app.notion.com/p/40961db7db7f815b919dc414dd1cb9a2)
+queda cerrada por confirmación del usuario: revisión satisfactoria y cartera de
+uno o dos clientes sin crédito activo o de prueba, sin tratamiento correctivo
+requerido. Esta confirmación atiende el pendiente histórico de PR #59/#60; no es
+una inspección nueva de BD realizada por el agente ni una corrección de saldos.
+La arquitectura amplia, Bullet y las capacidades futuras permanecen independientes.
+
+## Antecedentes de implementación
 
 - 31/10/2026: incremento autorizado de catálogo backend/Vue implementado en
   `feat/catalogo-capacidades-credito`, base `d002037`. Catálogo de código,
@@ -98,8 +107,6 @@ Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
 
 ## Decisiones pendientes
 
-- Tratamiento de cartera histórica afectada por F-01/F-02; el adaptador conserva
-  su algoritmo y no corrige saldos anteriores automáticamente.
 - Casos funcionales Bullet: calendario, parcialidades/anticipos, mora de intereses,
   liquidación y periodos incompletos, antes de implementación dependiente.
 - Respuestas del usuario el 29/10: incluir reducción de plazo para Bullet, con
@@ -143,13 +150,14 @@ Nómina. Alcance/calendario en Notion; contratos en la referencia del core.
 
 ## Siguiente paso
 
-Revisar el estado de [PR #64](https://github.com/jata-imk/kronik/pull/64) y su CI
-para la integración del catálogo backend/Vue. Las demás implementaciones siguen
-en espera: otros contratos/exigibilidad, diagnóstico histórico y capacidades futuras.
-Cerrar definición funcional Bullet antes de implementar sus reglas.
+El catálogo backend/Vue de [PR #64](https://github.com/jata-imk/kronik/pull/64) ya
+está integrado en `ee94025`, según evidencia registrada en Notion. El diagnóstico
+histórico queda atendido por la confirmación del usuario del 04/11/2026; no se
+reabre. Otros contratos/exigibilidad y capacidades futuras conservan sus tareas.
+Cerrar definición funcional Bullet con los contadores antes de implementar reglas.
 Act/365 Fixed y 30/360 requieren definición, compatibilidad por motor y pruebas de
-segmentación/contexto contractual antes de habilitarlas. Despliegue y QA operativo
-posterior no se han realizado por esta entrega.
+segmentación/contexto contractual antes de habilitarlas. No se atribuye una nueva
+versión desplegada del core a la confirmación histórica.
 
 ## Cierre
 
@@ -266,3 +274,25 @@ La iniciativa, arquitectura amplia y validación transversal siguen abiertas. La
 consulta completa de versiones y mejoras de política de originación conservan su
 tarea separada. Bullet mantiene pendientes reducción de plazo y mora; diagnóstico
 de créditos demo y demás capacidades continúan en espera.
+
+## Alcance Bullet y ampliaciones autorizadas — 04/11/2026
+
+El usuario recibió respuesta funcional y acepta seguir primero la recomendación
+de Bullet base: anticipos conservando vencimiento, liquidación anticipada, las dos
+políticas de intereses y frecuencias actuales. Se retira de ese alcance la reducción
+de plazo por anticipo parcial Bullet, sustituyendo la intención del 29/10; los
+métodos actuales conservan sus opciones. Siguen pendientes las respuestas sobre
+cobro del devengado aún no exigible y base de mora de intereses vencidos, además
+de precisar el corte de fecha del abono si difiere del comportamiento vigente.
+
+El usuario confirma incluir frecuencia diaria y capitalización en ampliaciones
+separadas después del Bullet base. Son capacidades futuras autorizadas, todavía
+sin reglas completas ni implementación. Orden recomendado: aceptar Bullet base,
+añadir exigibilidad diaria y después capitalización; no se fijan fechas ni se
+reprograman otras iniciativas automáticamente.
+
+Periodicidad diaria requiere calendario, catálogo/compatibilidad, validación, UI,
+revisión del CAT y pruebas históricas; no cambia por sí sola Act/360. Capitalización
+requiere definición de conceptos/evento/base futura, evidencia de origen,
+idempotencia y reversos, sin reinterpretar contratos anteriores. La conversación
+no habilita estas capacidades ni introduce cambios al código financiero.
