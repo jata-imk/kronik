@@ -6,10 +6,12 @@ Los documentos distinguen diseño aprobado de capacidades implementadas.
 
 ## Referencia y decisiones
 
+- [ADR 0038: estrategia Bullet y proyección de exigibilidad](../explanation/adr-0038-bullet-amortizacion-exigibilidad.md).
+
 - [ADR 0035: catálogo de capacidades backend/Vue](../explanation/adr-0035-catalogo-capacidades-credito.md).
 
 - [Responsabilidades, invariantes y contratos del core](../reference/core-crediticio.md).
-- [Bullet: propuestas y decisiones funcionales pendientes](../reference/bullet-casos-definicion.md).
+- [Bullet: decisiones vigentes, casos y pendientes de mora](../reference/bullet-casos-definicion.md).
 - [ADR 0032: evolución modular del core](../explanation/adr-0032-core-crediticio-extensible.md).
 - [ADR 0033: extensión de convenciones de días](../explanation/adr-0033-convenciones-dias-base-fija.md).
 - [Contraste de auditoría de octubre de 2026](../explanation/contraste-auditoria-core-crediticio-2026-10.md).

@@ -185,6 +185,13 @@ un solo código por acción, sin crear catálogos paralelos.
 
 ## Acciones sin evento adicional
 
+Bullet, incremento puro del 05/11/2026: amortización y proyección de exigibilidad
+no crean operaciones ni actividad. `BulletAmortizacionTest` verifica cálculo y
+exclusión del catálogo operativo; `CapacidadesCreditoTest` conserva evidencia de
+rechazo HTTP sin creación. Los eventos de negocio mantienen sus emisores actuales.
+Pagos/anticipo y su auditoría Bullet permanecen pendientes de integración; no
+se acredita esa cobertura por la estrategia pura.
+
 | Superficie | Decisión y justificación | Evidencia |
 | --- | --- | --- |
 | `dashboard`, `admin` y bandejas | Consulta, navegación, filtros, búsqueda y paginación no mutan negocio ni generan actividad adicional. | ConsultaSucursalTest, Admin/ActivityLogTest, SelectedTeamManagementTest |

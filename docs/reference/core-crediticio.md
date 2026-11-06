@@ -1,5 +1,20 @@
 # Core crediticio: responsabilidades y contratos de evolución
 
+## Bullet: incremento puro y límites vigentes
+
+La estrategia Bullet distribuye cero capital intermedio y liquida principal
+al final. `ExigibilidadInteresBullet` proyecta intereses periódicos o al vencimiento
+por separado; conserva numeradores y los intervalos sin pago para CAT. Requiere
+motor 2, sin ampliar compatibilidad histórica. Las estrategias actuales mantienen
+sus guardas de capital positivo y su serialización.
+
+Este incremento es interno: Bullet sigue fuera del catálogo operativo; todavía
+no integra obligaciones, anticipo, persistencia ni UI. Las decisiones y los casos
+vigentes del 05/11 están en [Bullet](bullet-casos-definicion.md).
+Se conservan vencimiento e interés no exigible en el anticipo aprobado; mora sigue
+pendiente de compatibilidad y activación explícitas. La auditoría técnica #72 ya
+está completada y validada en QA; cada incremento mantiene su propia cobertura.
+
 ## Catálogo de capacidades
 
 `CatalogoCapacidadesCredito` declara opciones `{value, label, ayuda}` para métodos,
@@ -48,7 +63,7 @@ completa y las capacidades futuras siguen pendientes. Evidencia en la
 | Clasificación comercial | Catálogo de productos | Nómina no impone otra fórmula ni otro configurador |
 | Cobranza/recepción | Registro manual QA junto a aplicación | Retenciones, remesas, recepción y aplicación distinguibles |
 | Consultas | Estado calculado desde evidencia cifrada | Proyecciones relacionales reconstruibles y fechadas |
-| Auditoría | Emisores y cobertura parcial documentados | Mantener matriz, contexto original y pruebas por entrega |
+| Auditoría | Cobertura técnica integrada por #72 y QA confirmada | Mantener matriz, contexto original y pruebas por entrega |
 
 ## Invariantes y límites de integración
 
@@ -190,7 +205,7 @@ actuales hasta contar con nuevas convenciones aprobadas y probadas.
 
 | Capacidad | Definición necesaria |
 | --- | --- |
-| Bullet | Primera fecha, duración, periodos incompletos, anticipos/parcialidad, interés vencido, mora y liquidación |
+| Bullet | Integración de obligaciones/anticipo/UI; definición pendiente de activación y combinaciones de mora, con validación contractual |
 | Revolvente | Mínimo, disponibilidad, reservas, distribución, corte/fecha límite y límites por disposición |
 | Nómina | Reconocimiento entre descuento/recepción, remesa parcial/no recibida, reversos y bajas |
 | Escalabilidad | Medición en entorno identificado con 10 mil créditos/líneas activos y disposiciones asociadas |

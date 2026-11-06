@@ -1,5 +1,44 @@
 # Core crediticio extensible
 
+## Bullet base — incremento independiente, 05/11/2026
+
+Precisión posterior durante implementación: José confirma obligación vencida
+impagada como disparador, incluidas obligaciones de interés con capital no vencido,
+y las tres bases moratorias (saldo insoluto, capital inicial, remanente de obligación
+vencida). La consulta funcional de activación queda atendida; falta implementación
+y compatibilidad probada. No atribuir validación jurídica al agente ni habilitar
+bases ordinarias nuevas por inferencia. Esto actualiza los pendientes históricos
+de mora descritos abajo y en documentos anteriores.
+
+Rama `feat/bullet-base`, worktree `output/bullet-base/worktree`, base
+`c30c941`. Se preservan los cambios locales de auditoría en main; #72 está
+completada, desplegada y validada en QA por el usuario. No reabrir esa entrega.
+
+Notion vigente del 05/11 sustituye preguntas históricas: anticipo parcial conserva
+vencimiento e interés devengado no exigible; el saldo menor genera interés desde
+el día siguiente. Caso 12000/120/3120: saldo 8880 y 120 pendientes. Reducción de
+plazo fuera de Bullet base; diaria y capitalización separadas. Solo mora conserva
+decisiones de activación, compatibilidad de bases y validación contractual pendientes.
+
+Implementación local inicial: estrategia Bullet, guardas por estrategia y
+proyección pura de intereses periódicos/al vencimiento con numeradores.
+No se publica Bullet en el catálogo operativo. Sin migraciones, UI ni cambios
+a pagos: el resto del plan sigue pendiente. No equivale a Bullet integral.
+
+Siguientes incrementos: datos/capacidades/editor, obligaciones y anticipo con
+preservación de cargo/numerador/contabilización; habilitación tras cerrar mora;
+E2E, concurrencia y barrido acumulado. PR #65 documental sigue abierta:
+reconciliar con esta base vigente antes de integrarla; no adoptar su cuestionario
+histórico ni duplicar su cierre de catálogo. Pruebas y revisión de este incremento
+se registran al finalizar; no reutilizar conteos históricos como ejecución nueva.
+
+Validación local del incremento: 715 backend aprobadas, una omitida y 43834
+aserciones, 140 frontend/54 archivos, build y cuatro E2E de Productos aprobados.
+La suite inicial falló por falta de manifest Vite en el worktree nuevo; se generó
+el build y se repitió completa. Sin BD operativa ni proveedores externos.
+Review medium contra c30c941 sin hallazgos accionables; revisor verificó
+41 pruebas/398 aserciones de amortización e integridad. Sin integración/despliegue.
+
 ## Referencias
 
 - Notion: [iniciativa y roadmap](https://app.notion.com/p/40961db7db7f819a8af1d7c3cfec2df7).
@@ -105,7 +144,7 @@ La arquitectura amplia, Bullet y las capacidades futuras permanecen independient
   sin alterar el VPS. El usuario pidió terminar solo este incremento; las demás
   tareas quedan pendientes, sin avanzar Bullet/Revolvente/Nómina.
 
-## Decisiones pendientes
+## Antecedentes de decisiones del 29/10, superados por el estado vigente
 
 - Casos funcionales Bullet: calendario, parcialidades/anticipos, mora de intereses,
   liquidación y periodos incompletos, antes de implementación dependiente.

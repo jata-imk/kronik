@@ -107,7 +107,7 @@ test('cada cuota contractual puntual cierra y conserva el capital con el motor c
     }
     expect($motor->resumen($estado)['capital_insoluto'])->toBe('0.00')
         ->and($motor->resumen($estado)['exigible'])->toBe('0.00');
-})->with(MetodoAmortizacion::cases())->with(PeriodicidadCredito::cases());
+})->with([MetodoAmortizacion::CuotaNivelada, MetodoAmortizacion::CapitalFijo])->with(PeriodicidadCredito::cases());
 
 test('no mezcla versiones ni acepta un motor desconocido', function () {
     expect(fn () => VersionMotorCredito::desdeSnapshot(['motor_calculo_version' => 99]))

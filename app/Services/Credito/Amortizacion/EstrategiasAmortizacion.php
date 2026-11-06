@@ -12,6 +12,7 @@ final class EstrategiasAmortizacion
         return match ($metodo) {
             MetodoAmortizacion::CuotaNivelada => new CuotaNivelada,
             MetodoAmortizacion::CapitalFijo => new CapitalFijo,
+            MetodoAmortizacion::Bullet => new Bullet,
         };
     }
 }

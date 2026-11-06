@@ -1,5 +1,7 @@
 # Explicación
 
+- [ADR 0038: amortización y exigibilidad Bullet](adr-0038-bullet-amortizacion-exigibilidad.md)
+
 [Buscar por tema](../topic/index.md) · [Índice general](../index.md)
 
 - [ADR 0032: responsabilidades y evolución del core crediticio](adr-0032-core-crediticio-extensible.md)
