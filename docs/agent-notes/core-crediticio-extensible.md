@@ -4,8 +4,10 @@
 
 Continuación autorizada desde PR #73, head `6922fb2`, CI aprobada:
 [run 42149395120](https://github.com/jata-imk/kronik/actions/runs/42149395120).
-Git remoto comprobado; PR abierta y sin integrar. Rama `feat/bullet-condiciones`
-sobre ese head, en el mismo worktree `output/bullet-base/worktree`. Los cambios
+Git remoto comprobado; PR #73 abierta y sin integrar. Rama `feat/bullet-condiciones`
+sobre ese head, en el mismo worktree `output/bullet-base/worktree`. Publicado en [PR #74](https://github.com/jata-imk/kronik/pull/74), borrador contra
+`feat/bullet-base`; código `c8a916f`, sin integrar ni desplegar. El resultado
+vigente de CI y su head se consultan en la PR. Los cambios
 locales de auditoría en main permanecen intactos; no se reabre #72 ni la definición
 ya aceptada de las tres bases/disparador de mora.
 
@@ -23,9 +25,9 @@ hasta integrar obligaciones, anticipos y mora. No se habilita diaria/capitalizac
 ADR 0039 y referencias/matriz revisados: los eventos existentes de Productos
 cubren cambios; resolución y consulta no añaden actividad.
 
-Validación del incremento: regresión inicial 734 backend aprobadas, una omitida
-(44116 aserciones antes de las últimas guardas de requests); selección final de
-31 pruebas/338 aserciones aprobada. Frontend final: 145 pruebas en 55 archivos.
+Validación de publicación del código `c8a916f`: hook pre-push sin omitir controles,
+734 backend aprobadas, una omitida y 44121 aserciones, más build aprobado.
+Selección final de 31 pruebas/338 aserciones aprobada. Frontend final: 145 pruebas en 55 archivos.
 Build y cinco E2E de Productos, incluido Bullet/escritorio/móvil, aprobados en
 SQLite dedicada; no se usó BD operativa ni proveedores externos. Pint,
 `git diff --check` y 141 enlaces locales en 11 documentos sin roturas.
