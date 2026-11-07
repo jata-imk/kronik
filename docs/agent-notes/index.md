@@ -1,6 +1,6 @@
 # Agent Notes
 
-- [Core crediticio y Bullet: rama y PR únicas](core-crediticio-extensible.md)
+- [Core crediticio y Bullet: anticipo y liquidación/reverso internos en PR #73](core-crediticio-extensible.md)
 - [Auditoría y actividad: cobertura técnica y validaciones](auditoria-actividad.md)
 
 - [Equipo: acciones de integrantes](equipo-acciones-integrantes.md)

@@ -1,5 +1,54 @@
 # Core crediticio extensible
 
+## Anticipo y liquidación/reverso Bullet internos — 06/11/2026
+
+Retoma autorizada desde `6c64a3e`, worktree `output/bullet-base/worktree`, rama
+`feat/bullet-base`, [PR #73](https://github.com/jata-imk/kronik/pull/73). Agent Note
+y definición/implementación de Notion leídas. El usuario confirma limitar este
+incremento a validación interna; activación, simulación y originación permanecen
+bloqueadas. No se reabren disparador, bases moratorias, gracia ni sustitución.
+Los cuatro archivos locales de auditoría de main se preservan por hash.
+
+Implementado internamente: anticipo que cubre exigibles y cargos aplicables sin
+cobrar el devengado no exigible, conservación de claves/numeradores/vencimientos
+y contadores, capital inicial y gracia. El cronograma versionado proyecta nuevo
+saldo desde el día siguiente, con redondeo por obligación. Liquidación exacta sin
+interés futuro; reversos compensatorios y reapertura mediante el servicio actual.
+Sin nuevas migraciones, variables, seeders, permisos, endpoints, dependencias ni UI.
+
+ADR 0041 complementa ADR 0023/0040. Contrato, casos, matriz, índices y tema del
+core actualizados. Las pruebas de persistencia usan evidencia sintética solo
+en BD aislada, sin habilitar originación ni acreditar concurrencia MariaDB.
+Se conservan los eventos de pago/reverso; cálculo y consulta no añaden actividad.
+
+Validación final: `php artisan test --compact`, 847 aprobadas, una omitida y
+45547 aserciones. Build y E2E `solicitudes-dual.spec.js` aprobados; el E2E usa
+SQLite dedicada y cubre PDF, desembolso, pago/reverso, anticipo, liquidación y
+reapertura de métodos existentes. Sin BD operativa ni proveedores. Pint de cuatro
+archivos, diff-check y 155 enlaces locales en 11 documentos aprobados, UTF-8/LF.
+Advertencias existentes de recursos, Browserslist y chunks en el build.
+
+Review medium contra la base `6c64a3e` mediante `codex review --uncommitted -c
+model_reasoning_effort=medium`: sin hallazgos accionables; verificó 101 unitarias
+y 12 de integración, 1426 aserciones (superpuestas con la suite, no sumar).
+Prueban ambas políticas, tres bases, gracia/sustitución, anticipos repetidos,
+exigibles, impuestos/comisiones, bisiestos, centavos, liquidación vencida,
+reversos, reintento, previa obsoleta, permisos y auditoría sin datos reservados.
+Publicación con hook completo; resultado de CI en los checks de PR #73.
+
+Diagnósticos resueltos: relación inexistente en un test corregida para consultar
+movimientos del crédito; mora por obligación precisada a 15.28 por redondeo
+individual de cargos (6.23 + 9.05), sin cambiar el motor moratorio. La primera
+ejecución E2E quedó en PDF por límite de 30 segundos del servidor: Chrome tampoco
+iniciaba en la prueba aislada dentro del sandbox. Traza, capturas, vídeo y consola
+revisados; repetición fuera del sandbox aprobada, sin cambios al código ni al
+test. Review también requirió red fuera del sandbox. Base previa: 91/441 aprobadas.
+
+Siguiente entrega: habilitación y validación del ciclo completo, concurrencia
+financiera MariaDB y barrido acumulado antes de integrar. Sin integración en main,
+despliegue ni cierre integral. Las secciones inferiores conservan evidencia histórica;
+sus pendientes de anticipo/liquidación quedan sustituidos por este incremento.
+
 ## Obligaciones y mora Bullet — 05/11/2026
 
 Continuación en `output/bullet-base/worktree`, rama `feat/bullet-base` y

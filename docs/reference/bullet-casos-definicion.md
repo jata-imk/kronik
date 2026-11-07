@@ -1,6 +1,6 @@
 # Bullet: decisiones y casos de aceptación
 
-Estado funcional al 05/11/2026. Prevalece la sección vigente de la
+Estado funcional al 05/11/2026; avance interno al 06/11/2026. Prevalece la sección vigente de la
 [definición en Notion](https://app.notion.com/p/40861db7db7f81d1ab37cc46ea320c3c).
 La preparación histórica del 29/10 y las preguntas de PR #65 quedan superadas
 en anticipo, reducción de plazo y corte de fecha. Definición no equivale a
@@ -85,8 +85,10 @@ El segundo prepara condiciones/capacidades/editor en borradores según el
 [contrato de Productos](productos-crediticios.md#preparar-condiciones-bullet), sin
 ofrecer Bullet operativo. El tercero integra obligaciones y mora internamente
 en `MotorPagos`, con persistencia/reverso probados sobre evidencia sintética.
-Anticipo conservando devengado, liquidación y habilitación del ciclo siguen
-pendientes. Ver [contrato de obligaciones y mora](core-crediticio.md#obligaciones-y-mora-bullet).
+El cuarto integra anticipo conservando devengado y liquidación/reverso sobre
+evidencia sintética, sin habilitar el ciclo. Ver [contrato de obligaciones y mora](core-crediticio.md#obligaciones-y-mora-bullet)
+y [anticipo y liquidación internos](core-crediticio.md#anticipo-y-liquidación-bullet-internos).
+Activación, simulación, originación y validación integral permanecen pendientes.
 
 Oráculos adicionales, tasa moratoria sintética de 36 % y sin impuestos/comisiones:
 

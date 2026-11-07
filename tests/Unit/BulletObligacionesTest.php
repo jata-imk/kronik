@@ -166,7 +166,7 @@ test('Bullet rechaza condiciones incompletas y calendarios incompatibles sin def
     }
 })->with(['politica', 'base', 'ordinario', 'motor', 'metodo', 'intermedio', 'fechas']);
 
-test('Bullet no reconstruye estado perdido ni habilita anticipos o liquidación incompletos', function () {
+test('Bullet no reconstruye estado perdido ni opera anticipos con calendario incompleto', function () {
     $motor = app(MotorPagos::class);
     $state = estadoObligacionesBullet();
     $sinOrigen = $state;
@@ -174,7 +174,7 @@ test('Bullet no reconstruye estado perdido ni habilita anticipos o liquidación 
     expect(fn () => $motor->avanzar($sinOrigen, '2027-01-02'))->toThrow(ValidationException::class, 'evidencia Bullet');
     foreach (['prepago', 'liquidacion'] as $tipo) {
         expect(fn () => app(MotorAnticipos::class)->calcular($state, ['metodo' => 'bullet'], $tipo, '3120'))
-            ->toThrow(ValidationException::class, 'preservación');
+            ->toThrow(ValidationException::class, 'evidencia Bullet');
     }
 });
 

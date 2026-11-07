@@ -6,6 +6,8 @@ Los documentos distinguen diseño aprobado de capacidades implementadas.
 
 ## Referencia y decisiones
 
+- [ADR 0041: anticipo conservando devengado y liquidación/reverso Bullet internos](../explanation/adr-0041-anticipos-liquidacion-bullet.md).
+
 - [ADR 0040: obligaciones de interés/capital y mora Bullet](../explanation/adr-0040-obligaciones-mora-bullet.md).
 
 - [ADR 0038: estrategia Bullet y proyección de exigibilidad](../explanation/adr-0038-bullet-amortizacion-exigibilidad.md).

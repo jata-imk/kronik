@@ -44,8 +44,9 @@ históricos no reciben marcas ni defaults. Sin nuevas migraciones, variables,
 permisos ni eventos de cálculo. Los eventos reales de pago/reverso siguen siendo
 `CreditPaymentRecorded` y `CreditPaymentReversed`, con su emisor de aplicación.
 
-Bullet permanece fuera del catálogo operativo. El anticipo y la liquidación se
-rechazan explícitamente hasta preservar el interés no exigible y su calendario.
+Bullet permanece fuera del catálogo operativo. El bloqueo inicial de anticipo y
+liquidación internos se sustituye por la preservación definida en
+[ADR 0041](adr-0041-anticipos-liquidacion-bullet.md), sin habilitar el ciclo.
 La evidencia sintética de persistencia prueba la integración interna y auditoría,
 sin acreditar originación, concurrencia MariaDB, despliegue ni cierre de Bullet.
 Diaria y capitalización conservan sus entregas separadas.

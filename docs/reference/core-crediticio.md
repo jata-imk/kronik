@@ -10,8 +10,8 @@ sus guardas de capital positivo y su serialización.
 
 Bullet sigue fuera del catálogo operativo. Están preparados el cálculo puro,
 [condiciones y editor](productos-crediticios.md#preparar-condiciones-bullet) y
-las obligaciones/mora del motor de pagos. Faltan anticipo que preserve devengado,
-liquidación y habilitación probada del ciclo. Las decisiones y los casos
+las obligaciones/mora y el anticipo con devengado conservado, liquidación/reverso
+internos. Falta habilitación y validación probada del ciclo. Las decisiones y los casos
 vigentes del 05/11 están en [Bullet](bullet-casos-definicion.md).
 Se conservan vencimiento e interés no exigible en el anticipo aprobado; el disparador de mora por obligación vencida impagada y las tres bases están
 aclarados e implementados internamente; la habilitación operativa permanece pendiente. La auditoría técnica #72 ya
@@ -64,11 +64,40 @@ vencimiento, también retira ese ordinario provisional de las bases diferidas.
 
 Se mantiene el límite B+sustitución: cubrir completamente la obligación afectada
 durante gracia; no devolver una distribución parcial que luego requiera compensar
-interés pagado. `MotorAnticipos` rechaza expresamente Bullet mientras no preserve
-devengo y calendario. Activación, simulación y originación siguen bloqueadas.
+interés pagado. El anticipo y la liquidación internos conservan este límite.
+Activación, simulación y originación siguen bloqueadas.
 La persistencia de pagos/reversos se verifica con evidencia sintética inyectada
 en BD de pruebas; no acredita originación Bullet ni concurrencia financiera.
 Decisión y consecuencias en [ADR 0040](../explanation/adr-0040-obligaciones-mora-bullet.md).
+
+### Anticipo y liquidación Bullet internos
+
+El anticipo parcial cubre exigibles y cargos aplicables antes de reducir principal.
+El ordinario todavía no exigible conserva cargo, numerador y vencimiento; no se
+cobra obligatoriamente, elimina ni capitaliza. La obligación final conserva su
+fecha y refleja el capital pendiente. No se permite reducir plazo Bullet.
+
+El estado conserva claves de cuotas/cargos, `capital_inicial`, pagos, impuestos
+y control de gracia. Cada registro contabiliza solo diferencias de devengos;
+preservar el interés no exige crear otro cargo ni otro movimiento por su saldo
+ya contabilizado. Un anticipo posterior o en la misma fecha no reinicia contadores.
+
+La nueva versión del cronograma proyecta el nuevo saldo desde el día siguiente
+al abono y conserva fechas/números futuros. Suma numeradores anteriores y futuros
+por obligación antes de redondear; al vencimiento acumula los intervalos sin cobro.
+Incluye el devengado conservado pendiente y la fiscalidad/comisiones aplicables,
+sin convertir la proyección en deuda registrada. Los métodos anteriores conservan
+el cobro de devengado y regeneración definidos en ADR 0023.
+
+Liquidar cubre capital, devengos, cargos e impuestos aplicables, excluyendo interés
+y comisiones periódicas futuros. Exige coincidencia exacta con la cotización y
+detiene la generación posterior. El reverso admisible restaura estado y calendario
+mediante compensaciones y nueva versión, incluida reapertura tras liquidación.
+
+Se mantienen las interfaces y eventos de pago/reverso, permisos separados y
+restricciones de fecha/QA existentes. Previa y consulta no escriben. La evidencia
+es sintética y no habilita activación, simulación u originación Bullet ni acredita
+concurrencia financiera. Decisión en [ADR 0041](../explanation/adr-0041-anticipos-liquidacion-bullet.md).
 
 ## Catálogo de capacidades
 
@@ -260,7 +289,7 @@ actuales hasta contar con nuevas convenciones aprobadas y probadas.
 
 | Capacidad | Definición necesaria |
 | --- | --- |
-| Bullet | Integración de obligaciones/anticipo/mora y habilitación operativa; condiciones/editor preparados, validación transversal pendiente |
+| Bullet | Cálculo, condiciones/editor, obligaciones/mora y anticipo/liquidación internos; habilitación operativa y validación transversal pendientes |
 | Revolvente | Mínimo, disponibilidad, reservas, distribución, corte/fecha límite y límites por disposición |
 | Nómina | Reconocimiento entre descuento/recepción, remesa parcial/no recibida, reversos y bajas |
 | Escalabilidad | Medición en entorno identificado con 10 mil créditos/líneas activos y disposiciones asociadas |

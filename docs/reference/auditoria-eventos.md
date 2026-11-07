@@ -205,8 +205,13 @@ eventos adicionales: consultar y preparar distribuciones no crean recursos.
 reales de `credito.payment_recorded`/`credito.payment_reversed` de las filas de
 Créditos: actor, sujeto, equipo/sucursal, reintento sin duplicación, cifrado y
 ausencia de referencia, motivo, importes y condiciones en actividad. No añade
-metadatos ni duplica eventos. Anticipo/liquidación Bullet y habilitación integral
-siguen pendientes; esta prueba no acredita originación ni concurrencia financiera.
+metadatos ni duplica eventos. La ampliación interna del 06/11/2026 cubre también
+anticipo con devengado conservado, liquidación y ambos reversos: historial
+inmutable, contadores sin doble contabilización, compensación y reapertura,
+previa obsoleta, reintento y permisos/contexto. No requiere eventos adicionales:
+las operaciones se registran una vez en los mismos emisores de pago/reverso.
+La habilitación integral sigue pendiente; esta evidencia sintética no acredita
+originación ni concurrencia financiera MariaDB.
 
 | Superficie | Decisión y justificación | Evidencia |
 | --- | --- | --- |

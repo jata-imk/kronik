@@ -1,5 +1,7 @@
 # Explicación
 
+- [ADR 0041: anticipo Bullet con devengado conservado y liquidación/reverso](adr-0041-anticipos-liquidacion-bullet.md).
+
 - [ADR 0040: obligaciones y mora Bullet](adr-0040-obligaciones-mora-bullet.md).
 
 - [ADR 0038: amortización y exigibilidad Bullet](adr-0038-bullet-amortizacion-exigibilidad.md)
