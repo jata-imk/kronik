@@ -44,6 +44,9 @@ huella distinta entre procesos. Diagnóstico reproducido: serializar now() cambi
 la zona del reloj simulado y los casts de fechas; el worker debe recibir el
 testNow original con su zona. Se corrige exclusivamente el harness, conservando
 el rechazo de evidencia modificada. Pendiente repetir CI y revisar el ajuste.
+El traspaso conserva además el nombre IANA, no solo su offset actual: la fixture
+usa nacimiento en julio de 2002 para detectar diferencias históricas de horario
+de verano. Se reprodujeron ambos cambios de huella sin modificar código de dominio.
 
 Diagnósticos E2E resueltos: el router conserva la devolución de recursos
 estáticos; las fechas simuladas usan sesiones en la base aislada para evitar

@@ -56,6 +56,7 @@ function competirBullet(string $tabla, array $ids, array $operaciones): array
                 ...$operation, 'barrier' => $barrier, 'slot' => $slot, 'tabla' => $tabla,
                 // Date casts use the mock's zone; now() would convert it to the app zone.
                 'clock' => CarbonImmutable::getTestNow()->toIso8601String(),
+                'timezone' => CarbonImmutable::getTestNow()->getTimezone()->getName(),
             ], JSON_THROW_ON_ERROR)], base_path());
             $process->setTimeout(45);
             $process->start();
@@ -120,8 +121,9 @@ function prepararPagoBullet(Credito $credito, User $actor, string $tipo, string 
 try {
     if (($argv[1] ?? null) === 'worker') {
         $operation = json_decode($argv[2], true, flags: JSON_THROW_ON_ERROR);
-        CarbonImmutable::setTestNow(CarbonImmutable::parse($operation['clock']));
-        Illuminate\Support\Carbon::setTestNow(CarbonImmutable::parse($operation['clock']));
+        $clock = CarbonImmutable::parse($operation['clock'])->setTimezone($operation['timezone']);
+        CarbonImmutable::setTestNow($clock);
+        Illuminate\Support\Carbon::setTestNow($clock);
         $connection = (int) DB::selectOne('SELECT CONNECTION_ID() AS id')->id;
         $actor = User::findOrFail($operation['actor']);
         auth()->setUser($actor);

@@ -61,6 +61,8 @@ final class BulletScenario
     {
         self::aislado();
         $cliente = Cliente::factory()->create(['primer_nombre' => 'Bullet', 'apellido_paterno' => 'Sintético',
+            // Historic DST makes loss of the named clock zone observable across processes.
+            'fecha_nacimiento' => '2002-07-01',
             'sucursal_id' => $actor->current_sucursal_id]);
         $regimen = RegimenFiscal::firstOrCreate(['clave' => '612'], ['descripcion' => 'Régimen sintético', 'fisica' => true,
             'moral' => false, 'fecha_inicio_vigencia' => '2020-01-01', 'fecha_fin_vigencia' => '2099-12-31']);
