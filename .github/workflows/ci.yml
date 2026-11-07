@@ -119,3 +119,31 @@ jobs:
 
       - name: Verify audit concurrency on isolated MariaDB
         run: php tests/Concurrency/auditoria.php
+
+      - name: Verify Bullet financial concurrency on isolated MariaDB
+        run: php tests/Concurrency/bullet.php
+
+      - name: Install Chromium for browser and PDF verification
+        run: |
+          npx playwright install --with-deps chromium
+          echo "DOCUMENTOS_CHROME_PATH=$(node --input-type=module -e 'import { chromium } from "@playwright/test"; process.stdout.write(chromium.executablePath())')" >> "$GITHUB_ENV"
+
+      - name: Verify both Bullet policies end to end
+        env:
+          E2E_BULLET_FIXTURES: "true"
+        run: npm run test:e2e -- bullet-ciclo.spec.js productos-bullet.spec.js
+
+      - name: Verify existing dual origination end to end
+        env:
+          E2E_ORIGINACION_DUAL: "true"
+        run: npm run test:e2e -- solicitudes-dual.spec.js
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-evidence
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7

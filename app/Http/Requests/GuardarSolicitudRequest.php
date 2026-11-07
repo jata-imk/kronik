@@ -25,7 +25,7 @@ class GuardarSolicitudRequest extends FormRequest
             'monto' => ['nullable', 'regex:/^\d{1,12}(\.\d{1,2})?$/', 'numeric', 'gt:0'],
             'plazo' => 'nullable|integer|min:1|max:600',
             'periodicidad' => ['nullable', Rule::in(\App\Services\Credito\CatalogoCapacidadesCredito::valores('periodicidades'))],
-            'metodo' => ['nullable', Rule::in(\App\Services\Credito\CatalogoCapacidadesCredito::valores('metodos_amortizacion'))],
+            'metodo' => ['nullable', Rule::in(\App\Services\Credito\CatalogoCapacidadesCredito::valores('metodos_amortizacion', \App\Enums\VersionMotorCredito::actual()))],
             'destino' => 'nullable|string|max:2000',
             'fecha_estimada' => 'nullable|date_format:Y-m-d',
         ];

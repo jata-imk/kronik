@@ -16,6 +16,10 @@ final class CalculadorAmortizacion
     {
         ['principal' => $principal, 'tasaAnualPorcentaje' => $tasaAnualPorcentaje, 'inicio' => $inicio,
             'fechas' => $fechas, 'metodo' => $metodo, 'motor' => $motor, 'convencion' => $convencion] = get_object_vars($condiciones);
+        if ($metodo === \App\Enums\MetodoAmortizacion::Bullet && $motor !== VersionMotorCredito::Act360Racional) {
+            $this->error('Bullet requiere la precisión del motor 2 y no puede aplicarse a un contrato histórico.');
+        }
+        $motor->validarConvencion($convencion);
         if ($motor !== VersionMotorCredito::Historico && ($fechas === [] || Decimal::compare(Decimal::round($principal), '0') <= 0)) {
             $this->error('Indica un capital de al menos un centavo y un calendario con vencimientos.');
         }
@@ -27,6 +31,7 @@ final class CalculadorAmortizacion
         $base = $estrategia->preparar($principal, array_column($factores, 'descuento'));
         $saldo = Decimal::round($principal);
         $tabla = [];
+        $devengos = [];
 
         foreach ($factores as $index => $factor) {
             $saldoInicial = $saldo;
@@ -38,11 +43,16 @@ final class CalculadorAmortizacion
                 ? $saldoInicial
                 : $estrategia->capital($base->importe, $interes);
             $capital = Decimal::round($capital);
-            if ($motor !== VersionMotorCredito::Historico && (Decimal::compare($capital, '0') <= 0 || Decimal::compare($capital, $saldoInicial) > 0)) {
+            $capitalCeroAdmitido = ! $ultimo && $estrategia->permiteCapitalIntermedioCero();
+            if ($motor !== VersionMotorCredito::Historico && (Decimal::compare($capital, '0') < 0 || (! $capitalCeroAdmitido && Decimal::compare($capital, '0') === 0) || Decimal::compare($capital, $saldoInicial) > 0)) {
                 $this->error('El monto, la tasa y el calendario no permiten amortizaciones positivas dentro del capital pendiente. Revisa el plazo, el monto o el método seleccionado.');
             }
             $pago = Decimal::round(Decimal::add($capital, $interes));
             $saldo = Decimal::round(Decimal::sub($saldoInicial, $capital));
+            if ($metodo === \App\Enums\MetodoAmortizacion::Bullet) {
+                $devengos[] = ['inicio' => $factor['inicio']->toDateString(), 'fin' => $factor['fecha']->toDateString(),
+                    'numerador' => $this->intereses->numerador($saldoInicial, $tasaAnualPorcentaje, $factor['inicio'], $factor['fecha'], $convencion)];
+            }
 
             $tabla[] = [
                 'numero' => $index + 1,
@@ -61,7 +71,7 @@ final class CalculadorAmortizacion
             ];
         }
 
-        return new ResultadoAmortizacion($tabla, $base);
+        return new ResultadoAmortizacion($tabla, $base, $devengos);
     }
 
     /** @param array<int, CarbonImmutable> $fechas */

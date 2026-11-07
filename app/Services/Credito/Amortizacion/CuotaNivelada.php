@@ -7,6 +7,11 @@ use App\Support\Decimal;
 
 final class CuotaNivelada implements EstrategiaAmortizacion
 {
+    public function permiteCapitalIntermedioCero(): bool
+    {
+        return false;
+    }
+
     public function preparar(string $principal, array $descuentos): BaseAmortizacion
     {
         $exacta = Decimal::div($principal, array_reduce($descuentos, fn (string $total, string $factor) => Decimal::add($total, $factor), '0'));

@@ -44,6 +44,7 @@ class CreditoPagoController extends Controller
         }
 
         return Inertia::render('Creditos/Anticipo', ['credito' => $credito->load(['cliente:id,primer_nombre,apellido_paterno', 'sucursal:id,nombre']),
+            'politicaInteresBullet' => $credito->condiciones['producto']['reglas']['politica_interes_bullet'] ?? null,
             'situacion' => $service->consultar($credito), 'hoy' => app(FechaEmpresa::class)->hoy()->toDateString(), 'operaciones' => $ops,
             'opcionales' => collect($credito->condiciones['producto']['comisiones'])->map(fn ($c, $i) => [...$c, 'indice' => $i])->filter(fn ($c) => ! $c['obligatoria'] && in_array($c['momento_cobro'], ['evento', 'liquidacion'], true))->values(),
             'habilitado' => config('originacion.pagos_qa_habilitados') === true && config('originacion.anticipos_qa_habilitados') === true]);

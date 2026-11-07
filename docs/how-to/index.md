@@ -12,6 +12,7 @@
 - [Migrar VPS](migrar-vps.md)
 - [Probar correos de acceso y seguridad](probar-correos-acceso.md)
 - [Probar anticipos y liquidación QA](qa-anticipos-liquidacion.md)
+- [Desplegar y comprobar ambas políticas Bullet en QA](qa-bullet.md)
 - [Guion QA manual — Backlog 03.5](qa-backlog-03-5-documentos-y-plantillas.md)
 - [Guía operativa QA: crédito simple para un prestamista o financiera pequeña](qa-credito-simple.md)
 - [Probar crédito y desembolso manual QA](qa-desembolso.md)

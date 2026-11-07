@@ -126,8 +126,8 @@ un solo código por acción, sin crear catálogos paralelos.
 | `solicitudes` | Copia firmada recibida | `solicitud.signature_received` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudFirmaService::recibir | AuditDomainCoverageTest; SolicitudesTest |
 | `solicitudes` | Firma revisada | `solicitud.signature_reviewed` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudFirmaService::revisar | AuditDomainCoverageTest; SolicitudesTest |
 | `creditos` | Desembolso QA registrado | `credito.disbursed` | U | Solicitud; crédito en related | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | DesembolsoService::registrar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest |
-| `creditos` | Pago QA registrado | `credito.payment_recorded` | U | Crédito | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | PagoService::registrar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest |
-| `creditos` | Pago QA revertido | `credito.payment_reversed` | U | Crédito | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | PagoService::reversar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest |
+| `creditos` | Pago QA registrado | `credito.payment_recorded` | U | Crédito | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | PagoService::registrar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest; BulletPagosTest (evidencia sintética) |
+| `creditos` | Pago QA revertido | `credito.payment_reversed` | U | Crédito | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | PagoService::reversar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest; BulletPagosTest (evidencia sintética) |
 | `Autenticación` | Autenticación de dos factores completada | `login.2fa_completed` | U | Usuario | Autenticación completada | C | result | Q | Implementado; validar entrega en Agent Note | TwoFactorSessionController::store | AuditCoverageTest |
 | `Perfil` | Perfil de usuario actualizado | `user.profile.updated` | U | Usuario | Cambio aplicado | C | changed_fields | Q | Implementado; validar entrega en Agent Note | UpdateUserProfileInformation::update | AuditCoverageTest |
 | `menubar-items` | Elemento de menú creado | `menubar_item.created` | U | Elemento de menú | Cambio aplicado | C | changed_fields, result | Q | Implementado; validar entrega en Agent Note | MenubarItemService::guardar | Admin/ConsultaEmpresaMenuTest |
@@ -184,6 +184,25 @@ un solo código por acción, sin crear catálogos paralelos.
 
 
 ## Acciones sin evento adicional
+
+Bullet mantiene los emisores reales de Productos, Solicitudes, Documentos,
+firmas y Créditos de la matriz anterior. La habilitación del ciclo no añade un
+evento por seleccionar política/base, resolver capacidades, calcular ni consultar.
+BulletCondicionesTest verifica creación/copia/edición, activación/programación,
+uso y consulta sin escrituras; los rechazos de combinaciones no crean actividad.
+BulletPagosTest y las unitarias conservan cobertura sintética de obligaciones,
+mora, anticipos y reversos.
+
+BulletCicloQaTest origina productos y contratos mediante los servicios reales:
+condiciones, tabla, firma, desembolso, anticipo y liquidación/reapertura. Comprueba
+actor, sujeto, equipo/sucursal y emisión única de pago/reverso ante reintentos,
+sin referencias, motivos reservados, importes ni condiciones en actividad.
+Concurrency/bullet.php añade carreras multiconexión en MariaDB aislada para
+desembolsos, pagos, anticipos/liquidación y reversos: la operación perdedora
+revierte sus escrituras y sus eventos; un reintento no duplica auditoría.
+E2E/bullet-ciclo.spec.js recorre ambas políticas con PDF real. La ejecución
+aprobada y su commit se acreditan en la Agent Note; una prueba declarada no
+demuestra por sí sola ejecución ni despliegue.
 
 | Superficie | Decisión y justificación | Evidencia |
 | --- | --- | --- |

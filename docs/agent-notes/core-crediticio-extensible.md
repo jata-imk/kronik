@@ -1,5 +1,278 @@
 # Core crediticio extensible
 
+## Habilitación y validación integral Bullet — 07/11/2026
+
+Retoma autorizada desde `1a495aa`, worktree `output/bullet-base/worktree`, rama
+`feat/bullet-base`, PR #73 contra main `c30c941`. Notion y Agent Note leídos;
+ambas políticas, definiciones moratorias y límites conservados. Los cuatro
+archivos locales de auditoría de main se preservan por hash; no pertenecen a
+esta entrega. El usuario realizará despliegue y comprobación en la VPS compartida;
+el agente implementa, valida en bases aisladas y prepara su guion.
+
+Implementado en la rama: catálogo operativo motor 2/Act/360, política explícita
+en el adaptador antes de serializar tabla/CAT, condiciones congeladas durante
+originación/firma/desembolso, resumen de ordinario pendiente/no exigible/vencido,
+ayudas y anexo PDF coherentes. Se conservan las banderas QA existentes, sin nuevos
+permisos, migraciones ni seeders operativos. ADR 0042 sustituye el bloqueo
+provisional de los incrementos anteriores y mantiene sus decisiones financieras.
+
+Las pruebas nuevas originan mediante servicios reales; E2E usa PDF real y reloj
+exclusivo del harness aislado. MariaDB añade ocho competencias por política con
+procesos/conexiones independientes. Los emisores de actividad existentes se
+conservan, sin nuevos eventos por consulta o cálculo; matriz actualizada.
+Validación local: 856 backend aprobadas, una omitida preexistente y 46151
+aserciones; 148 frontend/56 archivos y build aprobados. E2E Chromium aprobados
+para ambas políticas en selecciones independientes, Productos Bullet y regresión
+dual existente, sobre SQLite dedicada y PDF real. Capturas de escritorio/móvil
+incorporadas a la guía. Sin BD operativa ni proveedores.
+
+Review medium del incremento contra `1a495aa`, mediante `codex review
+--uncommitted -c model_reasoning_effort=medium`: sin regresiones accionables.
+La selección del revisor detectó dependencia de helpers de Productos declarados
+en otro archivo de pruebas; se centralizó el fixture en Support/Pest y las 40
+pruebas específicas pasan por archivo, con 942 aserciones. El barrido acumulado
+final contra `c30c941` y la concurrencia financiera real se comprobarán antes
+de integrar. Pint, UTF-8/LF, diff y navegación documental revisados; los cuatro
+hashes locales de auditoría permanecen idénticos.
+
+Diagnósticos E2E resueltos: el router conserva la devolución de recursos
+estáticos; las fechas simuladas usan sesiones en la base aislada para evitar
+compararlas con mtime del sistema, conservando CSRF. Los dictámenes esperan el
+resultado visible anterior antes del siguiente envío. El oráculo al 02/03 con
+ambos añade 5.92 ordinarios al pendiente final: 380.48 - 100 + 5.92 = 286.40;
+se corrigió la aserción, sin modificar reglas financieras. Traza, captura,
+vídeo y consola revisados. No hay despliegue ni aceptación QA
+compartida reportados. Diaria, capitalización y reducción de plazo Bullet siguen
+fuera de alcance; tampoco se habilitan SIC productivo ni dinero real.
+
+Guion: [desplegar y comprobar Bullet en QA](../how-to/qa-bullet.md).
+Las secciones inferiores conservan evidencia histórica; su bloqueo operativo
+queda sustituido por esta habilitación, sin atribuirles pruebas nuevas.
+
+## Anticipo y liquidación/reverso Bullet internos — 06/11/2026
+
+Retoma autorizada desde `6c64a3e`, worktree `output/bullet-base/worktree`, rama
+`feat/bullet-base`, [PR #73](https://github.com/jata-imk/kronik/pull/73). Agent Note
+y definición/implementación de Notion leídas. El usuario confirma limitar este
+incremento a validación interna; activación, simulación y originación permanecen
+bloqueadas. No se reabren disparador, bases moratorias, gracia ni sustitución.
+Los cuatro archivos locales de auditoría de main se preservan por hash.
+
+Implementado internamente: anticipo que cubre exigibles y cargos aplicables sin
+cobrar el devengado no exigible, conservación de claves/numeradores/vencimientos
+y contadores, capital inicial y gracia. El cronograma versionado proyecta nuevo
+saldo desde el día siguiente, con redondeo por obligación. Liquidación exacta sin
+interés futuro; reversos compensatorios y reapertura mediante el servicio actual.
+Sin nuevas migraciones, variables, seeders, permisos, endpoints, dependencias ni UI.
+
+ADR 0041 complementa ADR 0023/0040. Contrato, casos, matriz, índices y tema del
+core actualizados. Las pruebas de persistencia usan evidencia sintética solo
+en BD aislada, sin habilitar originación ni acreditar concurrencia MariaDB.
+Se conservan los eventos de pago/reverso; cálculo y consulta no añaden actividad.
+
+Validación final: `php artisan test --compact`, 847 aprobadas, una omitida y
+45547 aserciones. Build y E2E `solicitudes-dual.spec.js` aprobados; el E2E usa
+SQLite dedicada y cubre PDF, desembolso, pago/reverso, anticipo, liquidación y
+reapertura de métodos existentes. Sin BD operativa ni proveedores. Pint de cuatro
+archivos, diff-check y 155 enlaces locales en 11 documentos aprobados, UTF-8/LF.
+Advertencias existentes de recursos, Browserslist y chunks en el build.
+
+Review medium contra la base `6c64a3e` mediante `codex review --uncommitted -c
+model_reasoning_effort=medium`: sin hallazgos accionables; verificó 101 unitarias
+y 12 de integración, 1426 aserciones (superpuestas con la suite, no sumar).
+Prueban ambas políticas, tres bases, gracia/sustitución, anticipos repetidos,
+exigibles, impuestos/comisiones, bisiestos, centavos, liquidación vencida,
+reversos, reintento, previa obsoleta, permisos y auditoría sin datos reservados.
+Publicación con hook completo; resultado de CI en los checks de PR #73.
+
+Diagnósticos resueltos: relación inexistente en un test corregida para consultar
+movimientos del crédito; mora por obligación precisada a 15.28 por redondeo
+individual de cargos (6.23 + 9.05), sin cambiar el motor moratorio. La primera
+ejecución E2E quedó en PDF por límite de 30 segundos del servidor: Chrome tampoco
+iniciaba en la prueba aislada dentro del sandbox. Traza, capturas, vídeo y consola
+revisados; repetición fuera del sandbox aprobada, sin cambios al código ni al
+test. Review también requirió red fuera del sandbox. Base previa: 91/441 aprobadas.
+
+Siguiente entrega: habilitación y validación del ciclo completo, concurrencia
+financiera MariaDB y barrido acumulado antes de integrar. Sin integración en main,
+despliegue ni cierre integral. Las secciones inferiores conservan evidencia histórica;
+sus pendientes de anticipo/liquidación quedan sustituidos por este incremento.
+
+## Obligaciones y mora Bullet — 05/11/2026
+
+Continuación en `output/bullet-base/worktree`, rama `feat/bullet-base` y
+[PR #73](https://github.com/jata-imk/kronik/pull/73). Base de este incremento
+`ccea858`; Git limpio/sincronizado y [CI de entrada aprobada](https://github.com/jata-imk/kronik/actions/runs/42161579303).
+Notion leído: precisión inicial del 05/11 prevalece sobre preguntas históricas.
+No se reabren disparador ni tres bases moratorias. Los cuatro archivos locales
+de auditoría en main conservan sus cambios; no se reabre #72.
+
+Implementado internamente: obligación periódica/final de interés, atraso de
+interés con capital futuro, tres bases sin duplicar las globales, gracia A/B y
+ambos/sustitución. Se preservan numeradores y base diaria anterior/posterior al
+pago; la sustitución retroactiva retira ordinario provisional del cargo y las
+bases diferidas correctos, incluso si la gracia cruza otro vencimiento.
+El recorrido histórico permanece separado por método exacto. ADR 0040 y contrato
+del core documentan la evidencia nueva del estado, sin tablas nuevas.
+
+`BulletPagosTest` usa evidencia sintética inyectada solo en BD de pruebas para
+verificar persistencia cifrada, previa/consulta sin escritura, reintento y reverso
+compensatorio con actor/sujeto/equipo/sucursal. Conserva los emisores reales de
+pago y reverso, sin eventos adicionales por cálculo ni metadatos sensibles.
+Matriz actualizada. No acredita originación Bullet ni concurrencia financiera.
+
+Validación final: `php artisan test --compact`, 794 aprobadas, una omitida y
+44565 aserciones; build aprobado. E2E `solicitudes-dual.spec.js` aprobado en
+SQLite dedicada: contrato/PDF, desembolso, pago/reverso, anticipo, liquidación y
+reapertura de los métodos existentes. No se usó BD operativa ni proveedores.
+Selección de regresión previa 213/1932 y selección final 60/444 (superpuestas,
+no sumar). Pint de cuatro archivos y diff-check aprobados; siete documentos y
+87 enlaces locales sin roturas, UTF-8/LF. Advertencias de chunks/recursos del
+build ya existentes; sin cambios de dependencias ni frontend.
+
+Una selección inicial omitió el archivo que define `productoPayload`, helper
+existente: repetición incluyendo Productos aprobada. El fixture sintético de
+integración necesitaba formalización después de revisar firma; corregido antes
+de las tres pruebas aprobadas. La primera revisión
+medium encontró P2: el residuo exclusivo de impuesto podía activar mora global
+y sustitución. Corregido el disparador a capital/interés pendientes; seis casos
+de centavos prueban las tres bases con ambos/sustitución. Selección final de
+60 pruebas/444 aserciones aprobada. Review medium final mediante `codex review
+--uncommitted -c model_reasoning_effort=medium -c sandbox_mode=danger-full-access`,
+base `ccea858`: sin hallazgos accionables; verificó las 57 unitarias y tres de
+integración (selección superpuesta). Código y CI vigentes en PR #73; publicación
+con hook pre-push completo, sin omitir controles. No corresponde aún el barrido
+de cierre integral de Bullet.
+
+Sin nuevas migraciones, seeders, variables, permisos o UI en este incremento.
+La migración de condiciones ya incluida en la PR conserva su propio alcance.
+Activación, simulación y originación siguen bloqueadas; `MotorAnticipos` rechaza
+Bullet expresamente. Siguiente incremento: anticipo que conserve cargo,
+numerador, contabilización y vencimiento del devengado no exigible; liquidación,
+reverso y posterior habilitación probada. Diaria/capitalización siguen separadas.
+Sin integración en main, despliegue ni cierre integral de Bullet.
+
+## Rama y PR únicas — 05/11/2026
+
+El usuario pide publicar los incrementos e integrarlos en main, o mantenerlos
+concentrados en una misma rama y PR. Para continuar Bullet se adopta una única
+rama `feat/bullet-base` y [PR #73](https://github.com/jata-imk/kronik/pull/73),
+contra main. Los siguientes incrementos se publicarán en esta PR; no abrir una
+cadena adicional por cada incremento. La integración en main se realizará con
+pruebas/CI, review medium y barrido acumulado aprobados, sin pedir de nuevo la
+autorización de publicación/integración ya expresada por el usuario.
+
+[PR #74](https://github.com/jata-imk/kronik/pull/74) integrada en esa rama mediante
+`ea68771`, conservando historial. El árbol del merge es idéntico al head aprobado
+`324944d` (`5cbd616f35bd6bb3d800db7cf34f142bfac92fd7`): se mantienen las pruebas
+y reviews ya registradas, sin presentarlas como ejecuciones nuevas. La CI de
+`324944d` fue comprobada aprobada antes de integrar. El estado vigente de la CI
+de la rama unificada se consulta en PR #73. El worktree de trabajo sigue en
+`output/bullet-base/worktree`, ahora sobre `feat/bullet-base`.
+
+No se ha integrado Bullet en main ni desplegado. Los cambios locales de auditoría
+de main permanecen intactos. Las secciones inferiores conservan el historial de
+las entregas; su organización anterior en dos PR queda sustituida por esta.
+
+El incremento de obligaciones/mora se registra arriba. Después sigue anticipo que conserve
+el devengado no exigible, liquidación/reverso y habilitación probada del ciclo.
+Diaria y capitalización siguen como ampliaciones separadas. No reabrir definiciones
+funcionales aceptadas ni cerrar Bullet por esta consolidación.
+
+## Condiciones Bullet — 05/11/2026
+
+Continuación autorizada desde PR #73, head `6922fb2`, CI aprobada:
+[run 42149395120](https://github.com/jata-imk/kronik/actions/runs/42149395120).
+Git remoto comprobado; PR #73 abierta y sin integrar. Rama `feat/bullet-condiciones`
+sobre ese head, en el mismo worktree `output/bullet-base/worktree`. Publicado en [PR #74](https://github.com/jata-imk/kronik/pull/74), borrador contra
+`feat/bullet-base`; código `c8a916f`, sin integrar ni desplegar. El resultado
+vigente de CI y su head se consultan en la PR. Los cambios
+locales de auditoría en main permanecen intactos; no se reabre #72 ni la definición
+ya aceptada de las tres bases/disparador de mora.
+
+Implementado: condiciones por versión, copia, catálogo de configuración separado
+del operativo y campos en el editor existente. Bullet exige ambas selecciones
+explícitas (política y base moratoria), solo ordinario sobre saldo insoluto y
+prepago `conservar_fecha`. El editor muestra bases efectivas y limpia/avisa ante
+cambios incompatibles. En esta etapa no mezcla Bullet con métodos anteriores.
+Consulta conserva valores originales, sin aplicar defaults ni mutaciones.
+
+Migración aditiva nullable `2026_11_05_220000_add_bullet_conditions_to_product_rules`,
+sin backfill. No aplicada a BD operativa. Sin seeders, variables o permisos nuevos.
+Activación/programación, simulación y uso permanecen bloqueados en backend y UI
+hasta integrar obligaciones, anticipos y mora. No se habilita diaria/capitalización.
+ADR 0039 y referencias/matriz revisados: los eventos existentes de Productos
+cubren cambios; resolución y consulta no añaden actividad.
+
+Validación de publicación del código `c8a916f`: hook pre-push sin omitir controles,
+734 backend aprobadas, una omitida y 44121 aserciones, más build aprobado.
+Selección final de 31 pruebas/338 aserciones aprobada. Frontend final: 145 pruebas en 55 archivos.
+Build y cinco E2E de Productos, incluido Bullet/escritorio/móvil, aprobados en
+SQLite dedicada; no se usó BD operativa ni proveedores externos. Pint,
+`git diff --check` y 141 enlaces locales en 11 documentos sin roturas.
+
+Review medium final mediante `codex review --uncommitted -c
+model_reasoning_effort=medium -c sandbox_mode=danger-full-access`, base `6922fb2`:
+sin hallazgos accionables; revisor verificó 31/338 y 70/535 backend (selecciones
+superpuestas), más 11 pruebas frontend. Primera revisión sin hallazgos, con
+frontend limitado por permisos del proceso hijo; repetición final con acceso
+local completada. Este incremento no cierra Bullet, por lo que el barrido de
+cierre acumulado de la funcionalidad sigue pendiente.
+
+E2E detectó etiquetas accesibles ausentes y un acceso al simulador desde el
+encabezado; corregidos con regresión. Dos pruebas existentes ahora seleccionan
+su producto sintético por nombre accesible al coexistir el nuevo borrador Bullet.
+Se revisaron diagnósticos de los fallos; últimas cinco aprobadas. Hubo una
+interrupción del entorno y corridas incompletas, que no cuentan como evidencia
+aprobada. Capturas conservadas en `output/bullet-base/capturas-condiciones/`.
+No equivale a integración, despliegue ni cierre de Bullet. Siguiente incremento: obligaciones y mora por
+remanente impagado, preservación de devengado por anticipo, ciclo financiero y
+posterior habilitación probada; luego validación transversal y barrido acumulado.
+
+## Bullet base — incremento independiente, 05/11/2026
+
+Precisión posterior durante implementación: José confirma obligación vencida
+impagada como disparador, incluidas obligaciones de interés con capital no vencido,
+y las tres bases moratorias (saldo insoluto, capital inicial, remanente de obligación
+vencida). La consulta funcional de activación queda atendida; falta implementación
+y compatibilidad probada. No atribuir validación jurídica al agente ni habilitar
+bases ordinarias nuevas por inferencia. Esto actualiza los pendientes históricos
+de mora descritos abajo y en documentos anteriores.
+
+Rama `feat/bullet-base`, worktree `output/bullet-base/worktree`, base
+`c30c941`. Se preservan los cambios locales de auditoría en main; #72 está
+completada, desplegada y validada en QA por el usuario. No reabrir esa entrega.
+
+Publicado en [PR #73](https://github.com/jata-imk/kronik/pull/73), código
+`3d5a74e`. [CI del código aprobada](https://github.com/jata-imk/kronik/actions/runs/42147415145).
+Review medium del commit publicado sin hallazgos; 41 pruebas/398 aserciones
+dirigidas verificadas por el revisor. Sin integración ni despliegue.
+
+Notion vigente del 05/11 sustituye preguntas históricas: anticipo parcial conserva
+vencimiento e interés devengado no exigible; el saldo menor genera interés desde
+el día siguiente. Caso 12000/120/3120: saldo 8880 y 120 pendientes. Reducción de
+plazo fuera de Bullet base; diaria y capitalización separadas. Las tres bases y el disparador de mora están aclarados; quedan implementación
+y compatibilidad operativa probada, sin reabrir consultas.
+
+Implementación local inicial: estrategia Bullet, guardas por estrategia y
+proyección pura de intereses periódicos/al vencimiento con numeradores.
+No se publica Bullet en el catálogo operativo. Sin migraciones, UI ni cambios
+a pagos: el resto del plan sigue pendiente. No equivale a Bullet integral.
+
+Siguientes incrementos: datos/capacidades/editor, obligaciones y anticipo con
+preservación de cargo/numerador/contabilización; habilitación tras cerrar mora;
+E2E, concurrencia y barrido acumulado. PR #65 documental sigue abierta:
+reconciliar con esta base vigente antes de integrarla; no adoptar su cuestionario
+histórico ni duplicar su cierre de catálogo. Pruebas y revisión de este incremento
+se registran al finalizar; no reutilizar conteos históricos como ejecución nueva.
+
+Validación local del incremento: 715 backend aprobadas, una omitida y 43834
+aserciones, 140 frontend/54 archivos, build y cuatro E2E de Productos aprobados.
+La suite inicial falló por falta de manifest Vite en el worktree nuevo; se generó
+el build y se repitió completa. Sin BD operativa ni proveedores externos.
+Review medium contra c30c941 sin hallazgos accionables; revisor verificó
+41 pruebas/398 aserciones de amortización e integridad. Sin integración/despliegue.
+
 ## Referencias
 
 - Notion: [iniciativa y roadmap](https://app.notion.com/p/40961db7db7f819a8af1d7c3cfec2df7).
@@ -105,7 +378,7 @@ La arquitectura amplia, Bullet y las capacidades futuras permanecen independient
   sin alterar el VPS. El usuario pidió terminar solo este incremento; las demás
   tareas quedan pendientes, sin avanzar Bullet/Revolvente/Nómina.
 
-## Decisiones pendientes
+## Antecedentes de decisiones del 29/10, superados por el estado vigente
 
 - Casos funcionales Bullet: calendario, parcialidades/anticipos, mora de intereses,
   liquidación y periodos incompletos, antes de implementación dependiente.

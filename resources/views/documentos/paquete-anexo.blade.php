@@ -12,15 +12,21 @@
         <p>Fiscalidad no definida. Los importes siguientes son anteriores a impuestos; esto no significa exención ni tasa cero. No autoriza firma, desembolso ni cobro.</p>
     @endif
     <p>Condiciones y simulación conservadas de la revisión {{ $snapshot['revision_id'] }}. La disposición indicada es una fecha estimada, no un movimiento realizado.</p>
-    <p>Monto: ${{ number_format((float) $snapshot['tabla']['monto'], 2) }} MXN · {{ $snapshot['tabla']['plazo'] }} pagos · {{ $snapshot['tabla']['periodicidad'] }} · {{ $snapshot['tabla']['metodo'] }}</p>
+    <p>Monto: ${{ number_format((float) $snapshot['tabla']['monto'], 2) }} MXN · {{ $snapshot['tabla']['plazo'] }} periodos · {{ $snapshot['tabla']['periodicidad'] }} · {{ $snapshot['tabla']['metodo'] }}</p>
     <p>Destino: {{ $snapshot['condiciones']['destino'] }}</p>
     <p>Producto versión {{ $snapshot['producto']['numero'] }} · Tasa ordinaria anual: {{ $snapshot['producto']['tasa_ordinaria_anual'] }}% · Tasa moratoria anual: {{ $snapshot['producto']['tasa_moratoria_anual'] }}% · Días de gracia configurados: {{ $snapshot['producto']['dias_gracia_mora'] }}.</p>
     <p>Convención: {{ $snapshot['producto']['reglas']['convencion_interes'] }}. Esta tabla proyecta curso normal, sin atraso.</p>
     @php($reglasAnticipo = $snapshot['producto']['reglas'])
+    @php($esBullet = ($reglasAnticipo['metodos_amortizacion'] ?? []) === ['bullet'])
+    @if ($esBullet)
+        <p>Bullet: capital al vencimiento. {{ ['periodicos' => 'Intereses exigibles en cada vencimiento del calendario.', 'al_vencimiento' => 'Intereses exigibles junto con el capital al vencimiento final, sin capitalización.'][$reglasAnticipo['politica_interes_bullet']] }}</p>
+        <p>Base ordinaria: saldo insoluto. Base moratoria: {{ ['saldo_insoluto' => 'saldo insoluto', 'capital_inicial' => 'capital inicial', 'obligacion_vencida' => 'remanente de obligación vencida impagada'][$reglasAnticipo['base_moratoria']] }}. La mora se activa por obligación de capital o interés vencida con remanente, incluso con capital aún no vencido; no se duplica una base global por varias obligaciones.</p>
+        <p>El anticipo cubre exigibles y cargos aplicables y reduce principal conservando el vencimiento. El interés devengado aún no exigible conserva su importe y fecha, sin cobro obligatorio ni capitalización. El saldo reducido genera interés desde el día siguiente al abono.</p>
+    @endif
     <h2>Anticipos y liquidación: condiciones conservadas</h2>
     <p>Anticipo parcial: {{ ($reglasAnticipo['permite_prepago_parcial'] ?? false) ? 'permitido' : 'no permitido' }}.
         Capital anticipado mínimo: ${{ number_format((float) ($reglasAnticipo['monto_minimo_prepago'] ?? 0), 2) }} MXN.
-        Aplicación: {{ ($reglasAnticipo['aplicacion_prepago'] ?? null) === 'reducir_plazo' ? 'reducir plazo' : 'reducir pago' }}.
+        Aplicación: {{ ['reducir_plazo' => 'reducir plazo', 'reducir_pago' => 'reducir pago', 'conservar_fecha' => 'conservar vencimiento'][$reglasAnticipo['aplicacion_prepago'] ?? ''] ?? 'sin definir en esta versión histórica' }}.
         Liquidación anticipada: {{ ($reglasAnticipo['permite_liquidacion_anticipada'] ?? false) ? 'permitida' : 'no permitida' }}.</p>
     @foreach ($snapshot['producto']['comisiones'] ?? [] as $comision)
         @if (in_array($comision['momento_cobro'], ['evento', 'liquidacion'], true))
@@ -38,8 +44,13 @@
     @endforeach
     @if (!empty($snapshot['producto']['politica_mora']))
         @php($mora = $snapshot['producto']['politica_mora'])
+        @if ($esBullet)
+        <p>Política de atraso conservada: {{ $mora['gracia'] === 'efectiva' ? 'A: los días de gracia no generan mora; comienza el día siguiente a terminar la gracia.' : 'B: si supera la gracia con obligación vencida impagada, la mora se calcula desde el día posterior al vencimiento.' }}</p>
+        <p>{{ $mora['intereses'] === 'ambos' ? 'Durante la mora se generan ordinario y moratorio sobre sus respectivas bases.' : 'El moratorio sustituye al ordinario conforme a la gracia y base moratoria conservadas; con B la sustitución es retroactiva al superar la gracia. No se cobran ambos por los mismos días y base afectados.' }}</p>
+        @else
         <p>Política de atraso conservada: {{ $mora['gracia'] === 'efectiva' ? 'A: los días de gracia no generan mora; comienza el día siguiente a terminar la gracia.' : 'B: si supera la gracia con capital vencido pendiente, la mora se calcula desde el día posterior al vencimiento.' }}</p>
         <p>{{ $mora['intereses'] === 'ambos' ? 'Durante la mora se generan ordinario y moratorio sobre sus respectivas bases.' : 'El moratorio sustituye al ordinario solo sobre el capital vencido sujeto a mora. Con A, el ordinario continúa durante la gracia; con B, la sustitución es retroactiva al superarla, sin cobrar ambos por los mismos días sobre ese capital.' }}</p>
+        @endif
     @else
         <p>Modalidades de gracia y coexistencia de intereses sin definir en estas condiciones históricas; no se asignan reglas nuevas automáticamente.</p>
     @endif

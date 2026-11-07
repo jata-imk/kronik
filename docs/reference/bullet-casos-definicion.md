@@ -1,98 +1,119 @@
-# Bullet: casos para cerrar la definición funcional
+# Bullet: decisiones y casos de aceptación
 
-Estado: propuesta numérica para revisión, 29/10/2026. No es una política de
-producto aprobada ni acredita implementación Bullet. Fuente de alcance:
-[subtarea funcional](https://app.notion.com/p/40861db7db7f81d1ab37cc46ea320c3c).
-La separación sigue [ADR 0032](../explanation/adr-0032-core-crediticio-extensible.md).
+Estado funcional al 05/11/2026; habilitación QA en rama al 07/11/2026. Prevalece la sección vigente de la
+[definición en Notion](https://app.notion.com/p/40861db7db7f81d1ab37cc46ea320c3c).
+La preparación histórica del 29/10 y las preguntas de PR #65 quedan superadas
+en anticipo, reducción de plazo y corte de fecha. Definición no equivale a
+implementación integral; evidencia en la [Agent Note](../agent-notes/core-crediticio-extensible.md).
 
-## Datos sintéticos de referencia
+## Alcance confirmado
 
-Principal 12000 MXN, tasa fija 24 % anual, días reales/360. Disposición 01/01/2027,
-vencimiento 01/03/2027. Para intereses periódicos: vencimientos 01/02 y 01/03.
-Sin comisiones y con tratamiento `no_causa` exclusivamente como fixture aritmético;
-no prescribe fiscalidad para productos reales. Gracia/mora deben definirse por
-separado. Las cifras se obtienen por las operaciones explícitas siguientes, sin
-copiar resultados del motor ni de los PDF de referencia.
+Capital al vencimiento, intereses periódicos o al vencimiento; tasa fija, MXN,
+Act/360, semanal, cada 15 días y mensual. Reutilizar calendario sin ajuste por
+inhábiles, ancla mensual y fin de mes. La última cuota con capital e interés no
+es otra modalidad. Anticipo parcial conserva vencimiento; reducción de plazo
+no entra en Bullet base. Diaria y capitalización son ampliaciones separadas.
 
-## Flujo normal
+Orden vigente: cuota más antigua y comisión → moratorio → ordinario → capital,
+con impuesto proporcional por concepto. Anticipo cubre exigibles y cargos
+aplicables; el remanente reduce principal. El interés devengado no exigible
+conserva importe y vencimiento, sin cobro obligatorio ni capitalización.
+El capital reducido genera intereses desde el día siguiente.
 
-El principal genera 8 MXN diarios: `12000 × 24 / 36000`. Enero aporta 31 días
-(248 MXN), febrero de 2027 aporta 28 (224 MXN). Interés total: 472 MXN.
+Liquidación cubre capital, devengos, cargos e impuestos aplicables y excluye
+interés futuro. Reverso mantiene último movimiento admisible sin posteriores,
+compensación e historia conservada. No ampliar fechas ni límites por esta entrega.
 
-| Política | Fecha | Capital exigible | Interés exigible | Pago total |
-| --- | --- | --- | --- | --- |
-| Periódicos | 01/02/2027 | 0.00 | 248.00 | 248.00 |
-| Periódicos | 01/03/2027 | 12000.00 | 224.00 | 12224.00 |
-| Al vencimiento | 01/03/2027 | 12000.00 | 472.00 | 12472.00 |
+## Oráculos independientes
 
-En ambas políticas el principal pendiente hasta su pago es 12000, no 12472.
-Antes de vencer, el interés puede estar devengado sin ser exigible. El pago final
-de capital e interés del último periodo no constituye otra modalidad mixta.
+Fixture: 12000 MXN, 24 % anual, disposición 01/01/2027 y vencimiento 01/03/2027.
+Sin comisiones y fiscalidad no_causa exclusivamente para aislar aritmética;
+no prescribe fiscalidad comercial. Antes del anticipo se generan 8 diarios.
 
-## Liquidación temprana
+| Caso | Periódicos | Al vencimiento |
+| --- | --- | --- |
+| Normal | 248 el 01/02; 12224 el 01/03 | 12472 el 01/03 |
+| Abono de 100 el 01/02 | Quedan 148 de interés exigible y capital 12000 no vencido | No existe interés exigible; un pago ordinario sin deuda exigible se rechaza |
+| Anticipo de 3120 el 16/01 | Capital 8880 y 120 conservados; 214.72 el 01/02 y 9045.76 el 01/03 | Capital 8880 y 120 conservados; 9260.48 el 01/03 |
+| Liquidación el 16/01, sin anticipo previo | 12120 | 12120 |
+| Liquidación el 20/01, tras anticipo | 9023.68 | 9023.68 |
+| Vencimiento final y abono de 100 | Pagado enero, quedan 124 de interés y capital 12000 | Quedan 372 de interés y capital 12000 |
+| Reverso admisible | Restaura principal, devengos y calendario; conserva compensaciones | Igual, incluida reapertura tras liquidación |
 
-Al 16/01 transcurrieron 15 días: `12000 × 24 × 15 / 36000 = 120`. Si se admite
-liquidación y no hay cargos/impuestos del escenario, la cotización es 12120.
-El interés futuro proyectado no integra el principal ni la liquidación. Confirmar
-que la política de liquidación conserva este tratamiento antes de implementarlo.
+Al 16/01: 12000 × 24 × 15 / 36000 = 120. El abono completo de 3120
+reduce principal a 8880. Desde el 17/01 genera 5.92 diarios: 16 días hasta
+01/02 = 94.72 y 28 hasta 01/03 = 165.76. Los 120 anteriores mantienen
+su fecha; interés restante total 380.48. El total del escenario es 12380.48.
+Liquidar el 20/01 añade cuatro días a 5.92: 8880 + 120 + 23.68 = 9023.68.
 
-## Anticipo parcial: propuesta pendiente de aceptación
+Caso con exigible: pagados 100 del interés de enero, anticipo de 3148 el mismo
+01/02 cubre los 148 restantes y anticipa 3000 de capital; quedan 9000.
 
-Decisión de José del 29/10/2026: **permitir también reducir plazo, definiendo esa
-regla**. Queda incluida la capacidad; no está aprobado todavía el mecanismo para
-determinar el nuevo vencimiento. Bullet no tiene una cuota de capital periódica
-que permita reutilizar sin más la reducción de plazo de cuota nivelada.
+## Mora: precisión funcional recibida el 05/11
 
-Propuesta A: conservar vencimiento final y cobrar primero devengado conforme al
-recorrido actual de anticipos. El 16/01 se reciben 3120: 120 de interés y 3000 de
-capital. Quedan 9000; generan 6 diarios por los 44 días restantes: 264.
+Ordinario y moratorio tendrán bases independientes. Las candidatas son saldo
+insoluto, capital inicial y pendiente del vencimiento. Esta última representa
+remanente impagado: 248 menos 100 = 148. No equivale al capital vencido actual.
+Ninguna lista de candidatas acredita soporte ni admite cualquier combinación.
 
-| Política | Flujo posterior propuesto |
-| --- | --- |
-| Periódicos | 96 de intereses el 01/02 y 9168 de capital/interés el 01/03 |
-| Al vencimiento | 9264 de capital/interés el 01/03 |
+José confirma durante la implementación: la obligación exigible vencida e impagada
+activa mora, incluso si es interés y el capital aún no vence. Las tres bases
+moratorias son saldo insoluto, capital inicial y amortización/obligación vencida.
+En la última, solo entra el remanente impagado: 148 en el caso anterior.
+La política periódica/al vencimiento decide cuándo el interés es exigible.
+No duplicar bases globales por varias obligaciones atrasadas.
 
-El costo total del escenario sería 12384, incluidos los 3120 iniciales. Esta
-propuesta no autoriza por sí misma conservar fecha ni reducir plazo. Si se desea
-reducir plazo, definir cómo se determina el nuevo vencimiento y qué opciones se
-permiten; no trasladar automáticamente la regla de cuota nivelada.
+Esta respuesta cierra la consulta funcional de activación. No acredita bases
+ordinarias adicionales ni validación jurídica realizada por el agente. Conservar
+gracia y coexistencia/sustitución existentes; las capacidades operativas requieren
+implementar y probar su compatibilidad antes de ofrecerlas.
 
-## Interés vencido con capital todavía no vencido
+La UI propone «Igual que el ordinario» solo cuando sea compatible y muestra
+ambas bases efectivas. Activación congela ambas; no guarda una referencia mutable.
+Probar atraso de interés, pago parcial, anticipo posterior, varias obligaciones
+vencidas, vencimiento final, liquidación y reverso para cada combinación aprobada.
 
-En la política periódica, si el 01/02 solo se reciben 100, quedan 148 de interés
-sin pagar y 12000 de principal no vencido. El seguimiento debe poder expresar
-ambos hechos. No sumar esos 148 al principal. Definir expresamente:
+## Diseño y verificación
 
-- Qué días de atraso se muestran y qué obligación determina el indicador.
-- Base, tolerancia y política de mora: conservar mora solo sobre capital vencido
-  o autorizar otra regla validada. No elegirla implícitamente.
-- Qué ocurre al pagar después y cómo se distribuye el importe por concepto.
+Reutilizar estrategias, calendario, impuestos, aplicación y editor. Separar
+amortización, devengo, exigibilidad y mora. Preservar numeradores y cargo original
+al regenerar: no perder interés, duplicarlo ni contabilizarlo de nuevo.
+Para al vencimiento, redondear el acumulado y conservar intervalos sin pago para CAT.
 
-Decisión de José del 29/10/2026: **base y tratamiento de mora pendientes de revisión
-funcional**. No seleccionar una alternativa por defecto ni habilitar operación
-dependiente de esta decisión. El indicador de interés vencido y la prohibición
-de capitalización implícita siguen formando parte del alcance.
+El primer incremento contiene estrategia y proyección pura de ambas políticas.
+El segundo prepara condiciones/capacidades/editor en borradores según el
+[contrato de Productos](productos-crediticios.md#preparar-condiciones-bullet), sin
+ofrecer Bullet operativo. El tercero integra obligaciones y mora internamente
+en `MotorPagos`, con persistencia/reverso probados sobre evidencia sintética.
+El cuarto integra anticipo conservando devengado y liquidación/reverso sobre
+evidencia sintética, sin habilitar el ciclo. Ver [contrato de obligaciones y mora](core-crediticio.md#obligaciones-y-mora-bullet)
+y [anticipo y liquidación internos](core-crediticio.md#anticipo-y-liquidación-bullet-internos).
+El incremento del 07/11 conecta ambas políticas a simulación/CAT, activación y
+originación; incorpora el ciclo real aislado, E2E y concurrencia MariaDB. La
+evidencia y el estado de integración/despliegue se registran en la Agent Note.
 
-## Calendario y correcciones por cerrar
+Oráculos adicionales, tasa moratoria sintética de 36 % y sin impuestos/comisiones:
 
-- Definir primera fecha de interés y vencimiento final/duración, no solo número
-  de cuotas. Precisar si el último periodo incompleto se admite y cómo se presenta.
-- Acordar inhábiles, anclas de meses cortos/bisiestos y significado de cada 15 días
-  frente a quincena calendario. No habilitar calendarios arbitrarios por defecto.
-- Reverso: mantener límites vigentes del último movimiento admisible. La
-  restauración conserva recibos/cronogramas anteriores y nuevas versiones cuando
-  corresponda; no editar ni borrar historia.
-- Ampliar casos con conceptos/impuestos configurados de forma explícita,
-  referencia duplicada, previa obsoleta, concurrencia y reverso de liquidación.
+- Pagados 100 de los 248 el 01/02, al 02/02 quedan 148 vencidos: mora 0.15 sobre
+  obligación o 12.00 sobre saldo insoluto/capital inicial. Capital vencido cero.
+- Sin pagos, al comenzar el 02/03 la base por obligación es 12472, con incremento
+  moratorio de 12.47; las bases globales generan 12.00 una sola vez ese día.
+- Gracia de tres días, sin pago de enero, al 05/02 sobre saldo insoluto: efectiva
+  genera 12.00 moratorios, retroactiva 48.00. El ordinario de febrero es 32.00
+  con ambos; con sustitución, 24.00 en efectiva y cero en retroactiva. Los 248
+  originales siguen exigibles.
+- Retroactiva con ambos: pago de 100 el 03/02 conserva dos días sobre 248 y dos
+  sobre 148 al 05/02: mora 0.79 sobre obligación. No recalcular todo desde 148.
 
-## Aceptación pendiente
+Estos oráculos acreditan el alcance de las pruebas internas; no sustituyen la
+validación transversal ni habilitan operación por sí solos.
 
-- [ ] Acordar calendario de la primera entrega y resultados por fecha.
-- [ ] Resolver anticipo parcial y su efecto en vencimiento e intereses futuros.
-- [ ] Resolver atraso/mora de intereses sin capital vencido.
-- [ ] Confirmar liquidación, correcciones y límites actuales que se conservan.
-- [ ] Registrar aceptación funcional antes de implementar operaciones dependientes.
+Regresión requerida: calendarios, bisiestos, centavos, métodos actuales,
+históricos sin normalización, borradores, payload incompatible, consulta sin
+escritura, permisos/contexto original, auditoría, idempotencia, previa obsoleta,
+concurrencia MariaDB y E2E aislados. Casos numéricos aceptados no sustituyen
+validación del ciclo completo.
 
-Relacionadas: [contratos del core](core-crediticio.md) y
-[productos vigentes](productos-crediticios.md). Las cifras de esta ficha no son
-condiciones comerciales ni determinación fiscal.
+Relacionadas: [core crediticio](core-crediticio.md),
+[productos](productos-crediticios.md),
+[ADR 0032](../explanation/adr-0032-core-crediticio-extensible.md).

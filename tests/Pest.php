@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__.'/Support/SolicitudFixtures.php';
+require_once __DIR__.'/Support/ProductoFixtures.php';
 require_once __DIR__.'/Support/ClienteFixtures.php';
 require_once __DIR__.'/Support/AuditAssertions.php';
 
