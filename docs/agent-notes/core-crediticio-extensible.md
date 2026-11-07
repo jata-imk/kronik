@@ -47,6 +47,10 @@ el rechazo de evidencia modificada. Pendiente repetir CI y revisar el ajuste.
 El traspaso conserva además el nombre IANA, no solo su offset actual: la fixture
 usa nacimiento en julio de 2002 para detectar diferencias históricas de horario
 de verano. Se reprodujeron ambos cambios de huella sin modificar código de dominio.
+CI `42410067060` superó la huella y registró desembolsos concurrentes; detectó
+otra aserción del harness que buscaba el desembolso sobre Crédito en vez de su
+sujeto real Solicitud. Se corrige la consulta y se incluye ese evento en la
+comprobación de actor/equipo/sucursal y privacidad, sin cambiar el emisor.
 
 Diagnósticos E2E resueltos: el router conserva la devolución de recursos
 estáticos; las fechas simuladas usan sesiones en la base aislada para evitar

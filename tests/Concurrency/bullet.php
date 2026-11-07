@@ -104,9 +104,9 @@ function resultadoBullet(array $results, int $successes): void
     }
 }
 
-function actividadBullet(Credito $credito, ActivityEvent $evento): int
+function actividadBullet(Illuminate\Database\Eloquent\Model $sujeto, ActivityEvent $evento): int
 {
-    return Activity::where('subject_type', $credito->getMorphClass())->where('subject_id', $credito->id)->where('event', $evento->value)->count();
+    return Activity::where('subject_type', $sujeto->getMorphClass())->where('subject_id', $sujeto->id)->where('event', $evento->value)->count();
 }
 
 function prepararPagoBullet(Credito $credito, User $actor, string $tipo, string $importe, ?string $referencia = null): array
@@ -180,7 +180,7 @@ try {
             }
             resultadoBullet(competirBullet('solicitudes', [$solicitud->id], [$first, $second]), $sameKey ? 2 : 1);
             $loans[] = $solicitud->credito()->sole();
-            comprobarBullet(actividadBullet($loans[array_key_last($loans)], ActivityEvent::CreditDisbursed) === 1, 'El desembolso debe auditarse una sola vez.');
+            comprobarBullet(actividadBullet($solicitud, ActivityEvent::CreditDisbursed) === 1, 'El desembolso debe auditarse una sola vez sobre la solicitud.');
         }
         [$loan, $other] = $loans;
         $originals = array_map(fn ($credit) => [$credit->condiciones_hash, $credit->cronogramas()->where('version', 1)->sole()->snapshot_hash], $loans);
@@ -230,7 +230,15 @@ try {
         comprobarBullet($loan->pagos()->count() === 4, 'La competencia entre reverso y pago no fue atómica.');
         foreach ($loans as $index => $credit) {
             comprobarBullet([$credit->fresh()->condiciones_hash, $credit->cronogramas()->where('version', 1)->sole()->snapshot_hash] === $originals[$index], 'Se modificó evidencia original.');
-            foreach (Activity::where('subject_type', $credit->getMorphClass())->where('subject_id', $credit->id)->get() as $activity) {
+            $activities = Activity::query()->where(function ($query) use ($credit) {
+                $query->where(function ($query) use ($credit) {
+                    $query->where('subject_type', $credit->getMorphClass())->where('subject_id', $credit->id);
+                })->orWhere(function ($query) use ($credit) {
+                    $query->where('subject_type', $credit->solicitud->getMorphClass())->where('subject_id', $credit->solicitud_id)
+                        ->where('event', ActivityEvent::CreditDisbursed->value);
+                });
+            })->get();
+            foreach ($activities as $activity) {
                 comprobarBullet($activity->causer_id === $actor->id && $activity->team_id === $actor->current_team_id && $activity->sucursal_id === $branch->id, 'Auditoría con actor o contexto incorrectos.');
                 comprobarBullet(! str_contains($activity->toJson(), '3120.00') && ! str_contains($activity->toJson(), 'Corrección concurrente'), 'Auditoría con datos reservados.');
             }

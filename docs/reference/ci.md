@@ -110,6 +110,8 @@ anticipo frente a liquidación, referencia única entre créditos, pagos con pre
 común y reverso frente a pago. El coordinador retiene las filas mientras ambos
 trabajadores alcanzan su consulta bloqueante. Se comprueban estados, rollback,
 calendarios originales y actividad sin duplicación ni datos reservados.
+El desembolso se audita sobre la solicitud; pagos y reversos sobre el crédito.
+El harness verifica el sujeto real de cada emisor y su contexto original.
 El reloj transmitido conserva el instante y el nombre IANA de la zona de testNow:
 convertirlo a la zona de la aplicación, o conservar solo el offset de enero,
 alteraría casts de fechas históricas y sus huellas. La fecha de nacimiento de la
