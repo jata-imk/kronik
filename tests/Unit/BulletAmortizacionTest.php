@@ -82,8 +82,7 @@ test('Bullet admite un centavo sin interés sin relajar las guardas de los otros
     }
 });
 
-test('el cálculo puro no ofrece Bullet en los contratos operativos sin mora definida', function () {
-    foreach (VersionMotorCredito::cases() as $motor) {
-        expect(CatalogoCapacidadesCredito::valores('metodos_amortizacion', $motor))->not->toContain('bullet');
-    }
+test('Bullet operativo exige el motor racional y conserva la exclusión histórica', function () {
+    expect(CatalogoCapacidadesCredito::valores('metodos_amortizacion', VersionMotorCredito::Historico))->not->toContain('bullet')
+        ->and(CatalogoCapacidadesCredito::valores('metodos_amortizacion', VersionMotorCredito::Act360Racional))->toContain('bullet');
 });

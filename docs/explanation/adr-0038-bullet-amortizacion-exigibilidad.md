@@ -1,6 +1,7 @@
 # ADR 0038: amortización y proyección de exigibilidad Bullet
 
-- Estado: implementación local del primer incremento; operación integral pendiente.
+- Estado: implementado en PR #73; el bloqueo operativo provisional queda sustituido por [ADR 0042](adr-0042-habilitacion-ciclo-bullet-qa.md).
+  Integración y despliegue se registran en la Agent Note.
 - Fecha: 2026-11-05.
 - Complementa ADR 0032, 0034 y 0035.
 

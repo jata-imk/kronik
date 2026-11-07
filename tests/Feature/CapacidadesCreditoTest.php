@@ -12,7 +12,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 test('el catálogo conserva únicamente las capacidades actuales y exige compatibilidad explícita', function () {
     foreach (VersionMotorCredito::cases() as $motor) {
         $opciones = CatalogoCapacidadesCredito::paraMotor($motor);
-        expect(array_column($opciones['metodos_amortizacion'], 'value'))->toBe(['cuota_nivelada', 'capital_fijo'])
+        expect(array_column($opciones['metodos_amortizacion'], 'value'))->toBe($motor === VersionMotorCredito::Historico ? ['cuota_nivelada', 'capital_fijo'] : ['cuota_nivelada', 'bullet', 'capital_fijo'])
             ->and(array_column($opciones['periodicidades'], 'value'))->toBe(['semanal', 'quincenal', 'mensual'])
             ->and(array_column($opciones['convenciones_interes'], 'value'))->toBe(['dias_reales_360']);
     }

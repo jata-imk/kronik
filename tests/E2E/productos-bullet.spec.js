@@ -13,7 +13,7 @@ test("prepara Bullet versionado y consulta sus bases en escritorio y móvil", as
     await page.getByRole("option", { name: "Moratorio sustituye al ordinario", exact: true }).click();
     await dialog.getByRole("tab", { name: "Reglas", exact: true }).click();
     await dialog.getByRole("checkbox", { name: /^Bullet/ }).check();
-    await expect(dialog).toContainText("Bullet permite preparar borradores");
+    await expect(dialog).toContainText("El capital vence al final");
     await dialog.getByRole("combobox", { name: "Pago de intereses Bullet", exact: true }).click();
     await page.getByRole("option", { name: "Intereses al vencimiento", exact: true }).click();
     await dialog.getByRole("combobox", { name: "Base moratoria", exact: true }).click();
@@ -22,8 +22,8 @@ test("prepara Bullet versionado y consulta sus bases en escritorio y móvil", as
     await dialog.getByRole("button", { name: "Guardar borrador" }).click();
     await expect(dialog).toHaveCount(0);
     await page.getByRole("button").filter({ hasText: "Bullet condiciones QA" }).click();
-    await expect(page.getByRole("button", { name: "Simular versión 1", exact: true })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Simular", exact: true })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Simular versión 1", exact: true })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Simular", exact: true })).toBeEnabled();
     await page.getByRole("button", { name: "Ver versión 1", exact: true }).click();
     await dialog.getByRole("tab", { name: "Reglas", exact: true }).click();
     await expect(dialog).toContainText("Intereses al vencimiento");

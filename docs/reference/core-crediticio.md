@@ -8,20 +8,19 @@ por separado; conserva numeradores y los intervalos sin pago para CAT. Requiere
 motor 2, sin ampliar compatibilidad histórica. Las estrategias actuales mantienen
 sus guardas de capital positivo y su serialización.
 
-Bullet sigue fuera del catálogo operativo. Están preparados el cálculo puro,
-[condiciones y editor](productos-crediticios.md#preparar-condiciones-bullet) y
-las obligaciones/mora y el anticipo con devengado conservado, liquidación/reverso
-internos. Falta habilitación y validación probada del ciclo. Las decisiones y los casos
-vigentes del 05/11 están en [Bullet](bullet-casos-definicion.md).
-Se conservan vencimiento e interés no exigible en el anticipo aprobado; el disparador de mora por obligación vencida impagada y las tres bases están
-aclarados e implementados internamente; la habilitación operativa permanece pendiente. La auditoría técnica #72 ya
-está completada y validada en QA; cada incremento mantiene su propia cobertura.
+Bullet está habilitado en el catálogo operativo para motor 2/Act/360 y ambas
+políticas, con las combinaciones explícitas de las [condiciones](productos-crediticios.md#preparar-condiciones-bullet).
+Simulación, CAT, solicitud, paquete, firma y desembolso conservan la misma política.
+La validación del ciclo y su estado de integración/despliegue se registran en la
+[Agent Note](../agent-notes/core-crediticio-extensible.md), sin equiparar pruebas
+aisladas con aceptación en QA compartido. Ver [ADR 0042](../explanation/adr-0042-habilitacion-ciclo-bullet-qa.md).
 
-La configuración usa `paraMotor(..., configuracion: true)` y combinaciones
-explícitas; no habilita el catálogo operativo de Solicitudes. Validar guardado
-usa ese contexto, mientras congelar y simular conservan validación operativa.
-Nulos añadidos por migración no rellenan snapshots históricos. Ver
-[ADR 0039](../explanation/adr-0039-condiciones-bullet-y-habilitacion.md).
+El adaptador de tabla recibe ?PoliticaInteresBullet, obligatoria para Bullet y
+ausente para los otros métodos. Aplica exigibilidad antes de serializar, también
+en los flujos CAT, conservando intervalos sin pago. El catálogo excluye Bullet del
+motor histórico; no añade defaults a evidencias anteriores. Activación/programación
+y uso validan combinaciones antes de persistir. Las condiciones y los hashes
+de créditos firmados permanecen inmutables.
 
 ### Obligaciones y mora Bullet
 
@@ -65,10 +64,17 @@ vencimiento, también retira ese ordinario provisional de las bases diferidas.
 Se mantiene el límite B+sustitución: cubrir completamente la obligación afectada
 durante gracia; no devolver una distribución parcial que luego requiera compensar
 interés pagado. El anticipo y la liquidación internos conservan este límite.
-Activación, simulación y originación siguen bloqueadas.
-La persistencia de pagos/reversos se verifica con evidencia sintética inyectada
-en BD de pruebas; no acredita originación Bullet ni concurrencia financiera.
+El ciclo habilitado reutiliza estos motores con las condiciones congeladas.
+BulletCicloQaTest origina por servicios reales; las pruebas sintéticas anteriores
+se conservan para aislar obligaciones y mora. MariaDB multiconexión y E2E aportan
+evidencia complementaria, registrada por commit en la Agent Note.
 Decisión y consecuencias en [ADR 0040](../explanation/adr-0040-obligaciones-mora-bullet.md).
+
+El resumen Bullet añade interes_devengado_pendiente e interes_no_exigible:
+ordinario generado pendiente de pago, sin impuestos, total y con vencimiento
+posterior a la consulta respectivamente. Reutiliza interes_vencido,
+obligacion_vencida y dias_atraso, este último por obligaciones. Consulta y
+previa no persisten devengos ni calendarios.
 
 ### Anticipo y liquidación Bullet internos
 
@@ -96,8 +102,8 @@ mediante compensaciones y nueva versión, incluida reapertura tras liquidación.
 
 Se mantienen las interfaces y eventos de pago/reverso, permisos separados y
 restricciones de fecha/QA existentes. Previa y consulta no escriben. La evidencia
-es sintética y no habilita activación, simulación u originación Bullet ni acredita
-concurrencia financiera. Decisión en [ADR 0041](../explanation/adr-0041-anticipos-liquidacion-bullet.md).
+incluye ahora originación real aislada, además de casos sintéticos; los resultados
+financieros concurrentes se acreditan por separado en MariaDB. Decisión en [ADR 0041](../explanation/adr-0041-anticipos-liquidacion-bullet.md).
 
 ## Catálogo de capacidades
 
@@ -289,7 +295,7 @@ actuales hasta contar con nuevas convenciones aprobadas y probadas.
 
 | Capacidad | Definición necesaria |
 | --- | --- |
-| Bullet | Cálculo, condiciones/editor, obligaciones/mora y anticipo/liquidación internos; habilitación operativa y validación transversal pendientes |
+| Bullet | Ciclo QA habilitado con dos políticas; estado de pruebas, integración y despliegue en Agent Note y guía QA |
 | Revolvente | Mínimo, disponibilidad, reservas, distribución, corte/fecha límite y límites por disposición |
 | Nómina | Reconocimiento entre descuento/recepción, remesa parcial/no recibida, reversos y bajas |
 | Escalabilidad | Medición en entorno identificado con 10 mil créditos/líneas activos y disposiciones asociadas |

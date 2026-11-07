@@ -6,6 +6,8 @@ consultan también desde el tema de fiscalidad.
 
 ## Operación
 
+- [Configurar y comprobar ambas políticas Bullet en QA](../how-to/qa-bullet.md).
+
 - [Configuración y simulación en el recorrido QA](../how-to/qa-credito-simple.md).
 - [Configurar fiscalidad de productos](../how-to/configurar-fiscalidad-productos.md).
 - [Probar simulación con impuestos](../how-to/qa-simulacion-fiscal.md).

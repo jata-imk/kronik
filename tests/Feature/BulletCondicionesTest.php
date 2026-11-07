@@ -34,7 +34,7 @@ test('guarda y copia ambas políticas con las tres bases explícitas sin activar
             ->and($item->reglas->politica_interes_bullet)->toBe($politica)
             ->and($item->reglas->aplicacion_prepago)->toBe('conservar_fecha')
             ->and($item->snapshot)->toBeNull()->and($item->estado)->toBe(ProductoVersionEstado::Borrador)
-            ->and(CapacidadesProducto::paraVersion($item)['problemas'])->not->toBeEmpty();
+            ->and(CapacidadesProducto::paraVersion($item)['problemas'])->toBe([]);
     }
     expect($version->fresh()->reglas->base_moratoria)->toBe($base);
     assertDomainAudit([ActivityEvent::CreditProductCreated->value, ActivityEvent::CreditProductVersioned->value], $actor, $actor->current_sucursal_id, ['politica_interes_bullet', 'obligacion_vencida']);
@@ -81,20 +81,29 @@ test('payload incompatible falla en HTTP y servicio sin producto ni actividad', 
     ['metodos_amortizacion', ['bullet', 'capital_fijo']],
 ]);
 
-test('Bullet no se activa programa usa ni simula aunque manipulen el payload', function () {
+test('Bullet activa programa usa y simula con condiciones congeladas compatibles', function () {
     $actor = actingAsSuperAdmin();
     $this->actingAs($actor);
     $service = app(ProductoVersionService::class);
     $version = $service->crear(productoBullet(), $actor->id)->versiones()->sole();
     $before = Activity::count();
-    foreach (['2026-01-01', '2027-01-01'] as $fecha) {
-        $this->postJson(route('productos-crediticios.activar', $version), ['vigente_desde' => $fecha])->assertUnprocessable();
-        expect(fn () => $service->activar($version, $fecha))->toThrow(ValidationException::class);
-    }
-    expect(fn () => $service->registrarUso($version, 'solicitud', 123))->toThrow(ValidationException::class);
-    $this->postJson(route('productos-crediticios.simular', $version), ['monto' => '10000', 'periodicidad' => 'mensual', 'plazo' => 3, 'metodo' => 'bullet', 'fecha' => '2026-01-01'])->assertUnprocessable();
-    expect($version->fresh()->estado)->toBe(ProductoVersionEstado::Borrador)->and($version->fresh()->snapshot)->toBeNull()
-        ->and(Activity::count())->toBe($before)->and($version->usos()->count())->toBe(0);
+    $this->postJson(route('productos-crediticios.activar', $version), ['vigente_desde' => app(\App\Services\FechaEmpresa::class)->hoy()->toDateString()])->assertRedirect();
+    $version->refresh();
+    $snapshot = $version->getRawOriginal('snapshot');
+    $hash = $version->snapshot_hash;
+    $service->registrarUso($version, 'solicitud', 123);
+    $this->postJson(route('productos-crediticios.simular', $version), ['monto' => '10000', 'periodicidad' => 'mensual', 'plazo' => 3, 'metodo' => 'bullet', 'fecha' => '2026-01-01'])
+        ->assertOk()->assertJsonPath('politica_interes_bullet', 'periodicos');
+    expect($version->fresh()->estado)->toBe(ProductoVersionEstado::Activa)->and($version->usos()->count())->toBe(1)
+        ->and($version->getRawOriginal('snapshot'))->toBe($snapshot)->and($version->snapshot_hash)->toBe($hash)
+        ->and(Activity::count())->toBe($before + 1);
+    $copia = $service->nuevaVersion($version->producto, $version, $actor->id);
+    $service->activar($copia, app(\App\Services\FechaEmpresa::class)->hoy()->addDay()->toDateString());
+    expect($copia->fresh()->estado)->toBe(ProductoVersionEstado::Programada);
+    $this->travel(2)->days();
+    expect($service->activarProgramadas())->toBe(1)->and($service->activarProgramadas())->toBe(0)
+        ->and($copia->fresh()->estado)->toBe(ProductoVersionEstado::Activa)
+        ->and($version->fresh()->snapshot_hash)->toBe($hash);
 });
 
 test('los métodos previos rechazan condiciones de Bullet y mantienen sus bases históricas', function () {
@@ -113,10 +122,10 @@ test('los métodos previos rechazan condiciones de Bullet y mantienen sus bases 
     expect(CapacidadesProducto::desdeCondiciones($malformado)['problemas'])->not->toBeEmpty();
     foreach ([new \App\Http\Requests\GuardarSolicitudRequest, new \App\Http\Requests\SimularCreditoRequest] as $request) {
         $validator = \Illuminate\Support\Facades\Validator::make(['metodo' => 'bullet'], ['metodo' => $request->rules()['metodo']]);
-        expect($validator->fails())->toBeTrue()->and($validator->errors()->has('metodo'))->toBeTrue();
+        expect($validator->fails())->toBeFalse();
     }
     expect(CatalogoCapacidadesCredito::valores('metodos_amortizacion', VersionMotorCredito::Historico, true))->not->toContain('bullet')
-        ->and(array_column(CatalogoCapacidadesCredito::paraVue()['configuracion']['opciones']['metodos_amortizacion'], 'value'))->not->toContain('bullet')
+        ->and(array_column(CatalogoCapacidadesCredito::paraVue()['configuracion']['opciones']['metodos_amortizacion'], 'value'))->toContain('bullet')
         ->and(array_column(CatalogoCapacidadesCredito::paraVue(true)['configuracion']['opciones']['metodos_amortizacion'], 'value'))->toContain('bullet');
 });
 

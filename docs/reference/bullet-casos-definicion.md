@@ -1,6 +1,6 @@
 # Bullet: decisiones y casos de aceptación
 
-Estado funcional al 05/11/2026; avance interno al 06/11/2026. Prevalece la sección vigente de la
+Estado funcional al 05/11/2026; habilitación QA en rama al 07/11/2026. Prevalece la sección vigente de la
 [definición en Notion](https://app.notion.com/p/40861db7db7f81d1ab37cc46ea320c3c).
 La preparación histórica del 29/10 y las preguntas de PR #65 quedan superadas
 en anticipo, reducción de plazo y corte de fecha. Definición no equivale a
@@ -88,7 +88,9 @@ en `MotorPagos`, con persistencia/reverso probados sobre evidencia sintética.
 El cuarto integra anticipo conservando devengado y liquidación/reverso sobre
 evidencia sintética, sin habilitar el ciclo. Ver [contrato de obligaciones y mora](core-crediticio.md#obligaciones-y-mora-bullet)
 y [anticipo y liquidación internos](core-crediticio.md#anticipo-y-liquidación-bullet-internos).
-Activación, simulación, originación y validación integral permanecen pendientes.
+El incremento del 07/11 conecta ambas políticas a simulación/CAT, activación y
+originación; incorpora el ciclo real aislado, E2E y concurrencia MariaDB. La
+evidencia y el estado de integración/despliegue se registran en la Agent Note.
 
 Oráculos adicionales, tasa moratoria sintética de 36 % y sin impuestos/comisiones:
 

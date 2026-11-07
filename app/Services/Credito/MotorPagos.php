@@ -155,7 +155,20 @@ final class MotorPagos
                 $pendiente = D::add($pendiente, $obligacion['base'], 2);
                 $diasAtraso = max($diasAtraso, (int) CarbonImmutable::parse($state['cuotas'][$numero]['fecha'], 'UTC')->diffInDays(CarbonImmutable::parse($state['fecha'], 'UTC')));
             }
-            $atrasoBullet = ['interes_vencido' => $interes, 'obligacion_vencida' => $pendiente];
+            $devengado = '0.00';
+            $noExigible = '0.00';
+            foreach ($state['cargos'] as $cargo) {
+                if ($cargo['tipo'] !== 'ordinario' || ! ($cargo['vigente'] ?? true)) {
+                    continue;
+                }
+                $importe = $this->pendiente($cargo)[0];
+                $devengado = D::add($devengado, $importe, 2);
+                if ($cargo['fecha'] > $state['fecha']) {
+                    $noExigible = D::add($noExigible, $importe, 2);
+                }
+            }
+            $atrasoBullet = ['interes_vencido' => $interes, 'obligacion_vencida' => $pendiente,
+                'interes_devengado_pendiente' => $devengado, 'interes_no_exigible' => $noExigible];
         }
         foreach ($state['cargos'] as $key => $cargo) {
             if (($cargo['vigente'] ?? true) === false) {

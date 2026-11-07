@@ -6,6 +6,9 @@ Los documentos distinguen diseño aprobado de capacidades implementadas.
 
 ## Referencia y decisiones
 
+- [Habilitación y validación del ciclo Bullet en QA](../explanation/adr-0042-habilitacion-ciclo-bullet-qa.md).
+- [Despliegue y recorrido de ambas políticas Bullet](../how-to/qa-bullet.md).
+
 - [ADR 0041: anticipo conservando devengado y liquidación/reverso Bullet internos](../explanation/adr-0041-anticipos-liquidacion-bullet.md).
 
 - [ADR 0040: obligaciones de interés/capital y mora Bullet](../explanation/adr-0040-obligaciones-mora-bullet.md).

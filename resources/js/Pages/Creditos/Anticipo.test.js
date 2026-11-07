@@ -22,7 +22,7 @@ vi.mock("@inertiajs/vue3", () => ({
 }));
 vi.stubGlobal("route", (name) => name);
 
-function render() {
+function render(props = {}) {
     return mount(Anticipo, {
         props: {
             credito: { id: 1, cliente: {} },
@@ -31,6 +31,7 @@ function render() {
             habilitado: true,
             operaciones: [{ value: "liquidacion", label: "Liquidación total" }],
             opcionales: [],
+            ...props,
         },
         global: {
             mocks: { route: (name) => name },
@@ -76,6 +77,19 @@ const quote = {
 };
 
 describe("Cotización de anticipos y liquidación", () => {
+    it("el anticipo Bullet explica el devengado no exigible sin exponer condiciones reservadas", () => {
+        const wrapper = render({
+            politicaInteresBullet: "al_vencimiento",
+            operaciones: [{ value: "prepago", label: "Anticipo parcial" }],
+        });
+        expect(wrapper.text()).toContain(
+            "El interés aún no exigible conserva importe y vencimiento",
+        );
+        expect(wrapper.text()).not.toContain(
+            "primero se cubren vencidos y devengos",
+        );
+        wrapper.unmount();
+    });
     it("conserva la cotización exacta al completar el total y exige confirmación", async () => {
         axios.post.mockResolvedValueOnce({ data: quote });
         const wrapper = render();

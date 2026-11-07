@@ -185,33 +185,24 @@ un solo código por acción, sin crear catálogos paralelos.
 
 ## Acciones sin evento adicional
 
-Bullet, condiciones/editor del 05/11/2026: creación, actualización y copia usan
-los emisores `CreditProductCreated`, `CreditProductUpdated` y
-`CreditProductVersioned` de `ProductoVersionService`, con el mismo actor, sujeto,
-resultado/contexto y metadatos de las filas de Productos. `BulletCondicionesTest`
-verifica emisión, contexto, ausencia de valores contractuales en metadatos,
-actualización repetida sin duplicación, consulta sin escrituras y rechazo
-operativo sin actividad ni persistencia. No hay nuevo evento por seleccionar una
-base o resolver capacidades; no son operaciones financieras. Activación y
-simulación Bullet siguen rechazadas. La cobertura no acredita pagos Bullet.
+Bullet mantiene los emisores reales de Productos, Solicitudes, Documentos,
+firmas y Créditos de la matriz anterior. La habilitación del ciclo no añade un
+evento por seleccionar política/base, resolver capacidades, calcular ni consultar.
+BulletCondicionesTest verifica creación/copia/edición, activación/programación,
+uso y consulta sin escrituras; los rechazos de combinaciones no crean actividad.
+BulletPagosTest y las unitarias conservan cobertura sintética de obligaciones,
+mora, anticipos y reversos.
 
-Bullet, incremento puro del 05/11/2026: amortización y proyección de exigibilidad
-no crean operaciones ni actividad. `BulletAmortizacionTest` verifica cálculo y
-exclusión del catálogo operativo; `CapacidadesCreditoTest` conserva evidencia de
-rechazo HTTP sin creación. Los eventos de negocio mantienen sus emisores actuales.
-El incremento posterior de obligaciones/mora extiende el cálculo puro sin
-eventos adicionales: consultar y preparar distribuciones no crean recursos.
-`BulletPagosTest` verifica con contratos sintéticos en BD aislada los emisores
-reales de `credito.payment_recorded`/`credito.payment_reversed` de las filas de
-Créditos: actor, sujeto, equipo/sucursal, reintento sin duplicación, cifrado y
-ausencia de referencia, motivo, importes y condiciones en actividad. No añade
-metadatos ni duplica eventos. La ampliación interna del 06/11/2026 cubre también
-anticipo con devengado conservado, liquidación y ambos reversos: historial
-inmutable, contadores sin doble contabilización, compensación y reapertura,
-previa obsoleta, reintento y permisos/contexto. No requiere eventos adicionales:
-las operaciones se registran una vez en los mismos emisores de pago/reverso.
-La habilitación integral sigue pendiente; esta evidencia sintética no acredita
-originación ni concurrencia financiera MariaDB.
+BulletCicloQaTest origina productos y contratos mediante los servicios reales:
+condiciones, tabla, firma, desembolso, anticipo y liquidación/reapertura. Comprueba
+actor, sujeto, equipo/sucursal y emisión única de pago/reverso ante reintentos,
+sin referencias, motivos reservados, importes ni condiciones en actividad.
+Concurrency/bullet.php añade carreras multiconexión en MariaDB aislada para
+desembolsos, pagos, anticipos/liquidación y reversos: la operación perdedora
+revierte sus escrituras y sus eventos; un reintento no duplica auditoría.
+E2E/bullet-ciclo.spec.js recorre ambas políticas con PDF real. La ejecución
+aprobada y su commit se acreditan en la Agent Note; una prueba declarada no
+demuestra por sí sola ejecución ni despliegue.
 
 | Superficie | Decisión y justificación | Evidencia |
 | --- | --- | --- |

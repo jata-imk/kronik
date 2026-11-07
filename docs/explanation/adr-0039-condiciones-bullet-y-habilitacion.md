@@ -1,6 +1,7 @@
 # ADR 0039: condiciones Bullet y habilitación por capacidad
 
-- Estado: implementado en el incremento de condiciones; integración y operación pendientes.
+- Estado: implementado en PR #73; el bloqueo operativo provisional queda sustituido por [ADR 0042](adr-0042-habilitacion-ciclo-bullet-qa.md).
+  Integración y despliegue se registran en la Agent Note.
 - Fecha: 2026-11-05.
 - Complementa ADR 0035 y 0038.
 

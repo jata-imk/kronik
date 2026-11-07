@@ -17,7 +17,7 @@ final class CatalogoCapacidadesCredito
         return [
             'metodos_amortizacion' => [
                 $opcion(MetodoAmortizacion::CuotaNivelada->value, 'Cuota nivelada', 'Mantiene el pago base; las comisiones e impuestos se suman por separado y la última cuota absorbe el residuo.'),
-                $opcion(MetodoAmortizacion::Bullet->value, 'Bullet', 'Capital al vencimiento e intereses periódicos o al vencimiento. Disponible para preparar borradores.'),
+                $opcion(MetodoAmortizacion::Bullet->value, 'Bullet', 'Capital al vencimiento e intereses periódicos o al vencimiento, sin capitalización. El anticipo conserva el vencimiento.'),
                 $opcion(MetodoAmortizacion::CapitalFijo->value, 'Capital fijo', 'Distribuye el principal en partes iguales; el interés se calcula sobre el saldo pendiente.'),
             ],
             'politicas_interes_bullet' => [
@@ -56,7 +56,7 @@ final class CatalogoCapacidadesCredito
             ],
         };
         $permitidas += ['politicas_interes_bullet' => [], 'bases_ordinarias' => ['saldo_insoluto'], 'bases_moratorias' => ['capital_vencido']];
-        if ($configuracion && $motor === VersionMotorCredito::Act360Racional) {
+        if ($motor === VersionMotorCredito::Act360Racional) {
             $permitidas['metodos_amortizacion'][] = 'bullet';
             $permitidas['politicas_interes_bullet'] = ['periodicos', 'al_vencimiento'];
             $permitidas['bases_moratorias'] = ['capital_vencido', 'saldo_insoluto', 'capital_inicial', 'obligacion_vencida'];
@@ -79,8 +79,8 @@ final class CatalogoCapacidadesCredito
     public static function combinaciones(): array
     {
         return [
-            'bullet' => ['metodos' => ['bullet'], 'bases_moratorias' => ['saldo_insoluto', 'capital_inicial', 'obligacion_vencida'], 'aplicaciones_prepago' => ['conservar_fecha'], 'operable' => false,
-                'aviso' => 'Bullet permite preparar borradores. La activación y simulación estarán disponibles al completar pagos, anticipos y mora.'],
+            'bullet' => ['metodos' => ['bullet'], 'bases_moratorias' => ['saldo_insoluto', 'capital_inicial', 'obligacion_vencida'], 'aplicaciones_prepago' => ['conservar_fecha'], 'operable' => true,
+                'aviso' => 'El capital vence al final. El interés devengado aún no exigible conserva su vencimiento tras un anticipo y no se capitaliza.'],
             'actuales' => ['metodos' => ['cuota_nivelada', 'capital_fijo'], 'bases_moratorias' => ['capital_vencido'], 'aplicaciones_prepago' => ['reducir_plazo', 'reducir_pago'], 'operable' => true],
         ];
     }

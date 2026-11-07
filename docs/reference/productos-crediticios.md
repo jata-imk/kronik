@@ -2,7 +2,7 @@
 
 ## Alcance V1
 
-El catálogo es global para la instalación. Crédito simple admite montos, tasas anuales, días de tolerancia de mora, periodicidades semanal/quincenal/mensual, cuota nivelada o capital fijo, prepago, liquidación y comisiones del catálogo interno. Crédito revolvente permanece diferido.
+El catálogo es global para la instalación. Crédito simple admite montos, tasas anuales, días de tolerancia de mora, periodicidades semanal/quincenal/mensual, cuota nivelada, capital fijo o Bullet, prepago, liquidación y comisiones del catálogo interno. Crédito revolvente permanece diferido.
 
 Las periodicidades de Buró de Crédito o Círculo de Crédito son códigos de reporte. No amplían por sí mismas las frecuencias contractuales que soporta el motor V1.
 
@@ -31,16 +31,17 @@ los acumuladores y los límites están en [versión del motor](core-crediticio.m
 - En capital fijo se divide el principal entre el número de pagos y se aplica el mismo criterio de residual final.
 - El motor 2 rechaza combinaciones que generen capital no positivo o superior al
   saldo en los métodos actuales; no devuelve tablas con intereses/capital negativos
-  para simular una amortización inválida. La restricción no define todavía Bullet.
-- El plazo es número de pagos. Las fechas avanzan +7 días, +15 días o por ancla mensual. El fin de mes permanece como fin de mes; un día inexistente se ajusta solo ese mes y luego recupera el ancla. V1 no ajusta días inhábiles.
-- La mora se configura como tasa anual y se calcula sobre capital vencido cuando el módulo de cobranza la aplique.
+  para simular una amortización inválida. Bullet permite explícitamente capital intermedio cero y principal final positivo.
+- El plazo define periodos de duración; en Bullet al vencimiento no implica pagos intermedios. Las fechas avanzan +7 días, +15 días o por ancla mensual. El fin de mes permanece como fin de mes; un día inexistente se ajusta solo ese mes y luego recupera el ancla. V1 no ajusta días inhábiles.
+- La mora usa las bases contractuales compatibles con cada método; las tres bases Bullet y su disparador se describen en el contrato del core.
 
 ## Preparar condiciones Bullet
 
-Bullet puede prepararse como borrador en el editor existente; activación,
-programación, simulación y registro de uso siguen rechazados hasta completar su
-ciclo financiero. El aviso se muestra en la versión y sus acciones se deshabilitan.
-No está disponible para nuevas Solicitudes. [ADR 0039](../explanation/adr-0039-condiciones-bullet-y-habilitacion.md).
+El editor existente prepara y activa/programa Bullet con condiciones explícitas.
+La versión activa y vigente está disponible en Solicitudes; borradores compatibles
+pueden simularse. Las condiciones se congelan al activar/programar. La habilitación
+del ciclo se documenta en [ADR 0042](../explanation/adr-0042-habilitacion-ciclo-bullet-qa.md),
+que sustituye el bloqueo provisional de ADR 0039. Ver [recorrido QA](../how-to/qa-bullet.md).
 
 | Condición de reglas | Valores compatibles para Bullet |
 | --- | --- |
@@ -53,8 +54,7 @@ No está disponible para nuevas Solicitudes. [ADR 0039](../explanation/adr-0039-
 La frecuencia y el número de periodos definen duración/vencimiento del capital.
 En periódicos también determinan pagos de interés; al vencimiento no son pagos
 intermedios. Se conserva el calendario actual. Las bases de mora se preparan con
-el disparador ya aprobado por obligación vencida impagada; su cálculo sigue
-pendiente. «Usar base ordinaria para mora» copia el valor efectivo cuando es
+el disparador aprobado por obligación vencida impagada y el cálculo vigente. «Usar base ordinaria para mora» copia el valor efectivo cuando es
 compatible, sin almacenar una referencia a la otra base.
 
 Cambiar método limpia condiciones incompatibles y avisa; no selecciona base

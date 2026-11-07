@@ -6,6 +6,8 @@ los límites QA en cada guía antes de operar.
 
 ## Operación
 
+- [Ciclo Bullet QA: ambas políticas, anticipos, liquidación y reversos](../how-to/qa-bullet.md).
+
 - [Desembolso manual QA](../how-to/qa-desembolso.md).
 - [Pagos manuales QA](../how-to/qa-pagos.md).
 - [Anticipos y liquidación](../how-to/qa-anticipos-liquidacion.md).

@@ -1,5 +1,54 @@
 # Core crediticio extensible
 
+## Habilitación y validación integral Bullet — 07/11/2026
+
+Retoma autorizada desde `1a495aa`, worktree `output/bullet-base/worktree`, rama
+`feat/bullet-base`, PR #73 contra main `c30c941`. Notion y Agent Note leídos;
+ambas políticas, definiciones moratorias y límites conservados. Los cuatro
+archivos locales de auditoría de main se preservan por hash; no pertenecen a
+esta entrega. El usuario realizará despliegue y comprobación en la VPS compartida;
+el agente implementa, valida en bases aisladas y prepara su guion.
+
+Implementado en la rama: catálogo operativo motor 2/Act/360, política explícita
+en el adaptador antes de serializar tabla/CAT, condiciones congeladas durante
+originación/firma/desembolso, resumen de ordinario pendiente/no exigible/vencido,
+ayudas y anexo PDF coherentes. Se conservan las banderas QA existentes, sin nuevos
+permisos, migraciones ni seeders operativos. ADR 0042 sustituye el bloqueo
+provisional de los incrementos anteriores y mantiene sus decisiones financieras.
+
+Las pruebas nuevas originan mediante servicios reales; E2E usa PDF real y reloj
+exclusivo del harness aislado. MariaDB añade ocho competencias por política con
+procesos/conexiones independientes. Los emisores de actividad existentes se
+conservan, sin nuevos eventos por consulta o cálculo; matriz actualizada.
+Validación local: 856 backend aprobadas, una omitida preexistente y 46151
+aserciones; 148 frontend/56 archivos y build aprobados. E2E Chromium aprobados
+para ambas políticas en selecciones independientes, Productos Bullet y regresión
+dual existente, sobre SQLite dedicada y PDF real. Capturas de escritorio/móvil
+incorporadas a la guía. Sin BD operativa ni proveedores.
+
+Review medium del incremento contra `1a495aa`, mediante `codex review
+--uncommitted -c model_reasoning_effort=medium`: sin regresiones accionables.
+La selección del revisor detectó dependencia de helpers de Productos declarados
+en otro archivo de pruebas; se centralizó el fixture en Support/Pest y las 40
+pruebas específicas pasan por archivo, con 942 aserciones. El barrido acumulado
+final contra `c30c941` y la concurrencia financiera real se comprobarán antes
+de integrar. Pint, UTF-8/LF, diff y navegación documental revisados; los cuatro
+hashes locales de auditoría permanecen idénticos.
+
+Diagnósticos E2E resueltos: el router conserva la devolución de recursos
+estáticos; las fechas simuladas usan sesiones en la base aislada para evitar
+compararlas con mtime del sistema, conservando CSRF. Los dictámenes esperan el
+resultado visible anterior antes del siguiente envío. El oráculo al 02/03 con
+ambos añade 5.92 ordinarios al pendiente final: 380.48 - 100 + 5.92 = 286.40;
+se corrigió la aserción, sin modificar reglas financieras. Traza, captura,
+vídeo y consola revisados. No hay despliegue ni aceptación QA
+compartida reportados. Diaria, capitalización y reducción de plazo Bullet siguen
+fuera de alcance; tampoco se habilitan SIC productivo ni dinero real.
+
+Guion: [desplegar y comprobar Bullet en QA](../how-to/qa-bullet.md).
+Las secciones inferiores conservan evidencia histórica; su bloqueo operativo
+queda sustituido por esta habilitación, sin atribuirles pruebas nuevas.
+
 ## Anticipo y liquidación/reverso Bullet internos — 06/11/2026
 
 Retoma autorizada desde `6c64a3e`, worktree `output/bullet-base/worktree`, rama

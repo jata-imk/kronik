@@ -295,7 +295,8 @@ final class MotorAnticipos
     {
         $tasa = $state['producto']['tasa_ordinaria_anual'];
         $filas = $this->amortizacion->calcular($saldo, $tasa, $inicio,
-            array_map(fn ($fecha) => CarbonImmutable::parse($fecha, 'UTC'), $fechas), MetodoAmortizacion::Bullet, $motor, $convencion)['tabla'];
+            array_map(fn ($fecha) => CarbonImmutable::parse($fecha, 'UTC'), $fechas), MetodoAmortizacion::Bullet, $motor, $convencion,
+            \App\Enums\PoliticaInteresBullet::from($state['producto']['reglas']['politica_interes_bullet']))['tabla'];
         $cuotas = array_values(array_filter($state['cuotas'], fn ($cuota) => $cuota['fecha'] > $state['fecha']));
         $alVencimiento = $state['producto']['reglas']['politica_interes_bullet'] === 'al_vencimiento';
         $acumulado = '0';

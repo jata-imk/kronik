@@ -41,9 +41,6 @@ final class CapacidadesProducto
 
     public static function validar(array $condiciones, VersionMotorCredito $motor, string $prefix = '', bool $configuracion = false): void
     {
-        if (! $configuracion && in_array('bullet', (array) ($condiciones['reglas']['metodos_amortizacion'] ?? []), true)) {
-            throw ValidationException::withMessages([$prefix.'reglas.metodos_amortizacion' => CatalogoCapacidadesCredito::combinaciones()['bullet']['aviso']]);
-        }
         // Mantener el error histórico de convención en su clave original.
         $motor->validarConvencion(ConvencionInteres::desdeProducto($condiciones));
         Validator::make($prefix === '' ? $condiciones : ['version' => $condiciones], self::reglas($prefix, $motor, $configuracion), [], [
@@ -68,6 +65,9 @@ final class CapacidadesProducto
             return;
         }
         $bullet = in_array('bullet', $metodos, true);
+        if ($bullet && ($reglas['base_ordinaria'] ?? null) !== 'saldo_insoluto') {
+            $validator->errors()->add($prefix.'reglas.base_ordinaria', 'Selecciona saldo insoluto como base ordinaria Bullet.');
+        }
         $combinacion = CatalogoCapacidadesCredito::combinaciones()[$bullet ? 'bullet' : 'actuales'];
         if (array_diff($metodos, $combinacion['metodos'])) {
             $validator->errors()->add($prefix.'reglas.metodos_amortizacion', 'Configura Bullet en una versión separada de los otros métodos.');
@@ -113,6 +113,7 @@ final class CapacidadesProducto
 
         $opciones['bases_ordinarias'] = array_values(array_filter($compatibles['bases_ordinarias'], fn ($o) => $o['value'] === ($reglas['base_ordinaria'] ?? 'saldo_insoluto')));
         $opciones['bases_moratorias'] = array_values(array_filter($compatibles['bases_moratorias'], fn ($o) => $o['value'] === ($reglas['base_moratoria'] ?? 'capital_vencido')));
+        $opciones['politicas_interes_bullet'] = array_values(array_filter($compatibles['politicas_interes_bullet'], fn ($o) => $o['value'] === ($reglas['politica_interes_bullet'] ?? null)));
 
         return ['motor_calculo_version' => $motor->value, 'opciones' => $opciones, 'problemas' => []];
     }

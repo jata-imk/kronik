@@ -1,6 +1,7 @@
 # ADR 0040: obligaciones y mora Bullet en el motor de pagos
 
-- Estado: implementado internamente en `feat/bullet-base`, PR #73; operación pendiente.
+- Estado: implementado en PR #73; el bloqueo operativo provisional queda sustituido por [ADR 0042](adr-0042-habilitacion-ciclo-bullet-qa.md).
+  Integración y despliegue se registran en la Agent Note.
 - Fecha: 2026-11-05.
 - Complementa ADR 0038 y 0039; conserva las decisiones funcionales de Notion.
 
