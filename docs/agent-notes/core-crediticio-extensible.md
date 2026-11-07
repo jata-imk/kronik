@@ -35,6 +35,16 @@ final contra `c30c941` y la concurrencia financiera real se comprobarán antes
 de integrar. Pint, UTF-8/LF, diff y navegación documental revisados; los cuatro
 hashes locales de auditoría permanecen idénticos.
 
+Código publicado `558b06a`. Review medium/barrido acumulado contra `c30c941`
+completado sin defectos accionables; las selecciones afectadas por compartir
+discos simulados con el hook pasaron al ejecutarse por separado y el push serial
+repitió backend/build completos. CI inicial `42409078861`: backend/frontend y
+concurrencias previas aprobados; la nueva financiera rechazó el desembolso por
+huella distinta entre procesos. Diagnóstico reproducido: serializar now() cambiaba
+la zona del reloj simulado y los casts de fechas; el worker debe recibir el
+testNow original con su zona. Se corrige exclusivamente el harness, conservando
+el rechazo de evidencia modificada. Pendiente repetir CI y revisar el ajuste.
+
 Diagnósticos E2E resueltos: el router conserva la devolución de recursos
 estáticos; las fechas simuladas usan sesiones en la base aislada para evitar
 compararlas con mtime del sistema, conservando CSRF. Los dictámenes esperan el

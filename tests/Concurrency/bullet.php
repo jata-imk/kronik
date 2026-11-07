@@ -54,7 +54,8 @@ function competirBullet(string $tabla, array $ids, array $operaciones): array
         foreach ($operaciones as $slot => $operation) {
             $process = new Process([PHP_BINARY, __FILE__, 'worker', json_encode([
                 ...$operation, 'barrier' => $barrier, 'slot' => $slot, 'tabla' => $tabla,
-                'clock' => CarbonImmutable::now()->toIso8601String(),
+                // Date casts use the mock's zone; now() would convert it to the app zone.
+                'clock' => CarbonImmutable::getTestNow()->toIso8601String(),
             ], JSON_THROW_ON_ERROR)], base_path());
             $process->setTimeout(45);
             $process->start();

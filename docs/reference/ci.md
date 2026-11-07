@@ -110,6 +110,8 @@ anticipo frente a liquidación, referencia única entre créditos, pagos con pre
 común y reverso frente a pago. El coordinador retiene las filas mientras ambos
 trabajadores alcanzan su consulta bloqueante. Se comprueban estados, rollback,
 calendarios originales y actividad sin duplicación ni datos reservados.
+El reloj transmitido conserva la zona de testNow: convertirlo previamente a la
+zona de la aplicación alteraría los casts de fechas entre procesos y sus huellas.
 
 Chromium instalado con Playwright se usa también para PDF. Con
 `E2E_BULLET_FIXTURES=true`, el runner aislado ejecuta `bullet-ciclo.spec.js` y
