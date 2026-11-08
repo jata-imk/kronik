@@ -3,7 +3,7 @@
 [Buscar por tema](../topic/index.md) · [Índice general](../index.md)
 
 - [Core crediticio: responsabilidades y contratos de evolución](core-crediticio.md)
-- [Bullet: casos numéricos pendientes de definición funcional](bullet-casos-definicion.md)
+- [Bullet: decisiones vigentes y casos de aceptación](bullet-casos-definicion.md)
 
 - [Eventos de auditoría](auditoria-eventos.md)
 - [Automatizacion de Documentacion](automatizacion-documentacion.md)

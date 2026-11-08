@@ -2,6 +2,11 @@
 
 Estado: aceptada para QA. Fecha: 10/10/2026.
 
+La regla de cobro de todo el devengado y regeneración aquí descrita conserva su
+alcance para los métodos anteriores. Bullet parcial mantiene el devengado no
+exigible y sus obligaciones conforme a [ADR 0041](adr-0041-anticipos-liquidacion-bullet.md),
+sin cambiar las restricciones de liquidación, reverso o habilitación QA.
+
 ## Decisión financiera
 
 Capturar el total recibido. Cubrir vencidos y todo interés ordinario/moratorio

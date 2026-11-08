@@ -5,6 +5,7 @@ namespace App\Services\Credito;
 use App\Enums\ConvencionInteres;
 use App\Enums\MetodoAmortizacion;
 use App\Enums\PeriodicidadCredito;
+use App\Enums\PoliticaInteresBullet;
 use App\Enums\VersionMotorCredito;
 use App\Models\ProductoVersion;
 use App\Support\Decimal;
@@ -45,7 +46,8 @@ final class SimuladorCreditoSimple
         $fechas = $this->calendario->fechas($fecha, $periodicidad, $plazo);
         $motor = $this->versionMotor($version);
         $convencion = $this->convencion($version);
-        $resultado = $this->amortizacion->calcular($saldoFinanciado, (string) $version->tasa_ordinaria_anual, $fecha, $fechas, $metodo, $motor, $convencion);
+        $politica = $this->politicaBullet($version, $metodo);
+        $resultado = $this->amortizacion->calcular($saldoFinanciado, (string) $version->tasa_ordinaria_anual, $fecha, $fechas, $metodo, $motor, $convencion, $politica);
         $tabla = $resultado['tabla'];
         $cadaPago = $comisiones->where('momento_cobro', 'cada_pago');
         $acumulados = ['capital' => '0.00', 'interes' => '0.00', 'comisiones' => '0.00', 'pagado' => '0.00'];
@@ -169,6 +171,9 @@ final class SimuladorCreditoSimple
                 ? 'Proyección según configuración del producto, no determinación fiscal ni autorización de operación. Sin mora ni eventos extraordinarios. La cuota base no incluye impuestos; el pago total puede variar.'
                 : 'Escenario anterior a impuestos. No significa exención ni tasa cero; no representa el total con impuestos.',
         ];
+        if ($politica !== null) {
+            $respuesta['politica_interes_bullet'] = $politica->value;
+        }
         if ($incluirImpuestos) {
             $respuesta['total_impuestos'] = $impuestosAcumulados;
             $respuesta['totales']['impuestos'] = $impuestosAcumulados;
@@ -253,7 +258,7 @@ final class SimuladorCreditoSimple
         $financiadas = $this->totalPorModalidad($iniciales, $monto, 'financiada');
         $saldo = Decimal::round(Decimal::add($monto, $financiadas));
         $fechas = $this->calendario->fechas($fecha, $periodicidad, $plazo);
-        $resultado = $this->amortizacion->calcular($saldo, (string) $version->tasa_ordinaria_anual, $fecha, $fechas, $metodo, $this->versionMotor($version), $this->convencion($version));
+        $resultado = $this->amortizacion->calcular($saldo, (string) $version->tasa_ordinaria_anual, $fecha, $fechas, $metodo, $this->versionMotor($version), $this->convencion($version), $this->politicaBullet($version, $metodo));
         $cadaPago = $comisiones->where('momento_cobro', 'cada_pago');
         $pagos = array_map(function (array $fila) use ($cadaPago, $monto): string {
             $comisionesCat = $cadaPago->reduce(
@@ -269,6 +274,13 @@ final class SimuladorCreditoSimple
         );
 
         return [Decimal::round(Decimal::sub($saldo, $inicialCat)), $pagos];
+    }
+
+    private function politicaBullet(ProductoVersion $version, MetodoAmortizacion $metodo): ?PoliticaInteresBullet
+    {
+        return $metodo === MetodoAmortizacion::Bullet
+            ? PoliticaInteresBullet::from(CapacidadesProducto::condiciones($version)['reglas']['politica_interes_bullet'])
+            : null;
     }
 
     private function versionMotor(ProductoVersion $version): VersionMotorCredito
@@ -298,6 +310,8 @@ final class SimuladorCreditoSimple
 
     private function formula(ProductoVersion $version, string $saldoFinanciado, array $resultado, array $tabla): array
     {
+        $politica = CapacidadesProducto::condiciones($version)['reglas']['politica_interes_bullet'] ?? null;
+
         return [
             'convencion' => 'días reales / 360',
             'calendario' => 'Semanal suma 7 días; quincenal suma 15 días; mensual conserva el día de la disposición. Si la disposición es fin de mes, todos los vencimientos permanecen en fin de mes; un día inexistente se ajusta solo para ese mes.',
@@ -305,11 +319,14 @@ final class SimuladorCreditoSimple
             'interes' => 'Iₖ = Sₖ₋₁ × (tasa anual / 100) × (díasₖ / 360)',
             'cuota_nivelada' => 'C = P ÷ Σ[1 ÷ Π(1 + iⱼ)]',
             'capital_fijo' => 'A = P ÷ n; la última amortización toma el saldo restante.',
+            'bullet' => 'El principal vence al final. La política del producto determina si el interés es exigible por periodo o se acumula sin capitalizar hasta el vencimiento.',
             'saldo_financiado' => $saldoFinanciado,
             'tasa_anual' => (string) $version->tasa_ordinaria_anual,
             'cuota_exacta' => $resultado['cuota_exacta'],
             'cuota_redondeada' => $resultado['cuota_redondeada'],
-            'redondeo' => 'Half-up a centavos en interés, capital, comisión, pago y saldo de cada fila.',
+            'redondeo' => $politica === 'al_vencimiento'
+                ? 'Interés acumulado por numeradores; half-up a centavos al vencimiento final. Comisiones e impuestos conservan su regla por concepto.'
+                : 'Half-up a centavos en interés, capital, comisión, pago y saldo de cada fila.',
             'simbolos' => [
                 ['simbolo' => 'Iₖ', 'significado' => 'Interés ordinario generado durante el periodo k.'],
                 ['simbolo' => 'Sₖ₋₁', 'significado' => 'Saldo insoluto al inicio del periodo k.'],
@@ -325,7 +342,9 @@ final class SimuladorCreditoSimple
             'periodos' => array_map(fn (array $fila) => [
                 'numero' => $fila['numero'],
                 'dias' => $fila['dias'],
-                'sustitucion_interes' => "{$fila['saldo_inicial']} × ".(string) $version->tasa_ordinaria_anual."% × {$fila['dias']}/360 = {$fila['interes']}",
+                'sustitucion_interes' => $politica === 'al_vencimiento'
+                    ? "Interés exigible: {$fila['interes']}. El devengo de cada intervalo se acumula hasta el vencimiento final, antes de redondear."
+                    : "{$fila['saldo_inicial']} × ".(string) $version->tasa_ordinaria_anual."% × {$fila['dias']}/360 = {$fila['interes']}",
             ], $tabla),
         ];
     }

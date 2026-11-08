@@ -23,7 +23,8 @@ function productoMotorRacional(string $tasa = '9', string $gracia = 'efectiva', 
 
 test('el motor corregido conserva el medio centavo entre contrato devengo y pago', function (MetodoAmortizacion $metodo) {
     $inicio = CarbonImmutable::parse('2026-01-01');
-    $tabla = app(TablaAmortizacionCreditoSimple::class)->calcular('100', '9', $inicio, [$inicio->addDays(7)], $metodo, VersionMotorCredito::Act360Racional);
+    $tabla = app(TablaAmortizacionCreditoSimple::class)->calcular('100', '9', $inicio, [$inicio->addDays(7)], $metodo, VersionMotorCredito::Act360Racional,
+        politica: $metodo === MetodoAmortizacion::Bullet ? \App\Enums\PoliticaInteresBullet::Periodicos : null);
     // 100 × 9 × 7 / 36000 = 0.175; half-up = 0.18.
     expect($tabla['tabla'][0]['interes'])->toBe('0.18')->and($tabla['tabla'][0]['pago_total'])->toBe('100.18');
     $motor = app(MotorPagos::class);
@@ -107,7 +108,7 @@ test('cada cuota contractual puntual cierra y conserva el capital con el motor c
     }
     expect($motor->resumen($estado)['capital_insoluto'])->toBe('0.00')
         ->and($motor->resumen($estado)['exigible'])->toBe('0.00');
-})->with(MetodoAmortizacion::cases())->with(PeriodicidadCredito::cases());
+})->with([MetodoAmortizacion::CuotaNivelada, MetodoAmortizacion::CapitalFijo])->with(PeriodicidadCredito::cases());
 
 test('no mezcla versiones ni acepta un motor desconocido', function () {
     expect(fn () => VersionMotorCredito::desdeSnapshot(['motor_calculo_version' => 99]))

@@ -1,5 +1,110 @@
 # Core crediticio: responsabilidades y contratos de evolución
 
+## Bullet: cálculo, condiciones y obligaciones
+
+La estrategia Bullet distribuye cero capital intermedio y liquida principal
+al final. `ExigibilidadInteresBullet` proyecta intereses periódicos o al vencimiento
+por separado; conserva numeradores y los intervalos sin pago para CAT. Requiere
+motor 2, sin ampliar compatibilidad histórica. Las estrategias actuales mantienen
+sus guardas de capital positivo y su serialización.
+
+Bullet está habilitado en el catálogo operativo para motor 2/Act/360 y ambas
+políticas, con las combinaciones explícitas de las [condiciones](productos-crediticios.md#preparar-condiciones-bullet).
+Simulación, CAT, solicitud, paquete, firma y desembolso conservan la misma política.
+La validación del ciclo y su estado de integración/despliegue se registran en la
+[Agent Note](../agent-notes/core-crediticio-extensible.md), sin equiparar pruebas
+aisladas con aceptación en QA compartido. Ver [ADR 0042](../explanation/adr-0042-habilitacion-ciclo-bullet-qa.md).
+
+El adaptador de tabla recibe ?PoliticaInteresBullet, obligatoria para Bullet y
+ausente para los otros métodos. Aplica exigibilidad antes de serializar, también
+en los flujos CAT, conservando intervalos sin pago. El catálogo excluye Bullet del
+motor histórico; no añade defaults a evidencias anteriores. Activación/programación
+y uso validan combinaciones antes de persistir. Las condiciones y los hashes
+de créditos firmados permanecen inmutables.
+
+### Obligaciones y mora Bullet
+
+`MotorPagos` identifica Bullet por el método exacto del cronograma y exige
+motor 2, Act/360 y condiciones explícitas compatibles. Conserva capital inicial,
+método y evidencia diaria de gracia en el estado, sin agregar tablas ni cambiar
+el algoritmo de los contratos anteriores. La ausencia de esos datos o de un
+numerador ya utilizado se rechaza; no se reconstruyen desde importes redondeados.
+
+El ordinario se acumula sobre todo el capital insoluto en el cargo de su fecha
+exigible: siguiente vencimiento periódico o vencimiento final. Los importes
+proyectados de la tabla no se convierten en deuda. Hasta el vencimiento el cargo
+no admite pagos ordinarios. Pagar interés no amortiza capital.
+
+Desde el día posterior al vencimiento, un remanente de capital o interés ordinario
+activa atraso. `capital_vencido` conserva su significado; `interes_vencido`,
+`obligacion_vencida` y `dias_atraso` distinguen interés impagado con capital futuro.
+La gracia afecta el cargo moratorio, sin ocultar los días de atraso.
+
+| Base moratoria | Importe diario antes del nuevo devengo |
+| --- | --- |
+| `obligacion_vencida` | Suma de capital e interés ordinario vencidos impagados de las obligaciones elegibles |
+| `saldo_insoluto` | Principal pendiente total, una sola vez si hay alguna obligación elegible |
+| `capital_inicial` | Principal inicial conservado, una sola vez si hay alguna obligación elegible |
+
+Comisiones, impuestos y moratorio se mantienen separados y no engrosan esas
+bases. Los impuestos siguen la fiscalidad y distribución proporcional de cada
+concepto. Sin remanente de capital/interés vencido no se genera nueva mora;
+el moratorio pendiente por sí solo no vuelve a dispararla. Un residuo exclusivo
+de impuesto sigue siendo exigible, sin activar mora ni suspender el ordinario.
+
+Gracia efectiva cobra desde el primer día posterior a la gracia. Retroactiva
+conserva la base real de cada día y la cobra al incumplirse la gracia, descartando
+las obligaciones cubiertas durante ella. Las bases globales no se repiten por
+varias cuotas. Con `ambos` continúa el ordinario; con `sustituye` se suspende el
+ordinario del principal desde la activación. La sustitución retroactiva retira
+solo los numeradores ordinarios de los días de gracia, del cargo donde se
+generaron; conserva el interés que ya originó el atraso. Si la gracia cruza otro
+vencimiento, también retira ese ordinario provisional de las bases diferidas.
+
+Se mantiene el límite B+sustitución: cubrir completamente la obligación afectada
+durante gracia; no devolver una distribución parcial que luego requiera compensar
+interés pagado. El anticipo y la liquidación internos conservan este límite.
+El ciclo habilitado reutiliza estos motores con las condiciones congeladas.
+BulletCicloQaTest origina por servicios reales; las pruebas sintéticas anteriores
+se conservan para aislar obligaciones y mora. MariaDB multiconexión y E2E aportan
+evidencia complementaria, registrada por commit en la Agent Note.
+Decisión y consecuencias en [ADR 0040](../explanation/adr-0040-obligaciones-mora-bullet.md).
+
+El resumen Bullet añade interes_devengado_pendiente e interes_no_exigible:
+ordinario generado pendiente de pago, sin impuestos, total y con vencimiento
+posterior a la consulta respectivamente. Reutiliza interes_vencido,
+obligacion_vencida y dias_atraso, este último por obligaciones. Consulta y
+previa no persisten devengos ni calendarios.
+
+### Anticipo y liquidación Bullet internos
+
+El anticipo parcial cubre exigibles y cargos aplicables antes de reducir principal.
+El ordinario todavía no exigible conserva cargo, numerador y vencimiento; no se
+cobra obligatoriamente, elimina ni capitaliza. La obligación final conserva su
+fecha y refleja el capital pendiente. No se permite reducir plazo Bullet.
+
+El estado conserva claves de cuotas/cargos, `capital_inicial`, pagos, impuestos
+y control de gracia. Cada registro contabiliza solo diferencias de devengos;
+preservar el interés no exige crear otro cargo ni otro movimiento por su saldo
+ya contabilizado. Un anticipo posterior o en la misma fecha no reinicia contadores.
+
+La nueva versión del cronograma proyecta el nuevo saldo desde el día siguiente
+al abono y conserva fechas/números futuros. Suma numeradores anteriores y futuros
+por obligación antes de redondear; al vencimiento acumula los intervalos sin cobro.
+Incluye el devengado conservado pendiente y la fiscalidad/comisiones aplicables,
+sin convertir la proyección en deuda registrada. Los métodos anteriores conservan
+el cobro de devengado y regeneración definidos en ADR 0023.
+
+Liquidar cubre capital, devengos, cargos e impuestos aplicables, excluyendo interés
+y comisiones periódicas futuros. Exige coincidencia exacta con la cotización y
+detiene la generación posterior. El reverso admisible restaura estado y calendario
+mediante compensaciones y nueva versión, incluida reapertura tras liquidación.
+
+Se mantienen las interfaces y eventos de pago/reverso, permisos separados y
+restricciones de fecha/QA existentes. Previa y consulta no escriben. La evidencia
+incluye ahora originación real aislada, además de casos sintéticos; los resultados
+financieros concurrentes se acreditan por separado en MariaDB. Decisión en [ADR 0041](../explanation/adr-0041-anticipos-liquidacion-bullet.md).
+
 ## Catálogo de capacidades
 
 `CatalogoCapacidadesCredito` declara opciones `{value, label, ayuda}` para métodos,
@@ -48,7 +153,7 @@ completa y las capacidades futuras siguen pendientes. Evidencia en la
 | Clasificación comercial | Catálogo de productos | Nómina no impone otra fórmula ni otro configurador |
 | Cobranza/recepción | Registro manual QA junto a aplicación | Retenciones, remesas, recepción y aplicación distinguibles |
 | Consultas | Estado calculado desde evidencia cifrada | Proyecciones relacionales reconstruibles y fechadas |
-| Auditoría | Emisores y cobertura parcial documentados | Mantener matriz, contexto original y pruebas por entrega |
+| Auditoría | Cobertura técnica integrada por #72 y QA confirmada | Mantener matriz, contexto original y pruebas por entrega |
 
 ## Invariantes y límites de integración
 
@@ -190,7 +295,7 @@ actuales hasta contar con nuevas convenciones aprobadas y probadas.
 
 | Capacidad | Definición necesaria |
 | --- | --- |
-| Bullet | Primera fecha, duración, periodos incompletos, anticipos/parcialidad, interés vencido, mora y liquidación |
+| Bullet | Ciclo QA habilitado con dos políticas; estado de pruebas, integración y despliegue en Agent Note y guía QA |
 | Revolvente | Mínimo, disponibilidad, reservas, distribución, corte/fecha límite y límites por disposición |
 | Nómina | Reconocimiento entre descuento/recepción, remesa parcial/no recibida, reversos y bajas |
 | Escalabilidad | Medición en entorno identificado con 10 mil créditos/líneas activos y disposiciones asociadas |

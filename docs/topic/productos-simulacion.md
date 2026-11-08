@@ -6,6 +6,8 @@ consultan también desde el tema de fiscalidad.
 
 ## Operación
 
+- [Configurar y comprobar ambas políticas Bullet en QA](../how-to/qa-bullet.md).
+
 - [Configuración y simulación en el recorrido QA](../how-to/qa-credito-simple.md).
 - [Configurar fiscalidad de productos](../how-to/configurar-fiscalidad-productos.md).
 - [Probar simulación con impuestos](../how-to/qa-simulacion-fiscal.md).
@@ -37,3 +39,5 @@ consultan también desde el tema de fiscalidad.
 - [Contexto operativo, lectura institucional y listados en servidor](../reference/contexto-sucursal-consultas.md).
 
 - [Consulta completa de versiones](../reference/consulta-edicion-historicos.md).
+
+- [ADR 0039: preparación y habilitación de condiciones Bullet](../explanation/adr-0039-condiciones-bullet-y-habilitacion.md).

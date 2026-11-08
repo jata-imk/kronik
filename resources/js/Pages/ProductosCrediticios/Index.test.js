@@ -80,3 +80,12 @@ it("la respuesta de una acción tras cerrar no reabre la consulta descartada",as
  await w.setProps({productoSeleccionado:product({...v})});expect(w.vm.editorVisible).toBe(false);
  w.vm.requestVersion(v);await w.setProps({productoSeleccionado:product({...v})});expect(w.vm.editorVisible).toBe(true);
 });
+
+
+it("impide abrir simulación desde cualquier acceso si la versión tiene problemas de capacidad", async () => {
+    const v = { ...version(), capacidades: { problemas: ["Solo borrador"], motor_calculo_version: 2, opciones: {} } };
+    const w = render(v);
+    w.vm.openSimulator(v);
+    await w.vm.$nextTick();
+    expect(w.vm.simulatorVisible).toBe(false);
+});

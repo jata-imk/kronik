@@ -6,6 +6,8 @@ use App\Services\Credito\Amortizacion\BaseAmortizacion;
 
 interface EstrategiaAmortizacion
 {
+    public function permiteCapitalIntermedioCero(): bool;
+
     /** @param list<string> $descuentos */
     public function preparar(string $principal, array $descuentos): BaseAmortizacion;
 

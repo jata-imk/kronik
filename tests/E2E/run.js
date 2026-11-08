@@ -7,9 +7,7 @@ const publicRoot = fileURLToPath(new URL("../../public", import.meta.url));
 const environment = prepareE2eDatabase(e2eEnvironment());
 const port = process.env.E2E_PORT ?? "8015";
 const baseURL = process.env.E2E_BASE_URL ?? `http://127.0.0.1:${port}`;
-const router = fileURLToPath(
-    new URL("../../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php", import.meta.url),
-);
+const router = fileURLToPath(new URL("./server.php", import.meta.url));
 
 const server = spawn("php", ["-S", `127.0.0.1:${port}`, "-t", ".", router], {
     cwd: publicRoot,

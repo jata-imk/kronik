@@ -211,6 +211,9 @@ class E2eSeeder extends Seeder
         if (filter_var(env('E2E_ORIGINACION_DUAL'), FILTER_VALIDATE_BOOL)) {
             $this->call(E2eSolicitudDualSeeder::class);
         }
+        if (filter_var(env('E2E_BULLET_FIXTURES'), FILTER_VALIDATE_BOOL)) {
+            $this->call(E2eBulletSeeder::class);
+        }
         if (filter_var(env('E2E_SIC_FIXTURES'), FILTER_VALIDATE_BOOL)) {
             $admin = User::where('email', 'test@example.com')->firstOrFail();
             $cliente = \App\Models\Cliente::where('primer_nombre', 'Ana')->firstOrFail();

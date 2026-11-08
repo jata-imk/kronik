@@ -42,7 +42,7 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
         $this->authorize('viewAny', ProductoCrediticio::class);
 
         return Inertia::render('ProductosCrediticios/Index', [
-            'capacidadesCredito' => \App\Services\Credito\CatalogoCapacidadesCredito::paraVue(),
+            'capacidadesCredito' => \App\Services\Credito\CatalogoCapacidadesCredito::paraVue(prepararBorradores: true),
             ...app(\App\Services\CatalogoListadoService::class)->productos($request),
             'conceptosComision' => fn () => ConceptoComision::query()->where('activo', true)->orderBy('nombre')->get(),
             'simuladorDefaults' => fn () => [

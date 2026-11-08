@@ -96,6 +96,48 @@ proveedores ni usa datos de la aplicación. Ver el
 [contrato de auditoría](auditoria-eventos.md) y la evidencia del commit en su
 [Agent Note](../agent-notes/auditoria-actividad.md).
 
+## Concurrencia financiera y E2E Bullet
+
+Después de las verificaciones anteriores, CI ejecuta
+`php tests/Concurrency/bullet.php`. Exige `APP_ENV=testing`, driver MySQL,
+base `kronik_test` y servidor MariaDB; falla antes de escribir si no coinciden.
+Los productos, solicitudes, firmas y desembolsos se preparan mediante los
+servicios reales, con PDF sintético solo en este harness financiero.
+
+Cada política prueba ocho competencias con procesos/conexiones independientes:
+desembolsos con igual/distinta idempotencia, anticipo y reverso idempotentes,
+anticipo frente a liquidación, referencia única entre créditos, pagos con previa
+común y reverso frente a pago. El coordinador retiene las filas mientras ambos
+trabajadores alcanzan su consulta bloqueante. Se comprueban estados, rollback,
+calendarios originales y actividad sin duplicación ni datos reservados.
+El desembolso se audita sobre la solicitud; pagos y reversos sobre el crédito.
+El harness verifica el sujeto real de cada emisor y su contexto original.
+El reloj transmitido conserva el instante y el nombre IANA de la zona de testNow:
+convertirlo a la zona de la aplicación, o conservar solo el offset de enero,
+alteraría casts de fechas históricas y sus huellas. La fecha de nacimiento de la
+fixture cae en horario de verano histórico para comprobar también ese límite.
+
+Playwright instala Chromium para la interfaz; PDF usa el Google Chrome del
+runner, resuelto con `command -v google-chrome`, y conserva su sandbox. Antes de
+los recorridos, `php tests/E2E/support/pdf.php` exige `APP_ENV=testing` y renderiza
+contenido sintético sin acceder a datos de dominio; un fallo conserva la causa
+operativa en CI. No se habilita `--no-sandbox` ni se cambia el renderer de QA.
+Los binarios descargados pueden estar restringidos por AppArmor en Ubuntu; ver
+la [referencia de Chromium](https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md).
+Con
+`E2E_BULLET_FIXTURES=true`, el runner aislado ejecuta `bullet-ciclo.spec.js` y
+`productos-bullet.spec.js`. El reloj está exclusivamente en los archivos de
+pruebas, con fecha controlada por escenario y guardas de base/entorno; las
+sesiones del escenario usan la tabla aislada con duración suficiente para sus
+saltos de fecha. No se cambia el reloj de la aplicación desplegada ni se
+desactiva CSRF. La regresión dual existente se ejecuta en otra preparación,
+con su configuración habitual. CI conserva artefactos de navegador siete días.
+El ciclo Bullet consume borradores y no tiene reintento automático: repetirlo
+requiere preparar de nuevo su base aislada. Un fallo conserva su primer punto
+de error, sin intentar editar una versión que el recorrido anterior ya activó.
+
+Guion para despliegue y validación compartida: [Bullet QA](../how-to/qa-bullet.md).
+
 Para E2E que generan PDF puede indicarse `DOCUMENTOS_CHROME_PATH` con la ruta
 del Chrome instalado; preparación y servidor conservan ese valor. No se fija
 una versión ni ruta del equipo de desarrollo en el repositorio.

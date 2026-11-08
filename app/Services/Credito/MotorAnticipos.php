@@ -17,6 +17,13 @@ final class MotorAnticipos
 
     public function calcular(array $antes, array $tabla, string $tipo, ?string $importe, array $opcionales = []): array
     {
+        $bullet = ($antes['metodo'] ?? null) === 'bullet' || ($tabla['metodo'] ?? null) === 'bullet'
+            || in_array('bullet', $antes['producto']['reglas']['metodos_amortizacion'] ?? [], true);
+        if ($bullet && (($antes['metodo'] ?? null) !== 'bullet' || ($tabla['metodo'] ?? null) !== 'bullet'
+            || VersionMotorCredito::desdeSnapshot($tabla) !== VersionMotorCredito::Act360Racional
+            || ! isset($tabla['escenario']['monto_solicitado']))) {
+            $this->error('La evidencia Bullet debe conservar su método, motor y monto original. Solicita revisión del calendario.');
+        }
         VersionMotorCredito::desdeSnapshot($antes['producto'])->validarConvencion(ConvencionInteres::desdeProducto($antes['producto']));
         if (ConvencionInteres::desdeProducto($antes['producto']) !== ConvencionInteres::desdeCronograma($tabla)) {
             $this->error('El producto y el calendario conservan convenciones de días diferentes. Solicita revisión de la evidencia.');
@@ -43,9 +50,10 @@ final class MotorAnticipos
             $this->error('El contrato no permite liquidación anticipada.');
         }
         $estado = $antes;
-        // Current-period accrued interest is owed even if its installment is not due.
+        $fechasOriginales = array_map(fn ($cargo) => $cargo['fecha'], $estado['cargos']);
+        // Bullet parcial conserva la exigibilidad contractual; liquidar cubre todos los devengos.
         foreach ($estado['cargos'] as &$cargo) {
-            if (in_array($cargo['tipo'], ['ordinario', 'moratorio'], true) && ($cargo['vigente'] ?? true)) {
+            if ((! $bullet || $tipo === 'liquidacion') && in_array($cargo['tipo'], ['ordinario', 'moratorio'], true) && ($cargo['vigente'] ?? true)) {
                 $cargo['fecha'] = min($cargo['fecha'], $estado['fecha']);
             }
         }
@@ -73,7 +81,7 @@ final class MotorAnticipos
             }
         } else {
             if ($importe === null || D::compare($importe, $obligatorio) <= 0 || D::compare($futuro, '0') <= 0) {
-                $this->error('El importe debe cubrir vencidos y devengos y dejar capital para anticipar.');
+                $this->error($bullet ? 'El importe debe cubrir exigibles y cargos aplicables y dejar capital para anticipar.' : 'El importe debe cubrir vencidos y devengos y dejar capital para anticipar.');
             }
             $low = '0';
             $high = D::mul($futuro, '100', 0);
@@ -116,27 +124,34 @@ final class MotorAnticipos
             $estado = $aplicado['estado'];
             $asignaciones = [...$asignaciones, ...$aplicado['asignaciones']];
         }
-        foreach ($estado['cargos'] as &$cargo) {
+        foreach ($estado['cargos'] as $clave => &$cargo) {
+            if ($bullet && isset($fechasOriginales[$clave])) {
+                $cargo['fecha'] = $fechasOriginales[$clave];
+            }
             if (($cargo['vigente'] ?? true) && ($cargo['fecha'] <= $estado['fecha'] || in_array($cargo['tipo'], ['ordinario', 'moratorio'], true))) {
                 $cargo['contabilizado'] = D::round($cargo['generado']);
                 $cargo['impuesto_contabilizado'] = $cargo['fiscalidad'] === null ? '0.00' : $this->impuestos->calcular($cargo['fiscalidad'], $cargo['contabilizado'], $cargo['concepto'])['impuesto'];
             }
-            $cargo['vigente'] = false; // Preserved history; future debt belongs to the new schedule.
+            if (! $bullet || ($tipo === 'liquidacion' && $cargo['tipo'] === 'comision' && $cargo['fecha'] > $estado['fecha'])) {
+                $cargo['vigente'] = false;
+            }
         }
         unset($cargo);
         $saldo = $this->pagos->resumen($estado)['capital_insoluto'];
-        $nuevo = $this->recalcular($antes, $tabla, $saldo, $reglas['aplicacion_prepago']);
+        $nuevo = $this->recalcular($bullet ? $estado : $antes, $tabla, $saldo, $reglas['aplicacion_prepago']);
         $offset = max(array_keys($antes['cuotas']));
         foreach ($nuevo['tabla'] as &$fila) {
-            $fila['numero'] += $offset;
+            if (! $bullet) {
+                $fila['numero'] += $offset;
+            }
         }
         unset($fila);
         $nuevo['escenario'] = [...$tabla['escenario'], 'fecha_disposicion' => $antes['fecha'], 'saldo_financiado' => $saldo];
-        if (D::compare($saldo, '0') > 0) {
+        if (! $bullet && D::compare($saldo, '0') > 0) {
             $iniciado = $this->pagos->iniciar($antes['producto'], $nuevo);
             $estado['cuotas'] = $iniciado['cuotas'];
             $estado['cargos'] = [...$estado['cargos'], ...$iniciado['cargos']];
-        } else {
+        } elseif (! $bullet) {
             $estado['cuotas'] = [];
         }
         $estado['formato'] = 2;
@@ -218,7 +233,9 @@ final class MotorAnticipos
                 $this->error('No quedan vencimientos futuros para un anticipo parcial. Revisa pago o liquidación.');
             }
             $inicio = CarbonImmutable::parse($state['fecha'], 'UTC');
-            if ($modo === 'reducir_pago') {
+            if ($metodo === MetodoAmortizacion::Bullet) {
+                $filas = $this->proyectarBullet($state, $saldo, $inicio, $fechas, $motor, $convencion);
+            } elseif ($modo === 'reducir_pago') {
                 $calculo = $this->amortizacion->calcular($saldo, $state['producto']['tasa_ordinaria_anual'], $inicio,
                     array_map(fn ($f) => CarbonImmutable::parse($f, 'UTC'), $fechas), $metodo, $motor, $convencion);
                 $filas = $calculo['tabla'];
@@ -265,10 +282,37 @@ final class MotorAnticipos
                 $f['impuestos'] = D::add($f['impuestos'], $this->impuestos->calcular($c['fiscalidad'], $c['importe'], $c['concepto'])['impuesto'], 2);
             }
             $f['pago_total'] = D::add(D::add(D::add($f['capital'], $f['interes'], 2), $f['comisiones'], 2), $f['impuestos'], 2);
+            if ($metodo === MetodoAmortizacion::Bullet) {
+                $f['pago_cat'] = $f['pago_total'];
+            }
         }
         unset($f);
 
         return ['formato' => 2, 'motor_calculo_version' => $motor->value, 'convencion_interes' => $convencion->value, 'metodo' => $metodo->value, 'cuota_base' => $base, 'tabla' => $filas];
+    }
+
+    private function proyectarBullet(array $state, string $saldo, CarbonImmutable $inicio, array $fechas, VersionMotorCredito $motor, ConvencionInteres $convencion): array
+    {
+        $tasa = $state['producto']['tasa_ordinaria_anual'];
+        $filas = $this->amortizacion->calcular($saldo, $tasa, $inicio,
+            array_map(fn ($fecha) => CarbonImmutable::parse($fecha, 'UTC'), $fechas), MetodoAmortizacion::Bullet, $motor, $convencion,
+            \App\Enums\PoliticaInteresBullet::from($state['producto']['reglas']['politica_interes_bullet']))['tabla'];
+        $cuotas = array_values(array_filter($state['cuotas'], fn ($cuota) => $cuota['fecha'] > $state['fecha']));
+        $alVencimiento = $state['producto']['reglas']['politica_interes_bullet'] === 'al_vencimiento';
+        $acumulado = '0';
+        foreach ($filas as $index => &$fila) {
+            $fila['numero'] = $cuotas[$index]['numero'];
+            $fin = CarbonImmutable::parse($fila['fecha'], 'UTC');
+            $numerador = $this->intereses->numerador($saldo, $tasa, $inicio, $fin, $convencion);
+            $acumulado = D::add($acumulado, $numerador);
+            $cargo = $state['cargos'][$fila['numero'].':ordinario'];
+            $fila['interes'] = $alVencimiento && $index !== array_key_last($filas) ? '0.00'
+                : D::sub(D::round($this->intereses->desdeNumerador(D::add($cargo['generado_numerador'] ?? '0', $alVencimiento ? $acumulado : $numerador), $convencion)), $cargo['pagado'], 2);
+            $inicio = $fin;
+        }
+        unset($fila);
+
+        return $filas;
     }
 
     private function error(string $message): never

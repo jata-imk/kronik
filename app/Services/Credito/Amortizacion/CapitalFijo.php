@@ -7,6 +7,11 @@ use App\Support\Decimal;
 
 final class CapitalFijo implements EstrategiaAmortizacion
 {
+    public function permiteCapitalIntermedioCero(): bool
+    {
+        return false;
+    }
+
     public function preparar(string $principal, array $descuentos): BaseAmortizacion
     {
         return new BaseAmortizacion(Decimal::round(Decimal::div($principal, (string) count($descuentos))));
