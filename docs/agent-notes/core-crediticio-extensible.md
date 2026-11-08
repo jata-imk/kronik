@@ -2,77 +2,73 @@
 
 ## Habilitación y validación integral Bullet — 07/11/2026
 
-Retoma autorizada desde `1a495aa`, worktree `output/bullet-base/worktree`, rama
-`feat/bullet-base`, PR #73 contra main `c30c941`. Notion y Agent Note leídos;
-ambas políticas, definiciones moratorias y límites conservados. Los cuatro
-archivos locales de auditoría de main se preservan por hash; no pertenecen a
-esta entrega. El usuario realizará despliegue y comprobación en la VPS compartida;
-el agente implementa, valida en bases aisladas y prepara su guion.
+Entrega en `output/bullet-base/worktree`, rama `feat/bullet-base`,
+[PR #73](https://github.com/jata-imk/kronik/pull/73), retomada desde `1a495aa`.
+Código de habilitación `558b06a`; ajustes del harness hasta `fc1fe03`.
+#74 está consolidada en #73. Base funcional del barrido completo: main `c30c941`.
+Los cuatro archivos locales de auditoría de main conservan sus hashes originales;
+no pertenecen a esta entrega ni se actualiza ese checkout.
 
-Implementado en la rama: catálogo operativo motor 2/Act/360, política explícita
-en el adaptador antes de serializar tabla/CAT, condiciones congeladas durante
-originación/firma/desembolso, resumen de ordinario pendiente/no exigible/vencido,
-ayudas y anexo PDF coherentes. Se conservan las banderas QA existentes, sin nuevos
-permisos, migraciones ni seeders operativos. ADR 0042 sustituye el bloqueo
-provisional de los incrementos anteriores y mantiene sus decisiones financieras.
+Motor 2/Act/360 habilita ambas políticas aprobadas. Simulación/CAT aplican
+exigibilidad antes de serializar; solicitud, paquete, firma y desembolso conservan
+condiciones y hashes. Resumen, ayudas y PDF distinguen devengado pendiente,
+aún no exigible y vencido. Anticipo conserva fecha e interés previo; liquidación
+y reversos mantienen historia. Disparador, tres bases moratorias, gracia y
+ambos/sustitución conservados. ADR 0042 sustituye el bloqueo provisional.
+Sin migraciones adicionales a las dos columnas nullable de ADR 0039, permisos,
+seeders operativos ni nuevas banderas de aplicación.
 
-Las pruebas nuevas originan mediante servicios reales; E2E usa PDF real y reloj
-exclusivo del harness aislado. MariaDB añade ocho competencias por política con
-procesos/conexiones independientes. Los emisores de actividad existentes se
-conservan, sin nuevos eventos por consulta o cálculo; matriz actualizada.
-Validación local: 856 backend aprobadas, una omitida preexistente y 46151
-aserciones; 148 frontend/56 archivos y build aprobados. E2E Chromium aprobados
-para ambas políticas en selecciones independientes, Productos Bullet y regresión
-dual existente, sobre SQLite dedicada y PDF real. Capturas de escritorio/móvil
-incorporadas a la guía. Sin BD operativa ni proveedores.
+Evidencia local hasta `fc1fe03`: 856 backend aprobadas, una omitida preexistente,
+46151 aserciones; 148 frontend/56 archivos y build aprobados. El hook serial
+repitió backend/build sin omitir controles. E2E Chromium de ambas políticas,
+Productos Bullet y regresión dual aprobados en SQLite dedicada, con PDF real y
+sin proveedores. Reloj exclusivo del harness aislado y CSRF activo; QA compartido
+conserva fechas reales. Capturas de escritorio/móvil en la guía.
 
-Review medium del incremento contra `1a495aa`, mediante `codex review
---uncommitted -c model_reasoning_effort=medium`: sin regresiones accionables.
-La selección del revisor detectó dependencia de helpers de Productos declarados
-en otro archivo de pruebas; se centralizó el fixture en Support/Pest y las 40
-pruebas específicas pasan por archivo, con 942 aserciones. El barrido acumulado
-final contra `c30c941` y la concurrencia financiera real se comprobarán antes
-de integrar. Pint, UTF-8/LF, diff y navegación documental revisados; los cuatro
-hashes locales de auditoría permanecen idénticos.
+Review medium del incremento desde `1a495aa` sin defectos accionables; el helper
+de Productos se centralizó para permitir selecciones por archivo. Barrido/review
+medium acumulado contra `c30c941`, head `b14a2a7`, sin regresiones accionables:
+156 pruebas Bullet/2349 aserciones verificadas por el revisor, superpuestas con
+la suite. Ajustes posteriores `807b5c1` y `fc1fe03` pasaron review medium propio
+sin hallazgos. Compartir discos simulados entre dos ejecuciones Pest causó
+colisiones; las selecciones pasaron al repetirse por separado. Pint, diff-check,
+UTF-8/LF y navegación temática/enlaces revisados.
 
-Código publicado `558b06a`. Review medium/barrido acumulado contra `c30c941`
-completado sin defectos accionables; las selecciones afectadas por compartir
-discos simulados con el hook pasaron al ejecutarse por separado y el push serial
-repitió backend/build completos. CI inicial `42409078861`: backend/frontend y
-concurrencias previas aprobados; la nueva financiera rechazó el desembolso por
-huella distinta entre procesos. Diagnóstico reproducido: serializar now() cambiaba
-la zona del reloj simulado y los casts de fechas; el worker debe recibir el
-testNow original con su zona. Se corrige exclusivamente el harness, conservando
-el rechazo de evidencia modificada. Pendiente repetir CI y revisar el ajuste.
-El traspaso conserva además el nombre IANA, no solo su offset actual: la fixture
-usa nacimiento en julio de 2002 para detectar diferencias históricas de horario
-de verano. Se reprodujeron ambos cambios de huella sin modificar código de dominio.
-CI `42410067060` superó la huella y registró desembolsos concurrentes; detectó
-otra aserción del harness que buscaba el desembolso sobre Crédito en vez de su
-sujeto real Solicitud. Se corrige la consulta y se incluye ese evento en la
-comprobación de actor/equipo/sucursal y privacidad, sin cambiar el emisor.
-CI `42410676522`, código `807b5c1`, aprueba las ocho competencias financieras
-por política en MariaDB. E2E se detuvo en POST de paquete con HTTP 500, antes
-del PDF; captura, vídeo, traza y consola revisados. Se añade una comprobación
-directa del renderer sintético para conservar la causa en CI y se selecciona
-el Chrome del runner con su sandbox. El recorrido no reintenta sobre versiones
-ya activadas: una repetición requiere preparar de nuevo la base aislada.
-Review medium del ajuste CI/PDF sin hallazgos; comprobación local del renderer
-real aprobada (8586 bytes), sin datos de dominio ni escrituras a la base.
+[CI de `807b5c1`](https://github.com/jata-imk/kronik/actions/runs/42410676522)
+aprueba ocho competencias financieras por política en MariaDB con procesos,
+conexiones y barreras independientes: desembolsos, idempotencia, referencias,
+previas competidoras, reversos y rollback de pagos/calendarios/actividad.
+La suite SQLite no sustituye esa evidencia. El harness conserva instante y
+zona IANA del reloj, con nacimiento en julio de 2002 para detectar diferencias
+históricas de horario de verano en los casts/huellas. Verifica desembolso sobre
+Solicitud y pagos/reversos sobre Crédito, con actor/equipo/sucursal y privacidad.
+No se cambiaron emisores ni reglas financieras. Consulta, cálculo y previa no
+agregan eventos; matriz y contratos actualizados.
 
-Diagnósticos E2E resueltos: el router conserva la devolución de recursos
-estáticos; las fechas simuladas usan sesiones en la base aislada para evitar
-compararlas con mtime del sistema, conservando CSRF. Los dictámenes esperan el
-resultado visible anterior antes del siguiente envío. El oráculo al 02/03 con
-ambos añade 5.92 ordinarios al pendiente final: 380.48 - 100 + 5.92 = 286.40;
-se corrigió la aserción, sin modificar reglas financieras. Traza, captura,
-vídeo y consola revisados. No hay despliegue ni aceptación QA
-compartida reportados. Diaria, capitalización y reducción de plazo Bullet siguen
-fuera de alcance; tampoco se habilitan SIC productivo ni dinero real.
+Diagnósticos E2E: devolución de recursos estáticos del router, sesiones fechadas
+en la base aislada y espera del resultado de cada dictamen. El oráculo final con
+ambos es 380.48 - 100 + 5.92 = 286.40; se precisó la aserción sin cambiar el
+motor. CI `807b5c1` se detuvo con HTTP 500 al preparar el paquete; traza, captura,
+vídeo y consola revisados. `fc1fe03` añade comprobación directa del renderer y
+selecciona el Chrome del runner con su sandbox. PDF sintético por renderer real
+aprobado localmente (8586 bytes), sin datos de dominio ni escrituras a la base.
+El ciclo no reintenta sobre versiones ya activadas: repetir exige base nueva.
 
-Guion: [desplegar y comprobar Bullet en QA](../how-to/qa-bullet.md).
+Verificaciones Linux por commit en la [CI de `fc1fe03`](https://github.com/jata-imk/kronik/actions/runs/42429637787)
+y checks del head documental de [PR #73](https://github.com/jata-imk/kronik/pull/73).
+Integrar exige CI completa aprobada; estado y SHA de integración se conservan en
+esa PR y en el [registro de implementación de Notion](https://app.notion.com/p/40861db7db7f81b2b039d32eabe2daf3).
+No hay despliegue ni aceptación compartida reportados. El usuario realiza el
+despliegue y la comprobación con el [guion QA](../how-to/qa-bullet.md).
+Siguiente paso tras el merge: registrar commit desplegado, entorno, navegador,
+políticas, folios sintéticos y resultados del usuario en Notion y esta nota.
+Bullet integral sigue abierto hasta esa aceptación. Diaria, capitalización y
+reducción de plazo Bullet siguen fuera de alcance; tampoco se habilitan SIC
+productivo ni dinero real.
+
 Las secciones inferiores conservan evidencia histórica; su bloqueo operativo
 queda sustituido por esta habilitación, sin atribuirles pruebas nuevas.
+
 
 ## Anticipo y liquidación/reverso Bullet internos — 06/11/2026
 

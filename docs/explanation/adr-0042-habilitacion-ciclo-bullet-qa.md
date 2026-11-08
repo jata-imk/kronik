@@ -1,7 +1,8 @@
 # ADR 0042: habilitación del ciclo Bullet en QA
 
 - Fecha: 2026-11-07.
-- Estado: implementado en `feat/bullet-base`, PR #73; validación e integración en curso.
+- Estado: aceptado e implementado en PR #73; CI e integración por commit en su
+  [evidencia de entrega](../agent-notes/core-crediticio-extensible.md).
 - Complementa ADR 0038–0041 y sustituye su bloqueo operativo provisional.
 
 ## Contexto
