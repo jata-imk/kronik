@@ -5,6 +5,9 @@ import { login, failOnConsoleErrors } from "./support/auth.js";
 const clockFile = new URL("../../storage/framework/testing/bullet-e2e-clock.txt", import.meta.url);
 const fixturesFile = new URL("../../storage/framework/testing/bullet-e2e-fixtures.json", import.meta.url);
 
+// Each run consumes draft versions; a retry requires a fresh isolated database.
+test.describe.configure({ retries: 0 });
+
 async function fecha(page, day) {
     writeFileSync(clockFile, `${day}T12:00:00-06:00\n`);
     await page.clock.setFixedTime(new Date(`${day}T12:00:00-06:00`));

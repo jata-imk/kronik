@@ -51,6 +51,14 @@ CI `42410067060` superó la huella y registró desembolsos concurrentes; detect�
 otra aserción del harness que buscaba el desembolso sobre Crédito en vez de su
 sujeto real Solicitud. Se corrige la consulta y se incluye ese evento en la
 comprobación de actor/equipo/sucursal y privacidad, sin cambiar el emisor.
+CI `42410676522`, código `807b5c1`, aprueba las ocho competencias financieras
+por política en MariaDB. E2E se detuvo en POST de paquete con HTTP 500, antes
+del PDF; captura, vídeo, traza y consola revisados. Se añade una comprobación
+directa del renderer sintético para conservar la causa en CI y se selecciona
+el Chrome del runner con su sandbox. El recorrido no reintenta sobre versiones
+ya activadas: una repetición requiere preparar de nuevo la base aislada.
+Review medium del ajuste CI/PDF sin hallazgos; comprobación local del renderer
+real aprobada (8586 bytes), sin datos de dominio ni escrituras a la base.
 
 Diagnósticos E2E resueltos: el router conserva la devolución de recursos
 estáticos; las fechas simuladas usan sesiones en la base aislada para evitar

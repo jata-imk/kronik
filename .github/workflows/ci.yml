@@ -123,10 +123,15 @@ jobs:
       - name: Verify Bullet financial concurrency on isolated MariaDB
         run: php tests/Concurrency/bullet.php
 
-      - name: Install Chromium for browser and PDF verification
+      - name: Install browsers for UI and PDF verification
         run: |
           npx playwright install --with-deps chromium
-          echo "DOCUMENTOS_CHROME_PATH=$(node --input-type=module -e 'import { chromium } from "@playwright/test"; process.stdout.write(chromium.executablePath())')" >> "$GITHUB_ENV"
+          echo "DOCUMENTOS_CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          echo "DOCUMENTOS_NODE_BINARY=$(command -v node)" >> "$GITHUB_ENV"
+          echo "DOCUMENTOS_NODE_MODULES_PATH=$GITHUB_WORKSPACE/node_modules" >> "$GITHUB_ENV"
+
+      - name: Verify real PDF renderer before browser flows
+        run: php tests/E2E/support/pdf.php
 
       - name: Verify both Bullet policies end to end
         env:

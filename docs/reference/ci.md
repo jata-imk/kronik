@@ -117,7 +117,14 @@ convertirlo a la zona de la aplicación, o conservar solo el offset de enero,
 alteraría casts de fechas históricas y sus huellas. La fecha de nacimiento de la
 fixture cae en horario de verano histórico para comprobar también ese límite.
 
-Chromium instalado con Playwright se usa también para PDF. Con
+Playwright instala Chromium para la interfaz; PDF usa el Google Chrome del
+runner, resuelto con `command -v google-chrome`, y conserva su sandbox. Antes de
+los recorridos, `php tests/E2E/support/pdf.php` exige `APP_ENV=testing` y renderiza
+contenido sintético sin acceder a datos de dominio; un fallo conserva la causa
+operativa en CI. No se habilita `--no-sandbox` ni se cambia el renderer de QA.
+Los binarios descargados pueden estar restringidos por AppArmor en Ubuntu; ver
+la [referencia de Chromium](https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md).
+Con
 `E2E_BULLET_FIXTURES=true`, el runner aislado ejecuta `bullet-ciclo.spec.js` y
 `productos-bullet.spec.js`. El reloj está exclusivamente en los archivos de
 pruebas, con fecha controlada por escenario y guardas de base/entorno; las
@@ -125,6 +132,9 @@ sesiones del escenario usan la tabla aislada con duración suficiente para sus
 saltos de fecha. No se cambia el reloj de la aplicación desplegada ni se
 desactiva CSRF. La regresión dual existente se ejecuta en otra preparación,
 con su configuración habitual. CI conserva artefactos de navegador siete días.
+El ciclo Bullet consume borradores y no tiene reintento automático: repetirlo
+requiere preparar de nuevo su base aislada. Un fallo conserva su primer punto
+de error, sin intentar editar una versión que el recorrido anterior ya activó.
 
 Guion para despliegue y validación compartida: [Bullet QA](../how-to/qa-bullet.md).
 
