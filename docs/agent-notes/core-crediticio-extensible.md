@@ -1,5 +1,45 @@
 # Core crediticio extensible
 
+## Cierre técnico y retoma — 07/11/2026
+
+Retoma autorizada desde `54d27f4`, rama `feat/bullet-base`, worktree
+`output/bullet-base/worktree`, [PR #73](https://github.com/jata-imk/kronik/pull/73).
+La pausa queda levantada. #74 está consolidada en #73; base funcional del
+barrido conjunto: main `c30c941`. Los cuatro archivos locales de auditoría de
+main conservan sus hashes originales y ese checkout permanece intacto.
+
+[CI de `54d27f4` aprobada](https://github.com/jata-imk/kronik/actions/runs/42429965010),
+comprobada al retomar: frontend/build, backend con 46151 aserciones, concurrencia
+de folios/auditoría y ocho competencias financieras por política en MariaDB,
+renderer PDF real, tres E2E Bullet/Productos y regresión dual. CI conserva
+advertencias de backend; los conteos locales de aprobadas/omitidas corresponden
+a su entorno, no se atribuyen al runner Linux. El código no cambió en la retoma.
+
+Review medium y barrido acumulado finales de `54d27f4` contra `c30c941`, mediante
+`codex review --base c30c941 -c model_reasoning_effort=medium`:
+sin regresiones accionables. El revisor verificó 156 pruebas backend y nueve
+frontend aprobadas; selecciones superpuestas con la suite. La concurrencia y
+E2E se acreditan por la CI citada, no por esa selección. Log local:
+`storage/framework/testing/bullet-ciclo-review-retoma-final.log`.
+
+La documentación conserva los contratos, auditoría, capturas y guía operativa;
+este cierre solo actualiza estado y evidencia. Review medium documental sin
+hallazgos; 268 enlaces locales en 22 documentos sin roturas, con índices y
+cobertura temática verificados. Integración de la entrega en
+[PR #73](https://github.com/jata-imk/kronik/pull/73): su estado, SHA y fecha se
+registran en GitHub y en el [traspaso de Notion](https://app.notion.com/p/40861db7db7f81b2b039d32eabe2daf3).
+Integrar requiere CI aprobada del head documental final y revisión resuelta.
+No confundir esa integración con despliegue ni aceptación QA compartida.
+
+El siguiente paso del usuario tras la integración es desplegar y comprobar
+ambas políticas con el [guion QA](../how-to/qa-bullet.md). Registrar commit,
+entorno/navegador, fecha, políticas, folios sintéticos y resultado en esta nota
+y Notion. Sin despliegue ni aceptación compartida reportados; Bullet integral
+permanece abierto. Definiciones moratorias conservadas; diaria, capitalización
+y reducción de plazo Bullet siguen fuera de alcance, al igual que SIC
+productivo y dinero real.
+
+
 ## Habilitación y validación integral Bullet — 07/11/2026
 
 Entrega en `output/bullet-base/worktree`, rama `feat/bullet-base`,
