@@ -89,3 +89,20 @@ it("impide abrir simulación desde cualquier acceso si la versión tiene problem
     await w.vm.$nextTick();
     expect(w.vm.simulatorVisible).toBe(false);
 });
+
+it("prellena cada alta respetando cero sin reemplazar captura ni el valor del origen", async () => {
+    const draft = { ...version(), estado: "borrador", puede_editar: true, dias_gracia_mora: 7 };
+    const w = render(draft, "edicion");
+    await w.setProps({ nuevoProductoDefaults: { dias_gracia_mora: 0 } });
+    expect(w.vm.form.version.dias_gracia_mora).toBe(7);
+    w.vm.openCreate();
+    expect(w.vm.form.version.dias_gracia_mora).toBe(0);
+    w.vm.form.version.dias_gracia_mora = 5;
+    await w.setProps({ nuevoProductoDefaults: { dias_gracia_mora: 9 } });
+    expect(w.vm.form.version.dias_gracia_mora).toBe(5);
+    w.vm.openCreate();
+    expect(w.vm.form.version.dias_gracia_mora).toBe(9);
+    await w.setProps({ nuevoProductoDefaults: {} });
+    w.vm.openCreate();
+    expect(w.vm.form.version.dias_gracia_mora).toBe(3);
+});

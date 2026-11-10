@@ -2,6 +2,11 @@
 
 ## Estado y contrato
 
+Incremento de días de gracia de Empresa (10/11/2026): conserva `empresa.updated`
+y `producto_crediticio.*`; prellenar no es una acción auditable nueva.
+`ProductoDiasGraciaTest` verifica persistencia única, actor/contexto y preservación
+de condiciones e históricos. El parámetro no se copia como valor al log.
+
 Reconciliación técnica del 05/11/2026, continuidad `80b2f92`, base funcional
 `0707ce9`. Esta es la única matriz de eventos. El inventario parte de los 19
 módulos de `ModulesAndPermissionsSeeder` y añade autenticación, perfil, API y

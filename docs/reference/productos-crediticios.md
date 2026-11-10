@@ -8,6 +8,11 @@ Las periodicidades de Buró de Crédito o Círculo de Crédito son códigos de r
 
 ## Convenciones de cálculo
 
+Los días de gracia de nuevos productos se prellenan desde
+[Empresa](configuracion-empresa.md#días-de-gracia-predeterminados), con 3 días
+cuando no hay valor y respetando cero. El borrador permite cambiarlos; editar,
+versionar o consultar condiciones existentes nunca aplica el default actual.
+
 Métodos, periodicidades, Act/360 y aplicación del prepago proceden del
 [catálogo backend de capacidades](core-crediticio.md#catálogo-de-capacidades).
 El editor conserva sus valores; al desactivar prepago parcial se deshabilitan sus
