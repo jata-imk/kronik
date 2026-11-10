@@ -9,7 +9,12 @@ class Rfc implements ValidationRule
 {
     private const CHARACTER_VALUES = '0123456789ABCDEFGHIJKLMN&OPQRSTUVWXYZ Ñ';
 
-    public function __construct(private readonly ?string $tipoPersona) {}
+    public function __construct(private readonly mixed $tipoPersona, private readonly bool $permitirGenericos = false) {}
+
+    public static function genericos(): array
+    {
+        return ['XAXX010101000', 'XEXX010101000'];
+    }
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
@@ -21,18 +26,20 @@ class Rfc implements ValidationRule
 
         $rfc = mb_strtoupper(trim($value), 'UTF-8');
 
-        if (in_array($rfc, ['XAXX010101000', 'XEXX010101000'], true)) {
-            $fail('Kronik requiere el RFC propio del cliente; no se admiten RFC genéricos.');
-
-            return;
-        }
-        $expectedLength = $this->tipoPersona === 'fisica' ? 13 : 12;
-
         if (! in_array($this->tipoPersona, ['fisica', 'moral'], true)) {
             $fail('Seleccione el tipo de persona antes de capturar el RFC.');
 
             return;
         }
+
+        if (in_array($rfc, self::genericos(), true)) {
+            if (! $this->permitirGenericos) {
+                $fail('Captura un RFC propio; no se admiten RFC genéricos en este formulario.');
+            }
+
+            return;
+        }
+        $expectedLength = $this->tipoPersona === 'fisica' ? 13 : 12;
 
         if (mb_strlen($rfc) !== $expectedLength) {
             $fail("El :attribute de una persona {$this->tipoPersona} debe tener {$expectedLength} caracteres.");

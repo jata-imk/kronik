@@ -6,6 +6,10 @@ status: accepted
 
 # ADR 0004: validacion local reutilizable del RFC
 
+**Sustitución parcial (10/11/2026):** [ADR 0044](adr-0044-rfc-genericos-clientes.md)
+admite genéricos en Clientes. Se conserva la validación estricta de RFC propios
+y de Empresa; los motivos originales siguientes describen la decisión histórica.
+
 ## Contexto
 
 Empresa y clientes capturaban RFC con reglas distintas. Empresa solo verificaba longitud y expresion regular; clientes aceptaban cualquier cadena de hasta 255 caracteres. Esto permitia fechas imposibles, longitudes incompatibles con el tipo de persona y digitos verificadores incorrectos.

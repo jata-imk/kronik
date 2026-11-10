@@ -21,11 +21,12 @@ status: active
 
 ## RFC
 
-- La longitud depende del tipo de persona.
+- La longitud del RFC propio depende del tipo de persona.
 - El RFC se normaliza antes de persistir.
 - Estructura, fecha y digito verificador deben ser validos.
 - La empresa puede conservar un RFC vacio en borrador o suspendida, pero no puede activarse asi.
 - Un cliente nuevo requiere RFC. En una actualizacion parcial se valida siempre que el campo sea enviado.
+- Clientes admite los dos [genéricos explícitos](validacion-rfc.md#genéricos-en-clientes), repetibles para física y moral, con identidad fiscal propia pendiente. Empresa exige RFC propio.
 
 ## Domicilio fiscal de empresa
 

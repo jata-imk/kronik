@@ -145,8 +145,8 @@ un solo código por acción, sin crear catálogos paralelos.
 | `sucursales` | Numeración de sucursal actualizada | `sucursal.folios.updated` | U | Sucursal | Cambio aplicado | Equipo iniciador / sucursal afectada | changed_fields | Q | Implementado; validar entrega en Agent Note | FolioService::configurar | FoliosTest |
 | `sucursales` | Folio asignado a registro histórico | `folio.historical_assigned` | S | Registro con folio | Cambio aplicado | Equipo desconocido / sucursal original | related | Q | Implementado; validar entrega en Agent Note | FolioService::completarHistoricos | FoliosTest |
 | `sucursales` | Sucursal desactivada | `sucursal.deactivated` | U | Sucursal | Cambio aplicado | Equipo iniciador / sucursal afectada | state | Q | Implementado; validar entrega en Agent Note | SucursalController::destroy | Admin/SucursalTest; Admin/ActivityLogTest |
-| `clientes` | Cliente creado | `cliente.created` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteService::store | AuditDomainCoverageTest |
-| `clientes` | Cliente actualizado | `cliente.updated` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteService::update | AuditDomainCoverageTest |
+| `clientes` | Cliente creado | `cliente.created` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteService::store | AuditDomainCoverageTest; Clientes/RfcGenericoTest |
+| `clientes` | Cliente actualizado | `cliente.updated` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteService::update | AuditDomainCoverageTest; Clientes/RfcGenericoTest |
 | `clientes` | Cliente eliminado | `cliente.deleted` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteService::destroy | AuditDomainCoverageTest |
 | `clientes` | Cliente trasladado de sucursal | `cliente.sucursal.transferred` | U | Cliente | Cambio aplicado | Equipo iniciador / sucursal origen | changed_fields, related, state | Q | Implementado; validar entrega en Agent Note | ClienteService::transferir | ConsultaSucursalTest |
 | `clientes` | Perfil KYC actualizado | `cliente.kyc.updated` | U | Cliente | Cambio aplicado | R | changed_fields, related, state, result | Q | Implementado; validar entrega en Agent Note | ClienteExpedienteService::updateProfile | AuditDomainCoverageTest |
@@ -189,6 +189,10 @@ un solo código por acción, sin crear catálogos paralelos.
 
 
 ## Acciones sin evento adicional
+
+RFC genéricos en Clientes (10/11/2026): se conservan `cliente.created` y
+`cliente.updated`; el aviso derivado no es una acción auditable. La regresión
+comprueba alta, corrección, idempotencia y contexto sin RFC/CURP en metadatos.
 
 Bullet mantiene los emisores reales de Productos, Solicitudes, Documentos,
 firmas y Créditos de la matriz anterior. La habilitación del ciclo no añade un

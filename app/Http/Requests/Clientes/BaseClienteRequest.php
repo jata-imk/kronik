@@ -31,7 +31,10 @@ abstract class BaseClienteRequest extends FormRequest
 
     protected function baseRules(): array
     {
-        $tipoPersonaColumn = $this->input('datos_fiscales.tipo_persona') === 'fisica' ? 'fisica' : 'moral';
+        $tipoPersona = $this->has('datos_fiscales.tipo_persona')
+            ? $this->input('datos_fiscales.tipo_persona')
+            : $this->route('cliente')?->datosFiscales?->tipo_persona;
+        $tipoPersonaColumn = $tipoPersona === 'fisica' ? 'fisica' : 'moral';
 
         return [
             // Datos del cliente
@@ -62,7 +65,7 @@ abstract class BaseClienteRequest extends FormRequest
                 ),
             ],
             'datos_fiscales.curp' => ['string', 'max:255'],
-            'datos_fiscales.rfc' => [new Rfc($this->input('datos_fiscales.tipo_persona'))],
+            'datos_fiscales.rfc' => [new Rfc($tipoPersona, permitirGenericos: true)],
             'datos_fiscales.razon_social' => ['nullable', 'string', 'max:255'],
 
             // Direcciones

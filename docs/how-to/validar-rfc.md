@@ -24,7 +24,20 @@ El RFC debe tener 13 caracteres para persona fisica y 12 para persona moral.
 4. Capture el RFC y elija el regimen fiscal.
 5. Guarde el expediente.
 
-Al cambiar el tipo de persona, Kronik limpia un regimen que ya no sea compatible y ajusta la longitud maxima del RFC.
+Al cambiar el tipo de persona en edición, Kronik limpia un regimen que ya no sea
+compatible. El RFC propio debe tener 13 caracteres para física o 12 para moral.
+El control de Clientes admite 13 para poder capturar también los genéricos en moral.
+
+Si aún no cuenta con RFC propio, capture `XAXX010101000` o `XEXX010101000`.
+Ambos pueden repetirse entre clientes y tipos de persona. Se mostrará
+«RFC genérico: identidad fiscal propia pendiente» al capturar, editar o consultar.
+Sustitúyalo por el RFC propio cuando lo tenga; si ya había una evaluación,
+revise los requisitos de la solicitud porque el cambio de identidad exige reevaluación.
+La consulta no modifica los datos ni guarda con Enter.
+
+Empresa no admite estos genéricos. Su aceptación en Clientes no certifica
+identidad fiscal ni aceptación por SIC u otra integración. Los flujos internos/QA
+conservan sus requisitos; SIC productivo permanece cerrado.
 
 ## Interpretar errores
 

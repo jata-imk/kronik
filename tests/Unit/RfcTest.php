@@ -48,5 +48,21 @@ test('requires the person type', function () {
 
 test('rejects generic national and foreign RFCs with a business message', function (string $rfc) {
     expect(rfcErrors($rfc, 'fisica'))
-        ->toContain('Kronik requiere el RFC propio del cliente; no se admiten RFC genéricos.');
+        ->toContain('Captura un RFC propio; no se admiten RFC genéricos en este formulario.');
 })->with(['XAXX010101000', 'XEXX010101000']);
+
+test('solo permite genéricos explícitos al habilitarlos con un tipo válido', function (string $rfc, string $tipo) {
+    $errors = [];
+    (new Rfc($tipo, permitirGenericos: true))->validate('RFC', mb_strtolower(" $rfc "), function ($message) use (&$errors) {
+        $errors[] = $message;
+    });
+    expect($errors)->toBeEmpty();
+})->with(Rfc::genericos())->with(['fisica', 'moral']);
+
+test('la excepción de genéricos no permite omitir o falsear tipo ni inventar otros RFC', function (mixed $tipo, string $rfc) {
+    $errors = [];
+    (new Rfc($tipo, permitirGenericos: true))->validate('RFC', $rfc, function ($message) use (&$errors) {
+        $errors[] = $message;
+    });
+    expect($errors)->not->toBeEmpty();
+})->with([[null, 'XAXX010101000'], [[], 'XEXX010101000'], ['invalido', 'XEXX010101000'], ['moral', 'GALA910418AB8'], ['fisica', 'GALA910418AB9'], ['fisica', 'XAXX010101001']]);

@@ -547,6 +547,19 @@ test('último dictamen prevalece y cambios de cliente o pérdida del archivo blo
     $this->assertDatabaseCount('solicitud_resoluciones', 0);
 });
 
+test('RFC genérico no agrega bloqueos a aprobación QA y corregirlo conserva la revisión original', function (string $rfc) {
+    [$user, $solicitud, $cliente] = prepararSolicitudAprobable($this, prepararCliente: fn ($cliente) => $cliente->datosFiscales()->update(['rfc' => $rfc]));
+    $revision = $solicitud->revisiones()->sole();
+    $snapshot = $revision->snapshot;
+    $hash = $revision->snapshot_hash;
+    expect(app(\App\Services\SolicitudRequisitosService::class)->evaluar($solicitud, $user)['puede_aprobar'])->toBeTrue();
+    $this->patchJson(route('api.clientes.update', $cliente), ['datos_fiscales' => ['rfc' => 'GALA910418AB8']])->assertOk();
+    $this->post(route('solicitudes.aprobar', $solicitud), ['lock_version' => 3, 'motivo' => 'Reevaluación por cambio de identidad fiscal.'])
+        ->assertSessionHasErrors('aprobacion');
+    expect(session('errors')->first('aprobacion'))->toContain('Los datos evaluados del cliente cambiaron');
+    expect($revision->fresh()->snapshot)->toBe($snapshot)->and($revision->fresh()->snapshot_hash)->toBe($hash);
+})->with(\App\Rules\Rfc::genericos());
+
 test('cambiar identidad fiscal invalida revisión y no permite aprobar persona moral', function () {
     [$user, $solicitud, $cliente] = prepararSolicitudAprobable($this);
     $cliente->datosFiscales()->update(['tipo_persona' => 'moral']);

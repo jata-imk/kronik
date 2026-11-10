@@ -65,6 +65,10 @@ Vitest carga `vite.config.js` en modo `test`. En ese modo se omite `laravel-vite
 
 ## Playwright local
 
+La regresión de RFC genéricos corre también en CI con
+`npm run test:e2e -- clientes-rfc-genericos.spec.js --output=test-results-rfc`.
+Su evidencia se conserva aparte de los otros recorridos E2E.
+
 Playwright es exclusivamente local: no debe ejecutarse en GitHub Actions ni en
 la VPS de QA/produccion.
 
