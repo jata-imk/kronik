@@ -247,6 +247,10 @@ el worker revalida estado y fecha bajo bloqueo del producto y versión, y regist
 activación/retiro en la misma transacción. La fecha se interpreta en zona empresarial.
 
 PDF comparte transacción en solicitud/evento, generación/evento y fallo/evento.
+El presupuesto compartido de medición y renderizado conserva esos emisores,
+reintentos y resultados; no introduce otra acción auditable. El preflight PDF
+solo genera bytes sintéticos y no crea documentos de dominio. Evidencia:
+`Documentos/DocumentoRendererIntegrationTest` y `tests/E2E/support/pdf.php`.
 El archivo privado se escribe antes de confirmar el resultado en BD; un fallo no
 se anuncia como generación completada. Se preserva la política de no regenerar
 originales contractuales con huella existente. La eliminación de evidencias de un
