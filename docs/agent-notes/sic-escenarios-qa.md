@@ -4,11 +4,13 @@
 
 - [Tarea Notion](https://app.notion.com/p/41461db7db7f811d9c21ef4ae542d6d1).
 - Rama: feat/sic-escenarios-qa, base origin/main fad6b29.
+- PR: [#75](https://github.com/jata-imk/kronik/pull/75), implementación
+  `374689b339714bb6e82b5accf07a138ba379faa5`.
 - [Contrato](../reference/sic-escenarios-qa.md), [ADR](../explanation/adr-0043-escenarios-sic-qa.md).
 
 ## Estado actual
 
-09/11/2026: implementación local en worktree aislado; checkout principal preservado.
+09/11/2026: implementación publicada en PR #75; checkout principal preservado.
 Catálogo de 84 cuerpos oficiales distintos y simulaciones internas explícitas.
 Predeterminados positivos acordados; las tres colecciones aportadas por el usuario
 se revisaron sin ejecutar sus scripts ni enviar consultas CDC.
@@ -37,5 +39,6 @@ dos variables nuevas desactivadas por defecto. Sin seeders operativos.
 
 ## Siguiente paso
 
-Publicar la PR y registrar su referencia. Integración, despliegue manual
-y aceptación QA pendientes; no se acredita operación productiva.
+Revisar CI de PR #75 antes de integrar. Integración, despliegue manual
+y aceptación QA pendientes; no se acredita operación productiva. El hook de
+publicación repitió 878 pruebas aprobadas, 1 omitida y build sobre 374689b.
