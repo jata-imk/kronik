@@ -2,10 +2,6 @@
 
 ## Estado y contrato
 
-RFC genéricos en Clientes (10/11/2026): se conservan `cliente.created` y
-`cliente.updated`; el aviso derivado no es una acción auditable. La regresión
-comprueba alta, corrección, idempotencia y contexto sin RFC/CURP en metadatos.
-
 Reconciliación técnica del 05/11/2026, continuidad `80b2f92`, base funcional
 `0707ce9`. Esta es la única matriz de eventos. El inventario parte de los 19
 módulos de `ModulesAndPermissionsSeeder` y añade autenticación, perfil, API y
@@ -188,6 +184,10 @@ un solo código por acción, sin crear catálogos paralelos.
 
 
 ## Acciones sin evento adicional
+
+RFC genéricos en Clientes (10/11/2026): se conservan `cliente.created` y
+`cliente.updated`; el aviso derivado no es una acción auditable. La regresión
+comprueba alta, corrección, idempotencia y contexto sin RFC/CURP en metadatos.
 
 Bullet mantiene los emisores reales de Productos, Solicitudes, Documentos,
 firmas y Créditos de la matriz anterior. La habilitación del ciclo no añade un
