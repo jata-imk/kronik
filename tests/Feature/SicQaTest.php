@@ -35,6 +35,40 @@ function sicQaFixture(?Cliente $cliente = null, ?\App\Models\User $actor = null)
     return [$actor, $cliente, ['api' => 'fico_score_v2', 'consentimiento_id' => $c->id, 'idempotency_key' => (string) Str::uuid(), 'confirmacion_qa' => true], $c];
 }
 
+test('SIC QA conserva el RFC genérico y sus requisitos usando transporte simulado', function (string $api, string $rfc) {
+    [$actor, $cliente, $data] = sicQaFixture();
+    $cliente->datosFiscales()->create(['tipo_persona' => 'fisica', 'rfc' => $rfc, 'curp' => 'GODE561231HDFRRN09']);
+    $data['api'] = $api;
+    Http::preventStrayRequests();
+    Http::fake(['*' => Http::response(['score' => ['valor' => 680]])]);
+    $this->actingAs($actor)->post(route('circulo-credito.store', $cliente), $data)->assertSessionHasNoErrors();
+    $query = SicQuery::sole();
+    $hash = $query->identidad_hash;
+    app(SicOperacionService::class)->ejecutar($query->id);
+    Http::assertSentCount(1);
+    Http::assertSent(fn ($request) => ($api === 'rc_fico_score' ? $request->data()['RFC'] : $request->data()['persona']['RFC']) === $rfc);
+    expect($query->fresh()->identidad_hash)->toBe($hash)->and($query->fresh()->estado_operacion)->toBe('completada');
+    expect(\App\Models\Activity::all()->toJson())->not->toContain($rfc);
+})->with(['fico_score_v2', 'fintech', 'rc_fico_score'])->with(\App\Rules\Rfc::genericos());
+
+test('corregir genérico cancela el envío SIC anterior sin reescribir la evidencia', function () {
+    [$actor, $cliente, $data] = sicQaFixture();
+    $cliente->datosFiscales()->create(['tipo_persona' => 'fisica', 'rfc' => 'XAXX010101000', 'curp' => 'GODE561231HDFRRN09']);
+    Http::fake();
+    $this->actingAs($actor)->post(route('circulo-credito.store', $cliente), $data)->assertSessionHasNoErrors();
+    $query = SicQuery::sole();
+    $service = app(SicOperacionService::class);
+    $peticion = $service->leer($query, 'peticion');
+    $originalHash = $query->identidad_hash;
+    $this->patchJson(route('api.clientes.update', $cliente), ['datos_fiscales' => ['rfc' => 'GALA910418AB8']])->assertOk();
+    expect($service->identidadHash($cliente->fresh()))->not->toBe($originalHash);
+    $service->ejecutar($query->id);
+    Http::assertNothingSent();
+    expect($query->fresh()->identidad_hash)->toBe($originalHash)
+        ->and($service->leer($query, 'peticion'))->toBe($peticion)
+        ->and($query->fresh()->estado_operacion)->toBe('cancelada');
+});
+
 test('suspender cancela una consulta preparada antes de llamar al proveedor', function () {
     [$actor, $cliente, $data] = sicQaFixture();
     Http::fake();

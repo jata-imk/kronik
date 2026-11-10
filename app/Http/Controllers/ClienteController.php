@@ -88,6 +88,7 @@ class ClienteController extends Controller implements HasMiddleware
             'paises' => $paises,
             'sexos' => $sexos,
             'tiposPersona' => $tiposPersona,
+            'rfcsGenericosPermitidos' => \App\Rules\Rfc::genericos(),
             'regimenesFiscales' => $regimenesFiscales,
         ]);
     }
@@ -121,6 +122,7 @@ class ClienteController extends Controller implements HasMiddleware
             'paises' => $paises,
             'sexos' => $sexos,
             'tiposPersona' => $tiposPersona,
+            'rfcsGenericosPermitidos' => \App\Rules\Rfc::genericos(),
             'regimenesFiscales' => $regimenesFiscales,
         ]);
     }
@@ -148,6 +150,7 @@ class ClienteController extends Controller implements HasMiddleware
             'paises' => $paises,
             'sexos' => $sexos,
             'tiposPersona' => $tiposPersona,
+            'rfcsGenericosPermitidos' => \App\Rules\Rfc::genericos(),
             'regimenesFiscales' => $regimenesFiscales,
         ]);
     }

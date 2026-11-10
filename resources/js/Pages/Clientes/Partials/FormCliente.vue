@@ -1,7 +1,7 @@
 <script setup>
 import { useForm, usePage } from "@inertiajs/vue3";
 import { useToast } from "primevue/usetoast";
-import { nextTick, reactive, ref, watch } from "vue";
+import { computed, nextTick, reactive, ref, watch } from "vue";
 
 import FormularioDatosFiscales from "@/Components/FormularioDatosFiscales.vue";
 import FormularioDireccion from "@/Components/FormularioDireccion.vue";
@@ -15,7 +15,7 @@ import { formatDateOnly, parseDateOnly } from "@/Utils/date";
 
 const toast = useToast();
 const page = usePage();
-const readOnly = ref(page.props.readOnly || false);
+const readOnly = computed(() => Boolean(page.props.readOnly));
 const cliente = ref(page.props.cliente);
 
 const formDatosFiscales = reactive({
@@ -190,9 +190,11 @@ const initialLoadFormDireccion = ref({
 const initialLoadFormDatosFiscales = ref({
     tiposPersona: page.props.tiposPersona,
     regimenesFiscales: page.props.regimenesFiscales,
+    rfcsGenericosPermitidos: page.props.rfcsGenericosPermitidos,
 });
 
 const onSubmit = () => {
+    if (readOnly.value) return;
     const updating = page.props.action === "clientes.update";
     form.transform((data) => ({
         ...data,

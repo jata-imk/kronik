@@ -40,22 +40,19 @@ test('client creation rejects a fiscal regime incompatible with person type', fu
         ->assertSessionHasErrors('datos_fiscales.regimen_fiscal_id');
 });
 
-test('client creation explains that generic RFCs are not accepted while allowing a foreign CURP', function () {
+test('client creation accepts a foreign generic RFC and preserves the foreign CURP', function () {
     $catalogs = clienteFiscalCatalogs();
     $user = actingAsSuperAdmin();
 
-    $response = $this->actingAs($user)
+    $this->actingAs($user)
         ->from(route('clientes.create'))
         ->post(route('clientes.store'), clientePayload($catalogs, [
             'curp' => 'EXTRANJERO-SIN-CURP',
             'rfc' => 'XEXX010101000',
         ]))
-        ->assertRedirect(route('clientes.create'))
-        ->assertSessionHasErrors('datos_fiscales.rfc')
-        ->assertSessionDoesntHaveErrors('datos_fiscales.curp');
-
-    expect($response->getSession()->get('errors')->first('datos_fiscales.rfc'))
-        ->toBe('Kronik requiere el RFC propio del cliente; no se admiten RFC genéricos.');
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+    $this->assertDatabaseHas('clientes_datos_fiscales', ['rfc' => 'XEXX010101000', 'curp' => 'EXTRANJERO-SIN-CURP']);
 });
 
 test('client creation rejects a postal code that does not match the locality', function () {

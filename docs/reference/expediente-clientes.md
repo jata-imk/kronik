@@ -6,6 +6,10 @@
 2. El sistema redirige a `clientes/{cliente}/expediente`.
 3. Completar perfil economico, documentos, referencias, vinculados, garantias y consentimiento SIC por secciones independientes.
 
+El alta admite [RFC genéricos](validacion-rfc.md#genéricos-en-clientes) repetibles
+con aviso de identidad fiscal propia pendiente, para física y moral. Esto no
+amplía los tipos de persona que pueden aprobarse ni habilita integraciones.
+
 ## Perfil economico
 
 - `ocupacion`

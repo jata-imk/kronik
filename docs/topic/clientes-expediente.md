@@ -25,5 +25,8 @@ consultas SIC se encuentran en el tema relacionado.
 
 ## Seguimiento y temas relacionados
 
+- [ADR 0044: RFC genéricos en Clientes](../explanation/adr-0044-rfc-genericos-clientes.md).
+- [Entrega y evidencia de RFC genéricos](../agent-notes/clientes-rfc-genericos.md).
+
 - [Backlog 02: clientes y expediente](../todos/02-clientes-expediente-kyc.md).
 - [SIC y consentimiento](sic-circulo-credito.md), [documentos](documentos-contratos-firmas.md) y [cumplimiento](fiscalidad-cumplimiento.md).
