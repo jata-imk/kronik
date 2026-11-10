@@ -2,10 +2,6 @@
 
 ## Recorridos compartidos E2E
 
-La regresión de días de gracia corre en CI con
-`npm run test:e2e -- dias-gracia.spec.js --output=test-results-gracia`.
-Su evidencia se conserva aparte de los siguientes escenarios Bullet y dual.
-
 El helper de consola responde localmente a la geolocalización IP con México;
 los recorridos de captura no dependen de disponibilidad o tiempos de ese proveedor.
 
@@ -32,6 +28,10 @@ El proyecto debe tener CI real en GitHub Actions ademas de hooks locales.
 `.githooks` corre en la maquina local antes de commit o push. CI corre en GitHub al hacer push o actualizar una PR, en un entorno limpio y reproducible.
 
 ## Workflow Actual
+
+La regresión de días de gracia corre en CI con
+`npm run test:e2e -- dias-gracia.spec.js --output=test-results-gracia`.
+Su evidencia se conserva aparte de los siguientes escenarios Bullet y dual.
 
 `.github/workflows/ci.yml` ejecuta:
 
