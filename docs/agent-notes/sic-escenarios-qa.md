@@ -10,7 +10,13 @@
 
 ## Estado actual
 
-09/11/2026: implementación publicada en PR #75; checkout principal preservado.
+09/11/2026: integrada en main mediante PR #75, merge
+`67c2f8462fcfaa51df39f097e874ce68a4dd5d91`, con CI aprobada en el intento 2.
+Checkout principal sincronizado; cambios documentales locales restaurados.
+El usuario confirma funcionamiento en su instalación QA el 09/11/2026:
+la captura de consulta #17 muestra Reporte + FICO mediante escenario CDC sandbox
+registrado como exitoso. Despliegue confirmado por ese uso; sin inferir validación
+de todos los escenarios o servicios.
 Catálogo de 84 cuerpos oficiales distintos y simulaciones internas explícitas.
 Predeterminados positivos acordados; las tres colecciones aportadas por el usuario
 se revisaron sin ejecutar sus scripts ni enviar consultas CDC.
@@ -39,6 +45,20 @@ dos variables nuevas desactivadas por defecto. Sin seeders operativos.
 
 ## Siguiente paso
 
-Revisar CI de PR #75 antes de integrar. Integración, despliegue manual
-y aceptación QA pendientes; no se acredita operación productiva. El hook de
+CI: [ejecución 42755120709, intento 2](https://github.com/jata-imk/kronik/actions/runs/42755120709/attempts/2)
+aprobada, incluidas concurrencia MariaDB, renderizador PDF y E2E Bullet/originación.
+El primer intento excedió los 10 segundos del chequeo PDF; la repetición pasó
+sin cambios de código. Integración completada. Despliegue manual y aceptación
+QA integral pendiente; despliegue y funcionamiento del escenario de Reporte + FICO
+confirmados por el usuario. No se acredita operación productiva. El hook de
 publicación repitió 878 pruebas aprobadas, 1 omitida y build sobre 374689b.
+
+## Ajuste de presentación posterior al QA
+
+Rama `fix/sic-presentacion-actividad`, base main `67c2f84`.
+El enlace de cada fila muestra «Ver» sin saltos, con nombre accesible que conserva
+el número de consulta. Actividad muestra el nombre del usuario; los pasos
+automáticos dicen «Sistema · solicitado por …», sin confundir iniciador y ejecutor.
+Los eventos persistidos conservan sus IDs y estados. Solo se expone el nombre,
+sin datos de cuenta. Sin nuevas acciones auditables: se mantiene la lectura
+auditada existente y se actualiza su presentación.

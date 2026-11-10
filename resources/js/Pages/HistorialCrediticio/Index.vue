@@ -70,7 +70,7 @@ function buscar(page = 1) {
                 <DataTable :value="consultas.data" :loading="loading" data-key="id" striped-rows scrollable>
                     <template #empty>No hay consultas con estos filtros. Revisa el expediente del cliente para preparar su autorización.</template>
                     <Column field="id" header="Consulta" />
-                    <Column header="Resultado"><template #body="{ data }"><Link :href="route('consultas-sic.show', data.id)" class="k-action-link">Ver consulta #{{ data.id }}</Link></template></Column>
+                    <Column header="Resultado"><template #body="{ data }"><Link :href="route('consultas-sic.show', data.id)" :aria-label="`Ver consulta #${data.id}`" class="k-action-link whitespace-nowrap">Ver</Link></template></Column>
                     <Column header="Cliente">
                         <template #body="{ data }"><Link :href="route('clientes.historial-crediticio.show', data.cliente_id)" class="text-primary underline">{{ nombre(data.cliente) }}</Link></template>
                     </Column>

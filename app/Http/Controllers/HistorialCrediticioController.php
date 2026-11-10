@@ -101,7 +101,12 @@ class HistorialCrediticioController extends Controller
                 'cliente' => $consulta->cliente->only(['id', 'primer_nombre', 'apellido_paterno']), 'servicio' => $consulta->api?->nombre],
             'escenarioQa' => $consulta->escenario_clave ? array_intersect_key($service->leer($consulta, 'escenario') ?? [], array_flip(['clave', 'nombre', 'version', 'procedencia'])) : null,
             'resultado' => $resultado,
-            'eventos' => \App\Models\SicEvento::where('sic_query_id', $consulta->id)->orderBy('id')->get(['id', 'estado', 'actor_id', 'created_at']),
+            'eventos' => \App\Models\SicEvento::where('sic_query_id', $consulta->id)->with('actor:id,name')->orderBy('id')
+                ->get(['id', 'estado', 'actor_id', 'created_at'])->map(fn ($evento) => [
+                    ...$evento->only(['id', 'estado', 'created_at']),
+                    'actor' => $evento->actor?->only(['name']),
+                    'automatico' => in_array($evento->estado, ['enviando', 'completada', 'error', 'cancelada', 'incierta', 'respuesta_tardia'], true),
+                ]),
         ])->toResponse(request())->header('Cache-Control', 'private, no-store');
     }
 

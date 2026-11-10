@@ -22,6 +22,7 @@ test("SIC displays all three services with provenance and report charts", async 
         await expect(page).toHaveURL(/\/consultas-sic\/\d+$/);
         await expect(page.getByText("680", { exact: true })).toBeVisible();
         await expect(page.getByText("Escenario sintético QA:", { exact: false })).toBeVisible();
+        await expect(page.getByText("Sistema · solicitado por", { exact: false }).first()).toBeVisible();
         if (service === "Reporte de Crédito + FICO") {
             await expect(page.getByRole("heading", { name: "Saldos reportados · MXN", exact: true })).toBeVisible();
             await expect(page.locator("canvas")).toHaveCount(5);
@@ -42,5 +43,10 @@ test("SIC displays all three services with provenance and report charts", async 
     await expect(page).toHaveURL(/\/consultas-sic\/\d+$/);
     await expect(page.getByText("Simulación interna, sin petición a CDC.", { exact: false })).toBeVisible();
     await expect(page.getByText("No se encontró a la persona del escenario (404.1).", { exact: true })).toBeVisible();
+    await page.goto("/clientes/historial-crediticio");
+    const ver = page.getByRole("link", { name: /^Ver consulta #/ }).first();
+    await expect(ver).toHaveText("Ver");
+    await expect(ver).toHaveCSS("white-space", "nowrap");
+    await page.screenshot({ path: test.info().outputPath("sic-listado-compacto.png"), fullPage: true });
     assertConsole();
 });

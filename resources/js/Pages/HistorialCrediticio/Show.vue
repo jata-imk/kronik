@@ -30,6 +30,9 @@ const estado = (key) =>
         error: "Error",
     })[key] ?? "Sin estado acreditado";
 const fecha = (v) => (v ? new Date(v).toLocaleString("es-MX") : "Sin fecha");
+const responsable = (evento) => evento.automatico
+    ? (evento.actor?.name ? `Sistema · solicitado por ${evento.actor.name}` : "Sistema")
+    : (evento.actor?.name ?? "Usuario no disponible");
 const labels = {
     creditos: "Cuentas de crédito",
     consultas: "Consultas reportadas",
@@ -320,7 +323,7 @@ onUnmounted(() => clearInterval(timer));
                             :key="e.id"
                             class="flex flex-wrap justify-between gap-2 text-sm"
                         >
-                            <span>{{ estado(e.estado) }} · actor #{{ e.actor_id }}</span
+                            <span>{{ estado(e.estado) }} · {{ responsable(e) }}</span
                             ><span class="text-muted-color">{{ fecha(e.created_at) }}</span>
                         </li>
                     </ol>
