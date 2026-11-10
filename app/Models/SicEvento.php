@@ -10,4 +10,9 @@ class SicEvento extends Model
     use ConservaEvidenciaSic;
 
     protected $guarded = [];
+
+    public function actor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'actor_id');
+    }
 }

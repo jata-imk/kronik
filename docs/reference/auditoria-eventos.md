@@ -266,4 +266,9 @@ por sí sola conformidad legal.
 
 ## Escenarios SIC QA
 
+La presentación de actividad muestra nombres y distingue ejecución automática del
+usuario iniciador. No modifica eventos persistidos ni agrega una acción de negocio;
+se conserva `SicEvidenceViewed` al leer el detalle. Regresión de exposición mínima
+(solo nombre) en `SicActividadPresentacionTest`.
+
 La modalidad por escenario conserva los emisores y eventos SIC de la matriz. `provider` distingue `cdc_sandbox` y `simulacion_interna`; el intento referenciado conserva escenario y evidencia cifrada. No se agrega un evento por elegir un control del formulario ni se duplican finalizaciones. Actor/iniciador y contexto originales siguen vigentes. Evidencia: SicEscenariosQaTest y SicQaTest. Las simulaciones internas no representan comunicaciones con CDC.

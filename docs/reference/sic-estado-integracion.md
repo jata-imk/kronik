@@ -81,4 +81,8 @@ regresión local y pendientes, sin acreditar integración ni despliegue.
 
 ## Modalidad de escenarios
 
+El listado ofrece «Ver» en cada fila y conserva el número de consulta en su nombre
+accesible. La actividad muestra nombres y distingue los pasos automáticos del
+sistema de la persona que solicitó la consulta; los IDs originales se conservan.
+
 Con la habilitación explícita, la petición usa el caso publicado elegido por intento. El expediente original se conserva; el resultado pertenece al escenario sintético. Véase [contrato de escenarios QA](sic-escenarios-qa.md), que amplía la modalidad anterior de envío con datos del cliente.
