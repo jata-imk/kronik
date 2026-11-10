@@ -2,6 +2,10 @@
 
 ## Recorridos compartidos E2E
 
+El preflight PDF verifica medición y generación con encabezado/pie reales. Ambas
+fases comparten el presupuesto configurado del renderer (hasta 50 segundos en
+total, 35 por subproceso), conservando el job de 55 segundos y su persistencia.
+
 El helper de consola responde localmente a la geolocalización IP con México;
 los recorridos de captura no dependen de disponibilidad o tiempos de ese proveedor.
 
