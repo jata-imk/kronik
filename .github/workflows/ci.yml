@@ -143,6 +143,9 @@ jobs:
           E2E_ORIGINACION_DUAL: "true"
         run: npm run test:e2e -- solicitudes-dual.spec.js
 
+      - name: Verify client generic RFC capture end to end
+        run: npm run test:e2e -- clientes-rfc-genericos.spec.js --output=test-results-rfc
+
       - name: Upload browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -151,4 +154,5 @@ jobs:
           path: |
             test-results/
             playwright-report/
+            test-results-rfc/
           retention-days: 7

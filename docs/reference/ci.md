@@ -10,6 +10,8 @@ recorrido que añade una política debe abrir explícitamente **Crear política*
 **Nueva versión de política** y comprobar el número resultante desde la versión
 vigente, sin asumir que es la primera. Los filtros duplicados por la disposición
 responsive se localizan por su rol y visibilidad.
+En móvil, Sucursales y Clientes muestran tarjetas: se comprueban su búsqueda
+y acceso de consulta, conservando la comprobación de tablas y filtros en escritorio.
 
 Los recorridos largos de documentos e integrantes tienen un presupuesto total
 de 180 segundos; la solicitud que captura, configura política y registra dos
@@ -51,6 +53,10 @@ El build frontend corre antes de los tests porque las pruebas HTTP que renderiza
 Vitest carga `vite.config.js` en modo `test`. En ese modo se omite `laravel-vite-plugin` para que las pruebas unitarias no intenten iniciar ni validar el servidor HMR dentro de CI.
 
 ## Playwright local
+
+La regresión de RFC genéricos corre también en CI con
+`npm run test:e2e -- clientes-rfc-genericos.spec.js --output=test-results-rfc`.
+Su evidencia se conserva aparte de los otros recorridos E2E.
 
 Playwright es exclusivamente local: no debe ejecutarse en GitHub Actions ni en
 la VPS de QA/produccion.

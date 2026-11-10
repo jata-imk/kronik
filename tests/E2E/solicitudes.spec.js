@@ -3,6 +3,7 @@ import { failOnConsoleErrors, login } from "./support/auth.js";
 
 test("crea, reanuda y envía una solicitud sin aprobar ni consultar SIC", async ({ page }, testInfo) => {
     test.setTimeout(240_000);
+    page.setDefaultTimeout(15_000);
     await login(page);
     const assertNoConsoleErrors = await failOnConsoleErrors(page);
     await page.goto("/solicitudes/create");
@@ -53,7 +54,7 @@ test("crea, reanuda y envía una solicitud sin aprobar ni consultar SIC", async 
     await page.getByLabel("Ine", { exact: true }).check();
     await page.getByLabel("Criterio de capacidad de pago para evaluación manual", { exact: true }).fill("Verificar ingresos y egresos documentados bajo metodología de prueba E2E.");
     await page.getByLabel("Referencia de validación del operador", { exact: true }).fill("Validación sintética E2E; no configura una instalación productiva.");
-    await page.getByLabel("Confirmo esta nueva versión y su modalidad de aprobación.", { exact: true }).check();
+    await page.locator("#pol-confirmacion").check();
     await page.getByRole("button", { name: "Guardar nueva versión de política", exact: true }).click();
     await expect(page.getByText(`Política actual: versión ${previousPolicy + 1}.`, { exact: true })).toBeVisible();
     await page.evaluate(() => window.scrollTo(0, 0));

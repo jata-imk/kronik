@@ -24,9 +24,9 @@ para pruebas aisladas, nunca credenciales ni la base de desarrollo.
 - Componentes nuevos: 7 pruebas aprobadas.
 - Suite backend: 913 aprobadas / 46741 aserciones / 1 omitida (SQLite en memoria).
 - Build aprobado; frontend: 158 aprobadas en 60 archivos.
-- E2E en verificación; la captura moral repetida/corrección/consulta móvil pasó
-  inicialmente. Se fijó la geolocalización IP del teléfono en el harness para
-  eliminar dependencia de un proveedor externo; revalidación en curso.
+- E2E focalizado final: 2 aprobadas (física y moral, alta repetida, corrección,
+  consulta móvil). Geolocalización IP del teléfono simulada en el harness,
+  sin dependencia de disponibilidad o tiempos del proveedor. General en curso.
 - Revisión medium inicial sobre `fcedf23`: sin hallazgos accionables. Revisión
   final y barrido acumulado pendientes antes de integrar.
 - 132 enlaces locales revisados sin rotos.

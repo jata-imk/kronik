@@ -4,6 +4,7 @@ import { failOnConsoleErrors, login } from "./support/auth.js";
 for (const [tipo, generic, own] of [["Fisica", "XAXX010101000", "GALA910418AB8"], ["Moral", "XEXX010101000", "KDE260101AB1"]]) {
     test(`${tipo}: alta repetida, corrección y consulta del RFC genérico`, async ({ page }, testInfo) => {
         test.setTimeout(240_000);
+        page.setDefaultTimeout(15_000);
         const assertConsole = await failOnConsoleErrors(page);
         await page.route("https://tile.openstreetmap.org/**", route => route.fulfill({ contentType: "image/png", body: Buffer.from(
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64",
