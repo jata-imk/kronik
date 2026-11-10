@@ -30,6 +30,11 @@ function aprobar() {
     <section v-if="estado && solicitud.estado === 'en_revision'" class="space-y-3 rounded border border-surface-200 p-4 dark:border-surface-700">
         <div class="flex flex-wrap items-center justify-between gap-3"><h2 class="text-lg font-semibold"><i class="pi pi-list-check mr-2 text-primary" aria-hidden="true" />Requisitos para aprobación</h2><span class="rounded-full bg-surface-100 px-3 py-1 text-sm dark:bg-surface-800">{{ pendientes ? `${pendientes} pendientes` : 'Requisitos completos' }}</span></div>
         <p>Se verifican nuevamente al confirmar. Un requisito cumplido no equivale a una aprobación ni a un desembolso.</p>
+        <Message v-if="estado.evidencia?.sic?.uso === 'qa'" severity="warn" :closable="false">
+            SIC sintético para aprobación QA · {{ estado.evidencia.sic.escenario }}.
+            {{ estado.evidencia.sic.procedencia === 'simulacion_interna' ? 'Simulación interna.' : 'Escenario CDC sandbox.' }}
+            El resultado corresponde al escenario y no describe al cliente.
+        </Message>
         <p v-if="estado.politica">Política {{ estado.politica.numero }} · Modalidad {{ estado.politica.condiciones.modalidad }}.</p>
         <p v-if="estado.politica" class="whitespace-pre-wrap">Capacidad de pago: {{ estado.politica.condiciones.criterio_capacidad }}</p>
         <details class="rounded-xl bg-primary-50 p-4 dark:bg-primary-950/30"><summary class="cursor-pointer font-medium">¿Por qué un requisito cumplido vuelve a pendiente?</summary><p class="mt-2">Los dictámenes evalúan una versión concreta del expediente. Cargar, validar o sustituir documentos cambia esa versión y exige renovar Evaluación y PLD. Por eso conviene completar y validar documentos antes de dictaminar.</p><p class="mt-2">Cambiar identidad, domicilio o política exige devolver y reenviar la solicitud; después se registran nuevos dictámenes. Estas comprobaciones no son un score ni una decisión automática.</p></details>

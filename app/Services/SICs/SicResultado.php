@@ -5,6 +5,28 @@ namespace App\Services\SICs;
 /** Provider values are displayed without invented ranges or risk thresholds. */
 final class SicResultado
 {
+    public function interpretar(int $status, mixed $body): array
+    {
+        $base = ['estado' => 'error', 'scores' => [], 'razones' => [], 'secciones' => [], 'folio' => null];
+        if ($status === 204) {
+            return [...$base, 'estado' => 'sin_score'];
+        }
+        if ($status >= 200 && $status < 300 && is_array($body)) {
+            return $this->normalizar($body);
+        }
+        $codes = is_array($body) ? array_column($body['errores'] ?? [], 'codigo') : [];
+
+        return [...$base, 'categoria_error' => match (true) {
+            $status === 404 && in_array('404.1', $codes, true) => 'persona_no_encontrada',
+            $status === 400 || $status === 422 => 'validacion',
+            $status === 401 => 'autenticacion',
+            $status === 403 => 'permisos',
+            $status === 429 => 'limite',
+            $status >= 500 => 'proveedor',
+            default => 'desconocido',
+        }];
+    }
+
     public function historico(\App\Models\SicQuery $query): ?array
     {
         $body = app(SicOperacionService::class)->leer($query, 'historico') ?? $query->response_data;

@@ -36,3 +36,5 @@
 - [Contexto de sucursal y consultas](contexto-sucursal-consultas.md).
 
 - [Consulta, edición e históricos](consulta-edicion-historicos.md).
+
+- [Escenarios SIC QA](sic-escenarios-qa.md).

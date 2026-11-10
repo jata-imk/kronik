@@ -25,6 +25,7 @@ export function e2eEnvironment() {
         ORIGINACION_PAGOS_QA_HABILITADOS: cycle ? "true" : "false",
         ORIGINACION_ANTICIPOS_QA_HABILITADOS: cycle ? "true" : "false",
         E2E_SIC_FIXTURES: process.env.E2E_SIC_FIXTURES === "true" ? "true" : "false",
+        SIC_QA_ESCENARIOS_HABILITADOS: process.env.E2E_SIC_FIXTURES === "true" ? "true" : "false",
         SIC_QA_HABILITADO: process.env.E2E_SIC_FIXTURES === "true" ? "true" : "false",
         SIC_CA_BUNDLE: "",
         CIRCULO_CREDITO_HOST: "https://services.circulodecredito.com.mx",

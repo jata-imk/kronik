@@ -12,6 +12,12 @@
    scheduler activos. Asignar permisos a operadores: la migración no concede
    conciliación automáticamente a todos los roles.
 
+## Modalidad por escenarios
+
+Para usar cualquier cliente de prueba autorizado, habilitar `SIC_QA_ESCENARIOS_HABILITADOS=true`, reconstruir configuración y reiniciar workers. Elegir servicio y escenario; el positivo viene preseleccionado. Los casos internos se identifican y no consultan CDC. Para acreditar el recorrido QA se requiere además `SIC_QA_APROBACION_SINTETICA_HABILITADA=true`. Véase [contrato y catálogo](../reference/sic-escenarios-qa.md).
+
+La guía siguiente describe la modalidad anterior con datos del cliente, aplicable cuando escenarios está desactivado.
+
 ## Consultar y revisar
 
 1. Cliente sintético de la sucursal actual con nombre, nacimiento y domicilio

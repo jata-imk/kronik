@@ -63,3 +63,5 @@
 - [ADR 0037: cobertura técnica de auditoría](adr-0037-cobertura-tecnica-auditoria.md).
 
 - [ADR 0039: condiciones Bullet y habilitación por capacidad](adr-0039-condiciones-bullet-y-habilitacion.md).
+
+- [ADR 0043: escenarios SIC QA](adr-0043-escenarios-sic-qa.md).

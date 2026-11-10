@@ -24,6 +24,8 @@ class CirculoCreditoController extends Controller
             'cliente' => $selected?->only(['id', 'primer_nombre', 'apellido_paterno', 'apellido_materno']),
             'motivoNoDisponible' => ConsultaSicNoDisponible::MENSAJE,
             'habilitado' => config('sic.qa_habilitado') === true && config('sic.sandbox') === true,
+            'escenariosQa' => config('sic.escenarios_qa_habilitados') === true
+                ? collect(array_keys(config('sic.servicios')))->mapWithKeys(fn ($api) => [$api => app(\App\Services\SICs\SicEscenariosQa::class)->opciones($api)]) : [],
             'servicios' => collect(config('sic.servicios'))->map(fn ($v, $key) => ['clave' => $key, 'nombre' => $v['nombre']])->values(),
             'consentimientos' => $selected?->consentimientosSic()->whereNull('revocado_en')->get(['id', 'otorgado_en', 'vence_en']) ?? [],
             'revisiones' => $selected ? \App\Models\SolicitudRevision::whereIn('solicitud_id', \App\Models\Solicitud::where('cliente_id', $selected->id)->select('id'))

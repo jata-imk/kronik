@@ -263,3 +263,7 @@ rechazos y rollback; añadir reintento/concurrencia cuando corresponda. Los cál
 puros del core conservan sus eventos de producto/crédito existentes y no generan
 actividad por cada estrategia o proyección. La trazabilidad técnica no acredita
 por sí sola conformidad legal.
+
+## Escenarios SIC QA
+
+La modalidad por escenario conserva los emisores y eventos SIC de la matriz. `provider` distingue `cdc_sandbox` y `simulacion_interna`; el intento referenciado conserva escenario y evidencia cifrada. No se agrega un evento por elegir un control del formulario ni se duplican finalizaciones. Actor/iniciador y contexto originales siguen vigentes. Evidencia: SicEscenariosQaTest y SicQaTest. Las simulaciones internas no representan comunicaciones con CDC.
