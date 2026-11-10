@@ -48,9 +48,9 @@ dos variables nuevas desactivadas por defecto. Sin seeders operativos.
 CI: [ejecución 42755120709, intento 2](https://github.com/jata-imk/kronik/actions/runs/42755120709/attempts/2)
 aprobada, incluidas concurrencia MariaDB, renderizador PDF y E2E Bullet/originación.
 El primer intento excedió los 10 segundos del chequeo PDF; la repetición pasó
-sin cambios de código. Integración completada. Despliegue manual y aceptación
-QA integral pendiente; despliegue y funcionamiento del escenario de Reporte + FICO
-confirmados por el usuario. No se acredita operación productiva. El hook de
+sin cambios de código. Integración completada. Despliegue y funcionamiento del
+escenario de Reporte + FICO confirmados por el usuario; resta aceptación QA
+integral. No se acredita operación productiva. El hook de
 publicación repitió 878 pruebas aprobadas, 1 omitida y build sobre 374689b.
 
 ## Ajuste de presentación posterior al QA
@@ -62,3 +62,12 @@ automáticos dicen «Sistema · solicitado por …», sin confundir iniciador y 
 Los eventos persistidos conservan sus IDs y estados. Solo se expone el nombre,
 sin datos de cuenta. Sin nuevas acciones auditables: se mantiene la lectura
 auditada existente y se actualiza su presentación.
+
+Validación: 61 pruebas SIC aprobadas (389 aserciones), prueba del componente
+aprobada, build y Pint aprobados. E2E SIC aprobado con datos/BD aislados:
+enlace «Ver» sin saltos, nombres de actividad, tres servicios y reporte móvil.
+Review medium de 33632f6 contra main 67c2f84 sin hallazgos accionables;
+sesión `01a1c3c4-0a6c-7131-80ee-6207818c13d9`. Barrido conjunto con PR #75
+sobre la base funcional fad6b29: se conserva el contrato de consulta y auditoría.
+[Listado compacto](../assets/sic-listado-compacto.png) y
+[actividad móvil](../assets/sic-actividad-nombres-mobile.png) con datos E2E sintéticos.
