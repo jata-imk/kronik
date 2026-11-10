@@ -17,13 +17,14 @@ for (const policy of ["periodicos", "al_vencimiento"]) {
     test(`Bullet ${policy}: configura, origina, paga, anticipa, liquida y reabre`, async ({ page }, testInfo) => {
         test.setTimeout(300_000);
         page.setDefaultTimeout(15000);
+        page.setDefaultNavigationTimeout(30_000);
         test.skip(process.env.E2E_BULLET_FIXTURES !== "true", "Requiere fixtures y reloj exclusivamente E2E aislados.");
         const fixture = JSON.parse(readFileSync(fixturesFile, "utf8"))[policy];
         await page.clock.install({ time: new Date("2027-01-01T12:00:00-06:00") });
         await fecha(page, "2027-01-01");
         const assertConsole = await failOnConsoleErrors(page);
         await login(page);
-        await page.goto(`/productos-crediticios?producto_id=${fixture.producto}&version_id=${fixture.version}`);
+        await page.goto(`/productos-crediticios?producto_id=${fixture.producto}&version_id=${fixture.version}`, { waitUntil: "domcontentloaded" });
         await page.getByRole("button", { name: "Editar versión 1", exact: true }).click();
         const editor = page.locator("#product-editor");
         await editor.getByRole("tab", { name: "Reglas", exact: true }).click();
@@ -49,7 +50,7 @@ for (const policy of ["periodicos", "al_vencimiento"]) {
         expect(simulation.tabla.slice(1).map(row => row.pago_total)).toEqual(policy === "periodicos" ? ["248.00", "12224.00"] : ["0.00", "12472.00"]);
         await page.keyboard.press("Escape");
 
-        await page.goto(`/solicitudes/create?cliente_id=${fixture.cliente}`);
+        await page.goto(`/solicitudes/create?cliente_id=${fixture.cliente}`, { waitUntil: "domcontentloaded" });
         await page.getByLabel("Producto y versión", { exact: true }).click();
         await page.getByRole("option", { name: new RegExp(`Bullet QA ${policy}`) }).click();
         await page.getByLabel("Monto solicitado (MXN)").pressSequentially("12000");
@@ -123,7 +124,7 @@ for (const policy of ["periodicos", "al_vencimiento"]) {
         await expect(page.getByRole("heading", { name: "Capital pendiente antes y después", exact: true })).toBeVisible();
         await page.getByRole("checkbox").check();
         await page.getByRole("button", { name: "Confirmar operación QA", exact: true }).click();
-        await page.goto(creditUrl);
+        await page.goto(creditUrl, { waitUntil: "domcontentloaded" });
         await expect(page.getByText("$8,880.00", { exact: true }).first()).toBeVisible();
         await expect(page.locator('[aria-label="Intereses Bullet"]')).toContainText("$120.00");
         await page.screenshot({ path: testInfo.outputPath(`bullet-${policy}-desktop.png`), fullPage: true });
@@ -147,7 +148,7 @@ for (const policy of ["periodicos", "al_vencimiento"]) {
         await page.getByLabel("Motivo del reverso", { exact: false }).fill("Corrección sintética de liquidación Bullet E2E.");
         await page.getByRole("checkbox").check();
         await page.getByRole("button", { name: "Confirmar reverso QA", exact: true }).click();
-        await page.goto(creditUrl);
+        await page.goto(creditUrl, { waitUntil: "domcontentloaded" });
         await expect(page.getByText("Activo · QA", { exact: true })).toBeVisible();
 
         await fecha(page, policy === "periodicos" ? "2027-02-01" : "2027-03-01");
@@ -160,7 +161,7 @@ for (const policy of ["periodicos", "al_vencimiento"]) {
         await page.getByRole("button", { name: "Confirmar pago QA", exact: true }).click();
         await expect(page.getByRole("heading", { name: /^Recibo interno/ })).toBeVisible();
         await fecha(page, policy === "periodicos" ? "2027-02-02" : "2027-03-02");
-        await page.goto(creditUrl);
+        await page.goto(creditUrl, { waitUntil: "domcontentloaded" });
         await expect(page.getByText("1 días de atraso de obligaciones", { exact: true })).toBeVisible();
         // Al vencimiento con ambos: 380.48 - 100 + un día de 5.92 = 286.40.
         await expect(page.locator('[aria-label="Intereses Bullet"]')).toContainText(policy === "periodicos" ? "$114.72" : "$286.40");

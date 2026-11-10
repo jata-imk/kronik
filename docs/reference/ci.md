@@ -15,7 +15,10 @@ y acceso de consulta, conservando la comprobación de tablas y filtros en escrit
 
 Los recorridos largos de documentos e integrantes tienen un presupuesto total
 de 180 segundos; la solicitud que captura, configura política y registra dos
-revisiones tiene 240. No amplían los plazos de cada aserción ni omiten pasos.
+revisiones tiene 240. Las aserciones generales conservan 15 segundos; el inicio
+de sesión permite 30 para recibir el contexto y Bullet separa la navegación
+(30 segundos, DOM listo) de las acciones (15). No se omiten pasos ni se espera
+la descarga de recursos opcionales para comprobar los controles de cada página.
 Una espera sobre un control deshabilitado se corrige siguiendo el modo de la UI,
 sin convertir consulta en edición dentro de la aplicación.
 

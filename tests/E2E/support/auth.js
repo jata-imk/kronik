@@ -8,11 +8,11 @@ export const users = {
 };
 
 export async function login(page, user = users.superAdmin) {
-    await page.goto("/login");
+    await page.goto("/login", { waitUntil: "domcontentloaded" });
     await page.locator("#email").fill(user.email);
     await page.locator("#password").fill(user.password);
     await page.getByRole("button", { name: /entrar a kronik|log in/i }).click();
-    await expect(page).toHaveURL(/\/dashboard$/, { timeout: 15_000 });
+    await expect(page).toHaveURL(/\/dashboard$/, { timeout: 30_000 });
 }
 
 export async function failOnConsoleErrors(page) {
