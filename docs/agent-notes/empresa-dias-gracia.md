@@ -9,7 +9,9 @@
 
 ## Estado actual — 2026-11-10
 
-Implementado y publicado en PR; integración, despliegue y QA del usuario pendientes.
+Integrado en `main` el 2026-11-10 mediante PR #77, commit `7852dc3`, por
+autorización del usuario. PR #78 se integró después en `2c092da`; ambas entregas
+conviven en esa base. Despliegue y QA del usuario pendientes.
 Empresa prellena nuevas capturas, respeta cero y usa 3 al faltar el valor.
 Los productos existentes conservan condiciones. Sin migraciones, seeders ni variables nuevas.
 Se conservan los eventos actuales; el prellenado no registra actividad.
@@ -39,15 +41,21 @@ Se conservan los eventos actuales; el prellenado no registra actividad.
   Logs `gracia-review-publicado.log` y `combinada-review-medium.log`.
 - Combinación local `qa/dias-gracia-rfc` sin conflictos: 78 pruebas backend / 849
   aserciones (1 omitida por flag de Chromium), 160 frontend y build aprobados.
-  Evidencia `storage/logs/combinada-*`; la base funcional main permanece intacta.
+  Evidencia previa a integración en `storage/logs/combinada-*`.
   Los 3 E2E conjuntos (física, moral y gracia) pasaron; capturas sintéticas
   conservadas en `test-results-final/` del checkout principal.
 - Enlaces locales y cobertura de índices/temas revisados sin rotos.
 - El hook pre-push duplicado se omitió tras ejecutar Pest y build manualmente;
   CI volvió a ejecutar las comprobaciones en el commit publicado.
+- [CI final de PR aprobado](https://github.com/jata-imk/kronik/actions/runs/42863203847)
+  en `7a98536`, sin hilos de revisión pendientes al fusionar.
+- Barrido de integración: `2c092da` conserva exactamente el código, recursos,
+  pruebas y workflow de la combinación validada `2ff634a`; solo difieren las
+  notas documentales finales y la justificación de auditoría PDF. Sin conflictos,
+  migraciones ni comprobaciones funcionales nuevas necesarias por ese registro.
 
 ## Siguiente paso
 
-Integrar mediante revisión de la PR y seguir el procedimiento de despliegue/QA.
+Seguir el procedimiento de despliegue/QA; la integración ya está completada.
 Registrar esos estados en esta nota y Notion cuando ocurran; las pruebas automatizadas
 no sustituyen QA del usuario. La entrega funcional está validada, sin cambios de BD.

@@ -10,7 +10,9 @@
 
 ## Estado actual — 2026-11-10
 
-Implementado y publicado en PR; integración, despliegue y QA del usuario pendientes.
+Integrado en `main` el 2026-11-10 mediante PR #78, commit `2c092da`, por
+autorización del usuario, después de PR #77 (`7852dc3`). Ambas entregas conviven
+en esa base. Despliegue y QA del usuario pendientes.
 Ambos genéricos se admiten y repiten para física/moral, alta/edición web/API.
 Empresa conserva validación estricta; la UI informa identidad propia pendiente.
 Consulta bloquea submit y watchers de normalización. Sin migraciones ni nuevas
@@ -47,16 +49,23 @@ para pruebas aisladas, nunca credenciales ni la base de desarrollo.
   en el checkout principal).
 - Combinación local sin conflictos en `qa/dias-gracia-rfc`: 78 pruebas backend /
   849 aserciones (1 omitida por flag de Chromium), 160 frontend y build aprobados.
-  Evidencia `storage/logs/combinada-*` en el checkout principal; main intacta.
+  Evidencia previa a integración en `storage/logs/combinada-*` del checkout principal.
   Los 3 E2E conjuntos (física, moral y gracia) pasaron; capturas sintéticas
   conservadas en `test-results-final/` del checkout principal.
 - 141 enlaces locales revisados sin rotos; ADR indexado y accesible por temas.
 - El hook pre-push duplicado se omitió tras ejecutar Pest y build manualmente;
   CI repitió las comprobaciones en el commit publicado.
+- [CI final de PR aprobado](https://github.com/jata-imk/kronik/actions/runs/42863229143)
+  en `f408505`, sin hilos de revisión pendientes al fusionar.
+- Barrido de integración: `2c092da` conserva exactamente el código, recursos,
+  pruebas y workflow de la combinación validada `2ff634a`; solo difieren las
+  notas documentales finales y la justificación de auditoría PDF. Sin conflictos,
+  migraciones ni comprobaciones funcionales nuevas necesarias por ese registro.
 
 ## Pendientes diferidos y siguiente paso
 
-Integrar mediante revisión de la PR y registrar despliegue/QA cuando ocurran.
+Seguir el procedimiento de despliegue/QA y registrar sus resultados cuando ocurran;
+la integración ya está completada.
 La unicidad de RFC propios queda en
 [su tarea de Notion](https://app.notion.com/p/41461db7db7f81aea71aefbb4b912571)
 por decisión del usuario, sin fecha nueva; evaluar datos existentes antes de definir alcance o migraciones.
