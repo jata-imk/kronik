@@ -40,7 +40,7 @@ class HistorialCrediticioController extends Controller
         $consultaSucursal = app(\App\Services\ConsultaSucursal::class);
         $scope = $consultaSucursal->resolver($request, $cliente ? 'all' : 'current');
         $queries = $consultaSucursal->aplicar(SicQuery::query(), $scope)
-            ->select(['id', 'cliente_id', 'sic_id', 'sic_api_id', 'fecha_consulta', 'status', 'sucursal_id'])
+            ->select(['id', 'cliente_id', 'sic_id', 'sic_api_id', 'fecha_consulta', 'status', 'sucursal_id', 'ambiente', 'escenario_clave', 'procedencia'])
             ->with([
                 'cliente:id,primer_nombre,apellido_paterno,apellido_materno',
                 'sucursal:id,nombre',
@@ -71,7 +71,7 @@ class HistorialCrediticioController extends Controller
         Gate::authorize('read historial-crediticio');
         Gate::authorize('view', $consulta->cliente);
         app(\App\Services\ActivityLogService::class)->log(\App\Enums\ActivityEvent::SicEvidenceViewed, 'Resultado SIC visualizado', $consulta->cliente,
-            ['related' => ['type' => 'sic_query', 'id' => $consulta->id]], request()->user(),
+            ['provider' => $consulta->procedencia ?? ($consulta->ambiente === 'qa' && $consulta->estado_operacion ? 'cdc_sandbox' : 'desconocida'), 'related' => ['type' => 'sic_query', 'id' => $consulta->id]], request()->user(),
             teamId: request()->user()->current_team_id, sucursalId: $consulta->sucursal_id, inheritActorContext: false);
         $resultado = $service->leer($consulta, 'resultado');
         if (! $resultado) {
@@ -80,9 +80,9 @@ class HistorialCrediticioController extends Controller
 
         $evolucion = [];
         $modelo = $resultado['scores'][0]['modelo'] ?? null;
-        if ($consulta->ambiente === 'qa' && $modelo && ! in_array($modelo, ['Modelo no informado', 'Valor heredado sin modelo acreditado'], true)) {
+        if (! $consulta->escenario_clave && $consulta->ambiente === 'qa' && $modelo && ! in_array($modelo, ['Modelo no informado', 'Valor heredado sin modelo acreditado'], true)) {
             foreach (SicQuery::where('cliente_id', $consulta->cliente_id)->where('sic_api_id', $consulta->sic_api_id)
-                ->where('ambiente', 'qa')->where('estado_operacion', 'completada')->orderByDesc('fecha_consulta')->orderByDesc('id')->limit(20)->get()->reverse() as $q) {
+                ->whereNull('escenario_clave')->where('ambiente', 'qa')->where('estado_operacion', 'completada')->orderByDesc('fecha_consulta')->orderByDesc('id')->limit(20)->get()->reverse() as $q) {
                 foreach (($service->leer($q, 'resultado')['scores'] ?? []) as $s) {
                     if ($s['modelo'] === $modelo) {
                         $evolucion[] = ['etiqueta' => $q->fecha_consulta->format('d/m/Y').' #'.$q->id, 'score' => $s['valor']];
@@ -99,6 +99,7 @@ class HistorialCrediticioController extends Controller
             'evolucion' => $evolucion,
             'consulta' => [...$consulta->only(['id', 'fecha_consulta', 'status', 'ambiente', 'estado_operacion', 'http_status', 'solicitud_revision_id']),
                 'cliente' => $consulta->cliente->only(['id', 'primer_nombre', 'apellido_paterno']), 'servicio' => $consulta->api?->nombre],
+            'escenarioQa' => $consulta->escenario_clave ? array_intersect_key($service->leer($consulta, 'escenario') ?? [], array_flip(['clave', 'nombre', 'version', 'procedencia'])) : null,
             'resultado' => $resultado,
             'eventos' => \App\Models\SicEvento::where('sic_query_id', $consulta->id)->orderBy('id')->get(['id', 'estado', 'actor_id', 'created_at']),
         ])->toResponse(request())->header('Cache-Control', 'private, no-store');

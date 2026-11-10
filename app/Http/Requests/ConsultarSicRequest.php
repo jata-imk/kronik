@@ -15,13 +15,14 @@ class ConsultarSicRequest extends FormRequest
     public function rules(): array
     {
         return ['cliente' => $this->route('cliente') ? ['nullable'] : ['required', 'integer', 'exists:clientes,id'],
+            'escenario_qa' => ['nullable', 'string', 'max:100'],
             'api' => ['required', Rule::in(array_keys(config('sic.servicios')))], 'consentimiento_id' => ['required', 'integer'],
             'solicitud_revision_id' => ['nullable', 'integer'], 'idempotency_key' => ['required', 'uuid'], 'confirmacion_qa' => ['accepted']];
     }
 
     public function attributes(): array
     {
-        return ['cliente' => 'cliente', 'api' => 'servicio SIC', 'consentimiento_id' => 'consentimiento SIC', 'solicitud_revision_id' => 'revisión de solicitud'];
+        return ['escenario_qa' => 'escenario SIC QA', 'cliente' => 'cliente', 'api' => 'servicio SIC', 'consentimiento_id' => 'consentimiento SIC', 'solicitud_revision_id' => 'revisión de solicitud'];
     }
 
     public function messages(): array

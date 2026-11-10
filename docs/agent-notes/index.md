@@ -65,3 +65,5 @@ Consulta el [índice temático](../topic/index.md) para encontrar material relac
 - [Contexto de sucursal: integrado, desplegado y validado en QA](contexto-sucursal-transversal.md).
 
 - [Consulta, edición e históricos](consulta-edicion-historicos.md).
+
+- [SIC QA por escenarios](sic-escenarios-qa.md).

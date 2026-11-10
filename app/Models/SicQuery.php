@@ -26,6 +26,7 @@ class SicQuery extends Model
         'status',
         'mensaje_error',
         'response_data',
+        'escenario_clave', 'escenario_version', 'procedencia',
         'ambiente', 'estado_operacion', 'actor_id', 'team_id', 'sucursal_id', 'consentimiento_id',
         'solicitud_revision_id', 'idempotency_key', 'payload_hash', 'identidad_hash', 'consentimiento_hash', 'http_status',
     ];

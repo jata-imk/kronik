@@ -38,8 +38,22 @@ final class SicOperacionService
             $revision = isset($data['solicitud_revision_id']) ? SolicitudRevision::findOrFail($data['solicitud_revision_id']) : null;
             $identidadHash = $this->identidadHash($cliente);
             $this->revisionValida($revision, $cliente);
+            $escenarios = app(SicEscenariosQa::class);
+            $existing = SicQuery::where('idempotency_key', $data['idempotency_key'])->first();
+            $escenario = null;
+            if (config('sic.escenarios_qa_habilitados') === true) {
+                $escenarios->habilitado();
+                $escenario = $existing
+                    ? ($existing->escenario_clave ? $this->leer($existing, 'escenario') : null)
+                    : $escenarios->resolver($data['api'], $data['escenario_qa'] ?? null);
+                if (isset($data['escenario_qa']) && ($escenario['clave'] ?? null) !== $data['escenario_qa']) {
+                    $this->error('Este envío ya fue utilizado con otro escenario.');
+                }
+            } elseif (! empty($data['escenario_qa']) || $existing?->escenario_clave) {
+                $escenarios->habilitado();
+            }
             $hash = self::hash([$cliente->id, $data['api'], $actor->id, $actor->current_team_id, $actor->current_sucursal_id,
-                $consentimiento->id, $consentimientoHash, $revision?->id, $identidadHash]);
+                $consentimiento->id, $consentimientoHash, $revision?->id, $identidadHash, ...($escenario ? [self::hash($escenario)] : [])]);
             if ($existing = SicQuery::where('idempotency_key', $data['idempotency_key'])->first()) {
                 if (! hash_equals($existing->payload_hash, $hash)) {
                     $this->error('Este envío ya fue utilizado con otros datos. Revisa la consulta original.');
@@ -58,7 +72,12 @@ final class SicOperacionService
                 'consentimiento_id' => $consentimiento->id, 'solicitud_revision_id' => $revision?->id,
                 'idempotency_key' => $data['idempotency_key'], 'payload_hash' => $hash, 'identidad_hash' => $identidadHash,
                 'consentimiento_hash' => $consentimientoHash]);
-            $payload = app(SicPeticion::class)->construir($cliente, $data['api'], (string) $query->id);
+            if ($escenario) {
+                $query->forceFill(['escenario_clave' => $escenario['clave'], 'escenario_version' => $escenario['version'],
+                    'procedencia' => $escenario['procedencia']])->save();
+                $this->evidencia($query, 'escenario', $escenario);
+            }
+            $payload = $escenario ? $escenario['peticion'] : app(SicPeticion::class)->construir($cliente, $data['api'], (string) $query->id);
             $this->evidencia($query, 'peticion', $payload);
             SicEvento::create(['sic_query_id' => $query->id, 'estado' => 'preparada', 'actor_id' => $actor->id]);
             $this->audit($query, ActivityEvent::SicRequested, $actor);
@@ -81,6 +100,10 @@ final class SicOperacionService
                 $empresa->exigir(\App\Enums\OperacionEmpresa::ConsultarSic, recurso: $q, equipoId: $q->team_id,
                     sucursalId: $q->sucursal_id, iniciadorId: $q->actor_id, sistema: true);
                 CirculoSandboxGateway::habilitado();
+                if ($q->escenario_clave) {
+                    app(SicEscenariosQa::class)->habilitado();
+                    $this->leer($q, 'escenario');
+                }
                 $actor = User::findOrFail($q->actor_id);
                 $actor->forceFill(['current_team_id' => $q->team_id, 'current_sucursal_id' => $q->sucursal_id]);
                 $actor->unsetRelations();
@@ -109,7 +132,10 @@ final class SicOperacionService
             return;
         }
         try {
-            $result = app(SicGateway::class)->consultar($query->api->clave, $this->leer($query, 'peticion'));
+            $escenario = $query->escenario_clave ? $this->leer($query, 'escenario') : null;
+            $result = $escenario && $escenario['procedencia'] === 'simulacion_interna'
+                ? app(SicEscenariosQa::class)->simular($escenario)
+                : app(SicGateway::class)->consultar($query->api->clave, $this->leer($query, 'peticion'));
             DB::transaction(function () use ($query, $result) {
                 $q = SicQuery::lockForUpdate()->findOrFail($query->id);
                 if ($q->estado_operacion !== 'enviando') {
@@ -134,7 +160,7 @@ final class SicOperacionService
                     default => ActivityEvent::ClientSicCreditReportFicoQueried,
                 };
                 app(ActivityLogService::class)->log($event, 'Consulta SIC QA finalizada', $q,
-                    ['related' => ['type' => 'iniciador', 'id' => $q->actor_id], 'result' => $ok ? 'success' : 'error'],
+                    ['provider' => $q->procedencia ?? 'cdc_sandbox', 'related' => ['type' => 'iniciador', 'id' => $q->actor_id], 'result' => $ok ? 'success' : 'error'],
                     null, teamId: $q->team_id, sucursalId: $q->sucursal_id, inheritActorContext: false);
             });
         } catch (\Throwable) {
@@ -306,7 +332,7 @@ final class SicOperacionService
 
     private function audit(SicQuery $query, ActivityEvent $event, ?User $actor = null): void
     {
-        $metadata = ['state' => $query->estado_operacion, 'result' => 'applied'];
+        $metadata = ['provider' => $query->procedencia ?? 'cdc_sandbox', 'state' => $query->estado_operacion, 'result' => 'applied'];
         if ($query->actor_id) {
             $metadata['related'] = ['type' => 'iniciador', 'id' => $query->actor_id];
         }

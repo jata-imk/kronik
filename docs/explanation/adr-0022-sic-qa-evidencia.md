@@ -2,6 +2,11 @@
 
 Estado: aceptada para QA. Fecha: 10/10/2026.
 
+Ampliada parcialmente por [ADR 0043](adr-0043-escenarios-sic-qa.md): la modalidad
+explícita por escenarios sustituye la persona enviada y permite aceptación
+sintética protegida para QA. Las decisiones siguientes conservan su contexto
+histórico y siguen aplicando a la modalidad anterior.
+
 ## Contexto
 
 P1 cerró SDK heredados que desactivaban TLS, usaban personas demostrativas y

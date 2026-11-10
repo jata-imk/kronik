@@ -76,6 +76,7 @@ function buscar(page = 1) {
                     </Column>
                     <Column header="Sucursal original"><template #body="{ data }">{{ data.sucursal?.nombre ?? "Sin sucursal histórica" }}</template></Column>
                     <Column header="Proveedor"><template #body="{ data }">{{ data.sic?.nombre ?? "Sin proveedor" }}</template></Column>
+                    <Column header="Procedencia"><template #body="{ data }">{{ data.escenario_clave ? (data.procedencia === "simulacion_interna" ? "Simulación interna QA" : "Escenario CDC sandbox") : (data.ambiente === "qa" ? "Sandbox QA" : "Histórico sin verificar") }}</template></Column>
                     <Column header="Servicio"><template #body="{ data }">{{ data.api?.nombre ?? "Sin servicio" }}</template></Column>
                     <Column header="Fecha"><template #body="{ data }">{{ fecha(data.fecha_consulta) }}</template></Column>
                     <Column header="Estado registrado"><template #body="{ data }">{{ estado(data.status) }}</template></Column>

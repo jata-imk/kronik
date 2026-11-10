@@ -1,0 +1,2004 @@
+{
+    "fico_score_v2": [
+        {
+            "clave": "cdc_fico_score_v2_01",
+            "nombre": "HTTP 200 score 720",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "SESENTAYDOS",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1965-08-09",
+                    "RFC": "SEPJ650809JG1",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 58",
+                        "coloniaPoblacion": "MONTEVIDEO",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "07730",
+                        "delegacionMunicipio": "GUSTAVO A MADERO",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_02",
+            "nombre": "HTTP 200 score 650",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "CINCUENTAYNUEVE",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1945-02-12",
+                    "RFC": "CIPJ450212KG4",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 168",
+                        "coloniaPoblacion": "CHALMA DE GUADALUPE",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "07210",
+                        "delegacionMunicipio": "GUSTAVO A MADERO",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_03",
+            "nombre": "HTTP 200 score 735",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "SESENTAYSIETE",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1945-08-07",
+                    "RFC": "SEPJ4508071Y8",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 746",
+                        "coloniaPoblacion": "PUEBLO LA CANDELARIA",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "04380",
+                        "delegacionMunicipio": "COYOACAN",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_04",
+            "nombre": "HTTP 200 score 550",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "DIEZYSEIS",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1970-08-25",
+                    "RFC": "DIPJ700825549",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 975",
+                        "coloniaPoblacion": "AVANTE",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "04460",
+                        "delegacionMunicipio": "COYOACAN",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_05",
+            "nombre": "HTTP 200 score 520",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "SESENTAYCINCO",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1974-02-11",
+                    "RFC": "SEPJ740211TL7",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 285",
+                        "coloniaPoblacion": "ALDANA",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "02910",
+                        "delegacionMunicipio": "AZCAPOTZALCO",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_06",
+            "nombre": "HTTP 200 score 640",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "DIEZ",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1969-01-20",
+                    "RFC": "DIPJ690120I50",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 998",
+                        "coloniaPoblacion": "PARAJE TLALATLACO",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "16247",
+                        "delegacionMunicipio": "XOCHIMILCO",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_07",
+            "nombre": "HTTP 200 score 500",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "TREINTAYOCHO",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1988-09-09",
+                    "RFC": "TEPJ880909AKA",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 1646",
+                        "coloniaPoblacion": "JUSTO SIERRA",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "09460",
+                        "delegacionMunicipio": "IZTAPALAPA",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_08",
+            "nombre": "HTTP 200 score 525",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "CUARENTAYCUATRO",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1997-10-19",
+                    "RFC": "CUPJ971019FM9",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 966",
+                        "coloniaPoblacion": "SANTA LUCÍA CHANTEPEC",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "01509",
+                        "delegacionMunicipio": "ALVARO OBREGON",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_09",
+            "nombre": "HTTP 200 score 610",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "SESENTAYSEIS",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1975-10-02",
+                    "RFC": "SEPJ751002UK4",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 974",
+                        "coloniaPoblacion": "GRANJAS ESMERALDA",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "09810",
+                        "delegacionMunicipio": "IZTAPALAPA",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_10",
+            "nombre": "HTTP 200 score 570",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "TREINTAYDOS",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1986-05-28",
+                    "RFC": "TEPJ860528278",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 1304",
+                        "coloniaPoblacion": "SAN LUCAS XOCHIMANCA",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "16300",
+                        "delegacionMunicipio": "XOCHIMILCO",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_11",
+            "nombre": "HTTP 200 score 660",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "CUARENTAYOCHO",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1966-04-04",
+                    "RFC": "CUPJ6604046Y9",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 180",
+                        "coloniaPoblacion": "BARRIO SAN DIEGO",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "16080",
+                        "delegacionMunicipio": "XOCHIMILCO",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_12",
+            "nombre": "HTTP 200 score 380",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "TREINTAYSIETE",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1967-01-29",
+                    "RFC": "TEPJ670129E48",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 65",
+                        "coloniaPoblacion": "EL PARQUE DE COYOACÁN",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "04899",
+                        "delegacionMunicipio": "COYOACAN",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_13",
+            "nombre": "HTTP 200 score 405",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "EÑE",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1969-12-11",
+                    "RFC": "EEPJ691211166",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 1653",
+                        "coloniaPoblacion": "APATLACO",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "09430",
+                        "delegacionMunicipio": "IZTAPALAPA",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_14",
+            "nombre": "HTTP 200 score 510",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "TREINTAYSEIS",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1949-10-04",
+                    "RFC": "TEPJ491004CB9",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 304",
+                        "coloniaPoblacion": "CARLOS ZAPATA VELA",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "08040",
+                        "delegacionMunicipio": "IZTACALCO",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_15",
+            "nombre": "HTTP 200 score 605",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "ONCE",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1994-07-17",
+                    "RFC": "OEPJ940717858",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 160",
+                        "coloniaPoblacion": "TEPEYAC INSURGENTES",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "07020",
+                        "delegacionMunicipio": "GUSTAVO A MADERO",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_16",
+            "nombre": "HTTP 200 score 535",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "CINCUENTAYSEIS",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1955-07-19",
+                    "RFC": "CIPJ550719EZ3",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 600",
+                        "coloniaPoblacion": "LA ASUNCIÓN",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "13000",
+                        "delegacionMunicipio": "TLAHUAC",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_17",
+            "nombre": "HTTP 200 score 470",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "CIENTOUNO",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1964-10-06",
+                    "RFC": "CIPJ641006H3A",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 881",
+                        "coloniaPoblacion": "PENSADOR MEXICANO",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "15510",
+                        "delegacionMunicipio": "VENUSTIANO CARRANZA",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_18",
+            "nombre": "HTTP 200 score 600",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "DOS",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1964-02-04",
+                    "RFC": "DOPJ6402046I9",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 1349",
+                        "coloniaPoblacion": "SANTA CECILIA",
+                        "ciudad": "CIUDAD DE MÉXICO",
+                        "CP": "04930",
+                        "delegacionMunicipio": "COYOACAN",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_19",
+            "nombre": "HTTP 200 score 490",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "SESENTA",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1944-01-04",
+                    "RFC": "SEPJ440104K91",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 772",
+                        "coloniaPoblacion": "JOSÉ VASCONCELOS CALDERÓN",
+                        "ciudad": "AGUASCALIENTES",
+                        "CP": "20200",
+                        "delegacionMunicipio": "AGUASCALIENTES",
+                        "estado": "AGS"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_20",
+            "nombre": "HTTP 200 score 590",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "SETENTA",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1973-06-14",
+                    "RFC": "SEPJ730614LK8",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 1837",
+                        "coloniaPoblacion": "INFONAVIT LOMAS DEL PORVENIR",
+                        "ciudad": "TIJUANA",
+                        "CP": "22535",
+                        "delegacionMunicipio": "TIJUANA",
+                        "estado": "BC"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_21",
+            "nombre": "HTTP 200 score 545",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "TRECE",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1988-12-03",
+                    "RFC": "TEPJ881203DQ4",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 692",
+                        "coloniaPoblacion": "LA LAGUNA",
+                        "ciudad": "COMONDU",
+                        "CP": "23823",
+                        "delegacionMunicipio": "COMONDU",
+                        "estado": "BCS"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_22",
+            "nombre": "HTTP 200 score 450",
+            "peticion": {
+                "folio": "123456",
+                "persona": {
+                    "nombres": "JUAN",
+                    "apellidoPaterno": "DIECISIETE",
+                    "apellidoMaterno": "PRUEBA",
+                    "fechaNacimiento": "1955-10-16",
+                    "RFC": "DIPJ551016DM2",
+                    "domicilio": {
+                        "direccion": "PASADISO ENCONTRADO 1114",
+                        "coloniaPoblacion": "TENABO CENTRO",
+                        "ciudad": "TENABO",
+                        "CP": "24700",
+                        "delegacionMunicipio": "TENABO",
+                        "estado": "CAMP"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_23",
+            "nombre": "HTTP 200 folio 240101000001",
+            "peticion": {
+                "folio": "240101000001",
+                "persona": {
+                    "nombres": "ROBERT",
+                    "segundoNombre": "DANIEL",
+                    "apellidoPaterno": "CORNES",
+                    "apellidoMaterno": "SINGEORZAN",
+                    "fechaNacimiento": "2003-05-05",
+                    "RFC": "COSR030505CJE",
+                    "CURP": "COSR030505MNLRNBMO",
+                    "domicilio": {
+                        "direccion": "UNIVERSIDAD 1344",
+                        "coloniaPoblacion": "DEL CARMEN",
+                        "delegacionMunicipio": "Coyoacán",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "04100"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_24",
+            "nombre": "HTTP 200 folio 240101000002",
+            "peticion": {
+                "folio": "240101000002",
+                "persona": {
+                    "nombres": "FELIP",
+                    "segundoNombre": "",
+                    "apellidoPaterno": "WIECZOREK",
+                    "apellidoMaterno": "PENEDO",
+                    "fechaNacimiento": "1976-02-10",
+                    "RFC": "WIPF760210GJZ",
+                    "CURP": "WIPF760210MMCCNLYS",
+                    "domicilio": {
+                        "direccion": "AV 535 84",
+                        "coloniaPoblacion": "SAN JUAN DE ARAGON 1RA SECC",
+                        "delegacionMunicipio": "GUSTAVO A MADERO",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "07969",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_25",
+            "nombre": "HTTP 200 folio 240101000003",
+            "peticion": {
+                "folio": "240101000003",
+                "persona": {
+                    "nombres": "CARLO",
+                    "segundoNombre": "ANTONIO",
+                    "apellidoPaterno": "RATCLIFFE",
+                    "apellidoMaterno": "BERBEL",
+                    "fechaNacimiento": "1968-07-05",
+                    "RFC": "RABC6807051AG",
+                    "CURP": "RABC680705MOCTRRD5",
+                    "domicilio": {
+                        "direccion": "RADIUM LTE 7 Y 8",
+                        "coloniaPoblacion": "SAN JUAN CERRO",
+                        "delegacionMunicipio": "Iztapalapa",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "09858",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_26",
+            "nombre": "HTTP 200 folio 240101000004",
+            "peticion": {
+                "folio": "240101000004",
+                "persona": {
+                    "nombres": "NAVIDAD",
+                    "segundoNombre": "",
+                    "apellidoPaterno": "COLLAGUAZO",
+                    "apellidoMaterno": "AMAYUELAS",
+                    "fechaNacimiento": "1957-08-28",
+                    "RFC": "COAN5708280NK",
+                    "CURP": "COAN570828MSRLMVQL",
+                    "domicilio": {
+                        "direccion": "BUENAVISTA NO. 227 ",
+                        "coloniaPoblacion": "Lindavista",
+                        "delegacionMunicipio": "GUSTAVO A MADERO",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "07300",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_27",
+            "nombre": "HTTP 200 folio 240101000005",
+            "peticion": {
+                "folio": "240101000005",
+                "persona": {
+                    "nombres": "LORETO",
+                    "segundoNombre": "CARMEN",
+                    "apellidoPaterno": "YOLDI",
+                    "apellidoMaterno": "FULLAONDO",
+                    "fechaNacimiento": "1981-05-02",
+                    "RFC": "YOFL810502R5P",
+                    "CURP": "YOFL810502MDGLLRYQ",
+                    "domicilio": {
+                        "direccion": "ADRIANO BROUWER NO. 42",
+                        "coloniaPoblacion": "ALFONSO XIII",
+                        "delegacionMunicipio": "ALVARO OBREGON",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "01460",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_28",
+            "nombre": "HTTP 200 folio 240101000006",
+            "peticion": {
+                "folio": "240101000006",
+                "persona": {
+                    "nombres": "AMALIA",
+                    "segundoNombre": "JOSE",
+                    "apellidoPaterno": "SERAFIN",
+                    "apellidoMaterno": "CANICOBA",
+                    "fechaNacimiento": "1975-11-18",
+                    "RFC": "SECA751118Q2J",
+                    "CURP": "SECA751118MBSRNMJJ",
+                    "domicilio": {
+                        "direccion": "UNIVERSIDAD 1344",
+                        "coloniaPoblacion": "DEL CARMEN",
+                        "delegacionMunicipio": "Coyoacán",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "04100",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_29",
+            "nombre": "HTTP 200 folio 240101000007",
+            "peticion": {
+                "folio": "240101000007",
+                "persona": {
+                    "nombres": "BLAS",
+                    "segundoNombre": "FRANCISCO",
+                    "apellidoPaterno": "MATESANZ",
+                    "apellidoMaterno": "TUDOSE",
+                    "fechaNacimiento": "2005-10-22",
+                    "RFC": "MATB051022UVB",
+                    "CURP": "MATB051022MDGTDLST",
+                    "domicilio": {
+                        "direccion": "TOTONACAS MZ 78 LT 20",
+                        "coloniaPoblacion": "AJUSCO",
+                        "delegacionMunicipio": "Coyoacán",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "04300",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_30",
+            "nombre": "HTTP 200 folio 240101000008",
+            "peticion": {
+                "folio": "240101000008",
+                "persona": {
+                    "nombres": "VENICIA",
+                    "apellidoPaterno": "FABREGUES",
+                    "apellidoMaterno": "DACAL",
+                    "fechaNacimiento": "1970-07-29",
+                    "RFC": "FADV700729DU2",
+                    "CURP": "FADV700729MTLBCNYE",
+                    "domicilio": {
+                        "direccion": "AV. TORRES DE IXTAPANTONGO 320",
+                        "coloniaPoblacion": "OLIVAR DE LOS PADRES",
+                        "delegacionMunicipio": "ALVARO OBREGON",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "01780",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_31",
+            "nombre": "HTTP 200 folio 240101000009",
+            "peticion": {
+                "folio": "240101000009",
+                "persona": {
+                    "nombres": "ANGELICA",
+                    "segundoNombre": "MARIA",
+                    "apellidoPaterno": "BORA",
+                    "apellidoMaterno": "STONE",
+                    "fechaNacimiento": "1974-06-08",
+                    "RFC": "BOSA7406080YZ",
+                    "CURP": "BOSA740608MCHRTN0V",
+                    "domicilio": {
+                        "direccion": "AV 535 84",
+                        "coloniaPoblacion": "SAN JUAN DE ARAGON 1RA SECC",
+                        "delegacionMunicipio": "GUSTAVO A MADERO",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "07969",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_32",
+            "nombre": "HTTP 200 folio 240101000010",
+            "peticion": {
+                "folio": "240101000010",
+                "persona": {
+                    "nombres": "LUCIA",
+                    "segundoNombre": "GEMA",
+                    "apellidoPaterno": "PELAEZ",
+                    "apellidoMaterno": "SERRANOS",
+                    "fechaNacimiento": "2006-12-31",
+                    "RFC": "PESL061231ILT",
+                    "CURP": "PESL061231MYNLRCM7",
+                    "domicilio": {
+                        "direccion": "PATRICIO SAENZ NO. 1701 NO. B",
+                        "coloniaPoblacion": "DEL VALLE",
+                        "delegacionMunicipio": "Benito Juárez",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "03100",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_33",
+            "nombre": "HTTP 200 folio 240101000011",
+            "peticion": {
+                "folio": "240101000011",
+                "persona": {
+                    "nombres": "ESTEBAN",
+                    "segundoNombre": "MANUEL",
+                    "apellidoPaterno": "HAMADA",
+                    "apellidoMaterno": "MOH",
+                    "fechaNacimiento": "1958-06-24",
+                    "RFC": "HAME5806240AB",
+                    "CURP": "HAME580624MNEMHSX3",
+                    "domicilio": {
+                        "direccion": "DE LA REFORMA 308",
+                        "coloniaPoblacion": "JUAREZ",
+                        "delegacionMunicipio": "Juarez",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "06500",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_34",
+            "nombre": "HTTP 200 folio 240101000012",
+            "peticion": {
+                "folio": "240101000012",
+                "persona": {
+                    "nombres": "GAISKA",
+                    "apellidoPaterno": "MORGAZ",
+                    "apellidoMaterno": "LOMINCHAR",
+                    "fechaNacimiento": "1974-10-28",
+                    "RFC": "MOLG741028TNL",
+                    "CURP": "MOLG741028MNTRMSYZ",
+                    "domicilio": {
+                        "direccion": "UNIVERSIDAD 1344",
+                        "coloniaPoblacion": "DEL CARMEN",
+                        "delegacionMunicipio": "Coyoacán",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "04100",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_35",
+            "nombre": "HTTP 200 folio 240101000013",
+            "peticion": {
+                "folio": "240101000013",
+                "persona": {
+                    "nombres": "ARSILIA",
+                    "apellidoPaterno": "BREZO",
+                    "apellidoMaterno": "CAMARENA",
+                    "fechaNacimiento": "1986-04-23",
+                    "RFC": "BECA860423XZU",
+                    "CURP": "BECA860423MVZRMRSW",
+                    "domicilio": {
+                        "direccion": "PROL MOLIERE 515",
+                        "coloniaPoblacion": "GRANADA",
+                        "delegacionMunicipio": "Miguel Hidalgo",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "11520",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_36",
+            "nombre": "HTTP 200 folio 240101000014",
+            "peticion": {
+                "folio": "240101000014",
+                "persona": {
+                    "nombres": "PAULA",
+                    "segundoNombre": "DIANA",
+                    "apellidoPaterno": "SAMPERE",
+                    "apellidoMaterno": "GABARROS",
+                    "fechaNacimiento": "1969-08-02",
+                    "RFC": "SAGP69080214G",
+                    "CURP": "SAGP690802MTSMBLLH",
+                    "domicilio": {
+                        "direccion": "2DA CERRADA DE GENERAL ANAYA CASA 99-B",
+                        "coloniaPoblacion": "SAN DIEGO CHURUBUSCO",
+                        "delegacionMunicipio": "Coyoacán",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "04120",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_37",
+            "nombre": "HTTP 200 folio 240101000015",
+            "peticion": {
+                "folio": "240101000015",
+                "persona": {
+                    "nombres": "ALFREDO",
+                    "segundoNombre": "ROBERTO",
+                    "apellidoPaterno": "SANFRANCISCO",
+                    "apellidoMaterno": "USATORRE",
+                    "fechaNacimiento": "1993-11-03",
+                    "RFC": "SAUA931103KN6",
+                    "CURP": "SAUA931103MBCNSLAX",
+                    "domicilio": {
+                        "direccion": "ORIENTE 245 NO. 373 NO. 3",
+                        "coloniaPoblacion": "AGRICOLA ORIENTAL",
+                        "delegacionMunicipio": "Iztacalco",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "08500",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_38",
+            "nombre": "HTTP 200 folio 240101000016",
+            "peticion": {
+                "folio": "240101000016",
+                "persona": {
+                    "nombres": "SERGEJ",
+                    "apellidoPaterno": "PRADOS",
+                    "apellidoMaterno": "CORRETGE",
+                    "fechaNacimiento": "1996-04-24",
+                    "RFC": "PACS960424MFT",
+                    "CURP": "PACS960424MJCRRRDI",
+                    "domicilio": {
+                        "direccion": "ORIENTE 245 NO. 373 NO. 3",
+                        "coloniaPoblacion": "AGRICOLA ORIENTAL",
+                        "delegacionMunicipio": "Iztacalco",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "08500",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_39",
+            "nombre": "HTTP 200 folio 240101000017",
+            "peticion": {
+                "folio": "240101000017",
+                "persona": {
+                    "nombres": "ALBERT",
+                    "segundoNombre": "DANIEL",
+                    "apellidoPaterno": "BORDEA",
+                    "apellidoMaterno": "MAHDAOUI",
+                    "fechaNacimiento": "1997-05-08",
+                    "RFC": "BOMA9705088OJ",
+                    "CURP": "BOMA970508MSRRHLS9",
+                    "domicilio": {
+                        "direccion": "ORIENTE 245 NO. 373 NO. 3",
+                        "coloniaPoblacion": "AGRICOLA ORIENTAL",
+                        "delegacionMunicipio": "Iztacalco",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "08500",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_40",
+            "nombre": "HTTP 200 folio 240101000018",
+            "peticion": {
+                "folio": "240101000018",
+                "persona": {
+                    "nombres": "SANI",
+                    "apellidoPaterno": "CORCOSTEGUI",
+                    "apellidoMaterno": "GUACOLLANTE",
+                    "fechaNacimiento": "1984-05-29",
+                    "RFC": "COGS840529SVE",
+                    "CURP": "COGS840529MQTRCNH4",
+                    "domicilio": {
+                        "direccion": "AVE MINAS NO. 57",
+                        "coloniaPoblacion": "ARBIDE",
+                        "delegacionMunicipio": "ALVARO OBREGON",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "01280",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_41",
+            "nombre": "HTTP 200 folio 240101000019",
+            "peticion": {
+                "folio": "24010100001asd9@$%&",
+                "persona": {
+                    "nombres": "RAYCO 1234",
+                    "segundoNombre": "JAVIER",
+                    "apellidoPaterno": "DRISSI",
+                    "apellidoMaterno": "SINCLAIR",
+                    "fechaNacimiento": "2005-08-24",
+                    "RFC": "DISR050824EUE",
+                    "CURP": "DISR050824MCMRNYUW",
+                    "domicilio": {
+                        "direccion": "UNIVERSIDAD 1344",
+                        "coloniaPoblacion": "DEL CARMEN",
+                        "delegacionMunicipio": "Coyoacán",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "04100",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_42",
+            "nombre": "HTTP 200 folio 240101000020",
+            "peticion": {
+                "folio": "240101000020",
+                "persona": {
+                    "nombres": "MOULOUD",
+                    "apellidoPaterno": "HORVATH",
+                    "apellidoMaterno": "ORVIZ",
+                    "fechaNacimiento": "1969-11-07",
+                    "RFC": "HOOM6911076E4",
+                    "CURP": "HOOM691107MGTRRLZX",
+                    "domicilio": {
+                        "direccion": "INGENIEROS MILITARES NO. 65 ",
+                        "coloniaPoblacion": "LOMAS DE SOTELO",
+                        "delegacionMunicipio": "Miguel Hidalgo",
+                        "ciudad": "MEXICO",
+                        "estado": "CDMX",
+                        "CP": "11200",
+                        "fechaResidencia": null,
+                        "numeroTelefono": null,
+                        "tipoDomicilio": null,
+                        "tipoAsentamiento": null,
+                        "fechaRegistroDomicilio": null,
+                        "tipoAltaDomicilio": null,
+                        "idDomicilio": null
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_43",
+            "nombre": "HTTP 204",
+            "peticion": {
+                "folio": "1235",
+                "persona": {
+                    "nombres": "LUIS",
+                    "apellidoPaterno": "OLIVOS",
+                    "apellidoMaterno": "JIMENEZ",
+                    "fechaNacimiento": "1966-05-13",
+                    "RFC": "CUPU800825569",
+                    "domicilio": {
+                        "direccion": "san joaquin",
+                        "coloniaPoblacion": "el arenal",
+                        "ciudad": "mexico",
+                        "CP": "12345",
+                        "delegacionMunicipio": "iztapalapa",
+                        "estado": "CDMX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_44",
+            "nombre": "HTTP 400",
+            "peticion": {
+                "folio": "1235",
+                "persona": {
+                    "apellidoPaterno": "OLIVOS",
+                    "apellidoMaterno": "JIMENEZ",
+                    "RFC": "CUPU800825569",
+                    "domicilio": {
+                        "direccion": "san joaquin",
+                        "coloniaPoblacion": "el arenal",
+                        "ciudad": "mexico",
+                        "CP": "12345",
+                        "delegacionMunicipio": "iztapalapa",
+                        "estado": "cdmx"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_45",
+            "nombre": "HTTP 403",
+            "peticion": {
+                "folio": "1235",
+                "persona": {
+                    "nombres": "María",
+                    "apellidoPaterno": "OLIVOS",
+                    "apellidoMaterno": "JIMENEZ",
+                    "fechaNacimiento": "1966-05-13",
+                    "RFC": "CUPU800825569",
+                    "domicilio": {
+                        "direccion": "san joaquin",
+                        "coloniaPoblacion": "el arenal",
+                        "ciudad": "mexico",
+                        "CP": "12345",
+                        "delegacionMunicipio": "iztapalapa",
+                        "estado": "GTO"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_46",
+            "nombre": "HTTP 404",
+            "peticion": {
+                "folio": "1235",
+                "persona": {
+                    "nombres": "HECTOR",
+                    "apellidoPaterno": "OLIVOS",
+                    "apellidoMaterno": "JIMENEZ",
+                    "fechaNacimiento": "1966-05-13",
+                    "RFC": "CUPU800825569",
+                    "domicilio": {
+                        "direccion": "san joaquin",
+                        "coloniaPoblacion": "el arenal",
+                        "ciudad": "mexico",
+                        "CP": "12345",
+                        "delegacionMunicipio": "iztapalapa",
+                        "estado": "cdmx"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_47",
+            "nombre": "HTTP 429",
+            "peticion": {
+                "folio": "1235",
+                "persona": {
+                    "nombres": "PEDRO",
+                    "apellidoPaterno": "OLIVOS",
+                    "apellidoMaterno": "JIMENEZ",
+                    "fechaNacimiento": "1966-05-13",
+                    "RFC": "CUPU800825569",
+                    "domicilio": {
+                        "direccion": "san joaquin",
+                        "coloniaPoblacion": "el arenal",
+                        "ciudad": "mexico",
+                        "CP": "12345",
+                        "delegacionMunicipio": "iztapalapa",
+                        "estado": "CHIS"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_48",
+            "nombre": "HTTP 500",
+            "peticion": {
+                "folio": "1235",
+                "persona": {
+                    "nombres": "DANIEL",
+                    "apellidoPaterno": "OLIVOS",
+                    "apellidoMaterno": "JIMENEZ",
+                    "fechaNacimiento": "1966-05-13",
+                    "RFC": "CUPU800825569",
+                    "domicilio": {
+                        "direccion": "san joaquin",
+                        "coloniaPoblacion": "el arenal",
+                        "ciudad": "mexico",
+                        "CP": "12345",
+                        "delegacionMunicipio": "iztapalapa",
+                        "estado": "TAB"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fico_score_v2_49",
+            "nombre": "HTTP 503",
+            "peticion": {
+                "folio": "1235",
+                "persona": {
+                    "nombres": "ANGEL",
+                    "apellidoPaterno": "OLIVOS",
+                    "apellidoMaterno": "JIMENEZ",
+                    "fechaNacimiento": "1966-05-13",
+                    "RFC": "CUPU800825569",
+                    "domicilio": {
+                        "direccion": "san joaquin",
+                        "coloniaPoblacion": "el arenal",
+                        "ciudad": "mexico",
+                        "CP": "12345",
+                        "delegacionMunicipio": "iztapalapa",
+                        "estado": "cdmx"
+                    }
+                }
+            }
+        }
+    ],
+    "fintech": [
+        {
+            "clave": "cdc_fintech_01",
+            "nombre": "1.- Score 0 (No Hit)",
+            "peticion": {
+                "folioOtorgante": "20210301",
+                "persona": {
+                    "primerNombre": "JORGE",
+                    "segundoNombre": "EDUARDO",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "ORTIZ",
+                    "fechaNacimiento": "1994-09-19",
+                    "RFC": "PUOJ940919488",
+                    "domicilio": {
+                        "direccion": "PROL MOLIERE 515",
+                        "coloniaPoblacion": "GRANADA",
+                        "delegacionMunicipio": "MIGUEL HIDALGO",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "11520",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_02",
+            "nombre": "2.- Score 0 (No Hit)",
+            "peticion": {
+                "folioOtorgante": "20210311",
+                "persona": {
+                    "primerNombre": "ERIKA",
+                    "segundoNombre": "EMILIA",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "NAJERA",
+                    "fechaNacimiento": "1999-11-21",
+                    "RFC": "PUNE9911211Z6",
+                    "domicilio": {
+                        "direccion": "PLAYA GUITARRON NO. 401",
+                        "coloniaPoblacion": "MILITAR MARTE",
+                        "delegacionMunicipio": "IZTACALCO",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "08830",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_03",
+            "nombre": "3.- Score 0 (Cuentas desactualizadas por más de 24 meses)",
+            "peticion": {
+                "folioOtorgante": "20210302",
+                "persona": {
+                    "primerNombre": "JOSE",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "OROZCO",
+                    "fechaNacimiento": "1976-11-24",
+                    "RFC": "PUOJ761124HMA",
+                    "domicilio": {
+                        "direccion": "PROTASIO TAGLE NO. 91",
+                        "coloniaPoblacion": "SAN MIGUEL CHAPULTEPEC",
+                        "delegacionMunicipio": "MIGUEL HIDALGO",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "11850",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_04",
+            "nombre": "4.- Score 0 (Cuentas desactualizadas por más de 24 meses)",
+            "peticion": {
+                "folioOtorgante": "20210312",
+                "persona": {
+                    "primerNombre": "ANA",
+                    "segundoNombre": "PAULINA",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "RIOS",
+                    "fechaNacimiento": "1999-11-20",
+                    "RFC": "PURA991120N87",
+                    "domicilio": {
+                        "direccion": "2DA CERRADA DE GENERAL ANAYA CASA 99-B",
+                        "coloniaPoblacion": "SAN DIEGO CHURUBUSCO",
+                        "delegacionMunicipio": "COYOACÁN",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "04120",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_05",
+            "nombre": "5.- Score 0 (Fecha de defunción antecede a la fecha de cálculo)",
+            "peticion": {
+                "folioOtorgante": "20210303",
+                "persona": {
+                    "primerNombre": "PABLO",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "GENARO",
+                    "fechaNacimiento": "1993-12-23",
+                    "RFC": "PUGP9312232T6",
+                    "domicilio": {
+                        "direccion": "VICTORIANO ZEPEDA NO. 42",
+                        "coloniaPoblacion": "OBSERVATORIO",
+                        "delegacionMunicipio": "MIGUEL HIDALGO",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "11860",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_06",
+            "nombre": "6.- Score 0 (Fecha de defunción antecede a la fecha de cálculo)",
+            "peticion": {
+                "folioOtorgante": "20210313",
+                "persona": {
+                    "primerNombre": "XIMENA",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "ORTIZ",
+                    "fechaNacimiento": "1964-08-22",
+                    "RFC": "PUOX6408226J7",
+                    "domicilio": {
+                        "direccion": "SAN BORJA 1021 Y 1031",
+                        "coloniaPoblacion": "DEL VALLE",
+                        "delegacionMunicipio": "BENITO JUÁREZ",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "03100",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_07",
+            "nombre": "7.- Score 404",
+            "peticion": {
+                "folioOtorgante": "20210304",
+                "persona": {
+                    "primerNombre": "JUAN",
+                    "segundoNombre": "PABLO",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "RUIZ",
+                    "fechaNacimiento": "1974-10-28",
+                    "RFC": "PURJ741028PL2",
+                    "domicilio": {
+                        "direccion": "INGENIEROS MILITARES NO. 65",
+                        "coloniaPoblacion": "LOMAS DE SOTELO",
+                        "delegacionMunicipio": "MIGUEL HIDALGO",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "11200",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_08",
+            "nombre": "8.- Score 502",
+            "peticion": {
+                "folioOtorgante": "20210305",
+                "persona": {
+                    "primerNombre": "GUILLERMO",
+                    "segundoNombre": "DANIEL",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "SANCHEZ",
+                    "fechaNacimiento": "1961-11-22",
+                    "RFC": "PUSG6111229Y7",
+                    "domicilio": {
+                        "direccion": "PATRICIO SAENZ NO. 1701 NO. B",
+                        "coloniaPoblacion": "DEL VALLE",
+                        "delegacionMunicipio": "BENITO JUÁREZ",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "03100",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_09",
+            "nombre": "9.- Score 608",
+            "peticion": {
+                "folioOtorgante": "20210306",
+                "persona": {
+                    "primerNombre": "GABRIEL",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "GONZALEZ",
+                    "fechaNacimiento": "1995-01-08",
+                    "RFC": "PUGG950108BV7",
+                    "domicilio": {
+                        "direccion": "DE LA REFORMA 308",
+                        "coloniaPoblacion": "JUAREZ",
+                        "delegacionMunicipio": "BENITO JUÁREZ",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "06500",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_10",
+            "nombre": "10.- Score 730",
+            "peticion": {
+                "folioOtorgante": "20210307",
+                "persona": {
+                    "primerNombre": "PABLO",
+                    "segundoNombre": "ANTONIO",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "ALVAREZ",
+                    "fechaNacimiento": "1985-03-16",
+                    "RFC": "PUAP850316MI1",
+                    "domicilio": {
+                        "direccion": "AV 535 84",
+                        "coloniaPoblacion": "SAN JUAN DE ARAGON 1RA SECC",
+                        "delegacionMunicipio": "GUSTAVO A MADERO",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "07969",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_11",
+            "nombre": "11.- Score 890",
+            "peticion": {
+                "folioOtorgante": "20210308",
+                "persona": {
+                    "primerNombre": "SEBASTIAN",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "HERNANDEZ",
+                    "fechaNacimiento": "1986-12-07",
+                    "RFC": "PUHS8612075KA",
+                    "domicilio": {
+                        "direccion": "ORIENTE 245 NO. 373 NO. 3",
+                        "coloniaPoblacion": "AGRICOLA ORIENTAL",
+                        "delegacionMunicipio": "IZTACALCO",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "08500",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_12",
+            "nombre": "12.- Score 900",
+            "peticion": {
+                "folioOtorgante": "20210309",
+                "persona": {
+                    "primerNombre": "ANGEL",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "MALDONADO",
+                    "fechaNacimiento": "1989-02-08",
+                    "RFC": "PUMA890208399",
+                    "domicilio": {
+                        "direccion": "TOTONACAS MZ 78 LT 20",
+                        "coloniaPoblacion": "AJUSCO",
+                        "delegacionMunicipio": "COYOACÁN",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "04300",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_13",
+            "nombre": "13.- Score 970",
+            "peticion": {
+                "folioOtorgante": "20210310",
+                "persona": {
+                    "primerNombre": "CESAR",
+                    "segundoNombre": "ALEJANDRO",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "ZAMITIZ",
+                    "fechaNacimiento": "1979-09-10",
+                    "RFC": "PUZC7909107M0",
+                    "domicilio": {
+                        "direccion": "AV. TORRES DE IXTAPANTONGO 320",
+                        "coloniaPoblacion": "OLIVAR DE LOS PADRES",
+                        "delegacionMunicipio": "ALVARO OBREGON",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "01780",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_14",
+            "nombre": "14.- Score 103",
+            "peticion": {
+                "folioOtorgante": "20210314",
+                "persona": {
+                    "primerNombre": "ALEJANDRA",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "VALDEZ",
+                    "fechaNacimiento": "1975-08-28",
+                    "RFC": "PUVA750828BA0",
+                    "domicilio": {
+                        "direccion": "PATRIOTISMO NO. 604 PISO NO. PB",
+                        "coloniaPoblacion": "NONOALCO MIXCOAC",
+                        "delegacionMunicipio": "BENITO JUÁREZ",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "03730",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_15",
+            "nombre": "15.- Score 204",
+            "peticion": {
+                "folioOtorgante": "20210315",
+                "persona": {
+                    "primerNombre": "CARLA",
+                    "segundoNombre": "MARIA",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "LUNA",
+                    "fechaNacimiento": "1969-06-28",
+                    "RFC": "PULC690628973",
+                    "domicilio": {
+                        "direccion": "ADRIANO BROUWER NO. 42",
+                        "coloniaPoblacion": "ALFONSO XIII",
+                        "delegacionMunicipio": "ALVARO OBREGON",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "01460",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_16",
+            "nombre": "16.- Score 350",
+            "peticion": {
+                "folioOtorgante": "20210316",
+                "persona": {
+                    "primerNombre": "ALEXIA",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "MANZANO",
+                    "fechaNacimiento": "1992-06-10",
+                    "RFC": "PUMA920610GM5",
+                    "domicilio": {
+                        "direccion": "UNIVERSIDAD 1344",
+                        "coloniaPoblacion": "DEL CARMEN",
+                        "delegacionMunicipio": "COYOACÁN",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "04100",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_17",
+            "nombre": "17.- Score 890",
+            "peticion": {
+                "folioOtorgante": "20210317",
+                "persona": {
+                    "primerNombre": "MARIANA",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "LOPEZ",
+                    "fechaNacimiento": "1965-08-26",
+                    "RFC": "PULM650826G1A",
+                    "domicilio": {
+                        "direccion": "AVE MINAS NO. 57",
+                        "coloniaPoblacion": "ARBIDE",
+                        "delegacionMunicipio": "ALVARO OBREGON",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "01280",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_18",
+            "nombre": "18.- Score 900",
+            "peticion": {
+                "folioOtorgante": "20210318",
+                "persona": {
+                    "primerNombre": "BEATRIZ",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "MORALES",
+                    "fechaNacimiento": "1971-11-21",
+                    "RFC": "PUMB7111211P6",
+                    "domicilio": {
+                        "direccion": "BUENAVISTA NO. 227",
+                        "coloniaPoblacion": "LINDAVISTA",
+                        "delegacionMunicipio": "GUSTAVO A MADERO",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "07300",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_19",
+            "nombre": "19.- Score 970",
+            "peticion": {
+                "folioOtorgante": "20210319",
+                "persona": {
+                    "primerNombre": "ANDREA",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "VAZQUEZ",
+                    "fechaNacimiento": "1969-02-15",
+                    "RFC": "PUVA6902154W5",
+                    "domicilio": {
+                        "direccion": "NORTE 45 958 204",
+                        "coloniaPoblacion": "INDUSTRIAL VALLEJO",
+                        "delegacionMunicipio": "AZCAPOTZALCO",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "02300",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_20",
+            "nombre": "20.- Score 50",
+            "peticion": {
+                "folioOtorgante": "20210320",
+                "persona": {
+                    "primerNombre": "BRENDA",
+                    "apellidoPaterno": "PRUEBA",
+                    "apellidoMaterno": "ORTEGA",
+                    "fechaNacimiento": "1983-11-09",
+                    "RFC": "PUOB831109CT6",
+                    "domicilio": {
+                        "direccion": "RADIUM LTE 7 Y 8",
+                        "coloniaPoblacion": "SAN JUAN CERRO",
+                        "delegacionMunicipio": "IZTAPALAPA",
+                        "ciudad": "CIUDAD DE MEXICO",
+                        "estado": "CDMX",
+                        "CP": "09858",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_21",
+            "nombre": "Error HTTP 400",
+            "peticion": {
+                "folioOtorgante": "",
+                "persona": {
+                    "primerNombre": null,
+                    "apellidoPaterno": "",
+                    "fechaNacimiento": "1990-04-00",
+                    "domicilio": {
+                        "coloniaPoblacion": "SAN JUAN CERRO",
+                        "CP": 9858,
+                        "pais": "TT"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_22",
+            "nombre": "Error HTTP 401",
+            "peticion": {
+                "folioOtorgante": "10000401",
+                "persona": {
+                    "primerNombre": "JUAN",
+                    "apellidoPaterno": "PRUEBA",
+                    "fechaNacimiento": "1990-04-01",
+                    "domicilio": {
+                        "direccion": "REFORMA NO. 401",
+                        "estado": "CDMX",
+                        "CP": "08564",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_23",
+            "nombre": "Error HTTP 403",
+            "peticion": {
+                "folioOtorgante": "10000403",
+                "persona": {
+                    "primerNombre": "JUAN",
+                    "apellidoPaterno": "PRUEBA",
+                    "fechaNacimiento": "1990-04-03",
+                    "domicilio": {
+                        "direccion": "REFORMA NO. 403",
+                        "estado": "CDMX",
+                        "CP": "08564",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_24",
+            "nombre": "Error HTTP 404",
+            "peticion": {
+                "folioOtorgante": "10000404",
+                "persona": {
+                    "primerNombre": "JUAN",
+                    "apellidoPaterno": "PRUEBA",
+                    "fechaNacimiento": "1990-04-04",
+                    "domicilio": {
+                        "direccion": "REFORMA NO. 404",
+                        "estado": "CDMX",
+                        "CP": "08564",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_25",
+            "nombre": "Error HTTP 429",
+            "peticion": {
+                "folioOtorgante": "10000429",
+                "persona": {
+                    "primerNombre": "JUAN",
+                    "apellidoPaterno": "PRUEBA",
+                    "fechaNacimiento": "1990-04-29",
+                    "domicilio": {
+                        "direccion": "REFORMA NO. 429",
+                        "estado": "CDMX",
+                        "CP": "08564",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_26",
+            "nombre": "Error HTTP 500",
+            "peticion": {
+                "folioOtorgante": "10000500",
+                "persona": {
+                    "primerNombre": "JUAN",
+                    "apellidoPaterno": "PRUEBA",
+                    "fechaNacimiento": "1990-05-00",
+                    "domicilio": {
+                        "direccion": "REFORMA NO. 500",
+                        "estado": "CDMX",
+                        "CP": "08564",
+                        "pais": "MX"
+                    }
+                }
+            }
+        },
+        {
+            "clave": "cdc_fintech_27",
+            "nombre": "Error HTTP 503",
+            "peticion": {
+                "folioOtorgante": "10000503",
+                "persona": {
+                    "primerNombre": "JUAN",
+                    "apellidoPaterno": "PRUEBA",
+                    "fechaNacimiento": "1990-05-03",
+                    "domicilio": {
+                        "direccion": "REFORMA NO. 503",
+                        "estado": "CDMX",
+                        "CP": "08564",
+                        "pais": "MX"
+                    }
+                }
+            }
+        }
+    ],
+    "rc_fico_score": [
+        {
+            "clave": "cdc_rc_fico_score_01",
+            "nombre": "Full Report - HTTP 200 Score 546",
+            "peticion": {
+                "apellidoPaterno": "PRUEBA",
+                "apellidoMaterno": "SIETE",
+                "primerNombre": "JUAN PRUEBA SIETE",
+                "fechaNacimiento": "1965-08-09",
+                "RFC": "PUSJ800107H2O",
+                "nacionalidad": "MX",
+                "domicilio": {
+                    "direccion": "INSURGENTES SUR 1001",
+                    "coloniaPoblacion": "INSURGENTES SUR",
+                    "delegacionMunicipio": "CIUDAD DE MEXICO",
+                    "ciudad": "CIUDAD DE MEXICO",
+                    "estado": "CDMX",
+                    "CP": "11230"
+                }
+            }
+        },
+        {
+            "clave": "cdc_rc_fico_score_02",
+            "nombre": "HTTP 204",
+            "peticion": {
+                "apellidoPaterno": "WOLFGANG",
+                "apellidoMaterno": "SIETE",
+                "primerNombre": "JOHANN",
+                "fechaNacimiento": "1980-01-07",
+                "RFC": "PUAC800107",
+                "nacionalidad": "MX",
+                "domicilio": {
+                    "direccion": "INSURGENTES SUR 1007",
+                    "coloniaPoblacion": "INSURGENTES SUR",
+                    "delegacionMunicipio": "CIUDAD DE MEXICO",
+                    "ciudad": "CIUDAD DE MEXICO",
+                    "estado": "CDMX",
+                    "CP": "11230"
+                }
+            }
+        },
+        {
+            "clave": "cdc_rc_fico_score_03",
+            "nombre": "Error HTTP 401",
+            "peticion": {
+                "primerNombre": "FRIEDRICH",
+                "apellidoPaterno": "NIETZSCHE",
+                "apellidoMaterno": "SIETE",
+                "fechaNacimiento": "1980-01-07",
+                "RFC": "PUAC800107",
+                "nacionalidad": "MX",
+                "domicilio": {
+                    "direccion": "INSURGENTES SUR 1007",
+                    "coloniaPoblacion": "INSURGENTES SUR",
+                    "delegacionMunicipio": "CIUDAD DE MEXICO",
+                    "ciudad": "CIUDAD DE MEXICO",
+                    "estado": "DF",
+                    "CP": "11230"
+                }
+            }
+        },
+        {
+            "clave": "cdc_rc_fico_score_04",
+            "nombre": "Error HTTP 403",
+            "peticion": {
+                "primerNombre": "ALBERT",
+                "apellidoPaterno": "CAMUS",
+                "apellidoMaterno": "SIETE",
+                "fechaNacimiento": "1980-01-07",
+                "RFC": "PUAC800107",
+                "nacionalidad": "MX",
+                "domicilio": {
+                    "direccion": "INSURGENTES SUR 1007",
+                    "coloniaPoblacion": "INSURGENTES SUR",
+                    "delegacionMunicipio": "CIUDAD DE MEXICO",
+                    "ciudad": "CIUDAD DE MEXICO",
+                    "estado": "COAH",
+                    "CP": "11230"
+                }
+            }
+        },
+        {
+            "clave": "cdc_rc_fico_score_05",
+            "nombre": "Error HTTP 404",
+            "peticion": {
+                "primerNombre": "JUAN",
+                "apellidoPaterno": "PRUEBA",
+                "apellidoMaterno": "SIETE",
+                "fechaNacimiento": "1980-01-07",
+                "RFC": "PUAC800107",
+                "nacionalidad": "MX",
+                "domicilio": {
+                    "direccion": "INSURGENTES SUR 1007",
+                    "coloniaPoblacion": "INSURGENTES SUR",
+                    "delegacionMunicipio": "CIUDAD DE MEXICO",
+                    "ciudad": "CIUDAD DE MEXICO",
+                    "estado": "DF",
+                    "CP": "11230"
+                }
+            }
+        },
+        {
+            "clave": "cdc_rc_fico_score_06",
+            "nombre": "Error HTTP 429",
+            "peticion": {
+                "primerNombre": "JUAN",
+                "apellidoPaterno": "PRUEBA",
+                "apellidoMaterno": "SIETE",
+                "fechaNacimiento": "1980-01-07",
+                "RFC": "PUAC800107",
+                "nacionalidad": "MX",
+                "domicilio": {
+                    "direccion": "INSURGENTES SUR 1007",
+                    "coloniaPoblacion": "INSURGENTES SUR",
+                    "delegacionMunicipio": "CIUDAD DE MEXICO",
+                    "ciudad": "CIUDAD DE MEXICO",
+                    "estado": "QROO",
+                    "CP": "11230"
+                }
+            }
+        },
+        {
+            "clave": "cdc_rc_fico_score_07",
+            "nombre": "Error HTTP 500",
+            "peticion": {
+                "primerNombre": "DANIEL",
+                "apellidoPaterno": "PRUEBA",
+                "apellidoMaterno": "SIETE",
+                "fechaNacimiento": "1980-01-07",
+                "RFC": "PUAC800107",
+                "nacionalidad": "MX",
+                "domicilio": {
+                    "direccion": "INSURGENTES SUR 1007",
+                    "coloniaPoblacion": "INSURGENTES SUR",
+                    "delegacionMunicipio": "CIUDAD DE MEXICO",
+                    "ciudad": "CIUDAD DE MEXICO",
+                    "estado": "TAB",
+                    "CP": "11230"
+                }
+            }
+        },
+        {
+            "clave": "cdc_rc_fico_score_08",
+            "nombre": "Error HTTP 503",
+            "peticion": {
+                "primerNombre": "LOUIS PASTEUR",
+                "apellidoPaterno": "PRUEBA",
+                "apellidoMaterno": "SIETE",
+                "fechaNacimiento": "1980-01-07",
+                "RFC": "PUAC800107",
+                "nacionalidad": "MX",
+                "domicilio": {
+                    "direccion": "INSURGENTES SUR 1007",
+                    "coloniaPoblacion": "INSURGENTES SUR",
+                    "delegacionMunicipio": "CIUDAD DE MEXICO",
+                    "ciudad": "CIUDAD DE MEXICO",
+                    "estado": "DF",
+                    "CP": "11230"
+                }
+            }
+        }
+    ]
+}

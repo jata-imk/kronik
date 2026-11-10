@@ -7,6 +7,7 @@ import SerieFinanciera from "@/Components/Creditos/SerieFinanciera.vue";
 import ResumenSic from "@/Components/Creditos/ResumenSic.vue";
 const props = defineProps({
     consulta: Object,
+    escenarioQa: Object,
     resultado: Object,
     resumen: Object,
     eventos: Array,
@@ -90,6 +91,7 @@ watch(
                     router.reload({
                         only: [
                             "consulta",
+                            "escenarioQa",
                             "resultado",
                             "resumen",
                             "eventos",
@@ -141,7 +143,12 @@ onUnmounted(() => clearInterval(timer));
                     >Este registro se conserva para consulta histórica. Su procedencia no acredita
                     un requisito de aprobación.</Message
                 >
-                <Message v-if="resultado?.demostrativo" severity="warn" :closable="false"
+                <Message v-if="escenarioQa" severity="warn" :closable="false">
+                    Escenario sintético QA: {{ escenarioQa.nombre }} · versión {{ escenarioQa.version }}.
+                    {{ escenarioQa.procedencia === 'simulacion_interna' ? 'Simulación interna, sin petición a CDC.' : 'Respuesta de CDC sandbox para el caso publicado.' }}
+                    Este resultado no describe al cliente del expediente.
+                </Message>
+                <Message v-if="resultado?.demostrativo && !escenarioQa" severity="warn" :closable="false"
                     >Resultado demostrativo. No acredita un requisito SIC para aprobación.</Message
                 >
                 <p v-if="resultado?.folio" class="text-sm text-muted-color">
@@ -158,7 +165,7 @@ onUnmounted(() => clearInterval(timer));
                     v-if="consulta.estado_operacion === 'incierta'"
                     severity="warn"
                     :closable="false"
-                    >No se pudo confirmar el resultado del proveedor. No se reenviará
+                    >No se pudo confirmar el resultado del intento. No se reenviará
                     automáticamente. Solicita conciliación de este intento antes de consultar
                     nuevamente.</Message
                 >
@@ -193,7 +200,7 @@ onUnmounted(() => clearInterval(timer));
                         fluid
                     /><label class="flex gap-3"
                         ><Checkbox v-model="conciliacion.confirmacion_revision" binary /><span
-                            >Revisé el intento con el proveedor y no hay un resultado acreditable.
+                            >{{ escenarioQa?.procedencia === 'simulacion_interna' ? 'Revisé el intento sintético y no hay un resultado acreditable.' : 'Revisé el intento con el proveedor y no hay un resultado acreditable.' }}
                             No incluyo credenciales en esta captura.</span
                         ></label
                     ><Message
@@ -216,7 +223,14 @@ onUnmounted(() => clearInterval(timer));
                     >{{
                         consulta.estado_operacion === "cancelada"
                             ? "El envío se canceló porque sus requisitos cambiaron."
-                            : `El proveedor no entregó un resultado utilizable${consulta.http_status ? ` (HTTP ${consulta.http_status})` : ""}. Revisa la habilitación del servicio y sus credenciales QA.`
+                            : ({
+                                persona_no_encontrada: "No se encontró a la persona del escenario (404.1).",
+                                validacion: "CDC rechazó los datos del escenario.",
+                                autenticacion: "El servicio rechazó la autenticación.",
+                                permisos: "El servicio rechazó el acceso.",
+                                limite: "El servicio indicó un límite de consultas.",
+                                proveedor: "El servicio informó un fallo técnico.",
+                            }[resultado?.categoria_error] ?? "No se recibió un resultado interpretable. Revisa la evidencia del intento.")
                     }}</Message
                 >
                 <div v-if="resultado?.scores?.length" class="grid gap-4 md:grid-cols-2">
@@ -239,7 +253,7 @@ onUnmounted(() => clearInterval(timer));
                     </section>
                 </div>
                 <Message v-if="resultado?.estado === 'sin_score'" severity="info" :closable="false"
-                    >El proveedor no entregó un score positivo utilizable. Revisa las razones y la
+                    >Este resultado no contiene un score positivo utilizable. Revisa las razones y la
                     política del producto.</Message
                 >
                 <Message v-if="resultado?.estado === 'bloqueado'" severity="warn" :closable="false"
