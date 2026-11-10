@@ -23,8 +23,13 @@ para pruebas aisladas, nunca credenciales ni la base de desarrollo.
 - SIC y originación QA con genéricos/corrección: 9 pruebas / 65 aserciones aprobadas.
 - Componentes nuevos: 7 pruebas aprobadas.
 - Suite backend: 913 aprobadas / 46741 aserciones / 1 omitida (SQLite en memoria).
-- Build aprobado; suite frontend y E2E en curso.
-- Revisión medium y barrido acumulado: pendientes antes de integrar.
+- Build aprobado; frontend: 158 aprobadas en 60 archivos.
+- E2E en verificación; la captura moral repetida/corrección/consulta móvil pasó
+  inicialmente. Se fijó la geolocalización IP del teléfono en el harness para
+  eliminar dependencia de un proveedor externo; revalidación en curso.
+- Revisión medium inicial sobre `fcedf23`: sin hallazgos accionables. Revisión
+  final y barrido acumulado pendientes antes de integrar.
+- 132 enlaces locales revisados sin rotos.
 
 ## Pendientes diferidos y siguiente paso
 

@@ -16,6 +16,10 @@ export async function login(page, user = users.superAdmin) {
 }
 
 export async function failOnConsoleErrors(page) {
+    await page.route("https://ipapi.co/**", route => route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({ country_code: "MX" }),
+    }));
     await page.route("https://fonts.bunny.net/**", (route) =>
         route.fulfill({ contentType: "text/css", body: "" }),
     );

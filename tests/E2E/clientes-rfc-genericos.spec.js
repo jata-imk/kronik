@@ -20,6 +20,7 @@ for (const [tipo, generic, own] of [["Fisica", "XAXX010101000", "GALA910418AB8"]
             await page.locator("#sexo").click();
             await page.getByRole("option", { name: "Femenino", exact: true }).click();
             await page.locator("#email").fill(`generico-${tipo.toLowerCase()}-${number}@example.test`);
+            await expect(page.getByRole("combobox", { name: "País seleccionado", exact: true })).toContainText("México +52");
             await page.locator("input[type=tel]").fill("9991234567");
             await page.locator("input[type=tel]").press("Tab");
             await page.locator("#tipo_persona").click();

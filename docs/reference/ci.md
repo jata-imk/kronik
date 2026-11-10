@@ -2,6 +2,9 @@
 
 ## Recorridos compartidos E2E
 
+El helper de consola responde localmente a la geolocalización IP con México;
+los recorridos de captura no dependen de disponibilidad o tiempos de ese proveedor.
+
 Los escenarios ejecutados juntos comparten los datos aislados del seeder. Un
 recorrido que añade una política debe abrir explícitamente **Crear política** o
 **Nueva versión de política** y comprobar el número resultante desde la versión
