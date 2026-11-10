@@ -57,8 +57,9 @@ return {
     pais_base: configuracion?.pais_base ?? (readonly.value ? null : "MX"),
     logotipo_path: configuracion?.logotipo_path ?? "",
     parametros_operativos: {
+        ...configuracion?.parametros_operativos,
         dias_gracia_default:
-            configuracion?.parametros_operativos?.dias_gracia_default ?? (readonly.value ? null : 0),
+            configuracion?.parametros_operativos?.dias_gracia_default ?? null,
         hora_corte_operativo:
             configuracion?.parametros_operativos?.hora_corte_operativo ??
             (readonly.value ? null : "18:00"),
@@ -475,14 +476,19 @@ const error = (field) => form.errors[field];
                             Días de gracia predeterminados
                         </label>
                         <InputNumber
-                            id="dias_gracia"
+                            inputId="dias_gracia"
                             v-model="form.parametros_operativos.dias_gracia_default"
-                            disabled
+                            :disabled="readonly"
+                            :invalid="!!error('parametros_operativos.dias_gracia_default')"
+                            :aria-invalid="!!error('parametros_operativos.dias_gracia_default')"
                             :min="0"
                             :max="365"
                             fluid
                         />
-                        <small class="text-surface-500">Guardado como referencia; pendiente de aplicación operativa.</small>
+                        <small class="text-surface-500">Prellena los días de gracia de mora de nuevos productos y permite ajustarlos en su borrador. Vacío usa 3 días; cero significa sin gracia. No cambia versiones ni créditos existentes.</small>
+                        <Message v-if="error('parametros_operativos.dias_gracia_default')" severity="error" size="small">
+                            {{ error("parametros_operativos.dias_gracia_default") }}
+                        </Message>
                     </div>
 
                     <div>

@@ -2,6 +2,11 @@
 
 ## Estado y contrato
 
+Incremento de días de gracia de Empresa (10/11/2026): conserva `empresa.updated`
+y `producto_crediticio.*`; prellenar no es una acción auditable nueva.
+`ProductoDiasGraciaTest` verifica persistencia única, actor/contexto y preservación
+de condiciones e históricos. El parámetro no se copia como valor al log.
+
 Reconciliación técnica del 05/11/2026, continuidad `80b2f92`, base funcional
 `0707ce9`. Esta es la única matriz de eventos. El inventario parte de los 19
 módulos de `ModulesAndPermissionsSeeder` y añade autenticación, perfil, API y
@@ -133,7 +138,7 @@ un solo código por acción, sin crear catálogos paralelos.
 | `menubar-items` | Elemento de menú creado | `menubar_item.created` | U | Elemento de menú | Cambio aplicado | C | changed_fields, result | Q | Implementado; validar entrega en Agent Note | MenubarItemService::guardar | Admin/ConsultaEmpresaMenuTest |
 | `menubar-items` | Elemento de menú actualizado | `menubar_item.updated` | U | Elemento de menú | Cambio aplicado | C | changed_fields, result | Q | Implementado; validar entrega en Agent Note | MenubarItemService::guardar | Admin/ConsultaEmpresaMenuTest |
 | `menubar-items` | Elemento de menú eliminado | `menubar_item.deleted` | U | Elemento de menú | Cambio aplicado | C | changed_fields, result | Q | Implementado; validar entrega en Agent Note | MenubarItemService::eliminar | Admin/ConsultaEmpresaMenuTest |
-| `configuracion-empresa` | Empresa actualizada | `empresa.updated` | U | Configuración | Cambio aplicado | C | changed_fields | Q | Implementado; validar entrega en Agent Note | EmpresaConfiguracionController::update | Admin/EmpresaConfiguracionTest |
+| `configuracion-empresa` | Empresa actualizada | `empresa.updated` | U | Configuración | Cambio aplicado | C | changed_fields | Q | Implementado; validar entrega en Agent Note | EmpresaConfiguracionController::update | Admin/EmpresaConfiguracionTest; ProductoDiasGraciaTest |
 | `configuracion-empresa` | Operación bloqueada por el estado de la empresa | `empresa.operacion_bloqueada` | U / S/I | Recurso de la operación | blocked | C / J | state, product, result, related | Q | Implementado; validar entrega en Agent Note | OperacionEmpresaBloqueada::registrar | EmpresaOperacionTest; SicQaTest |
 | `sucursales` | Sucursal creada | `sucursal.created` | U | Sucursal | Cambio aplicado | Equipo iniciador / sucursal afectada | changed_fields | Q | Implementado; validar entrega en Agent Note | SucursalController::store | Admin/SucursalTest; Admin/ActivityLogTest |
 | `sucursales` | Sucursal actualizada | `sucursal.updated` | U | Sucursal | Cambio aplicado | Equipo iniciador / sucursal afectada | changed_fields | Q | Implementado; validar entrega en Agent Note | SucursalController::update | Admin/SucursalTest; Admin/ActivityLogTest |
@@ -165,7 +170,7 @@ un solo código por acción, sin crear catálogos paralelos.
 | `circulo-credito` | Consulta de reporte de crédito con FICO Score | `cliente.sic.credit_report_fico.queried` | S/I | Cliente (conciliación) / intento SIC | Cambio aplicado | J | state, result, related; proveedor/producto si aplica | Q | Implementado; validar entrega en Agent Note | SicOperacionService::ejecutar | SicQaTest; ConsultaSucursalTest (lectura) |
 | `productos-crediticios` | Producto crediticio creado | `producto_crediticio.created` | U / S/I | Producto; versión en ejecución automática | Cambio aplicado | C / J | changed_fields, state, result, related | Q | Implementado; validar entrega en Agent Note | ProductoVersionService::crear | ProductosCrediticiosTest; VersionMotorCreditoTest |
 | `productos-crediticios` | Producto crediticio actualizado | `producto_crediticio.updated` | U / S/I | Producto; versión en ejecución automática | Cambio aplicado | C / J | changed_fields, state, result, related | Q | Implementado; validar entrega en Agent Note | ProductoVersionService::actualizar | ProductosCrediticiosTest; VersionMotorCreditoTest |
-| `productos-crediticios` | Producto crediticio versionado | `producto_crediticio.versioned` | U / S/I | Producto; versión en ejecución automática | Cambio aplicado | C / J | changed_fields, state, result, related | Q | Implementado; validar entrega en Agent Note | ProductoVersionService::nuevaVersion | ProductosCrediticiosTest; VersionMotorCreditoTest |
+| `productos-crediticios` | Producto crediticio versionado | `producto_crediticio.versioned` | U / S/I | Producto; versión en ejecución automática | Cambio aplicado | C / J | changed_fields, state, result, related | Q | Implementado; validar entrega en Agent Note | ProductoVersionService::nuevaVersion | ProductosCrediticiosTest; VersionMotorCreditoTest; ProductoDiasGraciaTest |
 | `productos-crediticios` | Versión de producto activada | `producto_crediticio.activated` | U / S/I | Producto; versión en ejecución automática | Activa | C / J | changed_fields, state, result, related | Q | Implementado; validar entrega en Agent Note | ProductoVersionService::activar / activarProgramadas | ProductosCrediticiosTest; VersionMotorCreditoTest |
 | `productos-crediticios` | Versión de producto retirada | `producto_crediticio.retired` | U / S/I | Producto; versión en ejecución automática | Retirada | C / J | changed_fields, state, result, related | Q | Implementado; validar entrega en Agent Note | ProductoVersionService::retirar / retirarActivaAnterior | ProductosCrediticiosTest; VersionMotorCreditoTest |
 | `plantillas-documentos` | Plantilla documental creada | `documento_plantilla.created` | U | Plantilla | Cambio aplicado | C | result, related | Q | Implementado; validar entrega en Agent Note | DocumentoPlantillaVersionService::create | Documentos/DocumentoPlantillaTest |
@@ -243,6 +248,10 @@ el worker revalida estado y fecha bajo bloqueo del producto y versión, y regist
 activación/retiro en la misma transacción. La fecha se interpreta en zona empresarial.
 
 PDF comparte transacción en solicitud/evento, generación/evento y fallo/evento.
+El presupuesto compartido de medición y renderizado conserva esos emisores,
+reintentos y resultados; no introduce otra acción auditable. El preflight PDF
+solo genera bytes sintéticos y no crea documentos de dominio. Evidencia:
+`Documentos/DocumentoRendererIntegrationTest` y `tests/E2E/support/pdf.php`.
 El archivo privado se escribe antes de confirmar el resultado en BD; un fallo no
 se anuncia como generación completada. Se preserva la política de no regenerar
 originales contractuales con huella existente. La eliminación de evidencias de un

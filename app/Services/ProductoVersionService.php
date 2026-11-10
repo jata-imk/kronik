@@ -16,6 +16,14 @@ class ProductoVersionService
 {
     public function __construct(private readonly FechaEmpresa $fechaEmpresa) {}
 
+    public function predeterminadosNuevoProducto(): array
+    {
+        $parametros = \App\Models\EmpresaConfiguracion::where('singleton_key', 'default')
+            ->value('parametros_operativos');
+
+        return ['dias_gracia_mora' => (int) (data_get($parametros, 'dias_gracia_default') ?? 3)];
+    }
+
     public function registrarUso(ProductoVersion $version, string $tipo, int $id): \App\Models\ProductoVersionUso
     {
         $snapshot = $version->snapshot ?? $this->snapshot($version);

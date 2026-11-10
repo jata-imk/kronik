@@ -1,5 +1,31 @@
 # CI
 
+## Recorridos compartidos E2E
+
+El preflight PDF verifica medición y generación con encabezado/pie reales. Ambas
+fases comparten el presupuesto configurado del renderer (hasta 50 segundos en
+total, 35 por subproceso), conservando el job de 55 segundos y su persistencia.
+
+El helper de consola responde localmente a la geolocalización IP con México;
+los recorridos de captura no dependen de disponibilidad o tiempos de ese proveedor.
+
+Los escenarios ejecutados juntos comparten los datos aislados del seeder. Un
+recorrido que añade una política debe abrir explícitamente **Crear política** o
+**Nueva versión de política** y comprobar el número resultante desde la versión
+vigente, sin asumir que es la primera. Los filtros duplicados por la disposición
+responsive se localizan por su rol y visibilidad.
+En móvil, Sucursales y Clientes muestran tarjetas: se comprueban su búsqueda
+y acceso de consulta, conservando la comprobación de tablas y filtros en escritorio.
+
+Los recorridos largos de documentos e integrantes tienen un presupuesto total
+de 180 segundos; la solicitud que captura, configura política y registra dos
+revisiones tiene 240. Las aserciones generales conservan 15 segundos; el inicio
+de sesión permite 30 para recibir el contexto y Bullet separa la navegación
+(30 segundos, DOM listo) de las acciones (15). No se omiten pasos ni se espera
+la descarga de recursos opcionales para comprobar los controles de cada página.
+Una espera sobre un control deshabilitado se corrige siguiendo el modo de la UI,
+sin convertir consulta en edición dentro de la aplicación.
+
 ## Decision
 
 El proyecto debe tener CI real en GitHub Actions ademas de hooks locales.
@@ -9,6 +35,10 @@ El proyecto debe tener CI real en GitHub Actions ademas de hooks locales.
 `.githooks` corre en la maquina local antes de commit o push. CI corre en GitHub al hacer push o actualizar una PR, en un entorno limpio y reproducible.
 
 ## Workflow Actual
+
+La regresión de días de gracia corre en CI con
+`npm run test:e2e -- dias-gracia.spec.js --output=test-results-gracia`.
+Su evidencia se conserva aparte de los siguientes escenarios Bullet y dual.
 
 `.github/workflows/ci.yml` ejecuta:
 

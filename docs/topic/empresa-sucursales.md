@@ -22,6 +22,8 @@ responsable de una operación.
 
 ## Seguimiento y temas relacionados
 
+- [Entrega de días de gracia predeterminados](../agent-notes/empresa-dias-gracia.md).
+
 - [Backlog 01: configuración](../todos/01-configuracion-empresa.md).
 - [Nota de gestión de usuarios, equipos y sucursales](../agent-notes/01.5-gestion-usuarios-equipos-sucursales.md).
 - [Capturas históricas de configuración](../screenshots/README.md).

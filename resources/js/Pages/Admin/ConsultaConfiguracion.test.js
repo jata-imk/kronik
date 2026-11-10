@@ -15,11 +15,24 @@ it("empresa consulta datos sin normalizar RFC ni completar parámetros y bloquea
     const w=shallowMount(Empresa,{props:{configurada:true,puedeEditar:true,modoEmpresa:"consulta",configuracion:{id:1,rfc:"rfc guardado",regimen_fiscal_id:99,parametros_operativos:{},integraciones:{}}},global});
     expect(w.vm.form.rfc).toBe("rfc guardado");expect(w.vm.form.regimen_fiscal_id).toBe(99);expect(w.vm.form.moneda).toBeNull();
     expect(w.vm.form.parametros_operativos.hora_corte_operativo).toBeNull();
+    expect(w.vm.form.parametros_operativos.dias_gracia_default).toBeNull();
+    expect(w.find('input-number-stub[inputid="dias_gracia"]').attributes("disabled")).toBe("true");
     expect(w.find('button-stub[label="Guardar configuración"]').exists()).toBe(false);
     await w.get("form").trigger("submit");expect(state.put).not.toHaveBeenCalled();
     await w.setProps({configuracion:{id:1,rfc:"Actualizado",domicilio_fiscal:{calle:"Nueva",colonia:"Colonia nueva",codigo_postal_id:7,division_admin_tres_id:8}}});
     expect(w.vm.form.rfc).toBe("Actualizado");expect(w.vm.form.domicilio_fiscal.calle).toBe("Nueva");expect(w.vm.form.domicilio_fiscal.colonia).toBe("Colonia nueva");
     expect(w.find('select-stub[id="colonia"]').exists()).toBe(false);
+});
+
+it("empresa permite configurar cero y conserva parámetros ajenos al formulario", async () => {
+    const w = shallowMount(Empresa, { props: { configurada: true, puedeEditar: true, modoEmpresa: "edicion", configuracion: {
+        parametros_operativos: { dias_gracia_default: 0, reglas_cobranza: { dias: 2 } },
+    } }, global });
+    expect(w.vm.form.parametros_operativos.dias_gracia_default).toBe(0);
+    expect(w.vm.form.parametros_operativos.reglas_cobranza).toEqual({ dias: 2 });
+    expect(w.find('input-number-stub[inputid="dias_gracia"]').attributes("disabled")).toBe("false");
+    await w.setProps({ modoEmpresa: "consulta", configuracion: { parametros_operativos: {} } });
+    expect(w.vm.form.parametros_operativos.dias_gracia_default).toBeNull();
 });
 it("menú conserva valor condicional parámetros y rutas guardadas sin reconstruirlos",async()=>{
     state.put.mockClear();state.post.mockClear();

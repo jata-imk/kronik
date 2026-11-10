@@ -3,7 +3,7 @@
 use App\Services\Documentos\BrowsershotDocumentoPdfRenderer;
 
 test('Chromium renderiza fuentes locales encabezados y páginas', function () {
-    config(['documentos.node_binary' => null, 'documentos.npm_binary' => null, 'documentos.chrome_path' => null, 'documentos.node_modules_path' => base_path('node_modules')]);
+    config(['documentos.node_modules_path' => base_path('node_modules')]);
     $pdf = app(BrowsershotDocumentoPdfRenderer::class)->render(
         '<h1>Prueba áéíóú</h1><div class="document-page-break"></div><p>Segunda página</p>',
         '<p>Encabezado</p>',

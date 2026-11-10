@@ -133,6 +133,9 @@ jobs:
       - name: Verify real PDF renderer before browser flows
         run: php tests/E2E/support/pdf.php
 
+      - name: Verify company grace defaults end to end
+        run: npm run test:e2e -- dias-gracia.spec.js --output=test-results-gracia
+
       - name: Verify both Bullet policies end to end
         env:
           E2E_BULLET_FIXTURES: "true"
@@ -150,5 +153,6 @@ jobs:
           name: browser-evidence
           path: |
             test-results/
+            test-results-gracia/
             playwright-report/
           retention-days: 7

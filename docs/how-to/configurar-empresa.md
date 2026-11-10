@@ -59,6 +59,18 @@ La validacion local del RFC no comprueba que el registro exista o este activo en
 
 Revisar [la matriz operativa](../reference/estatus-operativo-empresa.md). Borrador permite captura y simulaciones; Suspendida detiene nuevas operaciones y conserva cobranza. Completar datos antes de activar. Un trabajo bloqueado no se reenvia automaticamente al reactivar.
 
+## Configurar días de gracia para nuevos productos
+
+1. En **Administración → Configuración de empresa**, capture los días de gracia predeterminados (0–365) y guarde.
+2. Use cero para comenzar sin gracia; deje vacío para usar 3 días.
+3. Entre de nuevo en **Productos crediticios → Nuevo producto** y revise **Montos y tasas**.
+4. Ajuste los días en ese borrador si sus condiciones lo requieren.
+
+El cambio solo sirve para nuevas capturas. Versiones, solicitudes y créditos
+existentes conservan sus condiciones. Para probarlo, guarde un borrador con
+7 días, cambie Empresa a cero y confirme que editarlo sigue mostrando 7; un nuevo
+producto debe comenzar en cero. [Contrato](../reference/configuracion-empresa.md#días-de-gracia-predeterminados).
+
 ## Configurar folios
 
 Abrir **Sucursales → Folios** para consultar o cambiar la numeración. Revisar ejemplos y el siguiente número; la vista previa no reserva. Cambiar prefijo afecta solo futuras emisiones. Si la captura quedó desactualizada, cargar la numeración vigente y revisar antes de guardar. [Reglas y migración de folios](../reference/folios.md).

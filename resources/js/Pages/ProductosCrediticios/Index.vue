@@ -41,6 +41,7 @@ const props = defineProps({
     conceptosComision: { type: Array, default: () => [] },
     simuladorDefaults: { type: Object, default: () => ({}) },
     activacionDefaults: { type: Object, default: () => ({}) },
+    nuevoProductoDefaults: { type: Object, default: () => ({}) },
 });
 const page = usePage();
 const toast = useToast();
@@ -188,7 +189,7 @@ const emptyVersion = () => ({
     monto_maximo: 100000,
     tasa_ordinaria_anual: 36,
     tasa_moratoria_anual: 72,
-    dias_gracia_mora: 3,
+    dias_gracia_mora: props.nuevoProductoDefaults.dias_gracia_mora ?? 3,
     politica_mora: { gracia: "efectiva", intereses: null },
     cat_aplica: true,
     cat_no_aplica_motivo: "",

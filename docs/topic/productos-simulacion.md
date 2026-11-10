@@ -14,6 +14,8 @@ consultan también desde el tema de fiscalidad.
 
 ## Referencia
 
+- [Días de gracia de nuevos productos](../reference/configuracion-empresa.md#días-de-gracia-predeterminados).
+
 - [Productos crediticios](../reference/productos-crediticios.md).
 - [Decisiones fiscales, contractuales y de mora](../reference/decisiones-fiscales-contractuales-mora.md).
 
