@@ -16,9 +16,17 @@ for (const viewport of [
             { url: "/clientes", filters: ["Buscar por nombre", "Buscar por email", "Buscar por teléfono", "Buscar por sucursal"] },
         ]) {
             await page.goto(url);
-            await expect(page.locator("table")).toBeVisible();
-            for (const placeholder of filters) {
-                await expect(page.getByPlaceholder(placeholder, { exact: true })).toBeVisible();
+            const mobileCards = viewport.width < 640 && ["/admin/sucursales", "/clientes"].includes(url);
+            if (mobileCards) {
+                const cards = page.locator(url === "/clientes" ? ".k-mobile-client-list article" : ".k-mobile-records article");
+                await expect(cards.first()).toBeVisible();
+                await expect(cards.first().getByRole("button", { name: "Ver", exact: true })).toBeVisible();
+                await expect(page.getByPlaceholder(url === "/clientes" ? "Buscar clientes" : "Buscar sucursales", { exact: true }).filter({ visible: true })).toBeVisible();
+            } else {
+                await expect(page.locator("table")).toBeVisible();
+                for (const placeholder of filters) {
+                    await expect(page.getByPlaceholder(placeholder, { exact: true })).toBeVisible();
+                }
             }
             if (url === "/admin/teams") {
                 await expect(page.getByRole("combobox", { name: "Filtrar por estado", exact: true }).filter({ visible: true })).toBeVisible();

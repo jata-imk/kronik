@@ -56,7 +56,7 @@ test("Empresa prellena nuevos productos sin alterar versiones guardadas", async 
         await expect(page.locator("#dias_gracia")).toBeDisabled();
         const writes = [];
         page.on("request", r => { if (["POST", "PUT", "PATCH", "DELETE"].includes(r.method())) writes.push(r.url()); });
-        await page.locator("form").press("Enter");
+        await page.getByLabel("Razón social", { exact: true }).press("Enter");
         expect(writes).toEqual([]);
         await page.setViewportSize({ width: 390, height: 844 });
         await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

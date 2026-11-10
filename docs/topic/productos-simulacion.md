@@ -1,7 +1,5 @@
 # Productos y simulación
 
-- [Días de gracia de nuevos productos](../reference/configuracion-empresa.md#días-de-gracia-predeterminados).
-
 Productos y versiones, tasas, comisiones, periodicidades y simulaciones de
 crédito simple. La fiscalidad por concepto y las decisiones contractuales se
 consultan también desde el tema de fiscalidad.
@@ -15,6 +13,8 @@ consultan también desde el tema de fiscalidad.
 - [Probar simulación con impuestos](../how-to/qa-simulacion-fiscal.md).
 
 ## Referencia
+
+- [Días de gracia de nuevos productos](../reference/configuracion-empresa.md#días-de-gracia-predeterminados).
 
 - [Productos crediticios](../reference/productos-crediticios.md).
 - [Decisiones fiscales, contractuales y de mora](../reference/decisiones-fiscales-contractuales-mora.md).

@@ -17,8 +17,17 @@ Se conservan los eventos actuales; el prellenado no registra actividad.
 ## Evidencia
 
 - Pruebas focalizadas backend: 11 aprobadas / 106 aserciones.
-- Frontend, suite completa, build y E2E: en verificación.
-- Revisión medium y barrido acumulado: pendientes antes de integración.
+- Suite backend: 890 aprobadas / 46378 aserciones / 1 omitida (SQLite en memoria).
+- Frontend: 153 aprobadas en 58 archivos. Build aprobado.
+- E2E general inicial: 39 aprobadas, 4 omitidas por flags y 6 fallidas. El nuevo
+  recorrido de días de gracia pasó. Revalidación en curso de PDF/documentos,
+  filtros responsive, consulta/creación de política y recorrido largo de integrantes.
+- Diagnósticos iniciales conservados en `storage/framework/testing/gracia-e2e-inicial`;
+  log general en `storage/logs/dias-gracia-e2e-general.log` y revalidación en
+  `storage/logs/gracia-e2e-revalidacion.log`.
+- Revisión medium inicial contra main, código `d730cae`: sin hallazgos accionables.
+  Revisión final y barrido acumulado pendientes antes de integrar.
+- 96 enlaces locales revisados sin rotos.
 
 ## Siguiente paso
 

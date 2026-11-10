@@ -2,6 +2,10 @@
 
 ## Recorridos compartidos E2E
 
+La regresión de días de gracia corre en CI con
+`npm run test:e2e -- dias-gracia.spec.js --output=test-results-gracia`.
+Su evidencia se conserva aparte de los siguientes escenarios Bullet y dual.
+
 El helper de consola responde localmente a la geolocalización IP con México;
 los recorridos de captura no dependen de disponibilidad o tiempos de ese proveedor.
 
@@ -10,6 +14,8 @@ recorrido que añade una política debe abrir explícitamente **Crear política*
 **Nueva versión de política** y comprobar el número resultante desde la versión
 vigente, sin asumir que es la primera. Los filtros duplicados por la disposición
 responsive se localizan por su rol y visibilidad.
+En móvil, Sucursales y Clientes muestran tarjetas: se comprueban su búsqueda
+y acceso de consulta, conservando la comprobación de tablas y filtros en escritorio.
 
 Los recorridos largos de documentos e integrantes tienen un presupuesto total
 de 180 segundos; la solicitud que captura, configura política y registra dos
