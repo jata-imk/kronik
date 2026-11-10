@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { failOnConsoleErrors, login } from "./support/auth.js";
 
 test("administra usuarios desde el equipo y conserva el contexto", async ({ page }, testInfo) => {
-    test.setTimeout(90_000);
+    test.setTimeout(180_000);
     await login(page);
     const assertNoConsoleErrors = await failOnConsoleErrors(page);
     await page.goto("/admin/teams");

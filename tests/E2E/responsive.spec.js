@@ -21,10 +21,10 @@ for (const viewport of [
                 await expect(page.getByPlaceholder(placeholder, { exact: true })).toBeVisible();
             }
             if (url === "/admin/teams") {
-                await expect(page.getByLabel("Filtrar por estado")).toBeVisible();
+                await expect(page.getByRole("combobox", { name: "Filtrar por estado", exact: true }).filter({ visible: true })).toBeVisible();
             }
             if (url === "/admin/sucursales") {
-                await expect(page.getByLabel("Filtrar sucursales por estado")).toBeVisible();
+                await expect(page.getByRole("combobox", { name: "Filtrar sucursales por estado", exact: true }).filter({ visible: true })).toBeVisible();
             }
             await expect(page.locator("body")).not.toContainText(/Server Error|Exception/i);
         }

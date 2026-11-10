@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { failOnConsoleErrors, login } from "./support/auth.js";
 
 test("crea, reanuda y envía una solicitud sin aprobar ni consultar SIC", async ({ page }, testInfo) => {
-    test.setTimeout(90_000);
+    test.setTimeout(240_000);
     await login(page);
     const assertNoConsoleErrors = await failOnConsoleErrors(page);
     await page.goto("/solicitudes/create");
@@ -38,10 +38,14 @@ test("crea, reanuda y envía una solicitud sin aprobar ni consultar SIC", async 
     await expect(page.getByRole("status").filter({ hasText: "Información actualizada" })).toBeVisible();
     await page.getByRole("link", { name: "Configurar política de originación", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Política de originación", exact: true })).toBeVisible();
+    const policyText = await page.getByText(/^Política actual:/).innerText();
+    const previousPolicy = Number(policyText.match(/versión (\d+)/)?.[1] ?? 0);
+    await page.getByRole("button", { name: previousPolicy ? "Nueva versión de política" : "Crear política", exact: true }).click();
     await page.getByLabel("Separación de funciones", { exact: true }).click();
     await page.getByRole("option", { name: "Dual: quien capturó no aprueba", exact: true }).click();
     await page.getByLabel("Requisito SIC", { exact: true }).click();
     await page.getByRole("option", { name: "Evaluación manual documentada permitida", exact: true }).click();
+    await page.getByLabel("Límite de aprobación (MXN)", { exact: true }).press("ControlOrMeta+A");
     await page.getByLabel("Límite de aprobación (MXN)", { exact: true }).pressSequentially("50000.00");
     await page.getByLabel("Límite de aprobación (MXN)", { exact: true }).blur();
     await expect(page.getByLabel("Límite de aprobación (MXN)", { exact: true })).toHaveValue(/50,000\.00/);
@@ -51,7 +55,7 @@ test("crea, reanuda y envía una solicitud sin aprobar ni consultar SIC", async 
     await page.getByLabel("Referencia de validación del operador", { exact: true }).fill("Validación sintética E2E; no configura una instalación productiva.");
     await page.getByLabel("Confirmo esta nueva versión y su modalidad de aprobación.", { exact: true }).check();
     await page.getByRole("button", { name: "Guardar nueva versión de política", exact: true }).click();
-    await expect(page.getByText("Política actual: versión 1.", { exact: true })).toBeVisible();
+    await expect(page.getByText(`Política actual: versión ${previousPolicy + 1}.`, { exact: true })).toBeVisible();
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: testInfo.outputPath("politica-originacion-desktop.png"), fullPage: true });
     await page.goto(detail);

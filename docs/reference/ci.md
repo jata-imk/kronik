@@ -1,5 +1,19 @@
 # CI
 
+## Recorridos compartidos E2E
+
+Los escenarios ejecutados juntos comparten los datos aislados del seeder. Un
+recorrido que añade una política debe abrir explícitamente **Crear política** o
+**Nueva versión de política** y comprobar el número resultante desde la versión
+vigente, sin asumir que es la primera. Los filtros duplicados por la disposición
+responsive se localizan por su rol y visibilidad.
+
+Los recorridos largos de documentos e integrantes tienen un presupuesto total
+de 180 segundos; la solicitud que captura, configura política y registra dos
+revisiones tiene 240. No amplían los plazos de cada aserción ni omiten pasos.
+Una espera sobre un control deshabilitado se corrige siguiendo el modo de la UI,
+sin convertir consulta en edición dentro de la aplicación.
+
 ## Decision
 
 El proyecto debe tener CI real en GitHub Actions ademas de hooks locales.
