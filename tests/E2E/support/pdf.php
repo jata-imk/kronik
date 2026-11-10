@@ -11,7 +11,11 @@ if (! app()->environment('testing')) {
 
 // No domain data or database writes; renderer failures retain their actual cause in CI.
 try {
-    $pdf = app(App\Contracts\DocumentoPdfRenderer::class)->render('<p>Documento sintético aislado.</p>');
+    $pdf = app(App\Contracts\DocumentoPdfRenderer::class)->render(
+        '<p>Documento sintético aislado.</p>',
+        '<p>Encabezado de prueba con fuente local.</p>',
+        '<p>Pie de prueba.</p>',
+    );
     if (! str_starts_with($pdf, '%PDF-')) {
         throw new RuntimeException('El renderer no produjo un PDF válido.');
     }

@@ -10,11 +10,12 @@ final class BrowsershotDocumentoPdfRenderer implements DocumentoPdfRenderer
 {
     public function render(string $bodyHtml, ?string $headerHtml = null, ?string $footerHtml = null, array $options = []): string
     {
+        $inicio = hrtime(true);
         $css = $this->styles();
         $header = $this->section($headerHtml ?? '', $css);
         $footer = $this->section($footerHtml ?? '', $css, true);
         $measure = '<style>'.$css.'.section{width:174mm;display:flow-root}</style><div class="section document-content" id="header">'.($headerHtml ?? '').'</div><div class="section document-content" id="footer">'.($footerHtml ?? '').'<div style="font-size:8pt">1 / 1</div></div>';
-        $sizes = json_decode($this->browser($measure)->timeout(10)->evaluate('(async () => { await document.fonts.ready; await Promise.all(Array.from(document.images).map(i => i.decode().catch(() => {}))); return JSON.stringify(["header", "footer"].map(id => document.getElementById(id).getBoundingClientRect().height * 25.4 / 96)); })()'), true, flags: JSON_THROW_ON_ERROR);
+        $sizes = json_decode($this->browser($measure)->timeout($this->timeoutRestante($inicio))->evaluate('(async () => { await document.fonts.ready; await Promise.all(Array.from(document.images).map(i => i.decode().catch(() => {}))); return JSON.stringify(["header", "footer"].map(id => document.getElementById(id).getBoundingClientRect().height * 25.4 / 96)); })()'), true, flags: JSON_THROW_ON_ERROR);
         if (max($sizes) > 60) {
             throw ValidationException::withMessages(['encabezado_html' => 'El encabezado o el pie supera 60 mm de altura. Reduzca el texto o el tamaño de las imágenes.']);
         }
@@ -25,9 +26,21 @@ final class BrowsershotDocumentoPdfRenderer implements DocumentoPdfRenderer
             .document-content{position:relative;z-index:1}
         </style></head><body><div class="watermark">'.$watermark.'</div><main class="document-content">'.$bodyHtml.'</main></body></html>';
 
-        return $this->browser($html)->format('A4')->showBackground()
+        return $this->browser($html)->timeout($this->timeoutRestante($inicio))->format('A4')->showBackground()
             ->margins(max(26, $sizes[0] + 12), 18, max(24, $sizes[1] + 12), 18)
             ->showBrowserHeaderAndFooter()->headerHtml($header)->footerHtml($footer)->pdf();
+    }
+
+    private function timeoutRestante(int $inicio): int
+    {
+        // Reserve five seconds for persistence within the existing 55-second job.
+        $limite = min(50, max(1, (int) config('documentos.renderer_timeout', 55)));
+        $restante = $limite - (hrtime(true) - $inicio) / 1_000_000_000;
+        if ($restante <= 0) {
+            throw ValidationException::withMessages(['documento' => 'La preparación del PDF excedió el tiempo disponible. Inténtalo nuevamente.']);
+        }
+
+        return min(35, (int) ceil($restante));
     }
 
     private function browser(string $html): Browsershot
