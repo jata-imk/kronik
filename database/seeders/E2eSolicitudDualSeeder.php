@@ -61,7 +61,7 @@ class E2eSolicitudDualSeeder extends Seeder
             $comision->update(['fiscalidad' => ['tratamiento' => 'gravado', 'tasa' => '16', 'base' => 'importe_concepto']]);
         }
         // Distinct effective date required by version uniqueness; isolated fixture only.
-        $producto = $productos->activar($producto, app(FechaEmpresa::class)->hoy()->subDay()->toDateString());
+        $producto = $productos->activar($producto, app(FechaEmpresa::class)->hoy()->subDay()->toDateString(), true);
         app(OriginacionPoliticaService::class)->crear($producto, ['version_anterior' => 0, 'modalidad' => 'dual', 'sic' => 'manual_permitido',
             'monto_maximo' => '50000.00', 'vigencia_dias' => 15, 'documentos' => ['ine'], 'confirmacion' => true,
             'criterio_capacidad' => 'Revisar ingresos y egresos ficticios del escenario dual E2E.',

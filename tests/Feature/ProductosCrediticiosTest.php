@@ -129,7 +129,7 @@ test('event commission configuration persists through activation and duplication
     $this->actingAs($actor)->post(route('productos-crediticios.store'), productoPayload(['fiscalidad' => fiscalidadPrueba(), 'comisiones' => [$comision]]))->assertSessionHasNoErrors();
     $version = ProductoVersion::firstOrFail();
     $service = app(ProductoVersionService::class);
-    $activa = $service->activar($version, '2026-01-01');
+    $activa = $service->activar($version, app(\App\Services\FechaEmpresa::class)->hoy()->toDateString());
     expect($activa->snapshot['comisiones'][0]['evento_cobro'])->toBe('prepago')->and($activa->snapshot['comisiones'][0]['base_calculo'])->toBe('capital_anticipado');
     $copia = $service->nuevaVersion($activa->producto, $activa, $actor->id);
     expect($copia->comisiones()->first()->evento_cobro)->toBe('prepago')->and($copia->comisiones()->first()->fiscalidad)->toBe(['tratamiento' => 'exento']);

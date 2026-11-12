@@ -349,3 +349,7 @@ No acredita Revolvente operativo ni su validación de combinaciones. El catálog
 de capacidades está integrado mediante PR #64; la revisión de la cartera de prueba
 fue confirmada por el usuario el 04/11/2026. Bullet y exigibilidad independiente
 conservan sus tareas pendientes.
+
+## Captura histórica y límites de módulos
+
+[Captura histórica](captura-historica-creditos.md) permite reconstruir un crédito con fechas efectivas sin cambiar reloj, contratos ni motor. Su estado incompleto es operativo y se consulta desde aplicación; no es un estado financiero ni una regla matemática de mora. LOS autoriza, documentos conservan evidencia, core calcula y aplicación registra. Comunicaciones/proyecciones consumen ese contrato y no recalculan intereses. Libro financiero no equivale a pólizas contables. Ver [ADR 0045](../explanation/adr-0045-fechas-efectivas-captura-historica.md).

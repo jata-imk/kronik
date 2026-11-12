@@ -12,9 +12,19 @@ class Credito extends Model
 
     protected $guarded = [];
 
-    protected $hidden = ['condiciones'];
+    protected $hidden = ['condiciones', 'capturaHistorica'];
 
     protected $casts = ['condiciones' => 'encrypted:array', 'capital_inicial' => 'decimal:2', 'fecha_desembolso' => 'date:Y-m-d'];
+
+    public function capturaHistorica()
+    {
+        return $this->hasOne(CreditoCapturaHistorica::class);
+    }
+
+    public function scopeConHistoriaCompleta(\Illuminate\Database\Eloquent\Builder $query): void
+    {
+        $query->whereDoesntHave('capturaHistorica', fn ($q) => $q->whereNull('completada_en'));
+    }
 
     public function solicitud()
     {

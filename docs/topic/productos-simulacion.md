@@ -43,3 +43,5 @@ consultan también desde el tema de fiscalidad.
 - [Consulta completa de versiones](../reference/consulta-edicion-historicos.md).
 
 - [ADR 0039: preparación y habilitación de condiciones Bullet](../explanation/adr-0039-condiciones-bullet-y-habilitacion.md).
+
+- [Contrato de captura histórica](../reference/captura-historica-creditos.md), [ADR 0045](../explanation/adr-0045-fechas-efectivas-captura-historica.md) y [seguimiento de la entrega](../agent-notes/desembolsos-historicos.md).

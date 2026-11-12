@@ -134,7 +134,7 @@ test('la migración nullable y la consulta no rellenan condiciones ni hashes his
     $service = app(ProductoVersionService::class);
     $version = $service->crear(productoPayload(), $actor->id)->versiones()->sole();
     DB::table('producto_version_reglas')->where('producto_version_id', $version->id)->update(['base_ordinaria' => null, 'politica_interes_bullet' => null]);
-    $version = $service->activar($version->fresh(), '2026-01-01');
+    $version = $service->activar($version->fresh(), app(\App\Services\FechaEmpresa::class)->hoy()->toDateString());
     $snapshot = $version->snapshot;
     unset($snapshot['reglas']['base_ordinaria'], $snapshot['reglas']['politica_interes_bullet']);
     DB::table('producto_versiones')->where('id', $version->id)->update(['snapshot' => json_encode($snapshot), 'snapshot_hash' => hash('sha256', json_encode($snapshot))]);

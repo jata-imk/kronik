@@ -20,7 +20,7 @@ class CreditoController extends Controller
         $scope = $consulta->resolver($request);
         $filters = $request->validate(['buscar' => 'nullable|string|max:100', 'sucursal_id' => 'nullable|integer|exists:sucursales,id',
             'por_pagina' => ['nullable', 'integer', Rule::in([10, 25, 50])], 'orden' => ['nullable', Rule::in(['recientes', 'antiguos'])]]);
-        $creditos = $consulta->aplicar(Credito::query(), $scope)->with(['cliente:id,primer_nombre,apellido_paterno,apellido_materno', 'sucursal:id,nombre', 'responsable:id,name', 'ultimoPago'])
+        $creditos = $consulta->aplicar(Credito::query(), $scope)->with(['cliente:id,primer_nombre,apellido_paterno,apellido_materno', 'sucursal:id,nombre', 'responsable:id,name', 'ultimoPago', 'capturaHistorica'])
 
             ->when($filters['buscar'] ?? null, fn ($q, $buscar) => $q->where(fn ($q) => $q
                 ->where('folio', 'like', '%'.$buscar.'%')
@@ -38,7 +38,8 @@ class CreditoController extends Controller
                     $c->estado_operativo = 'por_revisar';
                 }
             }
-            $c->unsetRelation('ultimoPago');
+            $c->captura_historica = app(\App\Services\Credito\CapturaHistoricaService::class)->resumen($c);
+            $c->unsetRelation('ultimoPago')->unsetRelation('capturaHistorica');
         });
 
         return Inertia::render('Creditos/Index', ['creditos' => $creditos, 'filters' => [...$filters, ...$scope], 'sucursales' => $consulta->opciones()]);
@@ -89,6 +90,8 @@ class CreditoController extends Controller
             'situacion' => $situacion,
             'puedePagar' => request()->user()->operaEnSucursal($credito->sucursal_id) && Gate::allows('pay', $credito) && ($situacion['resumen']['estado_operativo'] ?? null) === 'activo',
             'puedeAnticipar' => request()->user()->operaEnSucursal($credito->sucursal_id) && (Gate::allows('prepay', $credito) || Gate::allows('settle', $credito)) && ($situacion['resumen']['estado_operativo'] ?? null) === 'activo',
+            'capturaHistorica' => app(\App\Services\Credito\CapturaHistoricaService::class)->resumen($credito),
+            'puedeCompletarCaptura' => request()->user()->operaEnSucursal($credito->sucursal_id) && Gate::allows('pay', $credito) && config('originacion.pagos_qa_habilitados') === true && app(\App\Services\Credito\CapturaHistoricaService::class)->estado($credito) === \App\Enums\EstadoCapturaHistorica::Pendiente,
             'puedeVerContrato' => Gate::allows('viewPackage', $credito->solicitud),
         ]);
     }

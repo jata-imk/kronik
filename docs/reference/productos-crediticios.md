@@ -132,3 +132,7 @@ de actualizaci?n. Incluye condiciones, periodicidades, reglas, comisiones, fisca
 y atraso, preservando valores históricos. Ver [contrato](consulta-edicion-historicos.md).
 Al volver por historial a una URL sin modo de formulario se cierra la consulta;
 las respuestas de validación conservan la captura del mismo borrador editable.
+
+## Vigencia histórica QA
+
+Un borrador puede activarse con vigencia efectiva pasada mediante confirmación y puerta QA existentes. La activación real y la evidencia congelada se conservan. No se cambia la vigencia de versiones utilizadas ni se selecciona otra versión por fecha. Contrato en [captura histórica](captura-historica-creditos.md).

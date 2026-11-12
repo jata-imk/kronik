@@ -175,3 +175,7 @@ antes de implementar los cálculos afectados.
 
 La configuración fiscal concreta y el contenido contractual aprobado siguen siendo
 responsabilidades de cada institución, no preguntas de producto ya sin respuesta.
+
+## Autorización posterior de desembolsos pasados — 2026-11-11
+
+La tarea [Desembolsos históricos](https://app.notion.com/p/41361db7db7f81f5ad52d7df919dee99) y [ADR 0045](../explanation/adr-0045-fechas-efectivas-captura-historica.md) sustituyen la prohibición anterior únicamente para captura QA con condiciones/tabla firmada conservadas. No cambia fiscalidad, gracia ni la prohibición de insertar pagos incompatibles con movimientos posteriores. No habilita operación real.

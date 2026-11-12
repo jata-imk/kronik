@@ -52,6 +52,7 @@ Route::middleware([
     'verified',
     'active',
 ])->group(function () {
+    Route::post('creditos/{credito}/captura-historica/completar', [\App\Http\Controllers\CreditoCapturaHistoricaController::class, 'store'])->name('creditos.captura-historica.completar');
     Route::get('contexto-operativo', fn (\Illuminate\Http\Request $request) => response()->json([
         'team_id' => $request->user()->current_team_id,
         'sucursal_id' => $request->user()->current_sucursal_id,

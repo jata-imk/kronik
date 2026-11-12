@@ -11,6 +11,7 @@ return [
     ],
     'boolean' => 'El campo :attribute debe ser verdadero o falso.',
     'date' => 'El campo :attribute debe ser una fecha válida.',
+    'date_format' => 'El campo :attribute debe tener el formato :format y ser una fecha válida.',
     'email' => 'El campo :attribute debe ser un correo electrónico válido.',
     'enum' => 'El valor seleccionado para :attribute no es válido.',
     'distinct' => 'El campo :attribute contiene valores repetidos.',

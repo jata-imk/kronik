@@ -22,7 +22,8 @@ class RegistrarDesembolsoRequest extends FormRequest
     {
         return ['fecha_desembolso' => ['required', 'date_format:Y-m-d'], 'importe' => ['required', 'regex:/^\d{1,14}(\.\d{1,2})?$/', 'gt:0'],
             'referencia' => ['required', 'string', 'min:5', 'max:120'], 'idempotency_key' => ['required', 'uuid'],
-            'lock_version' => ['required', 'integer', 'min:0'], 'confirmacion_qa' => ['accepted']];
+            'lock_version' => ['required', 'integer', 'min:0'], 'confirmacion_qa' => ['accepted'],
+            'confirmacion_historica' => ['sometimes', 'boolean']];
     }
 
     public function messages(): array
