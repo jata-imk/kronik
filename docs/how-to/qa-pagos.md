@@ -63,3 +63,7 @@ Consulta la [decisión técnica de pagos QA](../explanation/adr-0020-pagos-manua
 Capturas sintéticas: [previa en escritorio](../assets/qa-pagos/pago-qa-desktop.png),
 [captura móvil](../assets/qa-pagos/pago-qa-mobile.png) y
 [recibo móvil](../assets/qa-pagos/recibo-qa-mobile.png).
+
+## Recorrido con fechas pasadas
+
+La [guía de desembolsos históricos](qa-desembolsos-historicos.md) complementa el caso de hoy con vigencia/fecha efectiva pasada, registro cronológico y captura incompleta. Permite reconstruir atrasos con reloj real y documentos actuales conservados; no adelantar el reloj ni cambiar condiciones firmadas. Las pruebas aisladas mantienen sus fronteras temporales exactas.

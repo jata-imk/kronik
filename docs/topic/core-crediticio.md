@@ -37,3 +37,5 @@ Los documentos distinguen diseño aprobado de capacidades implementadas.
 - [ADR 0039: condiciones versionadas y editor Bullet](../explanation/adr-0039-condiciones-bullet-y-habilitacion.md).
 
 - [Contrato de captura histórica](../reference/captura-historica-creditos.md), [ADR 0045](../explanation/adr-0045-fechas-efectivas-captura-historica.md) y [seguimiento de la entrega](../agent-notes/desembolsos-historicos.md).
+
+- [Recorrido reproducible de desembolsos históricos](../how-to/qa-desembolsos-historicos.md).

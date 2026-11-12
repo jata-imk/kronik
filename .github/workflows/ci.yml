@@ -111,6 +111,9 @@ jobs:
       - name: Run frontend unit tests
         run: npm run test:unit
 
+      - name: Verify isolated E2E database guards
+        run: node --test tests/E2E/prepare.test.mjs
+
       - name: Run backend tests
         run: php artisan test
 
@@ -136,6 +139,12 @@ jobs:
       - name: Verify company grace defaults end to end
         run: npm run test:e2e -- dias-gracia.spec.js --output=test-results-gracia
 
+      - name: Verify historical origination and chronological payments
+        env:
+          E2E_HISTORICO_FIXTURES: "true"
+          E2E_FRESH_DATABASE: "true"
+        run: npm run test:e2e -- historico-ciclo.spec.js --output=test-results-historico
+
       - name: Verify both Bullet policies end to end
         env:
           E2E_BULLET_FIXTURES: "true"
@@ -159,4 +168,5 @@ jobs:
             test-results-gracia/
             playwright-report/
             test-results-rfc/
+            test-results-historico/
           retention-days: 7

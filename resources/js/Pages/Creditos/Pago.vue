@@ -6,7 +6,7 @@ import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import PageHeader from "@/Components/PageHeader.vue";
 import DistribucionPago from "@/Components/Creditos/DistribucionPago.vue";
 import { formatMoneyWithCents as money } from "@/Pages/ProductosCrediticios/productValidation";
-const props = defineProps({ credito: Object, situacion: Object, hoy: String, habilitado: Boolean });
+const props = defineProps({ credito: Object, situacion: Object, hoy: String, habilitado: Boolean, capturaHistorica: Object });
 const form = useForm({ fecha_pago: props.hoy, importe: null, referencia: "", idempotency_key: crypto.randomUUID(), confirmacion_qa: false, previa_hash: "" });
 const previa = ref(null);
 const loading = ref(false);
@@ -36,6 +36,7 @@ function guardar() {
         <div class="space-y-6 p-4 md:p-6">
             <Link :href="route('creditos.show', credito.id)" class="inline-flex items-center gap-2 text-primary hover:underline"><i class="pi pi-arrow-left" aria-hidden="true" />Volver al crédito {{ credito.folio ?? `CR-${credito.id}` }}</Link>
             <section class="k-feature p-6"><Tag value="Solo registro manual QA" severity="warn" /><h2 class="mt-4 text-xl font-semibold text-white">Primero revisa, después confirma</h2><p class="mt-2">Captura la fecha y el importe realmente recibidos en el escenario sintético. La vista previa no registra dinero.</p><p v-if="situacion.resumen" class="mt-4">Exigible hoy: <strong class="text-xl">{{ money(situacion.resumen.exigible) }}</strong> · Capital insoluto: {{ money(situacion.resumen.capital_insoluto) }}</p></section>
+            <Message v-if="capturaHistorica?.estado === 'pendiente'" severity="warn" :closable="false">Captura histórica pendiente: registra desde el pago más antiguo, con su fecha efectiva real. El saldo a hoy es provisional mientras falten movimientos. Al terminar, vuelve al crédito para completar la captura.</Message>
             <Message v-if="!habilitado" severity="warn" :closable="false">El administrador técnico debe habilitar ORIGINACION_PAGOS_QA_HABILITADOS y reconstruir la caché exclusivamente en QA.</Message>
             <Message v-if="situacion.error" severity="warn" :closable="false">{{ situacion.error }}</Message>
             <div class="grid gap-5 lg:grid-cols-3">

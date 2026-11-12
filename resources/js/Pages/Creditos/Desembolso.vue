@@ -8,8 +8,9 @@ const props = defineProps({ solicitud: Object, preparacion: Object, puedeRegistr
 const drawer = ref(false);
 const pendientes = computed(() => props.preparacion.requisitos.filter(r => !r.cumplido));
 const resumen = computed(() => props.preparacion.resumen);
-const form = useForm({ fecha_desembolso: resumen.value?.fecha ?? "", importe: resumen.value?.importe ?? "", referencia: "", confirmacion_qa: false, idempotency_key: crypto.randomUUID(), lock_version: props.solicitud.lock_version });
+const form = useForm({ fecha_desembolso: resumen.value?.fecha ?? "", importe: resumen.value?.importe ?? "", referencia: "", confirmacion_qa: false, confirmacion_historica: false, idempotency_key: crypto.randomUUID(), lock_version: props.solicitud.lock_version });
 function registrar() {
+    if (!props.puedeRegistrar || !props.preparacion.permitido || !form.confirmacion_qa || (resumen.value?.historica && !form.confirmacion_historica)) return;
     form.post(route("solicitudes.desembolso.store", props.solicitud.id), { preserveScroll: true });
 }
 </script>
@@ -28,9 +29,10 @@ function registrar() {
                     <div class="mt-5 grid gap-4 sm:grid-cols-3">
                         <div><p class="text-white/80">Efectivo a entregar</p><p class="mt-2 text-3xl font-bold">{{ money(resumen.importe) }}</p><p class="mt-2 text-sm text-white/80">Importe exacto de la transferencia</p></div>
                         <div class="rounded-xl bg-white/10 p-4"><p>Capital financiado inicial</p><p class="mt-2 text-xl font-semibold">{{ money(resumen.capital) }}</p><p class="mt-2 text-sm">Incluye cargos financiados: {{ money(resumen.financiado) }}</p></div>
-                        <div class="rounded-xl bg-white/10 p-4"><p>Fecha firmada</p><p class="mt-2 text-xl font-semibold">{{ resumen.fecha }}</p><p class="mt-2 text-sm">Debe coincidir con hoy en la zona de la institución.</p></div>
+                        <div class="rounded-xl bg-white/10 p-4"><p>Fecha firmada</p><p class="mt-2 text-xl font-semibold">{{ resumen.fecha }}</p><p class="mt-2 text-sm">Fecha efectiva conservada; debe ser pasada o actual en la zona de la institución.</p></div>
                     </div>
                 </section>
+                <Message v-if="resumen?.historica" severity="warn" :closable="false">Registrarás una operación histórica sintética. Después incorpora los pagos desde el más antiguo y completa la captura. Los saldos serán provisionales mientras falten movimientos.</Message>
                 <Message severity="warn" :closable="false">Esta pantalla solo registra una transferencia sintética para QA. No envía dinero al banco. No utilices comprobantes ni cuentas reales.</Message>
                 <div class="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-3">
                     <section class="min-w-0 space-y-4 rounded-2xl border border-surface-200 p-5 dark:border-surface-700 lg:col-span-2">
@@ -54,6 +56,7 @@ function registrar() {
                         <div><label for="desembolso-fecha" class="mb-2 block font-semibold">Fecha del desembolso</label><InputText id="desembolso-fecha" :modelValue="form.fecha_desembolso" readonly class="w-full" /></div>
                         <div><label for="desembolso-referencia" class="mb-2 block font-semibold">Referencia única de transferencia *</label><InputText id="desembolso-referencia" v-model="form.referencia" required minlength="5" maxlength="120" class="w-full" /><p class="mt-2 text-sm text-surface-500">Identificador completo del comprobante sintético (por ejemplo QA-TRANSFERENCIA-001). No lo reutilices en otro crédito ni captures datos bancarios personales.</p></div>
                         <label class="flex items-start gap-3"><Checkbox v-model="form.confirmacion_qa" binary /><span>Verifiqué fecha, cliente e importe. Confirmo el registro exclusivamente QA, sin dinero real.</span></label>
+                        <label v-if="resumen?.historica" class="flex items-start gap-3"><Checkbox v-model="form.confirmacion_historica" input-id="desembolso-historico" binary /><span>Confirmo que registro una operación histórica sintética ya ocurrida; no solicito una transferencia nueva.</span></label>
                         <Message v-for="(error, key) in form.errors" :key="key" severity="error" :closable="false">{{ error }}</Message>
                         <Button type="submit" v-empresa-operacion="'desembolsar'" label="Confirmar registro QA" icon="pi pi-check" :loading="form.processing" :disabled="!preparacion.permitido" class="w-full" />
                     </form>

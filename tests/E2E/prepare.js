@@ -1,12 +1,18 @@
 import { execFileSync } from "node:child_process";
 import { closeSync, existsSync, openSync, rmSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { resolve, dirname, basename } from "node:path";
+import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 export function e2eEnvironment() {
-    const cycle = process.env.E2E_ORIGINACION_DUAL === "true" || process.env.E2E_BULLET_FIXTURES === "true";
+    const historical = process.env.E2E_HISTORICO_FIXTURES === "true";
+    if (historical && process.env.E2E_BULLET_FIXTURES === "true") {
+        throw new Error("El recorrido histórico usa reloj real: desactiva E2E_BULLET_FIXTURES antes de iniciarlo.");
+    }
+    const fresh = historical || process.env.E2E_FRESH_DATABASE === "true";
+    const cycle = historical || process.env.E2E_ORIGINACION_DUAL === "true" || process.env.E2E_BULLET_FIXTURES === "true";
     const localDatabase = fileURLToPath(
-        new URL("../../storage/framework/testing/kronik-e2e.sqlite", import.meta.url),
+        new URL(fresh ? `../../storage/framework/testing/kronik-e2e-${randomUUID()}.sqlite` : "../../storage/framework/testing/kronik-e2e.sqlite", import.meta.url),
     );
 
     return {
@@ -16,6 +22,8 @@ export function e2eEnvironment() {
         DEBUGBAR_ENABLED: "false",
         APP_KEY: "base64:VdUXfE4mVbQd4D4QnS2SGdlx1DsFJsPhlfLCMyn5LIk=",
         E2E_DATABASE: "true",
+        E2E_HISTORICO_FIXTURES: historical ? "true" : "false",
+        E2E_FRESH_DATABASE: fresh ? "true" : "false",
         E2E_BULLET_FIXTURES: process.env.E2E_BULLET_FIXTURES === "true" ? "true" : "false",
         E2E_ORIGINACION_DUAL: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
         ORIGINACION_APROBACIONES_HABILITADAS: cycle ? "true" : "false",
@@ -66,15 +74,26 @@ export function prepareE2eDatabase(environment = e2eEnvironment()) {
 
     // Force Laravel to use the production build. A stale Vite hot file would
     // point browser tests at a developer server that may not be running.
-    if (existsSync(hotFile)) rmSync(hotFile);
+    if (existsSync(hotFile)) {
+        if (environment.E2E_FRESH_DATABASE === "true") throw new Error("La prueba aislada requiere el build sin public/hot; no se eliminó el archivo existente.");
+        rmSync(hotFile);
+    }
 
+    if (environment.E2E_FRESH_DATABASE === "true" && environment.DB_CONNECTION !== "sqlite") throw new Error("La base nueva por ejecución requiere SQLite dedicada.");
     if (environment.DB_CONNECTION === "sqlite") {
         const database = environment.DB_DATABASE;
-        if (resolve(database) !== resolve(safeLocalDatabase)) {
+        const fresh = environment.E2E_FRESH_DATABASE === "true";
+        const safeFresh = dirname(resolve(database)) === dirname(resolve(safeLocalDatabase)) && /^kronik-e2e-[0-9a-f-]{36}\.sqlite$/.test(basename(database));
+        if (fresh ? !safeFresh : resolve(database) !== resolve(safeLocalDatabase)) {
             throw new Error(`Ruta SQLite E2E insegura: ${database}`);
         }
-        if (existsSync(database)) rmSync(database);
-        closeSync(openSync(database, "w"));
+        if (fresh) {
+            // Exclusive creation: never truncate or reuse an existing database.
+            closeSync(openSync(database, "wx"));
+        } else {
+            if (existsSync(database)) rmSync(database);
+            closeSync(openSync(database, "w"));
+        }
     } else if (
         environment.DB_CONNECTION !== "mysql" ||
         environment.DB_DATABASE !== "kronik_e2e"
@@ -89,7 +108,7 @@ export function prepareE2eDatabase(environment = e2eEnvironment()) {
     }
     execFileSync(
         "php",
-        [...prepend, "artisan", "migrate:fresh", "--seed", "--seeder=E2eSeeder", "--force"],
+        [...prepend, "artisan", environment.E2E_FRESH_DATABASE === "true" ? "migrate" : "migrate:fresh", "--seed", "--seeder=E2eSeeder", "--force"],
         {
             cwd: root,
             env: { ...process.env, ...environment },

@@ -31,19 +31,20 @@ beforeEach(function () {
     BulletScenario::pdfSintetico();
 });
 
-function prepararCreditoHistorico($test, string $politica = 'periodicos', string $base = 'obligacion_vencida', string $gracia = 'efectiva', string $intereses = 'ambos', bool|int|string $confirmacion = true): array
+function prepararCreditoHistorico($test, string $politica = 'periodicos', string $base = 'obligacion_vencida', string $gracia = 'efectiva', string $intereses = 'ambos', bool|int|string $confirmacion = true, ?string $fechaEfectiva = null): array
 {
+    $fechaEfectiva ??= '2027-01-01';
     $actor = actingAsSuperAdmin();
     $test->actingAs($actor);
     $version = BulletScenario::producto($actor, $politica, $base, activar: false);
     $version->update(['dias_gracia_mora' => 3, 'politica_mora' => compact('gracia', 'intereses')]);
-    $test->post(route('productos-crediticios.activar', $version), ['vigente_desde' => '2027-01-01', 'confirmacion_historica' => true])->assertSessionHasNoErrors();
+    $test->post(route('productos-crediticios.activar', $version), ['vigente_desde' => $fechaEfectiva, 'confirmacion_historica' => true])->assertSessionHasNoErrors();
     $version->refresh();
     $solicitud = BulletScenario::solicitud($actor, $version);
-    $solicitud = app(SolicitudService::class)->guardar($solicitud, ['lock_version' => $solicitud->lock_version, 'fecha_estimada' => '2027-01-01'], $actor);
+    $solicitud = app(SolicitudService::class)->guardar($solicitud, ['lock_version' => $solicitud->lock_version, 'fecha_estimada' => $fechaEfectiva], $actor);
     $solicitud = BulletScenario::aprobar($solicitud, $actor);
     $paquete = BulletScenario::formalizar($solicitud, $actor);
-    $data = [...BulletScenario::desembolso($solicitud, $paquete), 'fecha_desembolso' => '2027-01-01', 'confirmacion_historica' => $confirmacion];
+    $data = [...BulletScenario::desembolso($solicitud, $paquete), 'fecha_desembolso' => $fechaEfectiva, 'confirmacion_historica' => $confirmacion];
     $test->post(route('solicitudes.desembolso.store', $solicitud), $data)->assertStatus(302)->assertSessionHasNoErrors();
     $credito = $solicitud->credito()->sole();
 
@@ -239,3 +240,23 @@ test('fechas de pago inválidas se rechazan sin efectos y la consulta a hoy no i
     expect($response->getContent())->not->toContain('validation.');
     expect([CreditoPago::count(), $credito->movimientos()->count(), Activity::count()])->toBe($antes);
 })->with(['2026-12-31', '2027-02-06', '2027-02-30']);
+
+test('consultar historias extensas conserva evidencia y no agrega consultas por día', function (int $dias) {
+    $fecha = app(App\Services\FechaEmpresa::class)->hoy()->subDays($dias)->toDateString();
+    [, $credito] = prepararCreditoHistorico($this, fechaEfectiva: $fecha);
+    $antes = [Activity::count(), $credito->movimientos()->count(), $credito->pagos()->count(), $credito->cronogramas()->count()];
+    Illuminate\Support\Facades\DB::enableQueryLog();
+    Illuminate\Support\Facades\DB::flushQueryLog();
+    $memoria = memory_get_usage();
+    $inicio = hrtime(true);
+    $situacion = app(PagoService::class)->consultar($credito);
+    $milisegundos = (hrtime(true) - $inicio) / 1e6;
+    $consultas = count(Illuminate\Support\Facades\DB::getQueryLog());
+    Illuminate\Support\Facades\DB::disableQueryLog();
+    expect($situacion['error'])->toBeNull()->and($consultas)->toBeLessThanOrEqual(8)
+        ->and([Activity::count(), $credito->movimientos()->count(), $credito->pagos()->count(), $credito->cronogramas()->count()])->toBe($antes);
+    file_put_contents(storage_path('logs/medicion-historica-'.getmypid().'.jsonl'), json_encode([
+        'php' => PHP_VERSION, 'os' => PHP_OS_FAMILY, 'db' => 'SQLite :memory:', 'dias' => $dias,
+        'consultas' => $consultas, 'ms' => round($milisegundos, 3), 'memoria_incremental' => memory_get_usage() - $memoria,
+    ], JSON_THROW_ON_ERROR)."\n", FILE_APPEND);
+})->with([30, 365, 1825]);

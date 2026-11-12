@@ -52,6 +52,7 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
             'activacionDefaults' => fn () => [
                 'hoy' => $fechaEmpresa->hoy()->toDateString(),
                 'zona_horaria' => $fechaEmpresa->zonaHoraria(),
+                'permite_fecha_pasada' => config('originacion.desembolsos_qa_habilitados') === true,
             ],
         ]);
     }
