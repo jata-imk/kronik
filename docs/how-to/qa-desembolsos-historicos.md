@@ -65,3 +65,5 @@ Regresión: desactivar E2E_HISTORICO_FIXTURES, mantener E2E_FRESH_DATABASE=true 
 Pest cubre fronteras y consulta sin escritura; Vitest, confirmaciones/teclado/cambio de recurso y fechas civiles. CI comprueba también concurrencia multiconexión MariaDB; SQLite local no la acredita. La medición de consulta de 30/365/1825 días conserva tiempos/memoria/consultas del entorno observado, sin SLA ni validación de 10 mil créditos.
 
 Estado y evidencia: [Agent Note](../agent-notes/desembolsos-historicos.md). Distinguir implementación, integración, despliegue y QA compartido; la prueba local no sustituye la aceptación del usuario.
+
+Capturas sintéticas del recorrido local: [periódicos en escritorio](../assets/captura-historica/periodicos-escritorio.png) y [al vencimiento en móvil](../assets/captura-historica/vencimiento-movil.png). Reflejan saldo posterior al reverso y captura aún pendiente, antes del cierre comprobado por el E2E.

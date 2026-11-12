@@ -112,7 +112,7 @@ jobs:
         run: npm run test:unit
 
       - name: Verify isolated E2E database guards
-        run: node --test tests/E2E/prepare.test.mjs
+        run: node --test tests/E2E/prepare-guards.mjs
 
       - name: Run backend tests
         run: php artisan test
