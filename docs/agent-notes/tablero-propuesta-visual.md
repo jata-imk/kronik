@@ -6,16 +6,18 @@
 - [Definición y prototipo](https://app.notion.com/p/41361db7db7f81ecb2e9c006e1ce427f).
 - [Proyecciones del core](https://app.notion.com/p/40961db7db7f813b989fe177f80f5c8d).
 - Rama `feat/tablero-proyecciones`, base funcional `67bba2c`.
+- [PR #81](https://github.com/jata-imk/kronik/pull/81); código `6e0da93`.
 - [Contrato de cifras y disponibilidad](../reference/tablero-financiero.md),
   [ADR 0045](../explanation/adr-0045-lecturas-financieras-tablero.md) y
   [preparación y validación](../how-to/validar-tablero.md).
 
 ## Estado actual — 2026-11-13
 
-Implementación local terminada para revisión. Sin commit, PR, integración,
-despliegue ni QA compartido de esta entrega. Se conservaron las modificaciones
-documentales anteriores ajenas al tablero. La retoma tras el apagado de la PC
-no perdió código. Las tareas siguen abiertas para revisión e integración.
+Implementación publicada en la PR #81, con revisión medium del código aprobada
+sin hallazgos accionables. CI en curso. Sin integración, despliegue ni QA
+compartido de esta entrega. Se conservaron las modificaciones documentales
+anteriores ajenas al tablero; no se incluyeron en la PR. La retoma tras el apagado
+de la PC no perdió código. Las tareas siguen abiertas para integración y QA.
 
 El lector compartido verifica evidencia original; el proyector reutiliza el motor
 y el escritor central mantiene las dos tablas derivadas dentro de las operaciones
@@ -79,6 +81,20 @@ con importes nulos. Una falla real de cálculo/almacenamiento revierte la operac
   precisión de tablas, carreras al desmontar Chart y retícula con zoom.
   No se atribuye esta revisión a `/review medium` ni a una revisión independiente.
 
+### Revisión de la PR — 2026-11-13
+
+- Una PR para este incremento: #81, base `67bba2c`, código revisado `6e0da93`.
+- Revisión independiente mediante `codex review -c model_reasoning_effort=medium
+  --base origin/main` en checkout aislado del commit. Resultado: sin regresiones
+  accionables. El revisor no ejecutó pruebas porque ese checkout no tenía
+  dependencias; se conservan las pruebas separadas y la verificación del hook.
+- El hook pre-push volvió a aprobar backend completo y build antes de publicar
+  la rama. CI valida además MariaDB y E2E sobre la PR; su resultado está pendiente.
+- La revisión cubrió el diff acumulado completo de esta entrega contra la base,
+  incluidas las interacciones core/tablero, migración, permisos, auditoría y UI.
+  No hubo correcciones posteriores de código. Los cambios posteriores a
+  `6e0da93` de esta sesión solo registran el estado y evidencia documental.
+
 ### Capacidad: 10000 créditos sintéticos
 
 Ensayo completo aprobado: **1 prueba, 22 aserciones**, 560.08 s. Windows,
@@ -102,10 +118,9 @@ No extender estos tiempos a cartera antigua, Revolvente o MariaDB.
 
 ## Siguiente paso
 
-1. Revisar los cambios de esta rama sin incluir documentación ajena; preparar la
-   PR y ejecutar `/review medium` sobre su commit, resolviendo hallazgos antes
-   de integrar. No hay PR/CI ejecutada para esta rama todavía.
-2. Ejecutar concurrencia MariaDB con `tests/Concurrency/bullet.php`, que ya
+1. Comprobar CI de la PR #81 y resolver fallos antes de dejarla lista. La revisión
+   medium del código `6e0da93` ya terminó sin hallazgos accionables.
+2. Confirmar en CI concurrencia MariaDB con `tests/Concurrency/bullet.php`, que
    contrasta también proyecciones. La cuenta local `kronik` recibió acceso
    denegado a `kronik_test`; no se migró ni reinició la BD operativa.
 3. Desplegar en QA siguiendo la guía, migrar, reconstruir y diagnosticar.
