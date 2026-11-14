@@ -1,5 +1,15 @@
 # Core crediticio extensible
 
+## Retoma documental de PR #65 — 13/11/2026
+
+El usuario autorizó integrar las PR abiertas en orden de publicación. PR #65
+se actualiza contra main `67bba2c`, conservando las decisiones posteriores y la
+implementación Bullet ya integrada en #73. El cuestionario del 01/11 es histórico:
+no se reabren anticipo, mora ni reducción de plazo como decisiones bloqueantes.
+Se conserva la evidencia de integración de #64 en `ee94025`; los estados de
+despliegue/QA posteriores no se sustituyen por el antiguo «sin despliegue».
+Actualización exclusivamente documental, sin acciones auditables adicionales.
+
 ## Cierre técnico y retoma — 07/11/2026
 
 Retoma autorizada desde `54d27f4`, rama `feat/bullet-base`, worktree

@@ -1,5 +1,9 @@
 # Bullet: decisiones y casos de aceptación
 
+El contraste de PR #65 del 01/11/2026 es un antecedente histórico. Las decisiones
+posteriores y la implementación Bullet de PR #73 prevalecen sobre aquel
+cuestionario; integrarlo no reabre consultas ya resueltas ni amplía el producto.
+
 Estado funcional al 05/11/2026; habilitación QA en rama al 07/11/2026. Prevalece la sección vigente de la
 [definición en Notion](https://app.notion.com/p/40861db7db7f81d1ab37cc46ea320c3c).
 La preparación histórica del 29/10 y las preguntas de PR #65 quedan superadas
