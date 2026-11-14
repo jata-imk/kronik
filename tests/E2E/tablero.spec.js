@@ -7,8 +7,19 @@ test("tablero conserva diseño, consulta y detalles en escritorio, móvil y oscu
     await expect(page.getByRole("heading", { name: "Cartera y movimientos" })).toBeVisible();
     await expect(page.getByText("Capital pendiente de recuperar", { exact: true })).toBeVisible();
     if (process.env.E2E_TABLERO_FIXTURES === "true") {
-        await expect(page.getByRole("button", { name: /Capital pendiente de recuperar/ })).toContainText("$20,880.00");
-        await expect(page.getByRole("button", { name: /Cobros registrados.*Ver detalle/s })).toContainText("$3,120.00");
+        await expect(page.getByRole("button", { name: /Capital pendiente de recuperar/ })).toContainText("$44,880.00");
+        const corte = await page.getByLabel("Corte de saldos", { exact: true }).inputValue();
+        const [anio, mes] = corte.split("-").map(Number);
+        const diasMesAnterior = new Date(Date.UTC(anio, mes - 1, 0)).getUTCDate();
+        const cobros = new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(3120 + diasMesAnterior * 8);
+        await expect(page.getByRole("button", { name: /Cobros registrados.*Ver detalle/s })).toContainText(cobros);
+        await expect(page.getByRole("heading", { name: "Embudo de etapas" })).toBeVisible();
+        await expect(page.getByRole("img", { name: "Composición de cobros por concepto" })).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Por atender" })).toBeVisible();
+        await page.getByRole("button", { name: "Con atraso", exact: true }).click();
+        await expect(page.getByRole("link", { name: /Rodrigo Ejemplo/ })).toBeVisible();
+        await page.getByRole("button", { name: "Por vencer", exact: true }).click();
+        await expect(page.getByRole("region", { name: "Programación futura" })).toBeVisible();
     }
     await page.getByRole("button", { name: /Cobros registrados.*Ver detalle/s }).click();
     await expect(page.getByRole("heading", { name: /Cobros registrados ·/ })).toBeVisible();

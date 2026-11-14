@@ -33,13 +33,15 @@ class DashboardController extends Controller
         $solicitudes = $puedeSolicitudes ? $scope(Solicitud::query()) : null;
         $creditos = $puedeCreditos ? $scope(Credito::query()) : null;
         $filtros = $tablero->filtros($request->validated());
+        $totalesEtapa = $solicitudes && ! $alcance['requiereSucursal']
+            ? (clone $solicitudes)->toBase()->selectRaw('estado, COUNT(*) AS total')->groupBy('estado')->pluck('total', 'estado') : null;
 
         return Inertia::render('Dashboard', array_map(fn ($valor) => Inertia::always($valor), [
             'filters' => [...$alcance, ...$filtros],
-            'finanzas' => $puedeCreditos && ! $alcance['requiereSucursal'] ? $tablero->consultar($alcance, $filtros) : null,
+            'finanzas' => $puedeCreditos && ! $alcance['requiereSucursal'] ? $tablero->consultar($alcance, $filtros, $puedeClientes) : null,
             'detalleFinanciero' => $puedeCreditos && ! $alcance['requiereSucursal'] ? $tablero->detalle($alcance, $filtros) : null,
-            'etapas' => $solicitudes ? (clone $solicitudes)->selectRaw('estado, COUNT(*) AS total')->groupBy('estado')->get()
-                ->map(fn ($s) => ['estado' => $s->estado->value, 'etiqueta' => $s->estado->label(), 'total' => (int) $s->total]) : [],
+            'etapas' => $totalesEtapa ? collect(SolicitudEstado::cases())->map(fn ($estado) => ['estado' => $estado->value,
+                'etiqueta' => $estado->label(), 'total' => (int) ($totalesEtapa[$estado->value] ?? 0)]) : [],
             'sucursales' => $consulta->opciones(),
             'resumen' => [
                 'clientes' => $puedeClientes ? $scope(Cliente::query())->count() : null,

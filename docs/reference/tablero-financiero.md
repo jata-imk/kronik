@@ -120,6 +120,23 @@ Se usan PrimeVue, tokens configurables y las gráficas compartidas. Cifras exact
 en texto/tablas; la conversión numérica para representar gráficos no recalcula
 obligaciones. Fechas civiles no cambian por la zona del navegador.
 
+La comparativa de meses completos usa barras verticales; capital al cierre usa
+línea/área y los cobros una gráfica circular con leyenda de importes exactos por
+concepto. Colores, badges y ayudas siguen los tokens de Kronik y sus temas.
+Programación futura apila capital, ordinario y cargos/impuestos; su total se
+agrega en backend, sin sumar series ni dinero en Vue.
+
+«Por atender» presenta hasta cinco créditos con atraso y cinco vencimientos
+próximos, ordenados por antigüedad o fecha. Comparte cobertura, corte y alcance
+con las cifras; abre el crédito exacto o el detalle paginado completo. La identidad
+del cliente se incluye únicamente con autorización de Clientes. Sin cobertura
+no se publican esos listados. Son lecturas, sin eventos adicionales de negocio.
+
+El embudo usa los conteos por estado actual de Solicitudes, incluidos estados en
+cero, y enlaces con la misma sucursal. Sus bandas pueden ensancharse en etapas
+posteriores: no reconstruye cohortes ni calcula una tasa de conversión. No añade
+metas, utilidad neta, reservas o capacidades de otros productos sin sus fuentes.
+
 Las pruebas cubren fuentes, permisos, rollback, idempotencia, cortes, gracia,
 Bullet, reconstrucción y ausencia de mutaciones al consultar. La medición de
 capacidad registra entorno y límites; ver la [guía de validación](../how-to/validar-tablero.md).

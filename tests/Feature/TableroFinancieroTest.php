@@ -15,6 +15,26 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(fn () => $this->withoutVite());
 
+test('listas de atencion usan el corte y ocultan identidad sin permiso de clientes sin escribir', function () {
+    [$actor, $credito] = creditoPagableQa($this);
+    $this->travel(5)->days();
+    app(ProyeccionCreditoService::class)->sincronizar($credito);
+    $nombre = trim(implode(' ', array_filter([$credito->cliente->primer_nombre, $credito->cliente->apellido_paterno, $credito->cliente->apellido_materno])));
+    $antes = [CreditoLectura::count(), Activity::count(), $credito->movimientos()->count()];
+    $this->actingAs($actor)->get(route('dashboard'))->assertInertia(fn (Assert $page) => $page
+        ->where('finanzas.atencion.vencidos.0.credito_id', $credito->id)->where('finanzas.atencion.vencidos.0.cliente', $nombre)
+        ->where('finanzas.atencion.vencidos.0.dias_atraso', 5)->has('etapas', count(\App\Enums\SolicitudEstado::cases())));
+    $actor->forceFill(['is_super_admin' => false])->save();
+    setPermissionsTeamId($actor->current_team_id);
+    $actor->givePermissionTo(\App\Models\Permission::findOrCreate('read creditos', 'web'));
+    $this->actingAs($actor->fresh())->get(route('dashboard'))->assertInertia(fn (Assert $page) => $page
+        ->where('accesos.creditos', false)->where('accesos.clientes', false)->where('etapas', [])->where('finanzas', null));
+    $servicio = app(\App\Services\TableroService::class);
+    $lectura = $servicio->consultar(['scope' => 'current', 'sucursal_id' => $credito->sucursal_id, 'requiereSucursal' => false], $servicio->filtros([]));
+    expect($lectura['atencion']['vencidos'][0]['cliente'])->toBeNull();
+    expect([CreditoLectura::count(), Activity::count(), $credito->movimientos()->count()])->toBe($antes);
+});
+
 test('contrato sin politica conserva desembolso autorizado y registra lectura no disponible sin defaults', function () {
     [$actor, $solicitud, , , $data] = prepararDesembolsoQa($this);
     $this->post(route('solicitudes.desembolso.store', $solicitud), $data)->assertSessionHasNoErrors();

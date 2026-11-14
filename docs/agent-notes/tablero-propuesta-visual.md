@@ -11,11 +11,16 @@
   [ADR 0046](../explanation/adr-0046-lecturas-financieras-tablero.md) y
   [preparación y validación](../how-to/validar-tablero.md).
 
-## Estado actual — 2026-11-13
+## Estado actual — 2026-11-14
 
 Implementación publicada en la PR #81; revisión y CI iniciales de `6e0da93` /
 `b294c70` aprobadas. Se actualiza contra main `defe471` tras integrar #65, #79 y
-#80 en orden, con nueva revisión y CI pendientes para la combinación. Sin integración, despliegue ni QA
+#80 en orden. Review medium acumulado de `3465468` contra `67bba2c` sin hallazgos
+accionables; suite secuencial 973/47640 y frontend 170/64 aprobados. La
+[CI de esa combinación](https://github.com/jata-imk/kronik/actions/runs/43560561315)
+también aprobó MariaDB, PDF y los recorridos de navegador. El usuario pidió
+completar el diseño antes de integrar #81; se mantiene abierta para ese ajuste.
+Sin integración, despliegue ni QA
 compartido de esta entrega. Se conservaron las modificaciones documentales
 anteriores ajenas al tablero; no se incluyeron en la PR. La retoma tras el apagado
 de la PC no perdió código. Las tareas siguen abiertas para integración y QA.
@@ -57,9 +62,12 @@ con importes nulos. Una falla real de cálculo/almacenamiento revierte la operac
 
 ## Evidencia local
 
+Los resultados iniciales siguientes corresponden al incremento anterior al ajuste
+visual del 14/11; los resultados finales se registran en su sección específica.
+
 - Backend completo: `php artisan test --compact`: **938 aprobadas, 2 omitidas,
   47083 aserciones**, 114.18 s. Las omitidas incluyen la medición de volumen
-  optativa; esa medición sí se ejecutó aparte. Backend sin cambios posteriores.
+  optativa; esa medición sí se ejecutó aparte.
 - Frontend completo antes del último refuerzo de formato: **164 aprobadas en
   62 archivos**. Después, selección final de tablero/serie/composable:
   **5 aprobadas en 3 archivos**, incluido un caso nuevo de centavos mayores
@@ -130,6 +138,35 @@ Artefacto local: `storage/framework/testing/tablero-capacidad.json`.
 Se replica evidencia financiera sintética conservando FK; no representa 10000
 originaciones, mezcla de productos, red, concurrencia ni rendimiento productivo.
 No extender estos tiempos a cartera antigua, Revolvente o MariaDB.
+
+## Ajuste visual solicitado — 2026-11-14
+
+El usuario contrastó las capturas con el borrador y una referencia de tablero.
+Solicitó embudo, gráfica circular, barras verticales, programación futura más
+visible, colores, badges, ayudas y listados con acceso al detalle completo.
+Se completa en la misma PR #81, antes de su integración ya autorizada bajo CI.
+
+Componentes específicos: EmbudoEtapas, AtencionCartera, AntiguedadCartera,
+MovimientosPeriodo y ComposicionCobros. SerieFinanciera conserva tablas exactas,
+paleta compartida y admite área/apilado. Backend publica listas limitadas y total
+programado desde las mismas lecturas; autorización vigente sin cambios de policy.
+El embudo muestra estados actuales, sin fabricar conversión, metas o utilidad.
+
+Fixtures E2E ampliados con cuatro créditos, pagos de interés, atraso y etapas
+reales por servicios, sin providers. Capital 44880; cobros 3120 + 8 × días del mes
+anterior. Pruebas dirigidas backend: 15/269 aprobadas; frontend completo:
+172 aprobadas en 65 archivos. Build y dos E2E Chromium aprobados, incluidas
+lista de atraso, gráfico circular, etapas, 320/390/768/1440 px, temas y zoom 200 %.
+Capturas renovadas con datos poblados. Suite backend completa y review/CI del
+head visual se ejecutan al publicar.
+
+Medición exclusiva de lectura con 10000 créditos/12 cuotas en SQLite `:memory:`,
+Windows/PHP 8.3.16, ejecutada el 14/11 a las 09:47:37 de México: cinco consultas
+al tablero de 236.16 / 233.16 / 253.99 / 272.99 / 230.74 ms, 58 consultas SQL
+cada una y 58 MiB pico. Las dos consultas adicionales corresponden a las listas
+limitadas de atención. Ensayo: 1 prueba/22 aserciones. Artefacto local separado
+`storage/framework/testing/tablero-capacidad-lectura.json`; construcción, avance
+y reconstrucción son nulos en este ensayo, no se atribuyen a estos tiempos.
 
 ## Siguiente paso
 

@@ -48,9 +48,19 @@ Backend dirigido: `php artisan test --filter='Tablero|ProyectorLecturaCredito'`.
 Frontend: `npm run test:unit`; compilación: `npm run build`.
 
 El recorrido Chromium se ejecuta con `E2E_TABLERO_FIXTURES=true` y
-`npm run test:e2e -- tablero.spec.js`. Dos créditos Bullet y un anticipo se
-registran mediante servicios reales solo en la SQLite E2E protegida; genera
-capturas de escritorio, móvil, oscuro, cambio de paleta y zoom.
+`npm run test:e2e -- tablero.spec.js`. Cuatro créditos Bullet, pagos de interés,
+un anticipo y solicitudes en diversas etapas se registran mediante servicios
+reales solo en la SQLite E2E protegida. Dos créditos históricos conservan fechas
+efectivas pasadas y cierran su captura explícitamente; uno conserva atraso.
+El oráculo usa 12000 × 24 % / 360 = 8 MXN por día, independiente de la previa.
+Capital esperado: 44880; cobros del mes: 3120 más ocho veces los días del mes
+anterior. Las fechas siguen el reloj real del escenario. Genera capturas de
+escritorio, móvil, oscuro, cambio de paleta y zoom con series pobladas.
+
+Comprobar circular/leyenda, barras mensuales, área de capital y programación
+apilada. En Por atender, alternar atraso/vencimientos y abrir crédito/listado
+completo; verificar permisos y limpieza al cambiar alcance. El embudo representa
+estado actual, sin porcentaje de conversión ni supuestas metas.
 
 La medición explícita usa PHPUnit sobre SQLite `:memory:` con datos sintéticos,
 verifica entorno y no toca la BD operativa. En PowerShell:

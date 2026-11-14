@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Services\Credito\ConsultaCartera;
 use App\Support\Decimal as D;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Query\Builder;
 
 final class TableroService
 {
@@ -18,7 +19,7 @@ final class TableroService
             'hasta' => $datos['hasta'] ?? $hoy->toDateString(), 'detalle' => $datos['detalle'] ?? null];
     }
 
-    public function consultar(array $alcance, array $filtros): array
+    public function consultar(array $alcance, array $filtros, bool $mostrarClientes = false): array
     {
         $zonaHoraria = $this->fecha->zonaHoraria();
         $corte = $filtros['corte'];
@@ -31,6 +32,7 @@ final class TableroService
         $saldos = null;
         $antiguedad = [];
         $proximos = [];
+        $atencion = null;
         if ($cobertura['disponible']) {
             $totales = (clone $lecturas)->selectRaw('COALESCE(SUM(l.capital), 0) AS capital, COALESCE(SUM(l.vencido), 0) AS vencido')->first();
             $saldos = ['capital' => D::round((string) $totales->capital), 'vencido' => D::round((string) $totales->vencido),
@@ -46,10 +48,12 @@ final class TableroService
                 $fin = $inicio->addDays(6);
                 $sumas = (clone $lecturas)->join('credito_lectura_obligaciones as o', 'o.lectura_id', '=', 'l.id')
                     ->where('o.naturaleza', 'programada')->whereBetween('o.fecha', [$inicio->toDateString(), $fin->toDateString()])
-                    ->selectRaw('COALESCE(SUM(o.capital), 0) AS capital, COALESCE(SUM(o.ordinario), 0) AS intereses, COALESCE(SUM(o.total), 0) AS total')->first();
+                    ->selectRaw('COALESCE(SUM(o.capital), 0) AS capital, COALESCE(SUM(o.ordinario), 0) AS intereses, COALESCE(SUM(o.comisiones + o.impuestos), 0) AS cargos_impuestos, COALESCE(SUM(o.total), 0) AS total')->first();
                 $proximos[] = ['etiqueta' => $inicio->format('d/m').'–'.$fin->format('d/m'),
-                    'capital' => D::round((string) $sumas->capital), 'intereses' => D::round((string) $sumas->intereses), 'total' => D::round((string) $sumas->total)];
+                    'capital' => D::round((string) $sumas->capital), 'intereses' => D::round((string) $sumas->intereses),
+                    'cargos_impuestos' => D::round((string) $sumas->cargos_impuestos), 'total' => D::round((string) $sumas->total)];
             }
+            $atencion = $this->atencion($lecturas, $corte, $mostrarClientes);
         }
         $cobros = $this->cartera->cobros($alcance, $filtros['desde'], $filtros['hasta']);
         $recuperado = $this->cartera->cobros($alcance, '1000-01-01', $corte)['capital'];
@@ -70,7 +74,30 @@ final class TableroService
         return ['cobertura' => $cobertura, 'zona_horaria' => $zonaHoraria, 'consultada_at' => now()->toIso8601String(),
             'saldos' => $saldos, 'cobros' => $cobros, 'recuperado' => $recuperado,
             'desembolsos' => D::round((string) $this->cartera->desembolsos($alcance, $filtros['desde'], $filtros['hasta'])->sum('d.importe')),
-            'antiguedad' => $antiguedad, 'proximos' => $proximos, 'movimientos_mensuales' => $meses, 'capital_mensual' => $capitalMensual];
+            'antiguedad' => $antiguedad, 'proximos' => $proximos, 'movimientos_mensuales' => $meses, 'capital_mensual' => $capitalMensual,
+            'proximos_total' => $cobertura['disponible'] ? array_reduce($proximos, fn ($s, $fila) => D::add($s, $fila['total'], 2), '0.00') : null,
+            'proximos_desde' => CarbonImmutable::parse($corte, 'UTC')->addDay()->toDateString(),
+            'proximos_hasta' => CarbonImmutable::parse($corte, 'UTC')->addDays(28)->toDateString(), 'atencion' => $atencion];
+    }
+
+    private function atencion(Builder $lecturas, string $corte, bool $mostrarClientes): array
+    {
+        $base = clone $lecturas;
+        $identidad = ['creditos.id as credito_id', 'creditos.folio'];
+        if ($mostrarClientes) {
+            $base->leftJoin('clientes as cliente', 'cliente.id', '=', 'creditos.cliente_id');
+            $identidad = [...$identidad, 'cliente.primer_nombre', 'cliente.apellido_paterno', 'cliente.apellido_materno'];
+        }
+        $vencidos = (clone $base)->where('l.vencido', '>', 0)->orderByDesc('l.dias_atraso')->orderByDesc('l.vencido')->orderBy('creditos.id')
+            ->limit(5)->get([...$identidad, 'l.vencido as importe', 'l.dias_atraso', 'l.corte as fecha']);
+        $proximos = (clone $base)->join('credito_lectura_obligaciones as o', 'o.lectura_id', '=', 'l.id')->where('o.naturaleza', 'programada')
+            ->where('o.fecha', '>', $corte)->where('o.fecha', '<=', CarbonImmutable::parse($corte, 'UTC')->addDays(28)->toDateString())
+            ->where('o.total', '>', 0)->orderBy('o.fecha')->orderBy('creditos.id')->limit(5)->get([...$identidad, 'o.total as importe', 'o.fecha']);
+        $formato = fn ($fila) => ['credito_id' => $fila->credito_id, 'folio' => $fila->folio,
+            'cliente' => $mostrarClientes ? trim(implode(' ', array_filter([$fila->primer_nombre, $fila->apellido_paterno, $fila->apellido_materno]))) : null,
+            'importe' => D::round((string) $fila->importe), 'fecha' => $fila->fecha, 'dias_atraso' => $fila->dias_atraso ?? null];
+
+        return ['vencidos' => $vencidos->map($formato)->all(), 'proximos' => $proximos->map($formato)->all()];
     }
 
     public function detalle(array $alcance, array $filtros): mixed

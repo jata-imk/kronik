@@ -3,6 +3,7 @@ import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import PageHeader from "@/Components/PageHeader.vue";
 import ConsultaSucursalFilter from "@/Components/ConsultaSucursalFilter.vue";
 import TableroFinanciero from "@/Components/Tablero/TableroFinanciero.vue";
+import EmbudoEtapas from "@/Components/Tablero/EmbudoEtapas.vue";
 import { useTableroConsulta } from "@/Composables/useTableroConsulta";
 import { Link, usePage } from "@inertiajs/vue3";
 import { computed } from "vue";
@@ -156,8 +157,12 @@ const accesos = computed(() =>
                             >Corte de saldos<input
                                 v-model="consulta.corte"
                                 type="date"
+                                aria-label="Corte de saldos"
+                                aria-describedby="corte-ayuda"
                                 class="k-tablero-fecha"
-                            /><span class="text-xs font-normal text-muted-color"
+                            /><span
+                                id="corte-ayuda"
+                                class="text-xs font-normal text-muted-color"
                                 >Hoy o cierre mensual</span
                             ></label
                         >
@@ -203,47 +208,11 @@ const accesos = computed(() =>
                     :detalle="detalleFinanciero"
                     @detalle="consultar"
                 />
-                <section
-                    v-if="
-                        !cargando &&
-                        !Object.keys(errores).length &&
-                        etapas.length
-                    "
-                    class="k-surface k-panel mb-6 space-y-3"
-                    aria-labelledby="etapas-title"
-                >
-                    <div>
-                        <p class="k-eyebrow">Originación · situación actual</p>
-                        <h2 id="etapas-title" class="text-lg font-semibold">
-                            Solicitudes por etapa
-                        </h2>
-                    </div>
-                    <div class="flex flex-wrap gap-3">
-                        <Link
-                            v-for="etapa in etapas"
-                            :key="etapa.estado"
-                            class="k-action-link"
-                            :href="
-                                route('solicitudes.index', {
-                                    scope: filters.scope,
-                                    sucursal_id:
-                                        filters.scope === 'all'
-                                            ? filters.sucursal_id
-                                            : undefined,
-                                    estado: etapa.estado,
-                                })
-                            "
-                            >{{ etapa.etiqueta }}
-                            <strong class="k-financial">{{
-                                etapa.total
-                            }}</strong></Link
-                        >
-                    </div>
-                    <p class="text-sm text-muted-color">
-                        Etapa actual de las solicitudes del alcance; no es una
-                        tasa de conversión histórica.
-                    </p>
-                </section>
+                <EmbudoEtapas
+                    v-if="!cargando && !Object.keys(errores).length"
+                    :etapas="etapas"
+                    :filtros="filters"
+                />
                 <div
                     v-if="!cargando && !Object.keys(errores).length"
                     class="k-dashboard"
