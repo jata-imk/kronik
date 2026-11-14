@@ -8,7 +8,7 @@ no implican que todos los reportes o controles ya estén implementados.
 
 - [Tablero financiero: fuentes, cálculos y disponibilidad](../reference/tablero-financiero.md).
 - [Validar y reconstruir las lecturas del tablero](../how-to/validar-tablero.md).
-- [ADR 0045: proyecciones mantenidas por el core](../explanation/adr-0045-lecturas-financieras-tablero.md).
+- [ADR 0046: proyecciones mantenidas por el core](../explanation/adr-0046-lecturas-financieras-tablero.md).
 
 - [Core: proyecciones, evidencia y separación de cortes](../reference/core-crediticio.md).
 

@@ -6,8 +6,11 @@ if (getenv('E2E_BULLET_FIXTURES') !== 'true') {
 }
 $root = dirname(__DIR__, 3);
 $database = getenv('DB_DATABASE');
+$freshDatabase = getenv('E2E_FRESH_DATABASE') === 'true'
+    && str_replace('\\', '/', dirname($database)) === str_replace('\\', '/', $root.'/storage/framework/testing')
+    && preg_match('/^kronik-e2e-[0-9a-f-]{36}\\.sqlite$/D', basename($database));
 if (getenv('APP_ENV') !== 'e2e' || getenv('E2E_DATABASE') !== 'true'
-    || ! ((getenv('DB_CONNECTION') === 'sqlite' && str_replace('\\', '/', $database) === str_replace('\\', '/', $root.'/storage/framework/testing/kronik-e2e.sqlite'))
+    || ! ((getenv('DB_CONNECTION') === 'sqlite' && ($freshDatabase || str_replace('\\', '/', $database) === str_replace('\\', '/', $root.'/storage/framework/testing/kronik-e2e.sqlite')))
         || (getenv('DB_CONNECTION') === 'mysql' && $database === 'kronik_e2e'))) {
     throw new RuntimeException('El reloj de pruebas requiere la base E2E aislada.');
 }

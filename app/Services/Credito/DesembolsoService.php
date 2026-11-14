@@ -49,8 +49,8 @@ class DesembolsoService
             'mensaje' => 'Selecciona la sucursal activa responsable antes de registrar el desembolso.'];
         $items[] = ['clave' => 'formalizacion', 'cumplido' => $formalizacion?->modo === 'qa' && ($paquete?->snapshot['formato'] ?? null) === 2,
             'mensaje' => 'Falta una formalización QA vigente con tabla fiscal conservada. No se convierten contratos históricos.'];
-        $items[] = ['clave' => 'fecha_desembolso', 'cumplido' => ($tabla['escenario']['fecha_disposicion'] ?? null) === app(FechaEmpresa::class)->hoy()->toDateString(),
-            'mensaje' => 'El registro debe hacerse hoy y coincidir con la fecha firmada. Si es futura, espera; si cambió, devuelve, revisa y formaliza una nueva tabla. No se admiten desembolsos retroactivos.'];
+        $items[] = ['clave' => 'fecha_desembolso', 'cumplido' => isset($tabla['escenario']['fecha_disposicion']) && $tabla['escenario']['fecha_disposicion'] <= app(FechaEmpresa::class)->hoy()->toDateString(),
+            'mensaje' => 'La fecha efectiva debe coincidir con la tabla firmada y no ser futura. Si cambió, devuelve, revisa y formaliza una nueva tabla antes de registrar.'];
         $items[] = ['clave' => 'unico', 'cumplido' => ! $solicitud->credito()->exists(), 'mensaje' => 'Esta solicitud ya tiene crédito y desembolso. Abre el crédito; no repitas el registro.'];
         if ($formalizacion) {
             try {
@@ -65,7 +65,8 @@ class DesembolsoService
             'resumen' => $tabla ? ['fecha' => $tabla['escenario']['fecha_disposicion'],
                 'monto' => $tabla['escenario']['monto_solicitado'], 'capital' => $tabla['escenario']['saldo_financiado'],
                 'importe' => $tabla['escenario']['efectivo_entregado'], 'retenido' => $tabla['totales']['retenido_desembolso'],
-                'financiado' => $tabla['totales']['financiado_comisiones'], 'separado' => $tabla['totales']['pago_separado_inicial']] : null];
+                'financiado' => $tabla['totales']['financiado_comisiones'], 'separado' => $tabla['totales']['pago_separado_inicial'],
+                'historica' => $tabla['escenario']['fecha_disposicion'] < app(FechaEmpresa::class)->hoy()->toDateString()] : null];
     }
 
     public function registrar(Solicitud $solicitud, array $data, User $actor): Credito
@@ -81,6 +82,10 @@ class DesembolsoService
                 }
                 $payload = ['solicitud_id' => $solicitud->id, 'actor_id' => $actor->id, 'fecha' => $data['fecha_desembolso'],
                     'importe' => Decimal::round((string) $data['importe']), 'referencia' => trim($data['referencia'])];
+                $confirmacionHistorica = in_array($data['confirmacion_historica'] ?? false, [true, 1, '1'], true);
+                if ($confirmacionHistorica) {
+                    $payload['confirmacion_historica'] = true;
+                }
                 $hash = hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR));
                 $existing = CreditoDesembolso::where('idempotency_key', $data['idempotency_key'])->first();
                 if ($existing) {
@@ -105,8 +110,12 @@ class DesembolsoService
                     $this->error(collect($check['requisitos'])->where('cumplido', false)->pluck('mensaje')->implode(' '));
                 }
                 $resumen = $check['resumen'];
-                if ($data['fecha_desembolso'] !== $resumen['fecha'] || $data['fecha_desembolso'] !== app(FechaEmpresa::class)->hoy()->toDateString()) {
-                    $this->error('La fecha debe ser hoy y coincidir con la tabla firmada. Si cambió, requiere nueva formalización.');
+                if ($data['fecha_desembolso'] !== $resumen['fecha'] || $data['fecha_desembolso'] > app(FechaEmpresa::class)->hoy()->toDateString()) {
+                    $this->error('La fecha efectiva debe coincidir con la tabla firmada y no ser futura. Si cambió, requiere nueva formalización.');
+                }
+                $historica = $resumen['fecha'] < app(FechaEmpresa::class)->hoy()->toDateString();
+                if ($historica && ! $confirmacionHistorica) {
+                    $this->error('Confirma el registro de una operación histórica sintética. No se ejecutará una transferencia nueva.');
                 }
                 if (Decimal::compare($payload['importe'], $resumen['importe']) !== 0) {
                     $this->error('El importe transferido debe coincidir exactamente con el efectivo a entregar de la tabla firmada.');
@@ -130,13 +139,16 @@ class DesembolsoService
                     'fecha_efectiva' => $resumen['fecha'], 'importe' => $payload['importe'], 'referencia' => $payload['referencia'], 'referencia_hash' => $referenciaHash, 'medio' => 'transferencia']);
                 $credito->movimientos()->create(['credito_desembolso_id' => $desembolso->id, 'actor_id' => $actor->id,
                     'tipo' => 'capital_inicial', 'fecha_efectiva' => $resumen['fecha'], 'importe' => $resumen['capital']]);
+                if ($historica) {
+                    $credito->capturaHistorica()->create(['iniciada_por' => $actor->id, 'team_id' => $actor->current_team_id, 'sucursal_id' => $solicitud->sucursal_id]);
+                }
                 $solicitud->estado = SolicitudEstado::Desembolsada;
                 $solicitud->lock_version++;
                 $solicitud->save();
                 $solicitud->eventos()->create(['actor_id' => $actor->id, 'tipo' => 'desembolso_qa', 'datos' => ['credito_id' => $credito->id, 'desembolso_id' => $desembolso->id]]);
                 app(ProyeccionCreditoService::class)->sincronizar($credito);
                 app(ActivityLogService::class)->log(ActivityEvent::CreditDisbursed, 'Desembolso manual QA registrado', $solicitud,
-                    ['related' => ['type' => 'credito', 'id' => $credito->id]], $actor, sucursalId: $solicitud->sucursal_id);
+                    ['related' => ['type' => 'credito', 'id' => $credito->id], 'state' => $historica ? 'captura_historica_pendiente' : 'registrado'], $actor, sucursalId: $solicitud->sucursal_id);
 
                 return $credito;
             }, attempts: 5);

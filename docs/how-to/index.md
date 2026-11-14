@@ -28,3 +28,5 @@
 - [Validar un RFC en Kronik](validar-rfc.md)
 
 - [Validar consulta de solo lectura](validar-consulta-solo-lectura.md).
+
+- [Desembolsos pasados y pagos cronológicos QA](qa-desembolsos-historicos.md).

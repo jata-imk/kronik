@@ -50,6 +50,7 @@ it("consulta Bullet explica el interés y el atraso de obligaciones sin ofrecer 
                 },
                 PageHeader: true,
                 SimulationTaxSummary: true,
+                CapturaHistoricaPanel: true,
                 Tag: true,
                 Select: true,
                 DataTable: true,

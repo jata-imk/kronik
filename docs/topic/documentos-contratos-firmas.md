@@ -34,3 +34,7 @@ aceptación documental y desembolso.
 - [Contexto operativo, lectura institucional y listados en servidor](../reference/contexto-sucursal-consultas.md).
 
 - [Consulta de versiones y editores](../reference/consulta-edicion-historicos.md).
+
+- [Contrato de captura histórica](../reference/captura-historica-creditos.md), [ADR 0045](../explanation/adr-0045-fechas-efectivas-captura-historica.md) y [seguimiento de la entrega](../agent-notes/desembolsos-historicos.md).
+
+- [Recorrido reproducible de desembolsos históricos](../how-to/qa-desembolsos-historicos.md).

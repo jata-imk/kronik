@@ -211,7 +211,7 @@ class E2eSeeder extends Seeder
         if (filter_var(env('E2E_ORIGINACION_DUAL'), FILTER_VALIDATE_BOOL)) {
             $this->call(E2eSolicitudDualSeeder::class);
         }
-        if (filter_var(env('E2E_BULLET_FIXTURES'), FILTER_VALIDATE_BOOL)) {
+        if (filter_var(env('E2E_BULLET_FIXTURES'), FILTER_VALIDATE_BOOL) || filter_var(env('E2E_HISTORICO_FIXTURES'), FILTER_VALIDATE_BOOL)) {
             $this->call(E2eBulletSeeder::class);
         }
         if (filter_var(env('E2E_TABLERO_FIXTURES'), FILTER_VALIDATE_BOOL)) {

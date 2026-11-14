@@ -1,6 +1,6 @@
 # Explicación
 
-- [ADR 0045: lecturas financieras derivadas del core](adr-0045-lecturas-financieras-tablero.md).
+- [ADR 0046: lecturas financieras derivadas del core](adr-0046-lecturas-financieras-tablero.md).
 
 - [ADR 0044: RFC genéricos en Clientes](adr-0044-rfc-genericos-clientes.md).
 
@@ -69,3 +69,5 @@
 - [ADR 0039: condiciones Bullet y habilitación por capacidad](adr-0039-condiciones-bullet-y-habilitacion.md).
 
 - [ADR 0043: escenarios SIC QA](adr-0043-escenarios-sic-qa.md).
+
+- [ADR 0045: fechas efectivas y captura histórica QA](adr-0045-fechas-efectivas-captura-historica.md).

@@ -1,4 +1,4 @@
-# ADR 0045: lecturas financieras derivadas del core
+# ADR 0046: lecturas financieras derivadas del core
 
 - Fecha: 2026-11-13.
 - Estado: aceptado; implementación local para revisión, sin integración ni despliegue.

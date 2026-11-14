@@ -70,8 +70,8 @@ login, reinicio del worker y generación del PDF desde la interfaz.
 El recorrido compartido conserva reloj y fechas reales. El mismo día del
 desembolso el devengado ordinario es cero; no forzar un pago sin deuda exigible
 ni adelantar el reloj para crear atraso. Los escenarios de interés conservado,
-mora y vencimiento se acreditan con las pruebas aisladas o se registran después
-cuando existan fechas reales aplicables.
+mora y vencimiento también pueden reconstruirse con el recorrido histórico
+enlazado al final; las pruebas aisladas conservan fronteras exactas.
 
 Capturas del escenario aislado tras el anticipo, con capital 8880 e interés
 conservado 120: periódicos en [escritorio](../assets/bullet/periodicos-desktop.png)
@@ -109,3 +109,7 @@ folios sintéticos y resultado o error concreto. Conservar capturas de ambas
 políticas y sus recibos/calendarios. Actualizar Agent Note y Notion diferenciando
 implementado, integrado, desplegado y validado. No cerrar la tarea principal solo
 por el merge: quedan pendientes despliegue y QA hasta recibir su evidencia.
+
+## Recorrido con fechas pasadas
+
+La [guía de desembolsos históricos](qa-desembolsos-historicos.md) complementa el caso de hoy con vigencia/fecha efectiva pasada, registro cronológico y captura incompleta. Permite reconstruir atrasos con reloj real y documentos actuales conservados; no adelantar el reloj ni cambiar condiciones firmadas. Las pruebas aisladas mantienen sus fronteras temporales exactas.

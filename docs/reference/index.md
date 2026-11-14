@@ -40,3 +40,5 @@
 - [Consulta, edición e históricos](consulta-edicion-historicos.md).
 
 - [Escenarios SIC QA](sic-escenarios-qa.md).
+
+- [Fechas efectivas y captura histórica](captura-historica-creditos.md).

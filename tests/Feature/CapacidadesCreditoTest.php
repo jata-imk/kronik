@@ -26,7 +26,7 @@ test('las opciones contractuales usan snapshot y no cambian la evidencia ni las 
     $actor = actingAsSuperAdmin();
     $service = app(ProductoVersionService::class);
     $producto = $service->crear(productoPayload(), $actor->id);
-    $version = $service->activar($producto->versiones()->first(), '2026-01-01');
+    $version = $service->activar($producto->versiones()->first(), app(\App\Services\FechaEmpresa::class)->hoy()->toDateString());
     $antes = $version->getRawOriginal('snapshot');
     $hash = $version->snapshot_hash;
     DB::table('producto_version_reglas')->where('producto_version_id', $version->id)->update(['metodos_amortizacion' => json_encode(['capital_fijo'])]);

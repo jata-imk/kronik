@@ -52,6 +52,7 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
             'activacionDefaults' => fn () => [
                 'hoy' => $fechaEmpresa->hoy()->toDateString(),
                 'zona_horaria' => $fechaEmpresa->zonaHoraria(),
+                'permite_fecha_pasada' => config('originacion.desembolsos_qa_habilitados') === true,
             ],
         ]);
     }
@@ -86,7 +87,7 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
     {
         $this->authorize('activate', $version);
         $data = $request->validated();
-        $version = $service->activar($version, $data['vigente_desde']);
+        $version = $service->activar($version, $data['vigente_desde'], (bool) ($data['confirmacion_historica'] ?? false));
 
         return back()->with('success', $version->estado->value === 'activa' ? 'Versión activada.' : 'Activación programada.');
     }
@@ -112,7 +113,7 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
             PeriodicidadCredito::from($data['periodicidad']),
             (int) $data['plazo'],
             MetodoAmortizacion::from($data['metodo']),
-            CarbonImmutable::parse($data['fecha']),
+            CarbonImmutable::parse($data['fecha'], app(FechaEmpresa::class)->zonaHoraria()),
             $data['comisiones_opcionales'] ?? [],
             $incluirFormula,
             (bool) ($data['incluir_impuestos'] ?? false),

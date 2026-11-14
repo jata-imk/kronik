@@ -8,7 +8,7 @@
 - Rama `feat/tablero-proyecciones`, base funcional `67bba2c`.
 - [PR #81](https://github.com/jata-imk/kronik/pull/81); código `6e0da93`.
 - [Contrato de cifras y disponibilidad](../reference/tablero-financiero.md),
-  [ADR 0045](../explanation/adr-0045-lecturas-financieras-tablero.md) y
+  [ADR 0046](../explanation/adr-0046-lecturas-financieras-tablero.md) y
   [preparación y validación](../how-to/validar-tablero.md).
 
 ## Estado actual — 2026-11-13

@@ -22,7 +22,7 @@ class ResetDevelopmentDataService
     // Child tables precede parents. Foreign keys remain enabled throughout the reset.
     private const TABLES = [
         'credito_lectura_obligaciones', 'credito_lecturas',
-        'credito_cronogramas', 'credito_movimientos', 'credito_pagos', 'credito_desembolsos', 'creditos',
+        'credito_capturas_historicas', 'credito_cronogramas', 'credito_movimientos', 'credito_pagos', 'credito_desembolsos', 'creditos',
         'solicitud_formalizaciones', 'solicitud_firmas', 'solicitud_paquetes',
         'sic_evidencias', 'sic_eventos', 'sic_query_results', 'sic_queries',
         'solicitud_dictamenes', 'solicitud_resoluciones', 'solicitud_eventos', 'solicitud_revisiones', 'solicitudes',

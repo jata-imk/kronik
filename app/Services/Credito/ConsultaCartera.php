@@ -11,12 +11,14 @@ final class ConsultaCartera
 {
     public function creditos(array $alcance): Builder
     {
-        return app(ConsultaSucursal::class)->aplicar(Credito::query(), $alcance)->toBase();
+        return app(ConsultaSucursal::class)->aplicar(Credito::query(), $alcance, 'creditos.sucursal_id')->toBase();
     }
 
     public function lecturas(array $alcance, string $corte): Builder
     {
         return $this->creditos($alcance)->where('creditos.fecha_desembolso', '<=', $corte)
+            ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('credito_capturas_historicas as captura')
+                ->whereColumn('captura.credito_id', 'creditos.id')->whereNull('captura.completada_en'))
             ->join('credito_lecturas as l', fn ($j) => $j->on('l.credito_id', '=', 'creditos.id')->where('l.corte', $corte))
             ->join('credito_cronogramas as original', fn ($j) => $j->on('original.credito_id', '=', 'creditos.id')->where('original.version', 1))
             ->join('credito_cronogramas as calendario', fn ($j) => $j->on('calendario.credito_id', '=', 'creditos.id')->on('calendario.version', '=', 'l.cronograma_version'))
@@ -32,11 +34,14 @@ final class ConsultaCartera
 
     public function cobertura(array $alcance, string $corte): array
     {
-        $esperadas = $this->creditos($alcance)->where('creditos.fecha_desembolso', '<=', $corte)->count();
+        $inventario = $this->creditos($alcance)->where('creditos.fecha_desembolso', '<=', $corte)
+            ->leftJoin('credito_capturas_historicas as captura', 'captura.credito_id', '=', 'creditos.id')
+            ->selectRaw('COUNT(*) AS creditos, COALESCE(SUM(CASE WHEN captura.id IS NOT NULL AND captura.completada_en IS NULL THEN 1 ELSE 0 END), 0) AS pendientes')->first();
+        $esperadas = (int) $inventario->creditos;
         $lecturas = $this->lecturas($alcance, $corte);
         $validas = (clone $lecturas)->count();
 
-        return ['disponible' => $validas === $esperadas, 'creditos' => $esperadas, 'verificados' => $validas,
+        return ['disponible' => $validas === $esperadas, 'creditos' => $esperadas, 'verificados' => $validas, 'capturas_pendientes' => (int) $inventario->pendientes,
             'calculada_at' => (clone $lecturas)->min('l.calculada_at')];
     }
 

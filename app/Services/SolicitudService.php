@@ -106,8 +106,8 @@ class SolicitudService
             // A contractual date is not a UTC instant. Rebuild it in the
             // lender's zone instead of converting Eloquent's midnight cast.
             $fecha = CarbonImmutable::parse($solicitud->fecha_estimada->toDateString(), $this->fecha->zonaHoraria())->startOfDay();
-            if ($fecha->lt($this->fecha->hoy())) {
-                $this->error('fecha_estimada', 'La fecha estimada no puede ser anterior a hoy.');
+            if ($problema = app(FechaOriginacion::class)->problema($fecha->toDateString(), $producto)) {
+                $this->error('fecha_estimada', $problema);
             }
             $simulacion = $this->simulador->simular($producto, $solicitud->monto,
                 PeriodicidadCredito::from($solicitud->periodicidad), $solicitud->plazo,

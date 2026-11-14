@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from "vue";
+import { Link } from "@inertiajs/vue3";
 import IndicadorFinanciero from "./IndicadorFinanciero.vue";
 import ComposicionCobros from "./ComposicionCobros.vue";
 import DetalleFinanciero from "./DetalleFinanciero.vue";
@@ -30,7 +31,29 @@ const corte = computed(() => `Al ${fechaCorta(props.filtros.corte)}`);
             </p>
         </div>
         <Message
-            v-if="!datos.cobertura.disponible"
+            v-if="datos.cobertura.capturas_pendientes"
+            severity="warn"
+            :closable="false"
+            >Hay {{ datos.cobertura.capturas_pendientes }} capturas históricas
+            pendientes. Completa y verifica su historial para consultar saldos
+            consolidados. Los movimientos muestran únicamente lo registrado
+            hasta ahora.
+            <Link
+                class="font-semibold underline"
+                :href="
+                    route('creditos.index', {
+                        scope: filtros.scope,
+                        sucursal_id:
+                            filtros.scope === 'all'
+                                ? filtros.sucursal_id
+                                : undefined,
+                    })
+                "
+                >Revisar créditos</Link
+            >
+        </Message>
+        <Message
+            v-else-if="!datos.cobertura.disponible"
             severity="warn"
             :closable="false"
             >Los saldos y vencimientos requieren actualización o revisión. Hay

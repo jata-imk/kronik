@@ -7,7 +7,7 @@ Los documentos distinguen diseño aprobado de capacidades implementadas.
 ## Referencia y decisiones
 
 - [Contrato de lectura financiera y proyecciones](../reference/tablero-financiero.md).
-- [ADR 0045: lecturas derivadas y consistencia transaccional](../explanation/adr-0045-lecturas-financieras-tablero.md).
+- [ADR 0046: lecturas derivadas y consistencia transaccional](../explanation/adr-0046-lecturas-financieras-tablero.md).
 
 - [Habilitación y validación del ciclo Bullet en QA](../explanation/adr-0042-habilitacion-ciclo-bullet-qa.md).
 - [Despliegue y recorrido de ambas políticas Bullet](../how-to/qa-bullet.md).
@@ -38,3 +38,7 @@ Los documentos distinguen diseño aprobado de capacidades implementadas.
 - [ADR 0034: estrategias compartidas de amortización](../explanation/adr-0034-amortizacion-reutilizable.md).
 
 - [ADR 0039: condiciones versionadas y editor Bullet](../explanation/adr-0039-condiciones-bullet-y-habilitacion.md).
+
+- [Contrato de captura histórica](../reference/captura-historica-creditos.md), [ADR 0045](../explanation/adr-0045-fechas-efectivas-captura-historica.md) y [seguimiento de la entrega](../agent-notes/desembolsos-historicos.md).
+
+- [Recorrido reproducible de desembolsos históricos](../how-to/qa-desembolsos-historicos.md).

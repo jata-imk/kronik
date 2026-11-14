@@ -91,6 +91,12 @@ lecturas de la versión vigente, con cursor de pago y huellas de condiciones,
 calendario original, calendario aplicable y pago de origen. Una lectura ausente,
 incompatible o invalidada impide publicar saldos y vencimientos consolidados.
 Los movimientos registrados conservan su periodo y se muestran por separado.
+Una captura histórica pendiente también impide publicar saldos/vencimientos
+consolidados: sus operaciones aún pueden estar incompletas. Se informa el número
+de capturas pendientes y un enlace autorizado a Créditos; los movimientos se
+etiquetan como únicamente lo registrado. Completar la captura verifica y actualiza
+las proyecciones en la misma transacción del cierre y su auditoría, sin modificar
+contratos ni recalcular operaciones desde derivados.
 El diagnóstico compara también estado cifrado, resumen y obligaciones publicadas.
 Las huellas y la reconstrucción no sustituyen los controles de integridad de BD.
 
@@ -121,4 +127,4 @@ capacidad registra entorno y límites; ver la [guía de validación](../how-to/v
 Capturas con datos sintéticos: [escritorio](../images/tablero/escritorio.png),
 [móvil](../images/tablero/movil.png) y [modo oscuro](../images/tablero/oscuro.png).
 
-Decisión: [ADR 0045](../explanation/adr-0045-lecturas-financieras-tablero.md).
+Decisión: [ADR 0046](../explanation/adr-0046-lecturas-financieras-tablero.md).

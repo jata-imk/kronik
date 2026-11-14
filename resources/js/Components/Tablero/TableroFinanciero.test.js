@@ -84,3 +84,30 @@ it("formatea centavos grandes sin perder precisión ni cambiar el día por zona 
     expect(importeMXN(null)).toBe("Sin dato");
     expect(fechaCorta("2026-11-13")).toBe("13/11/2026");
 });
+
+it("explica capturas históricas pendientes y conserva el alcance del enlace de revisión", () => {
+    const routeMock = vi.fn(() => "/creditos?scope=all&sucursal_id=2");
+    const config = opciones();
+    config.global.mocks = { route: routeMock };
+    config.props.datos.saldos = null;
+    config.props.datos.cobertura = {
+        disponible: false,
+        creditos: 1,
+        verificados: 0,
+        capturas_pendientes: 1,
+    };
+    config.props.filtros = {
+        ...config.props.filtros,
+        scope: "all",
+        sucursal_id: 2,
+    };
+    const wrapper = mount(TableroFinanciero, config);
+    expect(wrapper.text()).toContain("capturas históricas pendientes");
+    expect(wrapper.text()).toContain("únicamente lo registrado");
+    expect(routeMock).toHaveBeenCalledWith("creditos.index", {
+        scope: "all",
+        sucursal_id: 2,
+    });
+    expect(wrapper.findAll("button")[0].attributes("disabled")).toBeDefined();
+    wrapper.unmount();
+});

@@ -111,13 +111,19 @@ class ProductoVersionService
         });
     }
 
-    public function activar(ProductoVersion $version, string $vigenteDesde): ProductoVersion
+    public function activar(ProductoVersion $version, string $vigenteDesde, bool $confirmacionHistorica = false): ProductoVersion
     {
+        app(FechaOriginacion::class)->validarActivacion($vigenteDesde, $confirmacionHistorica);
+
         return DB::transaction(function () use ($version, $vigenteDesde) {
             ProductoCrediticio::whereKey($version->producto_crediticio_id)->lockForUpdate()->firstOrFail();
             $version = ProductoVersion::query()->lockForUpdate()->findOrFail($version->id);
             $this->asegurarEditable($version);
             $actor = auth()->user();
+            if (ProductoVersion::where('producto_crediticio_id', $version->producto_crediticio_id)
+                ->whereKeyNot($version->id)->whereDate('vigente_desde', $vigenteDesde)->exists()) {
+                throw ValidationException::withMessages(['vigente_desde' => 'Ya existe una versión con esa fecha de vigencia. Selecciona otra fecha; no se modificó la versión activa.']);
+            }
             $snapshot = $this->snapshot($version);
             $fechaVigencia = CarbonImmutable::parse($vigenteDesde, $this->fechaEmpresa->zonaHoraria())->startOfDay();
             $programada = $this->fechaEmpresa->hoy()->lt($fechaVigencia);
