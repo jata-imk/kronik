@@ -134,6 +134,7 @@ class DesembolsoService
                 $solicitud->lock_version++;
                 $solicitud->save();
                 $solicitud->eventos()->create(['actor_id' => $actor->id, 'tipo' => 'desembolso_qa', 'datos' => ['credito_id' => $credito->id, 'desembolso_id' => $desembolso->id]]);
+                app(ProyeccionCreditoService::class)->sincronizar($credito);
                 app(ActivityLogService::class)->log(ActivityEvent::CreditDisbursed, 'Desembolso manual QA registrado', $solicitud,
                     ['related' => ['type' => 'credito', 'id' => $credito->id]], $actor, sucursalId: $solicitud->sucursal_id);
 

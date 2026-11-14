@@ -6,6 +6,9 @@ Los documentos distinguen diseño aprobado de capacidades implementadas.
 
 ## Referencia y decisiones
 
+- [Contrato de lectura financiera y proyecciones](../reference/tablero-financiero.md).
+- [ADR 0045: lecturas derivadas y consistencia transaccional](../explanation/adr-0045-lecturas-financieras-tablero.md).
+
 - [Habilitación y validación del ciclo Bullet en QA](../explanation/adr-0042-habilitacion-ciclo-bullet-qa.md).
 - [Despliegue y recorrido de ambas políticas Bullet](../how-to/qa-bullet.md).
 

@@ -104,6 +104,14 @@ function resultadoBullet(array $results, int $successes): void
     }
 }
 
+function verificarLecturaBullet(Credito $credito): void
+{
+    app(\App\Services\Credito\ProyeccionCreditoService::class)->diagnosticar($credito->fresh());
+    $lectura = \App\Models\CreditoLectura::where('credito_id', $credito->id)
+        ->where('corte', app(\App\Services\FechaEmpresa::class)->hoy()->toDateString())->sole();
+    comprobarBullet($lectura->capital === app(PagoService::class)->consultar($credito)['resumen']['capital_insoluto'], 'La lectura concurrente difiere del motor.');
+}
+
 function actividadBullet(Illuminate\Database\Eloquent\Model $sujeto, ActivityEvent $evento): int
 {
     return Activity::where('subject_type', $sujeto->getMorphClass())->where('subject_id', $sujeto->id)->where('event', $evento->value)->count();
@@ -190,11 +198,13 @@ try {
         resultadoBullet(competirBullet('creditos', [$loan->id], [$advance, $advance]), 2);
         comprobarBullet($loan->pagos()->count() === 1 && $loan->cronogramas()->count() === 2 && actividadBullet($loan, ActivityEvent::CreditPaymentRecorded) === 1, 'Anticipo o auditoría duplicados.');
         comprobarBullet(app(PagoService::class)->consultar($loan)['resumen']['capital_insoluto'] === '8880.00', 'Se aplicó principal más de una vez.');
+        verificarLecturaBullet($loan);
         $reverse = ['accion' => 'reversar', 'actor' => $actor->id, 'credito' => $loan->id, 'pago' => $loan->pagos()->sole()->id,
             'data' => ['idempotency_key' => (string) Str::uuid(), 'motivo' => 'Corrección concurrente sintética Bullet.', 'confirmacion_qa' => true]];
         resultadoBullet(competirBullet('creditos', [$loan->id], [$reverse, $reverse]), 2);
         comprobarBullet($loan->pagos()->count() === 2 && $loan->cronogramas()->count() === 3 && actividadBullet($loan, ActivityEvent::CreditPaymentReversed) === 1, 'Compensación o cronograma duplicados.');
         comprobarBullet(app(PagoService::class)->consultar($loan)['resumen']['capital_insoluto'] === '12000.00', 'El reverso no restauró principal.');
+        verificarLecturaBullet($loan);
 
         $prepay = prepararPagoBullet($other, $actor, 'prepago', '3120.00');
         $settle = prepararPagoBullet($other, $actor, 'liquidacion', '12120.00');

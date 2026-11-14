@@ -136,6 +136,11 @@ jobs:
       - name: Verify company grace defaults end to end
         run: npm run test:e2e -- dias-gracia.spec.js --output=test-results-gracia
 
+      - name: Verify financial dashboard end to end
+        env:
+          E2E_TABLERO_FIXTURES: "true"
+        run: npm run test:e2e -- tablero.spec.js --output=test-results-tablero
+
       - name: Verify both Bullet policies end to end
         env:
           E2E_BULLET_FIXTURES: "true"
@@ -157,6 +162,7 @@ jobs:
           path: |
             test-results/
             test-results-gracia/
+            test-results-tablero/
             playwright-report/
             test-results-rfc/
           retention-days: 7

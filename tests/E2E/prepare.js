@@ -16,6 +16,7 @@ export function e2eEnvironment() {
         DEBUGBAR_ENABLED: "false",
         APP_KEY: "base64:VdUXfE4mVbQd4D4QnS2SGdlx1DsFJsPhlfLCMyn5LIk=",
         E2E_DATABASE: "true",
+        E2E_TABLERO_FIXTURES: process.env.E2E_TABLERO_FIXTURES === "true" ? "true" : "false",
         E2E_BULLET_FIXTURES: process.env.E2E_BULLET_FIXTURES === "true" ? "true" : "false",
         E2E_ORIGINACION_DUAL: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
         ORIGINACION_APROBACIONES_HABILITADAS: cycle ? "true" : "false",

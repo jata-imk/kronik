@@ -3,17 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Enums\SolicitudEstado;
+use App\Http\Requests\ConsultarTableroRequest;
 use App\Models\Cliente;
 use App\Models\Credito;
 use App\Models\Solicitud;
-use Illuminate\Http\Request;
+use App\Services\TableroService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(ConsultarTableroRequest $request, TableroService $tablero): Response
+    {
+        return DB::transaction(fn () => $this->renderizar($request, $tablero));
+    }
+
+    private function renderizar(ConsultarTableroRequest $request, TableroService $tablero): Response
     {
         $user = $request->user();
         $consulta = app(\App\Services\ConsultaSucursal::class);
@@ -25,9 +32,14 @@ class DashboardController extends Controller
 
         $solicitudes = $puedeSolicitudes ? $scope(Solicitud::query()) : null;
         $creditos = $puedeCreditos ? $scope(Credito::query()) : null;
+        $filtros = $tablero->filtros($request->validated());
 
-        return Inertia::render('Dashboard', [
-            'filters' => $alcance,
+        return Inertia::render('Dashboard', array_map(fn ($valor) => Inertia::always($valor), [
+            'filters' => [...$alcance, ...$filtros],
+            'finanzas' => $puedeCreditos && ! $alcance['requiereSucursal'] ? $tablero->consultar($alcance, $filtros) : null,
+            'detalleFinanciero' => $puedeCreditos && ! $alcance['requiereSucursal'] ? $tablero->detalle($alcance, $filtros) : null,
+            'etapas' => $solicitudes ? (clone $solicitudes)->selectRaw('estado, COUNT(*) AS total')->groupBy('estado')->get()
+                ->map(fn ($s) => ['estado' => $s->estado->value, 'etiqueta' => $s->estado->label(), 'total' => (int) $s->total]) : [],
             'sucursales' => $consulta->opciones(),
             'resumen' => [
                 'clientes' => $puedeClientes ? $scope(Cliente::query())->count() : null,
@@ -55,6 +67,6 @@ class DashboardController extends Controller
                 'productos' => Gate::allows('read productos-crediticios'),
                 'plantillas' => Gate::allows('read plantillas-documentos'),
             ],
-        ]);
+        ]));
     }
 }

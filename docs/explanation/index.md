@@ -1,5 +1,7 @@
 # Explicación
 
+- [ADR 0045: lecturas financieras derivadas del core](adr-0045-lecturas-financieras-tablero.md).
+
 - [ADR 0044: RFC genéricos en Clientes](adr-0044-rfc-genericos-clientes.md).
 
 - [ADR 0042: habilitación y validación del ciclo Bullet en QA](adr-0042-habilitacion-ciclo-bullet-qa.md).

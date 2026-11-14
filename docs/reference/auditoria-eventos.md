@@ -60,6 +60,11 @@ destino; crear un equipo no duplica este evento de preferencia.
 
 ## Matriz por acción
 
+El tablero financiero mantiene los eventos de desembolso/pago/reverso en su
+transacción, junto con las lecturas derivadas. Consulta y avance temporal no
+emiten actividad adicional. La reconstrucción administrativa usa el evento
+específico incluido a continuación; no publica importes ni evidencia cifrada.
+
 La evidencia es una prueba de comportamiento con actividad persistida; declarar
 un caso del enum o despachar un evento Jetstream no acredita cobertura. Los nombres
 de suites son rutas relativas a `tests/Feature/`. Las filas compartidas conservan
@@ -67,6 +72,7 @@ un solo código por acción, sin crear catálogos paralelos.
 
 | Módulo | Acción/disparador | Código | Actor/iniciador | Sujeto | Resultado | Equipo/sucursal | Metadatos permitidos | Consulta | Estado | Emisor | Prueba |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `creditos` | Reconstrucción administrativa de lecturas | `credito.projections_rebuilt` | S; iniciador CLI desconocido explícito | — | completada/incompleta | Equipo/sucursal null explícitos; no heredar sesión | result | G | Implementado, pendiente integración/QA | ProyectarCreditos | TableroFinancieroTest |
 | `teams` | Equipo creado | `team.created` | U | Equipo | Cambio aplicado | T | changed_fields, related, result | Q | Implementado; validar entrega en Agent Note | TeamManagementService::create | AuditCoverageTest |
 | `teams` | Equipo actualizado | `team.updated` | U | Equipo | Cambio aplicado | T | changed_fields, related, result | Q | Implementado; validar entrega en Agent Note | TeamManagementService::update | AuditCoverageTest |
 | `teams` | Equipo desactivado | `team.deactivated` | U | Equipo | Cambio aplicado | T | changed_fields, related, result | Q | Implementado; validar entrega en Agent Note | TeamManagementService::update | AuditCoverageTest |
