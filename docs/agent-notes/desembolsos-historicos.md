@@ -7,7 +7,12 @@
 - UI/aceptación: [PR #80](https://github.com/jata-imk/kronik/pull/80), dependiente de #79, código 86aa88f, rama feat/desembolsos-historicos-ui.
 - [ADR 0045](../explanation/adr-0045-fechas-efectivas-captura-historica.md), [contrato](../reference/captura-historica-creditos.md), [recorrido QA y oráculos](../how-to/qa-desembolsos-historicos.md).
 
-Implementado y probado en ramas, sin integración, despliegue ni aceptación manual del usuario en QA compartido. CI de los últimos heads se registra en las PR; no confundir su resultado con despliegue. No fusionar ni operar dinero real sin indicación.
+Integrado por autorización del usuario el 13/11/2026: #79 en `ba49793` y #80 en
+`defe471`, después de #65. Heads revisados `4057d70` y `e657487`, con CI aprobada
+en las ejecuciones 43159286071 y 43159958047. La segunda PR se redirigió a main
+tras integrar su dependencia. Sin despliegue ni aceptación manual en QA compartido;
+la integración no autoriza dinero real. PR #81 añade proyecciones y verifica la
+interacción con capturas pendientes; mantiene su revisión/CI propia.
 
 El usuario autorizó activar borrador QA con vigencia efectiva pasada conservando activación real. Monolito modular: Producto/LOS valida, documentos conserva evidencia, aplicación autoriza/bloquea/registra/audita y los motores existentes calculan. Equipos son contextos de permisos de una financiera por instalación, no tenants. No hay cambios de fórmulas ni interpretación con versiones actuales.
 
@@ -32,6 +37,8 @@ UI 86aa88f: review medium contra 4057d70 sin defectos accionables. Barrido mediu
 
 Consulta por servicios reales, Windows/PHP 8.3.16/SQLite en memoria, historias de 30/365/1825 días: tres consultas cada una, sin escrituras; observación local 9.069/628.607/5751.555 ms y memoria incremental 32744/11392/11440 bytes. No es SLA ni prueba de 10 mil créditos. El avance diario existente cuesta más para historias largas; seguimiento de proyecciones/capacidad permanece abierto.
 
-Sin decisiones de negocio bloqueantes. Pendientes: revisión del usuario, autorización de integración en orden #79 → #80, despliegue y aceptación manual de QA siguiendo la guía; no se acredita cierre de la validación integral Bullet ni del roadmap amplio.
+Sin decisiones de negocio bloqueantes. Integración #79 → #80 ya autorizada y
+realizada. Pendientes: despliegue y aceptación manual de QA siguiendo la guía;
+no se acredita cierre de la validación integral Bullet ni del roadmap amplio.
 
 Árbol principal preservado: 14 hashes de archivos preexistentes idénticos y main local/remoto 67bba2c al cierre de implementación. Worktrees anteriores intactos; ambos trabajos en worktrees aislados bajo output/desembolsos-historicos. Diff/hashes previos y logs locales quedan fuera de la entrega.

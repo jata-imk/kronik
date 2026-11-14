@@ -139,6 +139,11 @@ jobs:
       - name: Verify company grace defaults end to end
         run: npm run test:e2e -- dias-gracia.spec.js --output=test-results-gracia
 
+      - name: Verify financial dashboard end to end
+        env:
+          E2E_TABLERO_FIXTURES: "true"
+        run: npm run test:e2e -- tablero.spec.js --output=test-results-tablero
+
       - name: Verify historical origination and chronological payments
         env:
           E2E_HISTORICO_FIXTURES: "true"
@@ -166,6 +171,7 @@ jobs:
           path: |
             test-results/
             test-results-gracia/
+            test-results-tablero/
             playwright-report/
             test-results-rfc/
             test-results-historico/

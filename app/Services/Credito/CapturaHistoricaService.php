@@ -54,6 +54,7 @@ final class CapturaHistoricaService
                 throw ValidationException::withMessages(['captura_historica' => $situacion['error']]);
             }
             $captura->update(['completada_por' => $actor->id, 'completada_team_id' => $actor->current_team_id, 'completada_en' => now()]);
+            app(ProyeccionCreditoService::class)->sincronizar($credito);
             app(ActivityLogService::class)->log(ActivityEvent::CreditHistoricalCaptureCompleted, 'Captura histórica QA completada', $credito,
                 ['related' => ['type' => 'credito_captura_historica', 'id' => $captura->id], 'state' => 'completa'], $actor,
                 teamId: $actor->current_team_id, sucursalId: $credito->sucursal_id, inheritActorContext: false);

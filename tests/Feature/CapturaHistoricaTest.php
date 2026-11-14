@@ -63,6 +63,27 @@ function registrarPagoHistorico($test, Credito $credito, string $fecha, string $
     return [$data, $previa];
 }
 
+test('tablero no publica captura pendiente y el cierre confirma proyecciones y auditoria juntos', function () {
+    [$actor, $credito] = prepararCreditoHistorico($this);
+    $this->get(route('dashboard'))->assertInertia(fn (Assert $page) => $page
+        ->where('finanzas.cobertura.disponible', false)->where('finanzas.cobertura.capturas_pendientes', 1)->where('finanzas.saldos', null));
+    $this->travel(1)->days();
+    $antes = Activity::count();
+    $evento = 'eloquent.saving: '.\App\Models\CreditoLectura::class;
+    \Illuminate\Support\Facades\Event::listen($evento, fn () => throw new RuntimeException('Fallo sintético de proyección al cerrar historia.'));
+    try {
+        expect(fn () => app(CapturaHistoricaService::class)->completar($credito, $actor))->toThrow(RuntimeException::class);
+    } finally {
+        \Illuminate\Support\Facades\Event::forget($evento);
+    }
+    expect($credito->capturaHistorica()->sole()->completada_en)->toBeNull()->and(Activity::count())->toBe($antes);
+    app(CapturaHistoricaService::class)->completar($credito, $actor);
+    app(CapturaHistoricaService::class)->completar($credito, $actor);
+    $this->get(route('dashboard'))->assertInertia(fn (Assert $page) => $page
+        ->where('finanzas.cobertura.disponible', true)->where('finanzas.cobertura.capturas_pendientes', 0)->where('finanzas.saldos.capital', '12000.00'));
+    expect(Activity::where('event', ActivityEvent::CreditHistoricalCaptureCompleted->value)->count())->toBe(1);
+});
+
 test('recorrido histórico conserva momentos reales tabla firma producto y registro único', function (string $politica) {
     [$actor, $credito, $version, $paquete, $data] = prepararCreditoHistorico($this, $politica);
     expect($version->vigente_desde->toDateString())->toBe('2027-01-01')
