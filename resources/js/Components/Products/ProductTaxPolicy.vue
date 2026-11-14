@@ -5,7 +5,7 @@ const evento = (v) => ({ prepago: "Anticipo parcial", liquidacion_anticipada: "L
 const base = (v) => ({ monto_credito: "Monto original solicitado", capital_anticipado: "Capital anticipado", capital_insoluto: "Capital insoluto antes de operar", no_aplica: "Importe fijo" })[v] ?? "Sin base definida";
 </script>
 <template>
-    <div class="space-y-4 pt-3">
+    <div v-if="version.fiscalidad" class="space-y-4 pt-3">
         <section class="k-feature p-5"><p class="text-xs uppercase tracking-widest"><i class="pi pi-shield mr-2" aria-hidden="true" />Política fiscal de esta versión</p><h3 class="mt-2 text-xl font-semibold">Cada concepto, su tratamiento</h3><p class="mt-2 text-sm text-white/90">La institución define la fiscalidad con su asesor. Se conservará con las condiciones de la versión; no cambia créditos ni paquetes anteriores.</p></section>
         <Message severity="warn" :closable="false">El simulador puede aplicar esta configuración al activar «Incluir impuestos proyectados». Los paquetes QA anteriores a impuestos no cambian. Guardar o activar esta versión no autoriza contratos ni operaciones con dinero real.</Message>
         <div class="grid gap-4 rounded-xl bg-surface-50 p-4 dark:bg-surface-800 md:grid-cols-2">
@@ -18,4 +18,5 @@ const base = (v) => ({ monto_credito: "Monto original solicitado", capital_antic
         <p v-if="!version.comisiones.length" class="rounded-xl border border-dashed border-surface-300 p-5 text-sm text-surface-500">Sin comisiones. Puedes agregarlas en la pestaña Comisiones y después definir aquí su fiscalidad.</p>
         <div v-for="(item, index) in version.comisiones" :key="index" class="space-y-2"><p v-if="['evento','liquidacion'].includes(item.momento_cobro)" class="text-sm text-muted-color">{{ evento(item.evento_cobro) }} · Base comercial: {{ base(item.base_calculo) }} · {{ item.obligatoria ? 'Obligatoria' : 'Opcional' }}</p><TaxConceptField v-model="item.fiscalidad" :title="conceptos.find(c => c.id === item.concepto_comision_id)?.nombre ?? `Comisión ${index + 1}`" :path="`version.comisiones.${index}.fiscalidad`" :readonly="readonly" :errors="errors" /></div>
     </div>
+    <Message v-else severity="warn" :closable="false">Esta versión no conserva una configuración fiscal. No se asume exención ni tasa cero.</Message>
 </template>

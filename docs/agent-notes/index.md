@@ -1,6 +1,9 @@
 # Agent Notes
 
-- [Core crediticio extensible](core-crediticio-extensible.md)
+- [Días de gracia predeterminados de Empresa](empresa-dias-gracia.md)
+
+- [Core crediticio y Bullet: habilitación y validación integral QA en PR #73](core-crediticio-extensible.md)
+- [Auditoría y actividad: cobertura técnica y validaciones](auditoria-actividad.md)
 
 - [Equipo: acciones de integrantes](equipo-acciones-integrantes.md)
 
@@ -55,8 +58,16 @@ Consulta el [índice temático](../topic/index.md) para encontrar material relac
 
 ## Notas
 
+- [Clientes: admisión de RFC genéricos](clientes-rfc-genericos.md).
+
 - [Backlog 01.5 - Gestion de usuarios, equipos y sucursales](01.5-gestion-usuarios-equipos-sucursales.md)
 
 - [Estatus operativo de empresa](empresa-estatus-operativo.md).
 - [Folios y ayuda contextual: entrega integrada y evidencia](folios-ayuda-contextual.md).
 - [Equipo: tarjetas de roles y filtros de bitácora](equipo-tarjetas-bitacora.md).
+
+- [Contexto de sucursal: integrado, desplegado y validado en QA](contexto-sucursal-transversal.md).
+
+- [Consulta, edición e históricos](consulta-edicion-historicos.md).
+
+- [SIC QA por escenarios](sic-escenarios-qa.md).

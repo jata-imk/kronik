@@ -27,3 +27,7 @@ El alcance productivo se rige por las validaciones pendientes documentadas.
 - [Backlog 05: CDC, score y SIC](../todos/05-cdc-score-sic.md).
 - [Nota de SIC y score](../agent-notes/05-sic-score.md).
 - [Clientes](clientes-expediente.md), [originación](originacion-solicitudes.md), [portada y capturas](diseno-navegacion.md).
+
+- [Escenarios por intento y aprobación sintética QA](../reference/sic-escenarios-qa.md).
+- [ADR 0043: escenarios SIC QA](../explanation/adr-0043-escenarios-sic-qa.md).
+- [Seguimiento de la entrega](../agent-notes/sic-escenarios-qa.md).

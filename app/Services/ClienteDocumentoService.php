@@ -56,6 +56,9 @@ class ClienteDocumentoService
                         'state' => ClienteDocumentoEstado::Recibido->value,
                     ],
                     causer: auth()->user(),
+                    teamId: auth()->user()?->current_team_id,
+                    sucursalId: $cliente->sucursal_id,
+                    inheritActorContext: false,
                 );
 
                 return $documento;
@@ -113,6 +116,9 @@ class ClienteDocumentoService
                 'state' => $estado->value,
             ],
             causer: $reviewer,
+            teamId: $reviewer->current_team_id,
+            sucursalId: $documento->cliente->sucursal_id,
+            inheritActorContext: false,
         );
 
         return $documento->refresh();
@@ -131,10 +137,14 @@ class ClienteDocumentoService
 
     public function deleteFilesFor(Cliente $cliente): void
     {
-        $cliente->documentos()
+        $files = $cliente->documentos()
             ->whereNotNull('path')
-            ->get(['disk', 'path'])
-            ->each(fn (ClienteDocumento $documento) => Storage::disk($documento->disk)->delete($documento->path));
+            ->get(['disk', 'path']);
+        DB::afterCommit(function () use ($files) {
+            foreach ($files as $documento) {
+                Storage::disk($documento->disk)->delete($documento->path);
+            }
+        });
     }
 
     private function findReplacement(Cliente $cliente, ClienteDocumentoTipo $tipo, ?int $replacementId): ?ClienteDocumento

@@ -1,6 +1,6 @@
 # ADR 0035: catálogo de capacidades actuales del crédito
 
-- Estado: aceptado; integrado mediante PR #64 en `ee94025`, sin despliegue.
+- Estado: aceptado; integrado en main mediante PR #64 (`ee94025`).
 - Fecha: 2026-10-31.
 - Complementa [ADR 0032](adr-0032-core-crediticio-extensible.md), [ADR 0033](adr-0033-convenciones-dias-base-fija.md) y [ADR 0034](adr-0034-amortizacion-reutilizable.md).
 

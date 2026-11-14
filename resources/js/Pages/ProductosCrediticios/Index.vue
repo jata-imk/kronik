@@ -1,4 +1,12 @@
 <script setup>
+import InputText from "primevue/inputtext";
+import InputNumber from "primevue/inputnumber";
+import Select from "primevue/select";
+import CondicionesInteresEditor from "@/Components/Products/CondicionesInteresEditor.vue";
+import { cambiarMetodos, versionParaConsulta } from "./versionForm";
+import { useListadoServidor } from "@/Composables/useListadoServidor";
+import ListadoPaginador from "@/Components/ListadoPaginador.vue";
+import OriginacionAyuda from "@/Components/Products/OriginacionAyuda.vue";
 import PageHeader from "@/Components/PageHeader.vue";
 import PoliticaMoraEditor from "@/Components/Products/PoliticaMoraEditor.vue";
 import FinancialFieldHelp from "@/Components/Products/FinancialFieldHelp.vue";
@@ -26,22 +34,28 @@ import {
 } from "./productValidation";
 
 const props = defineProps({
+    productoSeleccionado: Object,
+    modoVersion: String,
     productos: { type: Array, default: () => [] },
     capacidadesCredito: { type: Object, required: true },
     conceptosComision: { type: Array, default: () => [] },
     simuladorDefaults: { type: Object, default: () => ({}) },
     activacionDefaults: { type: Object, default: () => ({}) },
+    nuevoProductoDefaults: { type: Object, default: () => ({}) },
 });
 const page = usePage();
 const toast = useToast();
 const confirm = useConfirm();
 const query = ref("");
-const selectedId = ref(props.productos[0]?.id ?? null);
+const selectedId = ref(props.productoSeleccionado?.id ?? props.productos[0]?.id ?? null);
 const editorVisible = ref(false);
 const simulatorVisible = ref(false);
 const catalogVisible = ref(false);
 const helpGuideVisible = ref(false);
 const editingVersion = ref(null);
+const editorReadonly = ref(false);
+const dismissedEditor = ref(null);
+const editorProductId = ref(null);
 const fiscalVersion = ref(null);
 const fiscalVisible = ref(false);
 const moraVersion = ref(null);
@@ -66,20 +80,18 @@ const activatingVersion = ref(null);
 const can = (permission) =>
     page.props.auth.is_super_admin ||
     page.props.auth.permissions?.[permission.replaceAll(" ", "-")] === true;
-const products = computed(() =>
-    props.productos.filter((product) =>
-        `${product.nombre} ${product.clave}`
-            .toLowerCase()
-            .includes(query.value.toLowerCase()),
-    ),
-);
-const selected = computed(
-    () =>
-        props.productos.find((product) => product.id === selectedId.value) ??
-        products.value[0] ??
-        null,
-);
-const latest = computed(() => selected.value?.versiones?.[0] ?? null);
+const products = computed(() => props.productos);
+const remoteFilters = ref({ global: { value: query.value } });
+const serverList = useListadoServidor(remoteFilters);
+query.value = remoteFilters.value.global.value ?? "";
+watch(query, value => { remoteFilters.value.global.value = value; }, { flush: "sync" });
+watch(() => remoteFilters.value.global.value, value => { query.value = value ?? ""; }, { flush: "sync" });
+const selected = computed(() => props.productoSeleccionado ? (props.productoSeleccionado.id === selectedId.value ? props.productoSeleccionado : null) : props.productos.find(p => p.id === selectedId.value));
+const latest = computed(() => selected.value?.ultimaVersion ?? selected.value?.versiones?.[0] ?? null);
+function selectProduct(product) {
+    selectedId.value = product.id;
+    serverList.visit({ producto_id: product.id, page: page.props.listado?.current_page ?? 1, versiones_page: 1, version_id: null, modo: null });
+}
 const money = formatMoneyWithCents;
 const moneyCompact = (value) =>
     new Intl.NumberFormat("es-MX", {
@@ -177,7 +189,7 @@ const emptyVersion = () => ({
     monto_maximo: 100000,
     tasa_ordinaria_anual: 36,
     tasa_moratoria_anual: 72,
-    dias_gracia_mora: 3,
+    dias_gracia_mora: props.nuevoProductoDefaults.dias_gracia_mora ?? 3,
     politica_mora: { gracia: "efectiva", intereses: null },
     cat_aplica: true,
     cat_no_aplica_motivo: "",
@@ -192,6 +204,8 @@ const emptyVersion = () => ({
     ],
     reglas: {
         metodos_amortizacion: [predeterminados.value.metodo],
+        base_ordinaria: "saldo_insoluto",
+        base_moratoria: "capital_vencido",
         permite_prepago_parcial: true,
         permite_liquidacion_anticipada: true,
         monto_minimo_prepago: null,
@@ -205,6 +219,17 @@ const form = useForm({
     descripcion: "",
     version: emptyVersion(),
 });
+const editorBullet = computed(() => form.version.reglas.metodos_amortizacion.includes("bullet"));
+const prepagoOpciones = computed(() => {
+    const permitidas = configuracion.value.combinaciones?.[editorBullet.value ? "bullet" : "actuales"]?.aplicaciones_prepago;
+    return (opciones.value.aplicaciones_prepago ?? []).filter(o => !permitidas || permitidas.includes(o.value));
+});
+const changeMethods = seleccion => {
+    if (editorReadonly.value) return;
+    const anterior = form.version.reglas.metodos_amortizacion.includes("bullet");
+    form.version.reglas = cambiarMetodos(form.version.reglas, seleccion, configuracion.value.combinaciones);
+    if (anterior !== editorBullet.value) toast.add({ severity: "info", summary: "Revisa las condiciones", detail: "Se ajustó la aplicación del prepago y se limpiaron condiciones incompatibles. Selecciona la base moratoria y la política de intereses aplicables.", life: 6500 });
+};
 const commissionForm = useForm({
     clave: "",
     nombre: "",
@@ -296,6 +321,10 @@ const normalizeCommission = (item) => {
     };
 };
 const openCreate = () => {
+    if (!can("create productos-crediticios")) return;
+    form.cancel();
+    editorReadonly.value = false;
+    editorProductId.value = null;
     editingVersion.value = null;
     form.defaults({
         clave: "",
@@ -309,6 +338,8 @@ const openCreate = () => {
     editorVisible.value = true;
 };
 const openEdit = (version) => {
+    editorReadonly.value = false;
+    editorProductId.value = selected.value.id;
     editingVersion.value = version;
     form.defaults({
         clave: selected.value.clave,
@@ -328,30 +359,85 @@ const openEdit = (version) => {
             periodicidades: version.periodicidades.map((item) => ({ ...item })),
             reglas: {
                 ...version.reglas,
+                base_ordinaria: version.reglas.base_ordinaria ?? "saldo_insoluto",
+                ...(version.reglas.politica_interes_bullet == null ? {} : { politica_interes_bullet: version.reglas.politica_interes_bullet }),
                 metodos_amortizacion: [...version.reglas.metodos_amortizacion],
             },
             comisiones: version.comisiones.map(normalizeCommission),
         },
     });
     form.reset();
+    if (!editorBullet.value) delete form.version.reglas.politica_interes_bullet;
     form.clearErrors();
     activeEditorTab.value = "general";
     editorVisible.value = true;
 };
+const requestVersion = (version, modo = "consulta") => {
+    dismissedEditor.value = null;
+    form.cancel();
+    editorVisible.value = false;
+    serverList.visit({ producto_id: selected.value.id, version_id: version.id, modo, page: page.props.listado?.current_page ?? 1 });
+};
+const closeEditor = () => {
+    dismissedEditor.value = props.modoVersion ? `${editorProductId.value}:${editingVersion.value?.id}:${props.modoVersion}` : null;
+    form.cancel();
+    editorVisible.value = false;
+    editingVersion.value = null;
+    form.clearErrors();
+    if (props.modoVersion) serverList.visit({ modo: null, page: page.props.listado?.current_page ?? 1 });
+};
+watch([() => props.productoSeleccionado, () => props.modoVersion, () => can("update productos-crediticios")], ([producto, modo]) => {
+    const version = producto?.versionSeleccionada;
+    // Validation responses preserve the actor's unsaved draft and field errors.
+    if (!modo) {
+        dismissedEditor.value = null;
+        if (editingVersion.value && editorVisible.value) {
+            form.cancel();
+            editorVisible.value = false;
+            editingVersion.value = null;
+            form.clearErrors();
+        }
+        return;
+    }
+    if (dismissedEditor.value === `${producto?.id}:${version?.id}:${modo}`) {
+        serverList.visit({modo:null,page:page.props.listado?.current_page ?? 1});
+        return;
+    }
+    if (modo === "edicion" && can("update productos-crediticios") && editorVisible.value && !editorReadonly.value && version?.puede_editar && editingVersion.value?.id === version.id && editorProductId.value === producto.id) return;
+    form.cancel();
+    editorVisible.value = false;
+    form.clearErrors();
+    if (!version) return;
+    selectedId.value = producto.id;
+    if (modo === "edicion" && can("update productos-crediticios") && version.puede_editar) { openEdit(version); return; }
+    editorProductId.value = producto.id;
+    editingVersion.value = version;
+    editorReadonly.value = true;
+    form.defaults({ clave: producto.clave, nombre: producto.nombre, descripcion: producto.descripcion ?? "", version: versionParaConsulta(version) });
+    form.reset();
+    activeEditorTab.value = "general";
+    editorVisible.value = true;
+}, { immediate: true });
+watch(() => can("create productos-crediticios"), allowed => {
+    if (allowed || editingVersion.value || !editorVisible.value) return;
+    form.cancel(); editorVisible.value = false; form.reset(); form.clearErrors();
+});
 const submit = () => {
+    if (!can(editingVersion.value ? "update productos-crediticios" : "create productos-crediticios")) return;
+    if (editorReadonly.value || (editingVersion.value && !editingVersion.value.puede_editar)) return;
     const editing = Boolean(editingVersion.value);
     const url = editing
         ? route("productos-crediticios.update", [
-              selected.value.id,
+              editorProductId.value,
               editingVersion.value.id,
           ])
         : route("productos-crediticios.store");
     form.submit(editing ? "put" : "post", url, {
         preserveScroll: true,
         errorBag: "productoCrediticio",
-        only: ["productos"],
+        only: ["productos", "productoSeleccionado", "listado", "versionesListado", "modoVersion"],
         onSuccess: () => {
-            editorVisible.value = false;
+            closeEditor();
             toast.add({
                 severity: "success",
                 summary: editing ? "Borrador actualizado" : "Producto creado",
@@ -373,6 +459,7 @@ const submit = () => {
     });
 };
 const addPeriodicity = () => {
+    if (editorReadonly.value) return;
     const available = opciones.value.periodicidades.map((o) => o.value).find(
         (value) =>
             !form.version.periodicidades.some(
@@ -401,10 +488,12 @@ const addCommission = () =>
         incluye_cat: true,
     });
 const changeCommissionType = (item) => {
+    if (editorReadonly.value) return;
     item.base_calculo =
         item.tipo_importe === "porcentaje" ? "monto_credito" : "no_aplica";
 };
 const changeCommissionMoment = (item) => {
+    if (editorReadonly.value) return;
     item.modalidad_cobro =
         item.momento_cobro === "inicio"
             ? (item.modalidad_cobro ?? "pago_separado")
@@ -416,6 +505,7 @@ const changeCommissionMoment = (item) => {
     }
 };
 const updateCommissionCat = (item) => {
+    if (editorReadonly.value) return;
     item.incluye_cat = commissionIncludesCat(item);
 };
 const catReason = commissionCatReason;
@@ -448,7 +538,7 @@ const versionCopy = (version) =>
         {},
         {
             preserveScroll: true,
-            only: ["productos"],
+            only: ["productos", "productoSeleccionado", "listado", "versionesListado"],
             onSuccess: () =>
                 toast.add({
                     severity: "success",
@@ -476,7 +566,7 @@ const submitActivation = () => {
         {
             preserveScroll: true,
             errorBag: "activarProductoVersion",
-            only: ["productos"],
+            only: ["productos", "productoSeleccionado", "listado", "versionesListado"],
             onSuccess: () => {
                 activationVisible.value = false;
                 toast.add({
@@ -508,7 +598,7 @@ const retire = (version) =>
                 {},
                 {
                     preserveScroll: true,
-                    only: ["productos"],
+                    only: ["productos", "productoSeleccionado", "listado", "versionesListado"],
                     onSuccess: () =>
                         toast.add({
                             severity: "success",
@@ -540,6 +630,7 @@ const simulatorConditionalCommissions = computed(() =>
     (simulatorVersion.value?.comisiones ?? []).filter(isConditionalCommission),
 );
 const openSimulator = (version) => {
+    if (version.capacidades?.problemas?.length) return;
     simulatorVersion.value = version;
     const period = version.capacidades.opciones.periodicidades[0];
     simForm.value = {
@@ -597,7 +688,8 @@ watch(simForm, () => {
 watch(
     () => props.productos,
     (value) => {
-        if (!value.some((product) => product.id === selectedId.value))
+        if (props.productoSeleccionado) selectedId.value = props.productoSeleccionado.id;
+        else if (!value.some((product) => product.id === selectedId.value))
             selectedId.value = value[0]?.id ?? null;
     },
 );
@@ -616,30 +708,33 @@ watch(
                 <aside class="min-w-0 rounded-2xl border border-surface-200 bg-surface-50/70 p-3 dark:border-surface-700 dark:bg-surface-900/50">
                     <IconField class="mb-3"><InputIcon class="pi pi-search" /><InputText v-model="query" aria-label="Buscar productos" placeholder="Buscar producto" fluid /></IconField>
                     <div v-if="products.length" class="space-y-2">
-                        <button v-for="product in products" :key="product.id" type="button" class="w-full rounded-xl border p-3 text-left transition" :class="selected?.id === product.id ? 'border-primary bg-primary-50 shadow-sm dark:bg-primary-950/30' : 'border-transparent bg-surface-0 hover:border-surface-300 dark:bg-surface-800'" @click="selectedId = product.id">
+                        <button v-for="product in products" :key="product.id" type="button" class="w-full rounded-xl border p-3 text-left transition" :class="selected?.id === product.id ? 'border-primary bg-primary-50 shadow-sm dark:bg-primary-950/30' : 'border-transparent bg-surface-0 hover:border-surface-300 dark:bg-surface-800'" @click="selectProduct(product)">
                             <div class="flex items-start justify-between gap-2"><div class="min-w-0"><p class="truncate font-semibold">{{ product.nombre }}</p><p class="truncate text-xs text-surface-500">{{ product.clave }}</p></div><ProductVersionStatus :state="product.versiones[0]?.estado ?? 'borrador'" /></div>
-                            <div class="mt-3 flex items-center gap-2 text-xs text-surface-500"><i class="pi pi-clone" /><span>{{ product.versiones.length }} {{ product.versiones.length === 1 ? 'versión' : 'versiones' }}</span><span>·</span><span>{{ product.versiones[0] ? moneyCompact(product.versiones[0].monto_maximo) : 'Sin configurar' }}</span></div>
+                            <div class="mt-3 flex items-center gap-2 text-xs text-surface-500"><i class="pi pi-clone" /><span>{{ product.versiones_count ?? product.versiones.length }} {{ (product.versiones_count ?? product.versiones.length) === 1 ? 'versión' : 'versiones' }}</span><span>·</span><span>{{ product.versiones[0] ? moneyCompact(product.versiones[0].monto_maximo) : 'Sin configurar' }}</span></div>
                         </button>
                     </div>
                     <div v-else class="px-4 py-12 text-center"><i class="pi pi-wallet text-3xl text-surface-300" /><p class="mt-3 font-medium">Sin productos</p><p class="mt-1 text-sm text-surface-500">Crea el primer producto de crédito simple.</p></div>
+                    <ListadoPaginador />
                 </aside>
 
                 <main v-if="selected" class="min-w-0 space-y-5">
                     <section class="k-feature overflow-hidden p-5">
-                        <div class="flex flex-col gap-5 md:flex-row md:items-start md:justify-between"><div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold">{{ selected.clave }}</span><span class="rounded-full bg-white/15 px-2.5 py-1 text-xs">Crédito simple</span></div><h2 class="mt-3 truncate text-2xl font-bold">{{ selected.nombre }}</h2><p class="mt-1 max-w-2xl text-sm text-white/75">{{ selected.descripcion || 'Sin descripción comercial.' }}</p></div><Button v-if="latest && can('simulate productos-crediticios')" label="Simular" icon="pi pi-calculator" severity="secondary" @click="openSimulator(latest)" /></div>
-                        <div v-if="latest" class="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4"><div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/70">Montos</p><p class="mt-1 font-semibold">{{ moneyCompact(latest.monto_minimo) }} – {{ moneyCompact(latest.monto_maximo) }}</p></div><div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/70">Tasa ordinaria anual</p><p class="mt-1 text-lg font-semibold">{{ percent(latest.tasa_ordinaria_anual) }}</p></div><div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/70">Mora anual</p><p class="mt-1 text-lg font-semibold">{{ percent(latest.tasa_moratoria_anual) }}</p></div><div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/70">Versión actual</p><p class="mt-1 text-lg font-semibold">v{{ latest.numero }} · {{ stateMeta(latest.estado)[0] }}</p></div></div>
+                        <div class="flex flex-col gap-5 md:flex-row md:items-start md:justify-between"><div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><span class="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold">{{ selected.clave }}</span><span class="rounded-full bg-white/15 px-2.5 py-1 text-xs">Crédito simple</span></div><h2 class="mt-3 truncate text-2xl font-bold">{{ selected.nombre }}</h2><p class="mt-1 max-w-2xl text-sm text-white/75">{{ selected.descripcion || 'Sin descripción comercial.' }}</p></div><Button v-if="latest && can('simulate productos-crediticios')" label="Simular" icon="pi pi-calculator" severity="secondary" :disabled="latest.capacidades?.problemas?.length > 0" @click="openSimulator(latest)" /></div>
+                        <div v-if="latest" class="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4"><div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/70">Montos</p><p class="mt-1 font-semibold">{{ moneyCompact(latest.monto_minimo) }} – {{ moneyCompact(latest.monto_maximo) }}</p></div><div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/70">Tasa ordinaria anual</p><p class="mt-1 text-lg font-semibold">{{ percent(latest.tasa_ordinaria_anual) }}</p></div><div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/70">Mora anual</p><p class="mt-1 text-lg font-semibold">{{ percent(latest.tasa_moratoria_anual) }}</p></div><div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/70">Última versión</p><p class="mt-1 text-lg font-semibold">v{{ latest.numero }} · {{ stateMeta(latest.estado)[0] }}</p></div></div>
                     </section>
+                    <section class="space-y-3 rounded-2xl border border-surface-200 p-4"><h3 class="font-semibold">Política de originación · versión de producto {{ (selected.versionSeleccionada ?? latest)?.numero }}</h3><p class="text-sm">Las condiciones contractuales y la política de originación tienen versionados independientes. Borrador permite configurar; activar/programar congela condiciones. Solo una versión activa y vigente se selecciona en solicitudes. Una política ausente no impide capturar ni enviar; sí impide aprobar.</p><OriginacionAyuda :info="(selected.versionSeleccionada ?? latest)?.originacion" /></section>
                     <section class="rounded-2xl border border-surface-200 bg-surface-0 p-4 dark:border-surface-700 dark:bg-surface-900">
                         <div class="mb-4"><h3 class="font-semibold">Versiones y vigencia</h3><p class="text-sm text-surface-500">Las versiones activadas son históricas e inmutables.</p></div>
+                        <ListadoPaginador :metadata="page.props.versionesListado" page-name="versiones_page" per-page-name="versiones_por_pagina" />
                         <DataTable :value="selected.versiones" striped-rows scrollable :table-style="{ minWidth: '72rem' }">
-                            <Column v-if="can('manage origination productos-crediticios')" header="Originación"><template #body="{ data }"><Link :href="route('originacion-politicas.show', data.id)" class="text-primary underline">Política v{{ data.numero }}</Link></template></Column>
+                            <Column header="Originación"><template #body="{ data }"><span>{{ data.originacion?.existe ? 'Política actual ' + data.originacion.numero : 'Sin política: impide aprobar' }}</span><Link :href="route('originacion-politicas.show', data.id)" class="block text-primary underline">Consultar política</Link></template></Column>
                             <Column header="Versión" style="width:16%"><template #body="{ data }"><div class="flex items-center gap-2"><Avatar :label="`v${data.numero}`" shape="circle" class="bg-primary-100 font-bold text-primary-700" /><ProductVersionStatus :state="data.estado" :used="data.usos_count > 0" /></div></template></Column>
                             <Column header="Condiciones"><template #body="{ data }"><p class="font-medium">{{ moneyCompact(data.monto_minimo) }} – {{ moneyCompact(data.monto_maximo) }}</p><p class="text-sm text-surface-500">{{ percent(data.tasa_ordinaria_anual) }} ordinaria · {{ data.dias_gracia_mora }} días de gracia</p></template></Column>
                             <Column header="Fiscalidad"><template #body="{ data }"><Button :label="data.fiscalidad ? (data.fiscalidad.uso === 'prueba' ? 'Prueba / QA' : 'Institucional') : 'Sin definir'" icon="pi pi-percentage" severity="secondary" size="small" class="whitespace-nowrap" :aria-label="`Ver fiscalidad versión ${data.numero}`" @click="showFiscalPolicy(data)" /></template></Column>
                             <Column header="Atraso"><template #body="{ data }"><Button :label="data.politica_mora ? 'Configurado' : 'Sin definir'" icon="pi pi-clock" severity="secondary" size="small" class="whitespace-nowrap" :aria-label="`Ver política de atraso versión ${data.numero}`" @click="moraVersion = data; moraVisible = true" /></template></Column>
                             <Column header="Periodicidad"><template #body="{ data }"><Message v-for="problema in data.capacidades.problemas" :key="problema" severity="warn">{{ problema }}</Message><div class="flex flex-wrap gap-1"><Chip v-for="item in data.periodicidades" :key="item.id" :label="`${periodicityLabel[item.periodicidad] ?? item.periodicidad} ${item.plazo_minimo}–${item.plazo_maximo}`" class="whitespace-nowrap" /></div></template></Column>
                             <Column header="Vigencia"><template #body="{ data }"><p class="whitespace-nowrap text-sm">{{ displayDate(data.vigente_desde) }}</p><p class="whitespace-nowrap text-xs text-surface-500">{{ data.cat_aplica ? 'CAT aplicable' : 'CAT no aplicable' }}</p></template></Column>
-                            <Column header="Acciones"><template #body="{ data }"><div class="flex flex-nowrap gap-1"><Button v-if="data.estado === 'borrador' && can('update productos-crediticios')" v-tooltip.top="'Editar borrador'" icon="pi pi-pencil" text rounded :aria-label="`Editar versión ${data.numero}`" @click="openEdit(data)" /><Button v-if="can('simulate productos-crediticios')" v-tooltip.top="'Simular'" icon="pi pi-calculator" text rounded :aria-label="`Simular versión ${data.numero}`" @click="openSimulator(data)" /><Button v-if="can('version productos-crediticios')" v-tooltip.top="'Crear nueva versión'" icon="pi pi-copy" text rounded :aria-label="`Duplicar versión ${data.numero}`" @click="versionCopy(data)" /><Button v-if="data.estado === 'borrador' && can('activate productos-crediticios')" v-tooltip.top="'Activar'" icon="pi pi-check-circle" text rounded severity="success" :aria-label="`Activar versión ${data.numero}`" @click="activate(data)" /><Button v-if="['activa','programada'].includes(data.estado) && can('retire productos-crediticios')" v-tooltip.top="'Retirar'" icon="pi pi-ban" text rounded severity="danger" :aria-label="`Retirar versión ${data.numero}`" @click="retire(data)" /></div></template></Column>
+                            <Column header="Acciones"><template #body="{ data }"><div class="flex flex-nowrap gap-1"><Button icon="pi pi-eye" text rounded :aria-label="`Ver versión ${data.numero}`" @click="requestVersion(data)" /><Button v-if="data.puede_editar" v-tooltip.top="'Editar borrador'" icon="pi pi-pencil" text rounded :aria-label="`Editar versión ${data.numero}`" @click="requestVersion(data, 'edicion')" /><Button v-if="can('simulate productos-crediticios')" :disabled="data.capacidades.problemas.length > 0" v-tooltip.top="'Simular'" icon="pi pi-calculator" text rounded :aria-label="`Simular versión ${data.numero}`" @click="openSimulator(data)" /><Button v-if="can('version productos-crediticios')" v-tooltip.top="'Crear nueva versión'" icon="pi pi-copy" text rounded :aria-label="`Duplicar versión ${data.numero}`" @click="versionCopy(data)" /><Button v-if="data.estado === 'borrador' && can('activate productos-crediticios')" v-tooltip.top="'Activar'" icon="pi pi-check-circle" text rounded severity="success" :aria-label="`Activar versión ${data.numero}`" :disabled="data.capacidades.problemas.length > 0" @click="activate(data)" /><Button v-if="['activa','programada'].includes(data.estado) && can('retire productos-crediticios')" v-tooltip.top="'Retirar'" icon="pi pi-ban" text rounded severity="danger" :aria-label="`Retirar versión ${data.numero}`" @click="retire(data)" /></div></template></Column>
                         </DataTable>
                     </section>
                 </main>
@@ -650,51 +745,53 @@ watch(
                 <Message v-if="fiscalVersion?.legacyFiscal" severity="warn" :closable="false">Esta versión no tiene configuración fiscal registrada. No se asume ninguna exención; la presentación de prueba no modifica el histórico.</Message>
                 <ProductTaxPolicy v-if="fiscalVersion" :version="fiscalVersion" :conceptos="conceptosComision" readonly />
             </Drawer>
-            <Dialog id="product-editor" v-model:visible="editorVisible" :header="editingVersion ? `Editar versión ${editingVersion.numero}` : 'Nuevo producto crediticio'" modal maximizable :style="{ width: 'min(1080px, 96vw)' }">
-                <form class="space-y-5" @submit.prevent="submit">
+            <Dialog id="product-editor" :visible="editorVisible" @update:visible="$event ? (editorVisible = true) : closeEditor()" :header="editingVersion ? `${editorReadonly ? 'Consultar' : 'Editar'} versión ${editingVersion.numero}` : 'Nuevo producto crediticio'" modal maximizable :style="{ width: 'min(1080px, 96vw)' }">
+                <form v-if="editorVisible" class="space-y-5" @submit.prevent="submit">
+                    <OriginacionAyuda v-if="editingVersion" :info="editingVersion.originacion" consulta /><Message v-if="editorReadonly" severity="info" :closable="false">Consulta · {{ editingVersion.estado }} · {{ editingVersion.usos_count ? 'utilizada' : 'sin usos' }}. Los datos corresponden a esta versión. Las acciones de gestión están fuera de este formulario.</Message>
+                    <p v-if="editorReadonly" class="text-sm">Moneda: {{ form.version.moneda ?? 'Sin registrar' }} · Vigencia: {{ displayDate(form.version.vigente_desde) }} · Motor: {{ form.version.snapshot?.motor_calculo_version ?? (form.version.estado === 'borrador' ? `${form.version.capacidades?.motor_calculo_version ?? configuracion.motor_calculo_version} · borrador` : 'Histórico sin marca') }}</p>
                     <div class="flex flex-col gap-3 rounded-xl bg-primary-50 p-4 dark:bg-primary-950/30 sm:flex-row sm:items-center sm:justify-between"><div><p class="font-semibold">Configuración segura y explicada</p><p class="text-sm text-surface-600 dark:text-surface-300">El borrador se congela al activarse. Usa los botones de ayuda para revisar cada concepto.</p></div><Button type="button" label="Guía financiera" icon="pi pi-book" text @click="helpGuideVisible = true" /></div>
                     <Tabs v-model:value="activeEditorTab">
                         <TabList>
                             <Tab v-for="tab in [{v:'general',l:'Información'},{v:'condiciones',l:'Montos y tasas'},{v:'reglas',l:'Reglas'},{v:'comisiones',l:'Comisiones'},{v:'fiscalidad',l:'Fiscalidad'}]" :key="tab.v" :value="tab.v"><span class="flex items-center gap-2">{{ tab.l }}<Badge v-if="tabErrorCount(tab.v)" :value="tabErrorCount(tab.v)" severity="danger" /></span></Tab>
                         </TabList>
                         <TabPanels>
-                            <TabPanel value="fiscalidad"><ProductTaxPolicy :version="form.version" :conceptos="conceptosComision" :errors="form.errors" /></TabPanel>
+                            <TabPanel value="fiscalidad"><Message v-if="editorReadonly && !form.version.fiscalidad" severity="warn" :closable="false">Esta versión no conserva fiscalidad; no se asume exención ni configuración de prueba.</Message><ProductTaxPolicy v-if="form.version.fiscalidad" :readonly="editorReadonly" :version="form.version" :conceptos="conceptosComision" :errors="form.errors" /></TabPanel>
                             <TabPanel value="general"><div class="grid gap-4 pt-3 md:grid-cols-2">
-                                <div><div class="flex items-center"><label for="product-key" class="text-sm font-medium">Clave *</label><FinancialFieldHelp :title="help.key[0]" :description="help.key[1]" :example="help.key[2]" /></div><InputText id="product-key" v-model="form.clave" :invalid="!!error('clave')" :aria-invalid="!!error('clave')" fluid /><Message v-if="error('clave')" severity="error" size="small">{{ error('clave') }}</Message></div>
-                                <div><label for="product-name" class="mb-1 block text-sm font-medium">Nombre comercial *</label><InputText id="product-name" v-model="form.nombre" :invalid="!!error('nombre')" :aria-invalid="!!error('nombre')" fluid /><Message v-if="error('nombre')" severity="error" size="small">{{ error('nombre') }}</Message></div>
-                                <div class="md:col-span-2"><label for="product-description" class="mb-1 block text-sm font-medium">Descripción comercial</label><Textarea id="product-description" v-model="form.descripcion" rows="3" fluid /></div>
-                                <div class="flex items-center gap-2"><Checkbox v-model="form.version.cat_aplica" input-id="cat-applies" binary /><label for="cat-applies">Mostrar CAT informativo</label><FinancialFieldHelp :title="help.cat[0]" :description="help.cat[1]" :example="help.cat[2]" :note="help.cat[3]" /></div>
-                                <div v-if="!form.version.cat_aplica"><label for="cat-reason" class="mb-1 block text-sm font-medium">Motivo de no aplicación *</label><InputText id="cat-reason" v-model="form.version.cat_no_aplica_motivo" :invalid="!!error('version.cat_no_aplica_motivo')" :aria-invalid="!!error('version.cat_no_aplica_motivo')" fluid /><Message v-if="error('version.cat_no_aplica_motivo')" severity="error" size="small">{{ error('version.cat_no_aplica_motivo') }}</Message></div>
+                                <div><div class="flex items-center"><label for="product-key" class="text-sm font-medium">Clave *</label><FinancialFieldHelp :title="help.key[0]" :description="help.key[1]" :example="help.key[2]" /></div><InputText :readonly="editorReadonly" id="product-key" v-model="form.clave" :invalid="!!error('clave')" :aria-invalid="!!error('clave')" fluid /><Message v-if="error('clave')" severity="error" size="small">{{ error('clave') }}</Message></div>
+                                <div><label for="product-name" class="mb-1 block text-sm font-medium">Nombre comercial *</label><InputText :readonly="editorReadonly" id="product-name" v-model="form.nombre" :invalid="!!error('nombre')" :aria-invalid="!!error('nombre')" fluid /><Message v-if="error('nombre')" severity="error" size="small">{{ error('nombre') }}</Message></div>
+                                <div class="md:col-span-2"><label for="product-description" class="mb-1 block text-sm font-medium">Descripción comercial</label><Textarea :readonly="editorReadonly" id="product-description" v-model="form.descripcion" rows="3" fluid /></div>
+                                <div class="flex items-center gap-2"><Checkbox :disabled="editorReadonly" v-model="form.version.cat_aplica" input-id="cat-applies" binary /><label for="cat-applies">Mostrar CAT informativo</label><FinancialFieldHelp :title="help.cat[0]" :description="help.cat[1]" :example="help.cat[2]" :note="help.cat[3]" /></div>
+                                <div v-if="!form.version.cat_aplica"><label for="cat-reason" class="mb-1 block text-sm font-medium">Motivo de no aplicación *</label><InputText :readonly="editorReadonly" id="cat-reason" v-model="form.version.cat_no_aplica_motivo" :invalid="!!error('version.cat_no_aplica_motivo')" :aria-invalid="!!error('version.cat_no_aplica_motivo')" fluid /><Message v-if="error('version.cat_no_aplica_motivo')" severity="error" size="small">{{ error('version.cat_no_aplica_motivo') }}</Message></div>
                             </div></TabPanel>
-                            <TabPanel value="condiciones"><PoliticaMoraEditor v-model="form.version.politica_mora" :errors="form.errors" class="mt-3" /><div class="grid gap-4 pt-3 md:grid-cols-2 lg:grid-cols-4">
-                                <div v-for="field in [{k:'monto_minimo',l:'Monto mínimo',h:'amount'},{k:'monto_maximo',l:'Monto máximo',h:'amount'}]" :key="field.k"><div class="flex items-center"><label :for="field.k" class="text-sm font-medium">{{ field.l }} *</label><FinancialFieldHelp :title="help[field.h][0]" :description="help[field.h][1]" :example="help[field.h][2]" /></div><InputNumber :id="field.k" v-model="form.version[field.k]" mode="currency" currency="MXN" locale="es-MX" :invalid="!!error(`version.${field.k}`)" :aria-invalid="!!error(`version.${field.k}`)" fluid /><Message v-if="error(`version.${field.k}`)" severity="error" size="small">{{ error(`version.${field.k}`) }}</Message></div>
-                                <div v-for="field in [{k:'tasa_ordinaria_anual',l:'Tasa ordinaria anual'},{k:'tasa_moratoria_anual',l:'Tasa moratoria anual'}]" :key="field.k"><div class="flex items-center"><label :for="field.k" class="text-sm font-medium">{{ field.l }} *</label><FinancialFieldHelp :title="help.rate[0]" :description="help.rate[1]" :example="help.rate[2]" /></div><InputNumber :id="field.k" v-model="form.version[field.k]" suffix=" %" :min-fraction-digits="2" :invalid="!!error(`version.${field.k}`)" :aria-invalid="!!error(`version.${field.k}`)" fluid /><Message v-if="error(`version.${field.k}`)" severity="error" size="small">{{ error(`version.${field.k}`) }}</Message></div>
-                                <div><div class="flex items-center"><label for="grace-days" class="text-sm font-medium">Días de gracia de mora</label><FinancialFieldHelp :title="help.grace[0]" :description="help.grace[1]" :example="help.grace[2]" /></div><InputNumber id="grace-days" v-model="form.version.dias_gracia_mora" :min="0" :invalid="!!error('version.dias_gracia_mora')" :aria-invalid="!!error('version.dias_gracia_mora')" fluid /><Message v-if="error('version.dias_gracia_mora')" severity="error" size="small">{{ error('version.dias_gracia_mora') }}</Message></div>
-                            </div><Divider /><div class="mb-3 flex items-center justify-between"><div><div class="flex items-center"><h4 class="font-semibold">Plazos por periodicidad</h4><FinancialFieldHelp :title="help.term[0]" :description="help.term[1]" :example="help.term[2]" /></div><p class="text-sm text-surface-500">{{ opciones.periodicidades.map((o) => o.label).join(", ") }}.</p></div><Button type="button" label="Agregar" icon="pi pi-plus" text :disabled="form.version.periodicidades.length >= opciones.periodicidades.length" @click="addPeriodicity" /></div>
+                            <TabPanel value="condiciones"><PoliticaMoraEditor :readonly="editorReadonly" v-model="form.version.politica_mora" :errors="form.errors" class="mt-3" /><div class="grid gap-4 pt-3 md:grid-cols-2 lg:grid-cols-4">
+                                <div v-for="field in [{k:'monto_minimo',l:'Monto mínimo',h:'amount'},{k:'monto_maximo',l:'Monto máximo',h:'amount'}]" :key="field.k"><div class="flex items-center"><label :for="field.k" class="text-sm font-medium">{{ field.l }} *</label><FinancialFieldHelp :title="help[field.h][0]" :description="help[field.h][1]" :example="help[field.h][2]" /></div><component :is="editorReadonly ? InputText : InputNumber" :readonly="editorReadonly" :id="field.k" v-model="form.version[field.k]" mode="currency" currency="MXN" locale="es-MX" :invalid="!!error(`version.${field.k}`)" :aria-invalid="!!error(`version.${field.k}`)" fluid /><Message v-if="error(`version.${field.k}`)" severity="error" size="small">{{ error(`version.${field.k}`) }}</Message></div>
+                                <div v-for="field in [{k:'tasa_ordinaria_anual',l:'Tasa ordinaria anual'},{k:'tasa_moratoria_anual',l:'Tasa moratoria anual'}]" :key="field.k"><div class="flex items-center"><label :for="field.k" class="text-sm font-medium">{{ field.l }} *</label><FinancialFieldHelp :title="help.rate[0]" :description="help.rate[1]" :example="help.rate[2]" /></div><component :is="editorReadonly ? InputText : InputNumber" :readonly="editorReadonly" :id="field.k" v-model="form.version[field.k]" suffix=" %" :min-fraction-digits="2" :invalid="!!error(`version.${field.k}`)" :aria-invalid="!!error(`version.${field.k}`)" fluid /><Message v-if="error(`version.${field.k}`)" severity="error" size="small">{{ error(`version.${field.k}`) }}</Message></div>
+                                <div><div class="flex items-center"><label for="grace-days" class="text-sm font-medium">Días de gracia de mora</label><FinancialFieldHelp :title="help.grace[0]" :description="help.grace[1]" :example="help.grace[2]" /></div><component :is="editorReadonly ? InputText : InputNumber" :readonly="editorReadonly" id="grace-days" v-model="form.version.dias_gracia_mora" :min="0" :invalid="!!error('version.dias_gracia_mora')" :aria-invalid="!!error('version.dias_gracia_mora')" fluid /><Message v-if="error('version.dias_gracia_mora')" severity="error" size="small">{{ error('version.dias_gracia_mora') }}</Message></div>
+                            </div><Divider /><div class="mb-3 flex items-center justify-between"><div><div class="flex items-center"><h4 class="font-semibold">{{ editorBullet ? "Duración y vencimiento del capital" : "Plazos por periodicidad" }}</h4><FinancialFieldHelp :title="help.term[0]" :description="help.term[1]" :example="help.term[2]" /></div><p v-if="editorBullet" class="text-sm text-surface-500">El capital vence al final del número de periodos indicado. {{ form.version.reglas.politica_interes_bullet === "periodicos" ? "La frecuencia también determina los vencimientos de intereses." : "Los intereses vencen junto con el capital; los periodos definen la duración." }}</p><p class="text-sm text-surface-500">{{ opciones.periodicidades.map((o) => o.label).join(", ") }}.</p></div><Button v-if="!editorReadonly" type="button" label="Agregar" icon="pi pi-plus" text :disabled="form.version.periodicidades.length >= opciones.periodicidades.length" @click="addPeriodicity" /></div>
                                 <Message v-if="error('version.periodicidades')" severity="error" size="small">{{ error('version.periodicidades') }}</Message>
-                                <div v-for="(item,index) in form.version.periodicidades" :key="index" class="mb-3 grid items-start gap-3 rounded-xl border border-surface-200 p-3 md:grid-cols-[1.2fr_1fr_1fr_1fr_auto]"><div><label class="mb-1 block text-xs font-medium">Periodicidad</label><Select v-model="item.periodicidad" :options="opciones.periodicidades" option-label="label" option-value="value" :invalid="!!error(`version.periodicidades.${index}.periodicidad`)" :aria-invalid="!!error(`version.periodicidades.${index}.periodicidad`)" fluid /><Message v-if="error(`version.periodicidades.${index}.periodicidad`)" severity="error" size="small">{{ error(`version.periodicidades.${index}.periodicidad`) }}</Message></div><div v-for="field in [{k:'plazo_minimo',l:'Mínimo'},{k:'plazo_maximo',l:'Máximo'},{k:'plazo_predeterminado',l:'Predeterminado'}]" :key="field.k"><label class="mb-1 block text-xs font-medium">{{ field.l }}</label><InputNumber v-model="item[field.k]" :min="1" :invalid="!!error(`version.periodicidades.${index}.${field.k}`)" :aria-invalid="!!error(`version.periodicidades.${index}.${field.k}`)" fluid /><Message v-if="error(`version.periodicidades.${index}.${field.k}`)" severity="error" size="small">{{ error(`version.periodicidades.${index}.${field.k}`) }}</Message></div><Button type="button" icon="pi pi-trash" text severity="danger" aria-label="Quitar periodicidad" :disabled="form.version.periodicidades.length === 1" @click="form.version.periodicidades.splice(index,1)" /></div>
+                                <div v-for="(item,index) in form.version.periodicidades" :key="index" class="mb-3 grid items-start gap-3 rounded-xl border border-surface-200 p-3 md:grid-cols-[1.2fr_1fr_1fr_1fr_auto]"><div><label class="mb-1 block text-xs font-medium">Periodicidad</label><component :is="editorReadonly ? InputText : Select" :readonly="editorReadonly" v-model="item.periodicidad" :options="opciones.periodicidades" option-label="label" option-value="value" :invalid="!!error(`version.periodicidades.${index}.periodicidad`)" :aria-invalid="!!error(`version.periodicidades.${index}.periodicidad`)" fluid /><Message v-if="error(`version.periodicidades.${index}.periodicidad`)" severity="error" size="small">{{ error(`version.periodicidades.${index}.periodicidad`) }}</Message></div><div v-for="field in [{k:'plazo_minimo',l:'Mínimo'},{k:'plazo_maximo',l:'Máximo'},{k:'plazo_predeterminado',l:'Predeterminado'}]" :key="field.k"><label class="mb-1 block text-xs font-medium">{{ field.l }}</label><component :is="editorReadonly ? InputText : InputNumber" :readonly="editorReadonly" v-model="item[field.k]" :min="1" :invalid="!!error(`version.periodicidades.${index}.${field.k}`)" :aria-invalid="!!error(`version.periodicidades.${index}.${field.k}`)" fluid /><Message v-if="error(`version.periodicidades.${index}.${field.k}`)" severity="error" size="small">{{ error(`version.periodicidades.${index}.${field.k}`) }}</Message></div><Button v-if="!editorReadonly" type="button" icon="pi pi-trash" text severity="danger" aria-label="Quitar periodicidad" :disabled="form.version.periodicidades.length === 1" @click="form.version.periodicidades.splice(index,1)" /></div>
                             </TabPanel>
-                            <TabPanel value="reglas"><div class="grid gap-5 pt-3 md:grid-cols-2"><div><div class="flex items-center"><label class="text-sm font-medium">Métodos de amortización *</label><FinancialFieldHelp :title="help.method[0]" :description="help.method[1]" :example="help.method[2]" /></div><div class="mt-2 flex flex-col gap-3 rounded-xl border border-surface-200 p-4"><div v-for="{ value: method, label, ayuda } in opciones.metodos_amortizacion" :key="method" class="flex items-center gap-2"><Checkbox v-model="form.version.reglas.metodos_amortizacion" :input-id="method" :value="method" /><label :for="method">{{ label }}<small class="block text-surface-500">{{ ayuda }}</small></label></div></div><Message v-if="error('version.reglas.metodos_amortizacion')" severity="error" size="small">{{ error('version.reglas.metodos_amortizacion') }}</Message></div><div class="rounded-xl border border-surface-200 p-4"><p class="font-medium">Convenciones V1</p><ul class="mt-3 space-y-2 text-sm text-surface-600"><li v-for="o in opciones.convenciones_interes" :key="o.value">{{ o.label }}: {{ o.ayuda }}</li><li>Mora sobre capital vencido</li><li>Redondeo half-up a centavos</li><li>Sin ajuste por inhábiles; impuestos opcionales en el simulador</li></ul></div><div class="space-y-4"><div class="flex items-center gap-3"><Checkbox v-model="form.version.reglas.permite_prepago_parcial" input-id="partial-prepay" binary /><label for="partial-prepay">Permitir prepago parcial</label></div><div class="flex items-center gap-3"><Checkbox v-model="form.version.reglas.permite_liquidacion_anticipada" input-id="full-prepay" binary /><label for="full-prepay">Permitir liquidación anticipada</label></div></div><div><div class="flex items-center"><label class="text-sm font-medium">Aplicar prepago para</label><FinancialFieldHelp :title="help.prepay[0]" :description="help.prepay[1]" :example="help.prepay[2]" /></div><Select v-model="form.version.reglas.aplicacion_prepago" :options="opciones.aplicaciones_prepago" :disabled="!form.version.reglas.permite_prepago_parcial" option-label="label" option-value="value" fluid /><label class="mb-1 mt-3 block text-sm font-medium">Monto mínimo de prepago</label><InputNumber v-model="form.version.reglas.monto_minimo_prepago" :disabled="!form.version.reglas.permite_prepago_parcial" mode="currency" currency="MXN" locale="es-MX" :invalid="!!error('version.reglas.monto_minimo_prepago')" :aria-invalid="!!error('version.reglas.monto_minimo_prepago')" fluid /><Message v-if="error('version.reglas.monto_minimo_prepago')" severity="error" size="small">{{ error('version.reglas.monto_minimo_prepago') }}</Message></div></div></TabPanel>
-                            <TabPanel value="comisiones"><div class="mb-3 flex items-center justify-between pt-3"><div><div class="flex items-center"><h4 class="font-semibold">Comisiones configurables</h4><FinancialFieldHelp :title="help.commission[0]" :description="help.commission[1]" :example="help.commission[2]" /></div><p class="text-sm text-surface-500">El cobro, saldo y CAT dependen de su modalidad.</p></div><Button type="button" label="Agregar comisión" icon="pi pi-plus" text @click="addCommission" /></div><div v-if="!form.version.comisiones.length" class="rounded-xl border border-dashed border-surface-300 p-8 text-center text-sm text-surface-500">Este producto no tiene comisiones.</div>
+                            <TabPanel value="reglas"><div class="grid gap-5 pt-3 md:grid-cols-2"><div><div class="flex items-center"><label class="text-sm font-medium">Métodos de amortización *</label><FinancialFieldHelp :title="help.method[0]" :description="help.method[1]" :example="help.method[2]" /></div><div class="mt-2 flex flex-col gap-3 rounded-xl border border-surface-200 p-4"><div v-for="{ value: method, label, ayuda } in (editorReadonly ? form.version.reglas.metodos_amortizacion.map(value => ({value, label: catalogo.metodos_amortizacion.find(o => o.value === value)?.label ?? value})) : opciones.metodos_amortizacion)" :key="method" class="flex items-center gap-2"><Checkbox :disabled="editorReadonly" :model-value="form.version.reglas.metodos_amortizacion" @update:model-value="changeMethods" :input-id="method" :value="method" /><label :for="method">{{ label }}<small class="block text-surface-500">{{ ayuda }}</small></label></div></div><Message v-if="error('version.reglas.metodos_amortizacion')" severity="error" size="small">{{ error('version.reglas.metodos_amortizacion') }}</Message></div><div class="rounded-xl border border-surface-200 p-4"><p class="font-medium">Convenciones conservadas</p><dl v-if="editorReadonly" class="space-y-2 text-sm"><div v-for="key in ['convencion_interes','redondeo','ajuste_dia_inhabil']" :key="key"><dt>{{ key.replaceAll('_', ' ') }}</dt><dd>{{ form.version.reglas[key] ?? 'Sin registrar' }}</dd></div></dl><ul v-else class="mt-3 space-y-2 text-sm text-surface-600"><li v-for="o in opciones.convenciones_interes" :key="o.value">{{ o.label }}: {{ o.ayuda }}</li><li>Redondeo half-up a centavos</li><li>Sin ajuste por inhábiles; impuestos opcionales en el simulador</li></ul></div><CondicionesInteresEditor v-model:reglas="form.version.reglas" :catalogo="catalogo" :combinaciones="configuracion.combinaciones" :readonly="editorReadonly" :errors="form.errors" /><div class="space-y-4"><div class="flex items-center gap-3"><Checkbox :disabled="editorReadonly" v-model="form.version.reglas.permite_prepago_parcial" input-id="partial-prepay" binary /><label for="partial-prepay">Permitir prepago parcial</label></div><div class="flex items-center gap-3"><Checkbox :disabled="editorReadonly" v-model="form.version.reglas.permite_liquidacion_anticipada" input-id="full-prepay" binary /><label for="full-prepay">Permitir liquidación anticipada</label></div></div><div><div class="flex items-center"><label class="text-sm font-medium">Aplicar prepago para</label><FinancialFieldHelp :title="help.prepay[0]" :description="help.prepay[1]" :example="help.prepay[2]" /></div><component :is="editorReadonly ? InputText : Select" :readonly="editorReadonly" :model-value="editorReadonly ? (catalogo.aplicaciones_prepago.find(o => o.value === form.version.reglas.aplicacion_prepago)?.label ?? form.version.reglas.aplicacion_prepago) : form.version.reglas.aplicacion_prepago" @update:model-value="!editorReadonly && (form.version.reglas.aplicacion_prepago = $event)" aria-label="Aplicación del prepago" :options="prepagoOpciones" :disabled="!form.version.reglas.permite_prepago_parcial" option-label="label" option-value="value" fluid /><label class="mb-1 mt-3 block text-sm font-medium">Monto mínimo de prepago</label><component :is="editorReadonly ? InputText : InputNumber" :readonly="editorReadonly" v-model="form.version.reglas.monto_minimo_prepago" :disabled="!form.version.reglas.permite_prepago_parcial" mode="currency" currency="MXN" locale="es-MX" :invalid="!!error('version.reglas.monto_minimo_prepago')" :aria-invalid="!!error('version.reglas.monto_minimo_prepago')" fluid /><Message v-if="error('version.reglas.monto_minimo_prepago')" severity="error" size="small">{{ error('version.reglas.monto_minimo_prepago') }}</Message></div></div></TabPanel>
+                            <TabPanel value="comisiones"><div class="mb-3 flex items-center justify-between pt-3"><div><div class="flex items-center"><h4 class="font-semibold">Comisiones configurables</h4><FinancialFieldHelp :title="help.commission[0]" :description="help.commission[1]" :example="help.commission[2]" /></div><p class="text-sm text-surface-500">El cobro, saldo y CAT dependen de su modalidad.</p></div><Button v-if="!editorReadonly" type="button" label="Agregar comisión" icon="pi pi-plus" text @click="addCommission" /></div><div v-if="!form.version.comisiones.length" class="rounded-xl border border-dashed border-surface-300 p-8 text-center text-sm text-surface-500">Este producto no tiene comisiones.</div>
                                 <div v-for="(item,index) in form.version.comisiones" :key="index" class="mb-4 rounded-xl border border-surface-200 p-4">
                                     <div class="grid items-start gap-3 md:grid-cols-2 lg:grid-cols-4">
-                                        <div><label class="mb-1 block text-xs font-medium">Concepto *</label><Select v-model="item.concepto_comision_id" :options="conceptosComision" option-label="nombre" option-value="id" :invalid="!!error(`version.comisiones.${index}.concepto_comision_id`)" :aria-invalid="!!error(`version.comisiones.${index}.concepto_comision_id`)" fluid /><Message v-if="error(`version.comisiones.${index}.concepto_comision_id`)" severity="error" size="small">{{ error(`version.comisiones.${index}.concepto_comision_id`) }}</Message></div>
-                                        <div><label class="mb-1 block text-xs font-medium">Tipo *</label><Select v-model="item.tipo_importe" :options="[{label:'Importe fijo',value:'fijo'},{label:'Porcentaje del monto solicitado',value:'porcentaje'}]" option-label="label" option-value="value" :invalid="!!error(`version.comisiones.${index}.tipo_importe`)" :aria-invalid="!!error(`version.comisiones.${index}.tipo_importe`)" fluid @change="changeCommissionType(item)" /><Message v-if="error(`version.comisiones.${index}.tipo_importe`)" severity="error" size="small">{{ error(`version.comisiones.${index}.tipo_importe`) }}</Message></div>
-                                        <div><label class="mb-1 block text-xs font-medium">Importe *</label><InputNumber v-model="item.importe" :suffix="item.tipo_importe === 'porcentaje' ? ' %' : ''" :mode="item.tipo_importe === 'fijo' ? 'currency' : 'decimal'" currency="MXN" locale="es-MX" :invalid="!!error(`version.comisiones.${index}.importe`)" :aria-invalid="!!error(`version.comisiones.${index}.importe`)" fluid /><Message v-if="error(`version.comisiones.${index}.importe`)" severity="error" size="small">{{ error(`version.comisiones.${index}.importe`) }}</Message></div>
-                                        <div><label class="mb-1 block text-xs font-medium">Momento *</label><Select v-model="item.momento_cobro" :options="momentOptions" option-label="label" option-value="value" :invalid="!!error(`version.comisiones.${index}.momento_cobro`)" :aria-invalid="!!error(`version.comisiones.${index}.momento_cobro`)" fluid @change="changeCommissionMoment(item)" /><Message v-if="error(`version.comisiones.${index}.momento_cobro`)" severity="error" size="small">{{ error(`version.comisiones.${index}.momento_cobro`) }}</Message></div>
-                                        <div v-if="item.momento_cobro === 'inicio'" class="md:col-span-2"><label class="mb-1 block text-xs font-medium">Modalidad inicial *</label><Select v-model="item.modalidad_cobro" :options="modalityOptions" option-label="label" option-value="value" :invalid="!!error(`version.comisiones.${index}.modalidad_cobro`)" :aria-invalid="!!error(`version.comisiones.${index}.modalidad_cobro`)" fluid /><Message v-if="error(`version.comisiones.${index}.modalidad_cobro`)" severity="error" size="small">{{ error(`version.comisiones.${index}.modalidad_cobro`) }}</Message></div>
-                                        <template v-if="['evento','liquidacion'].includes(item.momento_cobro)"><div><label :for="`comision-evento-${index}`" class="mb-1 block text-xs font-medium">Evento *</label><Select :input-id="`comision-evento-${index}`" v-model="item.evento_cobro" :options="[{label:'Anticipo parcial',value:'prepago'},{label:'Liquidación anticipada',value:'liquidacion_anticipada'},{label:'Liquidación ordinaria',value:'liquidacion_ordinaria'}]" option-label="label" option-value="value" fluid /></div><div v-if="item.tipo_importe === 'porcentaje'"><label :for="`comision-base-${index}`" class="mb-1 block text-xs font-medium">Base porcentual *</label><Select :input-id="`comision-base-${index}`" v-model="item.base_calculo" :options="[{label:'Monto original solicitado',value:'monto_credito'},{label:'Capital anticipado',value:'capital_anticipado'},{label:'Capital insoluto antes de operar',value:'capital_insoluto'}]" option-label="label" option-value="value" fluid /></div></template>
-                                        <div class="pt-6"><div class="flex items-center gap-2"><Checkbox v-model="item.obligatoria" :input-id="`required-${index}`" binary @change="updateCommissionCat(item)" /><label :for="`required-${index}`">Obligatoria</label></div><p class="mt-1 text-xs text-surface-500">{{ item.obligatoria ? 'Se cobra sin contratar un servicio adicional.' : 'El cliente decide si contrata este cargo adicional.' }}</p><Message v-if="error(`version.comisiones.${index}.obligatoria`)" severity="error" size="small">{{ error(`version.comisiones.${index}.obligatoria`) }}</Message></div>
+                                        <div><p v-if="editorReadonly" class="text-sm font-semibold">{{ item.concepto?.nombre ?? 'Concepto histórico' }}</p><label class="mb-1 block text-xs font-medium">Concepto *</label><component :is="editorReadonly ? InputText : Select" :readonly="editorReadonly" v-model="item.concepto_comision_id" :options="conceptosComision" option-label="nombre" option-value="id" :invalid="!!error(`version.comisiones.${index}.concepto_comision_id`)" :aria-invalid="!!error(`version.comisiones.${index}.concepto_comision_id`)" fluid /><Message v-if="error(`version.comisiones.${index}.concepto_comision_id`)" severity="error" size="small">{{ error(`version.comisiones.${index}.concepto_comision_id`) }}</Message></div>
+                                        <div><label class="mb-1 block text-xs font-medium">Tipo *</label><component :is="editorReadonly ? InputText : Select" :readonly="editorReadonly" v-model="item.tipo_importe" :options="[{label:'Importe fijo',value:'fijo'},{label:'Porcentaje del monto solicitado',value:'porcentaje'}]" option-label="label" option-value="value" :invalid="!!error(`version.comisiones.${index}.tipo_importe`)" :aria-invalid="!!error(`version.comisiones.${index}.tipo_importe`)" fluid @change="!editorReadonly && (changeCommissionType(item))" /><Message v-if="error(`version.comisiones.${index}.tipo_importe`)" severity="error" size="small">{{ error(`version.comisiones.${index}.tipo_importe`) }}</Message></div>
+                                        <div><label class="mb-1 block text-xs font-medium">Importe *</label><component :is="editorReadonly ? InputText : InputNumber" :readonly="editorReadonly" v-model="item.importe" :suffix="item.tipo_importe === 'porcentaje' ? ' %' : ''" :mode="item.tipo_importe === 'fijo' ? 'currency' : 'decimal'" currency="MXN" locale="es-MX" :invalid="!!error(`version.comisiones.${index}.importe`)" :aria-invalid="!!error(`version.comisiones.${index}.importe`)" fluid /><Message v-if="error(`version.comisiones.${index}.importe`)" severity="error" size="small">{{ error(`version.comisiones.${index}.importe`) }}</Message></div>
+                                        <div><label class="mb-1 block text-xs font-medium">Momento *</label><component :is="editorReadonly ? InputText : Select" :readonly="editorReadonly" v-model="item.momento_cobro" :options="momentOptions" option-label="label" option-value="value" :invalid="!!error(`version.comisiones.${index}.momento_cobro`)" :aria-invalid="!!error(`version.comisiones.${index}.momento_cobro`)" fluid @change="!editorReadonly && (changeCommissionMoment(item))" /><Message v-if="error(`version.comisiones.${index}.momento_cobro`)" severity="error" size="small">{{ error(`version.comisiones.${index}.momento_cobro`) }}</Message></div>
+                                        <div v-if="item.momento_cobro === 'inicio'" class="md:col-span-2"><label class="mb-1 block text-xs font-medium">Modalidad inicial *</label><component :is="editorReadonly ? InputText : Select" :readonly="editorReadonly" v-model="item.modalidad_cobro" :options="modalityOptions" option-label="label" option-value="value" :invalid="!!error(`version.comisiones.${index}.modalidad_cobro`)" :aria-invalid="!!error(`version.comisiones.${index}.modalidad_cobro`)" fluid /><Message v-if="error(`version.comisiones.${index}.modalidad_cobro`)" severity="error" size="small">{{ error(`version.comisiones.${index}.modalidad_cobro`) }}</Message></div>
+                                        <template v-if="['evento','liquidacion'].includes(item.momento_cobro)"><div><label :for="`comision-evento-${index}`" class="mb-1 block text-xs font-medium">Evento *</label><component :is="editorReadonly ? InputText : Select" :readonly="editorReadonly" :input-id="`comision-evento-${index}`" v-model="item.evento_cobro" :options="[{label:'Anticipo parcial',value:'prepago'},{label:'Liquidación anticipada',value:'liquidacion_anticipada'},{label:'Liquidación ordinaria',value:'liquidacion_ordinaria'}]" option-label="label" option-value="value" fluid /></div><div v-if="item.tipo_importe === 'porcentaje'"><label :for="`comision-base-${index}`" class="mb-1 block text-xs font-medium">Base porcentual *</label><component :is="editorReadonly ? InputText : Select" :readonly="editorReadonly" :input-id="`comision-base-${index}`" v-model="item.base_calculo" :options="[{label:'Monto original solicitado',value:'monto_credito'},{label:'Capital anticipado',value:'capital_anticipado'},{label:'Capital insoluto antes de operar',value:'capital_insoluto'}]" option-label="label" option-value="value" fluid /></div></template>
+                                        <div class="pt-6"><div class="flex items-center gap-2"><Checkbox :disabled="editorReadonly" v-model="item.obligatoria" :input-id="`required-${index}`" binary @change="!editorReadonly && (updateCommissionCat(item))" /><label :for="`required-${index}`">Obligatoria</label></div><p class="mt-1 text-xs text-surface-500">{{ item.obligatoria ? 'Se cobra sin contratar un servicio adicional.' : 'El cliente decide si contrata este cargo adicional.' }}</p><Message v-if="error(`version.comisiones.${index}.obligatoria`)" severity="error" size="small">{{ error(`version.comisiones.${index}.obligatoria`) }}</Message></div>
                                         <div class="pt-6"><div class="flex items-center gap-2"><Checkbox v-model="item.incluye_cat" :input-id="`cat-${index}`" binary disabled /><label :for="`cat-${index}`">Incluir en CAT base</label></div><p class="mt-1 text-xs" :class="item.incluye_cat ? 'text-green-700 dark:text-green-400' : 'text-surface-500'">{{ catReason(item) }}</p></div>
                                     </div>
                                     <Message v-for="message in unhandledCommissionErrors(index)" :key="message" class="mt-3" severity="error" size="small">{{ message }}</Message>
-                                    <div class="mt-3 flex justify-end"><Button type="button" label="Quitar" icon="pi pi-trash" text severity="danger" @click="form.version.comisiones.splice(index,1)" /></div>
+                                    <div class="mt-3 flex justify-end"><Button v-if="!editorReadonly" type="button" label="Quitar" icon="pi pi-trash" text severity="danger" @click="form.version.comisiones.splice(index,1)" /></div>
                                 </div>
                             </TabPanel>
                         </TabPanels>
                     </Tabs>
                     <Message v-if="form.errors.version" severity="error" :closable="false">{{ form.errors.version }}</Message>
-                    <div class="flex justify-end gap-2 border-t border-surface-200 pt-4"><Button type="button" label="Cancelar" severity="secondary" @click="editorVisible = false" /><Button type="submit" label="Guardar borrador" icon="pi pi-save" :loading="form.processing" /></div>
+                    <div class="flex justify-end gap-2 border-t border-surface-200 pt-4"><Button type="button" :label="editorReadonly ? 'Cerrar consulta' : 'Cancelar'" severity="secondary" @click="closeEditor" /><Button v-if="!editorReadonly" type="submit" label="Guardar borrador" icon="pi pi-save" :loading="form.processing" /></div>
                 </form>
             </Dialog>
 
@@ -711,7 +808,7 @@ watch(
 
             <Dialog v-model:visible="catalogVisible" header="Catálogo de comisiones" modal :style="{ width: 'min(820px, 96vw)' }"><div class="grid gap-5 md:grid-cols-[1fr_1.15fr]"><form class="space-y-3 rounded-xl border border-surface-200 p-4" @submit.prevent="saveCommissionConcept"><h4 class="font-semibold">Nuevo concepto</h4><div><label for="commission-key" class="mb-1 block text-sm font-medium">Clave *</label><InputText id="commission-key" v-model="commissionForm.clave" :invalid="!!commissionError('clave')" :aria-invalid="!!commissionError('clave')" fluid /><Message v-if="commissionError('clave')" severity="error" size="small">{{ commissionError('clave') }}</Message></div><div><label for="commission-name" class="mb-1 block text-sm font-medium">Nombre *</label><InputText id="commission-name" v-model="commissionForm.nombre" :invalid="!!commissionError('nombre')" :aria-invalid="!!commissionError('nombre')" fluid /><Message v-if="commissionError('nombre')" severity="error" size="small">{{ commissionError('nombre') }}</Message></div><div><label class="mb-1 block text-sm font-medium">Descripción</label><Textarea v-model="commissionForm.descripcion" rows="3" fluid /></div><div><label class="mb-1 block text-sm font-medium">Referencia RECO</label><InputText v-model="commissionForm.referencia_reco" fluid /></div><div class="flex items-center gap-2"><Checkbox v-model="commissionForm.es_oficial_reco" input-id="reco-official" binary /><label for="reco-official">Concepto tomado de RECO</label></div><div class="flex items-center gap-2"><Checkbox v-model="commissionForm.revisado" input-id="reco-reviewed" binary /><label for="reco-reviewed">Revisión documental completada</label></div><Button type="submit" label="Agregar concepto" icon="pi pi-plus" :loading="commissionForm.processing" fluid /></form><div><h4 class="mb-3 font-semibold">Conceptos disponibles</h4><div class="max-h-[32rem] space-y-2 overflow-auto"><div v-for="concept in conceptosComision" :key="concept.id" class="flex items-center justify-between gap-3 rounded-xl bg-surface-50 p-3 dark:bg-surface-800"><div class="min-w-0"><p class="truncate font-medium">{{ concept.nombre }}</p><p class="truncate text-xs text-surface-500">{{ concept.clave }}<span v-if="concept.es_oficial_reco"> · RECO</span><span v-if="concept.revisado"> · revisado</span></p></div><Button icon="pi pi-ban" text rounded severity="danger" :aria-label="`Retirar ${concept.nombre}`" @click="retireCommissionConcept(concept)" /></div></div></div></div></Dialog>
 
-            <Drawer v-model:visible="simulatorVisible" header="Simulador de crédito simple" position="right" class="!w-full lg:!w-[min(92vw,88rem)]"><div class="space-y-5"><Message v-for="problema in simulatorVersion?.capacidades?.problemas" :key="problema" severity="warn">{{ problema }}</Message><div class="rounded-xl bg-primary-50 p-4 dark:bg-primary-950/30"><p class="text-sm text-surface-500">Simulando</p><p class="font-semibold">{{ selected?.nombre }} · versión {{ simulatorVersion?.numero }}</p></div><div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-6"><div><div class="flex items-center"><label class="text-sm font-medium">Monto solicitado</label><FinancialFieldHelp :title="help.amount[0]" :description="help.amount[1]" :example="help.amount[2]" /></div><InputNumber v-model="simForm.monto" mode="currency" currency="MXN" locale="es-MX" fluid /></div><div><div class="flex items-center"><label class="text-sm font-medium">Fecha de disposición</label><FinancialFieldHelp title="Calendario mensual" description="Conserva el día original; si no existe en un mes, usa su último día y después recupera el ancla." example="30-ene → 28-feb → 30-mar" /></div><DatePicker v-model="simForm.fecha" date-format="yy-mm-dd" update-model-type="string" fluid /></div><div><label class="mb-1 block text-sm font-medium">Periodicidad</label><Select v-model="simForm.periodicidad" :options="simulatorPeriodOptions" option-label="label" option-value="value" fluid /><small>{{ ayudaSeleccionada("periodicidades", simForm.periodicidad) }}</small></div><div><label class="mb-1 block text-sm font-medium">Número de pagos</label><InputNumber v-model="simForm.plazo" :min="1" fluid /></div><div><label class="mb-1 block text-sm font-medium">Amortización</label><Select v-model="simForm.metodo" :options="simulatorMethodOptions" option-label="label" option-value="value" fluid /><small>{{ ayudaSeleccionada("metodos_amortizacion", simForm.metodo) }}</small></div><div class="flex items-end"><Button label="Calcular escenario" icon="pi pi-calculator" :loading="simulating" :disabled="!!simulatorVersion?.capacidades?.problemas.length" fluid @click="simulate" /></div></div>
+            <Drawer v-model:visible="simulatorVisible" header="Simulador de crédito simple" position="right" class="!w-full lg:!w-[min(92vw,88rem)]"><div class="space-y-5"><Message v-for="problema in simulatorVersion?.capacidades?.problemas" :key="problema" severity="warn">{{ problema }}</Message><div class="rounded-xl bg-primary-50 p-4 dark:bg-primary-950/30"><p class="text-sm text-surface-500">Simulando</p><p class="font-semibold">{{ selected?.nombre }} · versión {{ simulatorVersion?.numero }}</p></div><div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-6"><div><div class="flex items-center"><label class="text-sm font-medium">Monto solicitado</label><FinancialFieldHelp :title="help.amount[0]" :description="help.amount[1]" :example="help.amount[2]" /></div><InputNumber v-model="simForm.monto" mode="currency" currency="MXN" locale="es-MX" fluid /></div><div><div class="flex items-center"><label class="text-sm font-medium">Fecha de disposición</label><FinancialFieldHelp title="Calendario mensual" description="Conserva el día original; si no existe en un mes, usa su último día y después recupera el ancla." example="30-ene → 28-feb → 30-mar" /></div><DatePicker v-model="simForm.fecha" date-format="yy-mm-dd" update-model-type="string" fluid /></div><div><label class="mb-1 block text-sm font-medium">Periodicidad</label><Select v-model="simForm.periodicidad" :options="simulatorPeriodOptions" option-label="label" option-value="value" fluid /><small>{{ ayudaSeleccionada("periodicidades", simForm.periodicidad) }}</small></div><div><label class="mb-1 block text-sm font-medium">{{ simForm.metodo === "bullet" ? "Periodos hasta el vencimiento" : "Número de pagos" }}</label><InputNumber v-model="simForm.plazo" :min="1" fluid /></div><div><label class="mb-1 block text-sm font-medium">Amortización</label><Select v-model="simForm.metodo" :options="simulatorMethodOptions" option-label="label" option-value="value" fluid /><small>{{ ayudaSeleccionada("metodos_amortizacion", simForm.metodo) }}</small></div><div class="flex items-end"><Button label="Calcular escenario" icon="pi pi-calculator" :loading="simulating" :disabled="!!simulatorVersion?.capacidades?.problemas.length" fluid @click="simulate" /></div></div>
                     <section class="rounded-xl border border-primary-200 bg-primary-50 p-4 dark:bg-primary-950/30"><div class="flex items-center gap-2"><Checkbox v-model="simForm.incluir_impuestos" input-id="sim-incluir-impuestos" binary /><label for="sim-incluir-impuestos" class="font-semibold">Incluir impuestos proyectados</label></div><p class="mt-2 text-sm">Actívalo para aplicar la fiscalidad de esta versión al interés ordinario y a las comisiones del escenario. Requiere tratamientos definidos. Sin marcar, la tabla es anterior a impuestos; no supone exención. No incluye mora ni cargos por eventos.</p></section>
                     <Message v-for="message in simulationErrors" :key="message" severity="error" :closable="false">{{ message }}</Message>
                     <SimulationTaxSummary v-if="simulation" :simulation="simulation" />

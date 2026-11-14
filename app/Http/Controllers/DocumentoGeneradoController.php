@@ -99,6 +99,6 @@ class DocumentoGeneradoController extends Controller
 
     private function log(ActivityEvent $event, string $description, DocumentoGenerado $document): void
     {
-        app(ActivityLogService::class)->log($event, $description, $document->cliente, ['related' => ['type' => 'documento_generado', 'id' => $document->id]], request()->user());
+        app(ActivityLogService::class)->log($event, $description, $document->cliente, ['related' => ['type' => 'documento_generado', 'id' => $document->id]], request()->user(), teamId: request()->user()->current_team_id, sucursalId: $document->sucursal_id, inheritActorContext: false);
     }
 }

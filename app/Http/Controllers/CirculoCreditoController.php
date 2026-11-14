@@ -17,12 +17,15 @@ class CirculoCreditoController extends Controller
         $selected = $cliente ? Cliente::findOrFail($cliente) : null;
         if ($selected) {
             Gate::authorize('update', $selected);
+            abort_unless($request->user()->operaEnSucursal($selected->sucursal_id), 403, 'Selecciona la sucursal responsable del cliente.');
         }
 
         return Inertia::render('HistorialCrediticio/CirculoDeCredito/Create', [
             'cliente' => $selected?->only(['id', 'primer_nombre', 'apellido_paterno', 'apellido_materno']),
             'motivoNoDisponible' => ConsultaSicNoDisponible::MENSAJE,
             'habilitado' => config('sic.qa_habilitado') === true && config('sic.sandbox') === true,
+            'escenariosQa' => config('sic.escenarios_qa_habilitados') === true
+                ? collect(array_keys(config('sic.servicios')))->mapWithKeys(fn ($api) => [$api => app(\App\Services\SICs\SicEscenariosQa::class)->opciones($api)]) : [],
             'servicios' => collect(config('sic.servicios'))->map(fn ($v, $key) => ['clave' => $key, 'nombre' => $v['nombre']])->values(),
             'consentimientos' => $selected?->consentimientosSic()->whereNull('revocado_en')->get(['id', 'otorgado_en', 'vence_en']) ?? [],
             'revisiones' => $selected ? \App\Models\SolicitudRevision::whereIn('solicitud_id', \App\Models\Solicitud::where('cliente_id', $selected->id)->select('id'))
@@ -59,6 +62,10 @@ class CirculoCreditoController extends Controller
         Gate::authorize('create circulo-credito');
         Gate::authorize('viewAny', Cliente::class);
         $data = $request->validate(['buscar' => ['required', 'string', 'min:2', 'max:100']]);
+
+        if (! $request->user()->currentSucursal?->activa) {
+            return response()->json([])->header('Cache-Control', 'private, no-store');
+        }
 
         return response()->json(Cliente::where('sucursal_id', $request->user()->current_sucursal_id)
             ->where(fn ($q) => $q->where('primer_nombre', 'like', '%'.$data['buscar'].'%')->orWhere('apellido_paterno', 'like', '%'.$data['buscar'].'%'))

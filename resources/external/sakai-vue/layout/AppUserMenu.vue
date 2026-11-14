@@ -139,14 +139,14 @@ const userMenuItems = ref([
 
 
 <template>
-    <div v-if="$page.props.auth.user.current_sucursal" class="layout-menu-desktop-prime-vue">
+    <div v-if="($page.props.auth.user.sucursales ?? []).length" class="layout-menu-desktop-prime-vue">
         <button
             type="button"
             class="inline-flex items-center rounded-md border border-transparent bg-surface-card px-2 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-200"
             @click="toggleBranchMenu"
         >
             <i class="pi pi-map-marker mr-2" />
-            {{ $page.props.auth.user.current_sucursal.nombre }}
+            {{ $page.props.auth.user.current_sucursal?.nombre ?? "Seleccionar sucursal" }}
             <i class="pi pi-angle-down ml-2" />
         </button>
         <Menu ref="branchMenu" :popup="true" :model="branchMenuItems" class="w-full md:w-64">
@@ -183,7 +183,7 @@ const userMenuItems = ref([
             </template>
             <template #item="{ item, props }">
                 <component v-if="item.customElements" :is="item.customElements[0].component" v-bind="item.customElements[0].props" />
-                
+
                 <Link v-else :href="item.route" :as="item.as" :method="item.method" v-ripple class="flex items-center w-full" v-bind="props.action">
                 <span :class="item.icon" />
                 <span>{{ item.label }}</span>
@@ -192,7 +192,7 @@ const userMenuItems = ref([
                     class="ml-auto border border-surface rounded bg-emphasis text-muted-color text-xs p-1">{{
                     item.shortcut }}</span>
                 </Link>
-            </template>                    
+            </template>
         </Menu>
     </div>
 
@@ -224,7 +224,7 @@ const userMenuItems = ref([
     </div>
 
     <div class="layout-menu-prime-vue">
-        <Menu v-if="$page.props.auth.user.current_sucursal" :model="branchMenuItems" style="border: none; border-radius: 0">
+        <Menu v-if="($page.props.auth.user.sucursales ?? []).length" :model="branchMenuItems" style="border: none; border-radius: 0">
             <template #submenulabel="{ item }">
                 <span class="font-bold text-primary">{{ item.label }}</span>
             </template>
@@ -243,7 +243,7 @@ const userMenuItems = ref([
         </template>
         <template #item="{ item, props }">
             <component v-if="item.customElements" :is="item.customElements[0].component" v-bind="item.customElements[0].props" />
-            
+
             <Link v-else :href="item.route" :as="item.as" :method="item.method" v-ripple class="flex items-center w-full" v-bind="props.action">
             <span :class="item.icon" />
             <span>{{ item.label }}</span>
@@ -252,7 +252,7 @@ const userMenuItems = ref([
                 class="ml-auto border border-surface rounded bg-emphasis text-muted-color text-xs p-1">{{
                 item.shortcut }}</span>
             </Link>
-        </template>                    
+        </template>
     </Menu>
 
     <Divider />

@@ -61,7 +61,7 @@ const menuItems = computed(() => [
                     router.delete(
                         route("admin.roles.destroy", { role: props.role.id, team: props.teamId }),
                         {
-                            only: ["roles", "errors"],
+                            only: ["roles", "selectedRole", "roleMembers", "roleMembersListado", "listado", "errors"],
                             onSuccess: () => {
                                 emit("deleted");
                                 toast.add({

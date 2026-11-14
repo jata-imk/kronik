@@ -188,3 +188,32 @@ Pendientes: tareas por especialidad/asignación independiente, requisitos calcul
 consulta paginada de toda la historia y prueba concurrente multi-conexión.
 Sin SIC productivo, selección de comisiones opcionales, exportación, acción masiva,
 alertas externas ni movimientos monetarios en este incremento.
+
+## Alcance de consulta por sucursal
+
+Consultar el [contrato transversal de contexto y consultas](contexto-sucursal-consultas.md)
+para alcance actual/institucional, paginación en servidor y conservación del
+contexto histórico. La revisión transversal está integrada por PR #66; su
+[Agent Note](../agent-notes/contexto-sucursal-transversal.md) conserva la evidencia
+y distingue integración, despliegue y QA.
+
+## Consulta y orientación de política
+
+La consulta requiere `read productos-crediticios`; crear otra revisión requiere
+además `manage origination productos-crediticios` y una versión de producto no
+retirada. La creación vuelve a comprobar el estado bajo bloqueo. Cada revisión es
+inmutable; incluso Super Admin consulta las políticas de versiones retiradas.
+
+El catálogo muestra el número real de política actual, independiente del número
+de versión del producto. El formulario permite seleccionar por `politica_id`
+exacto dentro de la versión, fuera de la página de historia; no lo sustituye por
+la actual. `modo=nueva` solo inicia captura cuando el servidor lo autoriza.
+Crear una revisión parte de la política actual y exige nueva confirmación y
+referencia interna. La ayuda explica los campos y sus restricciones existentes;
+no prescribe umbrales financieros.
+
+El producto activo y vigente puede seleccionarse sin política: captura y envío
+siguen permitidos; la aprobación exige política y demás requisitos vigentes.
+El catálogo, la captura y los requisitos muestran ubicación y enlace autorizado.
+Sin lectura de productos se indica pedir ayuda al administrador sin conceder acceso.
+Ver [contrato de consulta](consulta-edicion-historicos.md).

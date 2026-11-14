@@ -32,7 +32,12 @@ class ClienteExpedienteService
     public function updateProfile(Cliente $cliente, array $data): Cliente
     {
         return DB::transaction(function () use ($cliente, $data) {
-            $cliente->update($data);
+            $cliente = Cliente::whereKey($cliente->id)->lockForUpdate()->firstOrFail();
+            $cliente->fill($data);
+            if (! $cliente->isDirty()) {
+                return $cliente;
+            }
+            $cliente->save();
 
             $this->log(
                 $cliente,
@@ -47,106 +52,132 @@ class ClienteExpedienteService
 
     public function storeReferencia(Cliente $cliente, array $data): ClienteReferencia
     {
-        $referencia = $cliente->referencias()->create($data);
-        $this->log($cliente, ActivityEvent::ClientReferenceCreated, 'Referencia de cliente creada', [
-            'related' => ['type' => 'cliente_referencia', 'id' => $referencia->id],
-        ]);
+        return DB::transaction(function () use ($cliente, $data) {
+            $referencia = $cliente->referencias()->create($data);
+            $this->log($cliente, ActivityEvent::ClientReferenceCreated, 'Referencia de cliente creada', [
+                'related' => ['type' => 'cliente_referencia', 'id' => $referencia->id],
+            ]);
 
-        return $referencia;
+            return $referencia;
+        });
     }
 
     public function updateReferencia(ClienteReferencia $referencia, array $data): ClienteReferencia
     {
-        $referencia->update($data);
-        $this->log($referencia->cliente, ActivityEvent::ClientReferenceUpdated, 'Referencia de cliente actualizada', [
-            'changed_fields' => $this->activityLog->fieldNames($data),
-            'related' => ['type' => 'cliente_referencia', 'id' => $referencia->id],
-        ]);
+        return DB::transaction(function () use ($referencia, $data) {
+            $referencia = ClienteReferencia::whereKey($referencia->id)->lockForUpdate()->firstOrFail();
+            $referencia->fill($data);
+            if (! $referencia->isDirty()) {
+                return $referencia;
+            }
+            $referencia->save();
+            $this->log($referencia->cliente, ActivityEvent::ClientReferenceUpdated, 'Referencia de cliente actualizada', [
+                'changed_fields' => $this->activityLog->fieldNames($data),
+                'related' => ['type' => 'cliente_referencia', 'id' => $referencia->id],
+            ]);
 
-        return $referencia->refresh();
+            return $referencia->refresh();
+        });
     }
 
     public function deleteReferencia(ClienteReferencia $referencia): void
     {
-        $cliente = $referencia->cliente;
-        $id = $referencia->id;
-        $referencia->delete();
-        $this->log($cliente, ActivityEvent::ClientReferenceDeleted, 'Referencia de cliente eliminada', [
-            'related' => ['type' => 'cliente_referencia', 'id' => $id],
-        ]);
+        DB::transaction(function () use ($referencia) {
+            $cliente = $referencia->cliente;
+            $id = $referencia->id;
+            $referencia->delete();
+            $this->log($cliente, ActivityEvent::ClientReferenceDeleted, 'Referencia de cliente eliminada', [
+                'related' => ['type' => 'cliente_referencia', 'id' => $id],
+            ]);
+        });
     }
 
     public function storeVinculo(Cliente $cliente, array $data): ClienteVinculo
     {
-        $vinculo = $cliente->vinculos()->create($data);
-        $this->log($cliente, ActivityEvent::ClientLinkCreated, 'Persona vinculada al expediente', [
-            'related' => ['type' => 'cliente_vinculo', 'id' => $vinculo->id],
-        ]);
+        return DB::transaction(function () use ($cliente, $data) {
+            $vinculo = $cliente->vinculos()->create($data);
+            $this->log($cliente, ActivityEvent::ClientLinkCreated, 'Persona vinculada al expediente', [
+                'related' => ['type' => 'cliente_vinculo', 'id' => $vinculo->id],
+            ]);
 
-        return $vinculo;
+            return $vinculo;
+        });
     }
 
     public function deleteVinculo(ClienteVinculo $vinculo): void
     {
-        $cliente = $vinculo->cliente;
-        $vinculado = $vinculo->vinculado;
+        DB::transaction(function () use ($vinculo) {
+            $cliente = $vinculo->cliente;
+            $vinculado = $vinculo->vinculado;
 
-        $usadoComoPropietario = ClienteGarantia::query()
-            ->where(fn ($query) => $query
-                ->where('cliente_id', $cliente->id)
-                ->where('propietario_cliente_id', $vinculado->id))
-            ->orWhere(fn ($query) => $query
-                ->where('cliente_id', $vinculado->id)
-                ->where('propietario_cliente_id', $cliente->id))
-            ->exists();
+            $usadoComoPropietario = ClienteGarantia::query()
+                ->where(fn ($query) => $query
+                    ->where('cliente_id', $cliente->id)
+                    ->where('propietario_cliente_id', $vinculado->id))
+                ->orWhere(fn ($query) => $query
+                    ->where('cliente_id', $vinculado->id)
+                    ->where('propietario_cliente_id', $cliente->id))
+                ->exists();
 
-        if ($usadoComoPropietario) {
-            throw ValidationException::withMessages([
-                'cliente_vinculado_id' => 'Reasigne las garantías de esta relación antes de eliminarla.',
+            if ($usadoComoPropietario) {
+                throw ValidationException::withMessages([
+                    'cliente_vinculado_id' => 'Reasigne las garantías de esta relación antes de eliminarla.',
+                ]);
+            }
+
+            $id = $vinculo->id;
+            $vinculo->delete();
+            $this->log($cliente, ActivityEvent::ClientLinkDeleted, 'Persona desvinculada del expediente', [
+                'related' => ['type' => 'cliente_vinculo', 'id' => $id],
             ]);
-        }
-
-        $id = $vinculo->id;
-        $vinculo->delete();
-        $this->log($cliente, ActivityEvent::ClientLinkDeleted, 'Persona desvinculada del expediente', [
-            'related' => ['type' => 'cliente_vinculo', 'id' => $id],
-        ]);
+        });
     }
 
     public function storeGarantia(Cliente $cliente, array $data): ClienteGarantia
     {
-        $garantia = $cliente->garantias()->create($data);
-        $this->log($cliente, ActivityEvent::ClientGuaranteeCreated, 'Garantia creada', [
-            'related' => ['type' => 'cliente_garantia', 'id' => $garantia->id],
-        ]);
+        return DB::transaction(function () use ($cliente, $data) {
+            $garantia = $cliente->garantias()->create($data);
+            $this->log($cliente, ActivityEvent::ClientGuaranteeCreated, 'Garantia creada', [
+                'related' => ['type' => 'cliente_garantia', 'id' => $garantia->id],
+            ]);
 
-        return $garantia;
+            return $garantia;
+        });
     }
 
     public function updateGarantia(ClienteGarantia $garantia, array $data): ClienteGarantia
     {
-        $garantia->update($data);
-        $this->log($garantia->cliente, ActivityEvent::ClientGuaranteeUpdated, 'Garantia actualizada', [
-            'changed_fields' => $this->activityLog->fieldNames($data),
-            'related' => ['type' => 'cliente_garantia', 'id' => $garantia->id],
-        ]);
+        return DB::transaction(function () use ($garantia, $data) {
+            $garantia = ClienteGarantia::whereKey($garantia->id)->lockForUpdate()->firstOrFail();
+            $garantia->fill($data);
+            if (! $garantia->isDirty()) {
+                return $garantia;
+            }
+            $garantia->save();
+            $this->log($garantia->cliente, ActivityEvent::ClientGuaranteeUpdated, 'Garantia actualizada', [
+                'changed_fields' => $this->activityLog->fieldNames($data),
+                'related' => ['type' => 'cliente_garantia', 'id' => $garantia->id],
+            ]);
 
-        return $garantia->refresh();
+            return $garantia->refresh();
+        });
     }
 
     public function deleteGarantia(ClienteGarantia $garantia): void
     {
-        if (DocumentoGenerado::query()->where('documentable_type', 'cliente_garantias')->where('documentable_id', $garantia->id)->exists()) {
-            throw ValidationException::withMessages([
-                'garantia' => 'La garantía tiene documentos generados y debe conservarse para mantener su trazabilidad.',
+        DB::transaction(function () use ($garantia) {
+            if (DocumentoGenerado::query()->where('documentable_type', 'cliente_garantias')->where('documentable_id', $garantia->id)->exists()) {
+                throw ValidationException::withMessages([
+                    'garantia' => 'La garantía tiene documentos generados y debe conservarse para mantener su trazabilidad.',
+                ]);
+            }
+            $cliente = $garantia->cliente;
+            $id = $garantia->id;
+            $garantia->delete();
+            $this->log($cliente, ActivityEvent::ClientGuaranteeDeleted, 'Garantia eliminada', [
+                'related' => ['type' => 'cliente_garantia', 'id' => $id],
             ]);
-        }
-        $cliente = $garantia->cliente;
-        $id = $garantia->id;
-        $garantia->delete();
-        $this->log($cliente, ActivityEvent::ClientGuaranteeDeleted, 'Garantia eliminada', [
-            'related' => ['type' => 'cliente_garantia', 'id' => $id],
-        ]);
+        });
     }
 
     private function log(Cliente $cliente, ActivityEvent $event, string $description, array $metadata): void
@@ -157,6 +188,9 @@ class ClienteExpedienteService
             subject: $cliente,
             metadata: $metadata,
             causer: Auth::user(),
+            teamId: Auth::user()?->current_team_id,
+            sucursalId: $cliente->sucursal_id,
+            inheritActorContext: false,
         );
     }
 }

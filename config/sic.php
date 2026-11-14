@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'escenarios_qa_habilitados' => env('SIC_QA_ESCENARIOS_HABILITADOS', false),
+    'aprobacion_sintetica_habilitada' => env('SIC_QA_APROBACION_SINTETICA_HABILITADA', false),
     'qa_habilitado' => env('SIC_QA_HABILITADO', false),
     'host' => env('CIRCULO_CREDITO_HOST', 'https://services.circulodecredito.com.mx'),
     'api_key' => env('CIRCULO_CREDITO_API_KEY'),

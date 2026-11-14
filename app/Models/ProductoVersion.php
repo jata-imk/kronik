@@ -21,6 +21,9 @@ class ProductoVersion extends Model
     protected $guarded = [];
 
     protected $casts = [
+        'programada_por' => 'integer',
+        'programada_team_id' => 'integer',
+        'programada_sucursal_id' => 'integer',
         'fiscalidad' => 'array',
         'politica_mora' => 'array',
         'estado' => ProductoVersionEstado::class,
@@ -52,6 +55,11 @@ class ProductoVersion extends Model
     public function usos()
     {
         return $this->hasMany(ProductoVersionUso::class);
+    }
+
+    public function politicaActual()
+    {
+        return $this->hasOne(OriginacionPolitica::class, 'producto_version_id')->latestOfMany('numero');
     }
 
     public function scopeDisponiblesParaOriginacion(Builder $query, CarbonImmutable $fecha): Builder

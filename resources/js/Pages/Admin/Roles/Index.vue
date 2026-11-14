@@ -1,4 +1,6 @@
 <script setup>
+import ListadoPaginador from "@/Components/ListadoPaginador.vue";
+import { useListadoServidor } from "@/Composables/useListadoServidor";
 import PageHeader from "@/Components/PageHeader.vue";
 import { ref } from "vue";
 import { useForm, usePage } from "@inertiajs/vue3";
@@ -10,6 +12,8 @@ import RolePanel from "@components/Role/RolePanel.vue";
 
 const toast = useToast();
 const page = usePage();
+const filters = ref({ global: { value: null } });
+useListadoServidor(filters);
 
 const formRolePermissions = useForm({
     name: "",
@@ -24,7 +28,7 @@ const closeCreateRoleModal = () => {
 
 const submit = (selectedRole, modelHasChangedCallback) => {
     formRolePermissions.put(route("admin.roles.update", { role: selectedRole.id, team: page.props.roleTeam.id }), {
-        only: ["roles"],
+        only: ["roles", "selectedRole", "roleMembers", "roleMembersListado", "listado"],
         onSuccess: () => {
             createRoleModalIsOpen.value = false;
             modelHasChangedCallback(formRolePermissions.permissions);
@@ -48,9 +52,11 @@ const submit = (selectedRole, modelHasChangedCallback) => {
         </template>
 
         <template #card-content>
+            <div class="p-4"><InputText v-model="filters.global.value" aria-label="Buscar roles" placeholder="Buscar roles" /><ListadoPaginador /></div>
             <Message v-for="(error, field) in formRolePermissions.errors" :key="field" severity="error">{{ error }}</Message>
             <RolePanel
                 :roles="page.props.roles"
+                :selected-role="page.props.selectedRole"
                 :role-members="page.props.roleMembers"
                 :modules="page.props.modules"
                 :permissions="page.props.permissions"

@@ -1,9 +1,10 @@
 import { execFileSync } from "node:child_process";
-import { closeSync, existsSync, openSync, rmSync } from "node:fs";
+import { closeSync, existsSync, openSync, rmSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export function e2eEnvironment() {
+    const cycle = process.env.E2E_ORIGINACION_DUAL === "true" || process.env.E2E_BULLET_FIXTURES === "true";
     const localDatabase = fileURLToPath(
         new URL("../../storage/framework/testing/kronik-e2e.sqlite", import.meta.url),
     );
@@ -15,14 +16,16 @@ export function e2eEnvironment() {
         DEBUGBAR_ENABLED: "false",
         APP_KEY: "base64:VdUXfE4mVbQd4D4QnS2SGdlx1DsFJsPhlfLCMyn5LIk=",
         E2E_DATABASE: "true",
+        E2E_BULLET_FIXTURES: process.env.E2E_BULLET_FIXTURES === "true" ? "true" : "false",
         E2E_ORIGINACION_DUAL: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
-        ORIGINACION_APROBACIONES_HABILITADAS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
-        ORIGINACION_PAQUETES_QA_HABILITADOS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
-        ORIGINACION_FIRMAS_QA_HABILITADAS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
-        ORIGINACION_DESEMBOLSOS_QA_HABILITADOS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
-        ORIGINACION_PAGOS_QA_HABILITADOS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
-        ORIGINACION_ANTICIPOS_QA_HABILITADOS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
+        ORIGINACION_APROBACIONES_HABILITADAS: cycle ? "true" : "false",
+        ORIGINACION_PAQUETES_QA_HABILITADOS: cycle ? "true" : "false",
+        ORIGINACION_FIRMAS_QA_HABILITADAS: cycle ? "true" : "false",
+        ORIGINACION_DESEMBOLSOS_QA_HABILITADOS: cycle ? "true" : "false",
+        ORIGINACION_PAGOS_QA_HABILITADOS: cycle ? "true" : "false",
+        ORIGINACION_ANTICIPOS_QA_HABILITADOS: cycle ? "true" : "false",
         E2E_SIC_FIXTURES: process.env.E2E_SIC_FIXTURES === "true" ? "true" : "false",
+        SIC_QA_ESCENARIOS_HABILITADOS: process.env.E2E_SIC_FIXTURES === "true" ? "true" : "false",
         SIC_QA_HABILITADO: process.env.E2E_SIC_FIXTURES === "true" ? "true" : "false",
         SIC_CA_BUNDLE: "",
         CIRCULO_CREDITO_HOST: "https://services.circulodecredito.com.mx",
@@ -38,12 +41,14 @@ export function e2eEnvironment() {
         CACHE_STORE: "array",
         MAIL_MAILER: "array",
         QUEUE_CONNECTION: "sync",
-        SESSION_DRIVER: "file",
+        // File mtime follows the OS clock; dated scenarios need session timestamps from Laravel.
+        SESSION_DRIVER: process.env.E2E_BULLET_FIXTURES === "true" ? "database" : "file",
+        SESSION_LIFETIME: process.env.E2E_BULLET_FIXTURES === "true" ? "525600" : "120",
         BCRYPT_ROUNDS: "4",
         DOCUMENTOS_NODE_BINARY: process.execPath,
         DOCUMENTOS_NPM_BINARY: "",
         DOCUMENTOS_NODE_MODULES_PATH: fileURLToPath(new URL("../../node_modules", import.meta.url)),
-        DOCUMENTOS_CHROME_PATH: "",
+        DOCUMENTOS_CHROME_PATH: process.env.DOCUMENTOS_CHROME_PATH ?? "",
         DOCUMENTOS_DISK: "e2e_dual",
     };
 }
@@ -77,9 +82,14 @@ export function prepareE2eDatabase(environment = e2eEnvironment()) {
         throw new Error("MySQL E2E solo puede usar la base kronik_e2e.");
     }
 
+    const prepend = [];
+    if (environment.E2E_BULLET_FIXTURES === "true") {
+        writeFileSync(resolve(root, "storage/framework/testing/bullet-e2e-clock.txt"), "2027-01-01T12:00:00-06:00\n");
+        prepend.push("-d", `auto_prepend_file=${resolve(root, "tests/E2E/support/clock.php")}`);
+    }
     execFileSync(
         "php",
-        ["artisan", "migrate:fresh", "--seed", "--seeder=E2eSeeder", "--force"],
+        [...prepend, "artisan", "migrate:fresh", "--seed", "--seeder=E2eSeeder", "--force"],
         {
             cwd: root,
             env: { ...process.env, ...environment },

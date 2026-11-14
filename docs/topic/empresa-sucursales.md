@@ -22,6 +22,8 @@ responsable de una operación.
 
 ## Seguimiento y temas relacionados
 
+- [Entrega de días de gracia predeterminados](../agent-notes/empresa-dias-gracia.md).
+
 - [Backlog 01: configuración](../todos/01-configuracion-empresa.md).
 - [Nota de gestión de usuarios, equipos y sucursales](../agent-notes/01.5-gestion-usuarios-equipos-sucursales.md).
 - [Capturas históricas de configuración](../screenshots/README.md).
@@ -34,3 +36,7 @@ responsable de una operación.
 - [Folios de negocio](../reference/folios.md).
 - [ADR 0030: numeración estable](../explanation/adr-0030-folios-negocio.md).
 - [Entrega de folios y ayuda](../agent-notes/folios-ayuda-contextual.md).
+
+- [Contexto de sucursal y consultas](../reference/contexto-sucursal-consultas.md).
+- [ADR 0036](../explanation/adr-0036-alcance-consulta-sucursal.md).
+- [Seguimiento transversal](../agent-notes/contexto-sucursal-transversal.md).

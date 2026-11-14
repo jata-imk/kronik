@@ -85,50 +85,59 @@ class GenerarDocumentoPdf implements ShouldQueue
             throw new \RuntimeException('El motor no produjo un PDF válido.');
         }
 
-        $disk = config('documentos.disk', 'local');
-        $path = "documentos-generados/{$document->cliente_id}/{$document->id}.pdf";
-        if (! Storage::disk($disk)->put($path, $pdf)) {
-            throw new \RuntimeException('No fue posible guardar el PDF privado.');
-        }
-        $name = $paquete ? "paquete-qa-{$paquete->id}-{$document->id}.pdf"
-            : Str::slug($document->version->plantilla->nombre)."-v{$document->version->numero}-{$document->id}.pdf";
-        $document->update([
-            'estado' => DocumentoGeneradoEstado::Generado,
-            'disk' => $disk,
-            'path' => $path,
-            'nombre_archivo' => $name,
-            'mime_type' => 'application/pdf',
-            'tamano_bytes' => strlen($pdf),
-            'archivo_hash' => hash('sha256', $pdf),
-            'generado_en' => now(),
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($document, $pdf, $paquete, $activity) {
+            $document = DocumentoGenerado::whereKey($document->id)->lockForUpdate()->firstOrFail();
+            if (($paquete && $document->archivo_hash !== null)
+                || ($document->estado === DocumentoGeneradoEstado::Generado && $document->path && Storage::disk($document->disk)->exists($document->path))) {
+                return;
+            }
+            $disk = config('documentos.disk', 'local');
+            $path = "documentos-generados/{$document->cliente_id}/{$document->id}.pdf";
+            if (! Storage::disk($disk)->put($path, $pdf)) {
+                throw new \RuntimeException('No fue posible guardar el PDF privado.');
+            }
+            $name = $paquete ? "paquete-qa-{$paquete->id}-{$document->id}.pdf"
+                : Str::slug($document->version->plantilla->nombre)."-v{$document->version->numero}-{$document->id}.pdf";
+            $document->update([
+                'estado' => DocumentoGeneradoEstado::Generado,
+                'disk' => $disk,
+                'path' => $path,
+                'nombre_archivo' => $name,
+                'mime_type' => 'application/pdf',
+                'tamano_bytes' => strlen($pdf),
+                'archivo_hash' => hash('sha256', $pdf),
+                'generado_en' => now(),
+            ]);
 
-        $activity->log(
-            ActivityEvent::DocumentGenerated,
-            'Documento generado',
-            $document->cliente,
-            ['related' => ['type' => 'documento_generado', 'id' => $document->id], 'state' => DocumentoGeneradoEstado::Generado->value],
-            null, teamId: $document->team_id, sucursalId: $document->sucursal_id, inheritActorContext: false,
-        );
+            $activity->log(
+                ActivityEvent::DocumentGenerated,
+                'Documento generado',
+                $document->cliente,
+                ['related' => ['type' => 'documento_generado', 'id' => $document->id], 'state' => DocumentoGeneradoEstado::Generado->value],
+                null, teamId: $document->team_id, sucursalId: $document->sucursal_id, inheritActorContext: false,
+            );
+        });
     }
 
     public function failed(Throwable $exception): void
     {
-        $document = DocumentoGenerado::query()->with('cliente')->find($this->documentoId);
-        if (! $document || ($document->documentable_type === (new SolicitudPaquete)->getMorphClass() && $document->archivo_hash !== null)) {
-            return;
-        }
-        $document->update([
-            'estado' => DocumentoGeneradoEstado::Fallido,
-            'error_codigo' => class_basename($exception),
-            'error_mensaje' => 'No fue posible generar el documento. Puede volver a intentarlo.',
-        ]);
-        app(ActivityLogService::class)->log(
-            ActivityEvent::DocumentGenerationFailed,
-            'Falló la generación de documento',
-            $document->cliente,
-            ['related' => ['type' => 'documento_generado', 'id' => $document->id], 'state' => DocumentoGeneradoEstado::Fallido->value],
-            null, teamId: $document->team_id, sucursalId: $document->sucursal_id, inheritActorContext: false,
-        );
+        \Illuminate\Support\Facades\DB::transaction(function () use ($exception) {
+            $document = DocumentoGenerado::query()->with('cliente')->whereKey($this->documentoId)->lockForUpdate()->first();
+            if (! $document || $document->estado === DocumentoGeneradoEstado::Fallido
+                || $document->estado === DocumentoGeneradoEstado::Generado
+                || ($document->documentable_type === (new SolicitudPaquete)->getMorphClass() && $document->archivo_hash !== null)) {
+                return;
+            }
+            $document->update([
+                'estado' => DocumentoGeneradoEstado::Fallido,
+                'error_codigo' => class_basename($exception),
+                'error_mensaje' => 'No fue posible generar el documento. Puede volver a intentarlo.',
+            ]);
+            app(ActivityLogService::class)->log(
+                ActivityEvent::DocumentGenerationFailed, 'Falló la generación de documento', $document->cliente,
+                ['related' => ['type' => 'documento_generado', 'id' => $document->id], 'state' => DocumentoGeneradoEstado::Fallido->value],
+                null, teamId: $document->team_id, sucursalId: $document->sucursal_id, inheritActorContext: false,
+            );
+        });
     }
 }

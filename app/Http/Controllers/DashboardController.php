@@ -16,17 +16,19 @@ class DashboardController extends Controller
     public function __invoke(Request $request): Response
     {
         $user = $request->user();
-        $sucursal = $user->current_sucursal_id;
+        $consulta = app(\App\Services\ConsultaSucursal::class);
+        $alcance = $consulta->resolver($request);
         $puedeClientes = Gate::allows('viewAny', Cliente::class);
         $puedeSolicitudes = Gate::allows('viewAny', Solicitud::class);
         $puedeCreditos = Gate::allows('viewAny', Credito::class);
-        $scope = fn ($query) => $query->when($sucursal, fn ($query) => $query->where('sucursal_id', $sucursal))
-            ->when(! $sucursal && ! $user->is_super_admin, fn ($query) => $query->whereRaw('1 = 0'));
+        $scope = fn ($query) => $consulta->aplicar($query, $alcance);
 
         $solicitudes = $puedeSolicitudes ? $scope(Solicitud::query()) : null;
         $creditos = $puedeCreditos ? $scope(Credito::query()) : null;
 
         return Inertia::render('Dashboard', [
+            'filters' => $alcance,
+            'sucursales' => $consulta->opciones(),
             'resumen' => [
                 'clientes' => $puedeClientes ? $scope(Cliente::query())->count() : null,
                 'solicitudes' => $solicitudes?->count(),

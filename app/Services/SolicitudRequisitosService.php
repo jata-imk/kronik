@@ -23,8 +23,8 @@ class SolicitudRequisitosService
         $items = [];
         $empresa = app(EmpresaOperacionService::class)->compartir();
         $items[] = ['clave' => 'empresa', 'cumplido' => $empresa['capacidades']['originar'], 'mensaje' => $empresa['motivo'] ?? 'Empresa activa.'];
-        $add = function (string $clave, bool $cumplido, string $mensaje) use (&$items): void {
-            $items[] = compact('clave', 'cumplido', 'mensaje');
+        $add = function (string $clave, bool $cumplido, string $mensaje, array $orientacion = []) use (&$items): void {
+            $items[] = [...compact('clave', 'cumplido', 'mensaje'), ...$orientacion];
         };
         $revision = $solicitud->revisiones()->latest('numero')->first();
         $politica = $revision?->snapshot['politica_originacion'] ?? null;
@@ -39,14 +39,19 @@ class SolicitudRequisitosService
                 && $aprobacion->vigente_hasta->toDateString() >= $this->fecha->hoy()->toDateString(),
                 'La aprobación debe estar vigente. Devuelve y reenvía la solicitud para obtener una nueva aprobación.');
         }
-        $add('politica', $politica !== null, 'Configura la política del producto y envía una nueva revisión.');
+        $versionProducto = $solicitud->producto_version_id ? ProductoVersion::with('producto')->find($solicitud->producto_version_id) : null;
+        $guia = $versionProducto ? app(OriginacionPoliticaService::class)->resumen($versionProducto, $actor) : null;
+        $orientacion = $guia ? ['ubicacion' => $guia['ubicacion'], 'accion' => $guia['accion']] : [];
+        $add('politica', $politica !== null, $guia
+            ? 'Esta revisión no conserva política de originación. Revisa '.$guia['ubicacion'].'. '.$guia['siguiente'].' Devuelve y envía una nueva revisión para conservar la política.'
+            : 'Selecciona un producto activo y vigente; después configura su política y envía una nueva revisión.', $orientacion);
         $evidencia = ['revision_id' => $revision?->id, 'revision_hash' => $revision?->snapshot_hash, 'documentos' => []];
         if (! $politica || ! $revision) {
             return ['requisitos' => $items, 'puede_aprobar' => false, 'evidencia' => $evidencia, 'politica' => null];
         }
         $reglas = $politica['condiciones'];
         $vigente = app(OriginacionPoliticaService::class)->vigente($solicitud->producto_version_id);
-        $add('politica_vigente', $vigente?->id === $politica['id'], 'La política cambió. Devuelve y reenvía para aplicar la versión vigente.');
+        $add('politica_vigente', $vigente?->id === $politica['id'], 'La política cambió. Devuelve y reenvía para aplicar la versión vigente.'.($guia ? ' Consulta '.$guia['ubicacion'].'.' : ''), $orientacion);
         $productoDisponible = ProductoVersion::disponiblesParaOriginacion($this->fecha->hoy())
             ->whereHas('producto', fn ($q) => $q->where('activo', true))->whereKey($solicitud->producto_version_id)->exists();
         $add('producto', $productoDisponible, 'El producto debe estar activo y vigente para originación.');

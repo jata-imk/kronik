@@ -57,8 +57,9 @@ El ejemplo ejecutable sin Laravel demuestra resultados independientes, igualdad
 simple/disposición y llamadas intercaladas con métodos distintos. Las disposiciones
 son escenarios de prueba, no una línea operativa ni aceptación de sus reglas.
 
-El catálogo backend/Vue, obligaciones independientes, recepción/conciliación,
-Bullet, Revolvente y Nómina continúan pendientes. Solo Act/360 está habilitada.
+El catálogo backend/Vue se integró mediante PR #64. Obligaciones independientes,
+recepción/conciliación y la operación integral de Bullet, Revolvente y Nómina
+continúan pendientes. Solo Act/360 está habilitada.
 Las reglas futuras necesitan casos y compatibilidad propios.
 
 ## Evidencia

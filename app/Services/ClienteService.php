@@ -19,8 +19,13 @@ class ClienteService
 
     public function readAll(?int $sucursalId = null)
     {
+        return $this->query()->when($sucursalId, fn ($q) => $q->where('sucursal_id', $sucursalId))->get();
+    }
+
+    public function query(): \Illuminate\Database\Eloquent\Builder
+    {
         return Cliente::query()
-            ->when($sucursalId, fn ($query) => $query->where('sucursal_id', $sucursalId))
+
             ->with(['sucursal:id,nombre,clave',
                 'paisNacimiento',
                 'datosFiscales.regimenFiscal',
@@ -31,7 +36,7 @@ class ClienteService
                     'divisionAdministrativaDos',
                     'divisionAdministrativaTres',
                 ],
-            ])->withCount(['vinculos', 'vinculosEntrantes'])->get();
+            ])->withCount(['vinculos', 'vinculosEntrantes']);
     }
 
     public function store(array $data)
@@ -39,7 +44,7 @@ class ClienteService
         return DB::transaction(function () use ($data) {
             app(EmpresaOperacionService::class)->exigir(\App\Enums\OperacionEmpresa::Capturar, Auth::user());
             $sucursalId = Auth::user()?->current_sucursal_id;
-            if (! $sucursalId) {
+            if (! $sucursalId || ! Auth::user()?->currentSucursal?->activa) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     'sucursal_id' => 'Selecciona una sucursal activa antes de crear un cliente.',
                 ]);
@@ -78,6 +83,9 @@ class ClienteService
                 subject: $cliente,
                 metadata: ['changed_fields' => $this->activityLog->fieldNames($data)],
                 causer: Auth::user(),
+                teamId: Auth::user()?->current_team_id,
+                sucursalId: $cliente->sucursal_id,
+                inheritActorContext: false,
             );
 
             return $cliente;
@@ -88,10 +96,13 @@ class ClienteService
     {
         return DB::transaction(function () use ($cliente, $data) {
             $cliente = Cliente::query()->lockForUpdate()->findOrFail($cliente->id);
-            $cliente->update($data);
+            $cliente->fill($data);
+            $changed = $cliente->isDirty();
+            $cliente->save();
 
             if (isset($data['datos_fiscales'])) {
-                $cliente->datosFiscales()->updateOrCreate([], $data['datos_fiscales']);
+                $fiscal = $cliente->datosFiscales()->updateOrCreate([], $data['datos_fiscales']);
+                $changed = $changed || $fiscal->wasRecentlyCreated || array_diff(array_keys($fiscal->getChanges()), ['updated_at']) !== [];
             }
 
             if (isset($data['direcciones'])) {
@@ -112,17 +123,23 @@ class ClienteService
                         ];
                     }
 
-                    $cliente->direcciones()->updateOrCreate(['tipo' => $direccion['tipo']], $direccion);
+                    $address = $cliente->direcciones()->updateOrCreate(['tipo' => $direccion['tipo']], $direccion);
+                    $changed = $changed || $address->wasRecentlyCreated || array_diff(array_keys($address->getChanges()), ['updated_at']) !== [];
                 }
             }
 
-            $this->activityLog->log(
-                event: ActivityEvent::ClientUpdated,
-                description: 'Cliente actualizado',
-                subject: $cliente,
-                metadata: ['changed_fields' => $this->activityLog->fieldNames($data)],
-                causer: Auth::user(),
-            );
+            if ($changed) {
+                $this->activityLog->log(
+                    event: ActivityEvent::ClientUpdated,
+                    description: 'Cliente actualizado',
+                    subject: $cliente,
+                    metadata: ['changed_fields' => $this->activityLog->fieldNames($data)],
+                    causer: Auth::user(),
+                    teamId: Auth::user()?->current_team_id,
+                    sucursalId: $cliente->sucursal_id,
+                    inheritActorContext: false,
+                );
+            }
 
             return $cliente;
         });
@@ -154,7 +171,30 @@ class ClienteService
                 subject: $cliente,
                 metadata: ['result' => 'deleted'],
                 causer: Auth::user(),
+                teamId: Auth::user()?->current_team_id,
+                sucursalId: $cliente->sucursal_id,
+                inheritActorContext: false,
             );
+        });
+    }
+
+    public function transferir(Cliente $cliente, int $targetId, \App\Models\User $actor): void
+    {
+        DB::transaction(function () use ($cliente, $targetId, $actor) {
+            $cliente = Cliente::whereKey($cliente->id)->lockForUpdate()->firstOrFail();
+            $sourceId = $cliente->sucursal_id;
+            if (! $actor->is_super_admin) {
+                abort_unless($actor->operaEnSucursal($sourceId) && $actor->sucursales()->whereKey($targetId)->exists(),
+                    403, 'Sólo puedes trasladar clientes entre tus sucursales asignadas.');
+            }
+            if ($sourceId === $targetId) {
+                return;
+            }
+            $cliente->update(['sucursal_id' => $targetId]);
+            $this->activityLog->log(ActivityEvent::ClientTransferred, 'Cliente trasladado de sucursal', $cliente,
+                ['changed_fields' => ['sucursal_id'], 'related' => ['type' => 'sucursal', 'id' => $targetId],
+                    'state' => "from-sucursal:{$sourceId}"],
+                $actor, $actor->current_team_id, $sourceId, inheritActorContext: false);
         });
     }
 

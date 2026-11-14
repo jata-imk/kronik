@@ -38,8 +38,22 @@ final class SicOperacionService
             $revision = isset($data['solicitud_revision_id']) ? SolicitudRevision::findOrFail($data['solicitud_revision_id']) : null;
             $identidadHash = $this->identidadHash($cliente);
             $this->revisionValida($revision, $cliente);
+            $escenarios = app(SicEscenariosQa::class);
+            $existing = SicQuery::where('idempotency_key', $data['idempotency_key'])->first();
+            $escenario = null;
+            if (config('sic.escenarios_qa_habilitados') === true) {
+                $escenarios->habilitado();
+                $escenario = $existing
+                    ? ($existing->escenario_clave ? $this->leer($existing, 'escenario') : null)
+                    : $escenarios->resolver($data['api'], $data['escenario_qa'] ?? null);
+                if (isset($data['escenario_qa']) && ($escenario['clave'] ?? null) !== $data['escenario_qa']) {
+                    $this->error('Este envío ya fue utilizado con otro escenario.');
+                }
+            } elseif (! empty($data['escenario_qa']) || $existing?->escenario_clave) {
+                $escenarios->habilitado();
+            }
             $hash = self::hash([$cliente->id, $data['api'], $actor->id, $actor->current_team_id, $actor->current_sucursal_id,
-                $consentimiento->id, $consentimientoHash, $revision?->id, $identidadHash]);
+                $consentimiento->id, $consentimientoHash, $revision?->id, $identidadHash, ...($escenario ? [self::hash($escenario)] : [])]);
             if ($existing = SicQuery::where('idempotency_key', $data['idempotency_key'])->first()) {
                 if (! hash_equals($existing->payload_hash, $hash)) {
                     $this->error('Este envío ya fue utilizado con otros datos. Revisa la consulta original.');
@@ -58,9 +72,15 @@ final class SicOperacionService
                 'consentimiento_id' => $consentimiento->id, 'solicitud_revision_id' => $revision?->id,
                 'idempotency_key' => $data['idempotency_key'], 'payload_hash' => $hash, 'identidad_hash' => $identidadHash,
                 'consentimiento_hash' => $consentimientoHash]);
-            $payload = app(SicPeticion::class)->construir($cliente, $data['api'], (string) $query->id);
+            if ($escenario) {
+                $query->forceFill(['escenario_clave' => $escenario['clave'], 'escenario_version' => $escenario['version'],
+                    'procedencia' => $escenario['procedencia']])->save();
+                $this->evidencia($query, 'escenario', $escenario);
+            }
+            $payload = $escenario ? $escenario['peticion'] : app(SicPeticion::class)->construir($cliente, $data['api'], (string) $query->id);
             $this->evidencia($query, 'peticion', $payload);
             SicEvento::create(['sic_query_id' => $query->id, 'estado' => 'preparada', 'actor_id' => $actor->id]);
+            $this->audit($query, ActivityEvent::SicRequested, $actor);
             \App\Jobs\ConsultarSicQa::dispatch($query->id)->afterCommit();
 
             return $query;
@@ -80,6 +100,10 @@ final class SicOperacionService
                 $empresa->exigir(\App\Enums\OperacionEmpresa::ConsultarSic, recurso: $q, equipoId: $q->team_id,
                     sucursalId: $q->sucursal_id, iniciadorId: $q->actor_id, sistema: true);
                 CirculoSandboxGateway::habilitado();
+                if ($q->escenario_clave) {
+                    app(SicEscenariosQa::class)->habilitado();
+                    $this->leer($q, 'escenario');
+                }
                 $actor = User::findOrFail($q->actor_id);
                 $actor->forceFill(['current_team_id' => $q->team_id, 'current_sucursal_id' => $q->sucursal_id]);
                 $actor->unsetRelations();
@@ -89,9 +113,7 @@ final class SicOperacionService
                     $this->error('La identidad o autorización cambió antes del envío.');
                 }
                 $this->revisionValida($q->solicitud_revision_id ? SolicitudRevision::findOrFail($q->solicitud_revision_id) : null, $q->cliente);
-                $this->transicion($q, 'enviando', 'pending');
 
-                return $q;
             } catch (\App\Exceptions\OperacionEmpresaBloqueada $exception) {
                 $this->transicion($q, 'cancelada', 'error');
                 $exception->registrar();
@@ -102,12 +124,18 @@ final class SicOperacionService
 
                 return null;
             }
+            $this->transicion($q, 'enviando', 'pending');
+
+            return $q;
         });
         if (! $query) {
             return;
         }
         try {
-            $result = app(SicGateway::class)->consultar($query->api->clave, $this->leer($query, 'peticion'));
+            $escenario = $query->escenario_clave ? $this->leer($query, 'escenario') : null;
+            $result = $escenario && $escenario['procedencia'] === 'simulacion_interna'
+                ? app(SicEscenariosQa::class)->simular($escenario)
+                : app(SicGateway::class)->consultar($query->api->clave, $this->leer($query, 'peticion'));
             DB::transaction(function () use ($query, $result) {
                 $q = SicQuery::lockForUpdate()->findOrFail($query->id);
                 if ($q->estado_operacion !== 'enviando') {
@@ -116,6 +144,7 @@ final class SicOperacionService
                         $this->evidencia($q, 'respuesta_tardia', $result['respuesta']);
                         $this->evidencia($q, 'resultado_tardio', $result['resultado']);
                         SicEvento::create(['sic_query_id' => $q->id, 'estado' => 'respuesta_tardia', 'actor_id' => $q->actor_id]);
+                        $this->audit($q, ActivityEvent::SicLateResponse);
                     }
 
                     return;
@@ -131,7 +160,7 @@ final class SicOperacionService
                     default => ActivityEvent::ClientSicCreditReportFicoQueried,
                 };
                 app(ActivityLogService::class)->log($event, 'Consulta SIC QA finalizada', $q,
-                    ['related' => ['type' => 'iniciador', 'id' => $q->actor_id], 'result' => $ok ? 'success' : 'error'],
+                    ['provider' => $q->procedencia ?? 'cdc_sandbox', 'related' => ['type' => 'iniciador', 'id' => $q->actor_id], 'result' => $ok ? 'success' : 'error'],
                     null, teamId: $q->team_id, sucursalId: $q->sucursal_id, inheritActorContext: false);
             });
         } catch (\Throwable) {
@@ -196,6 +225,7 @@ final class SicOperacionService
     {
         $registrar = app(\Spatie\Permission\PermissionRegistrar::class);
         $original = $registrar->getPermissionsTeamId();
+        $relations = array_intersect_key($actor->getRelations(), array_flip(['roles', 'permissions']));
         try {
             $registrar->setPermissionsTeamId($actor->current_team_id);
             $actor->unsetRelation('roles')->unsetRelation('permissions');
@@ -209,14 +239,39 @@ final class SicOperacionService
             }
         } finally {
             $registrar->setPermissionsTeamId($original);
+            $actor->unsetRelation('roles')->unsetRelation('permissions');
+            foreach ($relations as $name => $value) {
+                $actor->setRelation($name, $value);
+            }
         }
+    }
+
+    public function puedeConciliar(SicQuery $query, User $actor): bool
+    {
+        if (! $actor->currentTeam) {
+            return false;
+        }
+
+        return app(\App\Services\TeamContext::class)->run($actor, $actor->currentTeam, function () use ($query, $actor) {
+            return $actor->can('reconcile circulo-credito') && $actor->can('read historial-crediticio')
+                && $actor->can('create circulo-credito') && $actor->can('read clientes') && $actor->can('update clientes')
+                && $actor->isActive() && $actor->currentTeam?->activo && $actor->currentSucursal?->activa
+                && $query->sucursal_id !== null && (int) $actor->current_sucursal_id === (int) $query->sucursal_id
+                && $actor->belongsToSucursal($actor->currentSucursal);
+        });
     }
 
     public function conciliar(SicQuery $query, array $data, User $actor): void
     {
-        Gate::forUser($actor)->authorize('reconcile circulo-credito');
-        Gate::forUser($actor)->authorize('read historial-crediticio');
-        $this->autorizar($query->cliente, $actor);
+        if ($actor->currentTeam) {
+            app(\App\Services\TeamContext::class)->run($actor, $actor->currentTeam, function () use ($actor) {
+                Gate::forUser($actor)->authorize('reconcile circulo-credito');
+                Gate::forUser($actor)->authorize('read historial-crediticio');
+            });
+        }
+        if (! $actor->currentTeam || ! $this->puedeConciliar($query, $actor)) {
+            $this->error('Selecciona un equipo autorizado y la sucursal original del intento SIC para conciliarlo.');
+        }
         DB::transaction(function () use ($query, $data, $actor) {
             $q = SicQuery::lockForUpdate()->findOrFail($query->id);
             if ($q->ambiente !== 'qa' || $q->estado_operacion !== 'incierta') {
@@ -226,7 +281,8 @@ final class SicOperacionService
             $q->forceFill(['estado_operacion' => 'conciliada_sin_resultado', 'status' => 'error'])->save();
             SicEvento::create(['sic_query_id' => $q->id, 'estado' => 'conciliada_sin_resultado', 'actor_id' => $actor->id]);
             app(ActivityLogService::class)->log(ActivityEvent::SicAttemptReconciled, 'Intento SIC QA conciliado sin resultado acreditable', $q->cliente,
-                ['related' => ['type' => 'sic_query', 'id' => $q->id]], $actor);
+                ['related' => ['type' => 'sic_query', 'id' => $q->id]], $actor,
+                teamId: $actor->current_team_id, sucursalId: $q->sucursal_id, inheritActorContext: false);
         });
     }
 
@@ -253,6 +309,35 @@ final class SicOperacionService
     {
         $q->forceFill(['estado_operacion' => $estado, 'status' => $status])->save();
         SicEvento::create(['sic_query_id' => $q->id, 'estado' => $estado, 'actor_id' => $q->actor_id]);
+        $event = match ($estado) {
+            'enviando' => ActivityEvent::SicSending,
+            'cancelada' => ActivityEvent::SicCancelled,
+            'incierta' => ActivityEvent::SicUncertain,
+            default => null,
+        };
+        if ($event) {
+            $this->audit($q, $event);
+        }
+    }
+
+    public function marcarIncierta(int $id): void
+    {
+        DB::transaction(function () use ($id) {
+            $query = SicQuery::whereKey($id)->lockForUpdate()->first();
+            if ($query?->estado_operacion === 'enviando') {
+                $this->transicion($query, 'incierta', 'pending');
+            }
+        });
+    }
+
+    private function audit(SicQuery $query, ActivityEvent $event, ?User $actor = null): void
+    {
+        $metadata = ['provider' => $query->procedencia ?? 'cdc_sandbox', 'state' => $query->estado_operacion, 'result' => 'applied'];
+        if ($query->actor_id) {
+            $metadata['related'] = ['type' => 'iniciador', 'id' => $query->actor_id];
+        }
+        app(ActivityLogService::class)->log($event, $event->label(), $query, $metadata, $actor,
+            $query->team_id, $query->sucursal_id, inheritActorContext: false);
     }
 
     public static function hash(array $data): string

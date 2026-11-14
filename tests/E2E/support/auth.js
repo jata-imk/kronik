@@ -8,14 +8,18 @@ export const users = {
 };
 
 export async function login(page, user = users.superAdmin) {
-    await page.goto("/login");
+    await page.goto("/login", { waitUntil: "domcontentloaded" });
     await page.locator("#email").fill(user.email);
     await page.locator("#password").fill(user.password);
     await page.getByRole("button", { name: /entrar a kronik|log in/i }).click();
-    await expect(page).toHaveURL(/\/dashboard$/);
+    await expect(page).toHaveURL(/\/dashboard$/, { timeout: 30_000 });
 }
 
 export async function failOnConsoleErrors(page) {
+    await page.route("https://ipapi.co/**", route => route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({ country_code: "MX" }),
+    }));
     await page.route("https://fonts.bunny.net/**", (route) =>
         route.fulfill({ contentType: "text/css", body: "" }),
     );

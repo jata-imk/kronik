@@ -22,6 +22,7 @@ final class DocumentoPlantillaVersionService
                 'creada_por' => $userId,
             ]);
             $this->createVersion($plantilla, $data, $userId, 1);
+            $this->record(\App\Enums\ActivityEvent::DocumentTemplateCreated, $plantilla, \App\Models\User::find($userId));
 
             return $plantilla->load('versiones');
         });
@@ -33,10 +34,18 @@ final class DocumentoPlantillaVersionService
         $this->ensureEditable($version);
 
         return DB::transaction(function () use ($plantilla, $version, $data) {
+            $plantilla = DocumentoPlantilla::query()->lockForUpdate()->findOrFail($plantilla->id);
+            $version = $plantilla->versiones()->lockForUpdate()->findOrFail($version->id);
+            $this->ensureEditable($version);
+            $before = [$plantilla->only(['clave', 'nombre', 'descripcion']), $version->contenido_hash, $version->resumen_cambios];
             $plantilla->update(Arr::only($data, ['clave', 'nombre', 'descripcion']));
             $content = $this->content($plantilla->tipo, $data);
             $version->update([...$content, 'resumen_cambios' => $data['resumen_cambios'] ?? null]);
             $version->recursos()->sync(array_keys($this->resources->references($content['encabezado_html'] ?? '', $content['contenido_html'], $content['pie_html'] ?? '')));
+
+            if ($before !== [$plantilla->only(['clave', 'nombre', 'descripcion']), $version->contenido_hash, $version->resumen_cambios]) {
+                $this->record(\App\Enums\ActivityEvent::DocumentTemplateUpdated, $plantilla, auth()->user());
+            }
 
             return $plantilla->refresh();
         });
@@ -48,36 +57,43 @@ final class DocumentoPlantillaVersionService
         $source->refresh();
 
         return DB::transaction(function () use ($plantilla, $source, $userId) {
+            $plantilla = DocumentoPlantilla::query()->lockForUpdate()->findOrFail($plantilla->id);
+            $source = $plantilla->versiones()->lockForUpdate()->findOrFail($source->id);
             $next = ((int) $plantilla->versiones()->lockForUpdate()->max('numero')) + 1;
 
-            return $this->createVersion($plantilla, [
+            $version = $this->createVersion($plantilla, [
                 'encabezado_html' => $source->encabezado_html,
                 'contenido_html' => $source->contenido_html,
                 'pie_html' => $source->pie_html,
                 'presentacion' => $source->presentacion,
                 'resumen_cambios' => "Duplicada desde la versión {$source->numero}",
             ], $userId, $next);
+            $this->record(\App\Enums\ActivityEvent::DocumentTemplateVersioned, $plantilla, \App\Models\User::find($userId), $version);
+
+            return $version;
         });
     }
 
     public function activate(DocumentoPlantillaVersion $version): DocumentoPlantillaVersion
     {
-        $this->ensureEditable($version);
-        $version->loadMissing('plantilla');
-        $this->content($version->plantilla->tipo, $version->toArray());
-        $this->compiler->validateForType(
-            $version->plantilla->tipo,
-            $version->encabezado_html ?? '',
-            $version->contenido_html,
-            $version->pie_html ?? '',
-        );
-
         return DB::transaction(function () use ($version) {
-            DocumentoPlantillaVersion::query()
-                ->where('documento_plantilla_id', $version->documento_plantilla_id)
-                ->where('estado', DocumentoPlantillaVersionEstado::Activa)
-                ->whereKeyNot($version->id)
-                ->update(['estado' => DocumentoPlantillaVersionEstado::Retirada, 'retirada_en' => now()]);
+            $plantilla = DocumentoPlantilla::query()->lockForUpdate()->findOrFail($version->documento_plantilla_id);
+            $version = $plantilla->versiones()->lockForUpdate()->findOrFail($version->id);
+            $this->ensureEditable($version);
+            $version->loadMissing('plantilla');
+            $this->content($version->plantilla->tipo, $version->toArray());
+            $this->compiler->validateForType(
+                $version->plantilla->tipo,
+                $version->encabezado_html ?? '',
+                $version->contenido_html,
+                $version->pie_html ?? '',
+            );
+
+            foreach (DocumentoPlantillaVersion::query()->where('documento_plantilla_id', $version->documento_plantilla_id)
+                ->where('estado', DocumentoPlantillaVersionEstado::Activa)->whereKeyNot($version->id)->lockForUpdate()->get() as $previous) {
+                $previous->update(['estado' => DocumentoPlantillaVersionEstado::Retirada, 'retirada_en' => now()]);
+                $this->record(\App\Enums\ActivityEvent::DocumentTemplateRetired, $plantilla, auth()->user(), $previous);
+            }
 
             $version->update([
                 'estado' => DocumentoPlantillaVersionEstado::Activa,
@@ -85,19 +101,36 @@ final class DocumentoPlantillaVersionService
                 'retirada_en' => null,
             ]);
 
+            $this->record(\App\Enums\ActivityEvent::DocumentTemplateActivated, $plantilla, auth()->user(), $version);
+
             return $version->refresh();
         });
     }
 
     public function retire(DocumentoPlantillaVersion $version): DocumentoPlantillaVersion
     {
-        if ($version->estado !== DocumentoPlantillaVersionEstado::Activa) {
-            throw ValidationException::withMessages(['version' => 'Solo puede retirarse una versión activa.']);
+        return DB::transaction(function () use ($version) {
+            $plantilla = DocumentoPlantilla::query()->lockForUpdate()->findOrFail($version->documento_plantilla_id);
+            $version = $plantilla->versiones()->lockForUpdate()->findOrFail($version->id);
+            if ($version->estado !== DocumentoPlantillaVersionEstado::Activa) {
+                throw ValidationException::withMessages(['version' => 'Solo puede retirarse una versión activa.']);
+            }
+
+            $version->update(['estado' => DocumentoPlantillaVersionEstado::Retirada, 'retirada_en' => now()]);
+            $this->record(\App\Enums\ActivityEvent::DocumentTemplateRetired, $plantilla, auth()->user(), $version);
+
+            return $version->refresh();
+        });
+    }
+
+    private function record(\App\Enums\ActivityEvent $event, DocumentoPlantilla $plantilla, ?\App\Models\User $actor, ?DocumentoPlantillaVersion $version = null): void
+    {
+        $metadata = ['result' => 'applied'];
+        if ($version) {
+            $metadata['related'] = ['type' => 'documento_plantilla_version', 'id' => $version->id];
         }
-
-        $version->update(['estado' => DocumentoPlantillaVersionEstado::Retirada, 'retirada_en' => now()]);
-
-        return $version->refresh();
+        app(\App\Services\ActivityLogService::class)->log($event, $event->label(), $plantilla, $metadata, $actor,
+            $actor?->current_team_id, $actor?->current_sucursal_id, inheritActorContext: false);
     }
 
     private function createVersion(DocumentoPlantilla $plantilla, array $data, ?int $userId, int $number): DocumentoPlantillaVersion

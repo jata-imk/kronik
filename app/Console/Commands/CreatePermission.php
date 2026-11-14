@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Models\Permission;
 use App\Models\Module;
+use App\Models\Permission;
+use Illuminate\Console\Command;
 
 class CreatePermission extends Command
 {
@@ -23,7 +23,8 @@ class CreatePermission extends Command
 
         // Verificar si el permiso ya existe
         if (Permission::where('name', $permissionName)->where('guard_name', $guardName)->exists()) {
-            $this->error("Permission '{$permissionName}' already exists for guard '{$guardName}'");
+            $this->error('El permiso ya existe para este guard.');
+
             return 1;
         }
 
@@ -36,8 +37,9 @@ class CreatePermission extends Command
         if ($moduleId) {
             $module = $this->findModule($moduleId);
 
-            if (!$module) {
-                $this->error("Module '{$moduleId}' not found");
+            if (! $module) {
+                $this->error('No se encontró el módulo seleccionado.');
+
                 return 1;
             }
 
@@ -46,9 +48,16 @@ class CreatePermission extends Command
         }
 
         // Crear el permiso
-        $permission = Permission::create($permissionData);
+        $permission = \Illuminate\Support\Facades\DB::transaction(function () use ($permissionData) {
+            $permission = Permission::create($permissionData);
+            $event = \App\Enums\ActivityEvent::PermissionCreated;
+            app(\App\Services\ActivityLogService::class)->log($event, $event->label(), $permission,
+                ['changed_fields' => array_keys($permissionData), 'result' => 'created'], inheritActorContext: false);
 
-        $this->info("Permission '{$permissionName}' created successfully" .
+            return $permission;
+        });
+
+        $this->info("Permission '{$permissionName}' created successfully".
             ($moduleId ? " for module '{$module->name}'" : ''));
 
         return 0;

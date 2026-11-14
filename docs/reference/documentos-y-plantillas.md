@@ -41,6 +41,31 @@ La generación usa la cola configurada de Laravel. Un identificador UUID de idem
 
 La configuración relacionada se encuentra en `config/documentos.php` y usa `DOCUMENTOS_DISK`, `DOCUMENTOS_PDF_RENDERER`, `DOCUMENTOS_PDF_TIMEOUT` y `DOCUMENTOS_MAX_UPLOAD_KB`.
 
+Medición de encabezado/pie y generación comparten el presupuesto de
+`DOCUMENTOS_PDF_TIMEOUT`, con reloj monotónico. Se acota a 50 segundos en total
+para reservar persistencia dentro del job existente de 55, y a 35 por subproceso.
+La medición no sustituye ese presupuesto por 10 segundos fijos. El preflight de
+CI y la integración real comprueban encabezado, pie y fuentes locales; no crean
+registros de dominio ni actividad adicional. Se conservan eventos, reintentos,
+snapshots y errores sanitizados del flujo documental.
+
 ## Identificadores conservados
 
 Los contratos nuevos admiten `solicitud.folio` y `contrato.folio`, congelados al preparar. El anexo los imprime también. Los PDF históricos no se reescriben al completar folios. [Contrato de folios](folios.md).
+
+## Consulta y paginación
+
+El [contrato transversal de contexto y listados](contexto-sucursal-consultas.md)
+describe parámetros de consulta, paginadores y selección independiente de la
+página, conservando los permisos y la naturaleza global o por equipo del módulo.
+
+## Consulta del editor
+
+Ver versión abre el editor completo de la versión seleccionada en consulta,
+con encabezado, cuerpo, pie, variables y presentación. Quill queda deshabilitado,
+sin biblioteca, inserciones ni envío. La vista PDF usa el GET del ID guardado;
+la previsualización de cambios sigue reservada a edición. Estado de plantilla y
+estado de versión se identifican por separado.
+
+Actualizar/activar/retirar serializan por plantilla y revalidan la versión
+persistida, rechazando instancias desactualizadas. Ver [contrato transversal](consulta-edicion-historicos.md).

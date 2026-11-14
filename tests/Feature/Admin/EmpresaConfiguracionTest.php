@@ -69,13 +69,14 @@ test('super admin can see singleton company configuration', function () {
             ->component('Admin/ConfiguracionEmpresa/Index')
             ->has('configuracion')
             ->where('configuracion.singleton_key', 'default')
+            ->where('configurada', false)
             ->has('tiposPersona', 2)
             ->has('regimenesFiscales', 1)
             ->has('paises', 1)
             ->has('zonasHorarias')
         );
 
-    expect(EmpresaConfiguracion::where('singleton_key', 'default')->exists())->toBeTrue();
+    expect(EmpresaConfiguracion::where('singleton_key', 'default')->exists())->toBeFalse();
 });
 
 test('super admin can update singleton company configuration without exposing api key', function () {
@@ -139,6 +140,11 @@ test('super admin can update singleton company configuration without exposing ap
         'event' => 'empresa.updated',
         'description' => 'Configuracion de empresa actualizada',
     ]);
+
+    $this->travel(1)->minutes();
+    $this->put(route('admin.configuracion-empresa.update'), $payload)->assertSessionHasNoErrors();
+    assertDomainAudit(['empresa.updated'], $user, $user->current_sucursal_id, ['secret-api-key', '002010077777777771']);
+    expect(\App\Models\Activity::where('event', 'empresa.updated')->count())->toBe(1);
 
     $this->actingAs($user)
         ->get(route('admin.configuracion-empresa.index'))

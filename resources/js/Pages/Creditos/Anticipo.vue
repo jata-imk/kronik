@@ -14,6 +14,7 @@ const props = defineProps({
     habilitado: Boolean,
     operaciones: Array,
     opcionales: Array,
+    politicaInteresBullet: { type: String, default: null },
 });
 const form = useForm({
     operacion: props.operaciones[0]?.value,
@@ -25,6 +26,7 @@ const form = useForm({
     confirmacion_qa: false,
     previa_hash: "",
 });
+const bullet = computed(() => props.politicaInteresBullet !== null);
 const previa = ref(null);
 const loading = ref(false);
 const error = ref("");
@@ -195,7 +197,7 @@ function guardar() {
                                 {{
                                     form.operacion === "liquidacion"
                                         ? "Déjalo vacío para cotizar el total de liquidación. Al confirmar debe coincidir exactamente."
-                                        : "Incluye lo recibido completo: primero se cubren vencidos y devengos, después comisiones y capital anticipado."
+                                        : bullet ? "Se cubren exigibles y cargos aplicables; el remanente reduce capital. El interés aún no exigible conserva importe y vencimiento, sin cobro obligatorio ni capitalización." : "Incluye lo recibido completo: primero se cubren vencidos y devengos, después comisiones y capital anticipado."
                                 }}
                             </p>
                         </div>

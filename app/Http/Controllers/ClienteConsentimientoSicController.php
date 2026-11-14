@@ -46,6 +46,9 @@ class ClienteConsentimientoSicController extends Controller
             subject: $cliente,
             metadata: ['related' => ['type' => 'cliente_consentimiento_sic', 'id' => $consentimiento->id]],
             causer: request()->user(),
+            teamId: request()->user()?->current_team_id,
+            sucursalId: $cliente->sucursal_id,
+            inheritActorContext: false,
         );
 
         return $files->make($consentimiento->evidencia_disk, $consentimiento->evidencia_path, $consentimiento->evidencia_nombre_original);
@@ -62,6 +65,9 @@ class ClienteConsentimientoSicController extends Controller
             subject: $cliente,
             metadata: ['related' => ['type' => 'cliente_consentimiento_sic', 'id' => $consentimiento->id]],
             causer: request()->user(),
+            teamId: request()->user()?->current_team_id,
+            sucursalId: $cliente->sucursal_id,
+            inheritActorContext: false,
         );
 
         return $files->make($consentimiento->evidencia_disk, $consentimiento->evidencia_path, $consentimiento->evidencia_nombre_original, true);

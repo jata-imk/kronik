@@ -63,6 +63,26 @@ La configuracion de empresa, las sucursales y el formulario de clientes comparte
 
 Antes ambos flujos se observaban al escribir porque las sugerencias reaccionaban al valor mientras el formulario invocaba tambien la busqueda detallada. Las condiciones ahora son mutuamente excluyentes: sugerencias sirven para completar el codigo y buscar carga asentamientos y divisiones solo con el codigo completo.
 
+## Días de gracia predeterminados
+
+`parametros_operativos.dias_gracia_default` prellena los días de gracia de mora
+al abrir **Nuevo producto**. Acepta enteros de 0 a 365: cero significa sin gracia;
+si falta la configuración, la clave o su valor es nulo, se usan 3 días. El control
+vacío conserva esa ausencia y no la convierte en cero.
+
+El valor es global por instalación. Productos recibe únicamente el número
+resuelto en `nuevoProductoDefaults.dias_gracia_mora`, sin necesitar permiso de
+consulta de Empresa ni recibir integraciones. Consultarlo no crea configuración
+ni actividad. Se toma al iniciar el formulario y no sobrescribe una captura abierta.
+Tras cambiar Empresa, volver a entrar en Productos para cargar el predeterminado.
+
+Cada guardado de producto exige sus días explícitos y permite ajustarlos en el
+borrador. Editar o copiar una versión conserva sus condiciones, incluido cero.
+Cambiar Empresa no recalcula solicitudes, contratos, créditos ni snapshots; el
+motor consume el valor congelado de la versión. Ver [productos](productos-crediticios.md).
+
+La actualización se audita con `empresa.updated`, sin eventos extra por prellenado.
+
 ## Credenciales Externas
 
 `integraciones` se guarda con cast `encrypted:array`. La pantalla administrativa no devuelve secretos completos; solo expone indicadores como `circulo_credito_api_key_configurada`.
@@ -114,3 +134,12 @@ Consultar [la matriz de capacidades](estatus-operativo-empresa.md). El estatus y
 ## Ayuda contextual
 
 La empresa y sucursales comparten `FieldHelp`. Los parámetros guardados que todavía no tienen consumidor se muestran deshabilitados y marcados; no prometen efectos operativos. La numeración se administra en [Sucursales: Folios](folios.md).
+
+## Consulta sin escrituras
+
+GET consulta la configuración existente; si aún no existe devuelve
+`configurada=false` y no crea el singleton. El primer PUT autorizado lo crea
+con el evento de configuración existente. Lectores ven el mismo formulario sin
+mutaciones; gestores pueden elegir `modo=consulta` o edición. Se conserva la
+redacción de secretos: solo se informa si la API key está configurada.
+Ver [contrato transversal](consulta-edicion-historicos.md).

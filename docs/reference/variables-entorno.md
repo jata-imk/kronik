@@ -39,7 +39,7 @@ migraciones.
 
 - `DOCUMENTOS_DISK`: disco privado; normalmente `local`.
 - `DOCUMENTOS_PDF_RENDERER`: use `browsershot`.
-- `DOCUMENTOS_PDF_TIMEOUT`: límite por render, 55 segundos por defecto.
+- `DOCUMENTOS_PDF_TIMEOUT`: presupuesto compartido de medición y PDF, 55 segundos por defecto; se acota a 50 para reservar persistencia dentro del job de 55 y a 35 por subproceso. La medición ya no impone un límite independiente de 10 segundos.
 - `DOCUMENTOS_MAX_UPLOAD_KB`: máximo para PDF, JPG y PNG cargados.
 - `DOCUMENTOS_NODE_BINARY`, `DOCUMENTOS_NPM_BINARY`,
   `DOCUMENTOS_NODE_MODULES_PATH` y `DOCUMENTOS_CHROME_PATH`: rutas opcionales
@@ -94,3 +94,10 @@ El geocodificador actual usa Nominatim y no consume una API key configurable.
 
 Consulte [Desplegar Kronik en una VPS Debian 12](../how-to/desplegar-vps-nuevo.md)
 para un ejemplo completo sin secretos reales.
+
+### Escenarios SIC QA
+
+- `SIC_QA_ESCENARIOS_HABILITADOS`: false por defecto; catálogo por intento y simulaciones internas.
+- `SIC_QA_APROBACION_SINTETICA_HABILITADA`: false por defecto; aceptación explícita para recorrido QA.
+
+Contrato: [escenarios SIC QA](sic-escenarios-qa.md).

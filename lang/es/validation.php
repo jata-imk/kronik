@@ -84,11 +84,15 @@ return [
     ],
 
     'attributes' => [
+        'politica_id' => 'política seleccionada',
+        'modo' => 'modo de consulta',
         'team' => 'equipo seleccionado',
         'team_id' => 'equipo seleccionado',
         'responsible_id' => 'responsable del equipo',
         'confirmation' => 'confirmación de transferencia',
         'token' => 'enlace de acceso',
+        'code' => 'código de autenticación',
+        'recovery_code' => 'código de recuperación',
         'permissions' => 'permisos del rol',
         'permissions.*' => 'permiso del rol',
         'add_all_permissions' => 'asignación de todos los permisos',

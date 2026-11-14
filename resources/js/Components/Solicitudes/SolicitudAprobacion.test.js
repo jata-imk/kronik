@@ -5,8 +5,8 @@ import SolicitudAprobacion from "./SolicitudAprobacion.vue";
 vi.mock("@inertiajs/vue3", () => ({ useForm: data => ({ ...data, errors: {}, processing: false, post: vi.fn() }) }));
 const props = { solicitud: { id: 1, estado: "en_revision", lock_version: 0 }, puedeAprobar: true, estado: { puede_aprobar: false, requisitos: [{ clave: "sic", cumplido: false, mensaje: "Se requiere SIC integrado válido." }], politica: null } };
 function render(extra = {}) {
-    return mount(SolicitudAprobacion, { props: { ...props, ...extra }, global: { stubs: {
-        Button: { props: ["label", "disabled"], template: '<button :disabled="disabled">{{ label }}</button>' }, Textarea: true, Message: true,
+    return mount(SolicitudAprobacion, { props: { ...props, ...extra }, global: { directives: { "empresa-operacion": {} }, stubs: {
+        Button: { props: ["label", "disabled"], template: '<button :disabled="disabled">{{ label }}</button>' }, Textarea: true, Message: { template: "<div><slot /></div>" },
     } } });
 }
 describe("Requisitos de aprobación", () => {
@@ -25,5 +25,10 @@ describe("Requisitos de aprobación", () => {
     });
     it("no presenta aprobación como pendiente después de resolver", () => {
         expect(render({ solicitud: { ...props.solicitud, estado: "aprobada" } }).text()).toBe("");
+    });
+    it("explica la procedencia de una evidencia sintética QA", () => {
+        expect(render({ estado: { ...props.estado, evidencia: { sic: {
+            uso: "qa", escenario: "interno_con_score", procedencia: "simulacion_interna",
+        } } } }).text()).toContain("El resultado corresponde al escenario y no describe al cliente.");
     });
 });

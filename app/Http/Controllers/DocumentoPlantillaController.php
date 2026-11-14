@@ -2,12 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ActivityEvent;
 use App\Enums\DocumentoPlantillaTipo;
 use App\Http\Requests\GuardarDocumentoPlantillaRequest;
 use App\Models\DocumentoPlantilla;
 use App\Models\DocumentoPlantillaVersion;
-use App\Services\ActivityLogService;
 use App\Services\Documentos\CatalogoVariablesDocumento;
 use App\Services\Documentos\CompiladorPlantillaDocumento;
 use App\Services\Documentos\DocumentoPlantillaVersionService;
@@ -33,14 +31,12 @@ class DocumentoPlantillaController extends Controller implements HasMiddleware
         ];
     }
 
-    public function index(CatalogoVariablesDocumento $catalogo)
+    public function index(CatalogoVariablesDocumento $catalogo, \Illuminate\Http\Request $request)
     {
         $this->authorize('viewAny', DocumentoPlantilla::class);
 
         return Inertia::render('Documentos/Plantillas/Index', [
-            'plantillas' => fn () => DocumentoPlantilla::query()
-                ->with(['versiones' => fn ($query) => $query->withCount('documentosGenerados')->orderByDesc('numero')])
-                ->orderBy('nombre')->get(),
+            ...app(\App\Services\CatalogoListadoService::class)->plantillas($request),
             'tipos' => collect(DocumentoPlantillaTipo::cases())->map(fn ($type) => ['value' => $type->value, 'label' => $type->label()]),
             'variables' => collect(DocumentoPlantillaTipo::cases())->mapWithKeys(fn ($type) => [$type->value => $catalogo->forType($type)]),
         ]);
@@ -50,16 +46,14 @@ class DocumentoPlantillaController extends Controller implements HasMiddleware
     {
         $this->authorize('create', DocumentoPlantilla::class);
         $template = $service->create($request->validated(), Auth::id());
-        $this->log(ActivityEvent::DocumentTemplateCreated, 'Plantilla documental creada', $template, ['clave', 'nombre', 'tipo']);
 
-        return back()->with('success', 'Plantilla creada como borrador.');
+        return redirect()->route('plantillas-documentos.index', ['plantilla_id' => $template->id])->with('success', 'Plantilla creada como borrador.');
     }
 
     public function update(GuardarDocumentoPlantillaRequest $request, DocumentoPlantilla $plantilla, DocumentoPlantillaVersion $version, DocumentoPlantillaVersionService $service)
     {
         $this->authorize('update', $plantilla);
         $service->update($plantilla, $version, $request->validated());
-        $this->log(ActivityEvent::DocumentTemplateUpdated, 'Borrador de plantilla actualizado', $plantilla, ['nombre', 'descripcion', 'contenido']);
 
         return back()->with('success', 'Borrador guardado.');
     }
@@ -68,16 +62,14 @@ class DocumentoPlantillaController extends Controller implements HasMiddleware
     {
         $this->authorize('version', $plantilla);
         $new = $service->duplicate($plantilla, $version, Auth::id());
-        $this->log(ActivityEvent::DocumentTemplateVersioned, 'Nueva versión de plantilla creada', $plantilla, ['version']);
 
-        return back()->with('success', "Versión {$new->numero} creada como borrador.");
+        return redirect()->route('plantillas-documentos.index', ['plantilla_id' => $plantilla->id, 'version_id' => $new->id])->with('success', "Versión {$new->numero} creada como borrador.");
     }
 
     public function activar(DocumentoPlantillaVersion $version, DocumentoPlantillaVersionService $service)
     {
         $this->authorize('activate', $version);
         $service->activate($version);
-        $this->log(ActivityEvent::DocumentTemplateActivated, 'Versión de plantilla activada', $version->plantilla, ['estado', 'version']);
 
         return back()->with('success', 'Versión activada; su contenido quedó protegido contra cambios.');
     }
@@ -86,7 +78,6 @@ class DocumentoPlantillaController extends Controller implements HasMiddleware
     {
         $this->authorize('retire', $version);
         $service->retire($version);
-        $this->log(ActivityEvent::DocumentTemplateRetired, 'Versión de plantilla retirada', $version->plantilla, ['estado', 'version']);
 
         return back()->with('success', 'Versión retirada; el historial se conserva.');
     }
@@ -119,10 +110,5 @@ class DocumentoPlantillaController extends Controller implements HasMiddleware
             'garantia.valor_estimado' => '$25,000.00', 'garantia.moneda' => 'MXN',
             'garantia.propietario' => 'María Ejemplo López',
         ];
-    }
-
-    private function log(ActivityEvent $event, string $description, DocumentoPlantilla $template, array $fields): void
-    {
-        app(ActivityLogService::class)->log($event, $description, $template, ['changed_fields' => $fields], Auth::user());
     }
 }

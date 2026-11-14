@@ -88,17 +88,21 @@ final class DocumentoGeneracionService
             $document->documentable()->associate($garantia ?? $cliente);
             $document->save();
 
+            $this->activity->log(
+                ActivityEvent::DocumentGenerationRequested,
+                'Generación de documento solicitada',
+                $cliente,
+                ['related' => ['type' => 'documento_generado', 'id' => $document->id], 'state' => DocumentoGeneradoEstado::Pendiente->value],
+                $user,
+                teamId: $document->team_id,
+                sucursalId: $document->sucursal_id,
+                inheritActorContext: false,
+            );
+
+            GenerarDocumentoPdf::dispatch($document->id)->afterCommit();
+
             return $document;
         });
-
-        $this->activity->log(
-            ActivityEvent::DocumentGenerationRequested,
-            'Generación de documento solicitada',
-            $cliente,
-            ['related' => ['type' => 'documento_generado', 'id' => $document->id], 'state' => DocumentoGeneradoEstado::Pendiente->value],
-            $user,
-        );
-        GenerarDocumentoPdf::dispatch($document->id)->afterCommit();
 
         return $document;
     }

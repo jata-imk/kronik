@@ -123,4 +123,9 @@ class UpdateEmpresaConfiguracionRequest extends FormRequest
             'domicilio_fiscal.division_admin_tres_id.required_with' => 'Seleccione una colonia válida para el domicilio fiscal.',
         ];
     }
+
+    public function attributes(): array
+    {
+        return ['parametros_operativos.dias_gracia_default' => 'días de gracia predeterminados'];
+    }
 }

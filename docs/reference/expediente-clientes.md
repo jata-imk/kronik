@@ -6,6 +6,10 @@
 2. El sistema redirige a `clientes/{cliente}/expediente`.
 3. Completar perfil economico, documentos, referencias, vinculados, garantias y consentimiento SIC por secciones independientes.
 
+El alta admite [RFC genéricos](validacion-rfc.md#genéricos-en-clientes) repetibles
+con aviso de identidad fiscal propia pendiente, para física y moral. Esto no
+amplía los tipos de persona que pueden aprobarse ni habilita integraciones.
+
 ## Perfil economico
 
 - `ocupacion`
@@ -72,3 +76,11 @@ no revocado, no vencido y con evidencia disponible; ver
 - [Perfil economico en viewport movil](../assets/backlog-02/expediente-mobile.png)
 
 Las capturas se generaron con Chrome local mediante Playwright. La revision cubrio todas las secciones, el guardado del perfil, los dialogos y la ausencia de errores o advertencias de consola.
+
+## Alcance de consulta por sucursal
+
+Consultar el [contrato transversal de contexto y consultas](contexto-sucursal-consultas.md)
+para alcance actual/institucional, paginación en servidor y conservación del
+contexto histórico. La entrega transversal sigue en progreso; su
+[Agent Note](../agent-notes/contexto-sucursal-transversal.md) distingue implementación,
+regresión local y pendientes, sin acreditar integración ni despliegue.

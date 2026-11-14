@@ -8,8 +8,8 @@ import { computed, ref, watch } from "vue";
 // Props para recibir los datos del controlador
 const props = defineProps({
     clientes: {
-        type: Array,
-        default: () => [],
+        type: Object,
+        default: () => ({ data: [] }),
     },
     can: {
         type: Object,
@@ -21,7 +21,15 @@ const props = defineProps({
 });
 
 const toast = useToast();
-const clientes = computed(() => props.clientes);
+const clientes = computed(() => props.clientes.data);
+const buscarServidor = ref(props.filters.buscar ?? "");
+const orden = ref(props.filters.orden ?? "id");
+const direccion = ref(props.filters.direccion ?? "asc");
+const porPagina = ref(props.clientes.per_page ?? 25);
+function consultar(page = 1) {
+    router.get(route(props.view === "expedientes" ? "clientes.expedientes.index" : "clientes.index"), { scope: scope.value, sucursal_id: scope.value === "all" ? props.filters.sucursal_id : undefined, buscar: buscarServidor.value, columnas: JSON.stringify(Object.fromEntries(Object.entries(filters.value).map(([key, value]) => [key, value.value]))), orden: orden.value, direccion: direccion.value, page, por_pagina: porPagina.value }, { preserveState: true });
+}
+
 const loading = ref(false);
 const deleteProcessing = ref(false);
 const deleteDialog = ref(false);
@@ -33,18 +41,8 @@ const transferProcessing = ref(false);
 const scope = ref(props.filters.scope ?? "current");
 const expedienteBuscar = ref("");
 const mobileBuscar = ref("");
-const clientesMobile = computed(() => {
-    const needle = mobileBuscar.value.trim().toLocaleLowerCase("es-MX");
-    return needle ? props.clientes.filter((cliente) =>
-        `${cliente.id} ${cliente.nombre_completo} ${cliente.email ?? ""} ${cliente.sucursal?.nombre ?? ""}`.toLocaleLowerCase("es-MX").includes(needle),
-    ) : props.clientes;
-});
-const expedientesFiltrados = computed(() => {
-    const needle = expedienteBuscar.value.trim().toLocaleLowerCase("es-MX");
-    return needle ? props.clientes.filter((cliente) =>
-        `${cliente.id} ${cliente.nombre_completo} ${cliente.sucursal?.nombre ?? ""}`.toLocaleLowerCase("es-MX").includes(needle),
-    ) : props.clientes;
-});
+const clientesMobile = clientes;
+const expedientesFiltrados = clientes;
 
 watch(
     () => props.filters.scope,
@@ -55,7 +53,7 @@ watch(
 
 // Inicialización de filtros
 const filters = ref({
-    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    global: { value: props.filters.buscar ?? null, matchMode: FilterMatchMode.CONTAINS },
     id: { value: null, matchMode: FilterMatchMode.EQUALS },
     nombre_completo: { value: null, matchMode: FilterMatchMode.CONTAINS },
     email: { value: null, matchMode: FilterMatchMode.CONTAINS },
@@ -67,6 +65,20 @@ const filters = ref({
     sexo: { value: null, matchMode: FilterMatchMode.EQUALS },
     "datos_fiscales.rfc": { value: null, matchMode: FilterMatchMode.CONTAINS },
     "sucursal.nombre": { value: null, matchMode: FilterMatchMode.CONTAINS },
+});
+
+const recibidos = JSON.parse(props.filters.columnas ?? "{}");
+for (const [key, value] of Object.entries(recibidos)) {
+    if (filters.value[key]) filters.value[key].value = value;
+}
+
+watch(() => props.filters, value => {
+    buscarServidor.value = value.buscar ?? "";
+    orden.value = value.orden ?? "id";
+    direccion.value = value.direccion ?? "asc";
+    porPagina.value = props.clientes.per_page ?? 25;
+    const columns = JSON.parse(value.columnas ?? "{}");
+    for (const key of Object.keys(filters.value)) filters.value[key].value = columns[key] ?? null;
 });
 
 /**
@@ -285,8 +297,8 @@ const exportData = async () => {
         <div class="flex flex-wrap gap-4 justify-content-between align-items-center mb-4">
             <div class="w-full flex flex-wrap gap-2">
                 <Button v-if="can.create && view !== 'expedientes'" label="Nuevo cliente" icon="pi pi-plus" @click="navigateToCreate" />
-                <Button v-if="can.create && view !== 'expedientes'" label="Importar" icon="pi pi-upload" severity="secondary" @click="showImportDialog" />
-                <Button v-if="view !== 'expedientes'" label="Exportar" icon="pi pi-download" severity="secondary" @click="exportData" />
+
+
                 <SelectButton
                     :model-value="scope"
                     :options="[{ label: 'Sucursal actual', value: 'current' }, { label: 'Todas', value: 'all' }]"
@@ -297,9 +309,11 @@ const exportData = async () => {
             </div>
         </div>
 
+        <form class="mb-4 flex gap-3" @submit.prevent="consultar()"><InputText v-model="buscarServidor" aria-label="Buscar clientes" placeholder="Buscar clientes" /><Button type="submit" label="Buscar" /></form>
+        <Paginator :first="(props.clientes.current_page - 1) * props.clientes.per_page" :rows="props.clientes.per_page" :total-records="props.clientes.total" :rows-per-page-options="[10, 25, 50]" @page="e => { porPagina = e.rows; consultar(e.page + 1); }" />
         <section v-if="view === 'expedientes'" aria-label="Expedientes de clientes">
             <label for="expediente-buscar" class="block mb-2 font-semibold">Buscar expediente</label>
-            <InputText id="expediente-buscar" v-model="expedienteBuscar" placeholder="Nombre, número o sucursal" class="w-full md:max-w-sm mb-4" />
+
             <div v-if="expedientesFiltrados.length" class="k-expediente-list">
                 <article v-for="cliente in expedientesFiltrados" :key="cliente.id" class="k-surface k-expediente-row">
                     <span class="k-expediente-avatar" aria-hidden="true">{{ cliente.primer_nombre?.[0] }}{{ cliente.apellido_paterno?.[0] }}</span>
@@ -312,7 +326,7 @@ const exportData = async () => {
 
         <section v-if="view !== 'expedientes'" class="k-mobile-client-list" aria-label="Clientes">
             <label for="clientes-mobile-buscar" class="block mb-2 font-semibold">Buscar cliente</label>
-            <InputText id="clientes-mobile-buscar" v-model="mobileBuscar" placeholder="Nombre, correo o sucursal" class="w-full mb-4" />
+
             <div v-if="clientesMobile.length" class="k-expediente-list">
                 <article v-for="cliente in clientesMobile" :key="cliente.id" class="k-surface k-client-card">
                     <div class="flex gap-3 items-center min-w-0"><span class="k-expediente-avatar" aria-hidden="true">{{ cliente.primer_nombre?.[0] }}{{ cliente.apellido_paterno?.[0] }}</span><div class="min-w-0"><p class="font-semibold truncate">{{ cliente.nombre_completo }}</p><p class="text-sm text-surface-500">Cliente #{{ cliente.id }} · {{ cliente.sucursal?.nombre ?? 'Sin sucursal' }}</p></div></div>
@@ -325,13 +339,15 @@ const exportData = async () => {
 
         <DataTable v-if="view !== 'expedientes'" class="k-desktop-client-table p-datatable-sm"
             :value="clientes"
+            :sort-field="orden" :sort-order="direccion === 'desc' ? -1 : 1"
+            lazy @filter="consultar()" @sort="e => { orden = e.sortField; direccion = e.sortOrder === -1 ? 'desc' : 'asc'; consultar(); }"
             v-model:filters="filters"
             filter-display="row"
             :global-filter-fields="[
-                'id', 'nombre_completo', 'email', 'telefono', 
+                'id', 'nombre_completo', 'email', 'telefono',
                 'pais_nacimiento.nombre_es', 'sexo', 'datos_fiscales.rfc', 'sucursal.nombre'
             ]"
-            :paginator="true"
+            :paginator="false"
             :rows="10"
             :loading="loading"
             paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"

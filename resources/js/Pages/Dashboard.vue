@@ -1,15 +1,22 @@
 <script setup>
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import PageHeader from "@/Components/PageHeader.vue";
-import { Link, usePage } from "@inertiajs/vue3";
-import { computed } from "vue";
+import ConsultaSucursalFilter from "@/Components/ConsultaSucursalFilter.vue";
+import { Link, router, usePage } from "@inertiajs/vue3";
+import { computed, ref, watch } from "vue";
 
 const props = defineProps({
+    filters: Object,
+    sucursales: { type: Array, default: () => [] },
     resumen: { type: Object, required: true },
     pendientes: { type: Array, default: () => [] },
     accesos: { type: Object, required: true },
 });
 const page = usePage();
+const consulta = ref({ ...props.filters });
+watch(() => props.filters, value => { consulta.value = { ...value }; });
+const consultar = () => router.get(route("dashboard"), { scope: consulta.value.scope, sucursal_id: consulta.value.scope === "all" ? consulta.value.sucursal_id : undefined }, { preserveState: true, replace: true });
+const listUrl = (name) => route(name, ["clientes.index", "solicitudes.index", "evaluacion-solicitudes.index", "creditos.index", "solicitudes.trabajo"].includes(name) ? { scope: props.filters?.scope, sucursal_id: props.filters?.scope === "all" ? props.filters.sucursal_id : undefined } : {});
 const nombre = computed(() => page.props.auth?.user?.name?.split(" ")[0] ?? "equipo");
 const indicadores = computed(() => [
     { label: "Clientes", value: props.resumen.clientes, icon: "pi pi-users", to: "clientes.index" },
@@ -17,7 +24,7 @@ const indicadores = computed(() => [
     { label: "En revisión", value: props.resumen.enRevision, icon: "pi pi-clock", to: "evaluacion-solicitudes.index" },
     { label: "Por formalizar", value: props.resumen.porFormalizar, icon: "pi pi-check-circle", to: "solicitudes.index" },
     { label: "Créditos", value: props.resumen.creditos, icon: "pi pi-wallet", to: "creditos.index" },
-].filter((item) => item.value !== null));
+].filter((item) => !props.filters?.requiereSucursal && item.value !== null));
 const accesos = computed(() => [
     { label: "Clientes", description: "Alta y expedientes", icon: "pi pi-users", to: "clientes.index", enabled: props.accesos.clientes },
     { label: "Solicitudes", description: "Originación y seguimiento", icon: "pi pi-file-edit", to: "solicitudes.index", enabled: props.accesos.solicitudes },
@@ -31,14 +38,15 @@ const accesos = computed(() => [
     <AppLayout title="Tablero">
         <template #card-header>
             <PageHeader eyebrow="Tu espacio de trabajo" :title="`Buen día, ${nombre}`" description="Una vista clara de la operación de tu sucursal.">
-                <template #actions><Link v-if="accesos.some((item) => item.to === 'solicitudes.index')" :href="route('solicitudes.trabajo')" class="k-action-link">Ir a Mi trabajo <i class="pi pi-arrow-right" aria-hidden="true" /></Link></template>
+                <template #actions><Link v-if="accesos.some((item) => item.to === 'solicitudes.index')" :href="listUrl('solicitudes.trabajo')" class="k-action-link">Ir a Mi trabajo <i class="pi pi-arrow-right" aria-hidden="true" /></Link></template>
             </PageHeader>
         </template>
         <template #card-content>
+            <form class="flex flex-wrap items-end gap-3 mb-5" @submit.prevent="consultar"><ConsultaSucursalFilter v-model="consulta" :sucursales="sucursales" /><Button type="submit" label="Consultar" /></form>
             <div class="k-dashboard">
 
                 <div v-if="indicadores.length" class="k-metrics">
-                    <Link v-for="item in indicadores" :key="item.label" :href="route(item.to)" class="k-metric k-surface">
+                    <Link v-for="item in indicadores" :key="item.label" :href="listUrl(item.to)" class="k-metric k-surface">
                         <span class="k-metric-icon"><i :class="item.icon" aria-hidden="true" /></span>
                         <span class="k-metric-value k-financial">{{ item.value.toLocaleString('es-MX') }}</span>
                         <span class="k-metric-label">{{ item.label }}</span>
@@ -47,7 +55,7 @@ const accesos = computed(() => [
 
                 <div class="k-dashboard-grid">
                     <section class="k-surface k-panel" aria-labelledby="pendientes-title">
-                        <div class="k-panel-heading"><div><p class="k-eyebrow">Seguimiento</p><h2 id="pendientes-title">Mis solicitudes pendientes</h2></div><Link v-if="accesos.some((item) => item.to === 'solicitudes.index')" :href="route('solicitudes.trabajo')">Ver todas <i class="pi pi-arrow-right" aria-hidden="true" /></Link></div>
+                        <div class="k-panel-heading"><div><p class="k-eyebrow">Seguimiento</p><h2 id="pendientes-title">Mis solicitudes pendientes</h2></div><Link v-if="accesos.some((item) => item.to === 'solicitudes.index')" :href="listUrl('solicitudes.trabajo')">Ver todas <i class="pi pi-arrow-right" aria-hidden="true" /></Link></div>
                         <ul v-if="pendientes.length" class="k-work-list">
                             <li v-for="solicitud in pendientes" :key="solicitud.id"><Link :href="route('solicitudes.show', solicitud.id)"><span class="k-work-id">{{ solicitud.folio ?? `#${solicitud.id}` }}</span><span class="k-work-name">{{ solicitud.cliente || 'Cliente' }}</span><span class="k-work-state">{{ solicitud.estado }}</span><i class="pi pi-chevron-right" aria-hidden="true" /></Link></li>
                         </ul>
@@ -56,7 +64,7 @@ const accesos = computed(() => [
 
                     <section class="k-surface k-panel" aria-labelledby="accesos-title">
                         <div class="k-panel-heading"><div><p class="k-eyebrow">Navegación</p><h2 id="accesos-title">Accesos rápidos</h2></div></div>
-                        <div class="k-shortcuts"><Link v-for="item in accesos" :key="item.to" :href="route(item.to)"><span class="k-shortcut-icon"><i :class="item.icon" aria-hidden="true" /></span><span><strong>{{ item.label }}</strong><small>{{ item.description }}</small></span><i class="pi pi-arrow-up-right" aria-hidden="true" /></Link></div>
+                        <div class="k-shortcuts"><Link v-for="item in accesos" :key="item.to" :href="listUrl(item.to)"><span class="k-shortcut-icon"><i :class="item.icon" aria-hidden="true" /></span><span><strong>{{ item.label }}</strong><small>{{ item.description }}</small></span><i class="pi pi-arrow-up-right" aria-hidden="true" /></Link></div>
                     </section>
                 </div>
             </div>

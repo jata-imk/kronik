@@ -14,8 +14,6 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class ClienteController extends Controller implements HasMiddleware
@@ -32,16 +30,9 @@ class ClienteController extends Controller implements HasMiddleware
 
     public function index(Request $request, ClienteService $clienteService)
     {
-        $filters = $request->validate([
-            'scope' => ['nullable', Rule::in(['current', 'all'])],
-        ]);
-        $scope = $filters['scope'] ?? 'current';
-        if ($scope === 'current' && ! $request->user()->current_sucursal_id) {
-            throw ValidationException::withMessages([
-                'sucursal_id' => 'Selecciona una sucursal activa antes de consultar su cartera.',
-            ]);
-        }
-        $clientes = $clienteService->readAll($scope === 'current' ? $request->user()->current_sucursal_id : null);
+        $consulta = app(\App\Services\ConsultaSucursal::class);
+        $scope = $consulta->resolver($request);
+        [$clientes, $filters] = app(\App\Services\ClienteListadoService::class)->pagina($request, $scope);
 
         foreach ($clientes as $key => $cliente) {
             $clientes[$key]['nombre_completo'] = implode(' ', array_filter([
@@ -57,7 +48,7 @@ class ClienteController extends Controller implements HasMiddleware
             $clientes[$key]['can_delete'] = $request->user()->can('delete', $cliente);
             $clientes[$key]['can_transfer'] = $request->user()->can('transfer clientes')
                 && ($request->user()->is_super_admin
-                    || (int) $request->user()->current_sucursal_id === (int) $cliente->sucursal_id);
+                    || $request->user()->operaEnSucursal($cliente->sucursal_id));
         }
 
         return Inertia::render('Clientes/Index', [
@@ -69,7 +60,7 @@ class ClienteController extends Controller implements HasMiddleware
                 'delete' => $request->user()->can('delete clientes'),
                 'transfer' => $request->user()->can('transfer clientes'),
             ],
-            'filters' => ['scope' => $scope],
+            'filters' => [...$filters, ...$scope],
             'sucursales' => fn () => $request->user()->can('transfer clientes')
                 ? ($request->user()->is_super_admin
                     ? Sucursal::query()->where('activa', true)->orderBy('nombre')->get(['id', 'nombre', 'clave'])
@@ -97,6 +88,7 @@ class ClienteController extends Controller implements HasMiddleware
             'paises' => $paises,
             'sexos' => $sexos,
             'tiposPersona' => $tiposPersona,
+            'rfcsGenericosPermitidos' => \App\Rules\Rfc::genericos(),
             'regimenesFiscales' => $regimenesFiscales,
         ]);
     }
@@ -130,6 +122,7 @@ class ClienteController extends Controller implements HasMiddleware
             'paises' => $paises,
             'sexos' => $sexos,
             'tiposPersona' => $tiposPersona,
+            'rfcsGenericosPermitidos' => \App\Rules\Rfc::genericos(),
             'regimenesFiscales' => $regimenesFiscales,
         ]);
     }
@@ -157,6 +150,7 @@ class ClienteController extends Controller implements HasMiddleware
             'paises' => $paises,
             'sexos' => $sexos,
             'tiposPersona' => $tiposPersona,
+            'rfcsGenericosPermitidos' => \App\Rules\Rfc::genericos(),
             'regimenesFiscales' => $regimenesFiscales,
         ]);
     }
@@ -176,33 +170,9 @@ class ClienteController extends Controller implements HasMiddleware
         return response()->redirectToRoute('clientes.index');
     }
 
-    public function transfer(TransferClienteRequest $request, Cliente $cliente)
+    public function transfer(TransferClienteRequest $request, Cliente $cliente, ClienteService $service)
     {
-        $actor = $request->user();
-        $targetId = (int) $request->validated('sucursal_id');
-        $sourceId = (int) $cliente->sucursal_id;
-
-        if (! $actor->is_super_admin) {
-            abort_unless(
-                (int) $actor->current_sucursal_id === (int) $cliente->sucursal_id
-                    && $actor->sucursales()->whereKey($targetId)->exists(),
-                403,
-                'Sólo puedes trasladar clientes entre tus sucursales asignadas.',
-            );
-        }
-
-        $cliente->update(['sucursal_id' => $targetId]);
-        app(\App\Services\ActivityLogService::class)->log(
-            event: \App\Enums\ActivityEvent::ClientTransferred,
-            description: 'Cliente trasladado de sucursal',
-            subject: $cliente,
-            metadata: [
-                'changed_fields' => ['sucursal_id'],
-                'related' => ['type' => 'sucursal', 'id' => $targetId],
-                'state' => "from-sucursal:{$sourceId}",
-            ],
-            causer: $actor,
-        );
+        $service->transferir($cliente, (int) $request->validated('sucursal_id'), $request->user());
 
         return back()->with('success', 'Cliente trasladado');
     }

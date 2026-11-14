@@ -22,7 +22,17 @@ final class SicRequisito
             try {
                 $consent = ClienteConsentimientoSic::findOrFail($q->consentimiento_id);
                 $resultado = $service->leer($q, 'resultado');
-                if (! $resultado || ($resultado['demostrativo'] ?? false)) {
+                $escenario = $q->escenario_clave ? $service->leer($q, 'escenario') : null;
+                if ($escenario) {
+                    app(SicEscenariosQa::class)->habilitado();
+                    if (config('sic.aprobacion_sintetica_habilitada') !== true
+                        || config('originacion.aprobaciones_habilitadas') !== true
+                        || $q->procedencia !== $escenario['procedencia'] || $q->escenario_clave !== $escenario['clave']
+                        || (int) $q->escenario_version !== $escenario['version']) {
+                        continue;
+                    }
+                }
+                if (! $resultado || ($q->escenario_clave && ! $escenario) || (($resultado['demostrativo'] ?? false) && ! $escenario)) {
                     continue;
                 }
                 if (! hash_equals($q->identidad_hash, $service->identidadHash($cliente))
@@ -35,6 +45,10 @@ final class SicRequisito
                 }
                 $evidencia = ['consulta_id' => $q->id, 'resultado_hash' => SicOperacionService::hash($resultado),
                     'consentimiento_hash' => $q->consentimiento_hash, 'ambiente' => 'qa'];
+                if ($escenario) {
+                    $evidencia += ['uso' => 'qa', 'escenario' => $escenario['clave'], 'version' => $escenario['version'],
+                        'procedencia' => $escenario['procedencia'], 'escenario_hash' => SicOperacionService::hash($escenario)];
+                }
                 if (! $aprobado || $aprobado === $evidencia) {
                     return $evidencia;
                 }

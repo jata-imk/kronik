@@ -116,3 +116,47 @@ jobs:
 
       - name: Verify folio concurrency on isolated MariaDB
         run: php tests/Concurrency/folios.php
+
+      - name: Verify audit concurrency on isolated MariaDB
+        run: php tests/Concurrency/auditoria.php
+
+      - name: Verify Bullet financial concurrency on isolated MariaDB
+        run: php tests/Concurrency/bullet.php
+
+      - name: Install browsers for UI and PDF verification
+        run: |
+          npx playwright install --with-deps chromium
+          echo "DOCUMENTOS_CHROME_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          echo "DOCUMENTOS_NODE_BINARY=$(command -v node)" >> "$GITHUB_ENV"
+          echo "DOCUMENTOS_NODE_MODULES_PATH=$GITHUB_WORKSPACE/node_modules" >> "$GITHUB_ENV"
+
+      - name: Verify real PDF renderer before browser flows
+        run: php tests/E2E/support/pdf.php
+
+      - name: Verify company grace defaults end to end
+        run: npm run test:e2e -- dias-gracia.spec.js --output=test-results-gracia
+
+      - name: Verify both Bullet policies end to end
+        env:
+          E2E_BULLET_FIXTURES: "true"
+        run: npm run test:e2e -- bullet-ciclo.spec.js productos-bullet.spec.js
+
+      - name: Verify existing dual origination end to end
+        env:
+          E2E_ORIGINACION_DUAL: "true"
+        run: npm run test:e2e -- solicitudes-dual.spec.js
+
+      - name: Verify client generic RFC capture end to end
+        run: npm run test:e2e -- clientes-rfc-genericos.spec.js --output=test-results-rfc
+
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-evidence
+          path: |
+            test-results/
+            test-results-gracia/
+            playwright-report/
+            test-results-rfc/
+          retention-days: 7

@@ -35,6 +35,40 @@ function sicQaFixture(?Cliente $cliente = null, ?\App\Models\User $actor = null)
     return [$actor, $cliente, ['api' => 'fico_score_v2', 'consentimiento_id' => $c->id, 'idempotency_key' => (string) Str::uuid(), 'confirmacion_qa' => true], $c];
 }
 
+test('SIC QA conserva el RFC genérico y sus requisitos usando transporte simulado', function (string $api, string $rfc) {
+    [$actor, $cliente, $data] = sicQaFixture();
+    $cliente->datosFiscales()->create(['tipo_persona' => 'fisica', 'rfc' => $rfc, 'curp' => 'GODE561231HDFRRN09']);
+    $data['api'] = $api;
+    Http::preventStrayRequests();
+    Http::fake(['*' => Http::response(['score' => ['valor' => 680]])]);
+    $this->actingAs($actor)->post(route('circulo-credito.store', $cliente), $data)->assertSessionHasNoErrors();
+    $query = SicQuery::sole();
+    $hash = $query->identidad_hash;
+    app(SicOperacionService::class)->ejecutar($query->id);
+    Http::assertSentCount(1);
+    Http::assertSent(fn ($request) => ($api === 'rc_fico_score' ? $request->data()['RFC'] : $request->data()['persona']['RFC']) === $rfc);
+    expect($query->fresh()->identidad_hash)->toBe($hash)->and($query->fresh()->estado_operacion)->toBe('completada');
+    expect(\App\Models\Activity::all()->toJson())->not->toContain($rfc);
+})->with(['fico_score_v2', 'fintech', 'rc_fico_score'])->with(\App\Rules\Rfc::genericos());
+
+test('corregir genérico cancela el envío SIC anterior sin reescribir la evidencia', function () {
+    [$actor, $cliente, $data] = sicQaFixture();
+    $cliente->datosFiscales()->create(['tipo_persona' => 'fisica', 'rfc' => 'XAXX010101000', 'curp' => 'GODE561231HDFRRN09']);
+    Http::fake();
+    $this->actingAs($actor)->post(route('circulo-credito.store', $cliente), $data)->assertSessionHasNoErrors();
+    $query = SicQuery::sole();
+    $service = app(SicOperacionService::class);
+    $peticion = $service->leer($query, 'peticion');
+    $originalHash = $query->identidad_hash;
+    $this->patchJson(route('api.clientes.update', $cliente), ['datos_fiscales' => ['rfc' => 'GALA910418AB8']])->assertOk();
+    expect($service->identidadHash($cliente->fresh()))->not->toBe($originalHash);
+    $service->ejecutar($query->id);
+    Http::assertNothingSent();
+    expect($query->fresh()->identidad_hash)->toBe($originalHash)
+        ->and($service->leer($query, 'peticion'))->toBe($peticion)
+        ->and($query->fresh()->estado_operacion)->toBe('cancelada');
+});
+
 test('suspender cancela una consulta preparada antes de llamar al proveedor', function () {
     [$actor, $cliente, $data] = sicQaFixture();
     Http::fake();
@@ -48,6 +82,41 @@ test('suspender cancela una consulta preparada antes de llamar al proveedor', fu
     $event = \App\Models\Activity::where('event', 'empresa.operacion_bloqueada')->sole();
     expect($event->causer_id)->toBeNull()->and($event->team_id)->toBe($query->team_id)
         ->and($event->sucursal_id)->toBe($query->sucursal_id)->and($event->properties['related']['id'])->toBe($actor->id);
+    $requested = \App\Models\Activity::where('event', 'sic.requested')->sole();
+    $cancelled = \App\Models\Activity::where('event', 'sic.cancelled')->sole();
+    expect($requested->causer_id)->toBe($actor->id)->and($cancelled->causer_id)->toBeNull()
+        ->and($cancelled->subject_id)->toBe($query->id)->and($cancelled->team_id)->toBe($query->team_id)
+        ->and($cancelled->properties['related']['id'])->toBe($actor->id);
+});
+
+test('SIC incierto por worker conserva contexto incluso null y una sola transición ante reentrega', function (bool $unknown) {
+    [$actor, $cliente, $data] = sicQaFixture();
+    $this->actingAs($actor)->post(route('circulo-credito.store', $cliente), $data)->assertSessionHasNoErrors();
+    $query = SicQuery::sole();
+    $query->update(['estado_operacion' => 'enviando', 'sucursal_id' => $unknown ? null : $query->sucursal_id]);
+    $expectedTeam = $query->team_id;
+    $expectedBranch = $query->sucursal_id;
+    $actor->forceFill(['current_team_id' => \App\Models\Team::factory()->create()->id, 'current_sucursal_id' => null])->save();
+    $job = new \App\Jobs\ConsultarSicQa($query->id);
+    $job->failed(new RuntimeException('TOKEN-RESERVADO'));
+    $job->failed(new RuntimeException('TOKEN-RESERVADO'));
+    expect(app(SicOperacionService::class)->marcarInciertas())->toBe(0);
+    $event = \App\Models\Activity::where('event', 'sic.uncertain')->sole();
+    expect($event->causer_id)->toBeNull()->and($event->subject_id)->toBe($query->id)
+        ->and($event->team_id)->toBe($expectedTeam)->and($event->sucursal_id)->toBe($expectedBranch)
+        ->and($event->properties['related']['id'])->toBe($actor->id)
+        ->and($event->toJson())->not->toContain('TOKEN-RESERVADO', 'QA-FAKE', 'consentimiento.pdf');
+})->with([false, true]);
+
+test('fallo de auditoría SIC revierte estado y evento de dominio', function () {
+    [$actor, $cliente, $data] = sicQaFixture();
+    $query = app(SicOperacionService::class)->preparar($cliente, $data, $actor);
+    $query->update(['estado_operacion' => 'enviando']);
+    $domainBefore = \App\Models\SicEvento::where('sic_query_id', $query->id)->count();
+    $this->mock(\App\Services\ActivityLogService::class)->shouldReceive('log')->andThrow(new RuntimeException('Auditoría no disponible'));
+    expect(fn () => app(SicOperacionService::class)->marcarIncierta($query->id))->toThrow(RuntimeException::class)
+        ->and($query->fresh()->estado_operacion)->toBe('enviando')->and(\App\Models\SicEvento::where('sic_query_id', $query->id)->count())->toBe($domainBefore)
+        ->and(\App\Models\Activity::where('event', 'sic.uncertain')->count())->toBe(0);
 });
 
 test('SIC QA preserves encrypted evidence and never duplicates a provider POST', function (string $api) {
@@ -74,6 +143,12 @@ test('SIC QA preserves encrypted evidence and never duplicates a provider POST',
     expect($cliente->direcciones()->first()->divisionAdministrativaTres->nombre)->toBe('Centro (Área 1)')
         ->and($cliente->direcciones()->first()->codigoPostal->datos_adicionales['nombre_ciudad'])->toBe('Ciudad de México');
     expect($q->fresh()->estado_operacion)->toBe('completada');
+    $sending = \App\Models\Activity::where('event', 'sic.sending')->sole();
+    expect($sending->causer_id)->toBeNull()->and($sending->team_id)->toBe($q->team_id)->and($sending->sucursal_id)->toBe($q->sucursal_id);
+    $code = match ($api) {
+        'fico_score_v2' => 'cliente.sic.fico_score_v2.queried', 'fintech' => 'cliente.sic.fintech_score.queried', default => 'cliente.sic.credit_report_fico.queried'
+    };
+    expect(\App\Models\Activity::where('event', $code)->count())->toBe(1);
     expect(\Illuminate\Support\Facades\DB::table('sic_evidencias')->where('tipo', 'respuesta')->value('contenido'))->not->toContain('680');
     $this->get(route('consultas-sic.show', $q))->assertOk();
     $this->assertDatabaseCount('sic_queries', 1);
@@ -244,6 +319,8 @@ test('late SIC response is preserved without converting an uncertain attempt int
     $service->ejecutar($q->id);
     expect($q->fresh()->estado_operacion)->toBe('incierta')->and($service->leer($q, 'resultado'))->toBeNull();
     expect($service->leer($q, 'respuesta_tardia')['score']['valor'])->toBe(680);
+    $late = \App\Models\Activity::where('event', 'sic.late_response')->sole();
+    expect($late->causer_id)->toBeNull()->and($late->subject_id)->toBe($q->id)->and($late->sucursal_id)->toBe($q->sucursal_id);
     Http::assertSentCount(1);
 });
 
@@ -256,4 +333,41 @@ test('incomplete SIC address is rejected in Spanish before creating or sending a
     $this->assertDatabaseCount('sic_queries', 0);
     Http::assertNothingSent();
     Queue::assertNothingPushed();
+});
+
+test('conciliar un cliente trasladado exige la sucursal original del intento', function () {
+    [$actor, $cliente, $data] = sicQaFixture();
+    $this->actingAs($actor);
+    $service = app(SicOperacionService::class);
+    $q = $service->preparar($cliente, $data, $actor);
+    $q->update(['estado_operacion' => 'incierta']);
+    $original = $actor->current_sucursal_id;
+    $target = \App\Models\Sucursal::factory()->create();
+    $cliente->update(['sucursal_id' => $target->id]);
+    $actor->forceFill(['current_sucursal_id' => $target->id])->save();
+    expect($service->puedeConciliar($q->fresh(), $actor->fresh()))->toBeFalse();
+    $actor->forceFill(['current_sucursal_id' => $original])->save();
+    $service->conciliar($q->fresh(), ['motivo' => 'Revisión sintética del intento original.', 'referencia' => 'QA-TRASLADO'], $actor->fresh());
+    $log = \App\Models\Activity::where('event', \App\Enums\ActivityEvent::SicAttemptReconciled->value)->sole();
+    expect($q->fresh()->sucursal_id)->toBe($original)->and($log->sucursal_id)->toBe($original);
+    Http::assertNothingSent();
+});
+
+test('cola SIC conserva equipo y sucursal originales aunque el iniciador cambie preferencias', function () {
+    [$actor, $cliente, $data] = sicQaFixture();
+    $service = app(SicOperacionService::class);
+    $q = $service->preparar($cliente, $data, $actor);
+    $otherTeam = \App\Models\Team::factory()->create(['user_id' => $actor->id]);
+    $otherBranch = \App\Models\Sucursal::factory()->create();
+    $actor->forceFill(['current_team_id' => $otherTeam->id, 'current_sucursal_id' => $otherBranch->id])->save();
+    setPermissionsTeamId($otherTeam->id);
+    Http::fake(['*' => Http::response(['folioConsulta' => '123', 'score' => ['nombreScore' => 'FICO', 'valor' => 680]])]);
+    $service->ejecutar($q->id);
+    $service->ejecutar($q->id);
+    Http::assertSentCount(1);
+    expect($q->fresh()->estado_operacion)->toBe('completada')->and(getPermissionsTeamId())->toBe($otherTeam->id)
+        ->and($actor->fresh()->current_sucursal_id)->toBe($otherBranch->id);
+    $event = \App\Models\Activity::where('event', \App\Enums\ActivityEvent::ClientSicFicoScoreV2Queried->value)->sole();
+    expect($event->team_id)->toBe($q->team_id)->and($event->sucursal_id)->toBe($q->sucursal_id)
+        ->and($event->causer_id)->toBeNull()->and($event->properties['related']['id'])->toBe($actor->id);
 });

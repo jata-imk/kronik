@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ActivityEvent;
 use App\Models\DocumentoRecurso;
 use App\Services\ActivityLogService;
 use App\Services\Documentos\DocumentoRecursoService;
@@ -24,10 +23,6 @@ class DocumentoRecursoController extends Controller
         $request->validate(['archivo' => ['required', 'file', 'mimes:png,jpg,jpeg', 'max:2048', 'dimensions:max_width=2048,max_height=2048']], [], ['archivo' => 'imagen']);
 
         $resource = $service->upload($request->file('archivo'), $request->user()->id);
-        // Activity subjects use numeric morph IDs; resources use UUIDs.
-        $activity->log(ActivityEvent::DocumentResourceCreated, 'Imagen documental incorporada', null, [
-            'related' => ['type' => 'documento_recurso', 'id' => $resource->id],
-        ], $request->user());
 
         return response()->json($resource, 201);
     }

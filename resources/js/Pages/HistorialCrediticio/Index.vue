@@ -1,20 +1,24 @@
 <script setup>
+import ConsultaSucursalFilter from "@/Components/ConsultaSucursalFilter.vue";
 import { router, Link } from "@inertiajs/vue3";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import PageHeader from "@/Components/PageHeader.vue";
-import { reactive, ref } from "vue";
+import { reactive, ref, watch } from "vue";
 
 const props = defineProps({
     cliente: { type: Object, default: null },
     consultas: { type: Object, required: true },
     filters: { type: Object, default: () => ({}) },
     puedeConsultar: Boolean,
+    sucursales: Array,
 });
 const filters = reactive({
+    scope: props.filters.scope ?? "current", sucursal_id: props.filters.sucursal_id ?? null, requiereSucursal: props.filters.requiereSucursal,
     buscar: props.filters.buscar ?? "",
     estado: props.filters.estado ?? null,
     por_pagina: Number(props.filters.por_pagina ?? 25),
 });
+watch(() => props.filters, value => Object.assign(filters, { scope: "current", sucursal_id: null, buscar: "", estado: null, por_pagina: 25, ...value }));
 const loading = ref(false);
 const estados = [
     { label: "Todas", value: null },
@@ -51,6 +55,7 @@ function buscar(page = 1) {
         <template #card-content>
             <div class="space-y-5 p-6">
                 <Message severity="info" :closable="false">Las consultas QA se identifican en su detalle. Los registros heredados conservan procedencia no verificada y no acreditan por sí solos un requisito de aprobación.</Message>
+                <ConsultaSucursalFilter :model-value="filters" :sucursales="sucursales" />
                 <form class="flex flex-wrap items-end gap-3" @submit.prevent="buscar()">
                     <div class="flex flex-col gap-1">
                         <label for="sic-buscar">Buscar cliente</label>
@@ -65,11 +70,13 @@ function buscar(page = 1) {
                 <DataTable :value="consultas.data" :loading="loading" data-key="id" striped-rows scrollable>
                     <template #empty>No hay consultas con estos filtros. Revisa el expediente del cliente para preparar su autorización.</template>
                     <Column field="id" header="Consulta" />
-                    <Column header="Resultado"><template #body="{ data }"><Link :href="route('consultas-sic.show', data.id)" class="k-action-link">Ver consulta #{{ data.id }}</Link></template></Column>
+                    <Column header="Resultado"><template #body="{ data }"><Link :href="route('consultas-sic.show', data.id)" :aria-label="`Ver consulta #${data.id}`" class="k-action-link whitespace-nowrap">Ver</Link></template></Column>
                     <Column header="Cliente">
                         <template #body="{ data }"><Link :href="route('clientes.historial-crediticio.show', data.cliente_id)" class="text-primary underline">{{ nombre(data.cliente) }}</Link></template>
                     </Column>
+                    <Column header="Sucursal original"><template #body="{ data }">{{ data.sucursal?.nombre ?? "Sin sucursal histórica" }}</template></Column>
                     <Column header="Proveedor"><template #body="{ data }">{{ data.sic?.nombre ?? "Sin proveedor" }}</template></Column>
+                    <Column header="Procedencia"><template #body="{ data }">{{ data.escenario_clave ? (data.procedencia === "simulacion_interna" ? "Simulación interna QA" : "Escenario CDC sandbox") : (data.ambiente === "qa" ? "Sandbox QA" : "Histórico sin verificar") }}</template></Column>
                     <Column header="Servicio"><template #body="{ data }">{{ data.api?.nombre ?? "Sin servicio" }}</template></Column>
                     <Column header="Fecha"><template #body="{ data }">{{ fecha(data.fecha_consulta) }}</template></Column>
                     <Column header="Estado registrado"><template #body="{ data }">{{ estado(data.status) }}</template></Column>

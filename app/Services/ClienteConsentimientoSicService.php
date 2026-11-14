@@ -45,6 +45,9 @@ class ClienteConsentimientoSicService
                         'state' => 'vigente',
                     ],
                     causer: $user,
+                    teamId: $user->current_team_id,
+                    sucursalId: $cliente->sucursal_id,
+                    inheritActorContext: false,
                 );
 
                 return $consentimiento;
@@ -57,26 +60,39 @@ class ClienteConsentimientoSicService
 
     public function revoke(ClienteConsentimientoSic $consentimiento, User $user): ClienteConsentimientoSic
     {
-        $consentimiento->update(['revocado_en' => now()]);
+        return DB::transaction(function () use ($consentimiento, $user) {
+            $consentimiento = ClienteConsentimientoSic::whereKey($consentimiento->id)->lockForUpdate()->firstOrFail();
+            if ($consentimiento->revocado_en !== null) {
+                return $consentimiento;
+            }
+            $consentimiento->update(['revocado_en' => now()]);
 
-        $this->activityLog->log(
-            event: ActivityEvent::ClientSicConsentRevoked,
-            description: 'Consentimiento SIC revocado',
-            subject: $consentimiento->cliente,
-            metadata: [
-                'related' => ['type' => 'cliente_consentimiento_sic', 'id' => $consentimiento->id],
-                'state' => 'revocado',
-            ],
-            causer: $user,
-        );
+            $this->activityLog->log(
+                event: ActivityEvent::ClientSicConsentRevoked,
+                description: 'Consentimiento SIC revocado',
+                subject: $consentimiento->cliente,
+                metadata: [
+                    'related' => ['type' => 'cliente_consentimiento_sic', 'id' => $consentimiento->id],
+                    'state' => 'revocado',
+                ],
+                causer: $user,
+                teamId: $user->current_team_id,
+                sucursalId: $consentimiento->cliente->sucursal_id,
+                inheritActorContext: false,
+            );
 
-        return $consentimiento->refresh();
+            return $consentimiento->refresh();
+        });
     }
 
     public function deleteFilesFor(Cliente $cliente): void
     {
-        $cliente->consentimientosSic()
-            ->get(['evidencia_disk', 'evidencia_path'])
-            ->each(fn (ClienteConsentimientoSic $consentimiento) => Storage::disk($consentimiento->evidencia_disk)->delete($consentimiento->evidencia_path));
+        $files = $cliente->consentimientosSic()
+            ->get(['evidencia_disk', 'evidencia_path']);
+        DB::afterCommit(function () use ($files) {
+            foreach ($files as $consentimiento) {
+                Storage::disk($consentimiento->evidencia_disk)->delete($consentimiento->evidencia_path);
+            }
+        });
     }
 }

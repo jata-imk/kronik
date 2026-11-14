@@ -21,13 +21,32 @@ test("SIC displays all three services with provenance and report charts", async 
         await page.getByRole("button", { name: "Consultar en sandbox" }).click();
         await expect(page).toHaveURL(/\/consultas-sic\/\d+$/);
         await expect(page.getByText("680", { exact: true })).toBeVisible();
-        await expect(page.getByText("Resultado demostrativo.", { exact: false })).toBeVisible();
+        await expect(page.getByText("Escenario sintético QA:", { exact: false })).toBeVisible();
+        await expect(page.getByText("Sistema · solicitado por", { exact: false }).first()).toBeVisible();
         if (service === "Reporte de Crédito + FICO") {
             await expect(page.getByRole("heading", { name: "Saldos reportados · MXN", exact: true })).toBeVisible();
             await expect(page.locator("canvas")).toHaveCount(5);
             await page.setViewportSize({ width: 390, height: 844 });
             await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+            await page.screenshot({ path: test.info().outputPath("sic-escenario-qa-mobile.png"), fullPage: true });
         }
     }
+    await page.goto("/consultas-sic/nueva/1");
+    await page.getByLabel("Servicio", { exact: true }).click();
+    await page.getByRole("option", { name: "FICO Score v2", exact: true }).click();
+    await page.getByLabel("Escenario QA", { exact: true }).click();
+    await page.getByRole("option", { name: "Simulación interna · Persona no encontrada", exact: true }).click();
+    await page.getByLabel("Consentimiento", { exact: false }).click();
+    await page.getByRole("option").first().click();
+    await page.getByRole("checkbox").check();
+    await page.getByRole("button", { name: "Consultar en sandbox" }).click();
+    await expect(page).toHaveURL(/\/consultas-sic\/\d+$/);
+    await expect(page.getByText("Simulación interna, sin petición a CDC.", { exact: false })).toBeVisible();
+    await expect(page.getByText("No se encontró a la persona del escenario (404.1).", { exact: true })).toBeVisible();
+    await page.goto("/clientes/historial-crediticio");
+    const ver = page.getByRole("link", { name: /^Ver consulta #/ }).first();
+    await expect(ver).toHaveText("Ver");
+    await expect(ver).toHaveCSS("white-space", "nowrap");
+    await page.screenshot({ path: test.info().outputPath("sic-listado-compacto.png"), fullPage: true });
     assertConsole();
 });

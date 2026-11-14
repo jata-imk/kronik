@@ -8,7 +8,8 @@ status: active
 
 ## Puntos de aplicacion
 
-La regla unica es `App\Rules\Rfc`.
+La regla unica es `App\Rules\Rfc`. Por defecto exige RFC propio; solo los Form
+Requests de Clientes habilitan explícitamente `permitirGenericos`.
 
 | Flujo | Campo de tipo | Campo RFC | Requerido |
 | --- | --- | --- | --- |
@@ -16,6 +17,27 @@ La regla unica es `App\Rules\Rfc`.
 | Alta y edicion de cliente | `datos_fiscales.tipo_persona` | `datos_fiscales.rfc` | En el alta; si se envia al editar |
 
 Los modelos generados de los SDK de Circulo de Credito no ejecutan esta regla. Esos objetos reciben datos que ya debieron validarse en los Form Requests de Kronik.
+
+## Genéricos en Clientes
+
+Alta y edición, web y API, admiten exclusivamente `XAXX010101000` y
+`XEXX010101000` como excepción a estructura, fecha y dígito. Se requiere un tipo
+de persona válido (`fisica` o `moral`) y pueden repetirse entre clientes.
+`Rfc::genericos()` mantiene la lista canónica; los formularios reciben
+`rfcsGenericosPermitidos` y muestran «RFC genérico: identidad fiscal propia
+pendiente». No se crea un estado fiscal persistido ni se acredita identidad ante el SAT.
+
+El RFC propio conserva las reglas siguientes. Empresa rechaza ambos genéricos.
+En edición parcial de cliente se usa el tipo guardado si se omite; enviar un
+tipo inválido o nulo no activa ese respaldo. Corregir un RFC cambia la identidad
+vigente y conserva snapshots anteriores, con la reevaluación existente.
+
+No se agregan bloqueos a captura, originación o SIC QA. Se conserva el límite de
+aprobación a personas físicas. El transporte SIC mantiene su payload actual;
+las pruebas con dobles no prueban aceptación del proveedor. SIC productivo y
+facturación no se habilitan; cada futura integración debe definir sus requisitos
+de RFC propio antes de activarse. La unicidad de RFC propios queda diferida:
+actualmente no se impone y la repetición de genéricos no la introduce.
 
 ## Normalizacion
 
@@ -51,6 +73,6 @@ El bloque `YYMMDD` debe representar un mes y dia validos. Como el RFC solo conti
 - Inscripcion, vigencia o estatus ante el SAT.
 - Correspondencia con nombre, razon social, CURP o fecha real.
 - Constancia de situacion fiscal u obligaciones.
-- RFC genericos `XAXX010101000` y `XEXX010101000`, porque estos formularios capturan identidad fiscal propia.
+- Acreditar identidad fiscal o aceptación por una integración a partir de un RFC genérico.
 
 Fuentes y fecha de consulta: [SAT: estructura y verificacion del RFC](../fuentes/sat-rfc.md).

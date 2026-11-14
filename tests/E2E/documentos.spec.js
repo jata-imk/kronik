@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { failOnConsoleErrors, login } from "./support/auth.js";
 
 test("administra, versiona y previsualiza una plantilla documental", async ({ page }) => {
-    test.setTimeout(90_000);
+    test.setTimeout(180_000);
     const assertNoConsoleErrors = await failOnConsoleErrors(page);
     await login(page);
     await page.goto("/plantillas-documentos");

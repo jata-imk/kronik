@@ -133,3 +133,14 @@ El administrador selecciona las acciones desde el formulario con estas opciones:
 - [ ] **Quick-add desde cualquier página** — botón FAB visible para usuarios con permiso `configure menubar`; abre formulario simplificado pre-rellenado con el módulo actual.
 - [ ] **Aclarar lógica de route:dynamic** — revisar si `!preg_match()` en `MenubarService.php:~125` está invertido y documentar el comportamiento esperado.
 - [ ] **Soporte para submenu en items dinámicos** — actualmente `buildMenu()` solo agrega `items` si el item tiene `children` cargados desde BD, no desde condiciones dinámicas.
+
+
+## Consulta y gestión autorizadas
+
+El catálogo administrativo resuelve `selected_item_id` independientemente de
+filtros/página y admite `modo=consulta|edicion`. El formulario compartido muestra
+valor condicional y parámetros guardados sin reconstruirlos en consulta. Solo los
+permisos existentes habilitan crear, editar o eliminar. La gestión se realiza en
+`MenubarItemService` con auditoría transaccional; el evento conserva actor,
+contexto, recurso y nombres de campos, sin copiar rutas, parámetros ni etiquetas.
+Consultar no genera eventos nuevos. Ver [contrato de consulta](reference/consulta-edicion-historicos.md).

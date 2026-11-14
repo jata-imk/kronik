@@ -25,6 +25,8 @@ const props = defineProps({
 
 const tiposPersona = props.initialLoad?.tiposPersona ?? [];
 const regimenesFiscales = props.initialLoad?.regimenesFiscales ?? [];
+const rfcGenerico = computed(() => (props.initialLoad?.rfcsGenericosPermitidos ?? [])
+    .includes(typeof props.form.rfc === "string" ? props.form.rfc.trim().toUpperCase() : ""));
 const regimenesFiscalesFiltered = computed(() =>
     regimenesFiscales.filter((regimen) =>
         props.form.tipo_persona === "fisica" ? regimen.fisica : regimen.moral,
@@ -34,6 +36,7 @@ const regimenesFiscalesFiltered = computed(() =>
 watch(
     () => props.form.tipo_persona,
     () => {
+        if (props.readOnly) return;
         if (
             props.form.regimen_fiscal_id &&
             !regimenesFiscalesFiltered.value.some(
@@ -48,6 +51,7 @@ watch(
 watch(
     () => props.form.rfc,
     (rfc) => {
+        if (props.readOnly) return;
         if (typeof rfc === "string") {
             props.form.rfc = rfc.toUpperCase().trimStart();
         }
@@ -102,9 +106,10 @@ watch(
             <InputText
                 id="rfc" name="rfc"
                 v-model="form.rfc" :disabled="readOnly"
-                :maxlength="form.tipo_persona === 'fisica' ? 13 : 12"
+                :maxlength="13"
                 fluid :invalid="!!formErrors.rfc" />
-            <small class="mt-1 block text-surface-500">Captura el RFC propio del cliente. No se admiten RFC genéricos nacionales ni extranjeros.</small>
+            <small class="mt-1 block text-surface-500">Se admiten el RFC propio y los genéricos XAXX010101000 y XEXX010101000. Los genéricos pueden repetirse entre clientes.</small>
+            <Message v-if="rfcGenerico" severity="warn" :closable="false" class="mt-2">RFC genérico: identidad fiscal propia pendiente.</Message>
             <Message v-if="formErrors.rfc" severity="error" size="small">
                 {{ formErrors.rfc }}
             </Message>

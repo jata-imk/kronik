@@ -1,5 +1,15 @@
 # Explicación
 
+- [ADR 0044: RFC genéricos en Clientes](adr-0044-rfc-genericos-clientes.md).
+
+- [ADR 0042: habilitación y validación del ciclo Bullet en QA](adr-0042-habilitacion-ciclo-bullet-qa.md).
+
+- [ADR 0041: anticipo Bullet con devengado conservado y liquidación/reverso](adr-0041-anticipos-liquidacion-bullet.md).
+
+- [ADR 0040: obligaciones y mora Bullet](adr-0040-obligaciones-mora-bullet.md).
+
+- [ADR 0038: amortización y exigibilidad Bullet](adr-0038-bullet-amortizacion-exigibilidad.md)
+
 [Buscar por tema](../topic/index.md) · [Índice general](../index.md)
 
 - [ADR 0032: responsabilidades y evolución del core crediticio](adr-0032-core-crediticio-extensible.md)
@@ -49,3 +59,11 @@
 - [ADR 0034: amortización reutilizable de los métodos actuales](adr-0034-amortizacion-reutilizable.md).
 
 - [ADR 0035: catálogo de capacidades backend/Vue](adr-0035-catalogo-capacidades-credito.md).
+
+- [ADR 0036: alcance de consulta y sucursal operativa](adr-0036-alcance-consulta-sucursal.md).
+
+- [ADR 0037: cobertura técnica de auditoría](adr-0037-cobertura-tecnica-auditoria.md).
+
+- [ADR 0039: condiciones Bullet y habilitación por capacidad](adr-0039-condiciones-bullet-y-habilitacion.md).
+
+- [ADR 0043: escenarios SIC QA](adr-0043-escenarios-sic-qa.md).

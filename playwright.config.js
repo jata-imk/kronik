@@ -8,6 +8,7 @@ const localDatabase = fileURLToPath(
     new URL("./storage/framework/testing/kronik-e2e.sqlite", import.meta.url),
 );
 
+const cycle = process.env.E2E_ORIGINACION_DUAL === "true" || process.env.E2E_BULLET_FIXTURES === "true";
 const e2eEnvironment = {
     APP_ENV: "e2e",
     APP_URL: baseURL,
@@ -15,13 +16,14 @@ const e2eEnvironment = {
     DEBUGBAR_ENABLED: "false",
     APP_KEY: "base64:VdUXfE4mVbQd4D4QnS2SGdlx1DsFJsPhlfLCMyn5LIk=",
     E2E_DATABASE: "true",
+    E2E_BULLET_FIXTURES: process.env.E2E_BULLET_FIXTURES === "true" ? "true" : "false",
     E2E_ORIGINACION_DUAL: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
-    ORIGINACION_APROBACIONES_HABILITADAS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
-    ORIGINACION_PAQUETES_QA_HABILITADOS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
-    ORIGINACION_FIRMAS_QA_HABILITADAS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
-    ORIGINACION_DESEMBOLSOS_QA_HABILITADOS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
-    ORIGINACION_PAGOS_QA_HABILITADOS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
-    ORIGINACION_ANTICIPOS_QA_HABILITADOS: process.env.E2E_ORIGINACION_DUAL === "true" ? "true" : "false",
+    ORIGINACION_APROBACIONES_HABILITADAS: cycle ? "true" : "false",
+    ORIGINACION_PAQUETES_QA_HABILITADOS: cycle ? "true" : "false",
+    ORIGINACION_FIRMAS_QA_HABILITADAS: cycle ? "true" : "false",
+    ORIGINACION_DESEMBOLSOS_QA_HABILITADOS: cycle ? "true" : "false",
+    ORIGINACION_PAGOS_QA_HABILITADOS: cycle ? "true" : "false",
+    ORIGINACION_ANTICIPOS_QA_HABILITADOS: cycle ? "true" : "false",
     E2E_SIC_FIXTURES: process.env.E2E_SIC_FIXTURES === "true" ? "true" : "false",
     SIC_QA_HABILITADO: process.env.E2E_SIC_FIXTURES === "true" ? "true" : "false",
     SIC_CA_BUNDLE: "",
@@ -38,12 +40,13 @@ const e2eEnvironment = {
     CACHE_STORE: "array",
     MAIL_MAILER: "array",
     QUEUE_CONNECTION: "sync",
-    SESSION_DRIVER: "file",
+    SESSION_DRIVER: process.env.E2E_BULLET_FIXTURES === "true" ? "database" : "file",
+    SESSION_LIFETIME: process.env.E2E_BULLET_FIXTURES === "true" ? "525600" : "120",
     BCRYPT_ROUNDS: "4",
     DOCUMENTOS_NODE_BINARY: process.execPath,
     DOCUMENTOS_NPM_BINARY: "",
     DOCUMENTOS_NODE_MODULES_PATH: fileURLToPath(new URL("./node_modules", import.meta.url)),
-    DOCUMENTOS_CHROME_PATH: "",
+    DOCUMENTOS_CHROME_PATH: process.env.DOCUMENTOS_CHROME_PATH ?? "",
     DOCUMENTOS_DISK: "e2e_dual",
 };
 
@@ -52,6 +55,8 @@ export default defineConfig({
     outputDir: "test-results",
     fullyParallel: false,
     workers: 1,
+    timeout: 90_000,
+    expect: { timeout: 15_000 },
     retries: process.env.CI ? 1 : 0,
     reporter: [["list"], ["html", { open: "never" }]],
     use: {

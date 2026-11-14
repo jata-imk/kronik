@@ -66,7 +66,7 @@ test('development permission profiles enforce client dossier access', function (
             ->where('can.create', false)
             ->where('can.update', false)
             ->where('can.delete', false)
-            ->has('clientes.0.relaciones_count'));
+            ->has('clientes.data.0.relaciones_count'));
 
     $this->actingAs($reader)
         ->get(route('clientes.expediente.show', $cliente))

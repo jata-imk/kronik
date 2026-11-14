@@ -1,10 +1,11 @@
 <script setup>
 import { Link, router, useForm } from "@inertiajs/vue3";
-import { ref } from "vue";
+import { ref, computed, watch } from "vue";
 import axios from "axios";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import PageHeader from "@/Components/PageHeader.vue";
 const props = defineProps({
+    escenariosQa: { type: [Object, Array], default: () => ({}) },
     cliente: Object,
     habilitado: Boolean,
     servicios: Array,
@@ -14,10 +15,21 @@ const props = defineProps({
 });
 const form = useForm({
     api: "",
+    escenario_qa: null,
     consentimiento_id: null,
     solicitud_revision_id: null,
     idempotency_key: crypto.randomUUID(),
     confirmacion_qa: false,
+});
+const escenarios = computed(() => props.escenariosQa[form.api] ?? []);
+watch(() => form.api, (api) => {
+    form.escenario_qa = escenarios.value.find(e => e.clave === (api === "fintech" ? "cdc_fintech_07" : `cdc_${api}_01`))?.clave ?? null;
+    form.idempotency_key = crypto.randomUUID();
+    form.confirmacion_qa = false;
+});
+watch(() => form.escenario_qa, () => { form.idempotency_key = crypto.randomUUID(); form.confirmacion_qa = false; });
+watch(() => props.cliente?.id, () => {
+    form.reset(); form.clearErrors(); form.idempotency_key = crypto.randomUUID();
 });
 const buscar = ref("");
 const opciones = ref([]);
@@ -117,6 +129,12 @@ function enviar() {
                                 conserva su número de consulta en Kronik; el resultado no describe
                                 a una persona real.
                             </Message>
+                        </div>
+                        <div v-if="escenarios.length">
+                            <label for="sic-escenario" class="mb-2 block font-semibold">Escenario QA *</label>
+                            <Select input-id="sic-escenario" aria-label="Escenario QA" v-model="form.escenario_qa"
+                                :options="escenarios" option-label="nombre" option-value="clave" filter fluid />
+                            <p class="mt-2 text-sm">Se enviará el caso sintético seleccionado. El resultado pertenece a ese escenario; el expediente del cliente se conserva.</p>
                         </div>
                         <div>
                             <label for="sic-consentimiento" class="mb-2 block font-semibold"

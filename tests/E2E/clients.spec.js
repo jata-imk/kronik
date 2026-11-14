@@ -36,9 +36,9 @@ test("recorre clientes, expediente e historial crediticio sin errores de consola
     assertNoConsoleErrors();
 });
 
-test("explica el rechazo del RFC genérico en el formulario", async ({ page }) => {
+test("explica los RFC genéricos admitidos y su repetición en el formulario", async ({ page }) => {
     await page.goto("/clientes/create");
-    await expect(page.getByText(/No se admiten RFC genéricos/i)).toBeVisible();
+    await expect(page.getByText(/Los genéricos pueden repetirse entre clientes/i)).toBeVisible();
 });
 
 test("abre perfil, seguridad y tokens API", async ({ page }) => {

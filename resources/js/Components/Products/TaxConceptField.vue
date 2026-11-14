@@ -7,6 +7,7 @@ const concept = computed(() => model.value ?? emptyTaxConcept());
 const id = computed(() => props.path.replaceAll(".", "-"));
 const options = ["no_definido", "gravado", "exento", "no_causa"].map((value) => ({ value, label: taxConceptLabel({ tratamiento: value }) }));
 const update = (key, value) => {
+    if (props.readonly) return;
     const next = { ...concept.value, [key]: value };
     if (key === "tratamiento") { next.tasa = null; next.base = null; }
     model.value = next;

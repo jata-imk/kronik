@@ -518,7 +518,7 @@ test('política requiere permisos confirmación datos explícitos y preserva his
     $this->post(route('originacion-politicas.store', $version), politicaSolicitudDatos())->assertSessionHasErrors('politica');
     $user->forceFill(['is_super_admin' => false])->save();
     $user->givePermissionTo('read productos-crediticios');
-    $this->get(route('originacion-politicas.show', $version))->assertForbidden();
+    $this->get(route('originacion-politicas.show', $version))->assertOk();
     $this->post(route('originacion-politicas.store', $version), [...politicaSolicitudDatos(), 'version_anterior' => 1])->assertForbidden();
 });
 
@@ -546,6 +546,19 @@ test('último dictamen prevalece y cambios de cliente o pérdida del archivo blo
     expect(session('errors')->first('aprobacion'))->toContain('Los datos evaluados del cliente cambiaron')->toContain('Documento requerido');
     $this->assertDatabaseCount('solicitud_resoluciones', 0);
 });
+
+test('RFC genérico no agrega bloqueos a aprobación QA y corregirlo conserva la revisión original', function (string $rfc) {
+    [$user, $solicitud, $cliente] = prepararSolicitudAprobable($this, prepararCliente: fn ($cliente) => $cliente->datosFiscales()->update(['rfc' => $rfc]));
+    $revision = $solicitud->revisiones()->sole();
+    $snapshot = $revision->snapshot;
+    $hash = $revision->snapshot_hash;
+    expect(app(\App\Services\SolicitudRequisitosService::class)->evaluar($solicitud, $user)['puede_aprobar'])->toBeTrue();
+    $this->patchJson(route('api.clientes.update', $cliente), ['datos_fiscales' => ['rfc' => 'GALA910418AB8']])->assertOk();
+    $this->post(route('solicitudes.aprobar', $solicitud), ['lock_version' => 3, 'motivo' => 'Reevaluación por cambio de identidad fiscal.'])
+        ->assertSessionHasErrors('aprobacion');
+    expect(session('errors')->first('aprobacion'))->toContain('Los datos evaluados del cliente cambiaron');
+    expect($revision->fresh()->snapshot)->toBe($snapshot)->and($revision->fresh()->snapshot_hash)->toBe($hash);
+})->with(\App\Rules\Rfc::genericos());
 
 test('cambiar identidad fiscal invalida revisión y no permite aprobar persona moral', function () {
     [$user, $solicitud, $cliente] = prepararSolicitudAprobable($this);
@@ -645,6 +658,7 @@ test('devolver corregir y reenviar conserva ambas revisiones y cifra el motivo',
         ->and($original->fresh()->snapshot['condiciones']['destino'])->toBe('Compra de herramienta.')
         ->and($solicitud->revisiones()->where('numero', 2)->firstOrFail()->snapshot['condiciones']['destino'])->toBe('Nuevo destino documentado.');
     $this->assertDatabaseCount('solicitud_resoluciones', 1);
+    assertDomainAudit(['solicitud.created', 'solicitud.updated', 'solicitud.submitted', 'solicitud.returned'], $user, $solicitud->sucursal_id, [$payload['motivo']]);
     $this->assertDatabaseCount('producto_version_usos', 2);
     expect(json_encode($solicitud->eventos()->get()->toArray()))->not->toContain($payload['motivo']);
 });
@@ -656,6 +670,7 @@ test('cancelación es terminal y sale de pendientes sin borrar evidencia', funct
     $solicitud = Solicitud::firstOrFail();
     $this->post(route('solicitudes.resolver', $solicitud), ['accion' => 'cancelar', 'lock_version' => 0, 'motivo' => 'El cliente desistió de la solicitud.'])->assertSessionHasNoErrors();
     expect($solicitud->fresh()->estado)->toBe(SolicitudEstado::Cancelada);
+    assertDomainAudit(['solicitud.cancelled'], $user, $solicitud->sucursal_id, ['El cliente desistió']);
     $this->put(route('solicitudes.update', $solicitud), ['lock_version' => 1, 'destino' => 'Otro'])->assertSessionHasErrors('solicitud');
     $this->post(route('solicitudes.enviar', $solicitud), ['lock_version' => 1])->assertSessionHasErrors('solicitud');
     $this->patch(route('solicitudes.asignar', $solicitud), ['lock_version' => 1, 'responsable_id' => $user->id])->assertSessionHasErrors('solicitud');
@@ -680,6 +695,7 @@ test('rechazo solo procede en revisión y exige permiso separado de captura', fu
     $user->givePermissionTo('review solicitudes');
     $this->post(route('solicitudes.resolver', $solicitud), $data)->assertSessionHasNoErrors();
     expect($solicitud->fresh()->estado)->toBe(SolicitudEstado::Rechazada);
+    assertDomainAudit(['solicitud.rejected'], $user, $solicitud->sucursal_id, [$data['motivo']]);
     $this->post(route('solicitudes.resolver', $solicitud), [...$data, 'accion' => 'cancelar', 'lock_version' => 2])->assertForbidden();
 });
 
@@ -807,7 +823,8 @@ test('asignación genera tarea visible al responsable y rechaza usuarios inactiv
     $recipient = actingAsSuperAdmin();
     $recipient->sucursales()->attach($actor->current_sucursal_id);
     $this->actingAs($actor)->patch(route('solicitudes.asignar', $solicitud), ['lock_version' => 0, 'responsable_id' => $recipient->id])->assertSessionHasNoErrors();
-    $this->actingAs($recipient)->get(route('solicitudes.trabajo'))->assertInertia(fn (Assert $page) => $page->where('solicitudes.total', 1));
+    assertDomainAudit(['solicitud.assigned'], $actor, $solicitud->sucursal_id);
+    $this->actingAs($recipient)->get(route('solicitudes.trabajo', ['scope' => 'all']))->assertInertia(fn (Assert $page) => $page->where('solicitudes.total', 1));
     $this->actingAs($actor)->get(route('solicitudes.trabajo'))->assertInertia(fn (Assert $page) => $page->where('solicitudes.total', 0));
     $recipient->update(['status' => 'inactive']);
     $this->patch(route('solicitudes.asignar', $solicitud), ['lock_version' => 1, 'responsable_id' => $recipient->id])->assertSessionHasErrors('responsable_id');

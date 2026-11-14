@@ -39,11 +39,32 @@ Alias de Vite: `@` → `resources/js/`, `@css` → `resources/css/`, `@config` �
 | Ejecutar seeders | `php artisan db:seed` |
 | Actualizar catálogo SAT CFDI | `php artisan catalog:update-sat-cfdi-v4` |
 | Actualizar catálogo Sepomex | `php artisan catalog:update-sepomex` |
-| Crear permiso | `php artisan permission:create` |
+| Crear permiso | `php artisan permission:create-permission` |
 
 Confirmar entorno y efectos antes de migraciones o seeders. `php artisan migrate:fresh --seed` elimina datos: no es un paso rutinario para preparar una revisión. Para QA, seguir la guía de reinicio correspondiente. Consultar [comandos Artisan](docs/reference/comandos-artisan.md) y configuración vigente; no asumir drivers de sesiones/colas a partir de un ejemplo de `.env`.
 
 ## Estilo y validación
+
+### Consulta, edición e históricos
+
+La consulta autorizada no debe depender de permisos de creación o actualización.
+Mostrar el detalle del contrato de lectura sin exponer campos ni evidencias reservadas.
+Reutilizar formularios para consultar configuraciones cuando corresponda; conservar
+visores especializados para documentos y operaciones. Evitar formularios paralelos
+y abstracciones universales.
+
+Resolver editabilidad mediante autorización y estado del dominio en backend.
+Consulta no ofrece ni ejecuta mutaciones mediante botones, teclado, watchers,
+autosave, subidas o controles internos. Consultar no crea recursos de negocio;
+conservar los eventos de lectura expresamente auditables.
+
+Resolver el ID exacto independientemente de filtros y páginas, sin sustituirlo
+por la última versión ni reinterpretar históricos con defaults actuales. Limpiar
+datos y permisos al cambiar recurso/modo y descartar respuestas tardías. Explicar
+faltantes y siguiente paso con enlaces autorizados, sin inferir bloqueos nuevos.
+Cubrir acceso directo, permisos, inmutabilidad, teclado, cambios de selección,
+recargas parciales y móvil. Ver [contrato de consulta](docs/reference/consulta-edicion-historicos.md)
+y [validación](docs/how-to/validar-consulta-solo-lectura.md).
 
 Usar cuatro espacios, LF, UTF-8 y salto de línea final según `.editorconfig`. PHP sigue las convenciones de Laravel: clases StudlyCase, modelos singulares y sufijos `Controller`, `Request` y `Service`. Los componentes Vue usan PascalCase, los composables `useNombre.js` y JavaScript usa comillas dobles según `biome.json`.
 

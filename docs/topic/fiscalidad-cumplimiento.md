@@ -14,6 +14,8 @@ la institución; no acreditan cumplimiento regulatorio completo.
 
 ## Decisiones
 
+- [RFC genéricos en Clientes: alcance y límites](../explanation/adr-0044-rfc-genericos-clientes.md).
+
 - [ADR 0013: perfiles de cumplimiento](../explanation/adr-0013-perfiles-cumplimiento.md).
 - [ADR 0016: tratamiento fiscal versionado](../explanation/adr-0016-fiscalidad-producto-versionada.md).
 - [ADR 0017: proyección fiscal explícita](../explanation/adr-0017-proyeccion-fiscal-simulador.md).

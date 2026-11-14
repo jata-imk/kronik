@@ -28,6 +28,7 @@ import DocumentFileInput from "@/Components/Documents/DocumentFileInput.vue";
 import DocumentVersionStatus from "@/Components/Documents/DocumentVersionStatus.vue";
 import PrivateDocumentViewer from "@/Components/Documents/PrivateDocumentViewer.vue";
 import { documentVersionChain } from "@/Composables/documentHistory";
+import { useOpcionesRemotas } from "@/Composables/useOpcionesRemotas";
 import { useAsyncPolling } from "@/Composables/useAsyncPolling";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 
@@ -334,8 +335,9 @@ function openViewer(url, downloadUrl, name) {
     viewerVisible.value = true;
 }
 
+const candidates = useOpcionesRemotas(() => props.clientesDisponibles, () => route("clientes.expediente.clientes", props.cliente.id), () => linkForm.cliente_vinculado_id);
 const candidateOptions = computed(() =>
-    props.clientesDisponibles.map((cliente) => ({
+    candidates.options.value.map((cliente) => ({
         id: cliente.id,
         label: [
             cliente.primer_nombre,
@@ -1068,7 +1070,8 @@ function formatCurrency(value, currency = props.opciones.moneda) {
 
         <Dialog v-model:visible="linkDialog" modal header="Vincular cliente" class="responsive-dialog narrow-dialog">
             <form class="dialog-form" @submit.prevent="saveLink">
-                <div><label>Cliente</label><Select v-model="linkForm.cliente_vinculado_id" :options="candidateOptions" optionLabel="label" optionValue="id" filter fluid><template #option="{ option }"><div><strong>{{ option.label }}</strong><small class="block">{{ option.rfc }}</small></div></template></Select></div>
+                <div><label>Cliente</label><Select v-model="linkForm.cliente_vinculado_id" :options="candidateOptions" optionLabel="label" optionValue="id" filter @filter="candidates.search" :loading="candidates.loading.value" fluid><template #option="{ option }"><div><strong>{{ option.label }}</strong><small class="block">{{ option.rfc }}</small></div></template></Select></div>
+                <Message v-if="candidates.error.value" severity="error">{{ candidates.error.value }}</Message>
                 <div><label>Responsabilidad</label><SelectButton v-model="linkForm.rol" :options="opciones.vinculos" optionLabel="label" optionValue="value" :allowEmpty="false" /></div>
                 <div><label>Notas</label><Textarea v-model="linkForm.notas" rows="3" fluid /></div>
                 <Message v-for="error in linkForm.errors" :key="error" severity="error" size="small">{{ error }}</Message>

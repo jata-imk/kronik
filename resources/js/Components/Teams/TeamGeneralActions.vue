@@ -1,10 +1,12 @@
 <script setup>
+import { useOpcionesRemotas } from "@/Composables/useOpcionesRemotas";
 import { useForm } from "@inertiajs/vue3";
 import { useConfirm } from "primevue/useconfirm";
 import ContextHelp from "@/Components/Products/FinancialFieldHelp.vue";
 
 const props = defineProps({ team: Object, capabilities: Object, candidates: Array });
 const confirm = useConfirm();
+const choices = useOpcionesRemotas(() => props.candidates, () => route("teams.responsables.index", props.team.id));
 const transfer = useForm({ responsible_id: null, confirmation: false });
 const state = useForm({ name: "", activo: true });
 const confirmTransfer = () => confirm.require({
@@ -36,7 +38,8 @@ const changeState = () => confirm.require({
                 <ContextHelp title="Responsable del equipo" description="Ser responsable no concede permisos. Las facultades dependen de los roles del equipo. Antes de quitar al responsable del equipo debes transferir esta responsabilidad." />
             </div>
             <div v-if="capabilities['update-teams']" class="mt-4 flex flex-wrap items-end gap-3">
-                <div><label for="responsible-id" class="mb-2 block">Nuevo responsable</label><Select input-id="responsible-id" aria-label="Nuevo responsable" v-model="transfer.responsible_id" :options="candidates" option-label="name" option-value="id" placeholder="Integrante activo" class="w-64 max-w-full" /></div>
+                <div><label for="responsible-id" class="mb-2 block">Nuevo responsable</label><Select input-id="responsible-id" aria-label="Nuevo responsable" v-model="transfer.responsible_id" :options="choices.options.value" filter @filter="choices.search" :loading="choices.loading.value" option-label="name" option-value="id" placeholder="Integrante activo" class="w-64 max-w-full" /></div>
+                <Message v-if="choices.error.value" severity="error">{{ choices.error.value }}</Message>
                 <Button label="Transferir responsable" :disabled="!transfer.responsible_id || transfer.processing" @click="confirmTransfer" />
             </div>
             <Message v-for="(error, key) in transfer.errors" :key="key" severity="error" class="mt-3">{{ error }}</Message>

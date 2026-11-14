@@ -19,7 +19,11 @@ test('team member editing supplies and preserves assignments including inactive 
     $role = Role::query()->create(['name' => 'Histórico', 'guard_name' => 'web', 'team_id' => $other->id]);
     DB::table('model_has_roles')->insert(['role_id' => $role->id, 'team_id' => $other->id, 'model_id' => $member->id, 'model_type' => $member->getMorphClass()]);
     $this->actingAs($admin)->get(route('teams.show', $current))->assertInertia(fn (Assert $page) => $page
-        ->has('members.1.team_roles', 2)->has('userFormOptions.teams')->where('members.1.team_roles.1.role_ids.0', $role->id));
+        ->has('userFormOptions.teams')->where('members', function ($users) use ($member, $role) {
+            $data = collect($users)->firstWhere('id', $member->id);
+
+            return count($data['team_roles']) === 2 && collect($data['team_roles'])->firstWhere('team_id', $role->team_id)['role_ids'] === [$role->id];
+        }));
     $data = app(UserAdministrationData::class)->user($member->fresh());
     $this->from(route('teams.show', $current))->put(route('admin.users.update', $member), [...$data, 'name' => 'Nombre corregido'])
         ->assertRedirect(route('teams.show', $current))->assertSessionHasNoErrors();

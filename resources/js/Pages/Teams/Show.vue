@@ -1,4 +1,7 @@
 <script setup>
+import { router } from "@inertiajs/vue3";
+import ListadoPaginador from "@/Components/ListadoPaginador.vue";
+import { useListadoServidor } from "@/Composables/useListadoServidor";
 import { computed, ref } from "vue";
 import { usePage } from "@inertiajs/vue3";
 import { FilterMatchMode } from "@primevue/core/api";
@@ -64,6 +67,18 @@ const filters = ref({
     roles_search: { value: null, matchMode: FilterMatchMode.CONTAINS },
     sucursales_search: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
+const serverList = useListadoServidor(filters);
+const inviteRolesSearch = ref(new URL(window.location.href).searchParams.get("invitar_roles_buscar") ?? "");
+function searchInviteRoles() {
+    const url = new URL(window.location.href);
+    router.get(url.pathname, { ...Object.fromEntries(url.searchParams.entries()), invitar_roles_buscar: inviteRolesSearch.value, invitar_roles_page: 1 }, { preserveState: true, preserveScroll: true });
+}
+const pendingSearch = ref(new URL(window.location.href).searchParams.get("invitaciones_buscar") ?? "");
+function searchPending() {
+    const url = new URL(window.location.href);
+    router.get(url.pathname, { ...Object.fromEntries(url.searchParams.entries()), invitaciones_buscar: pendingSearch.value, invitaciones_page: 1 }, { preserveState: true, preserveScroll: true });
+}
+
 const statuses = ["Activo", "Pendiente", "Inactivo"];
 </script>
 
@@ -106,7 +121,7 @@ const statuses = ["Activo", "Pendiente", "Inactivo"];
                         :value="tableMembers"
                         :global-filter-fields="['name', 'email', 'status_label', 'roles_search', 'sucursales_search']"
                         filter-display="row"
-                        paginator
+                        lazy @sort="serverList.sort"
                         :rows="10"
                         striped-rows
                         responsive-layout="scroll"
@@ -172,9 +187,12 @@ const statuses = ["Activo", "Pendiente", "Inactivo"];
                             </template>
                         </Column>
                     </DataTable>
+                    <ListadoPaginador v-if="canManageUsers" />
 
-                    <div v-if="team.activo && canManageUsers && roles.length && (auth.is_super_admin || auth.permissions['create-users'])" class="mt-6 border-t border-surface-200 pt-4 dark:border-surface-700">
+                    <div v-if="team.activo && canManageUsers && (auth.is_super_admin || auth.permissions['create-users'])" class="mt-6 border-t border-surface-200 pt-4 dark:border-surface-700">
                         <div class="mb-2 text-sm font-medium">Invitar con rol preseleccionado</div>
+                        <form class="mb-3 flex gap-2" @submit.prevent="searchInviteRoles"><InputText v-model="inviteRolesSearch" aria-label="Buscar roles para invitar" /><Button type="submit" label="Buscar roles" /></form>
+                        <ListadoPaginador :metadata="page.props.inviteRolesListado" page-name="invitar_roles_page" per-page-name="invitar_roles_por_pagina" />
                         <div class="flex flex-wrap gap-2">
                             <Button
                                 v-for="role in roles"
@@ -193,6 +211,8 @@ const statuses = ["Activo", "Pendiente", "Inactivo"];
                 <template #title>Invitaciones pendientes</template>
                 <template #content>
                     <p v-if="!pendingInvitations.length">No hay invitaciones pendientes.</p>
+                    <form v-if="canManageUsers" class="mb-4 flex gap-2" @submit.prevent="searchPending"><InputText v-model="pendingSearch" aria-label="Buscar invitaciones" placeholder="Buscar invitaciones" /><Button type="submit" label="Buscar invitaciones" /></form>
+                    <ListadoPaginador v-if="canManageUsers" :metadata="page.props.pendingListado" page-name="invitaciones_page" per-page-name="invitaciones_por_pagina" />
                     <div v-for="invitation in pendingInvitations" :key="invitation.id" class="mb-4 rounded-lg border border-surface-200 p-4 dark:border-surface-700">
                         <p class="font-medium">{{ invitation.name }}</p><p>{{ invitation.email }}</p>
                         <p>{{ invitation.invited_at ? `Enviada: ${new Date(invitation.invited_at).toLocaleString('es-MX')}` : 'Sin envío registrado' }}</p>
@@ -206,6 +226,7 @@ const statuses = ["Activo", "Pendiente", "Inactivo"];
                 <template #title>Roles y permisos</template>
                 <template #content>
                     <TeamRoleCards :team-id="team.id" :roles="teamRoles" />
+                    <ListadoPaginador :metadata="page.props.teamRolesListado" page-name="roles_page" per-page-name="roles_por_pagina" />
                 </template>
             </Card>
             <div v-if="teamCapabilities['read-activity-log']" class="mt-8">

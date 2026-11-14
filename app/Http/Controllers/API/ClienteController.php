@@ -17,6 +17,20 @@ class ClienteController extends Controller
     {
         Gate::authorize('viewAny', Cliente::class);
 
+        if ($request->hasAny(['scope', 'sucursal_id', 'por_pagina', 'buscar'])) {
+            $data = $request->validate(['por_pagina' => ['nullable', 'integer', \Illuminate\Validation\Rule::in([10, 25, 50])], 'buscar' => 'nullable|string|max:100']);
+            $scope = app(\App\Services\ConsultaSucursal::class)->resolver($request, 'all');
+            if ($scope['requiereSucursal']) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['sucursal_id' => 'Selecciona una sucursal activa antes de consultar su cartera.']);
+            }
+            $query = app(\App\Services\ConsultaSucursal::class)->aplicar($clienteService->query(), $scope);
+            if ($buscar = $data['buscar'] ?? null) {
+                $query->where(fn ($q) => $q->where('primer_nombre', 'like', '%'.$buscar.'%')->orWhere('apellido_paterno', 'like', '%'.$buscar.'%'));
+            }
+
+            return ClienteResource::collection($query->orderBy('id')->paginate($data['por_pagina'] ?? 25)->withQueryString());
+        }
+
         return ClienteResource::collection($clienteService->readAll());
     }
 

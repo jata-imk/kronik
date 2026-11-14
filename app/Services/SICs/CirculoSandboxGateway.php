@@ -11,7 +11,7 @@ final class CirculoSandboxGateway implements SicGateway
     {
         self::habilitado();
         $ruta = config('sic.servicios.'.$servicio.'.ruta');
-        if (! $ruta) {
+        if (! is_string($ruta) || ! in_array($ruta, ['/sandbox/v2/ficoscore', '/sandbox/v1/fintechscore/', '/sandbox/v1/rcficoscore'], true)) {
             throw ValidationException::withMessages(['sic' => 'Este servicio SIC no está implementado.']);
         }
         // No retries: a POST may already have been processed by the provider.
@@ -20,9 +20,7 @@ final class CirculoSandboxGateway implements SicGateway
             ->withOptions(['verify' => config('sic.ca_bundle') ?: true, 'allow_redirects' => false])
             ->post(rtrim(config('sic.host'), '/').$ruta, $peticion);
         $body = $response->json();
-        $resultado = $response->status() === 204
-            ? ['estado' => 'sin_score', 'scores' => [], 'razones' => [], 'secciones' => [], 'folio' => null]
-            : ($response->successful() && is_array($body) ? app(SicResultado::class)->normalizar($body) : null);
+        $resultado = app(SicResultado::class)->interpretar($response->status(), $body);
 
         return ['http_status' => $response->status(), 'respuesta' => is_array($body) ? $body : ['contenido_no_json' => $response->body()],
             'resultado' => $resultado ?? ['estado' => 'error', 'scores' => [], 'razones' => [], 'secciones' => [], 'folio' => null]];
