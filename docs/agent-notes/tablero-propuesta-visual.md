@@ -13,8 +13,9 @@
 
 ## Estado actual — 2026-11-13
 
-Implementación publicada en la PR #81, con revisión medium del código aprobada
-sin hallazgos accionables. CI en curso. Sin integración, despliegue ni QA
+Implementación publicada en la PR #81; revisión y CI iniciales de `6e0da93` /
+`b294c70` aprobadas. Se actualiza contra main `defe471` tras integrar #65, #79 y
+#80 en orden, con nueva revisión y CI pendientes para la combinación. Sin integración, despliegue ni QA
 compartido de esta entrega. Se conservaron las modificaciones documentales
 anteriores ajenas al tablero; no se incluyeron en la PR. La retoma tras el apagado
 de la PC no perdió código. Las tareas siguen abiertas para integración y QA.
@@ -92,8 +93,22 @@ con importes nulos. Una falla real de cálculo/almacenamiento revierte la operac
   la rama. CI valida además MariaDB y E2E sobre la PR; su resultado está pendiente.
 - La revisión cubrió el diff acumulado completo de esta entrega contra la base,
   incluidas las interacciones core/tablero, migración, permisos, auditoría y UI.
-  No hubo correcciones posteriores de código. Los cambios posteriores a
-  `6e0da93` de esta sesión solo registran el estado y evidencia documental.
+  El cierre `b294c70` solo añadió evidencia documental a ese código.
+
+### Integración con capturas históricas — 2026-11-13
+
+El usuario autorizó integrar todas las PR abiertas en orden de publicación:
+#65 (`4f03503`), #79 (`ba49793`), #80 (`defe471`) y después #81. Las tres primeras
+ya están integradas; #81 conserva su única PR. Se resolvieron conflictos de CI,
+reinicio QA, validación y fixtures manteniendo ambos recorridos. ADR del tablero
+renumerado a 0046 porque la captura histórica integrada ya usa 0045.
+
+Se añadió una comprobación de interacción: una captura histórica pendiente impide
+presentar saldos consolidados vigentes. El aviso distingue movimientos capturados
+y ofrece enlace autorizado; completar la captura mantiene proyecciones y auditoría
+atómicamente. Prueba de rollback del cierre y de recuperación de cobertura.
+Frontend conjunto: 170 aprobadas en 64 archivos; build aprobado. Backend completo,
+revisión medium acumulada contra `67bba2c` y CI del nuevo head se ejecutan después.
 
 ### Capacidad: 10000 créditos sintéticos
 
@@ -118,8 +133,8 @@ No extender estos tiempos a cartera antigua, Revolvente o MariaDB.
 
 ## Siguiente paso
 
-1. Comprobar CI de la PR #81 y resolver fallos antes de dejarla lista. La revisión
-   medium del código `6e0da93` ya terminó sin hallazgos accionables.
+1. Comprobar nueva revisión medium acumulada y CI de la combinación en PR #81.
+   Integrarla después de #65/#79/#80, ya autorizado por el usuario si todo pasa.
 2. Confirmar en CI concurrencia MariaDB con `tests/Concurrency/bullet.php`, que
    contrasta también proyecciones. La cuenta local `kronik` recibió acceso
    denegado a `kronik_test`; no se migró ni reinició la BD operativa.
