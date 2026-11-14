@@ -107,6 +107,10 @@ financieros concurrentes se acreditan por separado en MariaDB. Decisión en [ADR
 
 ## Catálogo de capacidades
 
+Integrado mediante [PR #64](https://github.com/jata-imk/kronik/pull/64) en
+`ee94025`, con árbol idéntico al head aprobado `efdddf4`. El estado posterior de
+habilitación y QA se conserva en la Agent Note de la iniciativa.
+
 `CatalogoCapacidadesCredito` declara opciones `{value, label, ayuda}` para métodos,
 periodicidades, convenciones y aplicaciones del prepago. `paraMotor()` mantiene
 compatibilidad explícita para motores 1 y 2; solo Act/360 está habilitada.
