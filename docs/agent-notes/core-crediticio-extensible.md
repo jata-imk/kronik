@@ -9,6 +9,8 @@ no se reabren anticipo, mora ni reducción de plazo como decisiones bloqueantes.
 Se conserva la evidencia de integración de #64 en `ee94025`; los estados de
 despliegue/QA posteriores no se sustituyen por el antiguo «sin despliegue».
 Actualización exclusivamente documental, sin acciones auditables adicionales.
+Integrada mediante PR #65 en `4f03503`, con review medium de `f387dae` sin
+hallazgos y [CI aprobada](https://github.com/jata-imk/kronik/actions/runs/43559039072).
 
 ## Cierre técnico y retoma — 07/11/2026
 

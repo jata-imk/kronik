@@ -69,6 +69,7 @@ enum ActivityEvent: string
     case ApplicationSignatureReviewed = 'solicitud.signature_reviewed';
     case CreditHistoricalCaptureCompleted = 'credito.historical_capture_completed';
     case CreditDisbursed = 'credito.disbursed';
+    case CreditProjectionsRebuilt = 'credito.projections_rebuilt';
     case CreditPaymentRecorded = 'credito.payment_recorded';
     case CreditPaymentReversed = 'credito.payment_reversed';
     case TwoFactorCompleted = 'login.2fa_completed';
@@ -193,6 +194,7 @@ enum ActivityEvent: string
             self::ApplicationSignatureReviewed => 'Firma revisada',
             self::CreditHistoricalCaptureCompleted => 'Captura histórica QA completada',
             self::CreditDisbursed => 'Desembolso QA registrado',
+            self::CreditProjectionsRebuilt => 'Lecturas financieras reconstruidas',
             self::Login => 'Inicio de sesión',
             self::TwoFactorCompleted => 'Autenticación de dos factores completada',
             self::UserProfileUpdated => 'Perfil de usuario actualizado',

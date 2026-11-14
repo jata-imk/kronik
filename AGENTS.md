@@ -14,6 +14,18 @@ Kronik usa Laravel 11, Inertia, Vue 3, Jetstream, Sanctum, PrimeVue/Sakai, Tailw
 
 Mantener controladores delgados y delegar lógica de negocio a servicios. Usar Form Requests para validación y `app/Http/Resources/` para las respuestas API que los utilicen. Los formularios de clientes comparten `BaseClienteRequest` y `ExtendRulesTrait`; revisar ese contrato antes de duplicar reglas.
 
+### Consistencia obligatoria de lecturas financieras
+
+Toda operación nueva o modificada que afecte créditos, pagos, saldos, obligaciones
+o calendarios debe mantener sus proyecciones mediante `ProyeccionCreditoService`,
+en la misma transacción que la operación, sus movimientos y su auditoría. Incluye
+importaciones, correcciones y procesos automáticos. No escribir proyecciones desde
+controladores ni crear otro motor financiero. Probar consistencia, rollback,
+reversos, idempotencia y reconstrucción. El avance temporal no contabiliza devengos.
+Las proyecciones son derivadas; operaciones y previas usan evidencia original.
+Nunca presentar cortes incompletos o desactualizados como vigentes o como cero.
+Consultar [el contrato del tablero](docs/reference/tablero-financiero.md).
+
 ### Frontend y autorización
 
 `HandleInertiaRequests::share()` expone las capacidades de Jetstream, navegación y `auth.permissions`, evaluados mediante Gate. Los permisos de Spatie dependen del contexto de equipo. Fuera del middleware, establecer `setPermissionsTeamId($teamId)` antes de verificarlos y restaurar el contexto previo si se cambia temporalmente. Para acciones sobre un equipo seleccionado, usar su contexto y autorización, sin asumir que coincide con `current_team_id`. Distinguir la bandera global `is_super_admin` de los roles por equipo y de la responsabilidad del equipo.

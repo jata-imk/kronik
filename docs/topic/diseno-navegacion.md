@@ -12,6 +12,9 @@ destinos de las rutas donde se activa cada entrada.
 
 ## Referencia y decisiones
 
+- [Tablero financiero y composición de su interfaz](../reference/tablero-financiero.md).
+- [Validar el tablero en escritorio, móvil y temas](../how-to/validar-tablero.md).
+
 - [Sistema de diseño UI/UX](../reference/diseno-ui-ux.md).
 - [Detalle técnico de MenubarItems](../menubar-items.md).
 - [ADR 0021: identidad y navegación](../explanation/adr-0021-identidad-visual-kronik.md).

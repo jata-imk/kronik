@@ -1,5 +1,7 @@
 # Agent Notes
 
+- [Tablero: implementación de diseño y proyecciones financieras](tablero-propuesta-visual.md)
+
 - [Días de gracia predeterminados de Empresa](empresa-dias-gracia.md)
 
 - [Core crediticio y Bullet: habilitación y validación integral QA en PR #73](core-crediticio-extensible.md)

@@ -16,7 +16,7 @@ use Illuminate\Validation\ValidationException;
 
 final class PagoService
 {
-    public function __construct(private MotorPagos $motor, private ImpuestoConceptoService $impuestos, private FechaEmpresa $fechaEmpresa) {}
+    public function __construct(private MotorPagos $motor, private ImpuestoConceptoService $impuestos, private FechaEmpresa $fechaEmpresa, private LecturaCreditoService $lecturas) {}
 
     public function consultar(Credito $credito): array
     {
@@ -111,6 +111,7 @@ final class PagoService
                         'credito_pago_id' => $pago->id, 'fecha_efectiva' => $data['fecha_pago'], 'snapshot' => $previa['snapshot']['cronograma'],
                         'snapshot_hash' => $this->hash($previa['snapshot']['cronograma'])]);
                 }
+                app(ProyeccionCreditoService::class)->sincronizar($credito, $data['fecha_pago']);
                 app(ActivityLogService::class)->log(ActivityEvent::CreditPaymentRecorded, 'Pago manual QA registrado', $credito,
                     ['related' => ['type' => 'credito_pago', 'id' => $pago->id]], $actor, sucursalId: $credito->sucursal_id);
 
@@ -156,6 +157,7 @@ final class PagoService
                     $credito->movimientos()->create(['credito_pago_id' => $reverso->id, 'actor_id' => $actor->id, 'tipo' => 'reverso',
                         'concepto' => $movimiento->concepto, 'fecha_efectiva' => $pago->fecha_efectiva, 'importe' => D::sub('0', $movimiento->importe, 2)]);
                 }
+                app(ProyeccionCreditoService::class)->sincronizar($credito, $pago->fecha_efectiva->toDateString());
                 app(ActivityLogService::class)->log(ActivityEvent::CreditPaymentReversed, 'Pago QA revertido por compensación', $credito,
                     ['related' => ['type' => 'credito_pago', 'id' => $reverso->id]], $actor, sucursalId: $credito->sucursal_id);
 
@@ -168,21 +170,12 @@ final class PagoService
 
     private function estado(Credito $credito): array
     {
-        $this->verificar($credito->condiciones, $credito->condiciones_hash);
-        $cronograma = $credito->cronogramas()->where('version', 1)->firstOrFail();
-        $this->verificar($cronograma->snapshot, $cronograma->snapshot_hash);
-        if ($last = $credito->pagos()->latest('id')->first()) {
-            $this->verificar($last->snapshot, $last->snapshot_hash);
-
-            $state = $last->snapshot['despues'];
-            $state['cronograma_version'] ??= 1;
-            $vigente = $credito->cronogramas()->where('version', $state['cronograma_version'])->firstOrFail();
-            $this->verificar($vigente->snapshot, $vigente->snapshot_hash);
-
-            return $state;
+        $estado = $this->lecturas->estado($credito)->estado;
+        if ($estado === null) {
+            $this->error('Este crédito no conserva una política de atraso explícita. No se pueden asignar reglas nuevas al contrato histórico.');
         }
 
-        return [...$this->motor->iniciar($credito->condiciones['producto'], $cronograma->snapshot), 'cronograma_version' => 1];
+        return $estado;
     }
 
     private function autorizar(Credito $credito, User $actor, string $accion): void

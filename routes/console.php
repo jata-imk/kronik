@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('productos:activar-versiones')->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('creditos:proyectar')->everyFiveMinutes()->withoutOverlapping();
 Schedule::command('sic:marcar-inciertas')->everyMinute()->withoutOverlapping();
 Artisan::command('sic:marcar-inciertas', function () {
     $this->info('Intentos marcados inciertos: '.app(\App\Services\SICs\SicOperacionService::class)->marcarInciertas());

@@ -1,5 +1,15 @@
 # Comandos Artisan
 
+## Lecturas financieras del tablero
+
+- `php artisan creditos:proyectar`: actualiza hoy y cierres mensuales; el programador lo ejecuta cada cinco minutos sin solaparse.
+- `php artisan creditos:proyectar --reconstruir`: recalcula desde evidencia original y audita el resultado global.
+- `php artisan creditos:proyectar --diagnosticar`: compara sin escrituras ni actividad adicional.
+- `--credito=ID` limita cualquiera de esos recorridos a un crédito existente.
+
+Revisar [preparación y validación del tablero](../how-to/validar-tablero.md), sus
+fuentes, límites y disponibilidad antes de operar sobre QA.
+
 ## Desarrollo
 
 ```bash

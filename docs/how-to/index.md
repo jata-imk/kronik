@@ -1,5 +1,7 @@
 # How-to
 
+- [Preparar y validar cifras, proyecciones y diseño del tablero](validar-tablero.md).
+
 [Buscar por tema](../topic/index.md) · [Índice general](../index.md)
 
 - [Accesos del cliente desde el menubar](accesos-contextuales-clientes.md)

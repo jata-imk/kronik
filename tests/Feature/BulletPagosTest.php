@@ -110,6 +110,9 @@ test('anticipo y liquidación Bullet conservan devengado contadores contexto e h
     $this->post(route('creditos.anticipos.store', $credito), [...$data, 'importe' => '3121'])->assertSessionHasErrors('pago');
     $this->assertDatabaseCount('credito_pagos', 1);
     $this->assertDatabaseCount('credito_cronogramas', 2);
+    $programado = DB::table('credito_lectura_obligaciones as o')->join('credito_lecturas as l', 'l.id', '=', 'o.lectura_id')
+        ->where('l.credito_id', $credito->id)->where('l.corte', '2027-01-16')->where('o.naturaleza', 'programada')->sum('o.ordinario');
+    expect(\App\Support\Decimal::round((string) $programado))->toBe('380.48');
     $clave = ($politica === 'periodicos' ? '1' : '2').':ordinario';
     expect($anticipo->snapshot['despues']['cargos'][$clave]['contabilizado'])->toBe('120.00')
         ->and($anticipo->snapshot['despues']['cargos'][$clave]['pagado'])->toBe('0.00')

@@ -1,5 +1,7 @@
 # Referencia
 
+- [Tablero financiero: fuentes, indicadores y consistencia](tablero-financiero.md)
+
 [Buscar por tema](../topic/index.md) · [Índice general](../index.md)
 
 - [Core crediticio: responsabilidades y contratos de evolución](core-crediticio.md)

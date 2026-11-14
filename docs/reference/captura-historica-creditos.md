@@ -35,6 +35,12 @@ POST /creditos/{credito}/captura-historica/completar requiere confirmacion_qa y 
 
 ## Auditoría, migración y capacidad
 
+El tablero financiero trata una captura pendiente como cobertura incompleta;
+no publica saldos consolidados vigentes. Al completar la historia, el mismo
+escritor del core mantiene sus proyecciones junto con cierre y auditoría en una
+transacción. Un fallo real revierte el cierre. Consultar no completa ni reconstruye
+la captura. Ver el [contrato del tablero](tablero-financiero.md).
+
 Inicio: credito.disbursed con estado captura_historica_pendiente y related al crédito; cierre: credito.historical_capture_completed, sujeto crédito y related al control operativo. Fecha efectiva permanece en evidencia protegida, no se agrega a metadatos generales. Reintentos emiten una vez; fallo de auditoría revierte operación. No registrar importes, referencias, contenido documental ni motivos reservados en actividad.
 
 Migración 2026_11_11_100000 crea únicamente control operativo; unique/FK por crédito y rollback protegido. Sin backfill, permisos nuevos, seeders operativos o variables nuevas. El estado se carga en lote en listados; no reconstruir toda la cartera ni ejecutar consultas por día. El avance financiero sigue en memoria desde la última evidencia. No acredita capacidad de 10 mil créditos ni reemplaza las tareas de proyecciones/medición.
