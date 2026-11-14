@@ -30,6 +30,12 @@ test('pago QA integra distribución persistencia idempotencia cifrado y reverso 
     $pago = CreditoPago::firstOrFail();
     $this->post(route('creditos.pagos.store', $credito), $data)->assertRedirect(route('creditos.pagos.show', [$credito, $pago]));
     $this->assertDatabaseCount('credito_pagos', 1);
+    $this->assertDatabaseHas('communication_events', ['event_key' => 'payment:'.$pago->id,
+        'event_type' => 'payment_received', 'credito_id' => $credito->id, 'cliente_id' => $credito->cliente_id,
+        'sucursal_id' => $credito->sucursal_id, 'cancelled_at' => null]);
+    $this->assertDatabaseCount('communication_events', 1);
+    $this->assertDatabaseHas('activity_log', ['event' => 'communication.event_prepared', 'subject_type' => \App\Models\CommunicationEvent::class,
+        'subject_id' => \App\Models\CommunicationEvent::sole()->id, 'sucursal_id' => $credito->sucursal_id, 'team_id' => null]);
     expect(DB::table('credito_pagos')->value('referencia'))->not->toContain($data['referencia']);
     expect(fn () => $pago->delete())->toThrow(ValidationException::class);
     expect(fn () => $pago->update(['importe' => '1.00']))->toThrow(ValidationException::class);
@@ -38,8 +44,67 @@ test('pago QA integra distribución persistencia idempotencia cifrado y reverso 
     $this->post(route('creditos.pagos.reverse', [$credito, $pago]), $reverso)->assertSessionHasNoErrors();
     $this->post(route('creditos.pagos.reverse', [$credito, $pago]), $reverso)->assertSessionHasNoErrors();
     $this->assertDatabaseCount('credito_pagos', 2);
+    $this->assertDatabaseCount('communication_events', 1);
+    expect(\App\Models\CommunicationEvent::where('event_key', 'payment:'.$pago->id)->firstOrFail()->cancellation_reason)->toBe('payment_reversed');
+    $this->assertDatabaseHas('activity_log', ['event' => 'communication.event_cancelled', 'subject_type' => \App\Models\CommunicationEvent::class]);
     expect(\App\Support\Decimal::round((string) $credito->movimientos()->sum('importe')))->toBe('10000.00');
     expect(app(PagoService::class)->consultar($credito)['resumen']['capital_insoluto'])->toBe('10000.00');
+});
+
+test('recordatorio preventivo usa la lectura vigente tres días antes y se cancela tras el pago', function () {
+    [, $credito, $data] = creditoPagableQa($this);
+    $due = $data['fecha_pago'];
+    $this->travelTo(\Carbon\CarbonImmutable::parse($due.' 12:00:00', 'America/Mexico_City')->subDays(3));
+    $service = app(\App\Services\CommunicationEventService::class);
+    expect($service->reconcileDueReminders())->toBe(0);
+    app(\App\Services\Credito\ProyeccionCreditoService::class)->sincronizar($credito);
+    expect($service->reconcileDueReminders())->toBe(1);
+    expect($service->reconcileDueReminders())->toBe(0);
+    $event = \App\Models\CommunicationEvent::sole();
+    expect($event->event_type)->toBe('upcoming_due')
+        ->and($event->due_date->toDateString())->toBe($due)
+        ->and($event->cancelled_at)->toBeNull();
+    app(\App\Services\Credito\ProyeccionCreditoService::class)->invalidar($credito);
+    expect($service->reconcileDueReminders())->toBe(0)
+        ->and($event->fresh()->cancelled_at)->toBeNull();
+    $this->travelTo(\Carbon\CarbonImmutable::parse($due.' 12:00:00', 'America/Mexico_City'));
+    $data['previa_hash'] = $this->postJson(route('creditos.pagos.preview', $credito), $data)->assertOk()->json('previa_hash');
+    $this->post(route('creditos.pagos.store', $credito), $data)->assertSessionHasNoErrors();
+    expect($event->fresh()->cancellation_reason)->toBe('due_not_current');
+    $this->assertDatabaseCount('communication_events', 2);
+});
+
+test('candidato de vencimiento expira sin convertirse en cobranza', function () {
+    [, $credito, $data] = creditoPagableQa($this);
+    $due = $data['fecha_pago'];
+    $this->travelTo(\Carbon\CarbonImmutable::parse($due.' 12:00:00', 'America/Mexico_City')->subDays(3));
+    app(\App\Services\Credito\ProyeccionCreditoService::class)->sincronizar($credito);
+    $service = app(\App\Services\CommunicationEventService::class);
+    expect($service->reconcileDueReminders())->toBe(1);
+    $event = \App\Models\CommunicationEvent::sole();
+    $this->travelTo(\Carbon\CarbonImmutable::parse($due.' 12:00:00', 'America/Mexico_City')->addDay());
+    expect($service->reconcileDueReminders())->toBe(0)
+        ->and($event->fresh()->cancellation_reason)->toBe('due_not_current');
+    $this->assertDatabaseCount('communication_events', 1);
+});
+
+test('fallo de auditoría de comunicación revierte pago y proyección en la misma transacción', function () {
+    [$actor, $credito, $data] = creditoPagableQa($this);
+    $data['previa_hash'] = $this->postJson(route('creditos.pagos.preview', $credito), $data)->assertOk()->json('previa_hash');
+    $antes = DB::table('credito_lecturas')->where('credito_id', $credito->id)->count();
+    $activity = \Mockery::mock(\App\Services\ActivityLogService::class)->makePartial();
+    $activity->shouldReceive('log')->andReturnUsing(function ($event) {
+        if ($event === \App\Enums\ActivityEvent::CommunicationEventPrepared) {
+            throw new \RuntimeException('Fallo sintético de auditoría');
+        }
+    });
+    app()->instance(\App\Services\ActivityLogService::class, $activity);
+
+    expect(fn () => app(\App\Services\Credito\PagoService::class)->registrar($credito, $data, $actor))
+        ->toThrow(\RuntimeException::class, 'Fallo sintético de auditoría');
+    $this->assertDatabaseCount('credito_pagos', 0);
+    $this->assertDatabaseCount('communication_events', 0);
+    expect(DB::table('credito_lecturas')->where('credito_id', $credito->id)->count())->toBe($antes);
 });
 
 test('pago QA rechaza entradas inválidas sin mutación', function (string $caso) {

@@ -13,6 +13,7 @@
 - [Editar plantillas documentales](editar-plantillas-documentales.md)
 - [Migrar VPS](migrar-vps.md)
 - [Probar correos de acceso y seguridad](probar-correos-acceso.md)
+- [Probar comunicaciones y notificaciones](probar-comunicaciones.md)
 - [Probar anticipos y liquidación QA](qa-anticipos-liquidacion.md)
 - [Desplegar y comprobar ambas políticas Bullet en QA](qa-bullet.md)
 - [Guion QA manual — Backlog 03.5](qa-backlog-03-5-documentos-y-plantillas.md)

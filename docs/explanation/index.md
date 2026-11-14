@@ -1,5 +1,7 @@
 # Explicación
 
+- [ADR 0047: bandeja interna contextual](adr-0047-bandeja-interna-contextual.md).
+
 - [ADR 0046: lecturas financieras derivadas del core](adr-0046-lecturas-financieras-tablero.md).
 
 - [ADR 0044: RFC genéricos en Clientes](adr-0044-rfc-genericos-clientes.md).
@@ -71,3 +73,4 @@
 - [ADR 0043: escenarios SIC QA](adr-0043-escenarios-sic-qa.md).
 
 - [ADR 0045: fechas efectivas y captura histórica QA](adr-0045-fechas-efectivas-captura-historica.md).
+- [ADR 0048: eventos candidatos antes de seleccionar canal](adr-0048-eventos-candidatos-comunicacion.md).

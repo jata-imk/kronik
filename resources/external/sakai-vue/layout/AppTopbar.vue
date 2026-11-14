@@ -3,8 +3,10 @@ import { useLayout } from "@sakai-vue/layout/composables/layout";
 import AppConfigurator from "./AppConfigurator.vue";
 import AppUserMenu from "./AppUserMenu.vue";
 import { Link } from "@inertiajs/vue3";
+import OperatorNotificationBell from "@/Components/Notifications/OperatorNotificationBell.vue";
 
-const { toggleMenu, toggleDarkMode, isDarkTheme, isSidebarActive } = useLayout();
+const { toggleMenu, toggleDarkMode, isDarkTheme, isSidebarActive } =
+    useLayout();
 
 const appName = import.meta.env.VITE_APP_NAME;
 </script>
@@ -39,6 +41,7 @@ const appName = import.meta.env.VITE_APP_NAME;
         </div>
 
         <div class="layout-topbar-actions">
+            <OperatorNotificationBell />
             <div class="layout-config-menu">
                 <button type="button" class="layout-topbar-action" aria-label="Cambiar tema" v-tooltip.bottom="'Cambiar tema'" @click="toggleDarkMode">
                     <i :class="['pi', { 'pi-moon': isDarkTheme, 'pi-sun': !isDarkTheme }]"></i>

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ActivityEvent;
 use App\Enums\MetodoAmortizacion;
+use App\Enums\OperatorNotificationEvent;
 use App\Enums\PeriodicidadCredito;
 use App\Enums\SolicitudEstado;
 use App\Enums\UserStatus;
@@ -29,6 +30,7 @@ class SolicitudService
         private readonly ProductoVersionService $productos,
         private readonly SimuladorCreditoSimple $simulador,
         private readonly ActivityLogService $actividad,
+        private readonly OperatorNotificationService $notificaciones,
     ) {}
 
     public function crear(array $data, User $actor): Solicitud
@@ -156,6 +158,15 @@ class SolicitudService
             }
             $solicitud->update(['responsable_id' => $responsable->id, 'lock_version' => $solicitud->lock_version + 1]);
             $this->evento($solicitud, $actor, 'asignada', ActivityEvent::ApplicationAssigned, ['responsable_id' => $responsable->id]);
+            $this->notificaciones->publish(
+                $responsable,
+                $actor->current_team_id,
+                $solicitud->sucursal_id,
+                OperatorNotificationEvent::ApplicationAssigned,
+                "solicitud:{$solicitud->id}:asignada:{$solicitud->lock_version}:{$responsable->id}",
+                'Solicitud asignada',
+                'Se te asignó una solicitud para seguimiento.',
+            );
 
             return $solicitud;
         });
@@ -206,6 +217,17 @@ class SolicitudService
             $solicitud->update(['estado' => $estado, 'responsable_id' => $responsableId, 'lock_version' => $solicitud->lock_version + 1]);
             // Only identifiers in the shared timeline; never copy reasons into technical logs.
             $this->evento($solicitud, $actor, $tipo, $event, ['resolucion_id' => $resolucion->id, 'revision' => $revision?->numero]);
+            if ($data['accion'] === 'devolver') {
+                $this->notificaciones->publish(
+                    $responsable,
+                    $actor->current_team_id,
+                    $solicitud->sucursal_id,
+                    OperatorNotificationEvent::ApplicationReturned,
+                    "solicitud:{$solicitud->id}:devuelta:{$resolucion->id}:{$responsable->id}",
+                    'Solicitud devuelta',
+                    'Una solicitud requiere correcciones.',
+                );
+            }
 
             return $solicitud;
         });

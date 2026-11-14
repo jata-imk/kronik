@@ -58,6 +58,10 @@ Route::middleware([
         'sucursal_id' => $request->user()->current_sucursal_id,
     ])->header('Cache-Control', 'private, no-store, max-age=0'))->name('contexto-operativo.show');
 
+    Route::get('notificaciones', [\App\Http\Controllers\OperatorNotificationController::class, 'index'])->name('notifications.index');
+    Route::get('notificaciones/resumen', [\App\Http\Controllers\OperatorNotificationController::class, 'summary'])->name('notifications.summary');
+    Route::patch('notificaciones/{notification}/leer', [\App\Http\Controllers\OperatorNotificationController::class, 'markRead'])->whereNumber('notification')->name('notifications.read');
+
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('mi-trabajo', [\App\Http\Controllers\SolicitudController::class, 'index'])->name('solicitudes.trabajo');

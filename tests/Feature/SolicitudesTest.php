@@ -830,6 +830,32 @@ test('asignación genera tarea visible al responsable y rechaza usuarios inactiv
     $this->patch(route('solicitudes.asignar', $solicitud), ['lock_version' => 1, 'responsable_id' => $recipient->id])->assertSessionHasErrors('responsable_id');
 });
 
+test('la asignación notifica una sola vez al responsable del mismo equipo y sucursal', function () {
+    $actor = actingAsSuperAdmin();
+    $team = $actor->ownedTeams()->firstOrFail();
+    $recipient = \App\Models\User::factory()->create();
+    $team->users()->attach($recipient);
+    $recipient->sucursales()->attach($actor->current_sucursal_id);
+    $recipient->forceFill([
+        'current_team_id' => $team->id,
+        'current_sucursal_id' => $actor->current_sucursal_id,
+    ])->save();
+    grantTeamPermissions($recipient, $team, ['read solicitudes', 'read clientes']);
+    $cliente = Cliente::factory()->create(['sucursal_id' => $actor->current_sucursal_id]);
+    $this->actingAs($actor)->post(route('solicitudes.store'), ['cliente_id' => $cliente->id, 'clave_creacion' => (string) Str::uuid()]);
+    $solicitud = Solicitud::firstOrFail();
+
+    $this->patch(route('solicitudes.asignar', $solicitud), ['lock_version' => 0, 'responsable_id' => $recipient->id])->assertSessionHasNoErrors();
+    $this->assertDatabaseHas('operator_notifications', [
+        'user_id' => $recipient->id,
+        'team_id' => $team->id,
+        'sucursal_id' => $actor->current_sucursal_id,
+        'event' => 'solicitud.asignada',
+    ]);
+    $this->patch(route('solicitudes.asignar', $solicitud), ['lock_version' => 1, 'responsable_id' => $recipient->id])->assertSessionHasNoErrors();
+    $this->assertDatabaseCount('operator_notifications', 1);
+});
+
 test('solicitud impide eliminar el expediente del cliente', function () {
     $user = actingAsSuperAdmin();
     $cliente = Cliente::factory()->create(['sucursal_id' => $user->current_sucursal_id]);

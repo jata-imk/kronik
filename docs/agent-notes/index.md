@@ -1,5 +1,7 @@
 # Agent Notes
 
+- [Comunicaciones y notificaciones](comunicaciones-notificaciones.md)
+
 - [Tablero: implementación de diseño y proyecciones financieras](tablero-propuesta-visual.md)
 
 - [Días de gracia predeterminados de Empresa](empresa-dias-gracia.md)

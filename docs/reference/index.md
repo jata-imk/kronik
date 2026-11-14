@@ -8,6 +8,9 @@
 - [Bullet: decisiones vigentes y casos de aceptación](bullet-casos-definicion.md)
 
 - [Eventos de auditoría](auditoria-eventos.md)
+- [Contenido de la nota de Notion: comunicaciones por canales, envíos y seguimiento](comunicaciones-por-canales-envios-y-seguimiento.md)
+- [Notificaciones internas de operadores](notificaciones-internas.md)
+- [Eventos candidatos de comunicación](eventos-comunicacion.md)
 - [Automatizacion de Documentacion](automatizacion-documentacion.md)
 - [CI](ci.md)
 - [Comandos Artisan](comandos-artisan.md)

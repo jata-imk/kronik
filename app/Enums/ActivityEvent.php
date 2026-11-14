@@ -72,6 +72,8 @@ enum ActivityEvent: string
     case CreditProjectionsRebuilt = 'credito.projections_rebuilt';
     case CreditPaymentRecorded = 'credito.payment_recorded';
     case CreditPaymentReversed = 'credito.payment_reversed';
+    case CommunicationEventPrepared = 'communication.event_prepared';
+    case CommunicationEventCancelled = 'communication.event_cancelled';
     case TwoFactorCompleted = 'login.2fa_completed';
     case UserProfileUpdated = 'user.profile.updated';
     case MenubarItemCreated = 'menubar_item.created';
@@ -125,6 +127,7 @@ enum ActivityEvent: string
     case DocumentDownloaded = 'documento.downloaded';
     case ClientDocumentViewed = 'cliente.documento.viewed';
     case ClientSicConsentEvidenceViewed = 'cliente.consentimiento_sic.evidence_viewed';
+    case OperatorNotificationRead = 'operator_notification.read';
 
     public function label(): string
     {
@@ -180,6 +183,8 @@ enum ActivityEvent: string
             self::TeamResponsibleTransferred => 'Responsable del equipo transferido',
             self::CreditPaymentRecorded => 'Pago QA registrado',
             self::CreditPaymentReversed => 'Pago QA revertido',
+            self::CommunicationEventPrepared => 'Evento de comunicación preparado',
+            self::CommunicationEventCancelled => 'Evento de comunicación cancelado',
             self::ApplicationCreated => 'Solicitud creada',
             self::ApplicationUpdated => 'Borrador de solicitud actualizado',
             self::ApplicationSubmitted => 'Solicitud enviada a revisión',
@@ -250,6 +255,7 @@ enum ActivityEvent: string
             self::DocumentDownloaded => 'Documento descargado',
             self::ClientDocumentViewed => 'Documento de cliente visualizado',
             self::ClientSicConsentEvidenceViewed => 'Evidencia SIC visualizada',
+            self::OperatorNotificationRead => 'Notificación interna leída',
         };
     }
 

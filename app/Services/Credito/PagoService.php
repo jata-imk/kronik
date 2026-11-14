@@ -112,6 +112,8 @@ final class PagoService
                         'snapshot_hash' => $this->hash($previa['snapshot']['cronograma'])]);
                 }
                 app(ProyeccionCreditoService::class)->sincronizar($credito, $data['fecha_pago']);
+                app(\App\Services\CommunicationEventService::class)->paymentRecorded($credito, $pago);
+                app(\App\Services\CommunicationEventService::class)->reconcileCreditReminders($credito);
                 app(ActivityLogService::class)->log(ActivityEvent::CreditPaymentRecorded, 'Pago manual QA registrado', $credito,
                     ['related' => ['type' => 'credito_pago', 'id' => $pago->id]], $actor, sucursalId: $credito->sucursal_id);
 
@@ -158,6 +160,7 @@ final class PagoService
                         'concepto' => $movimiento->concepto, 'fecha_efectiva' => $pago->fecha_efectiva, 'importe' => D::sub('0', $movimiento->importe, 2)]);
                 }
                 app(ProyeccionCreditoService::class)->sincronizar($credito, $pago->fecha_efectiva->toDateString());
+                app(\App\Services\CommunicationEventService::class)->paymentReversed($credito, $pago);
                 app(ActivityLogService::class)->log(ActivityEvent::CreditPaymentReversed, 'Pago QA revertido por compensación', $credito,
                     ['related' => ['type' => 'credito_pago', 'id' => $reverso->id]], $actor, sucursalId: $credito->sucursal_id);
 
