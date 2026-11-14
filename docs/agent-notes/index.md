@@ -71,3 +71,5 @@ Consulta el [índice temático](../topic/index.md) para encontrar material relac
 - [Consulta, edición e históricos](consulta-edicion-historicos.md).
 
 - [SIC QA por escenarios](sic-escenarios-qa.md).
+
+- [Desembolsos históricos y captura cronológica](desembolsos-historicos.md).

@@ -23,7 +23,7 @@ test('la activación congela el motor nuevo y simulación y uso conservan su ver
     $actor = actingAsSuperAdmin();
     $servicio = app(ProductoVersionService::class);
     $producto = $servicio->crear(productoParaVersionMotor(), $actor->id);
-    $version = $servicio->activar($producto->versiones()->first(), '2026-01-01');
+    $version = $servicio->activar($producto->versiones()->first(), app(\App\Services\FechaEmpresa::class)->hoy()->toDateString());
     expect($version->snapshot['motor_calculo_version'])->toBe(2)
         ->and($version->snapshot['reglas']['convencion_interes'])->toBe('dias_reales_360');
     $antes = $version->getRawOriginal('snapshot');
@@ -39,7 +39,7 @@ test('la evidencia antigua conserva su motor hasta crear una nueva versión de p
     $actor = actingAsSuperAdmin();
     $servicio = app(ProductoVersionService::class);
     $producto = $servicio->crear(productoParaVersionMotor(), $actor->id);
-    $version = $servicio->activar($producto->versiones()->first(), '2026-01-01');
+    $version = $servicio->activar($producto->versiones()->first(), app(\App\Services\FechaEmpresa::class)->hoy()->toDateString());
     $snapshot = $version->snapshot;
     unset($snapshot['motor_calculo_version']);
     unset($snapshot['reglas']['convencion_interes']);
@@ -52,7 +52,8 @@ test('la evidencia antigua conserva su motor hasta crear una nueva versión de p
         'monto' => '100', 'periodicidad' => 'semanal', 'plazo' => 1, 'metodo' => 'capital_fijo', 'fecha' => '2026-01-01',
     ])->assertOk()->assertJsonPath('motor_calculo_version', 1)->assertJsonPath('tabla.1.interes', '0.17');
     $copia = $servicio->nuevaVersion($producto, $version, $actor->id);
-    $nueva = $servicio->activar($copia, '2026-01-02');
+    $this->travel(1)->days();
+    $nueva = $servicio->activar($copia, app(\App\Services\FechaEmpresa::class)->hoy()->toDateString());
     expect($nueva->snapshot['motor_calculo_version'])->toBe(VersionMotorCredito::actual()->value)
         ->and($version->fresh()->getRawOriginal('snapshot'))->toBe($antes)
         ->and($version->fresh()->estado)->toBe(ProductoVersionEstado::Retirada);
@@ -136,7 +137,7 @@ test('la simulación toma la convención congelada aunque se altere la fila muta
     $actor = actingAsSuperAdmin();
     $servicio = app(ProductoVersionService::class);
     $producto = $servicio->crear(productoParaVersionMotor(), $actor->id);
-    $version = $servicio->activar($producto->versiones()->first(), '2026-01-01');
+    $version = $servicio->activar($producto->versiones()->first(), app(\App\Services\FechaEmpresa::class)->hoy()->toDateString());
     $antes = $version->getRawOriginal('snapshot');
     // Alteración sintética para comprobar qué evidencia consume; no es una operación soportada.
     $version->reglas()->update(['convencion_interes' => '30e_360']);

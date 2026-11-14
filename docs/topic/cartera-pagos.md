@@ -32,3 +32,5 @@ los límites QA en cada guía antes de operar.
 - [Productos](productos-simulacion.md), [fiscalidad](fiscalidad-cumplimiento.md) y [reportes](auditoria-reportes.md).
 
 - [Números de crédito y recibo](../reference/folios.md).
+
+- [Contrato de captura histórica](../reference/captura-historica-creditos.md), [ADR 0045](../explanation/adr-0045-fechas-efectivas-captura-historica.md) y [seguimiento de la entrega](../agent-notes/desembolsos-historicos.md).

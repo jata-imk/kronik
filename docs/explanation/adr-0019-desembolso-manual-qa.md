@@ -51,3 +51,7 @@ P6 conserva los acuerdos de devengo actual/360, orden de aplicación, reversos y
 pagos históricos sin movimientos posteriores. Notion aún requiere precisar
 aplicación de impuestos en parcialidades y coexistencia/gracia antes de habilitar
 esos casos. No resolver esas decisiones silenciosamente durante P5.
+
+## Actualización de fechas — ADR 0045
+
+La prohibición de desembolso pasado queda sustituida para captura sintética QA por [ADR 0045](adr-0045-fechas-efectivas-captura-historica.md). Se conserva la decisión original como contexto; igualdad con tabla firmada, rechazo de futuro, integridad, permisos y unicidad siguen vigentes. Estado de entrega en la Agent Note enlazada por ese ADR.

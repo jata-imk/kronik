@@ -56,7 +56,8 @@ class SolicitudRequisitosService
             ->whereHas('producto', fn ($q) => $q->where('activo', true))->whereKey($solicitud->producto_version_id)->exists();
         $add('producto', $productoDisponible, 'El producto debe estar activo y vigente para originación.');
         $add('monto', Decimal::compare($solicitud->monto, $reglas['monto_maximo']) <= 0, 'El monto excede el límite de aprobación de la política.');
-        $add('fecha', $solicitud->fecha_estimada->toDateString() >= $this->fecha->hoy()->toDateString(), 'Actualiza la fecha estimada mediante una nueva revisión.');
+        $problemaFecha = app(FechaOriginacion::class)->problema($solicitud->fecha_estimada?->toDateString(), $versionProducto);
+        $add('fecha', $problemaFecha === null, $problemaFecha ?? 'Fecha efectiva compatible con la vigencia conservada.');
         $capturo = $solicitud->eventos()->where('actor_id', $paraPaquete ? $aprobacion?->actor_id : $actor->id)
             ->whereIn('tipo', ['creada', 'borrador_actualizado', 'enviada'])->exists();
         $add('separacion', $reglas['modalidad'] === 'individual' || ! $capturo, 'En modalidad dual debe aprobar una persona que no haya capturado ni enviado la solicitud.');

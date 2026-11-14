@@ -131,6 +131,7 @@ un solo código por acción, sin crear catálogos paralelos.
 | `solicitudes` | Copia firmada recibida | `solicitud.signature_received` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudFirmaService::recibir | AuditDomainCoverageTest; SolicitudesTest |
 | `solicitudes` | Firma revisada | `solicitud.signature_reviewed` | U | Solicitud | Cambio aplicado | R | state / related (política, firma) | Q | Implementado; validar entrega en Agent Note | SolicitudFirmaService::revisar | AuditDomainCoverageTest; SolicitudesTest |
 | `creditos` | Desembolso QA registrado | `credito.disbursed` | U | Solicitud; crédito en related | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | DesembolsoService::registrar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest |
+| `creditos` | Completar captura histórica | `credito.historical_capture_completed` | U | Crédito; captura en related | Completa | R; equipo real del cierre y sucursal responsable | state, related | Q | Implementado en rama; evidencia en Agent Note | CapturaHistoricaService::completar | CapturaHistoricaTest |
 | `creditos` | Pago QA registrado | `credito.payment_recorded` | U | Crédito | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | PagoService::registrar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest; BulletPagosTest (evidencia sintética) |
 | `creditos` | Pago QA revertido | `credito.payment_reversed` | U | Crédito | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | PagoService::reversar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest; BulletPagosTest (evidencia sintética) |
 | `Autenticación` | Autenticación de dos factores completada | `login.2fa_completed` | U | Usuario | Autenticación completada | C | result | Q | Implementado; validar entrega en Agent Note | TwoFactorSessionController::store | AuditCoverageTest |
@@ -285,3 +286,8 @@ se conserva `SicEvidenceViewed` al leer el detalle. Regresión de exposición m�
 (solo nombre) en `SicActividadPresentacionTest`.
 
 La modalidad por escenario conserva los emisores y eventos SIC de la matriz. `provider` distingue `cdc_sandbox` y `simulacion_interna`; el intento referenciado conserva escenario y evidencia cifrada. No se agrega un evento por elegir un control del formulario ni se duplican finalizaciones. Actor/iniciador y contexto originales siguen vigentes. Evidencia: SicEscenariosQaTest y SicQaTest. Las simulaciones internas no representan comunicaciones con CDC.
+
+## Captura histórica QA — ADR 0045
+
+El inicio se conserva en el evento existente credito.disbursed con state captura_historica_pendiente; no duplicar el desembolso con otro evento de inicio. La activación histórica conserva el evento existente de activación y producto como sujeto y versión en related. Fechas efectivas y referencias se consultan en evidencia protegida, sin ampliar la lista de metadatos permitidos. Consultas/cotizaciones no requieren eventos nuevos. Reintento y fallo de auditoría se prueban con persistencia real.
+

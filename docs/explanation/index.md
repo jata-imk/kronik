@@ -67,3 +67,5 @@
 - [ADR 0039: condiciones Bullet y habilitación por capacidad](adr-0039-condiciones-bullet-y-habilitacion.md).
 
 - [ADR 0043: escenarios SIC QA](adr-0043-escenarios-sic-qa.md).
+
+- [ADR 0045: fechas efectivas y captura histórica QA](adr-0045-fechas-efectivas-captura-historica.md).

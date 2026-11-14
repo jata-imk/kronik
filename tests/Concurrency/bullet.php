@@ -140,6 +140,12 @@ try {
                 'desembolso' => app(DesembolsoService::class)->registrar(Solicitud::findOrFail($operation['solicitud']), $operation['data'], $actor),
                 'registrar' => app(PagoService::class)->registrar(Credito::findOrFail($operation['credito']), $operation['data'], $actor),
                 'reversar' => app(PagoService::class)->reversar(Credito::findOrFail($operation['credito']), CreditoPago::findOrFail($operation['pago']), $operation['data'], $actor),
+                'completar' => (function () use ($operation, $actor) {
+                    $credit = Credito::findOrFail($operation['credito']);
+                    app(App\Services\Credito\CapturaHistoricaService::class)->completar($credit, $actor);
+
+                    return $credit;
+                })(),
             };
             echo json_encode(['ok' => true, 'id' => $result->id, 'connection' => $connection], JSON_THROW_ON_ERROR);
         } catch (ValidationException $exception) {
@@ -243,7 +249,28 @@ try {
                 comprobarBullet(! str_contains($activity->toJson(), '3120.00') && ! str_contains($activity->toJson(), 'Corrección concurrente'), 'Auditoría con datos reservados.');
             }
         }
-        echo "Bullet {$policy}: ocho competencias financieras multiconexión aprobadas.\n";
+        // Originación retrospectiva real; la captura no se inserta manualmente.
+        $date('2027-02-05');
+        $historicalVersion = BulletScenario::producto($actor, $policy, activar: false);
+        app(App\Services\ProductoVersionService::class)->activar($historicalVersion, '2027-01-01', true);
+        $historicalApplication = BulletScenario::solicitud($actor, $historicalVersion->fresh());
+        $historicalApplication = app(App\Services\SolicitudService::class)->guardar($historicalApplication,
+            ['lock_version' => $historicalApplication->lock_version, 'fecha_estimada' => '2027-01-01'], $actor);
+        $historicalApplication = BulletScenario::aprobar($historicalApplication, $actor);
+        $historicalPackage = BulletScenario::formalizar($historicalApplication, $actor);
+        $historicalData = [...BulletScenario::desembolso($historicalApplication, $historicalPackage),
+            'fecha_desembolso' => '2027-01-01', 'confirmacion_historica' => true];
+        $historical = app(DesembolsoService::class)->registrar($historicalApplication->fresh(), $historicalData, $actor);
+        $complete = ['accion' => 'completar', 'actor' => $actor->id, 'credito' => $historical->id];
+        $prepay = prepararPagoBullet($historical, $actor, 'prepago', '3120.00');
+        $results = competirBullet('creditos', [$historical->id], [$complete, $prepay]);
+        comprobarBullet(count(array_filter($results, fn ($r) => $r['ok'])) === 2, 'Cierre y pago deben serializar sin perder operaciones.');
+        resultadoBullet(competirBullet('creditos', [$historical->id], [$complete, $complete]), 2);
+        comprobarBullet($historical->capturaHistorica()->sole()->completada_en !== null
+            && $historical->pagos()->count() === 1
+            && actividadBullet($historical, ActivityEvent::CreditHistoricalCaptureCompleted) === 1, 'Cierre o pago perdidos/duplicados.');
+        comprobarBullet($historical->cronogramas()->where('version', 1)->sole()->snapshot === $historicalPackage->snapshot['tabla'], 'El cierre alteró la tabla firmada.');
+        echo "Bullet {$policy}: ocho competencias financieras y dos de captura histórica multiconexión aprobadas.\n";
     }
 } catch (Throwable $exception) {
     fwrite(STDERR, get_class($exception).': '.$exception->getMessage()."\n");
