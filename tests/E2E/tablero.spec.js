@@ -32,6 +32,16 @@ test("tablero conserva diseño, consulta y detalles en escritorio, móvil y oscu
         await page.setViewportSize({ width, height: 1000 });
         await expect(page.getByRole("button", { name: "Consultar", exact: true })).toBeVisible();
         await expect.poll(async () => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(1);
+        if (width === 1440) {
+            await expect.poll(async () => page.locator(".k-tablero-indicador > span:last-child").evaluateAll((enlaces) => {
+                const posiciones = enlaces.map((enlace) => enlace.getBoundingClientRect().bottom);
+                return Math.max(...posiciones) - Math.min(...posiciones);
+            })).toBeLessThanOrEqual(1);
+            await expect.poll(async () => page.locator('.k-tablero-filtros .p-select, .k-tablero-filtros input[type="date"], .k-tablero-filtros button[type="submit"]').evaluateAll((controles) => {
+                const posiciones = controles.map((control) => control.getBoundingClientRect().bottom);
+                return Math.max(...posiciones) - Math.min(...posiciones);
+            })).toBeLessThanOrEqual(1);
+        }
         await page.screenshot({ path: testInfo.outputPath(`tablero-${width}.png`), fullPage: true });
     }
     await page.setViewportSize({ width: 1440, height: 1000 });

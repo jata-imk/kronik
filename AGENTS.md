@@ -55,6 +55,11 @@ Alias de Vite: `@` → `resources/js/`, `@css` → `resources/css/`, `@config` �
 
 Confirmar entorno y efectos antes de migraciones o seeders. `php artisan migrate:fresh --seed` elimina datos: no es un paso rutinario para preparar una revisión. Para QA, seguir la guía de reinicio correspondiente. Consultar [comandos Artisan](docs/reference/comandos-artisan.md) y configuración vigente; no asumir drivers de sesiones/colas a partir de un ejemplo de `.env`.
 
+El usuario conserva el acceso exclusivo a la VPS. No iniciar conexiones SSH ni
+administrarla directamente: proporcionar los comandos y revisar las salidas que
+él comparta. Distinguir configuración del código, configuración del servidor y
+ejecución comprobada; no declarar activo el programador solo por `schedule:list`.
+
 ## Estilo y validación
 
 ### Consulta, edición e históricos

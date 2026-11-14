@@ -145,7 +145,7 @@ const accesos = computed(() =>
         <template #card-content>
             <div class="k-tablero-layout">
                 <form
-                    class="k-surface k-panel flex flex-wrap items-end gap-3 mb-5"
+                    class="k-surface k-panel k-tablero-filtros flex flex-wrap items-end gap-3 mb-5"
                     @submit.prevent="consultar()"
                 >
                     <ConsultaSucursalFilter
@@ -160,11 +160,7 @@ const accesos = computed(() =>
                                 aria-label="Corte de saldos"
                                 aria-describedby="corte-ayuda"
                                 class="k-tablero-fecha"
-                            /><span
-                                id="corte-ayuda"
-                                class="text-xs font-normal text-muted-color"
-                                >Hoy o cierre mensual</span
-                            ></label
+                            /></label
                         >
                         <label class="flex flex-col gap-2 text-sm font-semibold"
                             >Movimientos desde<input
@@ -184,6 +180,14 @@ const accesos = computed(() =>
                         label="Consultar"
                         :loading="cargando"
                     />
+                    <p
+                        v-if="props.accesos.creditos"
+                        id="corte-ayuda"
+                        class="basis-full text-xs text-muted-color"
+                    >
+                        Corte de saldos: elige hoy o el último día de un mes
+                        anterior.
+                    </p>
                 </form>
                 <Message
                     v-for="(error, campo) in errores"

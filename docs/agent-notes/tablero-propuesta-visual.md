@@ -19,7 +19,8 @@ después de #65, #79 y #80, en el orden autorizado. Head final `9835ef7`, review
 medium acumulado contra `67bba2c` sin hallazgos accionables y
 [CI final aprobada](https://github.com/jata-imk/kronik/actions/runs/43612999462),
 incluidos MariaDB, PDF y todos los recorridos de navegador. El árbol integrado
-coincide exactamente con el head revisado. Rama local actual: main.
+coincide exactamente con el head revisado. El seguimiento visual posterior se
+trabaja en `fix/tablero-alineacion`, sobre main `9b94348`.
 
 Sin despliegue ni QA operativo compartido de esta entrega. Las tareas continúan
 abiertas para esa aceptación. Las doce modificaciones documentales anteriores
@@ -198,3 +199,34 @@ y reconstrucción son nulos en este ensayo, no se atribuyen a estos tiempos.
    comprobar el programador activo y la cobertura de las lecturas.
 2. Contrastar cifras operativas independientes con el equipo; registrar entorno,
    commit y resultados reales en esta nota y Notion antes de cerrar las tareas.
+
+## Seguimiento de alineación y programador — 2026-11-14
+
+El usuario acepta la composición visual y señala dos alineaciones. La ayuda de
+corte pasa a una fila independiente, los controles conservan altura común y los
+enlaces de las cuatro tarjetas se alinean al pie. Chromium verifica las posiciones
+reales de controles/enlaces, además de móvil, oscuro y zoom. Ayuda más explícita:
+hoy o último día de un mes anterior. Sin fórmulas, permisos, operaciones ni nuevos
+eventos auditables; la reconstrucción conserva el evento existente.
+
+Diagnóstico solo de lectura en la conexión configurada localmente: dos créditos
+con evidencia verificable, sin capturas históricas pendientes y sin ninguna
+lectura derivada. Se proporcionaron comandos de reconstrucción y diagnóstico;
+no se ejecutaron mutaciones sobre esa BD ni sobre la VPS.
+
+El usuario conserva acceso exclusivo a la VPS; los agentes proporcionan comandos
+y revisan sus resultados. Regla permanente registrada en AGENTS.md. El usuario
+reporta las tres tareas en `schedule:list` y servicio cron activo, pero
+`no crontab for kronik`, sin entradas visibles en `/etc/crontab`, `/etc/cron.d`
+ni temporizadores con los nombres consultados. Eso no acredita actualización
+automática. Se facilitó entrada permanente por minuto y registro de salida;
+el usuario instaló su crontab y reportó reconstrucción y diagnóstico de dos
+créditos, ambos sin incidencias. Registro VPS de las 10:46 confirma invocación
+automática de Laravel y ejecución de `sic:marcar-inciertas`. Falta observar el
+turno de cinco minutos de `creditos:proyectar` y confirmar que desapareció el
+aviso al recargar. La guía de despliegue deja de afirmar que no hay tareas.
+
+Validación del ajuste local: seis pruebas frontend dirigidas, build y dos E2E
+Chromium aprobados, incluyendo alineación geométrica en escritorio y ausencia
+de desbordamiento en 320/390/768/1440 px, oscuro y zoom 200 %. Capturas actualizadas.
+Revisión medium y CI del seguimiento se registrarán al publicar su PR.
