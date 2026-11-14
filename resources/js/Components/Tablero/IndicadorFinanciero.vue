@@ -38,7 +38,7 @@ defineEmits(["abrir"]);
         }}</strong>
         <span class="font-semibold">{{ titulo }}</span>
         <span class="text-sm text-muted-color">{{ ayuda }}</span>
-        <span v-if="valor != null" class="text-sm font-semibold text-primary"
+        <span v-if="valor != null" class="mt-auto text-sm font-semibold text-primary"
             >Ver detalle <i class="pi pi-arrow-right" aria-hidden="true"
         /></span>
     </button>

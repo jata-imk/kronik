@@ -242,6 +242,11 @@ select {
     max-width: 100%;
 }
 
+.k-tablero-filtros .p-select,
+.k-tablero-filtros .p-button {
+    min-height: 2.75rem;
+}
+
 .k-tablero-indicador {
     display: flex;
     min-width: 0;

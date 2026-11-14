@@ -564,8 +564,9 @@ solo controla la consulta de una cola vacía.
 
 ### 9.2 Scheduler
 
-Actualmente Kronik no define tareas programadas de negocio, pero deje preparado
-el scheduler para futuros comandos.
+Kronik define sus tareas en `routes/console.php`: activación de versiones de
+producto y proyecciones de créditos cada cinco minutos, y recuperación de
+intentos SIC inciertos cada minuto. El worker de colas no sustituye al scheduler.
 
 En CloudPanel abra **Cron Jobs**, elija ejecución cada minuto y use:
 
@@ -578,6 +579,32 @@ Sin panel agregue al `crontab` del usuario `kronik`:
 ```cron
 * * * * * cd /home/kronik/htdocs/kronik.example.com && /usr/bin/php8.3 artisan schedule:run >> /dev/null 2>&1
 ```
+
+La entrada se configura una vez y persiste entre sesiones; no hace falta agregar
+una por cada comando nuevo de Laravel. Ajuste ruta, usuario y binario a la
+instalación real. No duplique una entrada existente en el panel o crontab.
+
+Desde la carpeta del sitio y con su usuario, compruebe:
+
+```bash
+php artisan schedule:list
+crontab -l
+systemctl is-active cron
+```
+
+`schedule:list` acredita las tareas declaradas y su próxima ejecución; no prueba
+que el servidor las invoque. Un servicio `cron` activo tampoco demuestra que
+exista la entrada del sitio. Si el panel administra las tareas, revise allí la
+entrada correspondiente. Contraste con una ejecución automática real en los
+registros y, para el tablero, con la actualización de sus lecturas.
+
+Durante la comprobación puede dirigir la salida de la entrada a
+`storage/logs/scheduler.log` en lugar de `/dev/null`, usando su ruta absoluta y
+la política de rotación de registros del servidor. Consulte el archivo después
+del siguiente minuto divisible entre cinco para verificar `creditos:proyectar`.
+No invoque `schedule:run` solo para consultar el estado: ejecuta las tareas
+que estén pendientes. La [guía del tablero](validar-tablero.md) distingue la
+carga inicial y el diagnóstico de la actualización periódica.
 
 ## 10. Respaldos
 

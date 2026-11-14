@@ -27,6 +27,35 @@ La reconstrucción registra `credito.projections_rebuilt` con resultado global y
 sin importes ni snapshots. Una consola sin iniciador conocido se registra como
 sistema con contexto desconocido explícito; no se atribuye al usuario conectado.
 
+## Aviso de lecturas sin verificar y actualización
+
+«Hay 0 de 2 créditos con lectura verificada» indica cobertura incompleta de ese
+corte. No significa cartera cero. Al consultar todas las sucursales se incluyen
+créditos que pueden no existir en la sucursal activa. Si las tablas ya existen
+pero aún no contienen lecturas, ejecute la carga inicial desde la carpeta del
+proyecto en el entorno afectado:
+
+```bash
+php artisan creditos:proyectar --reconstruir
+php artisan creditos:proyectar --diagnosticar
+```
+
+La reconstrucción se ejecuta inicialmente y cuando una reparación la requiera;
+no se necesita en cada consulta. El diagnóstico puede repetirse para comprobar
+consistencia. Si aparecen incidencias, revise la evidencia o las capturas
+pendientes indicadas por el contrato; no oculte el aviso ni asigne condiciones
+nuevas al crédito para forzar cobertura.
+
+El programador mantiene las lecturas cada cinco minutos. Su entrada permanente
+en el servidor se configura una vez y llama a `artisan schedule:run` cada minuto;
+consulte [configuración y comprobación del scheduler](desplegar-vps-nuevo.md#92-scheduler).
+`schedule:list` por sí solo no demuestra ejecución. En desarrollo puede mantener
+`php artisan schedule:work` en una terminal; no deje procesos de desarrollo como
+sustituto del cron permanente de la VPS.
+
+El selector de corte admite hoy o el último día de un mes anterior, según la
+zona de la institución. Las fechas de movimientos son un intervalo independiente.
+
 ## Casos de QA
 
 - Comparar tarjetas, detalles y recibos con importes independientes. Separar
