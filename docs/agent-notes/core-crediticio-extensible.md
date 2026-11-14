@@ -1,5 +1,21 @@
 # Core crediticio extensible
 
+## Proyecciones e integración ordenada — 14/11/2026
+
+PR #81 integrada en main `19a0614`, después de #65 (`4f03503`), #79 (`ba49793`)
+y #80 (`defe471`), según autorización del usuario. Escritor único de proyecciones
+y consistencia transaccional con operaciones/auditoría; captura histórica
+pendiente invalida saldos consolidados y su cierre mantiene la lectura atómica.
+No modifica fórmulas ni sustituye evidencia original para operaciones o previas.
+
+Review medium acumulado de `9835ef7` contra `67bba2c` sin hallazgos y
+[CI aprobada](https://github.com/jata-imk/kronik/actions/runs/43612999462), incluidas
+competencias MariaDB con proyecciones, PDF y recorridos históricos/Bullet/simple.
+Estado, pruebas y límites en la [Agent Note del tablero](tablero-propuesta-visual.md)
+y [ADR 0046](../explanation/adr-0046-lecturas-financieras-tablero.md).
+Despliegue y QA operativo siguen pendientes; la integración no cierra las tareas
+del core ni acredita aceptación integral Bullet. Sin operaciones sobre la BD real.
+
 ## Retoma documental de PR #65 — 13/11/2026
 
 El usuario autorizó integrar las PR abiertas en orden de publicación. PR #65

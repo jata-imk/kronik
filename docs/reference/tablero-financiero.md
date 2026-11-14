@@ -1,7 +1,7 @@
 # Tablero financiero
 
-Contrato de lectura de cartera de Kronik. Implementación local en
-`feat/tablero-proyecciones`; integración, despliegue y QA compartido se registran
+Contrato de lectura de cartera de Kronik, integrado mediante
+[PR #81](https://github.com/jata-imk/kronik/pull/81). Integración, despliegue y QA compartido se registran
 en la [Agent Note](../agent-notes/tablero-propuesta-visual.md).
 
 ## Responsabilidades y fuentes

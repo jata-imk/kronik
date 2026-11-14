@@ -1,7 +1,7 @@
 # ADR 0046: lecturas financieras derivadas del core
 
 - Fecha: 2026-11-13.
-- Estado: aceptado; implementación local para revisión, sin integración ni despliegue.
+- Estado: aceptado e implementado en main mediante [PR #81](https://github.com/jata-imk/kronik/pull/81), `19a0614`; despliegue y QA operativo pendientes.
 
 ## Contexto
 

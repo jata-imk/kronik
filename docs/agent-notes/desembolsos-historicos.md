@@ -1,6 +1,6 @@
 # Desembolsos históricos y captura cronológica
 
-## Referencias y estado — 2026-11-11
+## Referencias y estado — 2026-11-14
 
 - [Tarea Notion](https://app.notion.com/p/41361db7db7f81f5ad52d7df919dee99), base funcional main 67bba2c.
 - Backend: [PR #79](https://github.com/jata-imk/kronik/pull/79), código 2b2ccb1, evidencia documental 4057d70, rama feat/desembolsos-historicos.
@@ -11,8 +11,13 @@ Integrado por autorización del usuario el 13/11/2026: #79 en `ba49793` y #80 en
 `defe471`, después de #65. Heads revisados `4057d70` y `e657487`, con CI aprobada
 en las ejecuciones 43159286071 y 43159958047. La segunda PR se redirigió a main
 tras integrar su dependencia. Sin despliegue ni aceptación manual en QA compartido;
-la integración no autoriza dinero real. PR #81 añade proyecciones y verifica la
-interacción con capturas pendientes; mantiene su revisión/CI propia.
+la integración no autoriza dinero real. PR #81 quedó integrada en `19a0614`
+el 14/11: una captura pendiente impide publicar saldos consolidados vigentes y
+su cierre sincroniza proyecciones/cierre/auditoría atómicamente, probado con
+rollback. Review medium acumulado de `9835ef7` contra `67bba2c` sin hallazgos y
+[CI aprobada](https://github.com/jata-imk/kronik/actions/runs/43612999462), incluidos
+MariaDB, PDF y E2E histórico. Evidencia final y siguientes pasos en la
+[Agent Note del tablero](tablero-propuesta-visual.md).
 
 El usuario autorizó activar borrador QA con vigencia efectiva pasada conservando activación real. Monolito modular: Producto/LOS valida, documentos conserva evidencia, aplicación autoriza/bloquea/registra/audita y los motores existentes calculan. Equipos son contextos de permisos de una financiera por instalación, no tenants. No hay cambios de fórmulas ni interpretación con versiones actuales.
 

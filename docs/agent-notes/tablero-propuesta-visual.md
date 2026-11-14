@@ -6,24 +6,24 @@
 - [Definición y prototipo](https://app.notion.com/p/41361db7db7f81ecb2e9c006e1ce427f).
 - [Proyecciones del core](https://app.notion.com/p/40961db7db7f813b989fe177f80f5c8d).
 - Rama `feat/tablero-proyecciones`, base funcional `67bba2c`.
-- [PR #81](https://github.com/jata-imk/kronik/pull/81); código `6e0da93`.
+- [PR #81](https://github.com/jata-imk/kronik/pull/81); código final `9835ef7`,
+  integrado en main `19a0614`.
 - [Contrato de cifras y disponibilidad](../reference/tablero-financiero.md),
   [ADR 0046](../explanation/adr-0046-lecturas-financieras-tablero.md) y
   [preparación y validación](../how-to/validar-tablero.md).
 
 ## Estado actual — 2026-11-14
 
-Implementación publicada en la PR #81; revisión y CI iniciales de `6e0da93` /
-`b294c70` aprobadas. Se actualiza contra main `defe471` tras integrar #65, #79 y
-#80 en orden. Review medium acumulado de `3465468` contra `67bba2c` sin hallazgos
-accionables; suite secuencial 973/47640 y frontend 170/64 aprobados. La
-[CI de esa combinación](https://github.com/jata-imk/kronik/actions/runs/43560561315)
-también aprobó MariaDB, PDF y los recorridos de navegador. El usuario pidió
-completar el diseño antes de integrar #81; se mantiene abierta para ese ajuste.
-Sin integración, despliegue ni QA
-compartido de esta entrega. Se conservaron las modificaciones documentales
-anteriores ajenas al tablero; no se incluyeron en la PR. La retoma tras el apagado
-de la PC no perdió código. Las tareas siguen abiertas para integración y QA.
+Implementación y ajuste visual integrados mediante PR #81 en main `19a0614`,
+después de #65, #79 y #80, en el orden autorizado. Head final `9835ef7`, review
+medium acumulado contra `67bba2c` sin hallazgos accionables y
+[CI final aprobada](https://github.com/jata-imk/kronik/actions/runs/43612999462),
+incluidos MariaDB, PDF y todos los recorridos de navegador. El árbol integrado
+coincide exactamente con el head revisado. Rama local actual: main.
+
+Sin despliegue ni QA operativo compartido de esta entrega. Las tareas continúan
+abiertas para esa aceptación. Las doce modificaciones documentales anteriores
+ajenas al tablero conservan sus diferencias y no se incluyeron en la PR.
 
 El lector compartido verifica evidencia original; el proyector reutiliza el motor
 y el escritor central mantiene las dos tablas derivadas dentro de las operaciones
@@ -32,8 +32,9 @@ temporal, reconstrucción y diagnóstico. La consulta del tablero usa agregados 
 y detalles paginados. La regla permanente de consistencia quedó en `AGENTS.md`.
 
 La UI conserva el sistema visual Kronik y usa componentes Vue/composables,
-tarjetas, tres gráficas con tablas, filtros independientes de corte/periodo,
-detalle y etapas actuales de solicitudes. Conserva importes decimales exactos
+tarjetas, barras mensuales, área de capital, circular de cobros, programación
+apilada, antigüedad, listas de atención y embudo de etapas actuales. Gráficas con
+tablas, filtros independientes de corte/periodo y detalles paginados. Conserva importes decimales exactos
 en texto y tablas. El cambio de alcance/fecha oculta cifras anteriores mientras
 carga o falla; las recargas parciales también limpian permisos y datos revocados.
 
@@ -98,7 +99,8 @@ visual del 14/11; los resultados finales se registran en su sección específica
   accionables. El revisor no ejecutó pruebas porque ese checkout no tenía
   dependencias; se conservan las pruebas separadas y la verificación del hook.
 - El hook pre-push volvió a aprobar backend completo y build antes de publicar
-  la rama. CI valida además MariaDB y E2E sobre la PR; su resultado está pendiente.
+  la rama. La CI posterior aprobó MariaDB y E2E; la evidencia vigente corresponde
+  al head final indicado más abajo.
 - La revisión cubrió el diff acumulado completo de esta entrega contra la base,
   incluidas las interacciones core/tablero, migración, permisos, auditoría y UI.
   El cierre `b294c70` solo añadió evidencia documental a ese código.
@@ -115,8 +117,10 @@ Se añadió una comprobación de interacción: una captura histórica pendiente 
 presentar saldos consolidados vigentes. El aviso distingue movimientos capturados
 y ofrece enlace autorizado; completar la captura mantiene proyecciones y auditoría
 atómicamente. Prueba de rollback del cierre y de recuperación de cobertura.
-Frontend conjunto: 170 aprobadas en 64 archivos; build aprobado. Backend completo,
-revisión medium acumulada contra `67bba2c` y CI del nuevo head se ejecutan después.
+Frontend conjunto: 170 aprobadas en 64 archivos; build aprobado. Backend de
+`3465468`: 973/47640 aprobados, review medium acumulado contra `67bba2c` sin
+hallazgos y [CI aprobada](https://github.com/jata-imk/kronik/actions/runs/43560561315).
+El ajuste visual posterior se acredita por separado.
 
 ### Capacidad: 10000 créditos sintéticos
 
@@ -144,7 +148,7 @@ No extender estos tiempos a cartera antigua, Revolvente o MariaDB.
 El usuario contrastó las capturas con el borrador y una referencia de tablero.
 Solicitó embudo, gráfica circular, barras verticales, programación futura más
 visible, colores, badges, ayudas y listados con acceso al detalle completo.
-Se completa en la misma PR #81, antes de su integración ya autorizada bajo CI.
+Se completó en la misma PR #81 y quedó integrado tras aprobar revisión y CI.
 
 Componentes específicos: EmbudoEtapas, AtencionCartera, AntiguedadCartera,
 MovimientosPeriodo y ComposicionCobros. SerieFinanciera conserva tablas exactas,
@@ -157,8 +161,8 @@ reales por servicios, sin providers. Capital 44880; cobros 3120 + 8 × días del
 anterior. Pruebas dirigidas backend: 15/269 aprobadas; frontend completo:
 172 aprobadas en 65 archivos. Build y dos E2E Chromium aprobados, incluidas
 lista de atraso, gráfico circular, etapas, 320/390/768/1440 px, temas y zoom 200 %.
-Capturas renovadas con datos poblados. Suite backend completa y review/CI del
-head visual se ejecutan al publicar.
+Capturas renovadas con datos poblados. La suite backend completa y review/CI del
+head visual quedaron aprobadas, según la evidencia final siguiente.
 
 Medición exclusiva de lectura con 10000 créditos/12 cuotas en SQLite `:memory:`,
 Windows/PHP 8.3.16, ejecutada el 14/11 a las 09:47:37 de México: cinco consultas
@@ -168,13 +172,29 @@ limitadas de atención. Ensayo: 1 prueba/22 aserciones. Artefacto local separado
 `storage/framework/testing/tablero-capacidad-lectura.json`; construcción, avance
 y reconstrucción son nulos en este ensayo, no se atribuyen a estos tiempos.
 
-## Siguiente paso
+## Revisión e integración final — 2026-11-14
 
-1. Comprobar nueva revisión medium acumulada y CI de la combinación en PR #81.
-   Integrarla después de #65/#79/#80, ya autorizado por el usuario si todo pasa.
-2. Confirmar en CI concurrencia MariaDB con `tests/Concurrency/bullet.php`, que
-   contrasta también proyecciones. La cuenta local `kronik` recibió acceso
-   denegado a `kronik_test`; no se migró ni reinició la BD operativa.
-3. Desplegar en QA siguiendo la guía, migrar, reconstruir y diagnosticar.
-   Contrastar cifras operativas independientes con el equipo; registrar entorno,
+- Head `9835ef7`: hook pre-push secuencial, **974 backend aprobadas, 2 omitidas,
+  47679 aserciones**, 178.39 s; build aprobado. Frontend: **172/65 archivos**.
+- `codex review -c model_reasoning_effort=medium --base 67bba2c` en checkout
+  aislado: sin regresiones accionables. Barrido de #65/#79/#80/#81 y sus
+  interacciones contra la base funcional, no solo del ajuste visual. El revisor
+  ejecutó 50 pruebas dirigidas/826 aserciones, todas aprobadas; son una selección
+  de la suite, no se suman al conteo completo. Log local fuera de Git:
+  `output/tablero-pr/review-medium-visual.log`.
+- [CI 43612999462](https://github.com/jata-imk/kronik/actions/runs/43612999462)
+  aprobada: build/frontend/backend, guardas E2E, concurrencia de folios/auditoría
+  y Bullet con proyecciones en MariaDB, PDF real, gracia, tablero, captura
+  histórica, dos políticas Bullet, originación simple dual y RFC genéricos.
+- Integraciones autorizadas en orden: #65 `4f03503`, #79 `ba49793`, #80 `defe471`
+  y #81 **`19a0614`**. #81 conserva una sola PR para toda esta entrega.
+- Actualización documental posterior sin cambios funcionales ni eventos
+  auditables nuevos. Enlaces locales, navegación temática y diferencias locales
+  preexistentes verificados. No se migró ni reinició la BD operativa.
+
+## Pendientes reales
+
+1. Desplegar en QA siguiendo la guía, migrar, reconstruir y diagnosticar;
+   comprobar el programador activo y la cobertura de las lecturas.
+2. Contrastar cifras operativas independientes con el equipo; registrar entorno,
    commit y resultados reales en esta nota y Notion antes de cerrar las tareas.
