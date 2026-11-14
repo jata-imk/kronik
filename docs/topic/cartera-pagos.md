@@ -34,3 +34,5 @@ los límites QA en cada guía antes de operar.
 - [Números de crédito y recibo](../reference/folios.md).
 
 - [Contrato de captura histórica](../reference/captura-historica-creditos.md), [ADR 0045](../explanation/adr-0045-fechas-efectivas-captura-historica.md) y [seguimiento de la entrega](../agent-notes/desembolsos-historicos.md).
+
+- [Recorrido reproducible de desembolsos históricos](../how-to/qa-desembolsos-historicos.md).

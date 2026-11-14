@@ -8,7 +8,7 @@ const localDatabase = fileURLToPath(
     new URL("./storage/framework/testing/kronik-e2e.sqlite", import.meta.url),
 );
 
-const cycle = process.env.E2E_ORIGINACION_DUAL === "true" || process.env.E2E_BULLET_FIXTURES === "true";
+const cycle = process.env.E2E_HISTORICO_FIXTURES === "true" || process.env.E2E_ORIGINACION_DUAL === "true" || process.env.E2E_BULLET_FIXTURES === "true";
 const e2eEnvironment = {
     APP_ENV: "e2e",
     APP_URL: baseURL,

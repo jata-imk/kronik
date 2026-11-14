@@ -1,27 +1,37 @@
 # Desembolsos históricos y captura cronológica
 
-## Referencias
+## Referencias y estado — 2026-11-11
 
-- Notion: https://app.notion.com/p/41361db7db7f81f5ad52d7df919dee99
-- Base funcional: main 67bba2c.
-- Rama: feat/desembolsos-historicos; worktree output/desembolsos-historicos/worktree.
-- Backend: [PR #79](https://github.com/jata-imk/kronik/pull/79), código 2b2ccb1; segunda dependiente feat/desembolsos-historicos-ui para UI/aceptación.
-- [ADR 0045](../explanation/adr-0045-fechas-efectivas-captura-historica.md).
+- [Tarea Notion](https://app.notion.com/p/41361db7db7f81f5ad52d7df919dee99), base funcional main 67bba2c.
+- Backend: [PR #79](https://github.com/jata-imk/kronik/pull/79), código 2b2ccb1, evidencia documental 4057d70, rama feat/desembolsos-historicos.
+- UI/aceptación: [PR #80](https://github.com/jata-imk/kronik/pull/80), dependiente de #79, código 86aa88f, rama feat/desembolsos-historicos-ui.
+- [ADR 0045](../explanation/adr-0045-fechas-efectivas-captura-historica.md), [contrato](../reference/captura-historica-creditos.md), [recorrido QA y oráculos](../how-to/qa-desembolsos-historicos.md).
 
-## Estado — 2026-11-11
+Implementado y probado en ramas, sin integración, despliegue ni aceptación manual del usuario en QA compartido. CI de los últimos heads se registra en las PR; no confundir su resultado con despliegue. No fusionar ni operar dinero real sin indicación.
 
-Implementación en curso, sin integración, despliegue ni QA compartido. Árbol principal preservado; diff y hashes previos en output/desembolsos-historicos, fuera de la entrega. Worktrees anteriores intactos.
+El usuario autorizó activar borrador QA con vigencia efectiva pasada conservando activación real. Monolito modular: Producto/LOS valida, documentos conserva evidencia, aplicación autoriza/bloquea/registra/audita y los motores existentes calculan. Equipos son contextos de permisos de una financiera por instalación, no tenants. No hay cambios de fórmulas ni interpretación con versiones actuales.
 
-Definición recibida: activar borrador QA con vigencia pasada conservando activación real. Dos PR dependientes, revisión medium por cada una y barrido conjunto contra base funcional antes de dar por lista la entrega. Monolito modular; no modificar core para conocer canales/documentos ni equipos como tenants.
+Captura pendiente es control operativo separado del libro. Cierre explícito/idempotente no liquida, mueve dinero ni envía avisos acumulados. No hay emisor de atraso en esta base; consumidores futuros deben comprobar elegibilidad al programar y ejecutar. Canales y proyecciones mantienen sus tareas.
 
-Backend implementa regla temporal, desembolso firmado pasado, control operativo separado y cierre idempotente con auditoría. Código 2b2ccb1: suite completa 955 aprobadas, una omitida preexistente y 47352 aserciones; Pint y build aprobados. Hook pre-push repitió backend/build sin omitir controles. [CI 43151430137](https://github.com/jata-imk/kronik/actions/runs/43151430137) aprobada, incluidas diez competencias multiconexión MariaDB por política (ocho existentes y dos nuevas de cierre/pago histórico). Sin integración ni despliegue.
+## Evidencia de implementación
 
-## Evidencia y siguiente paso
+- Backend 2b2ccb1: 955 aprobadas, una omitida preexistente y 47352 aserciones. [CI 43151430137](https://github.com/jata-imk/kronik/actions/runs/43151430137) aprobada: diez competencias multiconexión MariaDB por política (ocho anteriores, dos nuevas de cierre/pago histórico).
+- UI 86aa88f: 958 backend aprobadas, una omitida preexistente y 47373 aserciones; 164 frontend aprobadas en 61 archivos. Cuatro guardas Node del harness aprobadas, repetidas tras renombrarlas fuera del patrón de descubrimiento de Playwright.
+- E2E histórico: dos políticas aprobadas con operador sin bandera Super Admin, reloj real, PDF real, oráculo independiente de centavos, pagos/anticipos cronológicos, reverso, PDF conservado y cierre. Regresiones: tres recorridos Bullet/Productos y uno de crédito simple dual aprobados.
+- Todas estas ejecuciones E2E crearon bases SQLite nuevas; nunca usaron BD operativa. Migración aditiva sin backfill; no aplicada en instalación operativa. Fixtures exclusivamente sintéticos.
+- Pint y build aprobados. Hooks pre-push repitieron backend/build sin omitir controles. Tras rebase 60b4c88 → 86aa88f solo cambió la Agent Note; código funcional idéntico.
+- Diagnósticos de intentos fallidos revisados: traza, captura, video y consola. Corregidos input-id de DatePicker y serialización civil; cliente de verificación Inertia incorpora versión para evitar 409. PDF requiere navegador con permisos del runner. Recorridos finales completos aprobados.
 
-Completar PR dependiente de UI y aceptación integral con BD nueva, reloj real y PDF real; regresiones, revisión medium propia y barrido conjunto contra 67bba2c. Actualizar esta nota y Notion con resultados efectivos. Migración aditiva de control operativo; no ejecutada en BD operativa. Sin dinero real ni fusiones/despliegues autorizados. Capacidad/proyecciones y canales conservan sus tareas; no se acredita capacidad para 10 mil créditos.
+## Revisiones
 
-## Revisión medium del backend
+Backend: review medium contra 67bba2c encontró dos P2 (fixture dual sin confirmación de vigencia pasada y true/1/"1" tratados distinto). Corregidos con regresión; segunda revisión sin defectos accionables. Disco fake por proceso evita colisión de ejecuciones; inventario del reinicio QA reconoce la tabla hija, probado solo en BD aislada.
 
-Revisión inicial de cambios contra 67bba2c detectó dos hallazgos P2: seeder dual activaba ayer sin confirmación y confirmación histórica aceptaba booleanos HTML pero el servicio comparaba estrictamente true. Corregidos: confirmación explícita del fixture y normalización única antes del hash/validación, con regresión para true/1/"1". Revisión medium posterior sin defectos accionables. El revisor inspeccionó fuente; implementador ejecutó las suites separadamente para evitar colisiones.
+UI 86aa88f: review medium contra 4057d70 sin defectos accionables. Barrido medium conjunto #79/#80 contra main 67bba2c, head 86aa88f: sin defectos accionables, incluyendo cronología, documentos/snapshots, permisos, auditoría, idempotencia y migración. Revisores inspeccionaron fuente sin ejecutar tests; implementador ejecutó suites separadas. El cierre posterior contiene documentación, capturas sintéticas y nombre del archivo de guardas; su revisión medium contra 86aa88f tampoco encontró defectos accionables. Detalles del head y CI final en las PR.
 
-La suite completa detectó colisión del disco fake al ejecutarse junto a pruebas del revisor; las nuevas pruebas usan disco por proceso. La nueva tabla también debe clasificarse en el inventario del reinicio QA existente: actualizado sin ejecutar el comando sobre ninguna base operativa. Añadido rechazo claro de vigencia repetida, sin retirar la versión activa.
+## Capacidad y pendientes reales
+
+Consulta por servicios reales, Windows/PHP 8.3.16/SQLite en memoria, historias de 30/365/1825 días: tres consultas cada una, sin escrituras; observación local 9.069/628.607/5751.555 ms y memoria incremental 32744/11392/11440 bytes. No es SLA ni prueba de 10 mil créditos. El avance diario existente cuesta más para historias largas; seguimiento de proyecciones/capacidad permanece abierto.
+
+Sin decisiones de negocio bloqueantes. Pendientes: revisión del usuario, autorización de integración en orden #79 → #80, despliegue y aceptación manual de QA siguiendo la guía; no se acredita cierre de la validación integral Bullet ni del roadmap amplio.
+
+Árbol principal preservado: 14 hashes de archivos preexistentes idénticos y main local/remoto 67bba2c al cierre de implementación. Worktrees anteriores intactos; ambos trabajos en worktrees aislados bajo output/desembolsos-historicos. Diff/hashes previos y logs locales quedan fuera de la entrega.

@@ -290,4 +290,3 @@ La modalidad por escenario conserva los emisores y eventos SIC de la matriz. `pr
 ## Captura histórica QA — ADR 0045
 
 El inicio se conserva en el evento existente credito.disbursed con state captura_historica_pendiente; no duplicar el desembolso con otro evento de inicio. La activación histórica conserva el evento existente de activación y producto como sujeto y versión en related. Fechas efectivas y referencias se consultan en evidencia protegida, sin ampliar la lista de metadatos permitidos. Consultas/cotizaciones no requieren eventos nuevos. Reintento y fallo de auditoría se prueban con persistencia real.
-

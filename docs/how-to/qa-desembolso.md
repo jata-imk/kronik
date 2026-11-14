@@ -64,3 +64,7 @@ $env:E2E_ORIGINACION_DUAL='true'
 npm run test:e2e -- solicitudes-dual.spec.js
 Remove-Item Env:\E2E_ORIGINACION_DUAL
 ```
+
+## Recorrido con fechas pasadas
+
+La [guía de desembolsos históricos](qa-desembolsos-historicos.md) complementa el caso de hoy con vigencia/fecha efectiva pasada, registro cronológico y captura incompleta. Permite reconstruir atrasos con reloj real y documentos actuales conservados; no adelantar el reloj ni cambiar condiciones firmadas. Las pruebas aisladas mantienen sus fronteras temporales exactas.

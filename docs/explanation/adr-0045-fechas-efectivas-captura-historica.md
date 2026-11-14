@@ -1,6 +1,6 @@
 # ADR 0045: fechas efectivas y captura histórica QA
 
-- Estado: implementación en curso; sin integración ni despliegue.
+- Estado: decisión aceptada e implementada en ramas de entrega; sin integración ni despliegue.
 - Fecha: 2026-11-11.
 - Fuente: [tarea autorizada](https://app.notion.com/p/41361db7db7f81f5ad52d7df919dee99).
 - Sustituye únicamente la prohibición de fecha pasada del [ADR 0019](adr-0019-desembolso-manual-qa.md). Conserva ADR 0020, 0023 y 0032.

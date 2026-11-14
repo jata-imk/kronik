@@ -20,6 +20,7 @@ class CreditoPagoController extends Controller
 
         return Inertia::render('Creditos/Pago', ['credito' => $credito->load(['cliente:id,primer_nombre,apellido_paterno', 'sucursal:id,nombre']),
             'situacion' => $service->consultar($credito), 'hoy' => app(FechaEmpresa::class)->hoy()->toDateString(),
+            'capturaHistorica' => app(\App\Services\Credito\CapturaHistoricaService::class)->resumen($credito),
             'habilitado' => config('originacion.pagos_qa_habilitados') === true]);
     }
 

@@ -45,6 +45,8 @@ try {
                 ...environment,
                 E2E_MANAGED_SERVER: "true",
                 E2E_BASE_URL: baseURL,
+                E2E_DB_DATABASE: environment.DB_DATABASE,
+                E2E_DB_CONNECTION: environment.DB_CONNECTION,
             },
             stdio: "inherit",
         },
