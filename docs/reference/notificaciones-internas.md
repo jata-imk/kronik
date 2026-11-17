@@ -16,6 +16,7 @@ El catálogo inicial es `OperatorNotificationEvent`: solicitud asignada, solicit
 - `GET /notificaciones/resumen` devuelve cantidad no leída y seis avisos recientes, con `Cache-Control: no-store`.
 - `PATCH /notificaciones/{id}/leer` marca un aviso propio del contexto activo como leído; un ID de otro usuario, equipo o sucursal responde 404. La segunda petición es idempotente.
 - La campana del encabezado consulta al abrir, al montar y cada 60 segundos mientras la pestaña esté visible. Se limpia al cambiar el contexto operativo. Incluye vacío, carga, error, recarga, historial, teclado y vista adaptable.
+- En móvil, el panel de la campana se centra bajo el encabezado para que su contenido no quede fuera de la pantalla; desde el ancho `sm` vuelve a quedar anclado a la campana.
 
 La lectura registra `operator_notification.read` una vez mediante `ActivityLogService` con actor, sujeto y equipo/sucursal originales. La creación del aviso se representa por el evento de negocio que la origina; no duplica su auditoría.
 

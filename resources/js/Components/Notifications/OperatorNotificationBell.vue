@@ -93,7 +93,7 @@ onUnmounted(() => {
             <i class="pi pi-bell" aria-hidden="true" />
             <span v-if="unreadCount" class="absolute -right-1 -top-1 min-w-5 rounded-full bg-red-600 px-1 text-center text-xs text-white">{{ unreadCount > 99 ? "99+" : unreadCount }}</span>
         </button>
-        <div v-if="open" id="operator-notification-menu" class="absolute right-0 z-50 mt-2 w-[min(22rem,90vw)] rounded-lg border border-surface-200 bg-surface-0 p-3 shadow-lg dark:border-surface-700 dark:bg-surface-900" role="region" aria-label="Notificaciones recientes">
+        <div v-if="open" id="operator-notification-menu" class="fixed left-1/2 top-14 z-50 w-[min(22rem,90vw)] -translate-x-1/2 rounded-lg border border-surface-200 bg-surface-0 p-3 shadow-lg dark:border-surface-700 dark:bg-surface-900 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:translate-x-0" role="region" aria-label="Notificaciones recientes">
             <div class="mb-2 flex items-center justify-between gap-2"><strong>Notificaciones</strong><Link :href="route('notifications.index')" class="text-primary-600 hover:underline" @click="open = false">Ver historial</Link></div>
             <p v-if="loading && !items.length" class="py-4 text-sm">Cargando notificaciones…</p>
             <p v-else-if="error" class="py-4 text-sm" role="alert">No se pudieron cargar las notificaciones. <button type="button" class="underline" @click="refresh">Reintentar</button></p>
