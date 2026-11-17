@@ -61,6 +61,23 @@ select {
     outline-offset: 2px;
 }
 
+/* Group toggles share the sidebar link styling and native keyboard behavior. */
+.k-sidebar-group {
+    width: calc(100% - var(--k-sidebar-indent, 0rem));
+    min-height: 44px;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+}
+.k-sidebar-group.active-route {
+    font-weight: 700;
+}
+.k-sidebar-group:disabled {
+    opacity: .6;
+    cursor: default;
+}
+
 /* Application shell and PrimeVue surfaces */
 .layout-topbar-actions,
 .layout-config-menu,
@@ -84,9 +101,13 @@ select {
     color: var(--k-muted);
     letter-spacing: .09em;
 }
-.layout-menu ul a.active-route {
+.layout-menu ul :is(a, button.k-sidebar-group).active-route {
     background: color-mix(in srgb, var(--k-brand), transparent 91%);
     color: var(--k-brand);
+}
+.layout-menu ul :is(a, button.k-sidebar-group):focus-visible {
+    outline: 2px solid var(--k-brand);
+    outline-offset: -2px;
 }
 .layout-menu ul ul a {
     min-height: 40px;
@@ -1383,7 +1404,7 @@ select {
         width: 100%;
     }
     .p-button,
-    .layout-menu ul a {
+    .layout-menu ul :is(a, button.k-sidebar-group) {
         min-height: 44px;
     }
     .k-metrics {

@@ -1,5 +1,7 @@
 # Agent Notes
 
+- [Sidebar: expansión manual, selección y validación](sidebar-desplegables.md).
+
 - [Tablero: implementación de diseño y proyecciones financieras](tablero-propuesta-visual.md)
 
 - [Días de gracia predeterminados de Empresa](empresa-dias-gracia.md)

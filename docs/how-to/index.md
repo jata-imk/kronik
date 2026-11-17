@@ -1,5 +1,7 @@
 # How-to
 
+- [Validar expansión, selección y accesibilidad del sidebar](validar-sidebar.md).
+
 - [Preparar y validar cifras, proyecciones y diseño del tablero](validar-tablero.md).
 
 [Buscar por tema](../topic/index.md) · [Índice general](../index.md)
