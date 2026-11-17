@@ -5,7 +5,7 @@
 - Notion: https://app.notion.com/p/41361db7db7f81b894d0f7f3b248e5dd
 - Rama: `fix/sidebar-desplegables`, base `7117c4c` de `origin/main`.
 - Worktree: `storage/framework/testing/sidebar-worktree` del checkout original.
-- Commit de implementación: pendiente de registrar al crear el commit local.
+- Commit de implementación: `c0aa7e5`, local y sin publicar; contiene el código, pruebas, documentación y capturas validados.
 - PR: no abierta; entrega local para revisión, sin integrar ni desplegar.
 - Contrato: [Sistema de diseño](../reference/diseno-ui-ux.md#expansión-del-menú-lateral).
 - Procedimiento: [Validar sidebar](../how-to/validar-sidebar.md).
@@ -33,7 +33,7 @@ Entorno local Windows, Node 22.22.3 y PHP 8.3.29. Inspección visual mediante Ch
 | `php artisan test --filter="navigation exposes product catalogue" --display-warnings` | 1 prueba y 7 aserciones aprobadas, sin avisos tras configurar el entorno de pruebas aislado. |
 | `node --test tests/E2E/prepare-guards.mjs` | 4 pruebas aprobadas. |
 | `npm run test:e2e -- sidebar.spec.js permissions.spec.js --max-failures=1 --output=test-results-sidebar-final` | 10 pruebas aprobadas. `E2E_FRESH_DATABASE=true`, puerto 8026, base UUID nueva. |
-| Enlaces y diff | Enlaces locales y `git diff --check` revisados sin errores. |
+| Enlaces y diff | 92 enlaces locales de los siete documentos afectados y `git diff --check` revisados sin errores. |
 
 Los E2E verifican clics repetidos, selección persistente, Enter/Espacio, foco visible de 2px, ARIA, Tab sin destinos ocultos, filtros Inertia, atrás, recarga, escritorio/móvil, ambos temas y modo overlay. Incluyen un nivel adicional sintético de grupos anidados para probar teclado, acordeón y ancho en móvil, sin modificar NavigationService. Conservan ausencia de Clientes y 403 sin permiso, acceso de lector y restricción administrativa.
 
@@ -46,7 +46,9 @@ Capturas sintéticas revisadas:
 - [Móvil claro](../audits/sidebar-desplegables/movil-claro.png).
 - [Móvil oscuro](../audits/sidebar-desplegables/movil-oscuro.png).
 
-La primera ejecución E2E usó un build anterior al ajuste del nombre accesible; se revisó su contexto de error y se recompiló antes de las pasadas aprobadas. La suite frontend emite avisos de directivas de pruebas ajenas al sidebar. El build informa referencias a recursos de portada/fuentes no distribuidos en este checkout, datos de Browserslist antiguos y chunks grandes; no impidieron compilar. Ninguno de estos avisos se presenta como validación de esas superficies.
+La primera ejecución E2E usó un build anterior al ajuste del nombre accesible; se revisaron contexto, traza, captura y video representativos y se recompiló antes de las pasadas aprobadas. La suite frontend emite avisos de directivas de pruebas ajenas al sidebar. El build informa referencias a recursos de portada/fuentes no distribuidos en este checkout, datos de Browserslist antiguos y chunks grandes; no impidieron compilar. Ninguno de estos avisos se presenta como validación de esas superficies.
+
+Notion actualizado con los criterios verificados y la evidencia real. Se conserva `Kanban Status=Doing` y `Done=__NO__` por la revisión e integración pendientes; sin fecha nueva comprometida.
 
 ## Revisión y siguiente paso
 
