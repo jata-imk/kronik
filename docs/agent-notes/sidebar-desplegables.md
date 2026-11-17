@@ -5,8 +5,8 @@
 - Notion: https://app.notion.com/p/41361db7db7f81b894d0f7f3b248e5dd
 - Rama: `fix/sidebar-desplegables`, base `7117c4c` de `origin/main`.
 - Worktree: `storage/framework/testing/sidebar-worktree` del checkout original.
-- Commit de implementación: `c0aa7e5`, local y sin publicar; contiene el código, pruebas, documentación y capturas validados.
-- PR: no abierta; entrega local para revisión, sin integrar ni desplegar.
+- Commit de implementación: `c0aa7e5`; evidencia inicial `7a45346`, publicados en la rama remota. El código, pruebas, documentación y capturas están validados.
+- PR: [#83 — permitir cerrar los desplegables del sidebar](https://github.com/jata-imk/kronik/pull/83), abierta contra `main`; sin integrar ni desplegar.
 - Contrato: [Sistema de diseño](../reference/diseno-ui-ux.md#expansión-del-menú-lateral).
 - Procedimiento: [Validar sidebar](../how-to/validar-sidebar.md).
 
@@ -29,7 +29,8 @@ Entorno local Windows, Node 22.22.3 y PHP 8.3.29. Inspección visual mediante Ch
 | Regresión contra código original | Falla al cerrar Clientes: `expected true to be false`. |
 | Menú/layout focalizados | 15 pruebas aprobadas; 11 nuevas sobre el componente recursivo real. |
 | `npm run test:unit` | 183 pruebas aprobadas en 66 archivos. Se ejecutó fuera del sandbox después de un bloqueo de acceso de esbuild. |
-| `npm run build` | Correcto tras el ajuste final de foco, tamaño y sangría. |
+| `npm run build` | Correcto tras el ajuste final de foco, tamaño y sangría; repetido correctamente por el hook pre-push. |
+| Hook pre-push: `php artisan test` | 974 pruebas aprobadas, 2 omitidas, 47 679 aserciones. Se omiten el ensayo optativo de renderizado documental y la medición explícita de capacidad. |
 | `php artisan test --filter="navigation exposes product catalogue" --display-warnings` | 1 prueba y 7 aserciones aprobadas, sin avisos tras configurar el entorno de pruebas aislado. |
 | `node --test tests/E2E/prepare-guards.mjs` | 4 pruebas aprobadas. |
 | `npm run test:e2e -- sidebar.spec.js permissions.spec.js --max-failures=1 --output=test-results-sidebar-final` | 10 pruebas aprobadas. `E2E_FRESH_DATABASE=true`, puerto 8026, base UUID nueva. |
@@ -52,6 +53,10 @@ Notion actualizado con los criterios verificados y la evidencia real. Se conserv
 
 ## Revisión y siguiente paso
 
-Revisado el diff acumulado frente a `7117c4c`: cambio limitado al sidebar, su estado, estilos, pruebas y documentación; sin cambios backend, financieros, de permisos ni del menubar superior. No se ha solicitado `/review medium` porque no se abrió PR.
+Revisado el diff acumulado frente a `7117c4c`: cambio limitado al sidebar, su estado, estilos, pruebas y documentación; sin cambios backend, financieros, de permisos ni del menubar superior.
 
-Revisar la rama local. Al abrir una PR, solicitar `/review medium`, resolver hallazgos y registrar el commit revisado antes de una eventual integración. La integración y el despliegue siguen pendientes por instrucción del usuario.
+`/review medium` ejecutado mediante `codex review --base origin/main -c model_reasoning_effort=medium` (CLI 0.169.0), base `7117c4c`, commit revisado `7a45346`: sin regresiones accionables. El revisor ejecutó 13 pruebas focalizadas, todas aprobadas. El código permanece idéntico al revisado; el seguimiento posterior solo modifica esta nota.
+
+El primer push fue rechazado por el hook al faltar APP_KEY en el entorno sintético del worktree. Se añadió una clave exclusiva de pruebas, se repitió el hook completo y aprobó antes de publicar. La actualización final de esta nota usa el mecanismo `SKIP_PRE_PUSH=1` exclusivamente para documentación, tras comprobar ausencia de cambios de código respecto de `7a45346`; no repite las suites ya aprobadas, conforme al contrato de entregas documentales. CI de la PR se consulta aparte y no acredita despliegue.
+
+Revisar la PR #83 y sus comprobaciones CI. La revisión medium local está resuelta sin hallazgos; cualquier cambio posterior de código requiere repetirla. La integración y el despliegue siguen pendientes por instrucción del usuario.
