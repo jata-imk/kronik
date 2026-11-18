@@ -77,9 +77,32 @@ revisión propia final y barrido conjunto todavía en curso.
 
 ## Siguiente paso y límites
 
-Publicar la primera PR; finalizar pruebas/revisión de la barra y los formularios,
-conservar capturas, publicar la segunda PR dependiente y registrar el barrido
+La primera entrega está publicada en la PR #85. Finalizar pruebas/revisión de la
+barra y los formularios, conservar capturas, publicar la segunda PR dependiente y registrar el barrido
 conjunto. Mantener Notion en curso hasta aceptación. No hay migraciones,
 variables nuevas ni ejecución del seeder en datos operativos. El seeder continúa
 aditivo. Se reutilizan eventos auditables de gestión; consulta, previa y cambios
 visuales no requieren eventos adicionales.
+
+## Pausa solicitada por el usuario — 2026-11-18
+
+Tarea pausada, sin integración ni despliegue. Main verificado en
+8884a78d738f9623c5d72fc194c4ecc55b400874. La PR
+[#85](https://github.com/jata-imk/kronik/pull/85) permanece abierta.
+La segunda entrega está guardada localmente en `feat/menubar-navegacion`,
+commit funcional/de pruebas 4e97d10, sin publicar una segunda PR.
+
+Antes de la pausa terminaron correctamente el build y la suite frontend
+(71 archivos, 199 pruebas); también las dos regresiones de diálogos ejecutadas
+por separado. Evidencia local: `menubar-nav-build4.log`,
+`menubar-nav-unit-full2.log` y `menubar-nav-unit-dialogs.log`, en
+`storage/framework/testing/` de este worktree. La última revisión medium
+(`menubar-review-nav-3.log`) se interrumpió por la pausa y no cuenta como
+completada. Se detuvieron los servidores propios de exploración 8033 y 8036.
+
+Al retomar: actualizar referencias y registrar de nuevo la base real; completar
+la revisión medium, validar el cambio de recargas parciales en backend, repetir
+los dos E2E de navegación pendientes con geocodificación sintética y comprobar
+sidebar/contexto de sucursal. Conservar las capturas finales locales, completar
+documentación y barrido acumulado contra la base funcional antes de publicar
+la PR dependiente. La aceptación del sidebar por el usuario continúa pendiente.
