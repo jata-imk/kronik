@@ -1,56 +1,75 @@
 # Menubar: usabilidad y configuración contextual
 
-## Referencias
+## Referencias y base
 
-- Notion: https://app.notion.com/p/41361db7db7f81968ea5cfc45a96b51d
-- Base funcional verificada tras `git fetch origin`: `8884a78d738f9623c5d72fc194c4ecc55b400874`, con PR #83 y #84 integradas.
-- Primer incremento: rama `feat/menubar-catalogo`; worktree propio `storage/framework/testing/menubar-worktree`.
-- PR: pendiente de publicación. Integración y despliegue no autorizados.
+- [Tarea en Notion](https://app.notion.com/p/41361db7db7f81968ea5cfc45a96b51d).
+- Base tras actualizar origin: 8884a78d738f9623c5d72fc194c4ecc55b400874, PR #83 y #84 integradas.
+- Primera entrega: feat/menubar-editor, worktree propio menubar-ui-worktree.
+- Segunda entrega dependiente: feat/menubar-navegacion, worktree propio menubar-nav-worktree.
+- La rama auxiliar feat/menubar-catalogo no se publica como PR independiente.
 
-## Estado actual
+## Estado al 2026-11-18
 
-Implementación iniciada el 2026-11-18 por instrucción del usuario. Se preservan los archivos locales, worktrees y servicios ajenos, incluida la rama independiente de comunicaciones de Bryan. La aceptación del sidebar sigue pendiente y no forma parte del cierre de esta tarea.
+Catálogo y editor implementados y verificados; PR pendiente de publicación. La
+barra compacta y la protección de navegación están en verificación en la segunda
+entrega. Sin integración ni despliegue autorizados. La aceptación del sidebar
+sigue pendiente y es independiente. Se preservan checkout, archivos, servicios
+y trabajo de comunicaciones de Bryan.
 
 ## Decisiones confirmadas
 
-Configuración compartida para toda la instalación con permisos actuales; catálogo de 19 módulos; visibilidad según pantalla; guardado explícito por elemento; opciones técnicas en apartado avanzado. Confirmar descarte de formularios, sin borradores persistentes ni altas silenciosas.
+Configuración compartida por instalación; 19 módulos; acciones contextuales por
+pantalla; permisos existentes separados; guardado explícito por elemento.
+Opciones técnicas avanzadas conservadas. PrimeVue Menubar con grupos de texto y
+flecha, iconos opcionales en submenús y Configurar neutro. Tipografía compacta
+solo en la barra, objetivos móviles de 44 px. Descarte confirmado, sin borradores
+persistentes ni altas silenciosas. [ADR 0047](../explanation/adr-0047-menubar-contextual-compartido.md).
 
-Mantener PrimeVue Menubar: grupos superiores con texto y flecha, iconos opcionales en submenús; tipografía compacta propia de la barra y control Configurar neutro. No cambiar la tipografía general ni introducir preferencias personales o separación por financiera.
+Se agrupan catálogo y editor en una PR para evitar que el validador de pantallas
+canónicas deje incompatible el editor anterior. La segunda depende de esta y
+cubre barra/navegación. No se rehace el sidebar ni se integran otras iniciativas.
 
-## Incrementos
+## Evidencia de la primera entrega
 
-1. Catálogo común, contexto, validación, persistencia y previsualización sin efectos.
-2. Editor guiado y agregado desde la pantalla real.
-3. Barra compacta, navegación segura y regresión conjunta.
+- Código funcional dd19836: push con hook completo, 997 pruebas backend aprobadas,
+  2 omitidas, 47 827 aserciones; 314.78 s. Build correcto.
+- Suite frontend: 69 archivos, 190 pruebas aprobadas.
+- E2E con harness Chromium, SQLite sintética y puertos propios: siete casos del
+  Menubar aprobados en ejecuciones focalizadas (cuatro combinaciones de viewport
+  y tema, consulta/teclado/recarga sin escrituras, validación española y lector
+  sin gestión). Tres recorridos de consulta administrativa también aprobados.
+- MCP durante inventario, prototipo y UI real. La propuesta no se guardó. Las
+  capturas finales son de la implementación, con fixtures sintéticos:
+  [editor](../audits/menubar-2026-11-18/editor-vista-previa.png),
+  [previa oscura](../audits/menubar-2026-11-18/editor-previa-oscuro.png) y
+  [previa móvil](../audits/menubar-2026-11-18/editor-previa-movil.png).
+- Se inspeccionaron trazas, capturas, vídeo y consola de fallos. Los ajustes del
+  harness esperan selección, cierre y actualización de URL antes de continuar;
+  usan filtro visible del catálogo y teclado de InputNumber. Los inicios de
+  sesión de perfiles distintos usan contextos de prueba independientes para no
+  heredar la URL intended de consultas geográficas de una pantalla anterior.
 
-Cada PR tendrá revisión medium, pruebas y documentación; barrido acumulado contra la base al completar. Aún no se acredita implementación validada, integración ni despliegue.
+## Revisiones medium
 
-La segunda revisión detectó que imponer nombres de pantalla canónicos antes de actualizar los editores antiguos impediría guardar algunas selecciones. Se agrupan los incrementos 1 y 2 en una primera PR coherente; la segunda entrega integra barra y navegación segura. El otro hallazgo, destinos aceptados pero no soportados por autorización, se corrige alineando validador y selector avanzado con el catálogo. No se publica la rama backend aislada como entrega integrable.
+Todas contra la base funcional 8884a78, salvo indicación:
 
-## Evidencia inicial
+- 64b5a5c: corregir autorización de roles en equipo seleccionado.
+- 720644d: agrupar backend/editor y alinear destinos aceptados con autorización.
+- 692cd7c: explicar rechazo al borrar grupo con contenido y alinear orden de borrador.
+- 5e41891: conservar agregado rápido al validar y activaciones históricas de otro módulo.
+- c1d4f66: corregir fixture de pivote y refrescar grupos tras eliminación.
+- dd19836: revisión completada sin hallazgos; 32 pruebas focalizadas de Menubar,
+  514 aserciones. El intento previo interrumpido por límite de uso no cuenta como
+  revisión completada.
 
-Exploración de `8884a78` con Playwright MCP en puerto 8031 y SQLite UUID nueva: listado sin barra cuando no hay activaciones; edición de cliente con Abrir expediente/Nueva solicitud; administración y agregado rápido. Este último preselecciona Listado aunque se abra desde edición. Las capturas usan fixtures sintéticos; la propuesta visual solo modificó el navegador y no se guardó. Build correcto y 4 pruebas frontend aprobadas antes de comenzar la implementación.
+Los cambios posteriores de esta rama son evidencia, documentación y harness E2E.
+La segunda entrega tendrá revisión propia y barrido acumulado contra 8884a78.
 
-## Siguiente paso
+## Siguiente paso y límites
 
-Revisión medium del commit `64b5a5c` frente a `8884a78`: hallazgo P2 en autorización de enlaces de roles para un equipo seleccionado distinto del actual. Se corrige reutilizando `TeamContext`, con regresión de ambos sentidos y restauración del contexto. Revisión posterior requerida.
-
-Primer incremento implementado: catálogo común, previsualización sin efectos, destinos autorizados y persistencia validada. Build correcto. Pruebas focalizadas iniciales: 27 aprobadas; se amplió cobertura de jerarquía y autorización. Completar revisión medium y publicar la PR antes del editor.
-
-Editor guiado en worktree propio `storage/framework/testing/menubar-ui-worktree`, rama `feat/menubar-editor`. Catálogo y editor se agrupan en la primera PR por compatibilidad; la barra/navegación quedan en la siguiente.
-
-## Evidencia durante la primera entrega
-
-Backend del commit 64b5a5c: suite completa con 991 aprobadas, 2 omitidas y 47 782 aserciones; 414.96 s. Se omiten renderizado documental optativo y medición de capacidad. Los ajustes posteriores de roles/destinos están cubiertos por 35 pruebas focalizadas (603 aserciones), todavía pendientes de la nueva suite completa.
-
-El editor reutiliza Form.vue para administración y agregado contextual. Build y 8 pruebas focalizadas de formulario/consulta/previsualización aprobadas; se amplía la cobertura del renderizado nativo y E2E. La exploración MCP usa puerto 8033 y SQLite UUID propia. Detectó Escape que propagaba desde MultiSelect al diálogo; se limita el cierre del diálogo mientras hay un selector abierto. Se revisaron capturas y errores del recorrido. El primer fallo de selección fue un locator al input oculto de MultiSelect, no un error de persistencia.
-
-Suite frontend completa: 69 archivos y 190 pruebas aprobadas. Se detiene la propagación de Escape desde el selector abierto; comprobado con MCP. El siguiente E2E detectó latencia de guardado durante ejecución concurrente de la suite; traza: POST 302 en 18 s y GET posterior cancelado al agotar el límite de 15 s. Captura, vídeo, traza y consola inspeccionados; el recorrido usa ahora 45 s para esperar persistencia y se ejecuta sin la suite frontend concurrente. La exploración detectó además un delimitador incorrecto en el marcador de navegación documental nativa; corregido y pruebas backend repetidas.
-
-[Captura del editor y vista previa](../audits/menubar-2026-11-18/editor-vista-previa.png), Chromium con fixtures sintéticos. Vista previa sin enlaces ejecutables ni escrituras. Capturas finales adicionales y resultados E2E pendientes del recorrido en curso.
-
-Revisión medium de 692cd7c contra 8884a78: dos P2 corregidos (explicar rechazo al borrar grupos con contenido y ordenar borradores nuevos igual que después de guardar). Se amplía la regresión de orden y se repite revisión. E2E de escritorio claro aprobado en repetición sin suite concurrente; ejecución conjunta todavía pendiente.
-
-Revisión medium de 5e41891 contra 8884a78: dos P2 corregidos (mantener borrador rápido al refrescar el mismo contexto operativo tras validación y conservar activaciones históricas bajo otro módulo). La activación sigue la pantalla exacta guardada, mientras el catálogo orienta las nuevas selecciones. Se añade regresión histórica y se revisa de nuevo.
-
-Revisión medium de c1d4f66: corregidos fixture de pivote doblemente codificado y catálogo de grupos desactualizado tras eliminar. Los E2E inspeccionados mostraron que el auto-scroll de Playwright al último elemento del desplegable podía cerrarlo antes del clic; el recorrido usa el filtro visible del selector. El orden se captura con teclado y se comprueba antes de continuar. No se debilitan las aserciones de persistencia, selección o Escape.
+Publicar la primera PR; finalizar pruebas/revisión de la barra y los formularios,
+conservar capturas, publicar la segunda PR dependiente y registrar el barrido
+conjunto. Mantener Notion en curso hasta aceptación. No hay migraciones,
+variables nuevas ni ejecución del seeder en datos operativos. El seeder continúa
+aditivo. Se reutilizan eventos auditables de gestión; consulta, previa y cambios
+visuales no requieren eventos adicionales.
