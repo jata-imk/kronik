@@ -1,492 +1,187 @@
 <script setup>
-import { reactive, ref, watch, computed, onMounted } from "vue";
-import { useToast } from "primevue/usetoast";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useForm } from "@inertiajs/vue3";
+import { useToast } from "primevue/usetoast";
+import axios from "axios";
+import MenubarIconPicker from "@/Components/MenubarIconPicker.vue";
+import MenubarPreview from "@/Components/MenubarPreview.vue";
 
-const toast = useToast();
 const props = defineProps({
-    readonly: Boolean,
-    modules: Array,
-    menubarItems: Array,
-    item: Object,
+    readonly: Boolean, item: Object, initialScreen: { type: String, default: "" },
+    modules: { type: Array, default: () => [] }, menubarItems: { type: Array, default: () => [] },
+    catalogo: { type: Object, default: null }, canPreview: { type: Boolean, default: true },
 });
 const emit = defineEmits(["close"]);
-
-const modules = ref(props.modules);
-function itemParent() { return props.item?.parent ? [{label:"Padre guardado",children:[props.item.parent]}] : []; }
-const menubarItemsWithChildren = ref([
-    {
-        label: "Base",
-        children: props.menubarItems.filter((i) => i.children?.length > 0),
-    },
-    ...(itemParent()),
-    ...props.menubarItems
-        .flatMap((i) => [i, ...i.children.flatMap((c) => [c, ...c.children])])
-        .filter((i) => i.children?.length > 0),
-]);
-const item = reactive(JSON.parse(JSON.stringify(props.item ?? {})));
-const visible = ref(true);
-
-// --- Tipos con etiquetas de usuario ---
-const menubarItemTypes = [
-    { label: "Carpeta / Agrupador", value: "menu", icon: "pi pi-folder", description: "Solo contiene sub-items, sin enlace propio" },
-    { label: "Página de la aplicación", value: "route:name", icon: "pi pi-directions", description: "Redirige a una página del sistema por nombre de ruta" },
-    { label: "URL externa", value: "route:static", icon: "pi pi-link", description: "Enlace fijo a cualquier URL" },
-    { label: "Botón Regresar", value: "route:referer_fallback", icon: "pi pi-arrow-left", description: "Vuelve a la página anterior, o al listado indicado si no hay historial" },
-    { label: "Condicional avanzado", value: "route:dynamic", icon: "pi pi-code", description: "Destino cambia según la URL de origen (avanzado)" },
-];
-
-const actionTypes = [
-    { label: "Listado / Vista principal", value: "index" },
-    { label: "Formulario de creación", value: "create" },
-    { label: "Vista de detalle", value: "show" },
-    { label: "Formulario de edición", value: "edit" },
-];
-
-// --- AutoComplete de rutas ---
-const availableRoutes = ref([]);
-const routeSuggestions = ref([]);
-
-onMounted(async () => {
-    if (props.readonly) return;
-    try {
-        const res = await fetch(route("admin.menubar-items.available-routes"));
-        availableRoutes.value = await res.json();
-    } catch (e) {
-        // silent — AutoComplete funciona como texto libre como fallback
-    }
-});
-
-const searchRoutes = (event) => {
-    const q = event.query.toLowerCase();
-    routeSuggestions.value = availableRoutes.value.filter((r) => r.toLowerCase().includes(q));
-};
-
-// --- Selector de íconos ---
-const iconPickerVisible = ref(false);
-const iconSearch = ref("");
-
-const allIcons = [
-    "home", "bars", "times", "check", "plus", "minus",
-    "arrow-left", "arrow-right", "arrow-up", "arrow-down",
-    "angle-left", "angle-right", "angle-up", "angle-down",
-    "chevron-left", "chevron-right", "chevron-up", "chevron-down",
-    "caret-left", "caret-right", "caret-up", "caret-down",
-    "user", "users", "user-plus", "user-minus", "user-edit",
-    "file", "file-pdf", "file-excel", "file-word", "folder", "folder-open",
-    "save", "download", "upload", "copy", "database", "server",
-    "cloud", "cloud-upload", "cloud-download",
-    "search", "filter", "refresh", "sync", "eye", "eye-slash",
-    "pencil", "trash", "lock", "lock-open", "key", "send",
-    "share-alt", "print", "external-link",
-    "envelope", "phone", "comments", "comment", "bell", "bell-slash",
-    "chart-bar", "chart-line", "chart-pie", "calculator",
-    "percentage", "dollar", "wallet", "credit-card",
-    "info-circle", "exclamation-circle", "exclamation-triangle",
-    "question-circle", "check-circle", "times-circle", "ban",
-    "flag", "star", "star-fill", "heart", "bookmark", "tag", "tags",
-    "thumbs-up", "thumbs-down",
-    "code", "cog", "cogs", "wrench", "desktop", "mobile", "tablet",
-    "globe", "link", "directions", "sitemap", "shield",
-    "calendar", "clock", "history", "map-marker", "compass",
-    "book", "paperclip", "list", "table", "th-large",
-    "grip-vertical", "grip-horizontal", "shopping-cart", "briefcase",
-    "building", "ticket", "id-card", "hashtag", "at", "qrcode",
-    "image", "images", "video",
-    "sort-amount-up", "sort-amount-down", "sort-alpha-up", "sort-alpha-down",
-    "th", "fw",
-];
-
-const filteredIcons = computed(() => {
-    if (!iconSearch.value) return allIcons;
-    return allIcons.filter((i) => i.includes(iconSearch.value.toLowerCase()));
-});
-
-const selectIcon = (iconName) => {
-    if (props.readonly) return;
-    form.icon = `pi pi-fw pi-${iconName}`;
-    iconPickerVisible.value = false;
-    iconSearch.value = "";
-};
-
-// --- Builder para route:dynamic ---
-const dynamicDefault = reactive({ routeName: "", params: "" });
-const dynamicConditions = ref([]);
-
-if (item?.type === "route:dynamic" && item?.value) {
-    try {
-        const parsed = JSON.parse(item.value);
-        const def = parsed.find((c) => c.condition_type === "default");
-        if (def) {
-            dynamicDefault.routeName = def.route_name ?? "";
-            dynamicDefault.params = def.params ? JSON.stringify(def.params) : "";
-        }
-        const conds = parsed.filter((c) => c.condition_type === "route_regexp");
-        dynamicConditions.value = conds.map((c) => ({
-            triggerRouteName: c.condition_value?.route_name ?? "",
-            destinationRouteName: c.route_name ?? "",
-            params: c.params ? JSON.stringify(c.params) : "",
-        }));
-    } catch (e) {
-        // keep empty
-    }
-}
-
-const addDynamicCondition = () =>
-    dynamicConditions.value.push({ triggerRouteName: "", destinationRouteName: "", params: "" });
-const removeDynamicCondition = (i) => dynamicConditions.value.splice(i, 1);
-
-const safeParseParams = (raw) => {
-    if (!raw) return undefined;
-    try { return JSON.parse(raw); } catch (e) { return undefined; }
-};
-
-const buildDynamicValue = () => {
-    const result = [];
-    if (dynamicDefault.routeName) {
-        const entry = { condition_type: "default", route_name: dynamicDefault.routeName };
-        const p = safeParseParams(dynamicDefault.params);
-        if (p) entry.params = p;
-        result.push(entry);
-    }
-    dynamicConditions.value.forEach((c) => {
-        if (c.triggerRouteName && c.destinationRouteName) {
-            const entry = {
-                condition_type: "route_regexp",
-                condition_value: { pregmatch_subject_type: "referer", route_name: c.triggerRouteName },
-                route_name: c.destinationRouteName,
-            };
-            const p = safeParseParams(c.params);
-            if (p) entry.params = p;
-            result.push(entry);
-        }
-    });
-    return JSON.stringify(result);
-};
-
-// --- Formulario ---
+const toast = useToast();
+const saved = props.item ?? {};
+const originalModules = Object.fromEntries((saved.modules ?? []).map(module => [module.id, { routes: [...((module.menubar_item_module ?? module.menubarItemModule)?.routes ?? [])] }]));
 const form = useForm({
-    modules:
-        item?.id &&
-        Object.fromEntries(
-            item?.modules?.map((m) => [m.id, { routes: (m.menubar_item_module ?? m.menubarItemModule)?.routes }]) ?? [],
-        ),
-    label: item?.label || "",
-    icon: item?.icon || "",
-    type: item?.type || "route:name",
-    value: props.readonly || item?.type !== "route:dynamic" ? (item?.value ?? "") : "",
-    params: item?.params == null ? "" : typeof item.params === "string" ? item.params : JSON.stringify(item.params),
-    parent_id: item?.parent_id || null,
+    label: saved.label ?? "", icon: saved.icon ?? "", type: saved.type ?? "route:name",
+    value: saved.value ?? "", params: saved.params == null ? "" : typeof saved.params === "string" ? saved.params : JSON.stringify(saved.params),
+    parent_id: saved.parent_id ?? null, sort_order: saved.sort_order ?? 0, modules: originalModules,
 });
-
-const modulesSelected = ref(item?.id ? Object.keys(form.modules).map(Number) : []);
-const modulesSelectedMenubarItemModule = reactive(
-    item?.id
-        ? Object.fromEntries(
-              modulesSelected.value.map((id) => [
-                  id,
-                  form.modules[id].routes?.map((r) => r.split(".").reverse().shift() || ""),
-              ]),
-          )
-        : {},
-);
-const flagAnyActionModify = ref(false);
-
-watch(
-    () => [modulesSelected, modulesSelectedMenubarItemModule],
-    () => {
+const catalogo = ref(props.catalogo);
+const loading = ref(false);
+const loadError = ref("");
+const discardVisible = ref(false);
+const visible = ref(true);
+const selectedScreens = ref(Object.values(originalModules).flatMap(module => module.routes));
+const types = [
+    { label: "Acción del catálogo", value: "route:name" }, { label: "Grupo de menú", value: "menu" },
+    { label: "Enlace fijo (avanzado)", value: "route:static" }, { label: "Regresar (avanzado)", value: "route:referer_fallback" },
+    { label: "Destino condicional (avanzado)", value: "route:dynamic" },
+];
+let controller;
+let revision = 0;
+const actions = computed(() => catalogo.value?.acciones ?? []);
+const screens = computed(() => {
+    const current = catalogo.value?.pantallas ?? [];
+    const legacy = Object.entries(originalModules).flatMap(([moduleId, link]) => link.routes.filter(key => !current.some(screen => screen.key === key))
+        .map((key, index) => ({ key, module_id: Number(moduleId), label: `Pantalla guardada ${index + 1} · configuración avanzada` })));
+    return [...current, ...legacy];
+});
+const selectedAction = computed({
+    get: () => actions.value.some(action => action.key === form.value) ? form.value : null,
+    set: key => {
         if (props.readonly) return;
-        form.modules = Object.fromEntries(
-            modulesSelected.value.map((id) => [
-                id,
-                {
-                    routes: modulesSelectedMenubarItemModule[id]?.map(
-                        (r) => `${modules.value.find((m) => m.id === id)?.route_name}.${r}`,
-                    ),
-                },
-            ]),
-        );
-        flagAnyActionModify.value = false;
-        for (const [, routes] of Object.entries(modulesSelectedMenubarItemModule)) {
-            if (routes?.includes("edit") || routes?.includes("show")) {
-                flagAnyActionModify.value = true;
-            }
-        }
-        if (flagAnyActionModify.value) {
-            let params = "";
-            for (const moduleId of modulesSelected.value) {
-                const module = modules.value.find((m) => m.id === moduleId);
-                const moduleName = module.name;
-                const moduleNameSingular = moduleName.endsWith("s") ? moduleName.slice(0, -1) : moduleName;
-                params += `"${moduleNameSingular}": "{${moduleNameSingular}}",`;
-            }
-            form.params = `{${params.slice(0, -1)}}`;
-        }
+        const action = actions.value.find(candidate => candidate.key === key);
+        if (!action) return;
+        form.value = action.key;
+        form.params = action.params ? JSON.stringify(action.params) : "";
+        if (!form.label) form.label = action.label;
     },
-    { deep: true, immediate: true },
-);
-
-watch(() => form.type, () => {
-    if (props.readonly) return;
-    if (form.type !== "route:dynamic") form.value = "";
 });
+const advanced = computed(() => !["menu", "route:name"].includes(form.type) || Boolean(saved.value && form.type === "route:name" && catalogo.value && !selectedAction.value));
+const groups = computed(() => {
+    const source = [...(catalogo.value?.grupos ?? [])];
+    if (saved.parent && !source.some(group => group.id === saved.parent.id)) source.push(saved.parent);
+    const lookup = new Map(source.map(group => [group.id, group]));
+    const path = group => {
+        const labels = [group.label];
+        const seen = new Set([group.id]);
+        let parent = lookup.get(group.parent_id);
+        while (parent && !seen.has(parent.id)) { seen.add(parent.id); labels.unshift(parent.label); parent = lookup.get(parent.parent_id); }
+        return { ...group, path: labels.join(" / "), ancestors: seen };
+    };
+    return source.map(path).filter(group => !group.ancestors.has(saved.id));
+});
+const previewDraft = computed(() => ({
+    label: form.label, icon: form.icon, type: form.type, value: form.value, params: form.params,
+    parent_id: form.parent_id, sort_order: form.sort_order, modules: form.modules,
+}));
 
-const submit = () => {
+watch(selectedScreens, values => {
     if (props.readonly) return;
-    if (form.type === "route:dynamic") form.value = buildDynamicValue();
-    if (item?.id) {
-        form.put(route("admin.menubar-items.update", item.id), {
-            only: ["menubarCatalogo", "menubarItems", "menubarSeleccionado", "modoMenu", "auth", "modules", "listado"],
-            onSuccess: () => {
-                toast.add({ severity: "success", summary: "Item actualizado", life: 3000 });
-                emit("close");
-            },
-        });
-    } else {
-        form.post(route("admin.menubar-items.store"), {
-            only: ["menubarCatalogo", "menubarItems"],
-            onSuccess: () => {
-                toast.add({ severity: "success", summary: "Item creado", life: 3000 });
-                emit("close");
-            },
-        });
+    const links = {};
+    for (const key of values) {
+        const screen = screens.value.find(option => option.key === key);
+        if (!screen) continue;
+        (links[screen.module_id] ??= { routes: [] }).routes.push(key);
     }
-};
+    form.modules = links;
+}, { deep: true, flush: "sync" });
+function preselectScreen() {
+    if (!saved.id && props.initialScreen && !selectedScreens.value.length && screens.value.some(screen => screen.key === props.initialScreen)) selectedScreens.value = [props.initialScreen];
+}
+async function loadCatalog() {
+    if (props.readonly) return;
+    const current = ++revision;
+    controller?.abort();
+    controller = new AbortController();
+    loading.value = true;
+    loadError.value = "";
+    try {
+        const { data } = await axios.get(route("admin.menubar-items.catalogo"), { signal: controller.signal });
+        if (current !== revision) return;
+        catalogo.value = data;
+        preselectScreen();
+    } catch (exception) {
+        if (current === revision && !axios.isCancel(exception)) loadError.value = "No pudimos cargar las acciones disponibles. Inténtalo de nuevo.";
+    } finally { if (current === revision) loading.value = false; }
+}
+onMounted(() => { if (catalogo.value) preselectScreen(); else if (!props.readonly) loadCatalog(); });
+onBeforeUnmount(() => { revision++; controller?.abort(); form.cancel?.(); });
+function requestClose() {
+    if (!props.readonly && form.isDirty) discardVisible.value = true;
+    else emit("close");
+}
+function submit() {
+    if (props.readonly || loading.value || !catalogo.value || form.processing) return;
+    const options = {
+        only: ["menubarCatalogo", "menubarItems", "menubarEstado", "menubarSeleccionado", "modoMenu", "auth", "modules", "catalogoMenu", "listado"],
+        onSuccess: () => { toast.add({ severity: "success", summary: saved.id ? "Elemento actualizado" : "Elemento creado", life: 3000 }); emit("close"); },
+    };
+    if (saved.id) form.put(route("admin.menubar-items.update", saved.id), options);
+    else form.post(route("admin.menubar-items.store"), options);
+}
+defineExpose({ requestClose, form, selectedScreens, selectedAction });
 </script>
 
 <template>
-    <Dialog v-model:visible="visible" :header="readonly ? 'Consultar elemento de menú' : 'Configurar item de menú'" :modal="true" :style="{ width: '600px', maxWidth: '95vw' }" @hide="emit('close')">
-        <Message v-if="readonly" severity="info">Consulta · solo lectura.</Message>
-        <form @submit.prevent="submit">
-            <div class="flex flex-col gap-5">
-
-                <!-- Título -->
+    <Dialog :visible="visible" :header="readonly ? 'Consultar elemento de menú' : 'Configurar elemento de menú'" modal :style="{ width: '760px', maxWidth: '96vw' }"
+        @update:visible="value => { if (!value) requestClose(); }">
+        <Message :severity="readonly ? 'info' : 'secondary'" class="mb-4">{{ readonly ? "Consulta · solo lectura." : "Configuración compartida: los cambios afectan a toda la instalación, respetando los permisos de cada usuario." }}</Message>
+        <Message v-if="loadError" severity="error" role="alert" class="mb-4">{{ loadError }} <Button type="button" label="Reintentar carga" text @click="loadCatalog" /></Message>
+        <p v-if="loading" role="status" class="mb-4">Cargando acciones y pantallas…</p>
+        <form @submit.prevent="submit" class="flex flex-col gap-5" :aria-busy="form.processing || loading">
+            <Message v-if="Object.keys(form.errors).length" severity="error" role="alert"><ul><li v-for="(message, field) in form.errors" :key="field">{{ message }}</li></ul></Message>
+            <div>
+                <label for="menubar-type" class="mb-1 block text-sm font-medium">Tipo de elemento</label>
+                <Select inputId="menubar-type" v-model="form.type" :options="types" optionLabel="label" optionValue="value" :disabled="readonly" fluid />
+            </div>
+            <section v-if="form.type === 'route:name' && !readonly" aria-label="Qué abre">
+                <label for="menubar-action" class="mb-1 block text-sm font-medium">Qué abre</label>
+                <Select inputId="menubar-action" v-model="selectedAction" :options="actions" optionLabel="label" optionValue="key" filter fluid placeholder="Elige una acción existente">
+                    <template #option="{ option }"><span>{{ option.label }}</span><span class="ml-2 text-xs text-surface-500">{{ option.group }}</span></template>
+                </Select>
+                <p v-if="!selectedAction && saved.value" class="mt-2 text-sm text-surface-500">El destino guardado se conserva en las opciones avanzadas. No necesitas cambiarlo para ajustar la etiqueta o ubicación.</p>
+                <p v-if="actions.find(action => action.key === selectedAction)?.required.length" class="mt-2 text-sm text-surface-500">Esta acción necesita un registro abierto. La vista previa indica cuándo falta ese contexto.</p>
+            </section>
+            <div>
+                <label for="menubar-label" class="mb-1 block text-sm font-medium">Etiqueta</label>
+                <InputText id="menubar-label" v-model="form.label" :disabled="readonly" fluid placeholder="Ejemplo: Cliente, Abrir expediente…" :aria-invalid="!!form.errors.label" />
+            </div>
+            <div>
+                <span class="mb-2 block text-sm font-medium">Icono opcional</span>
+                <MenubarIconPicker v-model="form.icon" :readonly="readonly" />
+                <p class="mt-1 text-xs text-surface-500">Los grupos superiores muestran texto y flecha. El icono se utiliza dentro de los submenús.</p>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
                 <div>
-                    <label class="block text-sm font-medium mb-1">Título *</label>
-                    <InputText :disabled="readonly" fluid v-model="form.label" placeholder="Ej: Ver clientes, Nueva consulta..." />
+                    <label for="menubar-parent" class="mb-1 block text-sm font-medium">Dentro del grupo</label>
+                    <Select inputId="menubar-parent" v-model="form.parent_id" :options="groups" optionLabel="path" optionValue="id" :disabled="readonly" showClear fluid placeholder="Nivel superior" />
                 </div>
-
-                <!-- Tipo de item -->
                 <div>
-                    <label class="block text-sm font-medium mb-2">Tipo de item *</label>
-                    <div class="flex flex-col gap-2">
-                        <div
-                            v-for="t in menubarItemTypes"
-                            :key="t.value"
-                            class="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors select-none"
-                            :class="form.type === t.value
-                                ? 'border-primary bg-primary/5 dark:bg-primary/10'
-                                : 'border-surface-200 dark:border-surface-700 hover:border-primary/40'"
-                            @click="!readonly && (form.type = t.value)">
-                            <span :class="[t.icon, 'text-primary flex-shrink-0']"></span>
-                            <div class="flex-1 min-w-0">
-                                <div class="font-medium text-sm">{{ t.label }}</div>
-                                <div class="text-xs text-surface-500 truncate">{{ t.description }}</div>
-                            </div>
-                            <span v-if="form.type === t.value" class="pi pi-check text-primary flex-shrink-0"></span>
-                        </div>
-                    </div>
+                    <label for="menubar-order" class="mb-1 block text-sm font-medium">Orden</label>
+                    <InputNumber inputId="menubar-order" v-model="form.sort_order" :min="0" :max="2147483647" :useGrouping="false" :disabled="readonly" fluid />
+                    <p class="mt-1 text-xs text-surface-500">Los números menores aparecen primero dentro del mismo grupo.</p>
                 </div>
-
-                <!-- Ícono -->
-                <div>
-                    <label class="block text-sm font-medium mb-1">Ícono</label>
-                    <div class="flex gap-2 items-center">
-                        <span :class="[form.icon || 'pi pi-question-circle', 'text-2xl w-8 text-center flex-shrink-0', !form.icon && 'text-surface-300']"></span>
-                        <InputText :disabled="readonly" v-model="form.icon" fluid placeholder="pi pi-fw pi-home" />
-                        <Button v-if="!readonly" type="button" icon="pi pi-th-large" @click="iconPickerVisible = true" outlined :title="'Abrir selector de íconos'" />
-                    </div>
-                    <p class="text-xs text-surface-400 mt-1">Escribe la clase directamente o usa el selector visual</p>
+            </div>
+            <section aria-label="Dónde aparece">
+                <label for="menubar-screens" class="mb-1 block text-sm font-medium">Dónde aparece</label>
+                <MultiSelect inputId="menubar-screens" v-model="selectedScreens" :options="screens" optionLabel="label" optionValue="key" :disabled="readonly" filter fluid placeholder="Elige pantallas" :maxSelectedLabels="3" selectedItemsLabel="{0} pantallas" />
+                <p class="mt-2 text-sm text-surface-500">{{ selectedScreens.length ? "La etiqueta, ubicación y orden se comparten en estas pantallas." : "Sin pantallas asignadas: este elemento queda guardado, pero no aparece por sí solo en la barra." }}</p>
+                <p v-if="form.type === 'menu'" class="mt-1 text-sm text-surface-500">Un grupo aparece cuando contiene acciones disponibles en la pantalla. Configura también dónde aparecen sus acciones.</p>
+            </section>
+            <details :open="advanced || readonly" class="rounded-lg border border-surface-200 p-3 dark:border-surface-700">
+                <summary class="cursor-pointer text-sm font-medium">Opciones avanzadas{{ readonly ? " · valores guardados" : "" }}</summary>
+                <div class="mt-3 flex flex-col gap-3">
+                    <p class="text-sm text-surface-500">Conserva la configuración existente. Modifica estos valores solo si conoces el destino y su contexto.</p>
+                    <div><label for="menubar-value" class="mb-1 block text-sm">Destino guardado{{ form.type === "route:dynamic" ? " (JSON condicional)" : "" }}</label><Textarea id="menubar-value" v-model="form.value" :readonly="readonly" rows="4" fluid /></div>
+                    <div><label for="menubar-params" class="mb-1 block text-sm">Parámetros guardados (JSON)</label><Textarea id="menubar-params" v-model="form.params" :readonly="readonly" rows="2" fluid /></div>
+                    <div><label for="menubar-icon-class" class="mb-1 block text-sm">Clase del icono guardado</label><InputText id="menubar-icon-class" v-model="form.icon" :disabled="readonly" fluid /></div>
+                    <pre v-if="readonly" class="whitespace-pre-wrap break-all text-xs">{{ form.modules }}</pre>
                 </div>
-
-                <!-- Valor según tipo -->
-
-                <!-- route:name -->
-                <div v-if="readonly"><label class="block">Valor guardado</label><Textarea :model-value="form.value" readonly rows="6" fluid /><label class="block">Orden</label><InputText :model-value="item.sort_order" readonly fluid /></div>
-                <div v-else-if="form.type === 'route:name'">
-                    <label class="block text-sm font-medium mb-1">Página de destino *</label>
-                    <AutoComplete :disabled="readonly"
-                        v-model="form.value"
-                        :suggestions="routeSuggestions"
-                        @complete="searchRoutes"
-                        fluid dropdown
-                        placeholder="clientes.index, clientes.show..." />
-                    <p class="text-xs text-surface-400 mt-1">Nombre de ruta Laravel. Escribe para buscar.</p>
-                </div>
-
-                <!-- route:static -->
-                <div v-else-if="form.type === 'route:static'">
-                    <label class="block text-sm font-medium mb-1">URL *</label>
-                    <InputText :disabled="readonly" v-model="form.value" fluid placeholder="/clientes, https://ejemplo.com/..." />
-                </div>
-
-                <!-- route:referer_fallback -->
-                <div v-else-if="form.type === 'route:referer_fallback'">
-                    <label class="block text-sm font-medium mb-1">
-                        Ruta de fallback
-                        <span class="text-surface-400 font-normal">(si no hay página anterior)</span>
-                    </label>
-                    <AutoComplete :disabled="readonly"
-                        v-model="form.value"
-                        :suggestions="routeSuggestions"
-                        @complete="searchRoutes"
-                        fluid dropdown
-                        placeholder="clientes.index..." />
-                    <p class="text-xs text-surface-400 mt-1">
-                        Cuando el usuario llegó directo a esta página sin navegar desde otra, se usará esta ruta
-                    </p>
-                </div>
-
-                <!-- route:dynamic builder -->
-                <div v-else-if="form.type === 'route:dynamic'" class="flex flex-col gap-3">
-                    <label class="block text-sm font-medium">Configuración condicional</label>
-
-                    <div class="p-3 rounded-lg bg-surface-50 dark:bg-surface-800 border border-surface-200 dark:border-surface-700">
-                        <p class="text-sm font-medium mb-3">Si ninguna condición coincide, ir a:</p>
-                        <div class="flex flex-col gap-2">
-                            <div>
-                                <label class="text-xs text-surface-500 mb-1 block">Ruta de destino</label>
-                                <AutoComplete :disabled="readonly"
-                                    v-model="dynamicDefault.routeName"
-                                    :suggestions="routeSuggestions"
-                                    @complete="searchRoutes"
-                                    fluid dropdown
-                                    placeholder="clientes.index" />
-                            </div>
-                            <div>
-                                <label class="text-xs text-surface-500 mb-1 block">Parámetros (JSON, opcional)</label>
-                                <InputText :disabled="readonly" v-model="dynamicDefault.params" fluid placeholder='{"cliente": "{cliente}"}' />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        v-for="(cond, i) in dynamicConditions"
-                        :key="i"
-                        class="p-3 rounded-lg bg-surface-50 dark:bg-surface-800 border border-surface-200 dark:border-surface-700">
-                        <div class="flex justify-between items-center mb-3">
-                            <p class="text-sm font-medium">Condición {{ i + 1 }}</p>
-                            <Button type="button" icon="pi pi-times" size="small" severity="danger" text @click="removeDynamicCondition(i)" />
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <div>
-                                <label class="text-xs text-surface-500 mb-1 block">Si vengo de (patrón del referer):</label>
-                                <AutoComplete :disabled="readonly"
-                                    v-model="cond.triggerRouteName"
-                                    :suggestions="routeSuggestions"
-                                    @complete="searchRoutes"
-                                    fluid dropdown
-                                    placeholder="clientes.historial-crediticio.index" />
-                            </div>
-                            <div>
-                                <label class="text-xs text-surface-500 mb-1 block">Ir a:</label>
-                                <AutoComplete :disabled="readonly"
-                                    v-model="cond.destinationRouteName"
-                                    :suggestions="routeSuggestions"
-                                    @complete="searchRoutes"
-                                    fluid dropdown
-                                    placeholder="clientes.historial-crediticio.index" />
-                            </div>
-                            <div>
-                                <label class="text-xs text-surface-500 mb-1 block">Parámetros (JSON, opcional)</label>
-                                <InputText :disabled="readonly" v-model="cond.params" fluid placeholder='{"historial": "{historial}"}' />
-                            </div>
-                        </div>
-                    </div>
-
-                    <Button type="button" icon="pi pi-plus" label="Agregar condición" size="small" outlined @click="addDynamicCondition" />
-                </div>
-
-                <!-- Parámetros (solo para route:name con show/edit) -->
-                <div v-if="readonly || (flagAnyActionModify && form.type === 'route:name')">
-                    <label class="block text-sm font-medium mb-1">Parámetros de ruta</label>
-                    <InputText :disabled="readonly" fluid v-model="form.params" />
-                    <p class="text-xs text-surface-400 mt-1">Auto-generado a partir de los módulos seleccionados. Formato: <code class="bg-surface-100 dark:bg-surface-700 px-1 rounded">{"clave": "{clave}"}</code></p>
-                </div>
-
-                <!-- Módulos -->
-                <div>
-                    <label class="block text-sm font-medium mb-1">Módulo(s) donde aparece *</label>
-                    <MultiSelect :disabled="readonly"
-                        v-model="modulesSelected"
-                        :options="modules"
-                        optionLabel="name"
-                        optionValue="id"
-                        fluid filter
-                        placeholder="Selecciona módulos" />
-                </div>
-
-                <!-- Rutas por módulo -->
-                <div v-for="moduleId in modulesSelected" :key="moduleId">
-                    <label class="block text-sm font-medium mb-1">
-                        Vistas de <strong>{{ modules.find((m) => m.id === moduleId)?.name ?? moduleId }}</strong> donde aparece
-                    </label>
-                    <pre v-if="readonly" class="whitespace-pre-wrap break-all">{{ form.modules[moduleId]?.routes }}</pre>
-                    <MultiSelect v-else :disabled="readonly"
-                        v-model="modulesSelectedMenubarItemModule[moduleId]"
-                        :options="actionTypes"
-                        optionLabel="label"
-                        optionValue="value"
-                        fluid filter
-                        placeholder="Selecciona vistas" />
-                </div>
-
-                <!-- Padre -->
-                <div>
-                    <label class="block text-sm font-medium mb-1">
-                        Item padre
-                        <span class="text-surface-400 font-normal">(opcional — para crear sub-menús)</span>
-                    </label>
-                    <Select :disabled="readonly"
-                        v-model="form.parent_id"
-                        fluid
-                        :options="menubarItemsWithChildren"
-                        optionLabel="label"
-                        optionValue="id"
-                        optionGroupLabel="label"
-                        optionGroupChildren="children"
-                        showClear
-                        placeholder="Sin padre (nivel raíz)">
-                        <template #optiongroup="slotProps">
-                            <div class="flex items-center">
-                                <span :class="`pi ${slotProps.option.icon} mr-2`"></span>
-                                <div>{{ slotProps.option.label.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") }}</div>
-                            </div>
-                        </template>
-                        <template #option="slotProps">
-                            <div class="flex items-center">
-                                <span class="pi pi-arrow-right !text-[0.5rem] ml-4 mr-2"></span>
-                                <div>{{ slotProps.option.label }}</div>
-                            </div>
-                        </template>
-                    </Select>
-                </div>
-
-                <!-- Acciones del formulario -->
-                <div class="flex justify-end gap-2 pt-2 border-t border-surface-200 dark:border-surface-700">
-                    <Button :label="readonly ? 'Cerrar consulta' : 'Cancelar'" icon="pi pi-times" severity="secondary" @click.prevent="emit('close')" />
-                    <Button v-if="!readonly" label="Guardar" icon="pi pi-check" type="submit" :loading="form.processing" />
-                </div>
+            </details>
+            <MenubarPreview v-if="catalogo && canPreview" :screens="catalogo.pantallas" :item-id="saved.id" :draft="previewDraft" :readonly="readonly" />
+            <div class="flex justify-end gap-2 border-t border-surface-200 pt-3 dark:border-surface-700">
+                <Button type="button" :label="readonly ? 'Cerrar consulta' : 'Cancelar'" severity="secondary" @click="requestClose" />
+                <Button v-if="!readonly" label="Guardar" type="submit" icon="pi pi-check" :loading="form.processing" :disabled="loading || !catalogo" />
             </div>
         </form>
     </Dialog>
-
-    <!-- Dialog selector de íconos -->
-    <Dialog v-if="!readonly" v-model:visible="iconPickerVisible" header="Seleccionar ícono" :modal="true" :style="{ width: '520px' }">
-        <div class="flex flex-col gap-3">
-            <InputText :disabled="readonly" v-model="iconSearch" fluid placeholder="Buscar ícono..." autofocus />
-            <div class="grid grid-cols-9 gap-1 max-h-72 overflow-y-auto">
-                <button
-                    v-for="icon in filteredIcons"
-                    :key="icon"
-                    type="button"
-                    class="flex items-center justify-center p-2 rounded hover:bg-primary/10 transition-colors cursor-pointer border border-transparent hover:border-primary/30"
-                    :title="`pi pi-fw pi-${icon}`"
-                    @click="selectIcon(icon)">
-                    <span :class="`pi pi-fw pi-${icon} text-lg`"></span>
-                </button>
-            </div>
-            <p class="text-xs text-surface-400">{{ filteredIcons.length }} íconos. Haz clic para seleccionar.</p>
-        </div>
+    <Dialog v-if="!readonly" v-model:visible="discardVisible" header="¿Descartar los cambios?" modal :style="{ width: '420px', maxWidth: '95vw' }">
+        <p>Los cambios de este elemento todavía no se han guardado.</p>
+        <template #footer><Button label="Seguir editando" severity="secondary" @click="discardVisible = false" /><Button label="Descartar cambios" severity="danger" @click="emit('close')" /></template>
     </Dialog>
 </template>

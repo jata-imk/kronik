@@ -77,18 +77,17 @@ class MenubarItemController extends Controller implements HasMiddleware
     {
         $request->validate(['selected_item_id' => 'nullable|integer|min:1', 'modo' => 'nullable|in:consulta,edicion']);
         $params = app(\App\Services\ListadoParametros::class);
-        $match = fn ($q, $v) => $q->where('label', 'like', '%'.$v.'%');
-        $filters = ['global' => fn ($q, $v) => $q->where(fn ($q) => $q->where(fn ($q) => $match($q, $v))
-            ->orWhereHas('children', fn ($q) => $match($q, $v))
-            ->orWhereHas('children.children', fn ($q) => $match($q, $v)))];
+        $catalogo = app(\App\Services\MenubarCatalogoService::class);
+        $filters = ['global' => fn ($q, $v) => $q->whereIn('id', $catalogo->raicesCoincidentes($v))];
         $sorts = ['label' => 'label', 'sort_order' => 'sort_order'];
         $values = $params->resolver($request, $filters, $sorts);
-        $query = MenubarItem::with(['modules', 'children.modules', 'children.children.modules'])->whereNull('parent_id');
+        $query = MenubarItem::with('modules')->whereNull('parent_id');
         $page = $params->aplicar($query, $values, $filters, $sorts, 'sort_order')->paginate($values['por_pagina'])->withQueryString();
 
         return Inertia::render('Admin/MenubarItems/Index', [
             'modules' => fn () => Module::with('menubarItems')->get(),
-            'menubarCatalogo' => $page->getCollection(),
+            'menubarCatalogo' => $catalogo->completarArbol($page->getCollection()),
+            'catalogoMenu' => fn () => $catalogo->datos(),
             'menubarSeleccionado' => $request->filled('selected_item_id') ? MenubarItem::with(['modules', 'parent'])->findOrFail($request->integer('selected_item_id')) : null,
             'modoMenu' => $request->user()->can('update menubar-items') && $request->input('modo') === 'edicion' ? 'edicion' : 'consulta',
             'listado' => $params->metadata($page, $values),

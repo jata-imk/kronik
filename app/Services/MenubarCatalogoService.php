@@ -8,6 +8,40 @@ use Illuminate\Support\Facades\Route;
 
 class MenubarCatalogoService
 {
+    public function completarArbol(\Illuminate\Database\Eloquent\Collection $roots): \Illuminate\Database\Eloquent\Collection
+    {
+        $items = MenubarItem::with('modules')->orderBy('sort_order')->orderBy('id')->get()->groupBy(fn ($item) => $item->parent_id ?? 'root');
+        $build = function ($item, array $seen = []) use (&$build, $items) {
+            $node = clone $item;
+            $node->setRelation('children', new \Illuminate\Database\Eloquent\Collection(
+                collect($items->get($item->id, []))->reject(fn ($child) => in_array($child->id, [...$seen, $item->id], true))
+                    ->map(fn ($child) => $build($child, [...$seen, $item->id]))->all()
+            ));
+
+            return $node;
+        };
+
+        return $roots->map(fn ($root) => $build($root));
+    }
+
+    public function raicesCoincidentes(string $search): array
+    {
+        $parents = MenubarItem::pluck('parent_id', 'id');
+        $roots = [];
+        foreach (MenubarItem::where('label', 'like', '%'.$search.'%')->pluck('id') as $id) {
+            $seen = [];
+            while (isset($parents[$id]) && ! in_array($id, $seen, true)) {
+                $seen[] = $id;
+                $id = $parents[$id];
+            }
+            if (! in_array($id, $seen, true)) {
+                $roots[] = $id;
+            }
+        }
+
+        return array_values(array_unique($roots));
+    }
+
     public function acciones(): array
     {
         $actions = [];
