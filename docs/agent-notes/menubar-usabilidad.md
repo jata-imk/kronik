@@ -50,3 +50,5 @@ Suite frontend completa: 69 archivos y 190 pruebas aprobadas. Se detiene la prop
 [Captura del editor y vista previa](../audits/menubar-2026-11-18/editor-vista-previa.png), Chromium con fixtures sintéticos. Vista previa sin enlaces ejecutables ni escrituras. Capturas finales adicionales y resultados E2E pendientes del recorrido en curso.
 
 Revisión medium de 692cd7c contra 8884a78: dos P2 corregidos (explicar rechazo al borrar grupos con contenido y ordenar borradores nuevos igual que después de guardar). Se amplía la regresión de orden y se repite revisión. E2E de escritorio claro aprobado en repetición sin suite concurrente; ejecución conjunta todavía pendiente.
+
+Revisión medium de 5e41891 contra 8884a78: dos P2 corregidos (mantener borrador rápido al refrescar el mismo contexto operativo tras validación y conservar activaciones históricas bajo otro módulo). La activación sigue la pantalla exacta guardada, mientras el catálogo orienta las nuevas selecciones. Se añade regresión histórica y se revisa de nuevo.

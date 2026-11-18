@@ -56,8 +56,9 @@ class MenubarService
                     continue;
                 }
                 $children = $build($item->id, [...$ancestors, $item->id]);
-                $link = $item->menubarItemModules->firstWhere('module_id', $module->id);
-                $active = in_array($name, $link?->routes ?? [], true);
+                // Old editors allowed an exact screen under another module.
+                // Its saved activation remains valid regardless of catalog ownership.
+                $active = $item->menubarItemModules->contains(fn ($link) => in_array($name, $link->routes ?? [], true));
                 $node = ['key' => 'item:'.$item->id, 'kind' => $children || $item->type === 'menu' ? 'group' : 'action', 'label' => $item->label, 'icon' => $item->icon];
                 if ($children) {
                     $node['items'] = $children;
