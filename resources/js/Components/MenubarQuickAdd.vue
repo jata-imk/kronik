@@ -4,8 +4,8 @@ import { usePage } from "@inertiajs/vue3";
 import MenubarItemForm from "@/Pages/Admin/MenubarItems/Form.vue";
 const page = usePage();
 const visible = ref(false);
-const canCreate = computed(() => page.props.auth?.is_super_admin || page.props.auth?.permissions?.["create-menubar-items"] === true);
-const canRead = computed(() => page.props.auth?.is_super_admin || page.props.auth?.permissions?.["read-menubar-items"] === true);
+const canCreate = computed(() => page.props.menubarAdmin?.canCreate === true);
+const canRead = computed(() => page.props.menubarAdmin?.canRead === true);
 const currentScreen = computed(() => page.props.menubarAdmin?.currentRouteName ?? "");
 watch(() => [page.url, page.props.contextoOperativo?.team_id, page.props.contextoOperativo?.sucursal_id, currentScreen.value, canCreate.value], (current, previous) => {
     if (current.some((value, index) => value !== previous[index])) visible.value = false;

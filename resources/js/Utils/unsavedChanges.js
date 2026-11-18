@@ -7,13 +7,18 @@ export function registerUnsavedChanges(isDirty) {
 export const hasUnsavedChanges = () => [...forms].some(isDirty => isDirty());
 export const forgetUnsavedChanges = () => forms.clear();
 export const confirmDiscardChanges = () => !hasUnsavedChanges() || window.confirm(discardMessage);
+export function confirmFormDiscard(form) {
+    if (form.isDirty && !window.confirm(discardMessage)) return false;
+    form.defaults?.();
+    return true;
+}
 
 export function changesResource(from, to) {
     const previous = new URL(from, window.location.origin);
     const next = new URL(to, window.location.origin);
     if (previous.origin !== next.origin || previous.pathname !== next.pathname) return true;
     const fields = new Set([...previous.searchParams.keys(), ...next.searchParams.keys()]);
-    return [...fields].filter(key => key.startsWith("selected_") || ["modo", "cliente_id", "credito_id", "pago_id", "team_id"].includes(key))
+    return [...fields].filter(key => key.startsWith("selected_") || key.endsWith("_id") || key === "modo")
         .some(key => previous.searchParams.get(key) !== next.searchParams.get(key));
 }
 

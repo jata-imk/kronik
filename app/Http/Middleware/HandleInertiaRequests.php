@@ -83,9 +83,9 @@ class HandleInertiaRequests extends Middleware
             'contextoOperativo' => Inertia::always(fn () => ['team_id' => $request->user()->current_team_id, 'sucursal_id' => $request->user()->current_sucursal_id]),
             'empresaOperacion' => fn () => app(\App\Services\EmpresaOperacionService::class)->compartir(),
             'navigation' => fn () => app(\App\Services\NavigationService::class)->forUser($request->user()),
-            'menubarItems' => fn () => $resolveMenu()['items'],
-            'menubarEstado' => fn () => $resolveMenu()['state'],
-            'menubarAdmin' => function () use ($request) {
+            'menubarItems' => Inertia::always(fn () => $resolveMenu()['items']),
+            'menubarEstado' => Inertia::always(fn () => $resolveMenu()['state']),
+            'menubarAdmin' => Inertia::always(function () use ($request) {
                 $read = Gate::allows('read menubar-items');
                 $create = Gate::allows('create menubar-items');
                 if (! $read && ! $create) {
@@ -98,7 +98,7 @@ class HandleInertiaRequests extends Middleware
                     'canRead' => $read,
                     'canCreate' => $create,
                 ];
-            },
+            }),
             'jetstream' => [
                 'canManageTwoFactorAuthentication' => Features::canManageTwoFactorAuthentication(),
                 'canUpdatePassword' => Features::enabled(Features::updatePasswords()),

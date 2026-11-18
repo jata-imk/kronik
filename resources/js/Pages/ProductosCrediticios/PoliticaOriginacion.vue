@@ -39,7 +39,6 @@ function guardar() {
         .post(route("originacion-politicas.store", props.version.id), { preserveScroll: true, onSuccess: consultar });
 }
 function seleccionar(id) {
-    form.cancel(); editando.value = false;
     router.get(route("originacion-politicas.show", props.version.id), { politica_id: id, modo: "consulta", page: props.historial.current_page }, { preserveScroll: true });
 }
 </script>

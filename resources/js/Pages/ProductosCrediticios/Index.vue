@@ -16,6 +16,7 @@ import SimulationTaxSummary from "@/Components/Products/SimulationTaxSummary.vue
 import { emptyTaxConcept, normalizeTaxPolicy } from "@/Components/Products/fiscalidad";
 import { Link, router, usePage } from "@inertiajs/vue3";
 import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
+import { confirmFormDiscard } from "@/Utils/unsavedChanges";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import axios from "axios";
 import { useConfirm } from "primevue/useconfirm";
@@ -90,6 +91,7 @@ watch(() => remoteFilters.value.global.value, value => { query.value = value ?? 
 const selected = computed(() => props.productoSeleccionado ? (props.productoSeleccionado.id === selectedId.value ? props.productoSeleccionado : null) : props.productos.find(p => p.id === selectedId.value));
 const latest = computed(() => selected.value?.ultimaVersion ?? selected.value?.versiones?.[0] ?? null);
 function selectProduct(product) {
+    if (!confirmFormDiscard(form)) return;
     selectedId.value = product.id;
     serverList.visit({ producto_id: product.id, page: page.props.listado?.current_page ?? 1, versiones_page: 1, version_id: null, modo: null });
 }
@@ -369,17 +371,20 @@ const openEdit = (version) => {
     });
     form.reset();
     if (!editorBullet.value) delete form.version.reglas.politica_interes_bullet;
+    form.defaults?.();
     form.clearErrors();
     activeEditorTab.value = "general";
     editorVisible.value = true;
 };
 const requestVersion = (version, modo = "consulta") => {
+    if (!confirmFormDiscard(form)) return;
     dismissedEditor.value = null;
     form.cancel();
     editorVisible.value = false;
     serverList.visit({ producto_id: selected.value.id, version_id: version.id, modo, page: page.props.listado?.current_page ?? 1 });
 };
 const closeEditor = () => {
+    if (!editorReadonly.value && !confirmFormDiscard(form)) return;
     dismissedEditor.value = props.modoVersion ? `${editorProductId.value}:${editingVersion.value?.id}:${props.modoVersion}` : null;
     form.cancel();
     editorVisible.value = false;
@@ -438,6 +443,7 @@ const submit = () => {
         errorBag: "productoCrediticio",
         only: ["productos", "productoSeleccionado", "listado", "versionesListado", "modoVersion"],
         onSuccess: () => {
+            form.defaults?.();
             closeEditor();
             toast.add({
                 severity: "success",

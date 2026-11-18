@@ -28,7 +28,6 @@ watch(() => props.selectedRole, value => {
 });
 function selectRole(role) {
     if (!role || role.id === selectedRole.value?.id) return;
-    selectedRole.value = role;
     const url = new URL(window.location.href);
     router.get(url.pathname, { ...Object.fromEntries(url.searchParams.entries()), selected_role_id: role.id, integrantes_page: 1 }, { preserveState: true, preserveScroll: true, replace: true });
 }
@@ -42,11 +41,12 @@ watch(
 );
 
 watch(
-    () => [selectedRole.value],
+    () => [selectedRole.value, props.capabilities.update],
     () => {
         props.formRolePermissions.name = selectedRole.value?.name || "";
         props.formRolePermissions.permissions =
             selectedRole.value?.permissions?.map((p) => p.id) || [];
+        props.formRolePermissions.defaults?.();
     },
     { immediate: true },
 );

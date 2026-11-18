@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { changesResource, confirmDiscardChanges, forgetUnsavedChanges, hasUnsavedChanges, installUnsavedChangesGuard, registerUnsavedChanges } from "./unsavedChanges";
+import { changesResource, confirmDiscardChanges, confirmFormDiscard, forgetUnsavedChanges, hasUnsavedChanges, installUnsavedChangesGuard, registerUnsavedChanges } from "./unsavedChanges";
 
 let cleanup;
 beforeEach(() => { forgetUnsavedChanges(); history.replaceState({}, "", "/clientes/1/edit"); });
@@ -21,6 +21,19 @@ it("distingue navegación y selección de filtros y anclas", () => {
     expect(changesResource("/clientes/1/edit", "/clientes/1/edit#datos")).toBe(false);
     expect(changesResource("/clientes/1/edit", "/clientes/2/edit")).toBe(true);
     expect(changesResource("/admin/menubar-items?selected_item_id=1", "/admin/menubar-items?selected_item_id=2")).toBe(true);
+    expect(changesResource("/productos-crediticios?producto_id=1&version_id=2&modo=edicion", "/productos-crediticios?producto_id=1&version_id=3&modo=edicion")).toBe(true);
+    expect(changesResource("/originacion-politicas/1?politica_id=2", "/originacion-politicas/1?politica_id=3")).toBe(true);
+});
+it("cerrar un editor cancelado conserva captura y errores hasta aceptar descarte", () => {
+    const form = { isDirty: true, name: "Captura", errors: { name: "Revisa el nombre" }, defaults: vi.fn() };
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    expect(confirmFormDiscard(form)).toBe(false);
+    expect(form.name).toBe("Captura");
+    expect(form.errors.name).toBe("Revisa el nombre");
+    expect(form.defaults).not.toHaveBeenCalled();
+    confirm.mockReturnValue(true);
+    expect(confirmFormDiscard(form)).toBe(true);
+    expect(form.defaults).toHaveBeenCalledOnce();
 });
 it("cancela visitas de navegación/contexto, permite guardar y protege recarga", () => {
     let before;

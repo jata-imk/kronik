@@ -19,6 +19,15 @@ un stub de prueba, corregido. Backend focalizado detectó contexto de equipo
 faltante en la revocación de un permiso del test; se corrige la preparación y se
 repite. Validación y revisión medium finales pendientes.
 
+Revisión medium de 7e70241 contra dd19836: tres P2 corregidos: selección de
+producto/versión sin confirmar, cierre de sucursal que ocultaba captura al cancelar
+y falso estado sucio al cargar un rol. Se cubren los selectores de recurso por ID,
+se confirma antes de modificar estado local y se actualiza la base del formulario
+del rol. El barrido equivalente incluye plantillas y usuarios. Las pruebas añaden
+regresiones de selección, carga de rol y cancelación. La revisión del editor
+dd19836 contra 8884a78 terminó sin hallazgos; la ejecución anterior interrumpida por
+límite de uso no se acredita como completada.
+
 Implementación iniciada el 2026-11-18 por instrucción del usuario. Se preservan los archivos locales, worktrees y servicios ajenos, incluida la rama independiente de comunicaciones de Bryan. La aceptación del sidebar sigue pendiente y no forma parte del cierre de esta tarea.
 
 ## Decisiones confirmadas

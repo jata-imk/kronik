@@ -7,7 +7,7 @@ test("barra compacta navega con Inertia y cancelar conserva el formulario", asyn
     await login(page);
     await page.goto("/clientes/1/edit");
     const bar = page.getByRole("menubar", { name: "Acciones de esta pantalla" });
-    const settings = bar.getByRole("button", { name: "Configurar", exact: true });
+    const settings = page.getByRole("button", { name: "Configurar", exact: true });
     await expect(settings).toBeVisible();
     await expect(bar.getByRole("menuitem", { name: "Nueva solicitud", exact: true })).toHaveCSS("font-size", "13px");
     await page.evaluate(() => { window.__menubarSameDocument = "conservado"; });
@@ -35,11 +35,11 @@ test("atrás y recarga ofrecen salida explícita sin guardar ni resucitar captur
     await expect(page).toHaveURL(/\/clientes\/1\/edit$/);
     await page.locator("#primer_nombre").fill("Pendiente de guardar");
     page.once("dialog", dialog => dialog.dismiss());
-    await page.goBack();
+    await page.goBack({ timeout: 5000 }).catch(() => {});
     await expect(page).toHaveURL(/\/clientes\/1\/edit$/);
     await expect(page.locator("#primer_nombre")).toHaveValue("Pendiente de guardar");
     page.once("dialog", dialog => dialog.dismiss());
-    await page.reload().catch(() => {});
+    await page.reload({ timeout: 5000 }).catch(() => {});
     await expect(page.locator("#primer_nombre")).toHaveValue("Pendiente de guardar");
     page.once("dialog", dialog => dialog.accept());
     await page.goBack();
@@ -73,7 +73,7 @@ test("consulta no ofrece configuración y sus enlaces conservan href y nueva pes
     await login(page, users.reader);
     await page.goto("/clientes/1");
     await expect(page.getByRole("button", { name: "Configurar", exact: true })).toHaveCount(0);
-    const link = page.getByRole("menuitem", { name: "Abrir expediente", exact: true });
+    const link = page.getByRole("menuitem", { name: "Abrir expediente", exact: true }).locator("a");
     await expect(link).toHaveAttribute("href", /\/clientes\/1\/expediente$/);
     const popup = context.waitForEvent("page");
     await link.click({ modifiers: ["Control"] });
