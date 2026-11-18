@@ -22,6 +22,11 @@ cuyo texto decide el navegador. No se crean borradores persistentes ni autosave.
 Los cambios forzados de contexto o sesión limpian el registro antes de salir:
 no se ofrece conservar datos del contexto anterior.
 
+Las bases de formularios con objetos o listas se mantienen independientes de la
+captura, para detectar también cambios anidados. Al aceptar la cancelación de
+un diálogo se limpia su formulario; no queda un borrador invisible bloqueando
+salidas. Cancelar la confirmación conserva diálogo, datos y errores.
+
 Las activaciones históricas se resuelven por la pantalla exacta guardada, aunque
 su asociación de módulo sea anterior al catálogo canónico.
 

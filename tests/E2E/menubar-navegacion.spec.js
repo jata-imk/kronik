@@ -49,6 +49,7 @@ test("atrás y recarga ofrecen salida explícita sin guardar ni resucitar captur
 });
 
 test("agregado contextual conserva errores y pantalla exacta, cancelar exige descarte", async ({ page }) => {
+    const assertConsole = await failOnConsoleErrors(page);
     await login(page);
     await page.goto("/clientes/1/edit");
     await page.getByRole("button", { name: "Configurar", exact: true }).click();
@@ -67,9 +68,11 @@ test("agregado contextual conserva errores y pantalla exacta, cancelar exige des
     await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
     await page.getByRole("button", { name: "Descartar cambios", exact: true }).click();
     await expect(dialog).toBeHidden();
+    assertConsole();
 });
 
 test("consulta no ofrece configuración y sus enlaces conservan href y nueva pestaña", async ({ page, context }) => {
+    const assertConsole = await failOnConsoleErrors(page);
     await login(page, users.reader);
     await page.goto("/clientes/1");
     await expect(page.getByRole("button", { name: "Configurar", exact: true })).toHaveCount(0);
@@ -85,4 +88,5 @@ test("consulta no ofrece configuración y sus enlaces conservan href y nueva pes
     page.on("dialog", dialog => { dialogs.push(dialog.type()); dialog.dismiss(); });
     await page.reload();
     expect(dialogs).toEqual([]);
+    assertConsole();
 });

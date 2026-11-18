@@ -13,6 +13,9 @@ it("la consulta cargada es la base y solicitar otro rol conserva la captura hast
     expect(form.name).toBe("Consulta");
     expect(form.permissions).toEqual([7]);
     expect(form.isDirty).toBe(false);
+    form.permissions.push(11);
+    await flushPromises();
+    expect(form.isDirty).toBe(true);
     form.name = "Captura sin guardar";
     await flushPromises();
     wrapper.findComponent({ name: "RoleSidebar" }).vm.$emit("update:selectedRole", other);

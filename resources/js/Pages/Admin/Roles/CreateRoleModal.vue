@@ -2,6 +2,7 @@
 import { ref, watch } from "vue";
 import { useToast } from "primevue/usetoast";
 import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
+import { confirmFormDiscard } from "@/Utils/unsavedChanges";
 
 const toast = useToast();
 
@@ -17,6 +18,7 @@ watch(
     () => props.visible,
     () => {
         visible.value = props.visible;
+        if (!props.visible) { form.defaults({ name: "", add_all_permissions: false }); form.reset(); form.clearErrors(); }
     },
 );
 
@@ -39,10 +41,15 @@ const submit = async () => {
         },
     });
 };
+function requestClose() {
+    if (!confirmFormDiscard(form)) return;
+    form.defaults({ name: "", add_all_permissions: false }); form.reset(); form.clearErrors();
+    emit("close");
+}
 </script>
 
 <template>
-  <Dialog v-model:visible="visible" :modal="true" :style="{ width: '500px', maxWidth: '95vw' }" @hide="emit('close')" >
+  <Dialog :visible="visible" :modal="true" :style="{ width: '500px', maxWidth: '95vw' }" @update:visible="value => { if (!value) requestClose(); }" >
     <template #header>
       <h2>Crear Rol</h2>
     </template>
@@ -62,7 +69,7 @@ const submit = async () => {
       </div>
 
       <div class="col-span-2 mt-4 flex justify-end gap-2">
-        <Button label="Cancelar" icon="pi pi-times" class="p-button-secondary" @click.prevent="$emit('close')" />
+        <Button label="Cancelar" icon="pi pi-times" class="p-button-secondary" @click.prevent="requestClose" />
         <Button label="Crear" icon="pi pi-check" type="submit" />
       </div>
     </form>

@@ -17,7 +17,7 @@ const options = computed(() => [
 </script>
 
 <template>
-    <MenubarModel :model="items">
+    <MenubarModel v-if="items.length || options.length" :model="items">
         <template #end>
             <div v-if="options.length" class="flex items-center gap-2">
                 <span v-if="!items.length && page.props.menubarEstado?.status !== 'unavailable'" class="k-menu-empty">Sin acciones en esta pantalla</span>

@@ -29,7 +29,7 @@ function navigate(event) {
 </script>
 
 <template>
-    <div class="k-context-menu" @click="navigate">
+    <div class="k-context-menu" :class="{ 'k-context-menu-empty': !model.length }" @click="navigate">
         <Menubar :model="visibleModel" :aria-label="preview ? 'Vista previa del menú' : 'Acciones de esta pantalla'" :buttonProps="{ 'aria-label': 'Abrir acciones de esta pantalla' }" breakpoint="767px">
             <template #end><slot name="end" /></template>
         </Menubar>
@@ -41,6 +41,7 @@ function navigate(event) {
 .k-context-menu :deep(.p-menubar) { min-height: 38px; padding: 0 8px; border: 0; border-bottom: 1px solid var(--k-line); border-radius: 0; gap: 4px; font-size: 13px; }
 .k-context-menu :deep(.p-menubar-item-link) { padding: 7px 9px; gap: 7px; font-size: 13px; line-height: 20px; }
 .k-context-menu :deep(.p-menubar-root-list) { gap: 2px; }
+.k-context-menu-empty :deep(.p-menubar-button) { display: none; }
 .k-context-menu :deep(.p-menubar-submenu) { min-width: 220px; max-width: min(320px, calc(100vw - 32px)); padding: 4px; }
 .k-context-menu :deep(.p-menubar-item-link span) { overflow-wrap: anywhere; }
 .k-context-menu :deep(.p-menubar-submenu-icon) { width: 10px; height: 10px; color: var(--k-muted); }

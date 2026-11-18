@@ -46,7 +46,7 @@ watch(
         props.formRolePermissions.name = selectedRole.value?.name || "";
         props.formRolePermissions.permissions =
             selectedRole.value?.permissions?.map((p) => p.id) || [];
-        props.formRolePermissions.defaults?.();
+        props.formRolePermissions.defaults?.({ name: props.formRolePermissions.name, permissions: [...props.formRolePermissions.permissions] });
     },
     { immediate: true },
 );

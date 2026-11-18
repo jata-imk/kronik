@@ -371,7 +371,9 @@ const openEdit = (version) => {
     });
     form.reset();
     if (!editorBullet.value) delete form.version.reglas.politica_interes_bullet;
-    form.defaults?.();
+    // reset() clones the new defaults, keeping nested edits independent.
+    form.defaults();
+    form.reset();
     form.clearErrors();
     activeEditorTab.value = "general";
     editorVisible.value = true;
