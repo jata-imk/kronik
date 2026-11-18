@@ -59,7 +59,7 @@ const deleteItem = (item) => {
     if (!can('delete-menubar-items')) return;
     if (confirm("¿Seguro que deseas eliminar este elemento?")) {
         router.delete(route("admin.menubar-items.destroy", item.id), {
-            only: ["menubarCatalogo", "menubarItems", "menubarSeleccionado", "modoMenu", "listado", "auth"],
+            only: ["menubarCatalogo", "catalogoMenu", "menubarItems", "menubarEstado", "menubarSeleccionado", "modoMenu", "listado", "auth"],
         });
     }
 };

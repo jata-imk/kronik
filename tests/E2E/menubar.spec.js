@@ -31,8 +31,12 @@ for (const mobile of [false, true]) {
             await choose(page, dialog.locator("#menubar-action"), /^Listado de clientes/);
             await dialog.locator("#menubar-label").fill(label);
             await choose(page, dialog.locator("#menubar-parent"), group);
-            await dialog.locator("#menubar-order").fill("7");
+            await dialog.locator("#menubar-order").press("ControlOrMeta+A");
+            await dialog.locator("#menubar-order").press("7");
+            await dialog.locator("#menubar-order").press("Tab");
+            await expect(dialog.locator("#menubar-order")).toHaveValue("7");
             await dialog.locator(".p-multiselect").click();
+            await page.locator(".p-multiselect-filter").fill("Clientes · Editar cliente");
             await page.getByRole("option", { name: "Clientes · Editar cliente", exact: true }).click();
             await expect(dialog.locator(".p-multiselect")).toContainText("Clientes · Editar cliente");
             await page.keyboard.press("Escape");
