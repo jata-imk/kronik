@@ -1,8 +1,9 @@
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 const props = defineProps({ modelValue: { type: String, default: "" }, readonly: Boolean });
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "overlay"]);
 const open = ref(false);
+watch(open, value => emit("overlay", value), { flush: "sync" });
 const search = ref("");
 const icons = [
     ["", "Sin icono"], ["user", "Persona"], ["users", "Clientes"], ["folder-open", "Expediente"],

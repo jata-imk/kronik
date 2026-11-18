@@ -65,6 +65,7 @@ class MenubarService
                     if ($url !== null) {
                         $node['url'] = $preview ? null : $url;
                         $node['preview'] = $preview;
+                $node['native'] = (bool) preg_match('~/documentos-generados/[^/]+/ver(?:[?#]|$)~', $url);
                         $node['external'] = parse_url($url, PHP_URL_HOST) !== null && parse_url($url, PHP_URL_HOST) !== $request->getHost();
                     } elseif ($item->type === 'route:name' && $this->faltaContexto($item, $request)
                         && $destinations->sinContexto((string) $item->value, $request->user())) {

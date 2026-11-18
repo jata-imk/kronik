@@ -34,22 +34,27 @@ const selectedItem = ref(null);
 const showForm = ref(false);
 const readonly = computed(() => selectedItem.value ? page.props.modoMenu !== 'edicion' || !can('update-menubar-items') : !can('create-menubar-items'));
 const formRevision = ref(0);
+const dismissedId = ref(null);
 watch([() => page.props.menubarSeleccionado, () => page.props.modoMenu, () => readonly.value], () => {
+    if (dismissedId.value && page.props.menubarSeleccionado?.id === dismissedId.value) return;
+    if (!page.props.menubarSeleccionado) dismissedId.value = null;
     if (showForm.value && selectedItem.value?.id === page.props.menubarSeleccionado?.id && !readonly.value) return;
     selectedItem.value = page.props.menubarSeleccionado ?? null; showForm.value = Boolean(selectedItem.value); formRevision.value++;
 }, {immediate:true});
 
 const createItem = () => {
     if (!can('create-menubar-items')) return;
+    dismissedId.value = page.props.menubarSeleccionado?.id ?? null;
     selectedItem.value = null;
     showForm.value = true;
 };
 const editItem = (item) => {
     if (!can('update-menubar-items')) return;
+    dismissedId.value = null;
     serverList.visit({selected_item_id:item.id,modo:'edicion',page:page.props.listado?.current_page ?? 1});
 };
-const viewItem = item => serverList.visit({selected_item_id:item.id,modo:'consulta',page:page.props.listado?.current_page ?? 1});
-const closeForm = () => { showForm.value = false; serverList.visit({selected_item_id:null,modo:null,page:page.props.listado?.current_page ?? 1}); };
+const viewItem = item => { dismissedId.value = null; serverList.visit({selected_item_id:item.id,modo:'consulta',page:page.props.listado?.current_page ?? 1}); };
+const closeForm = () => { dismissedId.value = selectedItem.value?.id ?? null; showForm.value = false; selectedItem.value = null; serverList.visit({selected_item_id:null,modo:null,page:page.props.listado?.current_page ?? 1}); };
 const deleteItem = (item) => {
     if (!can('delete-menubar-items')) return;
     if (confirm("¿Seguro que deseas eliminar este elemento?")) {

@@ -82,6 +82,27 @@ previsualización y apertura visual de grupos no agregan eventos ni mutan negoci
 Ver [matriz de auditoría](reference/auditoria-eventos.md).
 
 Pest cubre catálogo, permisos, contexto, rutas, parámetros, jerarquía, persistencia,
-no efectos de vista previa y rollback de auditoría. El editor guiado y la barra
-compacta se entregan en incrementos dependientes; la evidencia vigente se mantiene
-en la nota de la tarea.
+no efectos de vista previa y rollback de auditoría. El editor guiado reutiliza este contrato; la barra operativa compacta es el siguiente incremento. La evidencia vigente se mantiene en la nota de la tarea.
+
+## Editor guiado y agregado rápido
+
+Administración ofrece un árbol con etiquetas humanas, búsqueda de descendientes a
+cualquier profundidad y selección por ID exacto. El mismo formulario sirve para
+consulta, creación, edición y agregado rápido, sin duplicar reglas de captura.
+
+El recorrido habitual ofrece acción existente, etiqueta, icono opcional, grupo,
+orden y pantallas. Qué abre no cambia al modificar Dónde aparece; los parámetros
+no se regeneran por módulos. Un grupo vacío puede guardarse para organizarlo después.
+Sin activaciones, las acciones quedan guardadas sin aparecer en la barra.
+
+Las opciones avanzadas permiten consultar/editar destinos y parámetros originales.
+No se reconstruyen condiciones desconocidas al abrir ni al editar una etiqueta.
+La vista previa solo se solicita al pulsar Ver vista previa. Permite abrir grupos,
+carece de href/comandos y no persiste. Cambiar borrador/pantalla invalida respuestas
+anteriores; cerrar cancela solicitudes pendientes. El agregado rápido preselecciona
+la ruta completa de la pantalla real, no una acción index supuesta.
+
+Guardar aplica un elemento. Cancelar/cerrar una edición sucia permite Seguir
+editando o Descartar cambios. Escape dentro de un desplegable cierra ese desplegable,
+sin cerrar el formulario ni abrir otra confirmación. Consulta no ofrece Guardar,
+selectores de captura activos ni envíos mediante Enter.

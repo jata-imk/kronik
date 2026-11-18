@@ -36,7 +36,7 @@ async function preview() {
         <h3 class="font-medium">Vista previa sin guardar</h3>
         <p class="mb-3 mt-1 text-sm text-surface-500">Abre los grupos para revisar su organización. Las acciones no navegan ni ejecutan operaciones.</p>
         <label for="menubar-preview-screen" class="mb-1 block text-sm">Pantalla de vista previa</label>
-        <Select inputId="menubar-preview-screen" v-model="screen" :options="screens" optionLabel="label" optionValue="key" filter fluid placeholder="Selecciona una pantalla" />
+        <Select inputId="menubar-preview-screen" aria-label="Pantalla de vista previa" v-model="screen" :options="screens" optionLabel="label" optionValue="key" filter fluid placeholder="Selecciona una pantalla" emptyMessage="No hay pantallas disponibles" emptyFilterMessage="No hay pantallas con esa búsqueda" />
         <Button type="button" label="Ver vista previa" icon="pi pi-eye" severity="secondary" outlined size="small" class="my-3" :loading="loading" @click="preview" />
         <Message v-if="error" severity="error" role="alert">{{ error }}</Message>
         <div aria-live="polite" :aria-busy="loading">

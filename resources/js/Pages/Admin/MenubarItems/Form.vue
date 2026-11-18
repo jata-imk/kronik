@@ -24,6 +24,8 @@ const catalogo = ref(props.catalogo);
 const loading = ref(false);
 const loadError = ref("");
 const discardVisible = ref(false);
+const screensOpen = ref(false);
+const iconOpen = ref(false);
 const visible = ref(true);
 const selectedScreens = ref(Object.values(originalModules).flatMap(module => module.routes));
 const types = [
@@ -81,7 +83,10 @@ watch(selectedScreens, values => {
     form.modules = links;
 }, { deep: true, flush: "sync" });
 function preselectScreen() {
-    if (!saved.id && props.initialScreen && !selectedScreens.value.length && screens.value.some(screen => screen.key === props.initialScreen)) selectedScreens.value = [props.initialScreen];
+    if (!saved.id && props.initialScreen && !selectedScreens.value.length && screens.value.some(screen => screen.key === props.initialScreen)) {
+        selectedScreens.value = [props.initialScreen];
+        form.defaults?.("modules", JSON.parse(JSON.stringify(form.modules)));
+    }
 }
 async function loadCatalog() {
     if (props.readonly) return;
@@ -118,7 +123,7 @@ defineExpose({ requestClose, form, selectedScreens, selectedAction });
 </script>
 
 <template>
-    <Dialog :visible="visible" :header="readonly ? 'Consultar elemento de menú' : 'Configurar elemento de menú'" modal :style="{ width: '760px', maxWidth: '96vw' }"
+    <Dialog :visible="visible" :header="readonly ? 'Consultar elemento de menú' : 'Configurar elemento de menú'" modal :closeOnEscape="!screensOpen && !iconOpen && !discardVisible" :style="{ width: '760px', maxWidth: '96vw' }"
         @update:visible="value => { if (!value) requestClose(); }">
         <Message :severity="readonly ? 'info' : 'secondary'" class="mb-4">{{ readonly ? "Consulta · solo lectura." : "Configuración compartida: los cambios afectan a toda la instalación, respetando los permisos de cada usuario." }}</Message>
         <Message v-if="loadError" severity="error" role="alert" class="mb-4">{{ loadError }} <Button type="button" label="Reintentar carga" text @click="loadCatalog" /></Message>
@@ -127,11 +132,11 @@ defineExpose({ requestClose, form, selectedScreens, selectedAction });
             <Message v-if="Object.keys(form.errors).length" severity="error" role="alert"><ul><li v-for="(message, field) in form.errors" :key="field">{{ message }}</li></ul></Message>
             <div>
                 <label for="menubar-type" class="mb-1 block text-sm font-medium">Tipo de elemento</label>
-                <Select inputId="menubar-type" v-model="form.type" :options="types" optionLabel="label" optionValue="value" :disabled="readonly" fluid />
+                <Select inputId="menubar-type" aria-label="Tipo de elemento" v-model="form.type" :options="types" optionLabel="label" optionValue="value" :disabled="readonly" fluid />
             </div>
             <section v-if="form.type === 'route:name' && !readonly" aria-label="Qué abre">
                 <label for="menubar-action" class="mb-1 block text-sm font-medium">Qué abre</label>
-                <Select inputId="menubar-action" v-model="selectedAction" :options="actions" optionLabel="label" optionValue="key" filter fluid placeholder="Elige una acción existente">
+                <Select inputId="menubar-action" aria-label="Qué abre" v-model="selectedAction" :options="actions" optionLabel="label" optionValue="key" filter fluid placeholder="Elige una acción existente" emptyMessage="No hay acciones disponibles" emptyFilterMessage="No hay acciones con esa búsqueda">
                     <template #option="{ option }"><span>{{ option.label }}</span><span class="ml-2 text-xs text-surface-500">{{ option.group }}</span></template>
                 </Select>
                 <p v-if="!selectedAction && saved.value" class="mt-2 text-sm text-surface-500">El destino guardado se conserva en las opciones avanzadas. No necesitas cambiarlo para ajustar la etiqueta o ubicación.</p>
@@ -143,13 +148,13 @@ defineExpose({ requestClose, form, selectedScreens, selectedAction });
             </div>
             <div>
                 <span class="mb-2 block text-sm font-medium">Icono opcional</span>
-                <MenubarIconPicker v-model="form.icon" :readonly="readonly" />
+                <MenubarIconPicker v-model="form.icon" :readonly="readonly" @overlay="value => iconOpen = value" />
                 <p class="mt-1 text-xs text-surface-500">Los grupos superiores muestran texto y flecha. El icono se utiliza dentro de los submenús.</p>
             </div>
             <div class="grid gap-4 sm:grid-cols-2">
                 <div>
                     <label for="menubar-parent" class="mb-1 block text-sm font-medium">Dentro del grupo</label>
-                    <Select inputId="menubar-parent" v-model="form.parent_id" :options="groups" optionLabel="path" optionValue="id" :disabled="readonly" showClear fluid placeholder="Nivel superior" />
+                    <Select inputId="menubar-parent" aria-label="Dentro del grupo" v-model="form.parent_id" :options="groups" optionLabel="path" optionValue="id" :disabled="readonly" showClear fluid placeholder="Nivel superior" emptyMessage="No hay grupos disponibles" emptyFilterMessage="No hay grupos con esa búsqueda" />
                 </div>
                 <div>
                     <label for="menubar-order" class="mb-1 block text-sm font-medium">Orden</label>
@@ -159,7 +164,7 @@ defineExpose({ requestClose, form, selectedScreens, selectedAction });
             </div>
             <section aria-label="Dónde aparece">
                 <label for="menubar-screens" class="mb-1 block text-sm font-medium">Dónde aparece</label>
-                <MultiSelect inputId="menubar-screens" v-model="selectedScreens" :options="screens" optionLabel="label" optionValue="key" :disabled="readonly" filter fluid placeholder="Elige pantallas" :maxSelectedLabels="3" selectedItemsLabel="{0} pantallas" />
+                <MultiSelect inputId="menubar-screens" aria-label="Dónde aparece" v-model="selectedScreens" :options="screens" optionLabel="label" optionValue="key" :disabled="readonly" filter fluid placeholder="Elige pantallas" emptyMessage="No hay pantallas disponibles" emptyFilterMessage="No hay pantallas con esa búsqueda" :maxSelectedLabels="3" selectedItemsLabel="{0} pantallas" @before-show="screensOpen = true" @hide="screensOpen = false" @keydown.esc="event => { if (screensOpen) event.stopPropagation(); }" :pt="{ overlay: { onKeydown: event => { if (event.key === 'Escape') event.stopPropagation(); } } }" />
                 <p class="mt-2 text-sm text-surface-500">{{ selectedScreens.length ? "La etiqueta, ubicación y orden se comparten en estas pantallas." : "Sin pantallas asignadas: este elemento queda guardado, pero no aparece por sí solo en la barra." }}</p>
                 <p v-if="form.type === 'menu'" class="mt-1 text-sm text-surface-500">Un grupo aparece cuando contiene acciones disponibles en la pantalla. Configura también dónde aparecen sus acciones.</p>
             </section>

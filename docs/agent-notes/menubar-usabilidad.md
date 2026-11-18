@@ -38,3 +38,13 @@ Revisión medium del commit `64b5a5c` frente a `8884a78`: hallazgo P2 en autoriz
 Primer incremento implementado: catálogo común, previsualización sin efectos, destinos autorizados y persistencia validada. Build correcto. Pruebas focalizadas iniciales: 27 aprobadas; se amplió cobertura de jerarquía y autorización. Completar revisión medium y publicar la PR antes del editor.
 
 Editor guiado en worktree propio `storage/framework/testing/menubar-ui-worktree`, rama `feat/menubar-editor`. Catálogo y editor se agrupan en la primera PR por compatibilidad; la barra/navegación quedan en la siguiente.
+
+## Evidencia durante la primera entrega
+
+Backend del commit 64b5a5c: suite completa con 991 aprobadas, 2 omitidas y 47 782 aserciones; 414.96 s. Se omiten renderizado documental optativo y medición de capacidad. Los ajustes posteriores de roles/destinos están cubiertos por 35 pruebas focalizadas (603 aserciones), todavía pendientes de la nueva suite completa.
+
+El editor reutiliza Form.vue para administración y agregado contextual. Build y 8 pruebas focalizadas de formulario/consulta/previsualización aprobadas; se amplía la cobertura del renderizado nativo y E2E. La exploración MCP usa puerto 8033 y SQLite UUID propia. Detectó Escape que propagaba desde MultiSelect al diálogo; se limita el cierre del diálogo mientras hay un selector abierto. Se revisaron capturas y errores del recorrido. El primer fallo de selección fue un locator al input oculto de MultiSelect, no un error de persistencia.
+
+Suite frontend completa: 69 archivos y 190 pruebas aprobadas. Se detiene la propagación de Escape desde el selector abierto; comprobado con MCP. El siguiente E2E detectó latencia de guardado durante ejecución concurrente de la suite; traza: POST 302 en 18 s y GET posterior cancelado al agotar el límite de 15 s. Captura, vídeo, traza y consola inspeccionados; el recorrido usa ahora 45 s para esperar persistencia y se ejecuta sin la suite frontend concurrente. La exploración detectó además un delimitador incorrecto en el marcador de navegación documental nativa; corregido y pruebas backend repetidas.
+
+[Captura del editor y vista previa](../audits/menubar-2026-11-18/editor-vista-previa.png), Chromium con fixtures sintéticos. Vista previa sin enlaces ejecutables ni escrituras. Capturas finales adicionales y resultados E2E pendientes del recorrido en curso.
