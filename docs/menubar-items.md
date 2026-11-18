@@ -1,146 +1,87 @@
 # Sistema MenubarItems
 
-Para sembrar el catálogo completo sin activar sus entradas, consulta
-[Cargar el catálogo del menú contextual](how-to/configurar-menu-contextual.md).
-Se utiliza el `MenubarItemsSeeder` existente; las páginas destino y las rutas de
-activación son campos diferentes.
+## Modelo compartido
 
-## Cómo funciona
+El catálogo es común para toda la instalación. Cada elemento comparte etiqueta,
+icono, grupo y orden entre sus pantallas asignadas; la visibilidad cambia según
+la pantalla. No hay preferencias individuales ni separación por financiera.
+Ver [ADR 0047](explanation/adr-0047-menubar-contextual-compartido.md) y
+[seguimiento](agent-notes/menubar-usabilidad.md).
 
-El sistema genera dinámicamente la barra de navegación superior en función de la ruta activa. Los items son configurables desde la BD por un administrador. El flujo es:
+`MenubarItem` conserva `type`, `value`, `params`, `parent_id` y `sort_order`.
+`menubar_item_module.routes` contiene nombres completos de las pantallas donde
+aparece. Destino y aparición son conceptos distintos. Los grupos se muestran
+cuando tienen descendientes disponibles, aunque ellos mismos no tengan activación.
 
-```
-Request HTTP
-    │
-    ▼
-HandleInertiaRequests::share()
-    │  app(MenubarService::class)->getMenuItems($request)
-    │  → detecta módulo y acción de la ruta actual
-    │  → carga items filtrados por módulo
-    │  → resuelve URLs
-    │  retorna [] si no hay módulo asociado
-    ▼
-page.props.menubarItems  (disponible en todas las páginas)
-    ▼
-AppLayout.vue
-    │  computed(() => page.props.menubarItems)
-    │  <Menubar :model="menubarItems">
-    │  slot #item renderiza <a href> para garantizar links reales
-    ▼
-PrimeVue Menubar renderizado
-```
+## Catálogo de acciones y pantallas
 
-## Módulos
+`config/menubar.php` alimenta `MenubarItemsSeeder` y `MenubarCatalogoService`.
+Los parámetros se derivan de las rutas registradas, nunca de un singular supuesto
+del módulo. Se excluyen escrituras y búsquedas JSON (`solicitudes.clientes`,
+`consultas-sic.clientes`). Las entradas ya guardadas no se borran al actualizar.
+El seeder sigue siendo aditivo/idempotente y no activa entradas nuevas.
+Consultar [carga y operación](how-to/configurar-menu-contextual.md).
 
-Cada sección de la app tiene un `Module` en BD con `route_name` que coincide con el prefijo de las rutas Laravel. Ejemplos:
+## Resolvedor y autorización
 
-| Module.route_name | Rutas que cubre |
-|---|---|
-| `clientes` | clientes.index, clientes.show, clientes.create, clientes.edit |
-| `clientes.historial-crediticio` | clientes.historial-crediticio.show |
-| `historial-crediticio` | historial-crediticio.index |
+`HandleInertiaRequests` comparte `menubarItems`, calculado por `MenubarService`.
+El resolvedor carga la jerarquía completa, mantiene orden `sort_order, id` y
+produce claves estables y `kind=system|group|action`. Inicio/Regresar son entradas
+automáticas independientes del catálogo.
 
-`MenubarService::getMenuItems()` extrae el módulo de la ruta actual quitando el último segmento:
-- `clientes.show` → módulo `clientes`
-- `clientes.historial-crediticio.show` → módulo `clientes.historial-crediticio`
+`MenubarDestinoService` reutiliza Gate y políticas del dominio. Configurar el
+menú no concede permisos; el servidor destino conserva su autorización propia.
+Los contextos temporales de permisos por equipo se restauran al terminar.
 
-## Tipos de MenubarItem (campo `type`)
+Una URL requiere el recurso exacto disponible en la ruta, con autorización y
+relaciones válidas (por ejemplo pago perteneciente al crédito). Los marcadores
+como `{cliente}` se resuelven por el nombre real del parámetro; no se eligen
+registros recientes ni IDs alternativos. Una acción sin contexto puede responder
+`disabled` y `reason`, sin URL, si el perfil tiene los permisos básicos requeridos.
+Destinos desconocidos/no autorizados no se anuncian. URL externas admiten HTTP/HTTPS;
+las internas deben corresponder a destinos autorizados. Regresar no usa orígenes externos.
 
-| Tipo | Label UI | Valor (`value`) | Params |
-|---|---|---|---|
-| `menu` | Carpeta / Agrupador | null | — |
-| `route:name` | Página de la aplicación | nombre de ruta Laravel (`clientes.show`) | JSON `{"cliente": "{cliente}"}` |
-| `route:static` | URL externa | URL completa (`/clientes`) | — |
-| `route:referer_fallback` | Botón Regresar | ruta de fallback si no hay referer | — |
-| `route:dynamic` | Condicional avanzado | JSON con condiciones (ver abajo) | — |
+## Tipos compatibles
 
-### Params dinámicos (`route:name`)
+| Tipo | Significado |
+| --- | --- |
+| `menu` | Grupo sin destino propio |
+| `route:name` | Página registrada, con parámetros estructurados |
+| `route:static` | Dirección fija segura |
+| `route:referer_fallback` | Regresar, con destino de reserva |
+| `route:dynamic` | Condiciones guardadas y destino predeterminado |
 
-El campo `params` es un JSON que mapea parámetros de ruta:
-```json
-{"cliente": "{cliente}"}
-```
-Al resolver la URL, `MenubarService` reemplaza `{cliente}` con `$request->route('cliente')->id`.
+Las condiciones dinámicas usan coincidencia positiva de la ruta de origen y un
+fallback explícito. No existe el antiguo `!preg_match()` indicado en documentación
+previa. La consulta muestra contenido guardado sin reconstruirlo. Editar otros
+metadatos conserva el contenido avanzado; cambiarlo exige validación.
 
-### route:dynamic (avanzado)
+## Interfaces administrativas
 
-Lógica condicional basada en regex sobre la URL actual o el referer. Estructura del JSON en `value`:
-```json
-[
-  {
-    "condition_type": "default",
-    "route_name": "clientes.show",
-    "params": {"cliente": "{cliente}"}
-  },
-  {
-    "condition_type": "route_regexp",
-    "condition_value": {
-      "pregmatch_subject_type": "referer",
-      "route_name": "clientes.historial-crediticio.show"
-    }
-  }
-]
-```
+Se conservan CRUD y props `menubarCatalogo`, `menubarSeleccionado`, `modoMenu`
+y `listado`. La selección por ID es independiente de filtros y paginación.
+Consultar requiere lectura, no creación/actualización. La gestión conserva sus
+permisos separados y auditoría transaccional en `MenubarItemService`.
 
-⚠️ La lógica `!preg_match()` en `MenubarService::resolveMenubarUrl()` línea ~125 tiene comportamiento posiblemente invertido. Documentar caso de uso antes de agregar más condiciones de este tipo.
+| Interfaz | Contrato |
+| --- | --- |
+| `GET /admin/menubar-items/catalogo` | Devuelve `acciones`, `pantallas`, `grupos`. Lectura o gestión; los grupos guardados solo se incluyen con lectura. |
+| `POST /admin/menubar-items/previsualizacion` | Recibe `screen`, `selected_item_id` opcional y `draft` opcional con campos CRUD. Lectura y, para borrador, creación/actualización. Devuelve `items`, `message`; no persiste ni ejecuta destinos. |
+| `GET /admin/menubar-items/routes` | Compatibilidad avanzada: nombres de rutas GET; requiere lectura. |
 
-## Pivot: MenubarItemModule
+Las respuestas auxiliares usan `Cache-Control: private, no-store`.
+`modules: []` retira todas las activaciones. Se rechazan ciclos, orden inválido,
+destinos no GET, direcciones inseguras y nuevas asociaciones a pantallas inválidas.
+Eliminar un grupo con contenido requiere mover o eliminar sus elementos primero.
 
-Cada `MenubarItem` se vincula a uno o más módulos mediante la tabla `menubar_item_module`. El pivot incluye:
+## Auditoría y validación
 
-```json
-{
-  "routes": ["clientes.index", "clientes.create"]
-}
-```
+Crear/modificar/eliminar emite los eventos existentes `menubar_item.*` dentro de
+la transacción. Un guardado sin cambios no emite un evento duplicado. Consulta,
+previsualización y apertura visual de grupos no agregan eventos ni mutan negocio.
+Ver [matriz de auditoría](reference/auditoria-eventos.md).
 
-Esto controla en **cuáles acciones del módulo** aparece el item. Si el item tiene `routes: ["clientes.index"]`, solo aparece cuando la acción actual es `index` del módulo `clientes`.
-
-El administrador selecciona las acciones desde el formulario con estas opciones:
-- `index` → Listado / Vista principal
-- `create` → Formulario de creación
-- `show` → Vista de detalle
-- `edit` → Formulario de edición
-
-## Items automáticos (no configurables en BD)
-
-`MenubarService::buildMenu()` agrega automáticamente al inicio:
-- **Página de inicio**: Si acción actual es `index` → link a `dashboard`
-- **Regresar**: En cualquier otra acción → link al referer o al `.index` del módulo
-
-## Archivos clave
-
-| Archivo | Rol |
-|---|---|
-| `app/Services/MenubarService.php` | Motor: detecta módulo, filtra items, resuelve URLs |
-| `app/Models/MenubarItem.php` | Modelo: campos type, value, params, parent_id, sort_order |
-| `app/Models/MenubarItemModule.php` | Pivot: menubar_item_id, module_id, routes (JSON) |
-| `app/Models/Module.php` | Módulos del sistema con route_name |
-| `app/Http/Middleware/HandleInertiaRequests.php` | Comparte menubarItems en cada request |
-| `app/Http/Controllers/Admin/MenubarItemController.php` | CRUD admin de items |
-| `resources/external/sakai-vue/layout/AppLayout.vue` | Renderiza el Menubar (computed reactivo + slot #item) |
-| `resources/js/Pages/Admin/MenubarItems/Index.vue` | UI de configuración (TreeTable) |
-| `resources/js/Pages/Admin/MenubarItems/Form.vue` | Formulario de creación/edición |
-| `config/permission.php` | No relacionado directamente; los items no tienen permiso propio aún |
-
-## TODO
-
-- [ ] **Cache de menubar items** — actualmente se regenera en cada request vía `HandleInertiaRequests`. Agregar cache por `module_id` con invalidación al guardar items.
-- [ ] **Permisos por item** — mostrar/ocultar items según permiso Spatie del usuario actual. Necesita columna `permission_name` en `menubar_items` y verificación en `buildMenu()`.
-- [ ] **Validación backend** — verificar que `route:name` apunte a una ruta existente al guardar. Actualmente no valida y crashea en runtime.
-- [ ] **Tests de integración** para `MenubarService` — cubrir: módulo no encontrado, items sin pivot, params dinámicos, route:referer_fallback.
-- [ ] **Mejorar formulario de configuración** — selector visual de íconos PrimeVue, AutoComplete de rutas disponibles (requiere endpoint `GET /admin/menubar-items/routes`), builder visual para `route:dynamic`.
-- [ ] **Quick-add desde cualquier página** — botón FAB visible para usuarios con permiso `configure menubar`; abre formulario simplificado pre-rellenado con el módulo actual.
-- [ ] **Aclarar lógica de route:dynamic** — revisar si `!preg_match()` en `MenubarService.php:~125` está invertido y documentar el comportamiento esperado.
-- [ ] **Soporte para submenu en items dinámicos** — actualmente `buildMenu()` solo agrega `items` si el item tiene `children` cargados desde BD, no desde condiciones dinámicas.
-
-
-## Consulta y gestión autorizadas
-
-El catálogo administrativo resuelve `selected_item_id` independientemente de
-filtros/página y admite `modo=consulta|edicion`. El formulario compartido muestra
-valor condicional y parámetros guardados sin reconstruirlos en consulta. Solo los
-permisos existentes habilitan crear, editar o eliminar. La gestión se realiza en
-`MenubarItemService` con auditoría transaccional; el evento conserva actor,
-contexto, recurso y nombres de campos, sin copiar rutas, parámetros ni etiquetas.
-Consultar no genera eventos nuevos. Ver [contrato de consulta](reference/consulta-edicion-historicos.md).
+Pest cubre catálogo, permisos, contexto, rutas, parámetros, jerarquía, persistencia,
+no efectos de vista previa y rollback de auditoría. El editor guiado y la barra
+compacta se entregan en incrementos dependientes; la evidencia vigente se mantiene
+en la nota de la tarea.

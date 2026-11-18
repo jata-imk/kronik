@@ -1,6 +1,6 @@
 # Cargar el catálogo del menú contextual
 
-El seeder existente `MenubarItemsSeeder` carga 19 módulos y 45 acciones de navegación en **Administración → Menú contextual por módulos**. Incluye clientes/expedientes, solicitudes, evaluación, cumplimiento, SIC/reportes, créditos/pagos/anticipos, productos, documentos, empresa, usuarios, equipos, sucursales, roles, actividad, perfil y tokens API.
+El seeder existente `MenubarItemsSeeder` carga los 19 módulos y las acciones navegables de `config/menubar.php` en **Administración → Menú contextual por módulos**. Incluye clientes/expedientes, solicitudes, evaluación, cumplimiento, SIC/reportes, créditos/pagos/anticipos, productos, documentos, empresa, usuarios, equipos, sucursales, roles, actividad, perfil y tokens API. Se excluyen las búsquedas auxiliares JSON; las configuraciones antiguas se conservan para revisión explícita.
 
 ## Cargar después del reinicio QA
 

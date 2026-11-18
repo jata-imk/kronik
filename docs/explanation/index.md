@@ -71,3 +71,5 @@
 - [ADR 0043: escenarios SIC QA](adr-0043-escenarios-sic-qa.md).
 
 - [ADR 0045: fechas efectivas y captura histórica QA](adr-0045-fechas-efectivas-captura-historica.md).
+
+- [ADR 0047: Menubar contextual compartido](adr-0047-menubar-contextual-compartido.md).

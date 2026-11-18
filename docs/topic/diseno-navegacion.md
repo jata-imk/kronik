@@ -13,6 +13,9 @@ destinos de las rutas donde se activa cada entrada.
 
 ## Referencia y decisiones
 
+- [ADR 0047: catálogo compartido y contexto del Menubar](../explanation/adr-0047-menubar-contextual-compartido.md).
+- [Seguimiento de usabilidad del Menubar](../agent-notes/menubar-usabilidad.md).
+
 - [Tablero financiero y composición de su interfaz](../reference/tablero-financiero.md).
 - [Validar el tablero en escritorio, móvil y temas](../how-to/validar-tablero.md).
 

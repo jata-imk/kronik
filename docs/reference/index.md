@@ -42,3 +42,5 @@
 - [Escenarios SIC QA](sic-escenarios-qa.md).
 
 - [Fechas efectivas y captura histórica](captura-historica-creditos.md).
+
+- [Menubar: catálogo, contexto y configuración](../menubar-items.md).
