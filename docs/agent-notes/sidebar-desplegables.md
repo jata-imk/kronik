@@ -6,15 +6,15 @@
 - Rama: `fix/sidebar-desplegables`, base `7117c4c` de `origin/main`.
 - Worktree: `storage/framework/testing/sidebar-worktree` del checkout original.
 - Commit de implementación: `c0aa7e5`; evidencia inicial `7a45346`, publicados en la rama remota. El código, pruebas, documentación y capturas están validados.
-- PR: [#83 — permitir cerrar los desplegables del sidebar](https://github.com/jata-imk/kronik/pull/83), abierta contra `main`; sin integrar ni desplegar.
+- PR: [#83 — permitir cerrar los desplegables del sidebar](https://github.com/jata-imk/kronik/pull/83), integrada en `main` el 2026-11-18 mediante `7b8b9b7`, head `281aeb4`; sin despliegue acreditado.
 - Contrato: [Sistema de diseño](../reference/diseno-ui-ux.md#expansión-del-menú-lateral).
 - Procedimiento: [Validar sidebar](../how-to/validar-sidebar.md).
 
 ## Estado actual
 
-Implementado y validado localmente el 2026-11-17; listo para revisión. No acredita integración, despliegue ni QA reportado por el usuario.
+Implementado y validado localmente el 2026-11-17; integrado por instrucción del usuario el 2026-11-18. La tarea sigue abierta para su revisión de aceptación; no hay confirmación de despliegue ni QA posterior al merge.
 
-El checkout original permanece en `main` y conserva los registros, capturas, `docs/audits/` y stackdump sin seguimiento iniciales. Las referencias remotas se contrastaron antes y después: `main` en `7117c4c` y `feat/comunicaciones-notificaciones` de Bryan en `793e684`, sin cambios por esta entrega.
+Durante la validación, el checkout original permaneció en `main` `7117c4c` con sus registros, capturas, `docs/audits/` y stackdump sin seguimiento iniciales. Tras integrar, se sincronizó por avance rápido a `7b8b9b7` conservando esos archivos. La rama de Bryan `feat/comunicaciones-notificaciones` en `793e684` no se modificó.
 
 Decisiones confirmadas: autoabrir al navegar/recargar; conservar cierres durante filtros/recargas parciales; acordeón entre hermanos; resaltar grupo seleccionado y describir el destino para accesibilidad. La expansión compartida sobrevive al remontaje del layout y se descarta ante cambios del árbol autorizado.
 
@@ -49,7 +49,7 @@ Capturas sintéticas revisadas:
 
 La primera ejecución E2E usó un build anterior al ajuste del nombre accesible; se revisaron contexto, traza, captura y video representativos y se recompiló antes de las pasadas aprobadas. La suite frontend emite avisos de directivas de pruebas ajenas al sidebar. El build informa referencias a recursos de portada/fuentes no distribuidos en este checkout, datos de Browserslist antiguos y chunks grandes; no impidieron compilar. Ninguno de estos avisos se presenta como validación de esas superficies.
 
-Notion actualizado con los criterios verificados y la evidencia real. Se conserva `Kanban Status=Doing` y `Done=__NO__` por la revisión e integración pendientes; sin fecha nueva comprometida.
+Notion actualizado con los criterios verificados, la integración y la evidencia real. Se conserva `Kanban Status=Doing` y `Done=__NO__` por la aceptación del usuario pendiente; sin fecha nueva comprometida.
 
 ## Revisión y siguiente paso
 
@@ -59,4 +59,6 @@ Revisado el diff acumulado frente a `7117c4c`: cambio limitado al sidebar, su es
 
 El primer push fue rechazado por el hook al faltar APP_KEY en el entorno sintético del worktree. Se añadió una clave exclusiva de pruebas, se repitió el hook completo y aprobó antes de publicar. La actualización final de esta nota usa el mecanismo `SKIP_PRE_PUSH=1` exclusivamente para documentación, tras comprobar ausencia de cambios de código respecto de `7a45346`; no repite las suites ya aprobadas, conforme al contrato de entregas documentales. CI de la PR se consulta aparte y no acredita despliegue.
 
-Revisar la PR #83 y sus comprobaciones CI. La revisión medium local está resuelta sin hallazgos; cualquier cambio posterior de código requiere repetirla. La integración y el despliegue siguen pendientes por instrucción del usuario.
+La [CI de la PR, ejecución 243](https://github.com/jata-imk/kronik/actions/runs/44188507465), terminó con resultado `success`. Antes de integrar se comprobó que `281aeb4` solo modifica documentación respecto de `7a45346`, que no había conflictos ni hilos de revisión abiertos y que el código conservaba la revisión medium y el barrido frente a `7117c4c` registrados arriba. No se repitieron suites por esta actualización documental.
+
+Git confirmó que el árbol de `7b8b9b7` coincide exactamente con `281aeb4`. La integración no acredita despliegue ni aceptación del usuario. Siguiente paso: realizar su recorrido de aceptación con la [guía de sidebar](../how-to/validar-sidebar.md), identificar el entorno y registrar los resultados para decidir el cierre.
