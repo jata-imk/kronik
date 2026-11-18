@@ -300,3 +300,7 @@ La modalidad por escenario conserva los emisores y eventos SIC de la matriz. `pr
 El inicio se conserva en el evento existente credito.disbursed con state captura_historica_pendiente; no duplicar el desembolso con otro evento de inicio. La activación histórica conserva el evento existente de activación y producto como sujeto y versión en related. Fechas efectivas y referencias se consultan en evidencia protegida, sin ampliar la lista de metadatos permitidos. Consultas/cotizaciones no requieren eventos nuevos. Reintento y fallo de auditoría se prueban con persistencia real.
 
 La previsualización, consulta y apertura de grupos del Menubar no generan eventos adicionales: no persisten configuración ni ejecutan destinos. La retirada de activaciones usa el evento de actualización existente. Véase [el contrato del Menubar](../menubar-items.md).
+
+El ajuste visual y la confirmación de descarte no ejecutan operaciones de negocio
+ni persisten datos; no generan actividad adicional. Una navegación aceptada conserva
+los eventos de lectura o gestión que correspondan al destino.

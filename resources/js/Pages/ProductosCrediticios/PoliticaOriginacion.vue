@@ -1,7 +1,8 @@
 <script setup>
 import PageHeader from "@/Components/PageHeader.vue";
 import FieldHelp from "@/Components/FieldHelp.vue";
-import { Link, router, useForm, usePage } from "@inertiajs/vue3";
+import { Link, router, usePage } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { computed, ref, watch } from "vue";
 import { formatMoneyWithCents as money } from "./productValidation";

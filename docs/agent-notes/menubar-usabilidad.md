@@ -9,6 +9,16 @@
 
 ## Estado actual
 
+Segunda entrega en rama feat/menubar-navegacion, worktree propio menubar-nav-worktree,
+dependiente de feat/menubar-editor. Implementa barra compacta y Configurar según
+capacidades, estado vacío/error y navegación Inertia. Registra los formularios
+existentes (sin almacenar borradores) para confirmar navegación/cambio de contexto,
+historial y recarga. Los cambios forzados de contexto limpian ese registro.
+Build correcto; primera suite frontend: 194 aprobadas y un fallo del nombre de
+un stub de prueba, corregido. Backend focalizado detectó contexto de equipo
+faltante en la revocación de un permiso del test; se corrige la preparación y se
+repite. Validación y revisión medium finales pendientes.
+
 Implementación iniciada el 2026-11-18 por instrucción del usuario. Se preservan los archivos locales, worktrees y servicios ajenos, incluida la rama independiente de comunicaciones de Bryan. La aceptación del sidebar sigue pendiente y no forma parte del cierre de esta tarea.
 
 ## Decisiones confirmadas

@@ -1,5 +1,5 @@
 <script setup>
-import { useForm } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import { watch } from "vue";
 
 const props = defineProps({ creditoId: Number, captura: Object, puedeCompletar: Boolean });

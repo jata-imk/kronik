@@ -1,52 +1,43 @@
 <script setup>
 import { computed, ref } from "vue";
-import { usePage } from "@inertiajs/vue3";
+import { router, usePage } from "@inertiajs/vue3";
 import MenubarQuickAdd from "@/Components/MenubarQuickAdd.vue";
+import MenubarModel from "@/Components/MenubarModel.vue";
 
 const page = usePage();
-const menubarItems = computed(() => (page.props.menubarItems ?? []).filter((item) => !["Inicio", "Regresar", "Administración"].includes(item.label)));
-const quickAddRef = ref(null);
-
-const opcionesSuperAdmin = [
-    {
-        label: "Configurar menubar",
-        icon: "pi pi-bars",
-        command: () => {
-            window.location.href = route("admin.menubar-items.index");
-        },
-    },
-];
+const items = computed(() => (page.props.menubarItems ?? []).filter(item => item.kind !== "system"));
+const admin = computed(() => page.props.menubarAdmin);
+const quickAdd = ref(null);
+const configuration = ref(null);
+const configurationOpen = ref(false);
+const options = computed(() => [
+    ...(admin.value?.canCreate ? [{ label: "Agregar acción aquí", command: () => quickAdd.value?.open() }] : []),
+    ...(admin.value?.canRead ? [{ label: "Administrar menú", command: () => router.visit(route("admin.menubar-items.index")) }] : []),
+]);
 </script>
 
 <template>
-    <Menubar :model="menubarItems">
-        <template #item="{ item, props }">
-            <a v-if="item.url" :href="item.url" v-bind="props.action">
-                <span :class="item.icon" />
-                <span>{{ item.label }}</span>
-            </a>
-            <span v-else v-bind="props.action">
-                <span :class="item.icon" />
-                <span>{{ item.label }}</span>
-            </span>
-        </template>
+    <MenubarModel :model="items">
         <template #end>
-            <div class="flex items-center gap-1">
-                <Button
-                    v-if="page.props.menubarAdmin"
-                    icon="pi pi-plus"
-                    rounded
-                    text
-                    severity="secondary"
-                    title="Agregar item al menú"
-                    @click="quickAddRef?.open()" />
-                <SplitButton
-                    :buttonProps="{ class: '!hidden' }"
-                    dropdownIcon="pi pi-cog"
-                    :model="opcionesSuperAdmin" />
+            <div v-if="options.length" class="flex items-center gap-2">
+                <span v-if="!items.length && page.props.menubarEstado?.status !== 'unavailable'" class="k-menu-empty">Sin acciones en esta pantalla</span>
+                <Button label="Configurar" icon="pi pi-angle-down" iconPos="right" text severity="secondary" size="small" class="k-menu-config"
+                    aria-haspopup="menu" aria-controls="k-menubar-configuration" :aria-expanded="configurationOpen" @click="configuration.toggle($event)" />
+                <Menu ref="configuration" id="k-menubar-configuration" :model="options" popup @show="configurationOpen = true" @hide="configurationOpen = false" />
             </div>
         </template>
-    </Menubar>
-
-    <MenubarQuickAdd ref="quickAddRef" />
+    </MenubarModel>
+    <div v-if="page.props.menubarEstado?.status === 'unavailable'" class="px-3 py-2 text-sm" role="alert">
+        {{ page.props.menubarEstado.message }} <Button label="Reintentar" text size="small" severity="secondary" @click="router.reload({ only: ['menubarItems', 'menubarEstado', 'menubarAdmin', 'auth'] })" />
+    </div>
+    <MenubarQuickAdd ref="quickAdd" />
 </template>
+
+<style scoped>
+.k-menu-empty { color: var(--k-muted); font-size: 12px; }
+.k-menu-config { border-radius: 3px; padding: 5px 8px; font-size: 13px; background: transparent; }
+@media (max-width: 767px), (pointer: coarse) {
+    .k-menu-config { min-height: 44px; }
+    .k-menu-empty { display: none; }
+}
+</style>

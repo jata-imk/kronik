@@ -94,6 +94,8 @@ test("validación de menú muestra errores españoles y lector sin gestión no a
     await dialog.getByRole("button", { name: "Guardar", exact: true }).click();
     await expect(dialog).toContainText(/etiqueta.*obligatorio/i);
     await expect(dialog).not.toContainText("validation.");
+    await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
+    await page.getByRole("button", { name: "Descartar cambios", exact: true }).click();
     await page.goto("/clientes/1/edit");
     await page.context().clearCookies();
     await login(page, users.reader);

@@ -8,7 +8,8 @@ import CodigoPostalAutocomplete from "@/Components/CodigoPostalAutocomplete.vue"
 import IntlTelInput from "@/Components/IntlTelInput.vue";
 import { useDireccionCodigoPostal } from "@/Composables/useDireccionCodigoPostal";
 import { useTelefonoInternacional } from "@/Composables/useTelefonoInternacional";
-import { router, useForm, usePage } from "@inertiajs/vue3";
+import { router, usePage } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";

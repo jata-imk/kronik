@@ -1,5 +1,30 @@
 # Sistema MenubarItems
 
+## Barra y navegación
+
+La barra usa PrimeVue Menubar con texto y flecha en los grupos superiores e iconos
+opcionales dentro. En escritorio usa 13 px; en móvil mantiene objetivos de 44 px.
+Configurar es un control neutro: Agregar acción aquí requiere creación y
+Administrar menú requiere lectura. No depende de Super Admin. Las acciones del
+sistema se distinguen por identidad, sin reservar etiquetas de grupos del usuario.
+
+Un fallo de resolución se muestra como error con reintento, distinto de un menú
+vacío. La vista previa y el menú real comparten el renderizador accesible.
+Los enlaces internos ordinarios usan Inertia; conservan href, modificadores,
+nueva pestaña, sitios externos y visores documentales con navegación nativa.
+
+Los formularios Inertia de las pantallas operativas se registran mediante
+useGuardedForm. Al salir a otro recurso, volver/avanzar en el historial o cambiar
+equipo/sucursal se confirma el descarte. Cancelar conserva los datos en memoria.
+Los filtros de la misma pantalla y los envíos de guardado no se bloquean. Recarga,
+salida externa y cierre de pestaña usan la confirmación nativa del navegador,
+cuyo texto decide el navegador. No se crean borradores persistentes ni autosave.
+Los cambios forzados de contexto o sesión limpian el registro antes de salir:
+no se ofrece conservar datos del contexto anterior.
+
+Las activaciones históricas se resuelven por la pantalla exacta guardada, aunque
+su asociación de módulo sea anterior al catálogo canónico.
+
 ## Modelo compartido
 
 El catálogo es común para toda la instalación. Cada elemento comparte etiqueta,

@@ -1,0 +1,88 @@
+import { expect, test } from "@playwright/test";
+import { failOnConsoleErrors, login, users } from "./support/auth.js";
+
+test.setTimeout(180_000);
+test("barra compacta navega con Inertia y cancelar conserva el formulario", async ({ page }, testInfo) => {
+    const assertConsole = await failOnConsoleErrors(page);
+    await login(page);
+    await page.goto("/clientes/1/edit");
+    const bar = page.getByRole("menubar", { name: "Acciones de esta pantalla" });
+    const settings = bar.getByRole("button", { name: "Configurar", exact: true });
+    await expect(settings).toBeVisible();
+    await expect(bar.getByRole("menuitem", { name: "Nueva solicitud", exact: true })).toHaveCSS("font-size", "13px");
+    await page.evaluate(() => { window.__menubarSameDocument = "conservado"; });
+    await page.locator("#primer_nombre").fill("Captura sin guardar");
+    const writes = [];
+    page.on("request", request => { if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method()) && request.url().includes("/clientes")) writes.push(request.url()); });
+    page.once("dialog", dialog => dialog.dismiss());
+    await bar.getByRole("menuitem", { name: "Nueva solicitud", exact: true }).click();
+    await expect(page).toHaveURL(/\/clientes\/1\/edit$/);
+    await expect(page.locator("#primer_nombre")).toHaveValue("Captura sin guardar");
+    expect(writes).toEqual([]);
+    await page.screenshot({ path: testInfo.outputPath("barra-compacta.png") });
+    page.once("dialog", dialog => dialog.accept());
+    await bar.getByRole("menuitem", { name: "Nueva solicitud", exact: true }).click();
+    await expect(page).toHaveURL(/\/solicitudes\/create\?cliente_id=1$/);
+    expect(await page.evaluate(() => window.__menubarSameDocument)).toBe("conservado");
+    assertConsole();
+});
+
+test("atrás y recarga ofrecen salida explícita sin guardar ni resucitar captura", async ({ page }) => {
+    await failOnConsoleErrors(page);
+    await login(page);
+    await page.goto("/clientes");
+    await page.getByRole("button", { name: /Editar Ana Lucia Garcia Lopez/i }).click();
+    await expect(page).toHaveURL(/\/clientes\/1\/edit$/);
+    await page.locator("#primer_nombre").fill("Pendiente de guardar");
+    page.once("dialog", dialog => dialog.dismiss());
+    await page.goBack();
+    await expect(page).toHaveURL(/\/clientes\/1\/edit$/);
+    await expect(page.locator("#primer_nombre")).toHaveValue("Pendiente de guardar");
+    page.once("dialog", dialog => dialog.dismiss());
+    await page.reload().catch(() => {});
+    await expect(page.locator("#primer_nombre")).toHaveValue("Pendiente de guardar");
+    page.once("dialog", dialog => dialog.accept());
+    await page.goBack();
+    await expect(page).toHaveURL(/\/clientes$/);
+    await page.goForward();
+    await expect(page.locator("#primer_nombre")).not.toHaveValue("Pendiente de guardar");
+});
+
+test("agregado contextual conserva errores y pantalla exacta, cancelar exige descarte", async ({ page }) => {
+    await login(page);
+    await page.goto("/clientes/1/edit");
+    await page.getByRole("button", { name: "Configurar", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Agregar acción aquí", exact: true }).click();
+    const dialog = page.getByRole("dialog", { name: "Configurar elemento de menú", exact: true });
+    await expect(dialog.locator(".p-multiselect")).toContainText("Clientes · Editar cliente");
+    await dialog.locator("#menubar-type").click();
+    await page.getByRole("option", { name: "Grupo de menú", exact: true }).click();
+    await dialog.getByRole("button", { name: "Guardar", exact: true }).click();
+    await expect(dialog).toContainText(/etiqueta.*obligatorio/i, { timeout: 45_000 });
+    await expect(dialog.locator(".p-multiselect")).toContainText("Clientes · Editar cliente");
+    await dialog.locator("#menubar-label").fill("Sin guardar");
+    await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
+    await page.getByRole("button", { name: "Seguir editando", exact: true }).click();
+    await expect(dialog.locator("#menubar-label")).toHaveValue("Sin guardar");
+    await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
+    await page.getByRole("button", { name: "Descartar cambios", exact: true }).click();
+    await expect(dialog).toBeHidden();
+});
+
+test("consulta no ofrece configuración y sus enlaces conservan href y nueva pestaña", async ({ page, context }) => {
+    await login(page, users.reader);
+    await page.goto("/clientes/1");
+    await expect(page.getByRole("button", { name: "Configurar", exact: true })).toHaveCount(0);
+    const link = page.getByRole("menuitem", { name: "Abrir expediente", exact: true });
+    await expect(link).toHaveAttribute("href", /\/clientes\/1\/expediente$/);
+    const popup = context.waitForEvent("page");
+    await link.click({ modifiers: ["Control"] });
+    const other = await popup;
+    await expect(other).toHaveURL(/\/clientes\/1\/expediente$/);
+    await expect(page).toHaveURL(/\/clientes\/1$/);
+    await other.close();
+    const dialogs = [];
+    page.on("dialog", dialog => { dialogs.push(dialog.type()); dialog.dismiss(); });
+    await page.reload();
+    expect(dialogs).toEqual([]);
+});

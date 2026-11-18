@@ -1,5 +1,6 @@
 <script setup>
-import { router, useForm, usePage } from "@inertiajs/vue3";
+import { router, usePage } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import axios from "axios";
 import {
     BadgeCheck,

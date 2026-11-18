@@ -1,7 +1,8 @@
 <script setup>
 import OriginacionAyuda from "@/Components/Products/OriginacionAyuda.vue";
 import PageHeader from "@/Components/PageHeader.vue";
-import { Link, useForm } from "@inertiajs/vue3";
+import { Link } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import axios from "axios";
 import { computed, ref, watch } from "vue";

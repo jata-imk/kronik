@@ -1,5 +1,6 @@
 <script setup>
-import { Link, useForm } from "@inertiajs/vue3";
+import { Link } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import { computed } from "vue";
 const props = defineProps({ solicitud: Object, estado: Object, puedeAprobar: Boolean });
 const form = useForm({ motivo: "", lock_version: props.solicitud.lock_version });

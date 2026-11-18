@@ -65,26 +65,38 @@ class HandleInertiaRequests extends Middleware
         // catalogue to roles in the current team made global administrators lose
         // navigation entries after switching teams.
         $permissions = Permission::query()->orderBy('name')->get();
+        $menu = null;
+        $resolveMenu = function () use ($request, &$menu) {
+            if ($menu !== null) {
+                return $menu;
+            }
+            try {
+                $items = app(MenubarService::class)->getMenuItems($request);
+                return $menu = ['items' => $items, 'state' => ['status' => collect($items)->contains(fn ($item) => ($item['kind'] ?? null) !== 'system') ? 'ready' : 'empty']];
+            } catch (\Throwable $exception) {
+                report($exception);
+                return $menu = ['items' => [], 'state' => ['status' => 'unavailable', 'message' => 'No pudimos cargar las acciones de esta pantalla. Inténtalo de nuevo.']];
+            }
+        };
 
         return array_merge(parent::share($request), [
             'contextoOperativo' => Inertia::always(fn () => ['team_id' => $request->user()->current_team_id, 'sucursal_id' => $request->user()->current_sucursal_id]),
             'empresaOperacion' => fn () => app(\App\Services\EmpresaOperacionService::class)->compartir(),
             'navigation' => fn () => app(\App\Services\NavigationService::class)->forUser($request->user()),
-            'menubarItems' => function () use ($request) {
-                try {
-                    return app(MenubarService::class)->getMenuItems($request);
-                } catch (\Throwable $e) {
-                    return [];
-                }
-            },
+            'menubarItems' => fn () => $resolveMenu()['items'],
+            'menubarEstado' => fn () => $resolveMenu()['state'],
             'menubarAdmin' => function () use ($request) {
-                if (! $request->user()?->is_super_admin) {
+                $read = Gate::allows('read menubar-items');
+                $create = Gate::allows('create menubar-items');
+                if (! $read && ! $create) {
                     return null;
                 }
 
                 return [
                     'modules' => Module::select(['id', 'name', 'route_name'])->get(),
                     'currentRouteName' => Route::current()?->getName(),
+                    'canRead' => $read,
+                    'canCreate' => $create,
                 ];
             },
             'jetstream' => [

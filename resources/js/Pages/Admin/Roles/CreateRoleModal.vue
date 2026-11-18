@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch } from "vue";
 import { useToast } from "primevue/usetoast";
-import { useForm } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 
 const toast = useToast();
 

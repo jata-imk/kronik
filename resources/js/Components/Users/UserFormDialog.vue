@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch, onMounted, onUnmounted } from "vue";
-import { useForm } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import axios from "axios";
 import { useToast } from "primevue/usetoast";
 

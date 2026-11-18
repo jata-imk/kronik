@@ -14,7 +14,8 @@ import ProductVersionStatus from "@/Components/Products/ProductVersionStatus.vue
 import ProductTaxPolicy from "@/Components/Products/ProductTaxPolicy.vue";
 import SimulationTaxSummary from "@/Components/Products/SimulationTaxSummary.vue";
 import { emptyTaxConcept, normalizeTaxPolicy } from "@/Components/Products/fiscalidad";
-import { Link, router, useForm, usePage } from "@inertiajs/vue3";
+import { Link, router, usePage } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import axios from "axios";
 import { useConfirm } from "primevue/useconfirm";

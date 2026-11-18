@@ -22,6 +22,26 @@ function menuFields($module, array $extra = []): array
         'parent_id' => null, 'sort_order' => 0, 'modules' => [$module->id => ['routes' => ['clientes.index']]]], ...$extra];
 }
 
+test('control contextual respeta lectura y creación sin exigir superadministrador', function () {
+    $reader = User::factory()->withPersonalTeam()->create();
+    $reader->forceFill(['current_team_id' => $reader->ownedTeams()->first()->id])->save();
+    grantTeamPermissions($reader, $reader->currentTeam, ['read clientes', 'create menubar-items']);
+    $this->actingAs($reader)->get(route('clientes.index'))->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+        ->where('menubarAdmin.canRead', false)->where('menubarAdmin.canCreate', true)->where('menubarAdmin.currentRouteName', 'clientes.index')
+        ->where('menubarEstado.status', 'empty'));
+    setPermissionsTeamId($reader->current_team_id);
+    $reader->revokePermissionTo('create menubar-items');
+    $reader->unsetRelation('permissions')->unsetRelation('roles');
+    $this->get(route('clientes.index'))->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page->where('menubarAdmin', null));
+});
+
+test('fallo de resolución se distingue de menú vacío sin exponer el error interno', function () {
+    $this->mock(\App\Services\MenubarService::class, fn ($mock) => $mock->shouldReceive('getMenuItems')->once()->andThrow(new \RuntimeException('SECRET-ERROR')));
+    $this->get(route('clientes.index'))->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+        ->has('menubarItems', 0)->where('menubarEstado.status', 'unavailable')
+        ->where('menubarEstado.message', 'No pudimos cargar las acciones de esta pantalla. Inténtalo de nuevo.'));
+});
+
 test('catálogo ofrece pantallas humanas sin escrituras ni búsquedas JSON', function () {
     $this->getJson(route('admin.menubar-items.catalogo'))->assertOk()
         ->assertJsonFragment(['key' => 'clientes.show', 'label' => 'Clientes · Información del cliente', 'module_id' => $this->module->id, 'required' => ['cliente']])
