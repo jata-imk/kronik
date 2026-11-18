@@ -224,6 +224,7 @@ demuestra por sí sola ejecución ni despliegue.
 | Superficie | Decisión y justificación | Evidencia |
 | --- | --- | --- |
 | `dashboard`, `admin` y bandejas | Consulta, navegación, filtros, búsqueda y paginación no mutan negocio ni generan actividad adicional. | ConsultaSucursalTest, Admin/ActivityLogTest, SelectedTeamManagementTest |
+| Sidebar | Expandir/contraer solo modifica presentación en memoria del navegador. No cambia recursos, permisos ni evidencia reservada; no requiere ActivityEvent ni emisión mediante ActivityLogService. La navegación conserva los eventos propios de sus destinos. | AppMenuItem.test.js; E2E/sidebar.spec.js; [Agent Note](../agent-notes/sidebar-desplegables.md) |
 | `activity-log` listado | Se conserva lectura sin evento; el CSV sí registra generación. | AuditCoverageTest, Admin/ActivityLogTest, E2E auditoria-actividad |
 | Productos, plantillas, políticas, catálogos y simulación | Consulta histórica y cálculo puro no añaden eventos. Previews sintéticos no crean evidencia de negocio. | ConsultaProductosTest, ConsultaPlantillasTest, ConsultaPoliticasTest, CapacidadesCreditoTest |
 | Biblioteca de imágenes | Consultar recursos de configuración no equivale a acceder a evidencia privada de clientes; el alta tiene su evento. | Documentos/DocumentoEditorTest |
