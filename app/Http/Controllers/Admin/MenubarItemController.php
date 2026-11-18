@@ -27,12 +27,7 @@ class MenubarItemController extends Controller implements HasMiddleware
 
     public function availableRoutes(): JsonResponse
     {
-        $routes = collect(LaravelRoute::getRoutes())
-            ->filter(fn ($r) => in_array('GET', $r->methods(), true))
-            ->map(fn ($r) => $r->getName())
-            ->filter()
-            ->sort()
-            ->values();
+        $routes = collect(app(\App\Services\MenubarCatalogoService::class)->acciones())->pluck('key')->sort()->values();
 
         return response()->json($routes);
     }

@@ -25,6 +25,8 @@ Mantener PrimeVue Menubar: grupos superiores con texto y flecha, iconos opcional
 
 Cada PR tendrá revisión medium, pruebas y documentación; barrido acumulado contra la base al completar. Aún no se acredita implementación validada, integración ni despliegue.
 
+La segunda revisión detectó que imponer nombres de pantalla canónicos antes de actualizar los editores antiguos impediría guardar algunas selecciones. Se agrupan los incrementos 1 y 2 en una primera PR coherente; la segunda entrega integra barra y navegación segura. El otro hallazgo, destinos aceptados pero no soportados por autorización, se corrige alineando validador y selector avanzado con el catálogo. No se publica la rama backend aislada como entrega integrable.
+
 ## Evidencia inicial
 
 Exploración de `8884a78` con Playwright MCP en puerto 8031 y SQLite UUID nueva: listado sin barra cuando no hay activaciones; edición de cliente con Abrir expediente/Nueva solicitud; administración y agregado rápido. Este último preselecciona Listado aunque se abra desde edición. Las capturas usan fixtures sintéticos; la propuesta visual solo modificó el navegador y no se guardó. Build correcto y 4 pruebas frontend aprobadas antes de comenzar la implementación.

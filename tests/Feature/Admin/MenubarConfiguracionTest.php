@@ -71,8 +71,10 @@ test('rutas parámetros activaciones y orden inválidos producen mensajes españ
     expect(MenubarItem::count())->toBe(0);
 })->with([
     [['value' => 'ruta.inexistente'], 'value'], [['value' => 'solicitudes.store'], 'value'],
+    [['value' => 'componentes'], 'value'], [['value' => 'documentos-generados.download'], 'value'],
     [['params' => '{invalid'], 'params'], [['sort_order' => -1], 'sort_order'],
     [['type' => 'route:static', 'value' => 'javascript:alert(1)'], 'value'],
+    [['type' => 'route:static', 'value' => '/componentes'], 'value'],
     [['modules' => [999999 => ['routes' => ['clientes.index']]]], 'modules'],
 ]);
 

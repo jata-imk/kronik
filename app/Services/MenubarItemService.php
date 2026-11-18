@@ -121,13 +121,24 @@ class MenubarItemService
         if ($params !== null && $params !== '' && (! is_string($params) || ! json_validate($params) || ! is_array(json_decode($params, true)))) {
             $fail('params', 'Los parámetros deben ser un objeto JSON válido.');
         }
-        $routeValid = fn ($name) => is_string($name) && ($route = Route::getRoutes()->getByName($name)) && in_array('GET', $route->methods(), true)
-            && ! in_array($name, ['solicitudes.clientes', 'consultas-sic.clientes'], true);
+        $supported = array_column(app(MenubarCatalogoService::class)->acciones(), 'key');
+        $routeValid = fn ($name) => is_string($name) && in_array($name, $supported, true);
         if (in_array($type, ['route:name', 'route:referer_fallback'], true) && ! $routeValid($value)) {
             $fail('value', 'Selecciona una página de destino disponible.');
         }
         if ($type === 'route:static' && ! app(MenubarDestinoService::class)->urlSegura($value)) {
             $fail('value', 'Escribe una dirección web segura o una ruta que comience con /.');
+        }
+        if ($type === 'route:static' && (str_starts_with($value, '/') || parse_url($value, PHP_URL_HOST) === parse_url(config('app.url'), PHP_URL_HOST))) {
+            try {
+                $destination = Route::getRoutes()->match(\Illuminate\Http\Request::create($value));
+                $supportedDestination = $routeValid($destination->getName());
+            } catch (\Throwable) {
+                $supportedDestination = false;
+            }
+            if (! $supportedDestination) {
+                $fail('value', 'Selecciona un destino interno incluido en el catálogo de acciones.');
+            }
         }
         if ($type === 'route:dynamic') {
             $conditions = is_string($value) && json_validate($value) ? json_decode($value, true) : null;
