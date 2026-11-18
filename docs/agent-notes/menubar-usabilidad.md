@@ -10,7 +10,8 @@
 
 ## Estado al 2026-11-18
 
-Catálogo y editor implementados y verificados; PR pendiente de publicación. La
+Catálogo y editor implementados y verificados; [PR #85 publicada](https://github.com/jata-imk/kronik/pull/85)
+con head 9c6257b y base 8884a78, pendiente de revisión humana e integración. La
 barra compacta y la protección de navegación están en verificación en la segunda
 entrega. Sin integración ni despliegue autorizados. La aceptación del sidebar
 sigue pendiente y es independiente. Se preservan checkout, archivos, servicios
