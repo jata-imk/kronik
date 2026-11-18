@@ -122,6 +122,12 @@ class MenubarDestinoService
         if ($name === 'teams.show') {
             return ($team = $model('team', Team::class)) && $gate->allows('view', $team);
         }
+        if ($name === 'admin.roles.index') {
+            $teamId = $params['team'] ?? $actor->current_team_id;
+            $team = is_scalar($teamId) ? Team::find($teamId) : null;
+
+            return $team && app(TeamContext::class)->allows($actor, $team, 'read roles');
+        }
         if ($name === 'originacion-politicas.show') {
             return $gate->allows('read productos-crediticios') && $model('version', ProductoVersion::class) !== null;
         }

@@ -31,6 +31,8 @@ Exploración de `8884a78` con Playwright MCP en puerto 8031 y SQLite UUID nueva:
 
 ## Siguiente paso
 
+Revisión medium del commit `64b5a5c` frente a `8884a78`: hallazgo P2 en autorización de enlaces de roles para un equipo seleccionado distinto del actual. Se corrige reutilizando `TeamContext`, con regresión de ambos sentidos y restauración del contexto. Revisión posterior requerida.
+
 Primer incremento implementado: catálogo común, previsualización sin efectos, destinos autorizados y persistencia validada. Build correcto. Pruebas focalizadas iniciales: 27 aprobadas; se amplió cobertura de jerarquía y autorización. Completar revisión medium y publicar la PR antes del editor.
 
 Editor guiado en worktree propio `storage/framework/testing/menubar-ui-worktree`, rama `feat/menubar-editor`. Catálogo y editor se agrupan en la primera PR por compatibilidad; la barra/navegación quedan en la siguiente.

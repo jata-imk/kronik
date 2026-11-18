@@ -140,3 +140,26 @@ test('creación sin lectura recibe metadatos pero no el árbol guardado ni vista
     $this->actingAs($creator)->getJson(route('admin.menubar-items.catalogo'))->assertOk()->assertJsonCount(0, 'grupos');
     $this->postJson(route('admin.menubar-items.previsualizacion'), ['screen' => 'clientes.index', 'draft' => menuFields($this->module)])->assertForbidden();
 });
+
+test('destinos de roles usan el equipo seleccionado y restauran el contexto anterior', function () {
+    $actor = User::factory()->withPersonalTeam()->create();
+    $teamA = $actor->ownedTeams()->first();
+    $teamB = \App\Models\Team::factory()->create(['user_id' => $actor->id]);
+    $teamC = \App\Models\Team::factory()->create(['user_id' => $actor->id]);
+    $actor->forceFill(['current_team_id' => $teamA->id])->save();
+    grantTeamPermissions($actor, $teamA, ['read clientes']);
+    grantTeamPermissions($actor, $teamB, ['read roles']);
+    $item = app(MenubarItemService::class)->guardar(null, menuFields($this->module, [
+        'value' => 'admin.roles.index', 'params' => json_encode(['team' => $teamB->id]),
+    ]), $this->actor);
+    $this->actingAs($actor)->get(route('clientes.index'))->assertInertia(fn ($page) => $page
+        ->where('menubarItems.1.url', route('admin.roles.index', ['team' => $teamB->id])));
+    $this->get(route('admin.roles.index', ['team' => $teamB->id]))->assertOk();
+    grantTeamPermissions($actor, $teamA, ['read roles']);
+    $item->update(['params' => ['team' => $teamC->id]]);
+    $this->get(route('clientes.index'))->assertInertia(fn ($page) => $page->has('menubarItems', 1));
+    $this->get(route('admin.roles.index', ['team' => $teamC->id]))->assertForbidden();
+    setPermissionsTeamId(345678);
+    expect(app(\App\Services\MenubarDestinoService::class)->permitido('admin.roles.index', ['team' => $teamB->id], $actor))->toBeTrue();
+    expect(getPermissionsTeamId())->toBe(345678);
+});
