@@ -66,6 +66,15 @@ Todas contra la base funcional 8884a78, salvo indicación:
 Los cambios posteriores de esta rama son evidencia, documentación y harness E2E.
 La segunda entrega tendrá revisión propia y barrido acumulado contra 8884a78.
 
+Segunda entrega: revisiones de 7e70241 y 290c8ca contra la primera PR corrigieron
+selección por ID, cancelaciones que ocultaban captura, base de roles, referencias
+anidadas de producto y formularios de diálogos ya cerrados. Se añaden regresiones
+con useForm real, no solo mocks. Los metadatos del menú se refrescan también en
+recargas parciales para retirar capacidades revocadas. Dos E2E de navegación
+(salida Inertia y atrás/recarga) aprobados; agregado y enlace modificado se repiten
+con las mismas respuestas geográficas sintéticas del harness. Suite completa,
+revisión propia final y barrido conjunto todavía en curso.
+
 ## Siguiente paso y límites
 
 Publicar la primera PR; finalizar pruebas/revisión de la barra y los formularios,

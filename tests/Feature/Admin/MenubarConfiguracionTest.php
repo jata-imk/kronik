@@ -33,6 +33,9 @@ test('control contextual respeta lectura y creación sin exigir superadministrad
     $reader->revokePermissionTo('create menubar-items');
     $reader->unsetRelation('permissions')->unsetRelation('roles');
     $this->get(route('clientes.index'))->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page->where('menubarAdmin', null));
+    $this->get(route('clientes.index'), [
+        'X-Inertia' => 'true', 'X-Inertia-Partial-Component' => 'Clientes/Index', 'X-Inertia-Partial-Data' => 'clientes',
+    ])->assertOk()->assertJsonPath('props.menubarAdmin', null)->assertJsonPath('props.menubarEstado.status', 'empty');
 });
 
 test('fallo de resolución se distingue de menú vacío sin exponer el error interno', function () {
