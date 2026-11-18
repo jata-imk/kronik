@@ -47,6 +47,14 @@ test('acción nueva conserva el mismo orden en vista previa y después de guarda
         ->assertOk()->assertJsonPath('items.0.label', 'Anterior')->assertJsonPath('items.1.label', 'Nueva');
 });
 
+test('activación histórica en otro módulo conserva la pantalla exacta', function () {
+    $documents = Module::where('name', 'documentos')->sole();
+    $item = MenubarItem::create(['label' => 'Expediente guardado', 'type' => 'route:name', 'value' => 'clientes.expediente.show', 'params' => ['cliente' => '{cliente}']]);
+    $item->modules()->attach($documents, ['routes' => json_encode(['clientes.expediente.show'])]);
+    $this->postJson(route('admin.menubar-items.previsualizacion'), ['screen' => 'clientes.expediente.show'])
+        ->assertOk()->assertJsonPath('items.0.label', 'Expediente guardado')->assertJsonPath('items.0.disabled', true);
+});
+
 test('lectores pueden previsualizar lo guardado pero no modificar borradores', function () {
     $reader = User::factory()->withPersonalTeam()->create();
     $reader->forceFill(['current_team_id' => $reader->ownedTeams()->first()->id])->save();
