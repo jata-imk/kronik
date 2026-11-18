@@ -37,6 +37,16 @@ test('previsualización reemplaza un elemento en memoria sin enlaces ni activida
     expect($item->fresh()->label)->toBe('Acción sintética')->and(MenubarItem::count())->toBe(1)->and(Activity::count())->toBe($before);
 });
 
+test('acción nueva conserva el mismo orden en vista previa y después de guardar', function () {
+    app(MenubarItemService::class)->guardar(null, menuFields($this->module, ['label' => 'Anterior']), $this->actor);
+    $draft = menuFields($this->module, ['label' => 'Nueva']);
+    $this->postJson(route('admin.menubar-items.previsualizacion'), ['screen' => 'clientes.index', 'draft' => $draft])
+        ->assertOk()->assertJsonPath('items.0.label', 'Anterior')->assertJsonPath('items.1.label', 'Nueva');
+    $this->post(route('admin.menubar-items.store'), $draft)->assertRedirect();
+    $this->postJson(route('admin.menubar-items.previsualizacion'), ['screen' => 'clientes.index'])
+        ->assertOk()->assertJsonPath('items.0.label', 'Anterior')->assertJsonPath('items.1.label', 'Nueva');
+});
+
 test('lectores pueden previsualizar lo guardado pero no modificar borradores', function () {
     $reader = User::factory()->withPersonalTeam()->create();
     $reader->forceFill(['current_team_id' => $reader->ownedTeams()->first()->id])->save();

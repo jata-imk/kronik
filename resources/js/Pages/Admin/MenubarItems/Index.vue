@@ -75,6 +75,7 @@ const deleteItem = (item) => {
 
         <template #card-content>
             <div class="p-4"><InputText v-model="filters.global.value" aria-label="Buscar acciones de menú" placeholder="Buscar acciones de menú" /><ListadoPaginador /></div>
+            <Message v-if="Object.keys(page.props.errors ?? {}).length && !showForm" severity="error" role="alert" class="mb-4"><ul><li v-for="(message, field) in page.props.errors" :key="field">{{ message }}</li></ul></Message>
             <div class="flex justify-end pb-8">
                 <Button v-if="can('create-menubar-items')" label="Agregar acción o grupo" icon="pi pi-plus" class="mt-3" @click="createItem" />
             </div>

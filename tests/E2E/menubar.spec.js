@@ -34,6 +34,7 @@ for (const mobile of [false, true]) {
             await dialog.locator("#menubar-order").fill("7");
             await dialog.locator(".p-multiselect").click();
             await page.getByRole("option", { name: "Clientes · Editar cliente", exact: true }).click();
+            await expect(dialog.locator(".p-multiselect")).toContainText("Clientes · Editar cliente");
             await page.keyboard.press("Escape");
             await expect(page.getByRole("dialog", { name: "¿Descartar los cambios?", exact: true })).toHaveCount(0);
             await expect(dialog).toBeVisible();
