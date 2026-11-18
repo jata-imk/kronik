@@ -5,7 +5,10 @@ const editor = page => page.getByRole("dialog", { name: "Configurar elemento de 
 test.setTimeout(180_000);
 async function choose(page, control, option) {
     await control.click();
+    const filter = page.locator(".p-select-filter:visible");
+    if (await filter.count()) await filter.fill(typeof option === "string" ? option : option.source.replace(/^\^/, ""));
     await page.getByRole("option", { name: option, exact: true }).click();
+    if (typeof option === "string") await expect(control).toContainText(option);
 }
 async function createGroup(page, label) {
     await page.getByRole("button", { name: "Agregar acción o grupo", exact: true }).click();
@@ -45,6 +48,7 @@ for (const mobile of [false, true]) {
             await choose(page, dialog.locator("#menubar-preview-screen"), "Clientes · Editar cliente");
             await dialog.getByRole("button", { name: "Ver vista previa", exact: true }).click();
             const previewRegion = dialog.locator('[aria-label="Vista previa"]');
+            await expect(previewRegion.locator(".p-menubar")).toBeVisible();
             const previewToggle = previewRegion.getByRole("button", { name: "Abrir acciones de esta pantalla", exact: true });
             if (await previewToggle.isVisible()) await previewToggle.click();
             const preview = previewRegion.getByRole("menubar", { name: "Vista previa del menú" });
@@ -80,12 +84,14 @@ test("consulta por ID y teclado no guarda ni modifica configuración", async ({ 
     await dialog.locator("#menubar-value").press("Enter");
     await dialog.getByRole("button", { name: "Cerrar consulta", exact: true }).click();
     await expect(dialog).toBeHidden();
+    await expect(page).not.toHaveURL(/selected_item_id=\d/);
     await page.reload();
     await expect(page.getByRole("dialog")).toHaveCount(0);
     expect(writes).toEqual([]);
     await page.screenshot({ path: testInfo.outputPath("consulta-cerrada.png") });
 });
-test("validación de menú muestra errores españoles y lector sin gestión no abre configuración", async ({ page }) => {
+test("validación de menú muestra errores españoles", async ({ page }) => {
+    const assertConsole = await failOnConsoleErrors(page);
     await login(page);
     await page.goto("/admin/menubar-items");
     await page.getByRole("button", { name: "Agregar acción o grupo", exact: true }).click();
@@ -94,10 +100,11 @@ test("validación de menú muestra errores españoles y lector sin gestión no a
     await dialog.getByRole("button", { name: "Guardar", exact: true }).click();
     await expect(dialog).toContainText(/etiqueta.*obligatorio/i);
     await expect(dialog).not.toContainText("validation.");
-    await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
-    await page.getByRole("button", { name: "Descartar cambios", exact: true }).click();
-    await page.goto("/clientes/1/edit");
-    await page.context().clearCookies();
+    assertConsole();
+});
+
+test("lector sin gestión no abre configuración de menú", async ({ page }) => {
+    await failOnConsoleErrors(page);
     await login(page, users.reader);
     await page.goto("/clientes");
     await expect(page.getByRole("button", { name: "Configurar", exact: true })).toHaveCount(0);
