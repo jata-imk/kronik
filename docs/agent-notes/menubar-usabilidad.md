@@ -11,35 +11,37 @@
 - Segunda entrega dependiente: feat/menubar-navegacion, worktree propio menubar-nav-worktree.
 - La rama auxiliar feat/menubar-catalogo no se publica como PR independiente.
 
-## Estado al 2026-11-18
+## Estado al 2026-11-19
 
-Catálogo y editor implementados y verificados; [PR #85 publicada](https://github.com/jata-imk/kronik/pull/85)
-con head 9c6257b y base 8884a78, pendiente de revisión humana e integración. La
-barra compacta y la protección de navegación están en verificación en la segunda
-entrega. Sin integración ni despliegue autorizados. La aceptación del sidebar
-sigue pendiente y es independiente. Se preservan checkout, archivos, servicios
-y trabajo de comunicaciones de Bryan.
+Catálogo/editor en la [PR #85](https://github.com/jata-imk/kronik/pull/85),
+head documental 56c9bfc, base 8884a78; abierta, sin conflictos y CI verde
+([run 44410875964](https://github.com/jata-imk/kronik/actions/runs/44410875964)).
+El primer intento falló por timeout del renderer PDF; el reintento pasó sin
+cambiar código/configuración PDF.
 
-Reanudado el 2026-11-19. PR #85 abierta y sin conflictos, head documental
-56c9bfc. CI 44410875964 pasó build, frontend, backend y concurrencia; falló por
-timeout de 35 s del renderer PDF antes de los recorridos de navegador. Se
-solicitó reintento del job, sin cambiar la configuración PDF.
+Barra y protección de captura implementadas en la segunda entrega dependiente.
+Código funcional final 4221959289248564ba2ecb82ee4671938d9c69dd; a3b739e
+añade un recorrido E2E sin modificar la implementación. Revisiones medium
+propia y acumulada completadas sin hallazgos; E2E finales en ejecución.
+Sin integración ni despliegue. La aceptación del sidebar sigue independiente.
+Se preservan checkout, archivos, servicios y comunicaciones de Bryan.
 
-Revisión medium del incremento de navegación contra feat/menubar-editor
-(56c9bfc), sobre 73b9c05 y los ajustes documentales iniciales: tres P2 sobre
-captura durante envíos, visitas de filtros que desmontan componentes y base/cierre
-de permisos de tokens. Se corrigen con regresiones. También se incorpora la
-selección de cliente de una solicitud al estado protegido. Pruebas backend del
-Menubar: 34 aprobadas, 552 aserciones; la recarga parcial envía la versión Inertia.
+## Evidencia de la segunda entrega
 
-CI de #85 verde tras el reintento (mismo run 44410875964). Sobre 3223060,
-la revisión propia encontró dos P2 adicionales: historial de filtros que remonta
-el componente y bases/cierre de diálogos del expediente. Se corrigen los dos,
-incluidos archivos y claves de idempotencia de formularios de documento. La suite
-frontend previa a este último ajuste pasó 204 pruebas en 74 archivos. La revisión
-acumulada inicial contra 8884a78 no encontró regresiones; se repetirá sobre el
-código final. Su último comando Git tuvo un aviso de ownership del usuario del
-sandbox, aunque las lecturas/diffs anteriores sí se ejecutaron.
+- Backend completo: 999 aprobadas, 2 omitidas, 47 865 aserciones; 490.75 s.
+  `menubar-nav-backend-full.log` en el storage de pruebas del worktree.
+- Frontend completo sobre 4221959: 75 archivos, 206 pruebas; 223.59 s.
+  `menubar-nav-unit-full4.log`. Incluye formularios Inertia reales para producto,
+  roles, solicitudes, permisos de tokens, expediente y diálogos.
+- Build correcto sobre el código final: `menubar-nav-build5.log`, 58.62 s.
+- Backend focalizado: 34 pruebas, 552 aserciones. La recarga parcial usa versión
+  Inertia y comprueba retirada de capacidades sin mantener props antiguas.
+- Primer recorrido de esta reanudación: 14 E2E aprobados en 8.7 min sobre el
+  build anterior a las últimas correcciones. La ejecución final usa el build
+  revisado: 16 casos de barra/sidebar/sucursal y siete de editor, bases SQLite
+  nuevas, puertos 8035/8037 y proveedores geográficos sintéticos.
+- MCP se usó el 18/11 durante inventario, propuesta e implementación. En esta
+  reanudación no está disponible: se usa el harness Chromium reproducible.
 
 ## Decisiones confirmadas
 
@@ -87,23 +89,28 @@ Todas contra la base funcional 8884a78, salvo indicación:
   514 aserciones. El intento previo interrumpido por límite de uso no cuenta como
   revisión completada.
 
-Los cambios posteriores de esta rama son evidencia, documentación y harness E2E.
-La segunda entrega tendrá revisión propia y barrido acumulado contra 8884a78.
+Segunda entrega contra feat/menubar-editor (56c9bfc):
 
-Segunda entrega: revisiones de 7e70241 y 290c8ca contra la primera PR corrigieron
-selección por ID, cancelaciones que ocultaban captura, base de roles, referencias
-anidadas de producto y formularios de diálogos ya cerrados. Se añaden regresiones
-con useForm real, no solo mocks. Los metadatos del menú se refrescan también en
-recargas parciales para retirar capacidades revocadas. Dos E2E de navegación
-(salida Inertia y atrás/recarga) aprobados; agregado y enlace modificado se repiten
-con las mismas respuestas geográficas sintéticas del harness. Suite completa,
-revisión propia final y barrido conjunto todavía en curso.
+- 7e70241 y 290c8ca: corregidos selección por ID, cierres que ocultaban captura,
+  bases de roles/productos y formularios de diálogos cerrados.
+- 73b9c05: corregidos protección durante envíos, filtros que desmontan captura
+  y base/cierre de permisos de tokens. También se protege seleccionar un cliente.
+- 3223060: corregidos historial de filtros y bases/cierre de los siete diálogos
+  del expediente, incluidos archivos y claves de idempotencia.
+- 4221959: revisión propia final sin hallazgos (`menubar-review-nav-6.log`),
+  con 12 pruebas focalizadas aprobadas por el revisor.
+- 4221959: barrido acumulado de ambas entregas contra la base funcional
+  8884a78d738f9623c5d72fc194c4ecc55b400874 sin hallazgos
+  (`menubar-review-acumulada-2.log`); pruebas de guardas/editor aprobadas.
+
+Las revisiones interrumpidas por límite de uso o pausa no cuentan como completas.
+Los commits posteriores al último código revisado solo añaden pruebas/evidencia
+y documentación. No quedan hallazgos conocidos pendientes de estas revisiones.
 
 ## Siguiente paso y límites
 
-La primera entrega está publicada en la PR #85. Finalizar pruebas/revisión de la
-barra y los formularios, conservar capturas, publicar la segunda PR dependiente y registrar el barrido
-conjunto. Mantener Notion en curso hasta aceptación. No hay migraciones,
+Finalizar E2E del build revisado y publicar la segunda PR dependiente de #85.
+Mantener Notion en curso hasta aceptación. No hay migraciones,
 variables nuevas ni ejecución del seeder en datos operativos. El seeder continúa
 aditivo. Se reutilizan eventos auditables de gestión; consulta, previa y cambios
 visuales no requieren eventos adicionales.
@@ -115,25 +122,10 @@ Capturas sintéticas de la barra revisadas visualmente: [base 8884a78, 1440 px](
 Se conservan en el repositorio; muestran texto compacto, grupos con flecha y el
 control Configurar neutro. La captura móvil muestra el menú abierto.
 
-## Pausa solicitada por el usuario — 2026-11-18
+## Traspaso entre sesiones
 
-Tarea pausada, sin integración ni despliegue. Main verificado en
-8884a78d738f9623c5d72fc194c4ecc55b400874. La PR
-[#85](https://github.com/jata-imk/kronik/pull/85) permanece abierta.
-La segunda entrega está guardada localmente en `feat/menubar-navegacion`,
-commit funcional/de pruebas 4e97d10, sin publicar una segunda PR.
-
-Antes de la pausa terminaron correctamente el build y la suite frontend
-(71 archivos, 199 pruebas); también las dos regresiones de diálogos ejecutadas
-por separado. Evidencia local: `menubar-nav-build4.log`,
-`menubar-nav-unit-full2.log` y `menubar-nav-unit-dialogs.log`, en
-`storage/framework/testing/` de este worktree. La última revisión medium
-(`menubar-review-nav-3.log`) se interrumpió por la pausa y no cuenta como
-completada. Se detuvieron los servidores propios de exploración 8033 y 8036.
-
-Al retomar: actualizar referencias y registrar de nuevo la base real; completar
-la revisión medium, validar el cambio de recargas parciales en backend, repetir
-los dos E2E de navegación pendientes con geocodificación sintética y comprobar
-sidebar/contexto de sucursal. Conservar las capturas finales locales, completar
-documentación y barrido acumulado contra la base funcional antes de publicar
-la PR dependiente. La aceptación del sidebar por el usuario continúa pendiente.
+Pausa solicitada el 18/11, conservada en 73b9c05 sobre código 4e97d10.
+Se detuvieron únicamente los servidores propios 8033/8036 y la revisión en curso.
+La reanudación del 19/11 volvió a actualizar referencias y verificar la base
+antes de continuar. Las pendientes reales se enumeran arriba; la aceptación
+del sidebar por el usuario sigue separada.
