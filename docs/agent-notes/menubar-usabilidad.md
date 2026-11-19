@@ -12,7 +12,27 @@
   feat/menubar-navegacion, worktree propio menubar-nav-worktree; depende de #85.
 - La rama auxiliar feat/menubar-catalogo no se publica como PR independiente.
 
-## Estado al 2026-11-19
+## Integración autorizada — 2026-11-19
+
+El usuario autorizó integrar las entregas del Menubar y solicitó comandos para
+desplegarlas en QA. Ambas PR se integraron con merge conservando su dependencia:
+
+- #85: `be67e60b6c99e492f54ad411ce826ca902520626`.
+- #88: base cambiada a main tras #85; merge
+  `1f4808962f06eff71b3a826ef0580a68f4db907c`.
+
+Se comprobó que el árbol integrado coincide exactamente con a7db44f, sin
+resoluciones adicionales ni cambios de código. Antes de integrar, CI verde
+sobre los heads 56c9bfc (#85, run 44410875964) y a7db44f (#88,
+run 44564537556); sin hilos ni hallazgos abiertos. Las revisiones medium propias
+y el barrido acumulado documentados abajo permanecen aplicables al árbol integrado.
+
+Estado: implementado, validado localmente e integrado. Despliegue y aceptación
+en QA pendientes de ejecución del usuario; no se accedió a la VPS. Notion sigue
+en curso. La aceptación del sidebar continúa separada. El procedimiento de QA
+está en [la guía del menú](../how-to/validar-menu-contextual.md#desplegar-en-qa).
+
+## Evidencia previa a la integración
 
 Catálogo/editor en la [PR #85](https://github.com/jata-imk/kronik/pull/85),
 head documental 56c9bfc, base 8884a78; abierta, sin conflictos y CI verde
@@ -28,7 +48,7 @@ CI del código funcional verde sobre 30ac59e
 ([run 44562730776](https://github.com/jata-imk/kronik/actions/runs/44562730776)).
 El último ajuste solo modifica documentación y la espera del harness; su
 actualización de CI puede consultarse en [Checks de #88](https://github.com/jata-imk/kronik/pull/88/checks).
-Sin integración ni despliegue. La aceptación del sidebar sigue independiente.
+Este estado previo no acredita despliegue. La integración se registra arriba.
 Se preservan checkout, archivos, servicios y comunicaciones de Bryan.
 
 ## Evidencia de la segunda entrega
@@ -123,8 +143,7 @@ y documentación. No quedan hallazgos conocidos pendientes de estas revisiones.
 
 ## Siguiente paso y límites
 
-Revisión humana de #85 y después #88; al integrar #85, cambiar la base de #88 a
-main y comprobar su estado antes de una integración autorizada. Mantener Notion
+Despliegue del usuario en QA y recorrido de aceptación del menú. Mantener Notion
 en curso hasta aceptación. No hay migraciones,
 variables nuevas ni ejecución del seeder en datos operativos. El seeder continúa
 aditivo. Se reutilizan eventos auditables de gestión; consulta, previa y cambios

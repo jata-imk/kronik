@@ -1,8 +1,59 @@
 # Validar el menú contextual y la navegación
 
-Usa un checkout propio con dependencias instaladas, build sin `public/hot` y
+Para las pruebas automatizadas, usa un checkout propio con dependencias instaladas, build sin `public/hot` y
 datos sintéticos. El harness crea una SQLite nueva dentro de ese checkout; no
 requiere reiniciar la base operativa ni usar proveedores externos.
+
+## Desplegar en QA
+
+Las PR #85/#88 están integradas; commit funcional de integración
+`1f4808962f06eff71b3a826ef0580a68f4db907c`. Esta entrega no añade migraciones,
+dependencias, permisos ni variables de entorno. Conserva la configuración y las
+personalizaciones existentes. El usuario ejecuta el despliegue en la VPS y
+comparte el resultado; integración no significa despliegue comprobado.
+
+Tras crear/verificar el respaldo habitual, entra en la carpeta raíz de Kronik
+como usuario del sitio. Estos comandos usan PHP 8.3 y la ubicación de Composer
+del [procedimiento de la VPS](desplegar-vps-nuevo.md#12-despliegues-posteriores):
+
+```bash
+(
+    set -e
+    test "$(git branch --show-current)" = main
+    test -z "$(git status --porcelain)"
+    git fetch origin
+    git merge-base --is-ancestor 1f4808962f06eff71b3a826ef0580a68f4db907c origin/main
+    php8.3 artisan down --retry=60
+    git pull --ff-only origin main
+    php8.3 /usr/local/bin/composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+    npm ci
+    npm run build
+    php8.3 artisan optimize:clear
+    php8.3 artisan optimize
+    php8.3 artisan queue:restart
+    php8.3 artisan up
+    git log -1 --oneline
+)
+```
+
+El bloque se detiene si hay cambios locales, una rama distinta o falla un paso.
+Si falla después de activar mantenimiento, conserva ese estado hasta resolverlo;
+no ejecuta una reapertura automática. `queue:restart` solicita el reinicio:
+comprueba la recuperación del worker mediante su administrador de procesos actual.
+
+No hace falta sembrar para actualizar barra/editor. Si el catálogo está vacío o
+incompleto, puedes completarlo mediante el seeder aditivo, que conserva etiquetas,
+jerarquía, orden y activaciones personalizadas y no activa las entradas nuevas:
+
+```bash
+php8.3 artisan db:seed --class=MenubarItemsSeeder --force
+```
+
+Consulta sus prerrequisitos en [configuración del catálogo](configurar-menu-contextual.md).
+Para esta entrega no se requiere el seeder general ni reiniciar los datos de QA.
+Después recarga el navegador y revisa administración, vista previa sin efectos,
+barra compacta, descarte de captura y sidebar en escritorio/móvil y ambos temas.
+Registra commit desplegado, resultado y siguientes pasos en la Agent Note y Notion.
 
 ## Ejecutar regresiones
 
