@@ -33,3 +33,12 @@ al editar podía restablecerla. Se reutilizó el conteo de fechas civiles y se
 conservó el valor guardado cuando el campo se omite. La revisión del catálogo
 también llevó a fijar la revisión al confirmar y limpiar capturas al pasar a
 consulta. Playwright MCP reprodujo la previa del 14 al 17 de noviembre.
+
+## Entrega
+
+- [PR #86 · Catálogo institucional](https://github.com/jata-imk/kronik/pull/86).
+- [PR #87 · Aplicación al crédito](https://github.com/jata-imk/kronik/pull/87), dependiente de #86.
+- Base de la entrega rebasada sobre `8884a78`; ambos incrementos conservan el sidebar integrado.
+- Regresión local anterior a las correcciones de revisión: 983 pruebas backend aprobadas, 47776 aserciones y dos omitidas. El recorrido Chromium actualizado aprobó edición de la cobertura, publicación, teclado y modo oscuro.
+- Capturas sintéticas del recorrido: [previa en escritorio](../audits/calendario-crediticio/calendario-ejemplo-claro.png) y [calendario móvil en oscuro](../audits/calendario-crediticio/calendario-movil-oscuro.png).
+- Pruebas dirigidas del catálogo y originación sobre `3443685`: 11 aprobadas y 110 aserciones. La CI valida MariaDB y la concurrencia.
