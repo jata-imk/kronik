@@ -19,12 +19,7 @@ final class CatInformativoService
         if ($diasAlVencimiento !== null && $diasAlVencimiento > 0
             && Decimal::compare((string) end($pagos), '0') > 0
             && count(array_filter($pagos, fn ($pago) => Decimal::compare($pago, '0') !== 0)) === 1) {
-            $tasa = 100 * (pow((float) Decimal::div((string) end($pagos), $montoRecibido), 360 / $diasAlVencimiento) - 1);
-            if (! is_finite($tasa)) {
-                throw new RuntimeException('No fue posible determinar el CAT para este vencimiento.');
-            }
-
-            return number_format(max(0, $tasa), 1, '.', '');
+            return $this->calcularPagoUnico($montoRecibido, (string) end($pagos), $diasAlVencimiento);
         }
 
         $inferior = '0';
@@ -47,6 +42,45 @@ final class CatInformativoService
         $anual = bcsub(bcpow(Decimal::add('1', $periodica), (string) $periodicidad->periodosAnuales(), Decimal::SCALE), '1', Decimal::SCALE);
 
         return Decimal::round(Decimal::mul($anual, '100'), 1);
+    }
+
+    private function calcularPagoUnico(string $monto, string $pago, int $dias): string
+    {
+        $divisor = 360;
+        for ($resto = $dias % $divisor; $resto !== 0; $resto = $restoSiguiente) {
+            $restoSiguiente = $divisor % $resto;
+            $divisor = $resto;
+        }
+        $periodos = (string) intdiv(360, $divisor);
+        $duracion = (string) intdiv($dias, $divisor);
+        $escala = bcpow('10', (string) Decimal::SCALE, 0);
+        $montoElevado = bcpow(bcmul($monto, $escala, 0), $periodos, 0);
+        $pagoElevado = bcpow(bcmul($pago, $escala, 0), $periodos, 0);
+        $pagoEscalado = bcmul($pagoElevado, bcpow('2000', $duracion, 0), 0);
+
+        // La décima k empieza en (k - 0.5)/1000. Elevar ambos lados
+        // elimina los exponentes fraccionarios y conserva los empates exactos.
+        $alcanza = function (string $decimas) use ($montoElevado, $pagoEscalado, $duracion): bool {
+            $numerador = bcadd('1999', bcmul('2', $decimas, 0), 0);
+
+            return bccomp($pagoEscalado, bcmul($montoElevado, bcpow($numerador, $duracion, 0), 0), 0) >= 0;
+        };
+        $inferior = '0';
+        $superior = '1';
+        while ($alcanza($superior)) {
+            $inferior = $superior;
+            $superior = bcmul('2', $superior, 0);
+        }
+        while (bccomp(bcsub($superior, $inferior, 0), '1', 0) > 0) {
+            $medio = bcdiv(bcadd($inferior, $superior, 0), '2', 0);
+            if ($alcanza($medio)) {
+                $inferior = $medio;
+            } else {
+                $superior = $medio;
+            }
+        }
+
+        return bcdiv($inferior, '10', 1);
     }
 
     /** @param array<int, string> $pagos */

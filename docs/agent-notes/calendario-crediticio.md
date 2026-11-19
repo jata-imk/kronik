@@ -46,3 +46,5 @@ consulta. Playwright MCP reprodujo la previa del 14 al 17 de noviembre.
   validar la previa. La lectura financiera y el tablero comparten el límite
   exclusivo del día siguiente y conservan cobertura cuando un reverso antiguo
   se guardó con hora. Se verifican liquidación y etiquetas de validación.
+- La última corrección limita los motivos del calendario a lecturas autorizadas
+  y redondea el CAT de pago único mediante comparaciones decimales exactas.

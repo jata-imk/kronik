@@ -2,6 +2,7 @@
 
 use App\Enums\MetodoAmortizacion;
 use App\Enums\PeriodicidadCredito;
+use App\Services\Credito\CatInformativoService;
 use App\Services\Credito\CalendarioCrediticioService;
 use App\Services\Credito\ConsultaCartera;
 use App\Services\Credito\SimuladorCreditoSimple;
@@ -45,6 +46,21 @@ test('la simulación anterior reproduce las fechas congeladas tras otra publicac
     $escenario = $simulador->simular(...$parametros);
     expect($escenario['tabla'][1])->toMatchArray(['fecha' => '2026-09-14', 'dias' => 8, 'interes' => '96.00'])
         ->and($escenario['cat'])->toBe('43.1');
+
+    $usuario = \App\Models\User::factory()->withPersonalTeam()->create();
+    $equipo = $usuario->ownedTeams()->sole();
+    $usuario->forceFill(['current_team_id' => $equipo->id])->save();
+    grantTeamPermissions($usuario, $equipo, ['simulate productos-crediticios']);
+    $this->actingAs($usuario)->postJson(route('productos-crediticios.simular', $producto), [
+        'monto' => '12000', 'periodicidad' => 'semanal', 'plazo' => 1, 'metodo' => 'capital_fijo', 'fecha' => '2026-11-07',
+    ])->assertOk()->assertJsonPath('tabla.1.fecha_original', '2026-11-14')
+        ->assertJsonMissingPath('calendario_crediticio');
+});
+
+test('el CAT de pago único conserva el empate decimal al redondear', function () {
+    $cat = app(CatInformativoService::class);
+    expect($cat->calcular('10000.00', ['10005.00'], PeriodicidadCredito::Mensual, 360))->toBe('0.1')
+        ->and($cat->calcular('10000.00', ['10004.99'], PeriodicidadCredito::Mensual, 360))->toBe('0.0');
 });
 
 test('una política inválida identifica el campo de vencimientos en días inhábiles', function () {

@@ -107,7 +107,7 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
 
         $incluirFormula = app()->environment('local') || (bool) $request->user()?->is_super_admin;
 
-        return response()->json($simulador->simular(
+        $resultado = $simulador->simular(
             $version,
             $data['monto'],
             PeriodicidadCredito::from($data['periodicidad']),
@@ -117,6 +117,11 @@ class ProductoCrediticioController extends Controller implements HasMiddleware
             $data['comisiones_opcionales'] ?? [],
             $incluirFormula,
             (bool) ($data['incluir_impuestos'] ?? false),
-        ));
+        );
+        if (! $request->user()->can(\App\Services\Credito\CalendarioCrediticioService::CONSULTAR)) {
+            unset($resultado['calendario_crediticio']);
+        }
+
+        return response()->json($resultado);
     }
 }
