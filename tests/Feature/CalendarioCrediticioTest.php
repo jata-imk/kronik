@@ -68,6 +68,10 @@ test('oculta los borradores reservados antes de validar la previa', function () 
 
     $this->postJson(route('productos-crediticios.calendario.previa', $borrador), [])->assertNotFound();
     $this->postJson(route('productos-crediticios.calendario.previa', $borrador->id + 1), [])->assertNotFound();
+    foreach ([$borrador->id, $borrador->id + 1] as $id) {
+        $this->putJson(route('productos-crediticios.calendario.update', $id), [])->assertForbidden();
+        $this->postJson(route('productos-crediticios.calendario.publicar', $id), [])->assertForbidden();
+    }
 });
 
 test('expone el nombre de negocio de un feriado incompleto', function () {
