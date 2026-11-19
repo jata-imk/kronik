@@ -115,3 +115,30 @@ test("seleccionar solo el cliente de una solicitud exige descarte antes de salir
     expect(writes).toEqual([]);
     assertConsole();
 });
+
+test("cancelar captura del expediente conserva o descarta sin dejar borradores invisibles", async ({ page }) => {
+    const assertConsole = await failOnConsoleErrors(page);
+    await login(page);
+    await page.goto("/clientes/1/expediente");
+    await page.getByRole("button", { name: "Referencias", exact: true }).click();
+    await page.getByRole("button", { name: "Agregar referencia", exact: true }).click();
+    const dialog = page.getByRole("dialog", { name: "Nueva referencia", exact: true });
+    await dialog.getByRole("textbox").first().fill("Referencia sin guardar");
+    page.once("dialog", dialog => dialog.dismiss());
+    await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
+    await expect(dialog.getByRole("textbox").first()).toHaveValue("Referencia sin guardar");
+    page.once("dialog", dialog => dialog.accept());
+    await dialog.getByRole("button", { name: "Cancelar", exact: true }).click();
+    await expect(dialog).toBeHidden();
+    const unexpectedDialogs = [];
+    page.on("dialog", dialog => { unexpectedDialogs.push(dialog.type()); dialog.dismiss(); });
+    await page.reload();
+    expect(unexpectedDialogs).toEqual([]);
+    await page.getByRole("button", { name: "Documentos", exact: true }).click();
+    await page.getByRole("button", { name: "Generar documento", exact: true }).click();
+    const generation = page.getByRole("dialog", { name: "Generar documento final", exact: true });
+    await generation.getByRole("button", { name: "Cancelar", exact: true }).click();
+    await expect(generation).toBeHidden();
+    expect(unexpectedDialogs).toEqual([]);
+    assertConsole();
+});
