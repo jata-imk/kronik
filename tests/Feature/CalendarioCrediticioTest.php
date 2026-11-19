@@ -26,7 +26,7 @@ test('un borrador versionado solo se publica por Super Admin y el reintento cons
     ])->assertUnprocessable()->assertJsonValidationErrors('revision');
     $usuario = \App\Models\User::factory()->withPersonalTeam()->create();
     $equipo = $usuario->ownedTeams()->sole();
-    $usuario->update(['current_team_id' => $equipo->id]);
+    $usuario->forceFill(['current_team_id' => $equipo->id])->save();
     grantTeamPermissions($usuario, $equipo, [CalendarioCrediticioService::CONSULTAR, CalendarioCrediticioService::EDITAR]);
     $this->actingAs($usuario)->postJson($ruta, ['revision' => 1])->assertForbidden();
 
@@ -62,7 +62,7 @@ test('oculta los borradores reservados antes de validar la previa', function () 
     $borrador = app(CalendarioCrediticioService::class)->guardar(null, ['configuracion' => $this->plantilla], $this->actor);
     $usuario = \App\Models\User::factory()->withPersonalTeam()->create();
     $equipo = $usuario->ownedTeams()->sole();
-    $usuario->update(['current_team_id' => $equipo->id]);
+    $usuario->forceFill(['current_team_id' => $equipo->id])->save();
     grantTeamPermissions($usuario, $equipo, [CalendarioCrediticioService::CONSULTAR]);
     $this->actingAs($usuario);
 
