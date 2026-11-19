@@ -8,7 +8,8 @@
 - [Tarea en Notion](https://app.notion.com/p/41361db7db7f81968ea5cfc45a96b51d).
 - Base tras actualizar origin: 8884a78d738f9623c5d72fc194c4ecc55b400874, PR #83 y #84 integradas.
 - Primera entrega: feat/menubar-editor, worktree propio menubar-ui-worktree.
-- Segunda entrega dependiente: feat/menubar-navegacion, worktree propio menubar-nav-worktree.
+- Segunda entrega: [PR #88](https://github.com/jata-imk/kronik/pull/88),
+  feat/menubar-navegacion, worktree propio menubar-nav-worktree; depende de #85.
 - La rama auxiliar feat/menubar-catalogo no se publica como PR independiente.
 
 ## Estado al 2026-11-19
@@ -19,10 +20,14 @@ head documental 56c9bfc, base 8884a78; abierta, sin conflictos y CI verde
 El primer intento falló por timeout del renderer PDF; el reintento pasó sin
 cambiar código/configuración PDF.
 
-Barra y protección de captura implementadas en la segunda entrega dependiente.
+Barra y protección de captura publicadas para revisión en la PR #88.
 Código funcional final 4221959289248564ba2ecb82ee4671938d9c69dd; a3b739e
 añade un recorrido E2E sin modificar la implementación. Revisiones medium
-propia y acumulada completadas sin hallazgos; E2E finales en ejecución.
+propia y acumulada completadas sin hallazgos; 23 casos E2E finales aprobados.
+CI del código funcional verde sobre 30ac59e
+([run 44562730776](https://github.com/jata-imk/kronik/actions/runs/44562730776)).
+El último ajuste solo modifica documentación y la espera del harness; su
+actualización de CI puede consultarse en [Checks de #88](https://github.com/jata-imk/kronik/pull/88/checks).
 Sin integración ni despliegue. La aceptación del sidebar sigue independiente.
 Se preservan checkout, archivos, servicios y comunicaciones de Bryan.
 
@@ -36,10 +41,16 @@ Se preservan checkout, archivos, servicios y comunicaciones de Bryan.
 - Build correcto sobre el código final: `menubar-nav-build5.log`, 58.62 s.
 - Backend focalizado: 34 pruebas, 552 aserciones. La recarga parcial usa versión
   Inertia y comprueba retirada de capacidades sin mantener props antiguas.
-- Primer recorrido de esta reanudación: 14 E2E aprobados en 8.7 min sobre el
-  build anterior a las últimas correcciones. La ejecución final usa el build
-  revisado: 16 casos de barra/sidebar/sucursal y siete de editor, bases SQLite
-  nuevas, puertos 8035/8037 y proveedores geográficos sintéticos.
+- E2E finales del build revisado: 23 casos aprobados en ejecuciones focalizadas.
+  Editor: siete, 5.8 min (`menubar-editor-e2e-final.log`). Barra/sidebar/sucursal:
+  15 aprobados en el recorrido principal y uno repetido correctamente, 1.7 min
+  (`menubar-nav-e2e-final.log`, `menubar-context-e2e-final.log`). Bases SQLite
+  nuevas, puertos propios 8035/8037/8038 y proveedores geográficos sintéticos.
+  El caso de contexto agotó primero los 90 s al esperar load de una entrada
+  histórica que se sustituye durante la recuperación. Tras inspeccionar captura,
+  vídeo, traza y consola, el harness espera el commit y verifica URL/alcance
+  finales; admite 180 s para el recorrido completo. La captura anterior se
+  retiró correctamente y no cambió código funcional por ese ajuste.
 - MCP se usó el 18/11 durante inventario, propuesta e implementación. En esta
   reanudación no está disponible: se usa el harness Chromium reproducible.
 
@@ -102,6 +113,9 @@ Segunda entrega contra feat/menubar-editor (56c9bfc):
 - 4221959: barrido acumulado de ambas entregas contra la base funcional
   8884a78d738f9623c5d72fc194c4ecc55b400874 sin hallazgos
   (`menubar-review-acumulada-2.log`); pruebas de guardas/editor aprobadas.
+- Ajuste final del harness sobre 30ac59e: revisión medium del diff pendiente
+  sin hallazgos (`menubar-review-harness-final.log`), manteniendo las aserciones
+  de destino y sucursal activa.
 
 Las revisiones interrumpidas por límite de uso o pausa no cuentan como completas.
 Los commits posteriores al último código revisado solo añaden pruebas/evidencia
@@ -109,11 +123,15 @@ y documentación. No quedan hallazgos conocidos pendientes de estas revisiones.
 
 ## Siguiente paso y límites
 
-Finalizar E2E del build revisado y publicar la segunda PR dependiente de #85.
-Mantener Notion en curso hasta aceptación. No hay migraciones,
+Revisión humana de #85 y después #88; al integrar #85, cambiar la base de #88 a
+main y comprobar su estado antes de una integración autorizada. Mantener Notion
+en curso hasta aceptación. No hay migraciones,
 variables nuevas ni ejecución del seeder en datos operativos. El seeder continúa
 aditivo. Se reutilizan eventos auditables de gestión; consulta, previa y cambios
 visuales no requieren eventos adicionales.
+Las publicaciones finales omiten repetir el hook local porque su suite backend
+y build ya pasaron y los cambios posteriores solo son evidencia/harness. Los
+servidores propios de estas pruebas terminaron; no quedan listeners 8035/8037/8038.
 
 Capturas sintéticas de la barra revisadas visualmente: [base 8884a78, 1440 px](../audits/menubar-2026-11-18/barra-base-8884a78.png),
 [escritorio claro, 1920 px](../audits/menubar-2026-11-18/barra-escritorio-claro.png),
