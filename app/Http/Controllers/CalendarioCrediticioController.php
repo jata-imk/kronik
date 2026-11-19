@@ -27,9 +27,9 @@ final class CalendarioCrediticioController extends Controller
         return to_route('productos-crediticios.calendario.show', $version);
     }
 
-    public function update(GuardarCalendarioCrediticioRequest $request, CalendarioCrediticioService $calendario, string $version)
+    public function update(GuardarCalendarioCrediticioRequest $request, CalendarioCrediticioService $calendario)
     {
-        $version = CalendarioCrediticioVersion::findOrFail($version);
+        $version = $request->versionCalendario();
         $calendario->guardar($version, $request->validated(), $request->user());
 
         return to_route('productos-crediticios.calendario.show', $version);
@@ -38,8 +38,8 @@ final class CalendarioCrediticioController extends Controller
     public function publicar(Request $request, CalendarioCrediticioService $calendario, string $version)
     {
         abort_unless($request->user()->is_super_admin, 403);
-        $datos = $request->validate(['revision' => ['required', 'integer', 'min:1']]);
         $version = CalendarioCrediticioVersion::findOrFail($version);
+        $datos = $request->validate(['revision' => ['required', 'integer', 'min:1']]);
         $calendario->publicar($version, $datos['revision'], $request->user());
 
         return to_route('productos-crediticios.calendario.show', $version);
