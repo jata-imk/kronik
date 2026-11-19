@@ -16,3 +16,13 @@ La revisión del catálogo detectó una fecha emitida por el selector como objet
 una previa que podía usar una revisión más reciente y un acceso lateral sujeto
 al permiso de Productos. Se normalizó la fecha civil al capturarla, se validó
 la revisión solicitada y se agregó un acceso lateral con permiso propio.
+
+La prueba de reverso detectó lecturas del mismo día que omitían evidencia con
+hora almacenada. Se usa un límite exclusivo al inicio del día siguiente y
+se registra la fecha civil en nuevos reversos. Se verifican reconstrucción
+y conservación del cronograma firmado en ambas políticas Bullet.
+
+Evidencia local durante el desarrollo: 54 pruebas backend y 619 aserciones de
+calendario, originación, tablero y reinicio. Vitest pasó 173 pruebas y Chromium
+verificó publicación, previa por teclado, móvil y tema oscuro en SQLite aislada.
+Las tareas de calendario y periodicidad fueron actualizadas en Notion.

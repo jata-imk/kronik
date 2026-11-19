@@ -174,7 +174,9 @@ class SolicitudPaqueteService
             PeriodicidadCredito::from($condiciones['periodicidad']), (int) $condiciones['plazo'],
             MetodoAmortizacion::from($condiciones['metodo']),
             CarbonImmutable::parse($snapshot['simulacion_informativa']['tabla'][0]['fecha'], app(FechaEmpresa::class)->zonaHoraria()),
-            incluirImpuestos: true);
+            incluirImpuestos: true,
+            calendarioCongelado: $snapshot['simulacion_informativa']['calendario_crediticio'] ?? null,
+            reproducir: true);
     }
 
     private function registrar(Solicitud $solicitud, DocumentoGenerado $documento, User $actor): void

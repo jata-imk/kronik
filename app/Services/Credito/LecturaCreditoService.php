@@ -3,6 +3,7 @@
 namespace App\Services\Credito;
 
 use App\Models\Credito;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Validation\ValidationException;
 
@@ -27,7 +28,8 @@ final class LecturaCreditoService
             if (! is_array($original->snapshot['tabla'] ?? null)) {
                 $this->error();
             }
-            $pago = $credito->pagos()->when($corte, fn ($q) => $q->where('fecha_efectiva', '<=', $corte))->latest('id')->first();
+            $fin = $corte === null ? null : CarbonImmutable::parse($corte, 'UTC')->addDay()->toDateString();
+            $pago = $credito->pagos()->when($fin, fn ($q) => $q->where('fecha_efectiva', '<', $fin))->latest('id')->first();
             if ($pago) {
                 $this->verificar($pago->snapshot, $pago->snapshot_hash);
                 if (! is_array($pago->snapshot['despues'] ?? null)) {

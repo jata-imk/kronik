@@ -10,10 +10,21 @@ use RuntimeException;
 final class CatInformativoService
 {
     /** @param array<int, string> $pagos */
-    public function calcular(string $montoRecibido, array $pagos, PeriodicidadCredito $periodicidad): string
+    public function calcular(string $montoRecibido, array $pagos, PeriodicidadCredito $periodicidad, ?int $diasAlVencimiento = null): string
     {
         if (Decimal::compare($montoRecibido, '0') <= 0 || $pagos === []) {
             throw new InvalidArgumentException('El CAT requiere un monto recibido y pagos positivos.');
+        }
+
+        if ($diasAlVencimiento !== null && $diasAlVencimiento > 0
+            && Decimal::compare((string) end($pagos), '0') > 0
+            && count(array_filter($pagos, fn ($pago) => Decimal::compare($pago, '0') !== 0)) === 1) {
+            $tasa = 100 * (pow((float) Decimal::div((string) end($pagos), $montoRecibido), 360 / $diasAlVencimiento) - 1);
+            if (! is_finite($tasa)) {
+                throw new RuntimeException('No fue posible determinar el CAT para este vencimiento.');
+            }
+
+            return number_format(max(0, $tasa), 1, '.', '');
         }
 
         $inferior = '0';

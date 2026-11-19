@@ -1,0 +1,85 @@
+<?php
+
+use App\Enums\MetodoAmortizacion;
+use App\Enums\PeriodicidadCredito;
+use App\Services\Credito\CalendarioCrediticioService;
+use App\Services\Credito\SimuladorCreditoSimple;
+use App\Services\ProductoVersionService;
+use Carbon\CarbonImmutable;
+
+beforeEach(function () {
+    $this->withoutVite();
+    $this->actor = actingAsSuperAdmin();
+    $this->actingAs($this->actor);
+    $this->plantilla = config('calendario-crediticio.cnbv_2026');
+});
+
+test('la simulación anterior reproduce las fechas congeladas tras otra publicación', function () {
+    $calendario = app(CalendarioCrediticioService::class);
+    $primera = $calendario->guardar(null, ['configuracion' => $this->plantilla], $this->actor);
+    $calendario->publicar($primera, 1, $this->actor);
+    $datos = productoPayload();
+    $datos['version']['reglas']['ajuste_dia_inhabil'] = 'siguiente_habil';
+    $datos['version']['periodicidades'] = [['periodicidad' => 'semanal', 'plazo_minimo' => 1, 'plazo_maximo' => 5, 'plazo_predeterminado' => 1]];
+    $producto = app(ProductoVersionService::class)->crear($datos, $this->actor->id)->versiones()->sole();
+    $simulador = app(SimuladorCreditoSimple::class);
+    $parametros = [$producto, '12000', PeriodicidadCredito::Semanal, 1, MetodoAmortizacion::CapitalFijo, CarbonImmutable::parse('2026-11-07')];
+    $original = $simulador->simular(...$parametros);
+    expect($original['tabla'][1]['fecha'])->toBe('2026-11-17');
+
+    $excepcion = ['fecha' => '2026-11-14', 'nombre' => 'Apertura de prueba', 'habil' => true];
+    $segunda = $calendario->guardar(null, ['configuracion' => [...$this->plantilla, 'excepciones' => [$excepcion]]], $this->actor);
+    $calendario->publicar($segunda, 1, $this->actor);
+
+    expect($simulador->simular(...$parametros)['tabla'][1]['fecha'])->toBe('2026-11-14');
+    expect($simulador->simular(...$parametros, calendarioCongelado: $original['calendario_crediticio'], reproducir: true))->toBe($original);
+});
+
+test('el contrato y desembolso Bullet conservan la fecha aprobada y su proyección', function (string $politica) {
+    $this->travelTo(CarbonImmutable::parse('2026-09-14 12:00:00', 'America/Mexico_City'));
+    activarEmpresaPrueba();
+    \Illuminate\Support\Facades\Storage::fake('calendario_prueba');
+    \Illuminate\Support\Facades\Queue::fake();
+    config(['documentos.disk' => 'calendario_prueba']);
+    \Tests\Support\BulletScenario::habilitar();
+    \Tests\Support\BulletScenario::pdfSintetico();
+
+    $calendario = app(CalendarioCrediticioService::class);
+    $primera = $calendario->guardar(null, ['configuracion' => $this->plantilla], $this->actor);
+    $calendario->publicar($primera, 1, $this->actor);
+    $producto = \Tests\Support\BulletScenario::producto($this->actor, $politica, ajuste: 'siguiente_habil');
+    $solicitud = \Tests\Support\BulletScenario::aprobar(\Tests\Support\BulletScenario::solicitud($this->actor, $producto), $this->actor);
+
+    $excepcion = ['fecha' => '2026-11-14', 'nombre' => 'Apertura posterior', 'habil' => true];
+    $segunda = $calendario->guardar(null, ['configuracion' => [...$this->plantilla, 'excepciones' => [$excepcion]]], $this->actor);
+    $calendario->publicar($segunda, 1, $this->actor);
+
+    $paquete = \Tests\Support\BulletScenario::formalizar($solicitud, $this->actor);
+    $tabla = $paquete->snapshot['tabla'];
+    expect($tabla['tabla'][2]['fecha_original'])->toBe('2026-11-14')
+        ->and($tabla['tabla'][2]['fecha'])->toBe('2026-11-17')
+        ->and($tabla['calendario_crediticio']['version_id'])->toBe($primera->id);
+    expect(view('documentos.paquete-anexo', ['snapshot' => $paquete->snapshot])->render())
+        ->toContain('Calendario crediticio, versión', '2026-11-17', 'Original: 2026-11-14');
+    $entrada = \Tests\Support\BulletScenario::desembolso($solicitud, $paquete);
+    $credito = app(\App\Services\Credito\DesembolsoService::class)->registrar($solicitud->fresh(), $entrada, $this->actor);
+    expect($credito->cronogramas()->sole()->snapshot)->toBe($tabla);
+    $this->assertDatabaseHas('credito_lecturas', ['credito_id' => $credito->id, 'cronograma_version' => 1]);
+
+    $this->travelTo(CarbonImmutable::parse('2026-09-29 12:00', 'America/Mexico_City'));
+    $pago = app(\App\Services\Credito\PagoService::class);
+    $anticipo = ['operacion' => 'prepago', 'fecha_pago' => '2026-09-29', 'importe' => '3120.00', 'referencia' => 'ANT-QA',
+        'idempotency_key' => (string) \Illuminate\Support\Str::uuid(), 'confirmacion_qa' => true];
+    $previa = $pago->previa($credito, $anticipo, $this->actor);
+    $registrado = $pago->registrar($credito, [...$anticipo, 'previa_hash' => $previa['previa_hash']], $this->actor);
+    $nuevaTabla = $credito->cronogramas()->where('version', 2)->sole()->snapshot;
+    expect(end($nuevaTabla['tabla']))->toMatchArray(['fecha' => '2026-11-17', 'fecha_original' => '2026-11-14']);
+    expect($nuevaTabla['calendario_crediticio'])->toBe($tabla['calendario_crediticio']);
+    $pago->reversar($credito, $registrado, ['motivo' => 'Corrección QA', 'idempotency_key' => (string) \Illuminate\Support\Str::uuid(),
+        'confirmacion_qa' => true], $this->actor);
+    $this->assertDatabaseHas('credito_lecturas', ['credito_id' => $credito->id, 'cronograma_version' => 3]);
+    expect($credito->cronogramas()->where('version', 1)->sole()->snapshot)->toBe($tabla);
+    $proyecciones = app(\App\Services\Credito\ProyeccionCreditoService::class);
+    $proyecciones->sincronizar($credito, reconstruir: true);
+    $proyecciones->diagnosticar($credito);
+})->with(['periodicos', 'al_vencimiento']);

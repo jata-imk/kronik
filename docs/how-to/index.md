@@ -1,6 +1,7 @@
 # How-to
 
 - [Validar expansión, selección y accesibilidad del sidebar](validar-sidebar.md).
+- [Validar el calendario crediticio en QA](qa-calendario-crediticio.md)
 
 - [Preparar y validar cifras, proyecciones y diseño del tablero](validar-tablero.md).
 
