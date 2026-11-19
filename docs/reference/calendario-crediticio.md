@@ -39,7 +39,9 @@ La gracia conserva sus días naturales y la política de mora del producto.
 
 La revisión de solicitud guarda las fechas nominales, resultantes y la versión
 del calendario. Paquete, formalización, desembolso, pagos y proyecciones usan
-la evidencia congelada. La previa usa datos sintéticos y calcula en memoria.
+la evidencia congelada. Los nombres y motivos de las fechas se consultan en la
+versión del catálogo con su permiso propio. La previa usa datos sintéticos y
+calcula en memoria.
 
 Para CAT se conservan los intervalos uniformes de pagos periódicos. Cuando se
 aplica la nueva política a un único pago al vencimiento, el exponente usa días

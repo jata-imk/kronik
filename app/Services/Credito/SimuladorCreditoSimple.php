@@ -192,6 +192,10 @@ final class SimuladorCreditoSimple
         ];
 
         if ($evidencia !== null) {
+            $evidencia['fechas'] = array_map(
+                fn (array $dia) => ['fecha_original' => $dia['fecha_original'], 'fecha' => $dia['fecha']],
+                $evidencia['fechas'],
+            );
             $respuesta['calendario_crediticio'] = ['politica' => $ajuste, ...$evidencia];
         }
 

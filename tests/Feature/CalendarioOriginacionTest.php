@@ -33,7 +33,10 @@ test('la simulación anterior reproduce las fechas congeladas tras otra publicac
     $simulador = app(SimuladorCreditoSimple::class);
     $parametros = [$producto, '12000', PeriodicidadCredito::Semanal, 1, MetodoAmortizacion::CapitalFijo, CarbonImmutable::parse('2026-11-07')];
     $original = $simulador->simular(...$parametros);
-    expect($original['tabla'][1]['fecha'])->toBe('2026-11-17');
+    expect($original['tabla'][1]['fecha'])->toBe('2026-11-17')
+        ->and($original['calendario_crediticio']['fechas'][0])->toBe([
+            'fecha_original' => '2026-11-14', 'fecha' => '2026-11-17',
+        ]);
 
     $excepcion = ['fecha' => '2026-11-14', 'nombre' => 'Apertura de prueba', 'habil' => true];
     $segunda = $calendario->guardar(null, ['configuracion' => [...$this->plantilla, 'excepciones' => [$excepcion]]], $this->actor);
