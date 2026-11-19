@@ -51,19 +51,35 @@ final class CatInformativoService
             $restoSiguiente = $divisor % $resto;
             $divisor = $resto;
         }
-        $periodos = (string) intdiv(360, $divisor);
-        $duracion = (string) intdiv($dias, $divisor);
-        $escala = bcpow('10', (string) Decimal::SCALE, 0);
-        $montoElevado = bcpow(bcmul($monto, $escala, 0), $periodos, 0);
-        $pagoElevado = bcpow(bcmul($pago, $escala, 0), $periodos, 0);
-        $pagoEscalado = bcmul($pagoElevado, bcpow('2000', $duracion, 0), 0);
+        $periodos = intdiv(360, $divisor);
+        $duracion = intdiv($dias, $divisor);
+        $precision = 24;
+        $unidad = '0.'.str_repeat('0', $precision - 1).'1';
+        $cociente = bcdiv($pago, $monto, $precision);
+        [$pagoMin, $pagoMax] = $this->potenciaAcotada($cociente, bcadd($cociente, $unidad, $precision), $periodos, $precision, $unidad);
+        $pagoEscalado = $montoElevado = null;
 
         // La décima k empieza en (k - 0.5)/1000. Elevar ambos lados
-        // elimina los exponentes fraccionarios y conserva los empates exactos.
-        $alcanza = function (string $decimas) use ($montoElevado, $pagoEscalado, $duracion): bool {
+        // elimina los exponentes fraccionarios. Solo si se cruzan los
+        // intervalos hace falta la comparación exacta de enteros.
+        $alcanza = function (string $decimas) use ($pago, $monto, $periodos, $duracion, $precision, $unidad, $pagoMin, $pagoMax, &$pagoEscalado, &$montoElevado): bool {
             $numerador = bcadd('1999', bcmul('2', $decimas, 0), 0);
+            $factor = bcdiv($numerador, '2000', 4);
+            [$umbralMin, $umbralMax] = $this->potenciaAcotada($factor, $factor, $duracion, $precision, $unidad);
+            if (bccomp($pagoMin, $umbralMax, $precision) >= 0) {
+                return true;
+            }
+            if (bccomp($pagoMax, $umbralMin, $precision) < 0) {
+                return false;
+            }
+            if ($pagoEscalado === null) {
+                $escala = bcpow('10', (string) Decimal::SCALE, 0);
+                $montoElevado = bcpow(bcmul($monto, $escala, 0), (string) $periodos, 0);
+                $pagoElevado = bcpow(bcmul($pago, $escala, 0), (string) $periodos, 0);
+                $pagoEscalado = bcmul($pagoElevado, bcpow('2000', (string) $duracion, 0), 0);
+            }
 
-            return bccomp($pagoEscalado, bcmul($montoElevado, bcpow($numerador, $duracion, 0), 0), 0) >= 0;
+            return bccomp($pagoEscalado, bcmul($montoElevado, bcpow($numerador, (string) $duracion, 0), 0), 0) >= 0;
         };
         $inferior = '0';
         $superior = '1';
@@ -81,6 +97,25 @@ final class CatInformativoService
         }
 
         return bcdiv($inferior, '10', 1);
+    }
+
+    /** @return array{string, string} */
+    private function potenciaAcotada(string $baseMin, string $baseMax, int $exponente, int $precision, string $unidad): array
+    {
+        $minimo = $maximo = '1';
+        while ($exponente > 0) {
+            if ($exponente % 2 === 1) {
+                $minimo = bcmul($minimo, $baseMin, $precision);
+                $maximo = bcadd(bcmul($maximo, $baseMax, $precision), $unidad, $precision);
+            }
+            $exponente = intdiv($exponente, 2);
+            if ($exponente > 0) {
+                $baseMin = bcmul($baseMin, $baseMin, $precision);
+                $baseMax = bcadd(bcmul($baseMax, $baseMax, $precision), $unidad, $precision);
+            }
+        }
+
+        return [$minimo, $maximo];
     }
 
     /** @param array<int, string> $pagos */

@@ -48,3 +48,6 @@ consulta. Playwright MCP reprodujo la previa del 14 al 17 de noviembre.
   se guardó con hora. Se verifican liquidación y etiquetas de validación.
 - La última corrección limita los motivos del calendario a lecturas autorizadas
   y redondea el CAT de pago único mediante comparaciones decimales exactas.
+- El paquete fiscal reproduce el CAT aprobado. La búsqueda decimal de pago
+  único usa cotas y reserva los enteros exactos para empates. El caso sintético
+  de 18 263 días tardó 10 ms en PHP 8.3.16 en el worktree local.

@@ -169,14 +169,23 @@ class SolicitudPaqueteService
             $this->error('paquete', 'La revisión o la versión del producto no coincide con la evidencia conservada. Solicita una revisión al administrador.');
         }
         $condiciones = $snapshot['condiciones'];
+        $simulacion = $snapshot['simulacion_informativa'];
 
-        return app(SimuladorCreditoSimple::class)->simular($producto, (string) $condiciones['monto'],
+        $tabla = app(SimuladorCreditoSimple::class)->simular($producto, (string) $condiciones['monto'],
             PeriodicidadCredito::from($condiciones['periodicidad']), (int) $condiciones['plazo'],
             MetodoAmortizacion::from($condiciones['metodo']),
-            CarbonImmutable::parse($snapshot['simulacion_informativa']['tabla'][0]['fecha'], app(FechaEmpresa::class)->zonaHoraria()),
+            CarbonImmutable::parse($simulacion['tabla'][0]['fecha'], app(FechaEmpresa::class)->zonaHoraria()),
             incluirImpuestos: true,
-            calendarioCongelado: $snapshot['simulacion_informativa']['calendario_crediticio'] ?? null,
+            calendarioCongelado: $simulacion['calendario_crediticio'] ?? null,
             reproducir: true);
+
+        if (isset($simulacion['calendario_crediticio'])) {
+            $tabla = array_replace($tabla, array_intersect_key($simulacion, array_flip([
+                'cat', 'cat_contexto', 'cat_leyenda', 'monto_recibido_cat',
+            ])));
+        }
+
+        return $tabla;
     }
 
     private function registrar(Solicitud $solicitud, DocumentoGenerado $documento, User $actor): void

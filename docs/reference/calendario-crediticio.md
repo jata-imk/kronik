@@ -48,6 +48,8 @@ Para CAT se conservan los intervalos uniformes de pagos periódicos. Cuando se
 aplica la nueva política a un único pago al vencimiento, el exponente usa días
 efectivos entre 360 según el numeral 5.1 f de la
 [Circular 21/2009 de Banxico](https://www.banxico.org.mx/marco-normativo/normativa-emitida-por-el-banco-de-mexico/circular-21-2009/costo-anual-total-disposicion.html).
+El paquete conserva el CAT informado en la revisión original al generar la
+tabla fiscal.
 La periodicidad diaria mantiene su propio alcance.
 
 - [Decisión de arquitectura](../explanation/adr-0047-calendario-crediticio.md)

@@ -63,7 +63,8 @@ test('la simulación anterior reproduce las fechas congeladas tras otra publicac
 test('el CAT de pago único conserva el empate decimal al redondear', function () {
     $cat = app(CatInformativoService::class);
     expect($cat->calcular('10000.00', ['10005.00'], PeriodicidadCredito::Mensual, 360))->toBe('0.1')
-        ->and($cat->calcular('10000.00', ['10004.99'], PeriodicidadCredito::Mensual, 360))->toBe('0.0');
+        ->and($cat->calcular('10000.00', ['10004.99'], PeriodicidadCredito::Mensual, 360))->toBe('0.0')
+        ->and($cat->calcular('10000.00', ['314383.33'], PeriodicidadCredito::Mensual, 18263))->toBe('7.0');
 });
 
 test('una política inválida identifica el campo de vencimientos en días inhábiles', function () {
@@ -98,7 +99,8 @@ test('el contrato y desembolso Bullet conservan la fecha aprobada y su proyecci�
     $tabla = $paquete->snapshot['tabla'];
     expect($tabla['tabla'][2]['fecha_original'])->toBe('2026-11-14')
         ->and($tabla['tabla'][2]['fecha'])->toBe('2026-11-17')
-        ->and($tabla['calendario_crediticio']['version_id'])->toBe($primera->id);
+        ->and($tabla['calendario_crediticio']['version_id'])->toBe($primera->id)
+        ->and($tabla['cat'])->toBe($solicitud->revisiones()->sole()->snapshot['simulacion_informativa']['cat']);
     expect(view('documentos.paquete-anexo', ['snapshot' => $paquete->snapshot])->render())
         ->toContain('Calendario crediticio, versión', '2026-11-17', 'Original: 2026-11-14');
     $entrada = \Tests\Support\BulletScenario::desembolso($solicitud, $paquete);
