@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { effectScope, nextTick } from "vue";
+import { useGuardedForm } from "@/Composables/useGuardedForm";
 import { changesResource, confirmDiscardChanges, confirmFormDiscard, forgetUnsavedChanges, hasUnsavedChanges, installUnsavedChangesGuard, registerUnsavedChanges } from "./unsavedChanges";
 
 let cleanup;
@@ -52,6 +54,26 @@ it("cancela visitas de navegación/contexto, permite guardar y protege recarga",
     expect(event.defaultPrevented).toBe(true);
     forgetUnsavedChanges();
     expect(visit("get", "/dashboard")).toBeUndefined();
+});
+it("solo exime filtros que conservan el formulario y protege envíos pendientes", async () => {
+    let before;
+    cleanup = installUnsavedChangesGuard({ on: (name, callback) => { before = callback; return vi.fn(); } });
+    const scope = effectScope();
+    const form = scope.run(() => useGuardedForm({ motivo: "" }));
+    try {
+        form.motivo = "Documento pendiente";
+        form.processing = true;
+        await nextTick();
+        const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+        const visit = (method, preserveState) => before({ detail: { visit: { method, preserveState, url: new URL("/clientes/1/edit?page=2", window.location.origin) } } });
+        expect(visit("get", true)).toBeUndefined();
+        expect(visit("get", false)).toBe(false);
+        expect(visit("post", false)).toBeUndefined();
+        expect(confirm).toHaveBeenCalledOnce();
+        const event = new Event("beforeunload", { cancelable: true });
+        window.dispatchEvent(event);
+        expect(event.defaultPrevented).toBe(true);
+    } finally { scope.stop(); }
 });
 it("cancelar atrás restaura la entrada sin entregar el evento a Inertia", () => {
     cleanup = installUnsavedChangesGuard({ on: () => vi.fn() });

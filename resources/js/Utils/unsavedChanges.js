@@ -56,7 +56,8 @@ export function installUnsavedChangesGuard(router) {
     const stop = router.on("before", event => {
         const visit = event.detail.visit;
         const changingContext = /\/(current-team|current-sucursal|logout)$/.test(visit.url.pathname);
-        if ((visit.method === "get" && changesResource(window.location.href, visit.url.href) || changingContext) && !confirmDiscardChanges()) return false;
+        const leavesForm = changesResource(window.location.href, visit.url.href) || visit.preserveState !== true;
+        if ((visit.method === "get" && leavesForm || changingContext) && !confirmDiscardChanges()) return false;
     });
     return () => {
         stop();

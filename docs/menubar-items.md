@@ -16,7 +16,9 @@ nueva pestaña, sitios externos y visores documentales con navegación nativa.
 Los formularios Inertia de las pantallas operativas se registran mediante
 useGuardedForm. Al salir a otro recurso, volver/avanzar en el historial o cambiar
 equipo/sucursal se confirma el descarte. Cancelar conserva los datos en memoria.
-Los filtros de la misma pantalla y los envíos de guardado no se bloquean. Recarga,
+Los filtros que conservan el estado del formulario y los envíos de guardado no
+se bloquean. La captura sigue protegida ante otras salidas durante un envío
+pendiente; los filtros que desmontan la captura también requieren descarte. Recarga,
 salida externa y cierre de pestaña usan la confirmación nativa del navegador,
 cuyo texto decide el navegador. No se crean borradores persistentes ni autosave.
 Los cambios forzados de contexto o sesión limpian el registro antes de salir:
@@ -112,7 +114,9 @@ previsualización y apertura visual de grupos no agregan eventos ni mutan negoci
 Ver [matriz de auditoría](reference/auditoria-eventos.md).
 
 Pest cubre catálogo, permisos, contexto, rutas, parámetros, jerarquía, persistencia,
-no efectos de vista previa y rollback de auditoría. El editor guiado reutiliza este contrato; la barra operativa compacta es el siguiente incremento. La evidencia vigente se mantiene en la nota de la tarea.
+no efectos de vista previa y rollback de auditoría. Editor y barra reutilizan este
+contrato. La [guía de validación](how-to/validar-menu-contextual.md) describe las
+regresiones; la evidencia por commit se mantiene en la nota de la tarea.
 
 ## Editor guiado y agregado rápido
 

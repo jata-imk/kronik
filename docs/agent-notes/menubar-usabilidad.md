@@ -2,6 +2,9 @@
 
 ## Referencias y base
 
+- Reanudación 2026-11-19: `git fetch origin --prune` confirma origin/main en
+  8884a78d738f9623c5d72fc194c4ecc55b400874, sin avances desde la base funcional.
+  Rama de trabajo limpia en 73b9c05 antes de reanudar; PR #85 pendiente.
 - [Tarea en Notion](https://app.notion.com/p/41361db7db7f81968ea5cfc45a96b51d).
 - Base tras actualizar origin: 8884a78d738f9623c5d72fc194c4ecc55b400874, PR #83 y #84 integradas.
 - Primera entrega: feat/menubar-editor, worktree propio menubar-ui-worktree.
@@ -16,6 +19,18 @@ barra compacta y la protección de navegación están en verificación en la seg
 entrega. Sin integración ni despliegue autorizados. La aceptación del sidebar
 sigue pendiente y es independiente. Se preservan checkout, archivos, servicios
 y trabajo de comunicaciones de Bryan.
+
+Reanudado el 2026-11-19. PR #85 abierta y sin conflictos, head documental
+56c9bfc. CI 44410875964 pasó build, frontend, backend y concurrencia; falló por
+timeout de 35 s del renderer PDF antes de los recorridos de navegador. Se
+solicitó reintento del job, sin cambiar la configuración PDF.
+
+Revisión medium del incremento de navegación contra feat/menubar-editor
+(56c9bfc), sobre 73b9c05 y los ajustes documentales iniciales: tres P2 sobre
+captura durante envíos, visitas de filtros que desmontan componentes y base/cierre
+de permisos de tokens. Se corrigen con regresiones. También se incorpora la
+selección de cliente de una solicitud al estado protegido. Pruebas backend del
+Menubar: 34 aprobadas, 552 aserciones; la recarga parcial envía la versión Inertia.
 
 ## Decisiones confirmadas
 

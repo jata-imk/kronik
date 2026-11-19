@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
+import { confirmFormDiscard } from "@/Utils/unsavedChanges";
 import ActionMessage from "@/Components/ActionMessage.vue";
 import ActionSection from "@/Components/ActionSection.vue";
 import ConfirmationModal from "@/Components/ConfirmationModal.vue";
@@ -41,8 +42,18 @@ const createApiToken = () => {
 };
 
 const manageApiTokenPermissions = (token) => {
-    updateApiTokenForm.permissions = token.abilities;
+    updateApiTokenForm.defaults({ permissions: [...token.abilities] });
+    updateApiTokenForm.reset();
+    updateApiTokenForm.clearErrors();
     managingPermissionsFor.value = token;
+};
+
+const closeApiTokenPermissions = () => {
+    if (!confirmFormDiscard(updateApiTokenForm)) return;
+    updateApiTokenForm.defaults({ permissions: [] });
+    updateApiTokenForm.reset();
+    updateApiTokenForm.clearErrors();
+    managingPermissionsFor.value = null;
 };
 
 const updateApiToken = () => {
@@ -198,7 +209,7 @@ const deleteApiToken = () => {
         </DialogModal>
 
         <!-- API Token Permissions Modal -->
-        <DialogModal :show="managingPermissionsFor != null" @close="managingPermissionsFor = null">
+        <DialogModal :show="managingPermissionsFor != null" @close="closeApiTokenPermissions">
             <template #title>
                 Permisos de Token de API
             </template>
@@ -215,7 +226,7 @@ const deleteApiToken = () => {
             </template>
 
             <template #footer>
-                <Button severity="secondary" raised class="uppercase font-semibold !text-xs" @click="managingPermissionsFor = null">
+                <Button severity="secondary" raised class="uppercase font-semibold !text-xs" @click="closeApiTokenPermissions">
                     Cancelar
                 </Button>
 

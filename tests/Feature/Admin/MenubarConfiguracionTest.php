@@ -34,7 +34,8 @@ test('control contextual respeta lectura y creación sin exigir superadministrad
     $reader->unsetRelation('permissions')->unsetRelation('roles');
     $this->get(route('clientes.index'))->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page->where('menubarAdmin', null));
     $this->get(route('clientes.index'), [
-        'X-Inertia' => 'true', 'X-Inertia-Partial-Component' => 'Clientes/Index', 'X-Inertia-Partial-Data' => 'clientes',
+        'X-Inertia' => 'true', 'X-Inertia-Version' => \Inertia\Inertia::getVersion(),
+        'X-Inertia-Partial-Component' => 'Clientes/Index', 'X-Inertia-Partial-Data' => 'clientes',
     ])->assertOk()->assertJsonPath('props.menubarAdmin', null)->assertJsonPath('props.menubarEstado.status', 'empty');
 });
 
