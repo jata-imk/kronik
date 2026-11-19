@@ -17,6 +17,7 @@ es una fuente anual editable en borrador. Cada instalación revisa su aplicabili
   Los ejemplos se calculan con la revisión que se muestra en pantalla.
 - La consulta de borradores está reservada a quienes pueden prepararlos. La
   previa aplica esa visibilidad antes de validar el escenario.
+- Los permisos de consulta y preparación se evalúan en el equipo activo.
 - Ejecutar la migración y actualizar el catálogo de permisos y menú mediante
   `ModulesAndPermissionsSeeder` y `MenubarItemsSeeder` en el orden habitual.
   La navegación del menú mantiene sus activaciones configurables. El reinicio
