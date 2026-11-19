@@ -42,6 +42,7 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 390, height: 844 
 
 
 test("otra pestaña y navegación histórica abandonan formularios y alcance del contexto anterior", async ({ page, context }) => {
+    test.setTimeout(180_000);
     await login(page);
     const assertNoConsoleErrors = await failOnConsoleErrors(page);
     async function switchBranch(name) {
@@ -54,19 +55,26 @@ test("otra pestaña y navegación histórica abandonan formularios y alcance del
     const assertOtherConsole = await failOnConsoleErrors(other);
     await other.goto("/solicitudes/create");
     await expect(other.getByRole("button", { name: "Guardar borrador", exact: true })).toBeVisible();
+    await other.locator("#sol-destino").fill("Captura del contexto anterior");
+    const oldContextDialogs = [];
+    other.on("dialog", dialog => { oldContextDialogs.push(dialog.type()); dialog.dismiss(); });
     await page.bringToFront();
     await page.goto("/solicitudes?scope=all&page=7");
     await switchBranch("Sucursal Norte");
     await other.bringToFront();
     await expect(other).toHaveURL(/\/solicitudes$/);
     await expect(other.getByRole("button", { name: "Guardar borrador", exact: true })).toHaveCount(0);
+    expect(oldContextDialogs).toEqual([]);
     await other.goto("/solicitudes?scope=all&page=4");
     await other.goto("/dashboard");
     await page.bringToFront();
     await switchBranch("Matriz");
     await other.bringToFront();
     await expect(other.locator("button:has(.pi-map-marker):visible").first()).toContainText("Matriz");
-    await other.goBack();
+    // Context recovery can replace the restored document before its load event.
+    await other.goBack({ waitUntil: "commit", timeout: 5000 }).catch(error => {
+        if (!/Timeout|ERR_ABORTED/.test(error.message)) throw error;
+    });
     await expect(other).toHaveURL(/\/solicitudes$/);
     await expect(other.getByLabel("Alcance", { exact: true })).toContainText("Sucursal activa");
     assertNoConsoleErrors(); assertOtherConsole();

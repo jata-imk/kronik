@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { useForm } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import { useToast } from "primevue/usetoast";
 import axios from "axios";
 import MenubarIconPicker from "@/Components/MenubarIconPicker.vue";
@@ -110,11 +110,12 @@ function requestClose() {
     if (!props.readonly && form.isDirty) discardVisible.value = true;
     else emit("close");
 }
+function discard() { form.defaults?.(); emit("close"); }
 function submit() {
     if (props.readonly || loading.value || !catalogo.value || form.processing) return;
     const options = {
         only: ["menubarCatalogo", "menubarItems", "menubarEstado", "menubarSeleccionado", "modoMenu", "auth", "modules", "catalogoMenu", "listado"],
-        onSuccess: () => { toast.add({ severity: "success", summary: saved.id ? "Elemento actualizado" : "Elemento creado", life: 3000 }); emit("close"); },
+        onSuccess: () => { toast.add({ severity: "success", summary: saved.id ? "Elemento actualizado" : "Elemento creado", life: 3000 }); discard(); },
     };
     if (saved.id) form.put(route("admin.menubar-items.update", saved.id), options);
     else form.post(route("admin.menubar-items.store"), options);
@@ -187,6 +188,6 @@ defineExpose({ requestClose, form, selectedScreens, selectedAction });
     </Dialog>
     <Dialog v-if="!readonly" v-model:visible="discardVisible" header="¿Descartar los cambios?" modal :style="{ width: '420px', maxWidth: '95vw' }">
         <p>Los cambios de este elemento todavía no se han guardado.</p>
-        <template #footer><Button label="Seguir editando" severity="secondary" @click="discardVisible = false" /><Button label="Descartar cambios" severity="danger" @click="emit('close')" /></template>
+        <template #footer><Button label="Seguir editando" severity="secondary" @click="discardVisible = false" /><Button label="Descartar cambios" severity="danger" @click="discard" /></template>
     </Dialog>
 </template>

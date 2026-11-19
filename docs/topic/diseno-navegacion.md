@@ -8,6 +8,7 @@ destinos de las rutas donde se activa cada entrada.
 
 - [Validar la expansión manual del sidebar](../how-to/validar-sidebar.md).
 - [Configurar el catálogo del menú contextual](../how-to/configurar-menu-contextual.md).
+- [Validar el menú contextual y la navegación](../how-to/validar-menu-contextual.md).
 - [Accesos contextuales del cliente](../how-to/accesos-contextuales-clientes.md).
 - [Actualizar módulos y capturas de la portada](../how-to/actualizar-portada.md).
 

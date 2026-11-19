@@ -6,7 +6,9 @@ import DocumentEditor from "@/Components/Documents/DocumentEditor.vue";
 import DocumentPdfPreview from "@/Components/Documents/DocumentPdfPreview.vue";
 import DocumentVersionStatus from "@/Components/Documents/DocumentVersionStatus.vue";
 import { normalizeTemplateKey } from "@/Utils/templateKey";
-import { router, useForm, usePage } from "@inertiajs/vue3";
+import { router, usePage } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
+import { confirmFormDiscard } from "@/Utils/unsavedChanges";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
@@ -160,6 +162,7 @@ const handleKeyInput = (event) => {
 };
 
 const selectTemplate = (item) => {
+    if (!confirmFormDiscard(form)) return;
     selectedId.value = item.id;
     selectedVersionId.value = preferredVersion(item)?.id ?? null;
     serverList.visit({ plantilla_id: item.id, version_id: null, modo: null, versiones_page: 1, page: page.props.listado?.current_page ?? 1 });
@@ -202,11 +205,13 @@ const openEdit = (version, readonly = false) => {
     editorVisible.value = true;
 };
 const requestVersion = (version, modo = "consulta") => {
+    if (!confirmFormDiscard(form)) return;
     dismissedEditor.value = null;
     form.cancel(); editorVisible.value = false;
     serverList.visit({ plantilla_id: selected.value.id, version_id: version.id, modo, page: page.props.listado?.current_page ?? 1 });
 };
 const closeEditor = async () => {
+    if (!editorReadonly.value && !confirmFormDiscard(form)) return;
     dismissedEditor.value = props.modoVersion ? `${editorTemplateId.value}:${editingVersion.value?.id}:${props.modoVersion}` : null;
     document.activeElement?.blur(); form.cancel(); editorVisible.value = false; form.clearErrors();
     if (props.modoVersion) serverList.visit({ modo: null, page: page.props.listado?.current_page ?? 1 });
@@ -240,6 +245,7 @@ const submit = () => {
     const options = {
         preserveScroll: true,
         onSuccess: async () => {
+            form.defaults?.();
             const target = props.plantillas.find(item => item.clave === form.clave);
             if (target) { selectedId.value = target.id; selectedVersionId.value = editingVersion.value?.id ?? target.versiones[0]?.id; }
             await closeEditor();

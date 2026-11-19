@@ -11,6 +11,7 @@
 - [Configurar Empresa](configurar-empresa.md)
 - [Configurar y comprobar la fiscalidad de un producto](configurar-fiscalidad-productos.md)
 - [Cargar el catálogo del menú contextual](configurar-menu-contextual.md)
+- [Validar el menú contextual y la navegación](validar-menu-contextual.md)
 - [Desplegar Kronik en una VPS Debian 12](desplegar-vps-nuevo.md)
 - [Editar plantillas documentales](editar-plantillas-documentales.md)
 - [Migrar VPS](migrar-vps.md)

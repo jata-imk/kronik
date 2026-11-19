@@ -1,5 +1,39 @@
 # Sistema MenubarItems
 
+## Barra y navegación
+
+La barra usa PrimeVue Menubar con texto y flecha en los grupos superiores e iconos
+opcionales dentro. En escritorio usa 13 px; en móvil mantiene objetivos de 44 px.
+Configurar es un control neutro: Agregar acción aquí requiere creación y
+Administrar menú requiere lectura. No depende de Super Admin. Las acciones del
+sistema se distinguen por identidad, sin reservar etiquetas de grupos del usuario.
+
+Un fallo de resolución se muestra como error con reintento, distinto de un menú
+vacío. La vista previa y el menú real comparten el renderizador accesible.
+Los enlaces internos ordinarios usan Inertia; conservan href, modificadores,
+nueva pestaña, sitios externos y visores documentales con navegación nativa.
+
+Los formularios Inertia de las pantallas operativas se registran mediante
+useGuardedForm. Al salir a otro recurso, volver/avanzar en el historial o cambiar
+equipo/sucursal se confirma el descarte. Cancelar conserva los datos en memoria.
+Los filtros que conservan el estado del formulario y los envíos de guardado no
+se bloquean. La captura sigue protegida ante otras salidas durante un envío
+pendiente; los filtros que desmontan la captura también requieren descarte. Recarga,
+salida externa y cierre de pestaña usan la confirmación nativa del navegador,
+cuyo texto decide el navegador. No se crean borradores persistentes ni autosave.
+Los cambios forzados de contexto o sesión limpian el registro antes de salir:
+no se ofrece conservar datos del contexto anterior.
+El historial confirma también entre filtros de una misma ruta, porque Inertia
+restaura esas entradas desmontando el componente anterior.
+
+Las bases de formularios con objetos o listas se mantienen independientes de la
+captura, para detectar también cambios anidados. Al aceptar la cancelación de
+un diálogo se limpia su formulario; no queda un borrador invisible bloqueando
+salidas. Cancelar la confirmación conserva diálogo, datos y errores.
+
+Las activaciones históricas se resuelven por la pantalla exacta guardada, aunque
+su asociación de módulo sea anterior al catálogo canónico.
+
 ## Modelo compartido
 
 El catálogo es común para toda la instalación. Cada elemento comparte etiqueta,
@@ -82,7 +116,9 @@ previsualización y apertura visual de grupos no agregan eventos ni mutan negoci
 Ver [matriz de auditoría](reference/auditoria-eventos.md).
 
 Pest cubre catálogo, permisos, contexto, rutas, parámetros, jerarquía, persistencia,
-no efectos de vista previa y rollback de auditoría. El editor guiado reutiliza este contrato; la barra operativa compacta es el siguiente incremento. La evidencia vigente se mantiene en la nota de la tarea.
+no efectos de vista previa y rollback de auditoría. Editor y barra reutilizan este
+contrato. La [guía de validación](how-to/validar-menu-contextual.md) describe las
+regresiones; la evidencia por commit se mantiene en la nota de la tarea.
 
 ## Editor guiado y agregado rápido
 

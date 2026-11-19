@@ -3,7 +3,9 @@ import { useListadoServidor } from "@/Composables/useListadoServidor";
 import ListadoPaginador from "@/Components/ListadoPaginador.vue";
 import PageHeader from "@/Components/PageHeader.vue";
 import { computed, ref } from "vue";
-import { router, useForm, usePage } from "@inertiajs/vue3";
+import { router, usePage } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
+import { confirmFormDiscard } from "@/Utils/unsavedChanges";
 import { FilterMatchMode } from "@primevue/core/api";
 import { useConfirm } from "primevue/useconfirm";
 import ConfirmDialog from "primevue/confirmdialog";
@@ -49,6 +51,11 @@ const openCreate = () => {
     form.reset();
     form.clearErrors();
     visible.value = true;
+};
+const closeCreate = () => {
+    if (!confirmFormDiscard(form)) return;
+    form.defaults({ name: "" }); form.reset(); form.clearErrors();
+    visible.value = false;
 };
 const submit = () =>
     form.post(route("admin.teams.store"), {
@@ -146,7 +153,7 @@ const reactivate = (team) =>
                 <Column header="Acciones" :frozen="true" align-frozen="right" style="width: 10%" :pt="{ columnHeaderContent: { class: 'whitespace-nowrap' } }"><template #body="{ data }"><div class="flex flex-nowrap items-center gap-1 whitespace-nowrap"><Button :aria-label="`Abrir configuración de ${data.name}`" icon="pi pi-arrow-right" text as="a" :href="route('teams.show', data.id)" /><Button v-if="can('delete-teams') && data.activo" :aria-label="`Desactivar ${data.name}`" icon="pi pi-ban" severity="danger" text @click="deactivate(data)" /><Button v-if="can('update-teams') && !data.activo" :aria-label="`Reactivar ${data.name}`" icon="pi pi-refresh" severity="success" text @click="reactivate(data)" /></div></template></Column>
             </DataTable>
             </div>
-            <Dialog v-model:visible="visible" header="Crear equipo institucional" modal :style="{ width: '460px' }"><form class="flex flex-col gap-4" @submit.prevent="submit"><Message severity="info" :closable="false">Los equipos creados aquí son institucionales. Después podrás administrar sus miembros y roles desde su configuración.</Message><div><label class="mb-1 block text-sm font-medium">Nombre *</label><InputText v-model="form.name" fluid :invalid="!!form.errors.name" /><small class="text-red-500">{{ form.errors.name }}</small></div><div class="flex justify-end gap-2"><Button label="Cancelar" severity="secondary" @click.prevent="visible = false" /><Button label="Crear" type="submit" :loading="form.processing" /></div></form></Dialog>
+            <Dialog :visible="visible" @update:visible="value => { if (!value) closeCreate(); }" header="Crear equipo institucional" modal :style="{ width: '460px' }"><form class="flex flex-col gap-4" @submit.prevent="submit"><Message severity="info" :closable="false">Los equipos creados aquí son institucionales. Después podrás administrar sus miembros y roles desde su configuración.</Message><div><label class="mb-1 block text-sm font-medium">Nombre *</label><InputText v-model="form.name" fluid :invalid="!!form.errors.name" /><small class="text-red-500">{{ form.errors.name }}</small></div><div class="flex justify-end gap-2"><Button label="Cancelar" severity="secondary" @click.prevent="closeCreate" /><Button label="Crear" type="submit" :loading="form.processing" /></div></form></Dialog>
         </template>
     </AppLayout>
 </template>

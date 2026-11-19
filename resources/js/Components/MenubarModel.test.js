@@ -5,7 +5,24 @@ import Model from "./MenubarModel.vue";
 const visit = vi.hoisted(() => vi.fn());
 vi.mock("@inertiajs/vue3", () => ({ router: { visit } }));
 beforeEach(() => {
+    visit.mockClear();
     vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+});
+it("conserva enlaces externos, visores nativos y modificadores sin interceptarlos", async () => {
+    const wrapper = mount(Model, { props: { model: [
+        { label: "Documento", url: "/documentos-generados/1/ver", native: true },
+        { label: "Sitio", url: "https://example.test/ayuda", external: true },
+        { label: "Clientes", url: "/clientes" },
+    ] }, global: { plugins: [PrimeVue] } });
+    const prevented = [];
+    wrapper.element.addEventListener("click", event => { prevented.push(event.defaultPrevented); event.preventDefault(); });
+    await wrapper.get('a[href="/documentos-generados/1/ver"]').trigger("click", { button: 0 });
+    await wrapper.get('a[href="https://example.test/ayuda"]').trigger("click", { button: 0 });
+    await wrapper.get('a[href="/clientes"]').trigger("click", { button: 0, ctrlKey: true });
+    await wrapper.get('a[href="/clientes"]').trigger("click", { button: 0, metaKey: true });
+    expect(visit).not.toHaveBeenCalled();
+    expect(prevented).toEqual([false, false, false, false]);
+    wrapper.unmount();
 });
 it("vista previa conserva ARIA nativo y grupos pero elimina enlaces y comandos", async () => {
     const command = vi.fn();

@@ -1,7 +1,8 @@
 <script setup>
 import OriginacionAyuda from "@/Components/Products/OriginacionAyuda.vue";
 import PageHeader from "@/Components/PageHeader.vue";
-import { Link, useForm } from "@inertiajs/vue3";
+import { Link } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import axios from "axios";
 import { computed, ref, watch } from "vue";
@@ -14,7 +15,7 @@ const suggestions = ref([]);
 const searchError = ref("");
 let sequence = 0;
 const form = useForm({
-    cliente_id: null,
+    cliente_id: props.clienteInicial?.id ?? null,
     clave_creacion: crypto.randomUUID(),
     lock_version: props.solicitud?.lock_version ?? 0,
     producto_version_id: props.solicitud?.producto_version_id ?? null,
@@ -33,6 +34,7 @@ const bullet = computed(() => metodos.value.some((o) => o.value === "bullet"));
 const politicaBullet = computed(() => selectedProduct.value?.capacidades?.opciones.politicas_interes_bullet?.[0]);
 const cambioProducto = ref("");
 const ayuda = (opciones, valor) => opciones.find((o) => o.value === valor)?.ayuda ?? "";
+watch(() => selectedClient.value?.id ?? null, id => { form.cliente_id = id; });
 watch(() => form.producto_version_id, () => {
     const cambios = [];
     if (form.periodicidad && !periodicidades.value.some((o) => o.value === form.periodicidad)) {
