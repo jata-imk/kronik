@@ -13,7 +13,7 @@ const confirmacion = ref(false);
 const publicacion = useForm({ revision: null });
 const estado = computed(() => {
     if (!props.version?.publicada_en) return "Borrador";
-    return props.version.id === props.vigenteId ? "Vigente para nuevas solicitudes" : "Publicación histórica";
+    return props.version.id === props.vigenteId ? "Vigente" : "Publicación histórica";
 });
 
 watch(() => props.version?.id, () => {
@@ -92,7 +92,7 @@ function publicar() {
                     :readonly="editor === 'actual' && (!puedeEditar || Boolean(version?.publicada_en))" @guardado="editor = null" />
             </Dialog>
             <Dialog v-model:visible="confirmacion" header="Publicar calendario" modal class="w-[min(94vw,32rem)]">
-                <p>Esta versión quedará vigente para los nuevos envíos de solicitudes de todas las sucursales. La cobertura que estás publicando va del {{ version?.configuracion.desde }} al {{ version?.configuracion.hasta }}.</p>
+                <p>La versión pasará a ser la referencia institucional del catálogo. Podrás comparar su efecto en Ejemplos. La cobertura que estás publicando va del {{ version?.configuracion.desde }} al {{ version?.configuracion.hasta }}.</p>
                 <Message v-if="publicacion.errors.revision" severity="error">{{ publicacion.errors.revision }}</Message>
                 <template #footer>
                     <Button label="Cancelar" severity="secondary" text @click="confirmacion = false" />

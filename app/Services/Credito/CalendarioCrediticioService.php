@@ -43,7 +43,8 @@ final class CalendarioCrediticioService
                 $configuracion[$campo] ??= [];
                 usort($configuracion[$campo], fn (array $a, array $b) => $a['fecha'] <=> $b['fecha']);
             }
-            if ($actual->exists && $actual->configuracion === $configuracion) {
+            $configuracion = $this->ordenarClaves($configuracion);
+            if ($actual->exists && $this->ordenarClaves($actual->configuracion) === $configuracion) {
                 return $actual;
             }
             $actual->fill(['configuracion' => $configuracion, 'revision' => $actual->revision + 1])->save();
@@ -65,7 +66,7 @@ final class CalendarioCrediticioService
                 return;
             }
             $this->verificarRevision($actual, $revision);
-            $actual->fill(['publicada_en' => now(), 'orden_publicacion' => (CalendarioCrediticioVersion::max('orden_publicacion') ?? 0) + 1, 'huella' => hash('sha256', json_encode($actual->configuracion, JSON_THROW_ON_ERROR))])->save();
+            $actual->fill(['publicada_en' => now(), 'orden_publicacion' => (CalendarioCrediticioVersion::max('orden_publicacion') ?? 0) + 1, 'huella' => hash('sha256', json_encode($this->ordenarClaves($actual->configuracion), JSON_THROW_ON_ERROR))])->save();
             $this->actividad->log(ActivityEvent::CreditCalendarPublished, 'Calendario crediticio publicado', $actual,
                 ['result' => 'applied', 'changed_fields' => ['publicada_en']], $actor);
         });
@@ -120,6 +121,15 @@ final class CalendarioCrediticioService
         }
 
         return ['version_id' => $version->id, 'huella' => $version->huella, 'fechas' => $filas];
+    }
+
+    private function ordenarClaves(array $datos): array
+    {
+        if (! array_is_list($datos)) {
+            ksort($datos);
+        }
+
+        return array_map(fn ($valor) => is_array($valor) ? $this->ordenarClaves($valor) : $valor, $datos);
     }
 
     private function borrador(CalendarioCrediticioVersion $version, int $revision): CalendarioCrediticioVersion

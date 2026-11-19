@@ -47,6 +47,10 @@ final class CalendarioCrediticioController extends Controller
     {
         abort_if(! $version->publicada_en && ! $request->user()->can(CalendarioCrediticioService::EDITAR), 404);
 
+        if ($version->revision !== (int) $request->validated('revision')) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['revision' => 'El borrador cambió. Vuelve a abrir esta versión para calcular con las fechas actualizadas.']);
+        }
+
         return response()->json($previa->calcular($version, $request->validated()));
     }
 

@@ -22,7 +22,7 @@ export function usePreviaCalendarioCrediticio(version, escenario) {
         solicitud = activa;
         cargando.value = true;
         try {
-            const respuesta = await axios.post(route("productos-crediticios.calendario.previa", version.value.id), escenario, { signal: activa.signal });
+            const respuesta = await axios.post(route("productos-crediticios.calendario.previa", version.value.id), { ...escenario, revision: version.value.revision }, { signal: activa.signal });
             if (solicitud === activa) resultado.value = respuesta.data;
         } catch (e) {
             if (solicitud !== activa) return;

@@ -9,3 +9,8 @@ Decisiones confirmadas: calendario institucional, plantilla CNBV revisable,
 cobertura revisada obligatoria, ajuste al siguiente hábil del cierre y
 vencimiento, publicación exclusiva de Super Admin. Se implementa en la rama
 aislada; integración, despliegue y validación QA se registran con su evidencia.
+
+La revisión del catálogo detectó una fecha emitida por el selector como objeto,
+una previa que podía usar una revisión más reciente y un acceso lateral sujeto
+al permiso de Productos. Se normalizó la fecha civil al capturarla, se validó
+la revisión solicitada y se agregó un acceso lateral con permiso propio.

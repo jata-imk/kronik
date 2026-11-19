@@ -19,6 +19,7 @@ final class PreviaCalendarioCrediticioRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'revision' => ['required', 'integer', 'min:1'],
             'inicio' => ['required', 'date_format:Y-m-d'],
             'periodicidad' => ['required', Rule::enum(PeriodicidadCredito::class)],
             'metodo' => ['required', Rule::enum(MetodoAmortizacion::class)],

@@ -1,5 +1,6 @@
 <script setup>
 import { useForm } from "@inertiajs/vue3";
+import { formatDateOnly, parseDateOnly } from "@/Utils/date";
 
 const props = defineProps({ version: Object, plantilla: Object, hoy: String, readonly: Boolean });
 const emit = defineEmits(["guardado"]);
@@ -36,7 +37,7 @@ function guardar() {
             <div v-for="{ clave, etiqueta } in [{ clave: 'desde', etiqueta: 'Cobertura desde' }, { clave: 'hasta', etiqueta: 'Cobertura hasta' }]" :key="clave">
                 <label :for="`cal-${clave}`" class="mb-1 block font-medium">{{ etiqueta }}</label>
                 <InputText v-if="readonly" :id="`cal-${clave}`" :model-value="form.configuracion[clave]" readonly fluid />
-                <DatePicker v-else :input-id="`cal-${clave}`" v-model="form.configuracion[clave]" date-format="yy-mm-dd" update-model-type="string" fluid />
+                <DatePicker v-else :input-id="`cal-${clave}`" :model-value="parseDateOnly(form.configuracion[clave])" @update:model-value="form.configuracion[clave] = formatDateOnly($event)" date-format="yy-mm-dd" fluid />
             </div>
             <div class="sm:col-span-2">
                 <label for="cal-fuente" class="mb-1 block font-medium">Fuente de las fechas</label>
@@ -59,7 +60,7 @@ function guardar() {
                     <p v-if="!form.configuracion[clave].length" class="mt-2 text-surface-500">Aún no hay fechas registradas.</p>
                     <div v-for="(dia, indice) in form.configuracion[clave]" :key="indice" class="mb-2 grid gap-2 sm:grid-cols-[10rem_1fr_auto_auto]">
                         <InputText v-if="readonly" :model-value="dia.fecha" readonly aria-label="Fecha" fluid />
-                        <DatePicker v-else v-model="dia.fecha" date-format="yy-mm-dd" update-model-type="string" aria-label="Fecha" fluid />
+                        <DatePicker v-else :model-value="parseDateOnly(dia.fecha)" @update:model-value="dia.fecha = formatDateOnly($event)" date-format="yy-mm-dd" aria-label="Fecha" fluid />
                         <InputText v-model="dia.nombre" :readonly="readonly" aria-label="Nombre o motivo" placeholder="Nombre o motivo" fluid />
                         <Select v-if="clave === 'excepciones'" v-model="dia.habil" :options="tipos" option-label="texto" option-value="habil" :disabled="readonly" aria-label="Tipo de excepción" />
                         <Button v-if="!readonly" type="button" icon="pi pi-trash" severity="danger" text aria-label="Quitar fecha" @click="form.configuracion[clave].splice(indice, 1)" />

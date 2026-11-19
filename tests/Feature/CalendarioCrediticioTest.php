@@ -18,6 +18,12 @@ test('un borrador versionado solo se publica por Super Admin y el reintento cons
     $this->post(route('productos-crediticios.calendario.store'), ['configuracion' => $this->plantilla])->assertRedirect();
     $version = CalendarioCrediticioVersion::sole();
     $ruta = route('productos-crediticios.calendario.publicar', $version);
+    $this->put(route('productos-crediticios.calendario.update', $version), ['revision' => 1, 'configuracion' => array_reverse($this->plantilla, true)])
+        ->assertRedirect();
+    expect(Activity::where('event', ActivityEvent::CreditCalendarDraftSaved->value)->count())->toBe(1);
+    $this->postJson(route('productos-crediticios.calendario.previa', $version), [
+        'revision' => 2, 'inicio' => '2026-11-07', 'periodicidad' => 'semanal', 'metodo' => 'capital_fijo', 'plazo' => 1, 'gracia' => 3,
+    ])->assertUnprocessable()->assertJsonValidationErrors('revision');
     $usuario = \App\Models\User::factory()->withPersonalTeam()->create();
     $equipo = $usuario->ownedTeams()->sole();
     $usuario->update(['current_team_id' => $equipo->id]);
@@ -40,7 +46,7 @@ test('la previa compara fechas, interés y gracia sin escribir operaciones ni ac
     $version = app(CalendarioCrediticioService::class)->guardar(null, ['configuracion' => $this->plantilla], $this->actor);
     $eventos = Activity::count();
     $this->postJson(route('productos-crediticios.calendario.previa', $version), [
-        'inicio' => '2026-11-07', 'periodicidad' => 'semanal', 'metodo' => $metodo, 'plazo' => 1, 'gracia' => 3, 'politica_bullet' => $politica,
+        'revision' => 1, 'inicio' => '2026-11-07', 'periodicidad' => 'semanal', 'metodo' => $metodo, 'plazo' => 1, 'gracia' => 3, 'politica_bullet' => $politica,
     ])->assertOk()
         ->assertJsonPath('cambios.0.fecha_original', '2026-11-14')
         ->assertJsonPath('cambios.0.fecha', '2026-11-17')
