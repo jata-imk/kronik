@@ -23,6 +23,8 @@ salida externa y cierre de pestaña usan la confirmación nativa del navegador,
 cuyo texto decide el navegador. No se crean borradores persistentes ni autosave.
 Los cambios forzados de contexto o sesión limpian el registro antes de salir:
 no se ofrece conservar datos del contexto anterior.
+El historial confirma también entre filtros de una misma ruta, porque Inertia
+restaura esas entradas desmontando el componente anterior.
 
 Las bases de formularios con objetos o listas se mantienen independientes de la
 captura, para detectar también cambios anidados. Al aceptar la cancelación de

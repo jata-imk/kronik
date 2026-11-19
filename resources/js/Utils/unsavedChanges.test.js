@@ -75,10 +75,10 @@ it("solo exime filtros que conservan el formulario y protege envíos pendientes"
         expect(event.defaultPrevented).toBe(true);
     } finally { scope.stop(); }
 });
-it("cancelar atrás restaura la entrada sin entregar el evento a Inertia", () => {
+it("cancelar atrás en filtros restaura la entrada sin desmontar la captura", () => {
     cleanup = installUnsavedChangesGuard({ on: () => vi.fn() });
     const previous = history.state;
-    history.pushState({ component: "Clientes/Edit" }, "", "/clientes/2/edit");
+    history.pushState({ component: "Clientes/Edit" }, "", "/clientes/1/edit?page=2");
     const current = history.state;
     const go = vi.spyOn(history, "go").mockImplementation(() => {});
     const inertia = vi.fn();
@@ -91,7 +91,7 @@ it("cancelar atrás restaura la entrada sin entregar el evento a Inertia", () =>
     window.dispatchEvent(new PopStateEvent("popstate", { state: previous }));
     expect(go).toHaveBeenCalledWith(1);
     expect(inertia).not.toHaveBeenCalled();
-    replace(current, "", "/clientes/2/edit");
+    replace(current, "", "/clientes/1/edit?page=2");
     window.dispatchEvent(new PopStateEvent("popstate", { state: current }));
     expect(inertia).not.toHaveBeenCalled();
     window.removeEventListener("popstate", inertia);

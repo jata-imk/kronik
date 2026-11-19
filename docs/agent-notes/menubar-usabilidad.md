@@ -32,6 +32,15 @@ de permisos de tokens. Se corrigen con regresiones. También se incorpora la
 selección de cliente de una solicitud al estado protegido. Pruebas backend del
 Menubar: 34 aprobadas, 552 aserciones; la recarga parcial envía la versión Inertia.
 
+CI de #85 verde tras el reintento (mismo run 44410875964). Sobre 3223060,
+la revisión propia encontró dos P2 adicionales: historial de filtros que remonta
+el componente y bases/cierre de diálogos del expediente. Se corrigen los dos,
+incluidos archivos y claves de idempotencia de formularios de documento. La suite
+frontend previa a este último ajuste pasó 204 pruebas en 74 archivos. La revisión
+acumulada inicial contra 8884a78 no encontró regresiones; se repetirá sobre el
+código final. Su último comando Git tuvo un aviso de ownership del usuario del
+sandbox, aunque las lecturas/diffs anteriores sí se ejecutaron.
+
 ## Decisiones confirmadas
 
 Configuración compartida por instalación; 19 módulos; acciones contextuales por

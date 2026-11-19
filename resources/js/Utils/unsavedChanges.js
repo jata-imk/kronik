@@ -28,24 +28,23 @@ export function installUnsavedChangesGuard(router) {
     const epoch = window.history.state?.[marker]?.epoch ?? crypto.randomUUID();
     let position = window.history.state?.[marker]?.index ?? 0;
     let restoring = false;
-    let currentHref = window.location.href;
     const push = window.history.pushState.bind(window.history);
     const replace = window.history.replaceState.bind(window.history);
-    window.history.pushState = (state, title, url) => { push({ ...state, [marker]: { epoch, index: ++position } }, title, url); currentHref = window.location.href; };
-    window.history.replaceState = (state, title, url) => { replace({ ...state, [marker]: { epoch, index: position } }, title, url); currentHref = window.location.href; };
+    window.history.pushState = (state, title, url) => { push({ ...state, [marker]: { epoch, index: ++position } }, title, url); };
+    window.history.replaceState = (state, title, url) => { replace({ ...state, [marker]: { epoch, index: position } }, title, url); };
     window.history.replaceState(window.history.state, "", window.location.href);
     const onPopstate = event => {
         if (restoring) { restoring = false; event.stopImmediatePropagation(); return; }
         const destination = event.state?.[marker];
         if (destination?.epoch === epoch && destination.index !== position) {
-            if (changesResource(currentHref, window.location.href) && !confirmDiscardChanges()) {
+            // Inertia restores history with preserveState=false, including filters.
+            if (!confirmDiscardChanges()) {
                 event.stopImmediatePropagation();
                 restoring = true;
                 window.history.go(position - destination.index);
                 return;
             }
             position = destination.index;
-            currentHref = window.location.href;
         }
     };
     window.addEventListener("popstate", onPopstate, true);
