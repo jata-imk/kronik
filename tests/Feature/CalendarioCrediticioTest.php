@@ -31,6 +31,8 @@ test('un borrador versionado solo se publica por Super Admin y el reintento cons
     $this->actingAs($usuario)->postJson($ruta, ['revision' => 1])->assertForbidden();
 
     $this->actingAs($this->actor)->post($ruta, ['revision' => 1])->assertRedirect();
+    $this->putJson(route('productos-crediticios.calendario.update', $version->id + 1), [])->assertNotFound();
+    $this->postJson(route('productos-crediticios.calendario.publicar', $version->id + 1), [])->assertNotFound();
     $this->post($ruta, ['revision' => 1])->assertRedirect();
     $this->putJson(route('productos-crediticios.calendario.update', $version), ['revision' => 1, 'configuracion' => $this->plantilla])
         ->assertUnprocessable()->assertJsonValidationErrors('revision');

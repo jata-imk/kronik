@@ -2,15 +2,30 @@
 
 namespace App\Http\Requests;
 
+use App\Models\CalendarioCrediticioVersion;
 use App\Services\Credito\CalendarioCrediticioService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
 final class GuardarCalendarioCrediticioRequest extends FormRequest
 {
+    private CalendarioCrediticioVersion $versionCalendario;
+
     public function authorize(): bool
     {
-        return $this->user()->can(CalendarioCrediticioService::CONSULTAR) && $this->user()->can(CalendarioCrediticioService::EDITAR);
+        if (! $this->user()->can(CalendarioCrediticioService::CONSULTAR) || ! $this->user()->can(CalendarioCrediticioService::EDITAR)) {
+            return false;
+        }
+        if (($id = $this->route('version')) !== null) {
+            $this->versionCalendario = CalendarioCrediticioVersion::findOrFail($id);
+        }
+
+        return true;
+    }
+
+    public function versionCalendario(): CalendarioCrediticioVersion
+    {
+        return $this->versionCalendario;
     }
 
     public function rules(): array

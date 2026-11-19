@@ -41,6 +41,7 @@ const opcionesSuperAdmin = [
                     title="Agregar item al menú"
                     @click="quickAddRef?.open()" />
                 <SplitButton
+                    v-if="page.props.auth?.is_super_admin || page.props.auth?.permissions?.['read-menubar-items'] === true"
                     :buttonProps="{ class: '!hidden' }"
                     dropdownIcon="pi pi-cog"
                     :model="opcionesSuperAdmin" />
