@@ -5,6 +5,8 @@
 
 ## 18/11/2026
 
+- [Calendario crediticio](../reference/calendario-crediticio.md).
+
 Decisiones confirmadas: calendario institucional, plantilla CNBV revisable,
 cobertura revisada obligatoria, ajuste al siguiente hábil del cierre y
 vencimiento, publicación exclusiva de Super Admin. Se implementa en la rama
