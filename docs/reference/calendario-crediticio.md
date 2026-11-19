@@ -19,7 +19,9 @@ es una fuente anual editable en borrador. Cada instalación revisa su aplicabili
   previa aplica esa visibilidad antes de validar el escenario.
 - Los permisos de consulta y preparación se evalúan en el equipo activo.
   Guardar o publicar requiere autorización antes de consultar el identificador.
-  El acceso a la configuración del menú contextual requiere su propio permiso.
+  El acceso a la configuración del menú contextual requiere permiso de
+  lectura de menús o Super Admin global. Los enlaces contextuales autorizados
+  siguen visibles para usuarios que consultan el calendario.
 - Ejecutar la migración y actualizar el catálogo de permisos y menú mediante
   `ModulesAndPermissionsSeeder` y `MenubarItemsSeeder` en el orden habitual.
   La navegación del menú mantiene sus activaciones configurables. El reinicio

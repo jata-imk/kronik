@@ -25,10 +25,22 @@ const MenubarStub = {
     `,
 };
 
+const renderMenubar = () => mount(AppMenubar, {
+    global: {
+        stubs: {
+            Menubar: MenubarStub,
+            MenubarQuickAdd: true,
+            Button: true,
+            SplitButton: true,
+        },
+    },
+});
+
 describe("AppMenubar", () => {
     beforeEach(() => {
         page.props.menubarAdmin = false;
         page.props.menubarItems = [];
+        page.props.auth = {};
         globalThis.route = vi.fn(() => "/admin/menubar-items");
     });
 
@@ -42,21 +54,21 @@ describe("AppMenubar", () => {
             { label: "Clientes", items: [] },
         ];
 
-        const wrapper = mount(AppMenubar, {
-            global: {
-                stubs: {
-                    Menubar: MenubarStub,
-                    MenubarQuickAdd: true,
-                    Button: true,
-                    SplitButton: true,
-                },
-            },
-        });
+        const wrapper = renderMenubar();
 
         expect(wrapper.get("a").attributes("href")).toBe(
             "https://app.test/clientes/15/edit",
         );
         expect(wrapper.get("a").text()).toContain("Editar cliente");
         expect(wrapper.findAll("nav > span")).toHaveLength(1);
+    });
+
+    it.each([
+        ["consulta sin permiso", {}, false],
+        ["permiso explícito", { permissions: { "read-menubar-items": true } }, true],
+        ["Super Admin global", { is_super_admin: true }, true],
+    ])("controla el acceso a configurar menubar para %s", (_perfil, auth, visible) => {
+        page.props.auth = auth;
+        expect(renderMenubar().find("split-button-stub").exists()).toBe(visible);
     });
 });
