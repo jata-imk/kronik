@@ -45,8 +45,6 @@ final class CalendarioCrediticioController extends Controller
 
     public function previa(\App\Http\Requests\PreviaCalendarioCrediticioRequest $request, CalendarioCrediticioVersion $version, \App\Services\Credito\PreviaCalendarioCrediticio $previa)
     {
-        abort_if(! $version->publicada_en && ! $request->user()->can(CalendarioCrediticioService::EDITAR), 404);
-
         if ($version->revision !== (int) $request->validated('revision')) {
             throw \Illuminate\Validation\ValidationException::withMessages(['revision' => 'El borrador cambió. Vuelve a abrir esta versión para calcular con las fechas actualizadas.']);
         }

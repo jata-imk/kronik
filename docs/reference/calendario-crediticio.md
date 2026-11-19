@@ -15,6 +15,8 @@ es una fuente anual editable en borrador. Cada instalación revisa su aplicabili
 - Solo Super Admin global publica. La última publicación se muestra como versión institucional vigente. Cada publicación conserva sus fechas, cobertura y huella.
 - Una revisión desactualizada exige abrir y confirmar de nuevo la publicación.
   Los ejemplos se calculan con la revisión que se muestra en pantalla.
+- La consulta de borradores está reservada a quienes pueden prepararlos. La
+  previa aplica esa visibilidad antes de validar el escenario.
 - Ejecutar la migración y actualizar el catálogo de permisos y menú mediante
   `ModulesAndPermissionsSeeder` y `MenubarItemsSeeder` en el orden habitual.
   La navegación del menú mantiene sus activaciones configurables. El reinicio

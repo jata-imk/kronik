@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\MetodoAmortizacion;
 use App\Enums\PeriodicidadCredito;
 use App\Enums\PoliticaInteresBullet;
+use App\Models\CalendarioCrediticioVersion;
 use App\Services\Credito\CalendarioCrediticioService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -13,7 +14,14 @@ final class PreviaCalendarioCrediticioRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can(CalendarioCrediticioService::CONSULTAR);
+        if (! $this->user()->can(CalendarioCrediticioService::CONSULTAR)) {
+            return false;
+        }
+        $version = $this->route('version');
+        abort_unless($version instanceof CalendarioCrediticioVersion, 404);
+        abort_if(! $version->publicada_en && ! $this->user()->can(CalendarioCrediticioService::EDITAR), 404);
+
+        return true;
     }
 
     public function rules(): array
