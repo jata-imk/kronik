@@ -1,0 +1,77 @@
+<script setup>
+import { useForm } from "@inertiajs/vue3";
+import { formatDateOnly, parseDateOnly } from "@/Utils/date";
+
+const props = defineProps({ version: Object, plantilla: Object, hoy: String, readonly: Boolean });
+const emit = defineEmits(["guardado"]);
+const copia = (dato) => JSON.parse(JSON.stringify(dato));
+const form = useForm({
+    revision: props.version?.publicada_en ? undefined : props.version?.revision,
+    configuracion: copia(props.version?.configuracion ?? {
+        desde: props.hoy, hasta: props.hoy, semana_habil: [1, 2, 3, 4, 5], fuente: "", feriados: [], excepciones: [],
+    }),
+});
+const semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map((texto, indice) => ({ texto, dia: indice + 1 }));
+const grupos = [{ clave: "feriados", titulo: "Feriados" }, { clave: "excepciones", titulo: "Excepciones de apertura o cierre" }];
+const tipos = [{ texto: "Apertura", habil: true }, { texto: "Cierre", habil: false }];
+
+function agregar(clave) {
+    form.configuracion[clave].push({ fecha: "", nombre: "", ...(clave === "excepciones" ? { habil: false } : {}) });
+}
+
+function guardar() {
+    if (props.readonly || form.processing) return;
+    if (props.version && !props.version.publicada_en) {
+        form.put(route("productos-crediticios.calendario.update", props.version.id), { onSuccess: () => emit("guardado") });
+    } else {
+        form.post(route("productos-crediticios.calendario.store"), { onSuccess: () => emit("guardado") });
+    }
+}
+</script>
+
+<template>
+    <form class="space-y-5" @submit.prevent="guardar">
+        <Button v-if="!readonly && plantilla" type="button" label="Cargar plantilla CNBV 2026" icon="pi pi-download" severity="secondary" outlined
+            @click="form.configuracion = copia(plantilla)" />
+        <div class="grid gap-3 sm:grid-cols-2">
+            <div v-for="{ clave, etiqueta } in [{ clave: 'desde', etiqueta: 'Cobertura desde' }, { clave: 'hasta', etiqueta: 'Cobertura hasta' }]" :key="clave">
+                <label :for="`cal-${clave}`" class="mb-1 block font-medium">{{ etiqueta }}</label>
+                <InputText v-if="readonly" :id="`cal-${clave}`" :model-value="form.configuracion[clave]" readonly fluid />
+                <DatePicker v-else :input-id="`cal-${clave}`" :model-value="parseDateOnly(form.configuracion[clave])" @update:model-value="form.configuracion[clave] = formatDateOnly($event)" date-format="yy-mm-dd" fluid />
+            </div>
+            <div class="sm:col-span-2">
+                <label for="cal-fuente" class="mb-1 block font-medium">Fuente de las fechas</label>
+                <InputText id="cal-fuente" v-model="form.configuracion.fuente" :readonly="readonly" fluid />
+            </div>
+        </div>
+        <fieldset>
+            <legend class="mb-2 font-medium">Días hábiles de la semana</legend>
+            <div class="flex flex-wrap gap-x-4 gap-y-2">
+                <div v-for="{dia, texto} in semana" :key="dia" class="flex items-center gap-2">
+                    <Checkbox v-model="form.configuracion.semana_habil" :input-id="`semana-${dia}`" :value="dia" :disabled="readonly" />
+                    <label :for="`semana-${dia}`">{{ texto }}</label>
+                </div>
+            </div>
+        </fieldset>
+        <Accordion :value="['feriados']" multiple>
+            <AccordionPanel v-for="{clave, titulo} in grupos" :key="clave" :value="clave">
+                <AccordionHeader>{{ titulo }} · {{ form.configuracion[clave].length }}</AccordionHeader>
+                <AccordionContent>
+                    <p v-if="!form.configuracion[clave].length" class="mt-2 text-surface-500">Aún no hay fechas registradas.</p>
+                    <div v-for="(dia, indice) in form.configuracion[clave]" :key="indice" class="mb-2 grid gap-2 sm:grid-cols-[10rem_1fr_auto_auto]">
+                        <InputText v-if="readonly" :model-value="dia.fecha" readonly aria-label="Fecha" fluid />
+                        <DatePicker v-else :model-value="parseDateOnly(dia.fecha)" @update:model-value="dia.fecha = formatDateOnly($event)" date-format="yy-mm-dd" aria-label="Fecha" fluid />
+                        <InputText v-model="dia.nombre" :readonly="readonly" aria-label="Nombre o motivo" placeholder="Nombre o motivo" fluid />
+                        <Select v-if="clave === 'excepciones'" v-model="dia.habil" :options="tipos" option-label="texto" option-value="habil" :disabled="readonly" aria-label="Tipo de excepción" />
+                        <Button v-if="!readonly" type="button" icon="pi pi-trash" severity="danger" text aria-label="Quitar fecha" @click="form.configuracion[clave].splice(indice, 1)" />
+                    </div>
+                    <Button v-if="!readonly" type="button" icon="pi pi-plus" label="Agregar fecha" text @click="agregar(clave)" />
+                </AccordionContent>
+            </AccordionPanel>
+        </Accordion>
+        <div v-if="form.hasErrors" aria-live="polite">
+            <Message v-for="(mensaje, campo) in form.errors" :key="campo" severity="error" class="mb-2">{{ mensaje }}</Message>
+        </div>
+        <Button v-if="!readonly" type="submit" label="Guardar borrador" icon="pi pi-save" :loading="form.processing" />
+    </form>
+</template>

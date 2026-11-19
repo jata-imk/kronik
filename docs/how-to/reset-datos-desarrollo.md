@@ -78,6 +78,8 @@ No se borran directorios completos de almacenamiento. Archivos huérfanos sin re
 
 ## Qué conserva
 
+Las versiones del calendario crediticio se conservan como configuración de la financiera.
+
 - Países, regímenes fiscales SAT, divisiones administrativas y códigos postales SEPOMEX. Se verifican sus conteos dentro de la transacción; pueden aumentar en modo demo si faltaban catálogos mínimos.
 - Módulos, permisos, roles globales y sus permisos, proveedores/APIs SIC y catálogo de conceptos de comisión. En modo demo `SystemSeeder` vuelve a sembrarlos idempotentemente; en mínimo y vacío no se modifica su configuración.
 - `.env`, credenciales de proveedores, `APP_KEY`, configuración técnica y código.

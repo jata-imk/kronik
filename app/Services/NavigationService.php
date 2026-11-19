@@ -49,6 +49,9 @@ class NavigationService
         if ($allowed(['read productos-crediticios'])) {
             $configuracion[] = $item('Productos crediticios', 'pi pi-sliders-h', 'productos-crediticios.index', ['originacion-politicas.*']);
         }
+        if ($allowed([\App\Services\Credito\CalendarioCrediticioService::CONSULTAR])) {
+            $configuracion[] = $item('Calendario crediticio', 'pi pi-calendar', 'productos-crediticios.calendario.index', ['productos-crediticios.calendario.*']);
+        }
         if ($allowed(['read plantillas-documentos'])) {
             $configuracion[] = $item('Documentos y plantillas', 'pi pi-file-edit', 'plantillas-documentos.index');
         }
