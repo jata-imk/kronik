@@ -93,6 +93,7 @@ class MenubarService
             // current profile cannot use (including existing seeded entries).
             if ($item->type === 'route:name' && (
                 (str_starts_with((string) $item->value, 'circulo-credito.') && ! $request->user()?->can('create circulo-credito'))
+                || (str_starts_with((string) $item->value, 'productos-crediticios.calendario.') && ! $request->user()?->can(\App\Services\Credito\CalendarioCrediticioService::CONSULTAR))
                 || (str_starts_with((string) $item->value, 'clientes.historial-crediticio.') && ! $request->user()?->can('read historial-crediticio'))
             )) {
                 continue;

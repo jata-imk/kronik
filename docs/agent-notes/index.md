@@ -1,6 +1,7 @@
 # Agent Notes
 
 - [Sidebar: expansión manual, selección y validación](sidebar-desplegables.md).
+- [Calendario crediticio](calendario-crediticio.md)
 
 - [Tablero: implementación de diseño y proyecciones financieras](tablero-propuesta-visual.md)
 
