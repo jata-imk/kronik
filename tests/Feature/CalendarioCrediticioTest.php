@@ -58,6 +58,18 @@ test('la previa compara fechas, interés y gracia sin escribir operaciones ni ac
     expect(Credito::count())->toBe(0)->and(Activity::count())->toBe($eventos);
 })->with([['capital_fijo', null], ['cuota_nivelada', null], ['bullet', 'periodicos'], ['bullet', 'al_vencimiento']]);
 
+test('oculta los borradores reservados antes de validar la previa', function () {
+    $borrador = app(CalendarioCrediticioService::class)->guardar(null, ['configuracion' => $this->plantilla], $this->actor);
+    $usuario = \App\Models\User::factory()->withPersonalTeam()->create();
+    $equipo = $usuario->ownedTeams()->sole();
+    $usuario->update(['current_team_id' => $equipo->id]);
+    grantTeamPermissions($usuario, $equipo, [CalendarioCrediticioService::CONSULTAR]);
+    $this->actingAs($usuario);
+
+    $this->postJson(route('productos-crediticios.calendario.previa', $borrador), [])->assertNotFound();
+    $this->postJson(route('productos-crediticios.calendario.previa', $borrador->id + 1), [])->assertNotFound();
+});
+
 test('expone el nombre de negocio de un feriado incompleto', function () {
     $configuracion = $this->plantilla;
     $configuracion['feriados'][0]['nombre'] = '';
