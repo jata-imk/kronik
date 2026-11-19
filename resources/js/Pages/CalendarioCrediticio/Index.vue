@@ -10,7 +10,9 @@ const props = defineProps({ version: Object, vigenteId: Number, versiones: Objec
 const tab = ref("calendario");
 const editor = ref(null);
 const confirmacion = ref(false);
+const avisoPublicacion = ref("");
 const publicacion = useForm({ revision: null });
+const editorReadonly = computed(() => editor.value === "actual" && (!props.puedeEditar || Boolean(props.version?.publicada_en)));
 const estado = computed(() => {
     if (!props.version?.publicada_en) return "Borrador";
     return props.version.id === props.vigenteId ? "Vigente" : "Publicación histórica";
@@ -19,15 +21,31 @@ const estado = computed(() => {
 watch(() => props.version?.id, () => {
     editor.value = null;
     confirmacion.value = false;
+    avisoPublicacion.value = "";
     publicacion.clearErrors();
     tab.value = "calendario";
 });
 
+function confirmarPublicacion() {
+    if (!props.puedePublicar || !props.version || props.version.publicada_en) return;
+    avisoPublicacion.value = "";
+    publicacion.revision = props.version.revision;
+    confirmacion.value = true;
+}
+
 function publicar() {
     if (!props.puedePublicar || !props.version || props.version.publicada_en || publicacion.processing) return;
-    publicacion.revision = props.version.revision;
+    if (publicacion.revision !== props.version.revision) {
+        confirmacion.value = false;
+        avisoPublicacion.value = "El borrador cambió. Revisa la configuración antes de volver a confirmar.";
+        return;
+    }
     publicacion.post(route("productos-crediticios.calendario.publicar", props.version.id), {
         onSuccess: () => { confirmacion.value = false; },
+        onError: (errores) => {
+            confirmacion.value = false;
+            avisoPublicacion.value = errores.revision ?? "No se pudo publicar el calendario.";
+        },
     });
 }
 </script>
@@ -38,7 +56,7 @@ function publicar() {
             <header class="flex flex-wrap items-start justify-between gap-4">
                 <div class="space-y-2">
                     <h1 class="m-0 text-3xl font-semibold tracking-tight">Calendario crediticio</h1>
-                    <p class="m-0 max-w-xl text-surface-600 dark:text-surface-300">Días hábiles, feriados y excepciones para todas las sucursales. Cada producto define cómo se ajustan sus vencimientos.</p>
+                    <p class="m-0 max-w-xl text-surface-600 dark:text-surface-300">Días hábiles, feriados y excepciones para todas las sucursales. Explora su efecto sobre fechas de pago en Ejemplos.</p>
                 </div>
                 <Button v-if="puedeEditar" label="Nuevo borrador" icon="pi pi-plus" @click="editor = 'nuevo'" />
             </header>
@@ -51,10 +69,11 @@ function publicar() {
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <Button :label="puedeEditar && !version.publicada_en ? 'Editar borrador' : 'Ver configuración'" icon="pi pi-list" outlined severity="secondary" @click="editor = 'actual'" />
-                    <Button v-if="puedePublicar && !version.publicada_en" label="Publicar" icon="pi pi-check" @click="confirmacion = true" />
+                    <Button v-if="puedePublicar && !version.publicada_en" label="Publicar" icon="pi pi-check" @click="confirmarPublicacion" />
                 </div>
             </section>
             <Message v-else severity="info">Aún no hay un calendario publicado. La vigencia comienza cuando un Super Admin publica un borrador.</Message>
+            <Message v-if="avisoPublicacion" severity="warn">{{ avisoPublicacion }}</Message>
 
             <Tabs v-model:value="tab">
                 <TabList>
@@ -88,12 +107,11 @@ function publicar() {
             </Tabs>
 
             <Dialog :visible="editor !== null" :header="editor === 'nuevo' ? 'Nuevo borrador' : 'Configuración de la versión'" modal class="w-[min(94vw,48rem)]" @update:visible="editor = null">
-                <EditorCalendario v-if="editor" :key="editor" :version="editor === 'actual' ? version : null" :hoy="hoy" :plantilla="plantilla"
-                    :readonly="editor === 'actual' && (!puedeEditar || Boolean(version?.publicada_en))" @guardado="editor = null" />
+                <EditorCalendario v-if="editor" :key="`${editor}-${editorReadonly}`" :version="editor === 'actual' ? version : null" :hoy="hoy" :plantilla="plantilla"
+                    :readonly="editorReadonly" @guardado="editor = null" />
             </Dialog>
             <Dialog v-model:visible="confirmacion" header="Publicar calendario" modal class="w-[min(94vw,32rem)]">
                 <p>La versión pasará a ser la referencia institucional del catálogo. Podrás comparar su efecto en Ejemplos. La cobertura que estás publicando va del {{ version?.configuracion.desde }} al {{ version?.configuracion.hasta }}.</p>
-                <Message v-if="publicacion.errors.revision" severity="error">{{ publicacion.errors.revision }}</Message>
                 <template #footer>
                     <Button label="Cancelar" severity="secondary" text @click="confirmacion = false" />
                     <Button label="Publicar versión" :loading="publicacion.processing" @click="publicar" />

@@ -35,6 +35,28 @@ final class GuardarCalendarioCrediticioRequest extends FormRequest
         ];
     }
 
+    public function attributes(): array
+    {
+        return [
+            'revision' => 'revisión del borrador',
+            'configuracion' => 'configuración del calendario',
+            'configuracion.desde' => 'inicio de cobertura',
+            'configuracion.hasta' => 'fin de cobertura',
+            'configuracion.semana_habil' => 'días hábiles de la semana',
+            'configuracion.semana_habil.*' => 'día hábil de la semana',
+            'configuracion.fuente' => 'fuente de las fechas',
+            'configuracion.feriados' => 'feriados',
+            'configuracion.feriados.*' => 'feriado',
+            'configuracion.feriados.*.fecha' => 'fecha del feriado',
+            'configuracion.feriados.*.nombre' => 'nombre del feriado',
+            'configuracion.excepciones' => 'excepciones',
+            'configuracion.excepciones.*' => 'excepción',
+            'configuracion.excepciones.*.fecha' => 'fecha de la excepción',
+            'configuracion.excepciones.*.nombre' => 'motivo de la excepción',
+            'configuracion.excepciones.*.habil' => 'tipo de excepción',
+        ];
+    }
+
     public function after(): array
     {
         return [function (Validator $validator) {

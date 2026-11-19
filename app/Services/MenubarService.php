@@ -74,6 +74,9 @@ class MenubarService
         $menu = [];
 
         if (! $parent) {
+            if (str_starts_with($currentRouteName, 'productos-crediticios.calendario.')) {
+                $moduleIndexRoute = 'productos-crediticios.calendario.index';
+            }
             $menu[] = $currentRouteName === $moduleIndexRoute
                 ? [
                     'label' => 'Inicio',

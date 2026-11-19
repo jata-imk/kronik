@@ -28,4 +28,16 @@ final class PreviaCalendarioCrediticioRequest extends FormRequest
             'gracia' => ['required', 'integer', 'between:0,30'],
         ];
     }
+
+    public function attributes(): array
+    {
+        return [
+            'revision' => 'revisión del calendario',
+            'inicio' => 'fecha de disposición',
+            'metodo' => 'método de amortización',
+            'politica_bullet' => 'política de intereses Bullet',
+            'plazo' => 'número de periodos',
+            'gracia' => 'días naturales de gracia',
+        ];
+    }
 }

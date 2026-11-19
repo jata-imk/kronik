@@ -58,6 +58,15 @@ test('la previa compara fechas, interés y gracia sin escribir operaciones ni ac
     expect(Credito::count())->toBe(0)->and(Activity::count())->toBe($eventos);
 })->with([['capital_fijo', null], ['cuota_nivelada', null], ['bullet', 'periodicos'], ['bullet', 'al_vencimiento']]);
 
+test('expone el nombre de negocio de un feriado incompleto', function () {
+    $configuracion = $this->plantilla;
+    $configuracion['feriados'][0]['nombre'] = '';
+    $respuesta = $this->postJson(route('productos-crediticios.calendario.store'), ['configuracion' => $configuracion])
+        ->assertUnprocessable();
+    expect($respuesta->json('errors')['configuracion.feriados.0.nombre'])
+        ->toBe(['El campo nombre del feriado es obligatorio.']);
+});
+
 test('el ajuste reporta la primera fecha fuera de cobertura y rechaza vencimientos coincidentes', function () {
     $calendario = app(CalendarioCrediticioService::class);
     $version = new CalendarioCrediticioVersion(['configuracion' => $this->plantilla]);
