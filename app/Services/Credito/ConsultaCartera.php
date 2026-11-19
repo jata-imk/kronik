@@ -4,6 +4,7 @@ namespace App\Services\Credito;
 
 use App\Models\Credito;
 use App\Services\ConsultaSucursal;
+use App\Services\FechaEmpresa;
 use Illuminate\Database\Query\Builder;
 
 /** Solo lectura relacional: no carga snapshots ni ejecuta el motor. Autoriza el llamador. */
@@ -29,7 +30,7 @@ final class ConsultaCartera
             ->whereColumn('l.original_hash', 'original.snapshot_hash')
             ->whereColumn('l.cronograma_hash', 'calendario.snapshot_hash')
             ->where(fn ($q) => $q->whereNull('l.ultimo_pago_id')->orWhereColumn('l.pago_hash', 'fuente_pago.snapshot_hash'))
-            ->whereRaw('COALESCE(l.ultimo_pago_id, 0) = COALESCE((SELECT MAX(p.id) FROM credito_pagos p WHERE p.credito_id = creditos.id AND p.fecha_efectiva <= ?), 0)', [$corte]);
+            ->whereRaw('COALESCE(l.ultimo_pago_id, 0) = COALESCE((SELECT MAX(p.id) FROM credito_pagos p WHERE p.credito_id = creditos.id AND p.fecha_efectiva < ?), 0)', [FechaEmpresa::finExclusivoDelDia($corte)]);
     }
 
     public function cobertura(array $alcance, string $corte): array

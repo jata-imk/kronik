@@ -126,6 +126,9 @@ jobs:
       - name: Verify Bullet financial concurrency on isolated MariaDB
         run: php tests/Concurrency/bullet.php
 
+      - name: Verify concurrent calendar publications on isolated MariaDB
+        run: php tests/Concurrency/calendario.php
+
       - name: Install browsers for UI and PDF verification
         run: |
           npx playwright install --with-deps chromium
@@ -163,6 +166,11 @@ jobs:
       - name: Verify client generic RFC capture end to end
         run: npm run test:e2e -- clientes-rfc-genericos.spec.js --output=test-results-rfc
 
+      - name: Verify credit calendar and adjusted due dates
+        env:
+          E2E_FRESH_DATABASE: "true"
+        run: npm run test:e2e -- calendario-crediticio.spec.js --output=test-results-calendario
+
       - name: Upload browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -175,4 +183,5 @@ jobs:
             playwright-report/
             test-results-rfc/
             test-results-historico/
+            test-results-calendario/
           retention-days: 7
