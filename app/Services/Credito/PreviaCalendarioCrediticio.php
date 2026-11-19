@@ -19,6 +19,7 @@ final class PreviaCalendarioCrediticio
         private readonly CalendarioCrediticioService $calendario,
         private readonly TablaAmortizacionCreditoSimple $amortizacion,
         private readonly MotorPagos $pagos,
+        private readonly InteresPorPeriodo $interes,
         private readonly FechaEmpresa $fecha,
     ) {}
 
@@ -56,10 +57,16 @@ final class PreviaCalendarioCrediticio
             'tabla' => $tabla,
         ]);
         $filas = [];
+        $limiteAnterior = $inicio;
         foreach ($tabla as $indice => $fila) {
             $fecha = $fechas[$indice];
             $exigible = Decimal::compare($fila['pago_total'], '0') > 0;
+            $devengo = $politica === PoliticaInteresBullet::AlVencimiento
+                ? Decimal::round($this->interes->calcular('12000', '36', $limiteAnterior, $fecha, ConvencionInteres::DiasReales360))
+                : $fila['interes'];
+            $limiteAnterior = $fecha;
             $filas[] = [
+                'devengado' => $devengo,
                 ...array_intersect_key($fila, array_flip(['fecha', 'interes', 'capital', 'dias'])),
                 'exigible' => $exigible,
                 'atraso_desde' => $exigible ? $fecha->addDay()->toDateString() : null,

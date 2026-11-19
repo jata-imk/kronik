@@ -65,7 +65,7 @@ class ResetDevelopmentDataService
             config('permission.table_names.model_has_roles'), config('permission.table_names.model_has_permissions')];
         $preserved = [...self::CATALOGS, 'migrations', 'development_data_resets', 'modules',
             'sics', 'sic_apis', 'conceptos_comision', 'folio_ambitos', 'folio_secuencias', 'folio_prefijos', 'folio_asignaciones',
-            ...array_values(config('permission.table_names')), 'users', 'teams', 'sucursales', 'empresa_configuraciones'];
+            ...array_values(config('permission.table_names')), 'users', 'teams', 'sucursales', 'empresa_configuraciones', 'calendario_crediticio_versiones'];
         $unknown = array_diff(Schema::getTableListing(), $tables, $preserved);
         if ($unknown) {
             throw new ResetDataException('Hay tablas sin clasificar en el reinicio: '.implode(', ', $unknown));

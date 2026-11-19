@@ -63,6 +63,7 @@ const monedas = new Intl.NumberFormat("es-MX", { style: "currency", currency: "M
                                 <h3 class="mb-2 font-semibold">{{ titulo }}</h3>
                                 <dl v-for="fila in [resultado[clave].periodos[indice]]" :key="fila.fecha" class="space-y-1">
                                     <div><dt class="inline font-medium">Cierre de periodo </dt><dd class="inline">{{ fila.fecha }} · {{ fila.dias }} días</dd></div>
+                                    <div><dt class="inline font-medium">Interés del periodo </dt><dd class="inline">{{ monedas.format(fila.devengado) }}</dd></div>
                                     <div><dt class="inline font-medium">Interés exigible </dt><dd class="inline">{{ monedas.format(fila.interes) }}</dd></div>
                                     <template v-if="fila.exigible">
                                         <div><dt class="inline font-medium">Exigibilidad </dt><dd class="inline">{{ fila.fecha }}</dd></div>
