@@ -3,9 +3,11 @@
 use App\Enums\MetodoAmortizacion;
 use App\Enums\PeriodicidadCredito;
 use App\Services\Credito\CalendarioCrediticioService;
+use App\Services\Credito\ConsultaCartera;
 use App\Services\Credito\SimuladorCreditoSimple;
 use App\Services\ProductoVersionService;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
     $this->withoutVite();
@@ -43,6 +45,15 @@ test('la simulación anterior reproduce las fechas congeladas tras otra publicac
     $escenario = $simulador->simular(...$parametros);
     expect($escenario['tabla'][1])->toMatchArray(['fecha' => '2026-09-14', 'dias' => 8, 'interes' => '96.00'])
         ->and($escenario['cat'])->toBe('43.1');
+});
+
+test('una política inválida identifica el campo de vencimientos en días inhábiles', function () {
+    $datos = productoPayload();
+    $datos['version']['reglas']['ajuste_dia_inhabil'] = 'no_valida';
+
+    $this->post(route('productos-crediticios.store'), $datos)->assertSessionHasErrors([
+        'version.reglas.ajuste_dia_inhabil' => 'El valor seleccionado para vencimientos en días inhábiles no es válido.',
+    ]);
 });
 
 test('el contrato y desembolso Bullet conservan la fecha aprobada y su proyección', function (string $politica) {
@@ -86,11 +97,23 @@ test('el contrato y desembolso Bullet conservan la fecha aprobada y su proyecci�
     $nuevaTabla = $credito->cronogramas()->where('version', 2)->sole()->snapshot;
     expect(end($nuevaTabla['tabla']))->toMatchArray(['fecha' => '2026-11-17', 'fecha_original' => '2026-11-14']);
     expect($nuevaTabla['calendario_crediticio'])->toBe($tabla['calendario_crediticio']);
-    $pago->reversar($credito, $registrado, ['motivo' => 'Corrección QA', 'idempotency_key' => (string) \Illuminate\Support\Str::uuid(),
+    $reverso = $pago->reversar($credito, $registrado, ['motivo' => 'Corrección QA', 'idempotency_key' => (string) \Illuminate\Support\Str::uuid(),
         'confirmacion_qa' => true], $this->actor);
     $this->assertDatabaseHas('credito_lecturas', ['credito_id' => $credito->id, 'cronograma_version' => 3]);
     expect($credito->cronogramas()->where('version', 1)->sole()->snapshot)->toBe($tabla);
     $proyecciones = app(\App\Services\Credito\ProyeccionCreditoService::class);
+    if (DB::connection()->getDriverName() === 'sqlite') {
+        DB::table('credito_pagos')->where('id', $reverso->id)->update(['fecha_efectiva' => '2026-09-29 00:00:00']);
+    }
     $proyecciones->sincronizar($credito, reconstruir: true);
     $proyecciones->diagnosticar($credito);
+    $alcance = ['scope' => 'current', 'sucursal_id' => $credito->sucursal_id, 'requiereSucursal' => false];
+    expect(app(ConsultaCartera::class)->cobertura($alcance, '2026-09-29')['disponible'])->toBeTrue();
+
+    $liquidacion = [...$anticipo, 'operacion' => 'liquidacion', 'importe' => '12120.00', 'referencia' => 'LIQ-QA',
+        'idempotency_key' => (string) \Illuminate\Support\Str::uuid()];
+    $previa = $pago->previa($credito, $liquidacion, $this->actor);
+    $pago->registrar($credito, [...$liquidacion, 'previa_hash' => $previa['previa_hash']], $this->actor);
+    expect($pago->consultar($credito)['resumen']['estado_operativo'])->toBe('liquidado')
+        ->and($credito->cronogramas()->where('version', 4)->sole()->snapshot['calendario_crediticio'])->toBe($tabla['calendario_crediticio']);
 })->with(['periodicos', 'al_vencimiento']);

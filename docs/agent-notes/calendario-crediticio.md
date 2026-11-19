@@ -42,3 +42,7 @@ consulta. Playwright MCP reprodujo la previa del 14 al 17 de noviembre.
 - Regresión local anterior a las correcciones de revisión: 983 pruebas backend aprobadas, 47776 aserciones y dos omitidas. El recorrido Chromium actualizado aprobó edición de la cobertura, publicación, teclado y modo oscuro.
 - Capturas sintéticas del recorrido: [previa en escritorio](../audits/calendario-crediticio/calendario-ejemplo-claro.png) y [calendario móvil en oscuro](../audits/calendario-crediticio/calendario-movil-oscuro.png).
 - Pruebas dirigidas del catálogo y originación sobre `3443685`: 11 aprobadas y 110 aserciones. La CI valida MariaDB y la concurrencia.
+- La segunda revisión llevó a comprobar permisos de borradores antes de
+  validar la previa. La lectura financiera y el tablero comparten el límite
+  exclusivo del día siguiente y conservan cobertura cuando un reverso antiguo
+  se guardó con hora. Se verifican liquidación y etiquetas de validación.

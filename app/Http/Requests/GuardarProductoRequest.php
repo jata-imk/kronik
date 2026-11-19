@@ -110,6 +110,7 @@ class GuardarProductoRequest extends FormRequest
             'version.reglas.base_moratoria' => 'base moratoria',
             'version.reglas.politica_interes_bullet' => 'política de intereses Bullet',
             'version.reglas.convencion_interes' => 'convención de días para intereses',
+            'version.reglas.ajuste_dia_inhabil' => 'vencimientos en días inhábiles',
             'version.comisiones.*.modalidad_cobro' => 'modalidad de cobro inicial',
             'version.comisiones.*.evento_cobro' => 'evento que genera la comisión',
             'version.comisiones.*.base_calculo' => 'base de cálculo de la comisión',
