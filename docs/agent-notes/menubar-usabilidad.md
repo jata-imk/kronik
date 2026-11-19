@@ -99,6 +99,13 @@ variables nuevas ni ejecución del seeder en datos operativos. El seeder contin�
 aditivo. Se reutilizan eventos auditables de gestión; consulta, previa y cambios
 visuales no requieren eventos adicionales.
 
+Capturas sintéticas de la barra revisadas visualmente: [base 8884a78, 1440 px](../audits/menubar-2026-11-18/barra-base-8884a78.png),
+[escritorio claro, 1920 px](../audits/menubar-2026-11-18/barra-escritorio-claro.png),
+[escritorio oscuro, 1920 px](../audits/menubar-2026-11-18/barra-escritorio-oscuro.png) y
+[móvil oscuro, 390 px](../audits/menubar-2026-11-18/barra-movil-oscuro.png).
+Se conservan en el repositorio; muestran texto compacto, grupos con flecha y el
+control Configurar neutro. La captura móvil muestra el menú abierto.
+
 ## Pausa solicitada por el usuario — 2026-11-18
 
 Tarea pausada, sin integración ni despliegue. Main verificado en

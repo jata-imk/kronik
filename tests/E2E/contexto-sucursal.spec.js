@@ -54,12 +54,16 @@ test("otra pestaña y navegación histórica abandonan formularios y alcance del
     const assertOtherConsole = await failOnConsoleErrors(other);
     await other.goto("/solicitudes/create");
     await expect(other.getByRole("button", { name: "Guardar borrador", exact: true })).toBeVisible();
+    await other.locator("#sol-destino").fill("Captura del contexto anterior");
+    const oldContextDialogs = [];
+    other.on("dialog", dialog => { oldContextDialogs.push(dialog.type()); dialog.dismiss(); });
     await page.bringToFront();
     await page.goto("/solicitudes?scope=all&page=7");
     await switchBranch("Sucursal Norte");
     await other.bringToFront();
     await expect(other).toHaveURL(/\/solicitudes$/);
     await expect(other.getByRole("button", { name: "Guardar borrador", exact: true })).toHaveCount(0);
+    expect(oldContextDialogs).toEqual([]);
     await other.goto("/solicitudes?scope=all&page=4");
     await other.goto("/dashboard");
     await page.bringToFront();

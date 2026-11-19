@@ -90,3 +90,28 @@ test("consulta no ofrece configuración y sus enlaces conservan href y nueva pes
     expect(dialogs).toEqual([]);
     assertConsole();
 });
+
+test("seleccionar solo el cliente de una solicitud exige descarte antes de salir", async ({ page }) => {
+    const assertConsole = await failOnConsoleErrors(page);
+    await login(page);
+    await page.goto("/solicitudes/create");
+    await page.getByLabel("Cliente (obligatorio)").fill("Ma");
+    const option = page.getByRole("option").first();
+    const selected = await option.textContent();
+    await option.click();
+    const client = page.getByLabel("Cliente (obligatorio)");
+    const value = await client.inputValue();
+    expect(selected).toBeTruthy();
+    const writes = [];
+    page.on("request", request => { if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method()) && request.url().includes("/solicitudes")) writes.push(request.url()); });
+    page.once("dialog", dialog => dialog.dismiss());
+    await page.getByRole("link", { name: "Volver", exact: true }).click();
+    await expect(page).toHaveURL(/\/solicitudes\/create$/);
+    await expect(client).toHaveValue(value);
+    expect(writes).toEqual([]);
+    page.once("dialog", dialog => dialog.accept());
+    await page.getByRole("link", { name: "Volver", exact: true }).click();
+    await expect(page).toHaveURL(/\/solicitudes$/);
+    expect(writes).toEqual([]);
+    assertConsole();
+});
