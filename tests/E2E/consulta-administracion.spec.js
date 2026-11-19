@@ -59,18 +59,12 @@ test("empresa y menú abren consulta sin controles de mutación",async({page},te
 
 test("crear menú conserva el orden predeterminado del servidor",async({page})=>{
     await login(page);await page.goto("/admin/menubar-items");
-    await page.getByRole("button",{name:"Crear nuevo",exact:true}).click();
-    const dialog=page.getByRole("dialog",{name:"Configurar item de menú",exact:true});
-    await dialog.getByPlaceholder("Ej: Ver clientes, Nueva consulta...").fill("Menú consulta QA");
-    await dialog.getByPlaceholder("clientes.index, clientes.show...").fill("clientes.index");
-    await dialog.locator(".p-multiselect").first().click();
-    await page.getByRole("option",{name:"clientes",exact:true}).getByRole("checkbox").check();
-    await dialog.getByPlaceholder("Ej: Ver clientes, Nueva consulta...").click();
-    await expect(dialog.getByText("Vistas de", {exact:false})).toBeVisible();
-    await dialog.locator(".p-multiselect").nth(1).click();
-    await page.getByRole("option",{name:"Listado / Vista principal",exact:true}).getByRole("checkbox").check();
-    await dialog.getByPlaceholder("Ej: Ver clientes, Nueva consulta...").click();
+    await page.getByRole("button",{name:"Agregar acción o grupo",exact:true}).click();
+    const dialog=page.getByRole("dialog",{name:"Configurar elemento de menú",exact:true});
+    await dialog.locator("#menubar-type").click();
+    await page.getByRole("option",{name:"Grupo de menú",exact:true}).click();
+    await dialog.locator("#menubar-label").fill("Menú consulta QA");
     await dialog.getByRole("button",{name:"Guardar",exact:true}).click();
     await expect(dialog).toHaveCount(0);
-    await expect(page.getByText("Item creado",{exact:true})).toBeVisible();
+    await expect(page.getByText("Elemento creado",{exact:true})).toBeVisible();
 });
