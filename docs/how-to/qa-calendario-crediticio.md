@@ -19,4 +19,7 @@
 6. En la bitácora, revisar actor y contexto de guardado y publicación. Registrar
    commit, ambiente, políticas, fechas y resultado en la Agent Note y Notion.
 
+La CI ejecuta tres intentos concurrentes de publicación sobre dos borradores en
+MariaDB aislada. Verifica un evento por versión y un orden de publicación único.
+
 [Contrato del calendario](../reference/calendario-crediticio.md)

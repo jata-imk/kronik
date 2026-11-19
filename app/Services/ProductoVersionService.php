@@ -60,6 +60,7 @@ class ProductoVersionService
             if (! array_key_exists('politica_mora', $data['version'])) {
                 $data['version']['politica_mora'] = $version->politica_mora;
             }
+            $data['version']['reglas']['ajuste_dia_inhabil'] ??= $version->reglas?->ajuste_dia_inhabil ?? 'sin_ajuste';
             \App\Services\Credito\CapacidadesProducto::validar($data['version'], \App\Enums\VersionMotorCredito::actual(), 'version.', configuracion: true);
             PoliticaMora::validate($data['version']);
             $before = [$this->contenidoVersion($version), $version->vigente_desde?->toDateString()];

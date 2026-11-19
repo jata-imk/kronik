@@ -126,6 +126,9 @@ jobs:
       - name: Verify Bullet financial concurrency on isolated MariaDB
         run: php tests/Concurrency/bullet.php
 
+      - name: Verify concurrent calendar publications on isolated MariaDB
+        run: php tests/Concurrency/calendario.php
+
       - name: Install browsers for UI and PDF verification
         run: |
           npx playwright install --with-deps chromium

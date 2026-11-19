@@ -26,3 +26,10 @@ Evidencia local durante el desarrollo: 54 pruebas backend y 619 aserciones de
 calendario, originación, tablero y reinicio. Vitest pasó 173 pruebas y Chromium
 verificó publicación, previa por teclado, móvil y tema oscuro en SQLite aislada.
 Las tareas de calendario y periodicidad fueron actualizadas en Notion.
+
+Revisión medium acumulada sobre la primera implementación detectó que el CAT de
+un solo pago podía perder un día en un cambio de horario y que omitir la política
+al editar podía restablecerla. Se reutilizó el conteo de fechas civiles y se
+conservó el valor guardado cuando el campo se omite. La revisión del catálogo
+también llevó a fijar la revisión al confirmar y limpiar capturas al pasar a
+consulta. Playwright MCP reprodujo la previa del 14 al 17 de noviembre.

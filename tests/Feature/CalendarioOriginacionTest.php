@@ -21,7 +21,12 @@ test('la simulación anterior reproduce las fechas congeladas tras otra publicac
     $datos = productoPayload();
     $datos['version']['reglas']['ajuste_dia_inhabil'] = 'siguiente_habil';
     $datos['version']['periodicidades'] = [['periodicidad' => 'semanal', 'plazo_minimo' => 1, 'plazo_maximo' => 5, 'plazo_predeterminado' => 1]];
-    $producto = app(ProductoVersionService::class)->crear($datos, $this->actor->id)->versiones()->sole();
+    $productos = app(ProductoVersionService::class);
+    $producto = $productos->crear($datos, $this->actor->id)->versiones()->sole();
+    unset($datos['version']['reglas']['ajuste_dia_inhabil']);
+    $productos->actualizar($producto->producto, $producto, $datos);
+    $producto->refresh();
+    expect($producto->reglas->ajuste_dia_inhabil)->toBe('siguiente_habil');
     $simulador = app(SimuladorCreditoSimple::class);
     $parametros = [$producto, '12000', PeriodicidadCredito::Semanal, 1, MetodoAmortizacion::CapitalFijo, CarbonImmutable::parse('2026-11-07')];
     $original = $simulador->simular(...$parametros);
@@ -33,6 +38,11 @@ test('la simulación anterior reproduce las fechas congeladas tras otra publicac
 
     expect($simulador->simular(...$parametros)['tabla'][1]['fecha'])->toBe('2026-11-14');
     expect($simulador->simular(...$parametros, calendarioCongelado: $original['calendario_crediticio'], reproducir: true))->toBe($original);
+
+    $parametros[5] = CarbonImmutable::parse('2026-09-06', 'America/Santiago');
+    $escenario = $simulador->simular(...$parametros);
+    expect($escenario['tabla'][1])->toMatchArray(['fecha' => '2026-09-14', 'dias' => 8, 'interes' => '96.00'])
+        ->and($escenario['cat'])->toBe('43.1');
 });
 
 test('el contrato y desembolso Bullet conservan la fecha aprobada y su proyección', function (string $politica) {
@@ -72,6 +82,7 @@ test('el contrato y desembolso Bullet conservan la fecha aprobada y su proyecci�
         'idempotency_key' => (string) \Illuminate\Support\Str::uuid(), 'confirmacion_qa' => true];
     $previa = $pago->previa($credito, $anticipo, $this->actor);
     $registrado = $pago->registrar($credito, [...$anticipo, 'previa_hash' => $previa['previa_hash']], $this->actor);
+    expect($pago->registrar($credito, [...$anticipo, 'previa_hash' => $previa['previa_hash']], $this->actor)->id)->toBe($registrado->id);
     $nuevaTabla = $credito->cronogramas()->where('version', 2)->sole()->snapshot;
     expect(end($nuevaTabla['tabla']))->toMatchArray(['fecha' => '2026-11-17', 'fecha_original' => '2026-11-14']);
     expect($nuevaTabla['calendario_crediticio'])->toBe($tabla['calendario_crediticio']);

@@ -8,6 +8,7 @@ use App\Enums\PeriodicidadCredito;
 use App\Enums\PoliticaInteresBullet;
 use App\Enums\VersionMotorCredito;
 use App\Models\ProductoVersion;
+use App\Services\Credito\Convenciones\DiasReales360;
 use App\Support\Decimal;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -140,7 +141,7 @@ final class SimuladorCreditoSimple
         [$montoRecibidoCat, $pagosCat] = $this->flujosCatBase($version, $monto, $metodo, $fecha, $resolucion['obligatorias'], $fechas);
         $cat = $version->cat_aplica
             ? $this->catService->calcular($montoRecibidoCat, $pagosCat, $periodicidad,
-                $evidencia === null ? null : (int) $fecha->diffInDays(end($fechas)))
+                $evidencia === null ? null : (new DiasReales360)->dias($fecha, end($fechas)))
             : null;
 
         $totalIntereses = $this->sumar($tabla, 'interes');
