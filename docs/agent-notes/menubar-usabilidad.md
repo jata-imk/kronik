@@ -1,168 +1,100 @@
 # Menubar: usabilidad y configuración contextual
 
-## Referencias y base
+## Estado final — 2026-11-19
 
-- Reanudación 2026-11-19: `git fetch origin --prune` confirma origin/main en
-  8884a78d738f9623c5d72fc194c4ecc55b400874, sin avances desde la base funcional.
-  Rama de trabajo limpia en 73b9c05 antes de reanudar; PR #85 pendiente.
+Entrega implementada, integrada y aceptada por Jose en QA. Tras recibir los
+comandos de despliegue, el usuario confirma que ya la probó, que le gusta el
+resultado y que las acciones configuradas reciben automáticamente el cliente.
+
+Evidencia de QA reportada por el usuario:
+
+- Aceptación de la experiencia del Menubar y su configuración.
+- Agregar Abrir expediente navega con el parámetro del cliente resuelto.
+- Agregar Nueva consulta SIC navega con el cliente precargado.
+
+Se registra como validación del usuario en QA, sin acceso del agente a la VPS.
+No se compartieron el hash efectivo del servidor, navegador ni viewport; no se
+atribuyen esos datos ni casos adicionales a esta comprobación. La entrega
+asociada es main 74461ab, entregada para despliegue antes de esta confirmación.
+La aceptación cierra el alcance acordado del Menubar; la tarea del sidebar
+conserva su aceptación independiente y pendiente.
+
+## Entregas y base funcional
+
 - [Tarea en Notion](https://app.notion.com/p/41361db7db7f81968ea5cfc45a96b51d).
-- Base tras actualizar origin: 8884a78d738f9623c5d72fc194c4ecc55b400874, PR #83 y #84 integradas.
-- Primera entrega: feat/menubar-editor, worktree propio menubar-ui-worktree.
-- Segunda entrega: [PR #88](https://github.com/jata-imk/kronik/pull/88),
-  feat/menubar-navegacion, worktree propio menubar-nav-worktree; depende de #85.
-- La rama auxiliar feat/menubar-catalogo no se publica como PR independiente.
+- Base funcional: 8884a78d738f9623c5d72fc194c4ecc55b400874, con #83/#84.
+- [PR #85](https://github.com/jata-imk/kronik/pull/85): catálogo y editor,
+  merge be67e60b6c99e492f54ad411ce826ca902520626.
+- [PR #88](https://github.com/jata-imk/kronik/pull/88): barra/navegación,
+  retarget a main tras #85 y merge 1f4808962f06eff71b3a826ef0580a68f4db907c.
+- [PR #89](https://github.com/jata-imk/kronik/pull/89): integración y guía QA,
+  merge 74461ab89508320d003a05d8d1bb5dc2c7a5a49b.
 
-## Integración autorizada — 2026-11-19
+Antes de integrar se verificó CI verde sobre los heads 56c9bfc (#85,
+run 44410875964) y a7db44f (#88, run 44564537556), sin hilos abiertos.
+El árbol funcional integrado coincide con a7db44f; #89 solo cambia documentación.
+Las ramas de implementación fueron feat/menubar-editor y feat/menubar-navegacion;
+feat/menubar-catalogo fue auxiliar. Se preservaron los checkouts, servicios y
+trabajo de comunicaciones de Bryan.
 
-El usuario autorizó integrar las entregas del Menubar y solicitó comandos para
-desplegarlas en QA. Ambas PR se integraron con merge conservando su dependencia:
+## Contrato final
 
-- #85: `be67e60b6c99e492f54ad411ce826ca902520626`.
-- #88: base cambiada a main tras #85; merge
-  `1f4808962f06eff71b3a826ef0580a68f4db907c`.
+Configuración compartida por instalación, 19 módulos y permisos separados.
+Destino y pantallas de aparición son independientes; se conserva configuración
+avanzada y se autoriza cada destino con el contexto real. Sin recurso válido se
+explica lo que falta, sin elegir IDs alternativos. Guardado explícito y vista
+previa sin navegación, escrituras ni comandos.
 
-Se comprobó que el árbol integrado coincide exactamente con a7db44f, sin
-resoluciones adicionales ni cambios de código. Antes de integrar, CI verde
-sobre los heads 56c9bfc (#85, run 44410875964) y a7db44f (#88,
-run 44564537556); sin hilos ni hallazgos abiertos. Las revisiones medium propias
-y el barrido acumulado documentados abajo permanecen aplicables al árbol integrado.
+PrimeVue Menubar/Menu: texto compacto, grupos con flecha, iconos opcionales en
+submenús, Configurar neutro y objetivos móviles de 44 px. Navegación Inertia con
+confirmación de descarte, historial y diálogos; los cambios forzados de contexto
+retiran la captura anterior. Sin borradores persistentes ni altas silenciosas.
 
-Estado: implementado, validado localmente e integrado. Despliegue y aceptación
-en QA pendientes de ejecución del usuario; no se accedió a la VPS. Notion sigue
-en curso. La aceptación del sidebar continúa separada. El procedimiento de QA
-está en [la guía del menú](../how-to/validar-menu-contextual.md#desplegar-en-qa).
+No hubo migraciones, dependencias, permisos ni variables nuevas. El seeder sigue
+aditivo y opcional para completar catálogo; no se da por ejecutado en QA sin
+reporte. Se conserva auditoría transaccional de gestión; consulta, vista previa,
+apertura de grupos y guardas no requieren eventos adicionales.
 
-## Evidencia previa a la integración
+## Evidencia automatizada y revisión
 
-Catálogo/editor en la [PR #85](https://github.com/jata-imk/kronik/pull/85),
-head documental 56c9bfc, base 8884a78; abierta, sin conflictos y CI verde
-([run 44410875964](https://github.com/jata-imk/kronik/actions/runs/44410875964)).
-El primer intento falló por timeout del renderer PDF; el reintento pasó sin
-cambiar código/configuración PDF.
+- #85, código dd19836: 997 backend, 2 omitidas, 47 827 aserciones; build correcto.
+  Frontend: 190 pruebas. Siete E2E del menú y tres administrativos aprobados.
+- Código funcional final 4221959: backend completo 999 aprobadas, 2 omitidas,
+  47 865 aserciones; 490.75 s. Frontend completo: 75 archivos, 206 pruebas,
+  223.59 s. Build: 58.62 s.
+- E2E finales: 23 casos aprobados en ejecuciones focalizadas (7 editor y 16
+  barra/sidebar/sucursal). El principal aprobó 15; el de recuperación de contexto
+  se repitió correctamente tras ajustar la espera del harness. Se inspeccionaron
+  captura, vídeo, traza y consola antes de corregir esa espera; no cambió código
+  funcional. SQLite sintéticas, puertos propios y geocodificación simulada.
+- Playwright MCP el 18/11 para inventario, propuesta e implementación; harness
+  Chromium reproducible el 19/11. No se usó la base operativa para las pruebas.
+- Review medium de #85 sobre dd19836 contra 8884a78 sin hallazgos después de las
+  correcciones. Review propio de #88 sobre 4221959 contra 56c9bfc y barrido
+  acumulado de ambas entregas contra 8884a78 sin hallazgos. Review adicional del
+  ajuste final del harness sin hallazgos. Los intentos interrumpidos no cuentan.
+- #89: review medium b574c15 contra 1f48089 sin hallazgos, 16 enlaces válidos y
+  sintaxis Bash comprobada sin ejecutar despliegue. Sin pruebas funcionales nuevas.
 
-Barra y protección de captura publicadas para revisión en la PR #88.
-Código funcional final 4221959289248564ba2ecb82ee4671938d9c69dd; a3b739e
-añade un recorrido E2E sin modificar la implementación. Revisiones medium
-propia y acumulada completadas sin hallazgos; 23 casos E2E finales aprobados.
-CI del código funcional verde sobre 30ac59e
-([run 44562730776](https://github.com/jata-imk/kronik/actions/runs/44562730776)).
-El último ajuste solo modifica documentación y la espera del harness; su
-actualización de CI puede consultarse en [Checks de #88](https://github.com/jata-imk/kronik/pull/88/checks).
-Este estado previo no acredita despliegue. La integración se registra arriba.
-Se preservan checkout, archivos, servicios y comunicaciones de Bryan.
+Los logs permanecen en storage/framework/testing del worktree menubar-nav-worktree:
+menubar-nav-backend-full.log, menubar-nav-unit-full4.log, menubar-nav-build5.log,
+menubar-editor-e2e-final.log, menubar-nav-e2e-final.log,
+menubar-context-e2e-final.log, menubar-review-nav-6.log,
+menubar-review-acumulada-2.log y menubar-review-harness-final.log.
 
-## Evidencia de la segunda entrega
+## Referencias y capturas
 
-- Backend completo: 999 aprobadas, 2 omitidas, 47 865 aserciones; 490.75 s.
-  `menubar-nav-backend-full.log` en el storage de pruebas del worktree.
-- Frontend completo sobre 4221959: 75 archivos, 206 pruebas; 223.59 s.
-  `menubar-nav-unit-full4.log`. Incluye formularios Inertia reales para producto,
-  roles, solicitudes, permisos de tokens, expediente y diálogos.
-- Build correcto sobre el código final: `menubar-nav-build5.log`, 58.62 s.
-- Backend focalizado: 34 pruebas, 552 aserciones. La recarga parcial usa versión
-  Inertia y comprueba retirada de capacidades sin mantener props antiguas.
-- E2E finales del build revisado: 23 casos aprobados en ejecuciones focalizadas.
-  Editor: siete, 5.8 min (`menubar-editor-e2e-final.log`). Barra/sidebar/sucursal:
-  15 aprobados en el recorrido principal y uno repetido correctamente, 1.7 min
-  (`menubar-nav-e2e-final.log`, `menubar-context-e2e-final.log`). Bases SQLite
-  nuevas, puertos propios 8035/8037/8038 y proveedores geográficos sintéticos.
-  El caso de contexto agotó primero los 90 s al esperar load de una entrada
-  histórica que se sustituye durante la recuperación. Tras inspeccionar captura,
-  vídeo, traza y consola, el harness espera el commit y verifica URL/alcance
-  finales; admite 180 s para el recorrido completo. La captura anterior se
-  retiró correctamente y no cambió código funcional por ese ajuste.
-- MCP se usó el 18/11 durante inventario, propuesta e implementación. En esta
-  reanudación no está disponible: se usa el harness Chromium reproducible.
-
-## Decisiones confirmadas
-
-Configuración compartida por instalación; 19 módulos; acciones contextuales por
-pantalla; permisos existentes separados; guardado explícito por elemento.
-Opciones técnicas avanzadas conservadas. PrimeVue Menubar con grupos de texto y
-flecha, iconos opcionales en submenús y Configurar neutro. Tipografía compacta
-solo en la barra, objetivos móviles de 44 px. Descarte confirmado, sin borradores
-persistentes ni altas silenciosas. [ADR 0047](../explanation/adr-0047-menubar-contextual-compartido.md).
-
-Se agrupan catálogo y editor en una PR para evitar que el validador de pantallas
-canónicas deje incompatible el editor anterior. La segunda depende de esta y
-cubre barra/navegación. No se rehace el sidebar ni se integran otras iniciativas.
-
-## Evidencia de la primera entrega
-
-- Código funcional dd19836: push con hook completo, 997 pruebas backend aprobadas,
-  2 omitidas, 47 827 aserciones; 314.78 s. Build correcto.
-- Suite frontend: 69 archivos, 190 pruebas aprobadas.
-- E2E con harness Chromium, SQLite sintética y puertos propios: siete casos del
-  Menubar aprobados en ejecuciones focalizadas (cuatro combinaciones de viewport
-  y tema, consulta/teclado/recarga sin escrituras, validación española y lector
-  sin gestión). Tres recorridos de consulta administrativa también aprobados.
-- MCP durante inventario, prototipo y UI real. La propuesta no se guardó. Las
-  capturas finales son de la implementación, con fixtures sintéticos:
-  [editor](../audits/menubar-2026-11-18/editor-vista-previa.png),
+- [Contrato](../menubar-items.md) y [ADR 0047](../explanation/adr-0047-menubar-contextual-compartido.md).
+- [Configurar el catálogo](../how-to/configurar-menu-contextual.md) y
+  [despliegue/validación](../how-to/validar-menu-contextual.md).
+- [Editor](../audits/menubar-2026-11-18/editor-vista-previa.png),
   [previa oscura](../audits/menubar-2026-11-18/editor-previa-oscuro.png) y
   [previa móvil](../audits/menubar-2026-11-18/editor-previa-movil.png).
-- Se inspeccionaron trazas, capturas, vídeo y consola de fallos. Los ajustes del
-  harness esperan selección, cierre y actualización de URL antes de continuar;
-  usan filtro visible del catálogo y teclado de InputNumber. Los inicios de
-  sesión de perfiles distintos usan contextos de prueba independientes para no
-  heredar la URL intended de consultas geográficas de una pantalla anterior.
+- Barra: [antes, 1440 px](../audits/menubar-2026-11-18/barra-base-8884a78.png),
+  [claro, 1920 px](../audits/menubar-2026-11-18/barra-escritorio-claro.png),
+  [oscuro, 1920 px](../audits/menubar-2026-11-18/barra-escritorio-oscuro.png) y
+  [móvil oscuro abierto, 390 px](../audits/menubar-2026-11-18/barra-movil-oscuro.png).
 
-## Revisiones medium
-
-Todas contra la base funcional 8884a78, salvo indicación:
-
-- 64b5a5c: corregir autorización de roles en equipo seleccionado.
-- 720644d: agrupar backend/editor y alinear destinos aceptados con autorización.
-- 692cd7c: explicar rechazo al borrar grupo con contenido y alinear orden de borrador.
-- 5e41891: conservar agregado rápido al validar y activaciones históricas de otro módulo.
-- c1d4f66: corregir fixture de pivote y refrescar grupos tras eliminación.
-- dd19836: revisión completada sin hallazgos; 32 pruebas focalizadas de Menubar,
-  514 aserciones. El intento previo interrumpido por límite de uso no cuenta como
-  revisión completada.
-
-Segunda entrega contra feat/menubar-editor (56c9bfc):
-
-- 7e70241 y 290c8ca: corregidos selección por ID, cierres que ocultaban captura,
-  bases de roles/productos y formularios de diálogos cerrados.
-- 73b9c05: corregidos protección durante envíos, filtros que desmontan captura
-  y base/cierre de permisos de tokens. También se protege seleccionar un cliente.
-- 3223060: corregidos historial de filtros y bases/cierre de los siete diálogos
-  del expediente, incluidos archivos y claves de idempotencia.
-- 4221959: revisión propia final sin hallazgos (`menubar-review-nav-6.log`),
-  con 12 pruebas focalizadas aprobadas por el revisor.
-- 4221959: barrido acumulado de ambas entregas contra la base funcional
-  8884a78d738f9623c5d72fc194c4ecc55b400874 sin hallazgos
-  (`menubar-review-acumulada-2.log`); pruebas de guardas/editor aprobadas.
-- Ajuste final del harness sobre 30ac59e: revisión medium del diff pendiente
-  sin hallazgos (`menubar-review-harness-final.log`), manteniendo las aserciones
-  de destino y sucursal activa.
-
-Las revisiones interrumpidas por límite de uso o pausa no cuentan como completas.
-Los commits posteriores al último código revisado solo añaden pruebas/evidencia
-y documentación. No quedan hallazgos conocidos pendientes de estas revisiones.
-
-## Siguiente paso y límites
-
-Despliegue del usuario en QA y recorrido de aceptación del menú. Mantener Notion
-en curso hasta aceptación. No hay migraciones,
-variables nuevas ni ejecución del seeder en datos operativos. El seeder continúa
-aditivo. Se reutilizan eventos auditables de gestión; consulta, previa y cambios
-visuales no requieren eventos adicionales.
-Las publicaciones finales omiten repetir el hook local porque su suite backend
-y build ya pasaron y los cambios posteriores solo son evidencia/harness. Los
-servidores propios de estas pruebas terminaron; no quedan listeners 8035/8037/8038.
-
-Capturas sintéticas de la barra revisadas visualmente: [base 8884a78, 1440 px](../audits/menubar-2026-11-18/barra-base-8884a78.png),
-[escritorio claro, 1920 px](../audits/menubar-2026-11-18/barra-escritorio-claro.png),
-[escritorio oscuro, 1920 px](../audits/menubar-2026-11-18/barra-escritorio-oscuro.png) y
-[móvil oscuro, 390 px](../audits/menubar-2026-11-18/barra-movil-oscuro.png).
-Se conservan en el repositorio; muestran texto compacto, grupos con flecha y el
-control Configurar neutro. La captura móvil muestra el menú abierto.
-
-## Traspaso entre sesiones
-
-Pausa solicitada el 18/11, conservada en 73b9c05 sobre código 4e97d10.
-Se detuvieron únicamente los servidores propios 8033/8036 y la revisión en curso.
-La reanudación del 19/11 volvió a actualizar referencias y verificar la base
-antes de continuar. Las pendientes reales se enumeran arriba; la aceptación
-del sidebar por el usuario sigue separada.
+Capturas sintéticas inspeccionadas y conservadas. La evidencia automatizada y la
+aceptación reportada acreditan los recorridos descritos; no cierran la tarea del
+sidebar ni amplían el alcance a empleo, variables o comunicaciones.
