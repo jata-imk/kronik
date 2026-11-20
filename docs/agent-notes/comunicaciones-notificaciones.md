@@ -3,7 +3,7 @@
 ## Referencias
 
 - [Requisito de Notion](https://app.notion.com/p/Kronik-Comunicaciones-por-canales-env-os-y-seguimiento-3fe61db7db7f81e4af50c4f0f3ab7e41) y [copia literal conservada](../reference/comunicaciones-por-canales-envios-y-seguimiento.md).
-- Rama `feat/comunicaciones-notificaciones`; commit inicial `793e684` y corrección móvil `1027e89`. PR e integración pendientes al 2026-11-20.
+- Rama `feat/comunicaciones-notificaciones`; commits `793e684` (base), `1027e89` (móvil) y `fb12c7f` (canales y seguimiento). La rama local está dos commits por delante de `origin`; PR e integración pendientes al 2026-11-20.
 - [Contrato de eventos](../reference/eventos-comunicacion.md), [canales](../reference/canales-comunicacion.md) y [ADR 0049](../explanation/adr-0049-orquestacion-comunicaciones-externas.md).
 
 ## Estado — 2026-11-20
@@ -22,4 +22,4 @@ El entorno local sigue con `MAIL_MAILER=log`. La barrera `COMMUNICATIONS_SEND_EN
 
 ## Siguiente paso
 
-Revisar migraciones y documentación; commitear y subir la rama; abrir PR, ejecutar `/review medium` y resolver hallazgos. Para QA real, configurar SMTP con dominio y destinatario de prueba autorizado; para SMS/WhatsApp, obtener aprobación escrita de uso, cuentas, remitentes, plantillas y webhook HTTPS antes de activar. Registrar recepción real y operación del programador/worker solo cuando haya evidencia. Actualizar Notion al confirmar integración/QA.
+La subida de `1027e89` y `fb12c7f` falló el 2026-11-20: este entorno no pudo conectar con `github.com:443` (TCP fallido); `gh` tampoco está instalado. Reintentar `git push origin feat/comunicaciones-notificaciones` al recuperar red. Después abrir PR, ejecutar `/review medium` y resolver hallazgos. Para QA real, configurar SMTP con dominio y destinatario de prueba autorizado; para SMS/WhatsApp, obtener aprobación escrita de uso, cuentas, remitentes, plantillas y webhook HTTPS antes de activar. Registrar recepción real y operación del programador/worker solo cuando haya evidencia. Actualizar Notion al confirmar integración/QA.
