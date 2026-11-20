@@ -1,39 +1,33 @@
 # Probar comunicaciones y notificaciones
 
-Este set valida el incremento local descrito en [eventos candidatos](../reference/eventos-comunicacion.md) y [notificaciones internas](../reference/notificaciones-internas.md). La [nota original](../reference/comunicaciones-por-canales-envios-y-seguimiento.md) contiene el alcance completo. Las pruebas automatizadas usan SQLite aislado y dobles de correo; no entregan mensajes.
+La [nota original](../reference/comunicaciones-por-canales-envios-y-seguimiento.md) contiene el alcance. El [contrato de canales](../reference/canales-comunicacion.md) explica el comportamiento actual. Las pruebas automatizadas usan SQLite aislado, correo fake y HTTP fake; no contactan proveedores ni acreditados.
 
-## Preparación
+## Regresión local
 
-1. Usar PHP compatible con `vendor`, dependencias instaladas y base de pruebas aislada. En este equipo se ejecuta PHP 8.4 con `pdo_sqlite` y `sqlite3` habilitados para el proceso de Pest.
-2. La dirección personal autorizada puede pasar solo como variable del **proceso de prueba** `COMMUNICATION_QA_EMAIL`; si falta, se usa `destinatario@example.test`. No escribirla en archivos versionados ni en `.env`. La prueba la coloca temporalmente en el cliente sintético y comprueba que no aparece en el evento ni en la auditoría.
-3. Ejecutar:
+En este equipo, usar PHP 8.4 con SQLite habilitado:
 
-   ```powershell
-   $env:COMMUNICATION_QA_EMAIL = '<correo_autorizado>'
-   & 'C:\laragon\bin\php\php-8.4.27-1-Win32-vs17-x64\php.exe' -d extension=pdo_sqlite -d extension=sqlite3 vendor/bin/pest tests/Feature/CommunicationReadinessTest.php tests/Feature/CreditoPagosTest.php tests/Feature/OperatorNotificationsTest.php tests/Feature/SolicitudesTest.php
-   Remove-Item Env:COMMUNICATION_QA_EMAIL
-   npm run test:unit -- resources/js/Components/Notifications/OperatorNotificationBell.test.js
-   ```
+```powershell
+& 'C:\laragon\bin\php\php-8.4.27-1-Win32-vs17-x64\php.exe' -d extension=pdo_sqlite -d extension=sqlite3 vendor/bin/pest tests/Feature/CommunicationDeliveryTest.php tests/Feature/CommunicationManagementTest.php tests/Feature/CommunicationWebhookTest.php tests/Feature/CommunicationReadinessTest.php tests/Feature/CreditoPagosTest.php tests/Feature/OperatorNotificationsTest.php tests/Feature/SolicitudesTest.php
+npm run test:unit -- resources/js/Components/Notifications/OperatorNotificationBell.test.js
+npm run build
+```
 
-## Casos y criterio de aceptación
+`CommunicationReadinessTest` puede recibir `COMMUNICATION_QA_EMAIL` solo como variable temporal del proceso; si falta, usa `destinatario@example.test`. No colocar el correo personal autorizado en archivos versionados.
 
-| Caso | Evidencia automatizada | Resultado esperado |
-| --- | --- | --- |
-| C01. Pago QA confirmado, reintento y reverso | `CreditoPagosTest` | Una ocurrencia por pago; el reintento no duplica; el reverso cancela y conserva el histórico. |
-| C02. Vencimiento a cuatro, tres y dos días | `CommunicationReadinessTest` | Solo se prepara al llegar a tres días; la pasada repetida no duplica. |
-| C03. Lectura financiera ausente o invalidada | `CommunicationReadinessTest`, `CreditoPagosTest` | No se prepara un vencimiento sin lectura vigente; un candidato previo no se cancela por falta de datos. |
-| C04. Pago, calendario y fecha vencida | `CreditoPagosTest` | Se cancela el candidato obsoleto; no se transforma en cobranza. |
-| C05. Fallo de auditoría/proyección | `CreditoPagosTest`, `TableroFinancieroTest` | Pago, movimientos, lectura y candidato retroceden juntos. |
-| C06. Privacidad y ausencia de transporte | `CommunicationReadinessTest` | Contacto ausente de evento/auditoría; `Mail::fake()` registra cero envíos y cero mensajes en cola. |
-| C07. Bandeja interna | `OperatorNotificationsTest`, `SolicitudesTest`, prueba Vue de campana | Aviso deduplicado, lectura una vez y aislamiento por usuario/equipo/sucursal; campana accesible. |
+Casos principales: evento de pago único y reverso; recordatorio exactamente tres días antes; lectura invalidada; propietario estable; consentimiento por equipo/canal/finalidad y cambio de contacto; activación de entorno, canal y regla; ventana, frecuencia y versión de texto; prueba técnica bloqueada con correo `log`; firma y duplicados de webhooks; evento adelantado; estado aceptado distinto de entregado; permisos y secreto cifrado.
 
-## Revisión manual local
+## Revisión E2E de la pantalla
 
-1. En una cuenta operativa de prueba, asignar una solicitud a otro operador de la misma sucursal y abrir su campana. Debe aparecer un aviso nuevo y el historial debe mostrarlo.
-2. Marcarlo como leído, recargar y confirmar que no vuelve a no leído. Cambiar de equipo o sucursal y comprobar que desaparece del contexto ajeno.
-3. Probar teclado, pantalla estrecha y estados vacío/error de la campana.
-4. En el entorno local, ejecutar `php artisan comunicaciones:preparar-vencimientos` después de sincronizar una lectura de QA. El comando informa candidatos preparados; no indica entrega de correo.
+1. Arrancar una **base QA aislada**, ejecutar las tres migraciones de comunicaciones y asignar permisos `read`, `manage` y `send test comunicaciones` al rol de prueba del equipo. No usar `migrate:fresh` sobre la base de trabajo.
+2. Iniciar Laravel y Vite (`composer dev`) y entrar como operador autorizado. Abrir **Operación → Comunicaciones**. Revisar en escritorio y móvil las pestañas Canales, Reglas y plantillas, Consentimientos e Historial. La advertencia de entorno desactivado debe ser visible.
+3. Configurar correo con remitente de QA y estado `testing`; confirmar que no permite activarlo hasta registrar elegibilidad `approved` y una referencia. Configurar una regla de pago con `{nombre}`, horario y límite 1. La vista previa debe sustituir las variables. Introducir `{importe}`: debe mostrar un error en español.
+4. Registrar en un cliente sintético consentimiento de correo para `operational` con referencia a evidencia protegida. Confirmar que la UI no devuelve correo ni evidencia. Revocar y confirmar que la autorización deja de estar vigente.
+5. Generar un pago QA por el flujo de crédito existente. Ejecutar `php artisan comunicaciones:despachar` con `COMMUNICATIONS_SEND_ENABLED=false`: debe preparar a lo sumo una salida y registrar **cero envíos en cola o proveedores**. Repetir el comando para comprobar idempotencia.
+6. Filtrar Historial por canal, evento, cliente, crédito, fecha y estado. Abrir un intento y comprobar fecha, versión, motivo y estados. Cambiar de equipo o sucursal y comprobar aislamiento. Un usuario sin permiso recibe 403.
+7. Probar campana interna: asignar una solicitud a otro operador, abrir la campana y marcarla leída; el cambio de contexto no debe mostrar datos ajenos.
 
-## Prueba de recepción real: pendiente
+## Prueba real controlada de correo
 
-El entorno local revisado usa `MAIL_MAILER=log`, `MAIL_FROM_ADDRESS=hello@example.com` y no tiene usuario SMTP. Ese transporte escribe en un registro local y **no entrega** a la dirección autorizada. La capa de comunicaciones aún carece de selección de prestamista/equipo, consentimiento, plantilla, proveedor y ejecutor de envíos. Cuando esos elementos estén implementados y configurados en QA, ejecutar un único mensaje de prueba con texto claramente sintético a la dirección autorizada, registrar identificador e información del proveedor y pedir al destinatario confirmación de recepción. La aceptación SMTP por sí sola no prueba entrega ni lectura. Los [correos de acceso](probar-correos-acceso.md) tienen otro flujo y no sustituyen esta prueba.
+El entorno local observado usa `MAIL_MAILER=log` y **no entrega correo**. Para una prueba real, el responsable del entorno debe configurar SMTP real y dominio autorizado, poner `COMMUNICATIONS_TEST_RECIPIENT` con el correo personal que el usuario autorizó, habilitar `COMMUNICATIONS_SEND_ENABLED=true` solo en QA, y comprobar conexión y política del proveedor. En la pantalla, activar el canal de correo del equipo y usar **Enviar prueba técnica** con esa misma dirección. El texto no contiene datos de clientes. Registrar la aceptación SMTP y comprobar el buzón; si el resultado es incierto, revisar el proveedor antes de repetir. La aceptación SMTP no prueba entrega ni lectura.
+
+No activar reglas de acreditados en un entorno con datos reales hasta verificar consentimientos, remitente y políticas. SMS requiere constancia de elegibilidad financiera mexicana, remitente, cuenta Infobip y webhook HMAC. WhatsApp requiere elegibilidad de la actividad, WABA/número, plantilla aprobada en Meta y webhook firmado. Las cuentas, credenciales, aprobaciones y recepción real no están disponibles en este repositorio.

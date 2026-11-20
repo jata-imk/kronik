@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->dontFlash(['secret']);
         $exceptions->render(function (\App\Exceptions\OperacionEmpresaBloqueada $exception) {
             $exception->registrar();
 

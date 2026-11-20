@@ -18,7 +18,7 @@ final class CommunicationEventService
     {
         $event = CommunicationEvent::firstOrCreate(
             ['event_key' => 'payment:'.$pago->id],
-            ['event_type' => 'payment_received', 'credito_id' => $credito->id,
+            ['event_type' => 'payment_received', 'team_id' => $credito->team_id, 'credito_id' => $credito->id,
                 'cliente_id' => $credito->cliente_id, 'sucursal_id' => $credito->sucursal_id,
                 'source_pago_id' => $pago->id],
         );
@@ -61,7 +61,7 @@ final class CommunicationEventService
             return 0;
         }
         $event = CommunicationEvent::firstOrCreate(['event_key' => $key], [
-            'event_type' => 'upcoming_due', 'credito_id' => $credito->id,
+            'event_type' => 'upcoming_due', 'team_id' => $credito->team_id, 'credito_id' => $credito->id,
             'cliente_id' => $credito->cliente_id, 'sucursal_id' => $credito->sucursal_id,
             'due_date' => $due,
         ]);
@@ -120,6 +120,6 @@ final class CommunicationEventService
     {
         $this->activity->log($activity, $activity->label(), $event,
             ['related' => ['type' => 'credito', 'id' => $credito->id], 'state' => $event->event_type],
-            teamId: null, sucursalId: $credito->sucursal_id, inheritActorContext: false);
+            teamId: $credito->team_id, sucursalId: $credito->sucursal_id, inheritActorContext: false);
     }
 }

@@ -36,6 +36,7 @@ class MenubarItemsSeeder extends Seeder
             'creditos.pagos.create' => 'Registrar pago QA', 'creditos.anticipos.create' => 'Anticipo o liquidación QA',
             'creditos.pagos.show' => 'Recibo de pago',
         ]],
+        'comunicaciones' => ['Comunicaciones', ['comunicaciones.index' => 'Canales, reglas y envíos']],
         'productos-crediticios' => ['Productos crediticios', [
             'productos-crediticios.index' => 'Productos y simulador', 'originacion-politicas.show' => 'Política de originación',
         ]],

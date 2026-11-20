@@ -42,7 +42,7 @@ test('el comando prepara solo a tres días y nunca entrega correo aunque exista 
     expect(json_encode(DB::table('communication_events')->first(), JSON_THROW_ON_ERROR))->not->toContain($recipient);
     $audit = Activity::where('event', ActivityEvent::CommunicationEventPrepared->value)->sole();
     expect($audit->causer_id)->toBeNull()
-        ->and($audit->team_id)->toBeNull()
+        ->and($audit->team_id)->toBe($credito->team_id)
         ->and($audit->sucursal_id)->toBe($credito->sucursal_id)
         ->and(json_encode($audit->properties, JSON_THROW_ON_ERROR))->not->toContain($recipient);
 });

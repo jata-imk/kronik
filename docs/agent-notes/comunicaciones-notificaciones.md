@@ -2,41 +2,24 @@
 
 ## Referencias
 
-- Notion: https://app.notion.com/p/Kronik-Comunicaciones-por-canales-env-os-y-seguimiento-3fe61db7db7f81e4af50c4f0f3ab7e41
-- Rama: `feat/comunicaciones-notificaciones`, cambios locales sin PR.
-- PR: pendiente.
-- ADR relacionados: [0047, bandeja interna contextual](../explanation/adr-0047-bandeja-interna-contextual.md) y [0048, eventos candidatos](../explanation/adr-0048-eventos-candidatos-comunicacion.md); pendiente otro para orquestación de canales externos.
+- [Requisito de Notion](https://app.notion.com/p/Kronik-Comunicaciones-por-canales-env-os-y-seguimiento-3fe61db7db7f81e4af50c4f0f3ab7e41) y [copia literal conservada](../reference/comunicaciones-por-canales-envios-y-seguimiento.md).
+- Rama `feat/comunicaciones-notificaciones`; commit inicial `793e684` y corrección móvil `1027e89`. PR e integración pendientes al 2026-11-20.
+- [Contrato de eventos](../reference/eventos-comunicacion.md), [canales](../reference/canales-comunicacion.md) y [ADR 0049](../explanation/adr-0049-orquestacion-comunicaciones-externas.md).
 
-## Objetivo
+## Estado — 2026-11-20
 
-Iniciar el módulo de notificaciones conforme al requisito de Notion, priorizando avisos internos de operadores.
+Implementado localmente en la rama: bandeja interna contextual; eventos candidatos para pago QA y próximo vencimiento tres días antes; equipo estable de nuevos créditos y recuperación conservadora de históricos; consentimiento por equipo/canal/finalidad/contacto con acceso desde la ficha del cliente; reglas, plantillas y ventanas; adaptadores SMTP, Infobip y Meta; comprobaciones técnicas de conexión sin envío; salida en cola después del commit; revalidación previa; historial, filtros y webhooks firmados con deduplicación y conciliación. SMS y WhatsApp no están activados en ningún proveedor. Telegram permanece opcional y desactivado.
 
-## Estado actual
-
-- Estado: en progreso.
-- Última actualización: 2026-11-17.
-- Último punto estable: copia directa del cuerpo de Notion a `docs/reference/comunicaciones-por-canales-envios-y-seguimiento.md`; base de avisos internos y primer disparador en solicitudes implementados localmente. El usuario eligió pago recibido y próximo vencimiento tres días antes. La capa de eventos candidatos para ambos quedó implementada localmente, sin envíos.
-- Integración y despliegue: pendientes; sin PR ni QA de usuario.
-
-## Decisiones pendientes
-
-- Definir los próximos eventos internos y los enlaces autorizados a recursos.
-- Resolver equipo/prestamista estable del crédito, consentimiento por finalidad y canal, contactos, textos y proveedor elegible antes de cualquier envío real.
-- ADR y revisión de políticas antes de construir WhatsApp productivo.
+El entorno local sigue con `MAIL_MAILER=log`. La barrera `COMMUNICATIONS_SEND_ENABLED=false` es el valor predeterminado y no se envió correo al destinatario personal autorizado ni a acreditados. No se han configurado credenciales ni elegibilidad de prestamista/proveedor. La cuenta, identidad, remitente, permisos externos, plantilla Meta y ruta SMS mexicana requieren validación externa antes de tráfico real. No se ha desplegado en VPS ni confirmado cron/worker del servidor. El usuario administra la VPS; no se accedió a ella.
 
 ## Evidencia
 
-- Pruebas: ejecución conjunta de `CommunicationReadinessTest`, `CreditoPagosTest`, `OperatorNotificationsTest` y `SolicitudesTest`: 89 pruebas/1442 aserciones. La dirección autorizada del usuario se pasó como variable temporal; sin correo enviado ni guardado en el repositorio. Incluyen reintentos, reverso, recordatorio a tres días, lectura invalidada, expiración, auditoría y rollback. `CreditoAnticiposTest`, `BulletPagosTest` y `TableroFinancieroTest`: 26 pruebas/1234 aserciones en la pasada anterior. Prueba de componente de campana aprobada en esta pasada; Vite compiló en la pasada anterior. Backend ejecutado con PHP 8.4 y extensiones SQLite activadas por CLI. Pint de la nueva prueba y `git diff --check` aprobados.
-- Revisión visual local: campana vacía y con aviso, historial antes/después de lectura y vistas de escritorio/móvil capturadas desde navegador Edge con SQLite E2E y usuarios sintéticos. Se corrigió el panel móvil que quedaba fuera de pantalla. Es un cambio de presentación sin nueva acción auditable. La validación de QA por el usuario sigue pendiente.
-- [Set de pruebas](../how-to/probar-comunicaciones.md) documentado; recepción real de correo pendiente porque el entorno local usa transporte `log` y el módulo aún no despacha avisos externos.
-- Confirmación de QA/usuario: pendiente.
-- Migraciones o seeders: tablas `operator_notifications` y `communication_events` aplicadas en la base local `kronik_softcredito9`; sin nuevos seeders. La tarea horaria aparece en `schedule:list`. El comando se ejecutó localmente con cero créditos y preparó cero candidatos, sin envíos. No se ha comprobado un scheduler de servidor.
+- Pest conjunto de comunicaciones, pagos, solicitudes y campana: **102 pruebas, 1,629 aserciones**, SQLite aislado con PHP 8.4, 2026-11-20. Incluye permisos, secretos, consentimientos, contacto cambiado, idempotencia, cola, rechazo/timeout, firmas, duplicados, desorden y conciliación de webhooks.
+- Prueba unitaria Vue de campana: 1 aprobada. Build Vite aprobado. `vendor/bin/pint --dirty` y `git diff --check` aprobados.
+- E2E con Edge y SQLite desechable: 2 recorridos aprobados, escritorio y móvil, regla/vista previa/historial y anchura de las cuatro secciones. Capturas sintéticas locales: `test-results/communications-desktop.png` y `test-results/communications-mobile.png`. El primer lanzador `tests/E2E/run.js` falló por una aserción interna de `fetch` de Node 24; la ejecución manual con servidor visible y la misma base aislada sí pasó. `public/hot` fue restaurado.
+- Regresión de crédito anticipado, Bullet y tablero: **26 pruebas, 1,234 aserciones** aprobadas con PHP 8.4 y SQLite aislado.
+- Tras integrar la ficha del cliente y el límite diario, **13 pruebas focalizadas, 238 aserciones** aprobadas; incluye webhooks, entregas, gestión, permisos y revocación. La comprobación técnica de APIs añadió otra prueba de gestión (**5 aprobadas, 79 aserciones**). Build Vite repetido con éxito. `route:list` y `schedule:list` registran las rutas y los dos comandos; esto no acredita ejecución del programador en VPS.
 
 ## Siguiente paso
 
-Validar la UI interna con datos reales de asignación y resolver propiedad estable del crédito y consentimiento antes de orquestar correo.
-
-## Cierre
-
-- Commit inicial: `793e684` en `feat/comunicaciones-notificaciones`, rama subida; merge pendiente.
-- Pendientes diferidos: canales externos y sus dependencias de proveedor.
+Revisar migraciones y documentación; commitear y subir la rama; abrir PR, ejecutar `/review medium` y resolver hallazgos. Para QA real, configurar SMTP con dominio y destinatario de prueba autorizado; para SMS/WhatsApp, obtener aprobación escrita de uso, cuentas, remitentes, plantillas y webhook HTTPS antes de activar. Registrar recepción real y operación del programador/worker solo cuando haya evidencia. Actualizar Notion al confirmar integración/QA.

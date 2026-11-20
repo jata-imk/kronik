@@ -128,7 +128,7 @@ class DesembolsoService
                 $snapshot = $paquete->snapshot;
                 $condiciones = ['modo' => 'qa', 'paquete_hash' => $paquete->snapshot_hash, 'formalizacion_hash' => $paquete->formalizacion->snapshot_hash,
                     'condiciones' => $snapshot['condiciones'], 'producto' => $snapshot['producto']];
-                $credito = Credito::create(['solicitud_id' => $solicitud->id, 'solicitud_formalizacion_id' => $paquete->formalizacion->id,
+                $credito = Credito::create(['solicitud_id' => $solicitud->id, 'team_id' => $actor->current_team_id, 'solicitud_formalizacion_id' => $paquete->formalizacion->id,
                     'cliente_id' => $solicitud->cliente_id, 'sucursal_id' => $solicitud->sucursal_id, 'responsable_id' => $solicitud->responsable_id,
                     'producto_version_id' => $solicitud->producto_version_id, 'fecha_desembolso' => $resumen['fecha'], 'capital_inicial' => $resumen['capital'],
                     'estado' => 'activo', 'modo' => 'qa', 'condiciones' => $condiciones,

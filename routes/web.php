@@ -62,6 +62,14 @@ Route::middleware([
     Route::get('notificaciones/resumen', [\App\Http\Controllers\OperatorNotificationController::class, 'summary'])->name('notifications.summary');
     Route::patch('notificaciones/{notification}/leer', [\App\Http\Controllers\OperatorNotificationController::class, 'markRead'])->whereNumber('notification')->name('notifications.read');
 
+    Route::get('comunicaciones', [\App\Http\Controllers\CommunicationController::class, 'index'])->name('comunicaciones.index');
+    Route::put('comunicaciones/canales', [\App\Http\Controllers\CommunicationController::class, 'configureChannel'])->name('comunicaciones.channels.update');
+    Route::put('comunicaciones/reglas', [\App\Http\Controllers\CommunicationController::class, 'configureRule'])->name('comunicaciones.rules.update');
+    Route::post('comunicaciones/prueba', [\App\Http\Controllers\CommunicationController::class, 'sendTest'])->name('comunicaciones.test');
+    Route::post('comunicaciones/comprobar-conexion', [\App\Http\Controllers\CommunicationController::class, 'checkConnection'])->name('comunicaciones.connection.check');
+    Route::post('clientes/{cliente}/comunicaciones/consentimientos', [\App\Http\Controllers\CommunicationController::class, 'grantConsent'])->name('comunicaciones.consents.store');
+    Route::patch('clientes/{cliente}/comunicaciones/consentimientos/{consent}/revocar', [\App\Http\Controllers\CommunicationController::class, 'revokeConsent'])->name('comunicaciones.consents.revoke');
+
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('mi-trabajo', [\App\Http\Controllers\SolicitudController::class, 'index'])->name('solicitudes.trabajo');

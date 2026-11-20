@@ -44,6 +44,9 @@ class NavigationService
         if ($allowed(['read creditos', 'read solicitudes', 'read clientes'])) {
             $operacion[] = $item('Créditos y pagos', 'pi pi-wallet', 'creditos.index', ['creditos.show', 'creditos.pagos.*']);
         }
+        if ($allowed(['read comunicaciones'])) {
+            $operacion[] = $item('Comunicaciones', 'pi pi-envelope', 'comunicaciones.index');
+        }
 
         $configuracion = [];
         if ($allowed(['read productos-crediticios'])) {

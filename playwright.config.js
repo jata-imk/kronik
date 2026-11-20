@@ -70,7 +70,9 @@ export default defineConfig({
     projects: [
         {
             name: "chromium",
-            use: { ...devices["Desktop Chrome"] },
+            use: { ...devices["Desktop Chrome"],
+                ...(process.env.E2E_BROWSER_PATH ? { launchOptions: { executablePath: process.env.E2E_BROWSER_PATH } } : {}),
+            },
         },
     ],
     webServer:

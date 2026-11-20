@@ -87,6 +87,10 @@ El geocodificador actual usa Nominatim y no consume una API key configurable.
 
 ## Correo y logs
 
+- `COMMUNICATIONS_SEND_ENABLED`: `false` por defecto; barrera global de salida externa. Activar solo tras validar entorno, proveedores, roles y consentimientos. Un canal/regla del equipo también debe estar activo.
+- `COMMUNICATIONS_TEST_RECIPIENT`: único correo autorizado para la prueba técnica de la pantalla. Guardar en el entorno, nunca en Git.
+- Las credenciales SMS y WhatsApp se cifran por equipo en la base. Consultar [canales de comunicación](canales-comunicacion.md) antes de configurarlas.
+
 - `MAIL_*`: configure SMTP antes de enviar correo real. `MAIL_MAILER=log` solo
   sirve para pruebas controladas.
 - `LOG_CHANNEL`, `LOG_STACK` y `LOG_LEVEL`: en producción se recomienda log

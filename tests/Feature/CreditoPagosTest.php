@@ -35,7 +35,7 @@ test('pago QA integra distribución persistencia idempotencia cifrado y reverso 
         'sucursal_id' => $credito->sucursal_id, 'cancelled_at' => null]);
     $this->assertDatabaseCount('communication_events', 1);
     $this->assertDatabaseHas('activity_log', ['event' => 'communication.event_prepared', 'subject_type' => \App\Models\CommunicationEvent::class,
-        'subject_id' => \App\Models\CommunicationEvent::sole()->id, 'sucursal_id' => $credito->sucursal_id, 'team_id' => null]);
+        'subject_id' => \App\Models\CommunicationEvent::sole()->id, 'sucursal_id' => $credito->sucursal_id, 'team_id' => $credito->team_id]);
     expect(DB::table('credito_pagos')->value('referencia'))->not->toContain($data['referencia']);
     expect(fn () => $pago->delete())->toThrow(ValidationException::class);
     expect(fn () => $pago->update(['importe' => '1.00']))->toThrow(ValidationException::class);

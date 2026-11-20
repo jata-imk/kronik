@@ -25,7 +25,7 @@ temas cuando se comparte entre módulos.
 
 | Tema | Qué encontrarás |
 | --- | --- |
-| [Comunicaciones y notificaciones](comunicaciones-notificaciones.md) | Nota de requisitos, bandeja interna y seguimiento de canales futuros |
+| [Comunicaciones y notificaciones](comunicaciones-notificaciones.md) | Nota de requisitos, bandeja interna, canales externos y seguimiento |
 | [Correos de acceso](correos-acceso.md) | Invitaciones, recuperación, verificación, SMTP y muestras |
 | [Diseño, navegación y portada](diseno-navegacion.md) | Identidad visual, menú contextual y presentación de módulos |
 | [Despliegue y mantenimiento QA](despliegue-mantenimiento.md) | VPS, configuración, catálogos, reset y archivos |
