@@ -10,6 +10,8 @@ La nota de producto requiere correo, SMS y WhatsApp, consentimiento por prestami
 
 Persistir el equipo de origen en créditos nuevos; recuperar el histórico solo desde evidencia única de auditoría y excluir el ambiguo. Separar evento, consentimiento, canal, regla/version de texto y salida. Programar salidas con un comando periódico que lee únicamente eventos ya confirmados; revalidar inmediatamente antes del transporte. Desactivar todo envío por configuración de entorno nueva y por equipo/canal/regla. Usar un adaptador por canal: Laravel Mail/SMTP, Infobip SMS v3 y Meta Cloud API. No hay fallback automático entre canales.
 
+La anticipación de vencimiento pertenece a cada regla y canal; el valor inicial del entorno es tres días, configurable, sin fijarlo en el cálculo financiero. La creación del candidato considera cada anticipación activa y el job solo puede enviar el día que indique la regla vigente. Zona horaria, ventana y frecuencia diaria se editan en la misma regla. Caducidad del pago, recuperación de cola y cadencia del programador se parametrizan en el entorno porque son límites operativos de la instancia.
+
 Un estado `sending` persiste antes de contactar al proveedor. Una interrupción o timeout se marca `uncertain`; no se reenvía sin conciliación. Los IDs de proveedor y webhooks firmados acreditan estados posteriores. Los webhooks adelantados se almacenan para correlación, y las transiciones no retroceden de leído/entregado por eventos atrasados. Los cambios de conexión, regla, consentimiento y estado de salida usan el contrato de auditoría sin datos de contacto ni secretos.
 
 ## Consecuencias

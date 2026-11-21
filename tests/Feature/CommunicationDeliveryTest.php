@@ -97,6 +97,15 @@ test('reglas de otro equipo y créditos sin propietario no preparan envíos', fu
     expect($service->prepare())->toBe(0);
 });
 
+test('la vigencia de un evento de pago se ajusta por configuración', function () {
+    [, , $event] = communicationReadyPayment($this);
+    $service = app(CommunicationOrchestrator::class);
+    config(['comunicaciones.payment_event_validity_hours' => 1]);
+    expect($service->eventCurrent($event))->toBeTrue();
+    $this->travel(2)->hours();
+    expect($service->eventCurrent($event))->toBeFalse();
+});
+
 test('un trabajo retrasado vuelve a preparado y un timeout queda incierto sin reintento', function () {
     [$actor, $credit] = communicationReadyPayment($this);
     $service = app(CommunicationOrchestrator::class);
@@ -106,7 +115,10 @@ test('un trabajo retrasado vuelve a preparado y un timeout queda incierto sin re
     config(['comunicaciones.send_enabled' => true]);
     expect($service->process())->toBe(1);
     $delivery = CommunicationDelivery::sole();
+    config(['comunicaciones.queue_stale_minutes' => 30]);
     $this->travel(16)->minutes();
+    expect($service->requeueStale())->toBe(0);
+    $this->travel(15)->minutes();
     expect($service->requeueStale())->toBe(1)->and($delivery->fresh()->status)->toBe('prepared');
     expect(Activity::where('event', 'communication.delivery_requeued')->count())->toBe(1);
     expect($service->process())->toBe(1);

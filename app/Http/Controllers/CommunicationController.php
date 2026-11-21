@@ -60,6 +60,15 @@ class CommunicationController extends Controller
                 'sms' => app(InfobipSmsTransport::class)->capabilities(),
                 'whatsapp' => app(MetaWhatsAppTransport::class)->capabilities()],
             'rules' => CommunicationRule::where('team_id', $teamId)->orderBy('event_type')->get(),
+            'ruleDefaults' => [
+                'leadDays' => config('comunicaciones.default_lead_days'),
+                'maxLeadDays' => config('comunicaciones.max_lead_days'),
+                'timezone' => config('comunicaciones.default_timezone'),
+                'windowStart' => config('comunicaciones.default_window_start'),
+                'windowEnd' => config('comunicaciones.default_window_end'),
+                'dailyLimit' => config('comunicaciones.default_daily_limit'),
+                'maxDailyLimit' => config('comunicaciones.max_daily_limit'),
+            ],
             'consents' => CommunicationConsent::where('team_id', $teamId)->whereHas('cliente',
                 fn ($query) => $query->where('sucursal_id', $request->user()->current_sucursal_id))
                 ->when($filters['cliente_id'] ?? null, fn ($query, $client) => $query->where('cliente_id', $client))
@@ -156,6 +165,9 @@ class CommunicationController extends Controller
         DB::transaction(function () use ($data, $teamId, $request, $activity) {
             $item = CommunicationRule::firstOrNew(['team_id' => $teamId, 'event_type' => $data['event_type'], 'channel' => $data['channel']]);
             $old = $item->exists ? [$item->subject, $item->body, $item->external_template_name, $item->external_template_locale] : null;
+            if ($data['event_type'] === 'payment_received') {
+                $data['lead_days'] = config('comunicaciones.default_lead_days');
+            }
             $item->fill($data);
             if ($old && $old !== [$item->subject, $item->body, $item->external_template_name, $item->external_template_locale]) {
                 $item->template_version++;

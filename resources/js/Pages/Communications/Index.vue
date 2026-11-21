@@ -7,6 +7,7 @@ const props = defineProps({
     channels: { type: Array, required: true },
     capabilities: { type: Object, required: true },
     rules: { type: Array, required: true },
+    ruleDefaults: { type: Object, required: true },
     consents: { type: Array, required: true },
     deliveries: { type: Object, required: true },
     canManage: Boolean,
@@ -27,7 +28,7 @@ const selectedRuleChannel = ref("email");
 const selectedChannelData = computed(() => props.channels.find((item) => item.channel === selectedChannel.value));
 const selectedRuleData = computed(() => props.rules.find((item) => item.event_type === selectedEvent.value && item.channel === selectedRuleChannel.value));
 const channelForm = useForm({ channel: "email", sender: "", secret: "", enabled: false, eligibility: "unverified", eligibility_reference: "" });
-const ruleForm = useForm({ event_type: "payment_received", channel: "email", enabled: false, timezone: "America/Mexico_City", window_start: "09:00", window_end: "20:00", daily_limit: 1, subject: "Confirmación de pago", body: "Hola {nombre}, registramos tu pago. Gracias.", external_template_name: "", external_template_locale: "es_MX", external_template_status: "draft" });
+const ruleForm = useForm({ event_type: "payment_received", channel: "email", enabled: false, lead_days: props.ruleDefaults.leadDays, timezone: props.ruleDefaults.timezone, window_start: props.ruleDefaults.windowStart, window_end: props.ruleDefaults.windowEnd, daily_limit: props.ruleDefaults.dailyLimit, subject: "Confirmación de pago", body: "Hola {nombre}, registramos tu pago. Gracias.", external_template_name: "", external_template_locale: "es_MX", external_template_status: "draft" });
 const consentForm = useForm({ cliente_id: props.filters.cliente_id || "", channel: "email", purpose: "operational", source: "documento firmado", evidence_reference: "" });
 const testForm = useForm({ channel: "email", recipient: props.testRecipient || "" });
 const checkForm = useForm({ channel: "sms" });
@@ -40,7 +41,7 @@ function loadChannel() {
 
 function loadRule() {
     const item = selectedRuleData.value;
-    const defaults = { event_type: selectedEvent.value, channel: selectedRuleChannel.value, enabled: item?.enabled || false, timezone: item?.timezone || "America/Mexico_City", window_start: item?.window_start?.slice(0, 5) || "09:00", window_end: item?.window_end?.slice(0, 5) || "20:00", daily_limit: item?.daily_limit || 1, subject: item?.subject || (selectedEvent.value === "payment_received" ? "Pago recibido" : "Recordatorio de vencimiento"), body: item?.body || (selectedEvent.value === "payment_received" ? "Hola {nombre}, registramos tu pago." : "Hola {nombre}, tu próximo vencimiento es el {fecha_vencimiento}."), external_template_name: item?.external_template_name || "", external_template_locale: item?.external_template_locale || "es_MX", external_template_status: item?.external_template_status || "draft" };
+    const defaults = { event_type: selectedEvent.value, channel: selectedRuleChannel.value, enabled: item?.enabled || false, lead_days: item?.lead_days ?? props.ruleDefaults.leadDays, timezone: item?.timezone || props.ruleDefaults.timezone, window_start: item?.window_start?.slice(0, 5) || props.ruleDefaults.windowStart, window_end: item?.window_end?.slice(0, 5) || props.ruleDefaults.windowEnd, daily_limit: item?.daily_limit ?? props.ruleDefaults.dailyLimit, subject: item?.subject || (selectedEvent.value === "payment_received" ? "Pago recibido" : "Recordatorio de vencimiento"), body: item?.body || (selectedEvent.value === "payment_received" ? "Hola {nombre}, registramos tu pago." : "Hola {nombre}, tu próximo vencimiento es el {fecha_vencimiento}."), external_template_name: item?.external_template_name || "", external_template_locale: item?.external_template_locale || "es_MX", external_template_status: item?.external_template_status || "draft" };
     ruleForm.defaults(defaults);
     ruleForm.reset();
 }
@@ -48,7 +49,11 @@ function loadRule() {
 loadChannel();
 loadRule();
 
-const preview = computed(() => ruleForm.body.replaceAll("{nombre}", "María").replaceAll("{fecha_vencimiento}", "24/11/2026"));
+const preview = computed(() => {
+    const due = new Date();
+    due.setDate(due.getDate() + Number(ruleForm.lead_days || 0));
+    return ruleForm.body.replaceAll("{nombre}", "María").replaceAll("{fecha_vencimiento}", due.toLocaleDateString("es-MX"));
+});
 const statuses = { prepared: "Preparado", queued: "En cola", sending: "En proceso", accepted: "Aceptado por proveedor", delivered: "Entregado", read: "Leído", failed: "Fallido", cancelled: "Cancelado", uncertain: "Resultado incierto" };
 
 function saveChannel() {
@@ -121,12 +126,20 @@ function filterHistory() {
             </section>
 
             <section v-if="tab === 'rules'" class="space-y-4">
-                <p>Eventos iniciales: pago recibido y vencimiento próximo tres días antes. El límite diario se comparte entre canales.</p>
+                <p>Eventos iniciales: pago recibido y vencimiento próximo. Configura la anticipación por canal. El límite diario se comparte entre canales.</p>
+                <div v-if="rules.length" class="overflow-x-auto rounded-lg border border-surface-200 dark:border-surface-700">
+                    <table class="w-full min-w-[620px] text-left text-sm">
+                        <thead class="bg-surface-100 dark:bg-surface-800"><tr><th class="p-3">Evento</th><th class="p-3">Canal</th><th class="p-3">Anticipación</th><th class="p-3">Horario</th><th class="p-3">Límite diario</th><th class="p-3">Estado</th></tr></thead>
+                        <tbody><tr v-for="item in rules" :key="`${item.event_type}-${item.channel}`" class="border-t border-surface-200 dark:border-surface-700"><td class="p-3">{{ item.event_type === 'upcoming_due' ? 'Próximo vencimiento' : 'Pago recibido' }}</td><td class="p-3">{{ item.channel }}</td><td class="p-3">{{ item.event_type === 'upcoming_due' ? `${item.lead_days} días antes` : 'Al registrar el pago' }}</td><td class="p-3">{{ item.window_start?.slice(0, 5) }}–{{ item.window_end?.slice(0, 5) }} · {{ item.timezone }}</td><td class="p-3">{{ item.daily_limit }}</td><td class="p-3">{{ item.enabled ? 'Activa' : 'Desactivada' }}</td></tr></tbody>
+                    </table>
+                </div>
+                <p v-else>No hay reglas configuradas para este equipo.</p>
                 <form v-if="canManage" class="grid gap-4 rounded-lg border border-surface-200 p-4 dark:border-surface-700 md:grid-cols-2" @submit.prevent="saveRule">
                     <label class="grid gap-1">Evento<select v-model="selectedEvent" class="rounded border p-2 dark:bg-surface-900" @change="loadRule"><option value="payment_received">Pago recibido</option><option value="upcoming_due">Próximo vencimiento</option></select></label>
                     <label class="grid gap-1">Canal<select v-model="selectedRuleChannel" class="rounded border p-2 dark:bg-surface-900" @change="loadRule"><option value="email">Correo</option><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option></select></label>
+                    <label v-if="selectedEvent === 'upcoming_due'" class="grid gap-1">Días antes del vencimiento<input v-model.number="ruleForm.lead_days" type="number" min="1" :max="ruleDefaults.maxLeadDays" class="rounded border p-2 dark:bg-surface-900" required /><small>{{ ruleForm.errors.lead_days }}</small></label>
                     <label class="grid gap-1">Zona horaria<input v-model="ruleForm.timezone" class="rounded border p-2 dark:bg-surface-900" required /></label>
-                    <label class="grid gap-1">Límite diario conjunto<input v-model.number="ruleForm.daily_limit" type="number" min="1" max="5" class="rounded border p-2 dark:bg-surface-900" /></label>
+                    <label class="grid gap-1">Límite diario conjunto<input v-model.number="ruleForm.daily_limit" type="number" min="1" :max="ruleDefaults.maxDailyLimit" class="rounded border p-2 dark:bg-surface-900" /></label>
                     <label class="grid gap-1">Desde<input v-model="ruleForm.window_start" type="time" class="rounded border p-2 dark:bg-surface-900" /></label>
                     <label class="grid gap-1">Hasta<input v-model="ruleForm.window_end" type="time" class="rounded border p-2 dark:bg-surface-900" /></label>
                     <label v-if="selectedRuleChannel === 'email'" class="grid gap-1 md:col-span-2">Asunto<input v-model="ruleForm.subject" class="rounded border p-2 dark:bg-surface-900" /></label>

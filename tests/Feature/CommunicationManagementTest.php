@@ -51,6 +51,11 @@ test('la gestión valida elegibilidad y plantillas; la prueba real queda bloquea
     $this->put(route('comunicaciones.rules.update'), [...$data, 'body' => 'Gracias por tu pago, {nombre}.'])->assertSessionHasNoErrors();
     expect(CommunicationRule::sole()->template_version)->toBe(2);
     expect(Activity::where('event', 'communication.rule_configured')->count())->toBe(2);
+    $dueRule = [...$data, 'event_type' => 'upcoming_due', 'lead_days' => 0];
+    $this->put(route('comunicaciones.rules.update'), $dueRule)->assertSessionHasErrors('lead_days');
+    $this->put(route('comunicaciones.rules.update'), [...$dueRule, 'lead_days' => 31])->assertSessionHasErrors('lead_days');
+    $this->put(route('comunicaciones.rules.update'), [...$dueRule, 'lead_days' => 7])->assertSessionHasNoErrors();
+    expect(CommunicationRule::where('event_type', 'upcoming_due')->sole()->lead_days)->toBe(7);
     Mail::fake();
     $this->post(route('comunicaciones.test'), ['channel' => 'email', 'recipient' => 'destinatario@example.test'])
         ->assertSessionHasErrors('recipient');

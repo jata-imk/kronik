@@ -98,7 +98,8 @@ final class CommunicationOrchestrator
                     $channel = CommunicationChannel::where('team_id', $event->team_id)->where('channel', $rule->channel)
                         ->where('enabled', true)->where('eligibility', 'approved')->first();
                     $contact = $client ? $this->contact($client, $rule->channel) : null;
-                    if (! $channel || ! $contact || ! $this->hasConsent($event, $rule->channel, $contact)) {
+                    if (! $channel || ! $contact || ! $this->hasConsent($event, $rule->channel, $contact)
+                        || ! $this->ruleMatchesEvent($event, $rule)) {
                         continue;
                     }
                     if (DB::transaction(function () use ($event, $rule, $contact) {
@@ -137,8 +138,14 @@ final class CommunicationOrchestrator
                     if (! $delivery || $delivery->status !== 'prepared') {
                         return false;
                     }
-                    $delivery->update(['status' => 'queued', 'queued_at' => now()]);
                     $event = CommunicationEvent::find($delivery->communication_event_id);
+                    $rule = CommunicationRule::where('team_id', $delivery->team_id)
+                        ->where('event_type', $event?->event_type)->where('channel', $delivery->channel)
+                        ->where('enabled', true)->first();
+                    if ($event && $rule && $this->eventCurrent($event) && ! $this->ruleMatchesEvent($event, $rule)) {
+                        return false;
+                    }
+                    $delivery->update(['status' => 'queued', 'queued_at' => now()]);
                     $this->audit(ActivityEvent::CommunicationDeliveryQueued, $delivery, $delivery->team_id, $event?->sucursal_id);
                     SendCommunicationDelivery::dispatch($delivery->id)->afterCommit();
 
@@ -176,6 +183,12 @@ final class CommunicationOrchestrator
             if ($invalid) {
                 $delivery->update(['status' => 'cancelled', 'reason' => 'eligibility_changed']);
                 $this->audit(ActivityEvent::CommunicationDeliveryCancelled, $delivery, $delivery->team_id, $event?->sucursal_id);
+
+                return null;
+            }
+            if (! $this->ruleMatchesEvent($event, $rule)) {
+                $delivery->update(['status' => 'prepared', 'reason' => 'timing_changed']);
+                $this->audit(ActivityEvent::CommunicationDeliveryRequeued, $delivery, $delivery->team_id, $event->sucursal_id);
 
                 return null;
             }
@@ -244,7 +257,7 @@ final class CommunicationOrchestrator
     public function markInterruptedUncertain(): int
     {
         $count = 0;
-        CommunicationDelivery::where('status', 'sending')->where('attempted_at', '<', now()->subMinutes(5))
+        CommunicationDelivery::where('status', 'sending')->where('attempted_at', '<', now()->subMinutes(config('comunicaciones.sending_uncertain_minutes')))
             ->select('id')->chunkById(100, function ($items) use (&$count) {
                 foreach ($items as $item) {
                     DB::transaction(function () use ($item, &$count) {
@@ -266,7 +279,7 @@ final class CommunicationOrchestrator
     public function requeueStale(): int
     {
         $count = 0;
-        CommunicationDelivery::where('status', 'queued')->where('queued_at', '<', now()->subMinutes(15))
+        CommunicationDelivery::where('status', 'queued')->where('queued_at', '<', now()->subMinutes(config('comunicaciones.queue_stale_minutes')))
             ->select('id')->chunkById(100, function ($items) use (&$count) {
                 foreach ($items as $item) {
                     DB::transaction(function () use ($item, &$count) {
@@ -295,7 +308,7 @@ final class CommunicationOrchestrator
             return false;
         }
         if ($event->event_type === 'payment_received') {
-            return $event->created_at?->greaterThanOrEqualTo(now()->subDay()) && $event->source_pago_id
+            return $event->created_at?->greaterThanOrEqualTo(now()->subHours(config('comunicaciones.payment_event_validity_hours'))) && $event->source_pago_id
                 && CreditoPago::whereKey($event->source_pago_id)->where('credito_id', $credit->id)->exists()
                 && ! CreditoPago::where('reversa_de', $event->source_pago_id)->exists();
         }
@@ -304,7 +317,7 @@ final class CommunicationOrchestrator
         }
         $today = $this->fecha->hoy()->toDateString();
         $due = $event->due_date->toDateString();
-        if ($due !== $this->fecha->hoy()->addDays(3)->toDateString()) {
+        if ($due <= $today) {
             return false;
         }
         $reading = DB::table('credito_lecturas')->where('credito_id', $credit->id)->where('corte', $today)
@@ -316,6 +329,12 @@ final class CommunicationOrchestrator
 
         return DB::table('credito_lectura_obligaciones')->where('lectura_id', $reading->id)
             ->where('fecha', $due)->where('naturaleza', 'programada')->where('total', '>', 0)->exists();
+    }
+
+    private function ruleMatchesEvent(CommunicationEvent $event, CommunicationRule $rule): bool
+    {
+        return $event->event_type !== 'upcoming_due'
+            || $event->due_date?->toDateString() === $this->fecha->hoy()->addDays($rule->lead_days)->toDateString();
     }
 
     private function hasConsent(CommunicationEvent $event, string $channel, string $contact): bool

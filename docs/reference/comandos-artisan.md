@@ -12,8 +12,8 @@ fuentes, límites y disponibilidad antes de operar sobre QA.
 
 ## Comunicaciones
 
-- `php artisan comunicaciones:preparar-vencimientos`: registra candidatos preventivos tres días antes desde la lectura vigente; programado cada hora.
-- `php artisan comunicaciones:despachar`: prepara salidas con consentimiento y canal/regla activos, recupera trabajos interrumpidos y encola el envío después del commit; programado cada cinco minutos. Requiere un worker de cola para ejecutarlo cuando `QUEUE_CONNECTION=database` y `COMMUNICATIONS_SEND_ENABLED=true`.
+- `php artisan comunicaciones:preparar-vencimientos`: registra candidatos preventivos desde la lectura vigente según los días de anticipación de cada regla; la frecuencia se configura con `COMMUNICATIONS_DUE_SCHEDULE_MINUTES` (60 por defecto).
+- `php artisan comunicaciones:despachar`: prepara salidas con consentimiento y canal/regla activos, recupera trabajos interrumpidos y encola el envío después del commit; la frecuencia se configura con `COMMUNICATIONS_DISPATCH_SCHEDULE_MINUTES` (5 por defecto). Requiere un worker de cola para ejecutarlo cuando `QUEUE_CONNECTION=database` y `COMMUNICATIONS_SEND_ENABLED=true`.
 
 Ver [contrato de canales](canales-comunicacion.md) y [pruebas](../how-to/probar-comunicaciones.md). `schedule:list` no demuestra que el cron del servidor esté activo.
 

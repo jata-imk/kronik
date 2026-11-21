@@ -89,6 +89,11 @@ El geocodificador actual usa Nominatim y no consume una API key configurable.
 
 - `COMMUNICATIONS_SEND_ENABLED`: `false` por defecto; barrera global de salida externa. Activar solo tras validar entorno, proveedores, roles y consentimientos. Un canal/regla del equipo también debe estar activo.
 - `COMMUNICATIONS_TEST_RECIPIENT`: único correo autorizado para la prueba técnica de la pantalla. Guardar en el entorno, nunca en Git.
+- `COMMUNICATIONS_DEFAULT_LEAD_DAYS` (3) y `COMMUNICATIONS_MAX_LEAD_DAYS` (30): valor inicial y máximo de anticipación de vencimiento; el operador configura los días de cada regla/canal en la UI.
+- `COMMUNICATIONS_DEFAULT_TIMEZONE` (`America/Mexico_City`), `COMMUNICATIONS_DEFAULT_WINDOW_START` (`09:00`), `COMMUNICATIONS_DEFAULT_WINDOW_END` (`20:00`), `COMMUNICATIONS_DEFAULT_DAILY_LIMIT` (1) y `COMMUNICATIONS_MAX_DAILY_LIMIT` (5): valores iniciales y máximo de las reglas, editables por equipo y canal.
+- `COMMUNICATIONS_PAYMENT_VALIDITY_HOURS` (24): vigencia máxima de un candidato de pago antes del envío.
+- `COMMUNICATIONS_QUEUE_STALE_MINUTES` (15) y `COMMUNICATIONS_SENDING_UNCERTAIN_MINUTES` (5): recuperación de trabajo en cola y clasificación conservadora de intento interrumpido. No reenvían automáticamente un intento incierto.
+- `COMMUNICATIONS_DUE_SCHEDULE_MINUTES` (60) y `COMMUNICATIONS_DISPATCH_SCHEDULE_MINUTES` (5): frecuencia del scheduler, de 1 a 60 minutos; usar divisores de 60 para una cadencia uniforme. Requiere cron real del servidor.
 - Las credenciales SMS y WhatsApp se cifran por equipo en la base. Consultar [canales de comunicación](canales-comunicacion.md) antes de configurarlas.
 
 - `MAIL_*`: configure SMTP antes de enviar correo real. `MAIL_MAILER=log` solo

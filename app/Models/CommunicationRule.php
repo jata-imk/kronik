@@ -8,5 +8,5 @@ class CommunicationRule extends Model
 {
     protected $guarded = [];
 
-    protected $casts = ['enabled' => 'boolean', 'daily_limit' => 'integer', 'template_version' => 'integer'];
+    protected $casts = ['enabled' => 'boolean', 'lead_days' => 'integer', 'daily_limit' => 'integer', 'template_version' => 'integer'];
 }

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ActivityEvent;
 use App\Models\CommunicationEvent;
+use App\Models\CommunicationRule;
 use App\Models\Credito;
 use App\Models\CreditoPago;
 use App\Services\Credito\ProyectorLecturaCredito;
@@ -42,9 +43,6 @@ final class CommunicationEventService
     public function reconcileCreditReminders(Credito $credito): int
     {
         $today = $this->fecha->hoy()->toDateString();
-        $due = $this->fecha->hoy()->addDays(3)->toDateString();
-        $eligible = $this->isEligible($credito, $today, $due);
-        $key = 'due:'.$credito->id.':'.$due;
         foreach (CommunicationEvent::where('credito_id', $credito->id)->where('event_type', 'upcoming_due')
             ->whereNull('cancelled_at')->get() as $pending) {
             if ($pending->due_date->toDateString() < $today
@@ -52,26 +50,30 @@ final class CommunicationEventService
                 $this->cancel($pending, $credito, 'due_not_current');
             }
         }
-        $existing = CommunicationEvent::where('event_key', $key)->first();
-
-        if ($eligible !== true) {
-            return 0;
+        $leadDays = CommunicationRule::where('team_id', $credito->team_id)
+            ->where('event_type', 'upcoming_due')->where('enabled', true)
+            ->pluck('lead_days')->map(fn ($days) => (int) $days)->unique();
+        if ($leadDays->isEmpty()) {
+            $leadDays = collect([config('comunicaciones.default_lead_days')]);
         }
-        if ($existing) {
-            return 0;
+        $prepared = 0;
+        foreach ($leadDays as $days) {
+            $due = $this->fecha->hoy()->addDays($days)->toDateString();
+            if ($this->isEligible($credito, $today, $due) !== true) {
+                continue;
+            }
+            $event = CommunicationEvent::firstOrCreate(['event_key' => 'due:'.$credito->id.':'.$due], [
+                'event_type' => 'upcoming_due', 'team_id' => $credito->team_id, 'credito_id' => $credito->id,
+                'cliente_id' => $credito->cliente_id, 'sucursal_id' => $credito->sucursal_id,
+                'due_date' => $due,
+            ]);
+            if ($event->wasRecentlyCreated) {
+                $this->audit(ActivityEvent::CommunicationEventPrepared, $event, $credito);
+                $prepared++;
+            }
         }
-        $event = CommunicationEvent::firstOrCreate(['event_key' => $key], [
-            'event_type' => 'upcoming_due', 'team_id' => $credito->team_id, 'credito_id' => $credito->id,
-            'cliente_id' => $credito->cliente_id, 'sucursal_id' => $credito->sucursal_id,
-            'due_date' => $due,
-        ]);
-        if ($event->wasRecentlyCreated) {
-            $this->audit(ActivityEvent::CommunicationEventPrepared, $event, $credito);
 
-            return 1;
-        }
-
-        return 0;
+        return $prepared;
     }
 
     public function reconcileDueReminders(): int

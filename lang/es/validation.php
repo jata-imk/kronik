@@ -98,6 +98,7 @@ return [
         'window_start' => 'inicio de la ventana',
         'window_end' => 'fin de la ventana',
         'daily_limit' => 'límite diario',
+        'lead_days' => 'días de anticipación',
         'subject' => 'asunto',
         'body' => 'texto de la plantilla',
         'external_template_name' => 'nombre de la plantilla externa',
