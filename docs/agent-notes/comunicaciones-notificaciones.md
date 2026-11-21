@@ -3,7 +3,7 @@
 ## Referencias
 
 - [Requisito de Notion](https://app.notion.com/p/Kronik-Comunicaciones-por-canales-env-os-y-seguimiento-3fe61db7db7f81e4af50c4f0f3ab7e41) y [copia literal conservada](../reference/comunicaciones-por-canales-envios-y-seguimiento.md).
-- Rama `feat/comunicaciones-notificaciones`; commits `793e684` (base), `1027e89` (móvil), `fb12c7f` (canales y seguimiento), `36da998` (evidencia) y `04543e3` (parametrización). PR e integración pendientes al 2026-11-20.
+- Rama `feat/comunicaciones-notificaciones`; commits `793e684` (base), `1027e89` (móvil), `fb12c7f` (canales y seguimiento), `36da998` (evidencia), `04543e3` (parametrización) y `909bb24` (capturas y publicación). Publicada en GitHub al 2026-11-20. La [PR #91](https://github.com/jata-imk/kronik/pull/91) recibió `/review medium` y fue cerrada sin integrar por indicación del usuario: la entrega debe permanecer en esta rama de desarrollo, sin llevar cambios a `main`.
 - [Contrato de eventos](../reference/eventos-comunicacion.md), [canales](../reference/canales-comunicacion.md) y [ADR 0049](../explanation/adr-0049-orquestacion-comunicaciones-externas.md).
 
 ## Estado — 2026-11-20
@@ -24,4 +24,4 @@ El entorno local sigue con `MAIL_MAILER=log`. La barrera `COMMUNICATIONS_SEND_EN
 
 ## Siguiente paso
 
-El 2026-11-20, los cuatro commits pendientes se publicaron mediante la API Git Data de GitHub, conservando exactamente sus SHA y sin forzar la rama; el remoto quedó en `04543e3`. El transporte Git HTTPS directo sigue sin conexión y `ssh.github.com:443` rechazó la llave disponible. Abrir PR, ejecutar `/review medium` y resolver hallazgos. Para QA real, configurar SMTP con dominio y destinatario de prueba autorizado; para SMS/WhatsApp, obtener aprobación escrita de uso, cuentas, remitentes, plantillas y webhook HTTPS antes de activar. Registrar recepción real y operación del programador/worker solo cuando haya evidencia. Actualizar Notion al confirmar integración/QA.
+El 2026-11-20, los commits pendientes se publicaron mediante la API Git Data de GitHub, conservando sus SHA y sin forzar la rama; el remoto quedó en `909bb24`. La PR #91 se cerró sin integrar y se canceló el merge local de `main`; la rama de desarrollo es la entrega vigente. El transporte Git HTTPS directo sigue sin conexión y `ssh.github.com:443` rechazó la llave disponible. Para QA real, configurar SMTP con dominio y destinatario de prueba autorizado; para SMS/WhatsApp, obtener aprobación escrita de uso, cuentas, remitentes, plantillas y webhook HTTPS antes de activar. Registrar recepción real y operación del programador/worker solo cuando haya evidencia. Actualizar Notion al confirmar integración/QA.
