@@ -18,6 +18,8 @@ Casos principales: evento de pago único y reverso; recordatorio con anticipaci�
 
 ## Revisión E2E de la pantalla
 
+Capturas de la revisión con datos sintéticos: [escritorio](../assets/comunicaciones-desktop.png) y [móvil](../assets/comunicaciones-mobile.png).
+
 1. Arrancar una **base QA aislada**, ejecutar las cuatro migraciones de comunicaciones y asignar permisos `read`, `manage` y `send test comunicaciones` al rol de prueba del equipo. No usar `migrate:fresh` sobre la base de trabajo.
 2. Iniciar Laravel y Vite (`composer dev`) y entrar como operador autorizado. Abrir **Operación → Comunicaciones**. Revisar en escritorio y móvil las pestañas Canales, Reglas y plantillas, Consentimientos e Historial. La advertencia de entorno desactivado debe ser visible.
 3. Configurar correo con remitente de QA y estado `testing`; confirmar que no permite activarlo hasta registrar elegibilidad `approved` y una referencia. Configurar una regla de pago con `{nombre}`, horario y límite 1. Configurar una regla de vencimiento a cinco días, guardar y comprobar que al reabrirla conserva el valor. La vista previa debe sustituir las variables. Introducir `{importe}` o anticipación 0: debe mostrar un error en español.
