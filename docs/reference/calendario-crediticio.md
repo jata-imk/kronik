@@ -29,8 +29,9 @@ es una fuente anual editable en borrador. Cada instalación revisa su aplicabili
   es inválida, el servidor muestra el error y conserva la captura para corregirla.
   Al quitar una fila, los errores pendientes siguen asociados a sus fechas.
   Cargar la plantilla limpia los mensajes de la configuración reemplazada.
-  El editor señala las fechas repetidas dentro de cada grupo junto con los
-  demás errores. Marca las filas afectadas y limpia el aviso al resolver la
+  El editor señala fechas válidas repetidas dentro de cada grupo, junto con
+  los errores de formato y cobertura. Ignora espacios invisibles en los
+  extremos para marcar las filas duplicadas y limpia el aviso al resolver la
   duplicidad. El foco pasa a un campo visible o al resumen de errores.
 - Ejecutar la migración y actualizar el catálogo de permisos y menú mediante
   `ModulesAndPermissionsSeeder` y `MenubarItemsSeeder` en el orden habitual.
