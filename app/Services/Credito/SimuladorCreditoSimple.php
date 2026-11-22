@@ -26,7 +26,7 @@ final class SimuladorCreditoSimple
     ) {}
 
     /** @return array<string, mixed> */
-    public function simular(ProductoVersion $version, string $monto, PeriodicidadCredito $periodicidad, int $plazo, MetodoAmortizacion $metodo, CarbonImmutable $fecha, array $comisionesOpcionales = [], bool $incluirFormula = false, bool $incluirImpuestos = false, ?array $calendarioCongelado = null, bool $reproducir = false): array
+    public function simular(ProductoVersion $version, string $monto, PeriodicidadCredito $periodicidad, int $plazo, MetodoAmortizacion $metodo, CarbonImmutable $fecha, array $comisionesOpcionales = [], bool $incluirFormula = false, bool $incluirImpuestos = false, ?array $calendarioCongelado = null, bool $reproducir = false, bool $calcularCat = true): array
     {
         $version->loadMissing(['periodicidades', 'reglas', 'comisiones.concepto']);
         $resolucion = $this->resolverComisiones->resolver($version, $comisionesOpcionales);
@@ -140,7 +140,7 @@ final class SimuladorCreditoSimple
 
         [$montoRecibidoCat, $pagosCat] = $this->flujosCatBase($version, $monto, $metodo, $fecha, $resolucion['obligatorias'], $fechas);
         $usaDiasRealesCat = $motor === VersionMotorCredito::Act360Racional && (! $reproducir || $evidencia !== null);
-        $cat = $version->cat_aplica
+        $cat = $calcularCat && $version->cat_aplica
             ? $this->catService->calcular($montoRecibidoCat, $pagosCat, $periodicidad,
                 $usaDiasRealesCat ? (new DiasReales360)->dias($fecha, end($fechas)) : null)
             : null;

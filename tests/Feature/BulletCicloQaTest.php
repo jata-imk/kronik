@@ -2,8 +2,10 @@
 
 use App\Enums\ActivityEvent;
 use App\Models\Activity;
+use App\Models\ConceptoComision;
 use App\Services\Credito\DesembolsoService;
 use App\Services\Credito\PagoService;
+use App\Services\FechaEmpresa;
 use App\Services\ProductoVersionService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -62,6 +64,27 @@ test('el paquete sin ajuste conserva el CAT informado en una revisión históric
 
     $paquete = BulletScenario::formalizar($solicitud, $actor);
     expect($paquete->snapshot['tabla']['cat'])->toBe('26.0');
+});
+
+test('el paquete reproduce el CAT aprobado que supera el límite de la búsqueda histórica', function () {
+    $actor = actingAsSuperAdmin();
+    $this->actingAs($actor);
+    $version = BulletScenario::producto($actor, 'al_vencimiento', activar: false);
+    $concepto = ConceptoComision::create(['clave' => 'PRUEBA', 'nombre' => 'Comisión sintética', 'activo' => true]);
+    $version->comisiones()->create([
+        'concepto_comision_id' => $concepto->id, 'tipo_importe' => 'fijo', 'importe' => '11990',
+        'base_calculo' => 'no_aplica', 'momento_cobro' => 'desembolso_descuento',
+        'obligatoria' => true, 'incluye_cat' => true, 'fiscalidad' => ['tratamiento' => 'no_causa'],
+    ]);
+    $version = app(ProductoVersionService::class)->activar($version, app(FechaEmpresa::class)->hoy()->toDateString());
+    $solicitud = BulletScenario::solicitud($actor, $version);
+    $solicitud->update(['plazo' => 1]);
+    $solicitud = BulletScenario::aprobar($solicitud->fresh(), $actor);
+    $simulacion = $solicitud->revisiones()->sole()->snapshot['simulacion_informativa'];
+
+    $paquete = BulletScenario::formalizar($solicitud, $actor);
+    expect($simulacion['monto_recibido_cat'])->toBe('10.00')
+        ->and($paquete->snapshot['tabla']['cat'])->toBe($simulacion['cat']);
 });
 
 test('ciclo QA conserva política tabla CAT firma crédito anticipos liquidación y auditoría', function (string $politica, string $base) {

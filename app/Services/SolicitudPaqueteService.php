@@ -177,7 +177,8 @@ class SolicitudPaqueteService
             CarbonImmutable::parse($simulacion['tabla'][0]['fecha'], app(FechaEmpresa::class)->zonaHoraria()),
             incluirImpuestos: true,
             calendarioCongelado: $simulacion['calendario_crediticio'] ?? null,
-            reproducir: true);
+            reproducir: true,
+            calcularCat: ! array_key_exists('cat', $simulacion));
 
         return array_replace($tabla, array_intersect_key($simulacion, array_flip([
             'cat', 'cat_contexto', 'cat_leyenda', 'monto_recibido_cat',

@@ -58,8 +58,8 @@ Para CAT se conservan los intervalos uniformes de pagos periódicos. En nuevas
 simulaciones con el motor Act/360, un único pago al vencimiento usa días
 efectivos entre 360 con cualquiera de las políticas de calendario, según el numeral 5.1 f de la
 [Circular 21/2009 de Banxico](https://www.banxico.org.mx/marco-normativo/normativa-emitida-por-el-banco-de-mexico/circular-21-2009/costo-anual-total-disposicion.html).
-El paquete conserva el CAT informado en la revisión original al generar la
-tabla fiscal.
+Al generar la tabla fiscal, el paquete usa directamente el CAT informado en la
+revisión original.
 La periodicidad diaria mantiene su propio alcance.
 
 - [Decisión de arquitectura](../explanation/adr-0048-calendario-crediticio.md)

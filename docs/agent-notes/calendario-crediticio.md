@@ -82,3 +82,9 @@ consulta. Playwright MCP reprodujo la previa del 14 al 17 de noviembre.
   permanecen al quitar una. El CAT de pago único Act/360 usa los días efectivos
   con ambas políticas, con pruebas de equivalencia y de conservación del CAT
   aprobado en expedientes con y sin ajuste.
+- Sobre `b9a29e5` aprobaron 1 016 pruebas backend (dos omitidas), 48 040
+  aserciones y 208 pruebas frontend. La última regresión fiscal comprobó que
+  formalizar usa directamente el CAT aprobado aunque la búsqueda periódica
+  histórica no tenga un resultado utilizable. Aprobaron 72 pruebas dirigidas.
+- El parámetro contextual de la versión cambió durante la revisión de PR.
+  La base `da529b2` aún carece del catálogo y de ese destino configurable.
