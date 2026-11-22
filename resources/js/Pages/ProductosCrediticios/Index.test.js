@@ -4,17 +4,18 @@ import { describe, expect, it, vi } from "vitest";
 import Index from "./Index.vue";
 
 const { submit, state } = vi.hoisted(() => ({ submit: vi.fn(), state:{page:null} }));
-vi.mock("@inertiajs/vue3", () => ({
+vi.mock("@inertiajs/vue3", async importOriginal => {
+    const { useForm } = await importOriginal();
+    return {
     Link: { template: "<a><slot /></a>" }, router: { get: vi.fn() },
     usePage: () => state.page,
     useForm: data => {
-        let defaults = JSON.parse(JSON.stringify(data));
-        const form = reactive({ ...data, errors: {}, processing: false });
-        Object.assign(form, { cancel: vi.fn(), clearErrors: () => { form.errors = {}; },
-            defaults: value => { defaults = value; }, reset: () => Object.assign(form, JSON.parse(JSON.stringify(defaults))), submit });
+        const form = useForm(data);
+        Object.assign(form, { cancel: vi.fn(), submit });
         return form;
     },
-}));
+    };
+});
 vi.mock("@/Composables/useListadoServidor", () => ({ useListadoServidor: () => ({ visit: vi.fn() }) }));
 vi.mock("primevue/useconfirm", () => ({ useConfirm: () => ({}) }));
 vi.mock("primevue/usetoast", () => ({ useToast: () => ({ add: vi.fn() }) }));
@@ -35,6 +36,21 @@ function render(selected = version(), modo = "consulta") {
     });
 }
 describe("editor de producto", () => {
+    it("editar solo un valor anidado detecta cambios y cancelar el descarte conserva el editor", async () => {
+        const draft = { ...version(), estado: "borrador", puede_editar: true, monto_minimo: 5000, monto_maximo: 10000, tasa_ordinaria_anual: 36, tasa_moratoria_anual: 72 };
+        const wrapper = render(draft, "edicion");
+        await wrapper.vm.$nextTick();
+        expect(wrapper.vm.form.isDirty).toBe(false);
+        wrapper.vm.form.version.monto_minimo = 5500;
+        await wrapper.vm.$nextTick();
+        expect(wrapper.vm.form.isDirty).toBe(true);
+        const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+        wrapper.vm.closeEditor();
+        expect(wrapper.vm.editorVisible).toBe(true);
+        expect(wrapper.vm.form.version.monto_minimo).toBe(5500);
+        confirm.mockRestore();
+        wrapper.unmount();
+    });
     it("consulta una versión protegida sin envío ni controles de mutación", async () => {
         submit.mockClear();
         const wrapper = render();

@@ -1,5 +1,6 @@
 <script setup>
-import { useForm, router } from "@inertiajs/vue3";
+import { router } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import FieldHelp from "@/Components/FieldHelp.vue";
 
 const props = defineProps({ sucursal: { type: Object, required: true }, editable: Boolean });

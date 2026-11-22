@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from "vue";
-import { useForm } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 const props = defineProps({ tipo: String, solicitud: Object, registros: Array, puedeRegistrar: Boolean });
 const pld = computed(() => props.tipo === "pld");
 const editando = ref(false);

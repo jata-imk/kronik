@@ -8,10 +8,14 @@ destinos de las rutas donde se activa cada entrada.
 
 - [Validar la expansión manual del sidebar](../how-to/validar-sidebar.md).
 - [Configurar el catálogo del menú contextual](../how-to/configurar-menu-contextual.md).
+- [Validar el menú contextual y la navegación](../how-to/validar-menu-contextual.md).
 - [Accesos contextuales del cliente](../how-to/accesos-contextuales-clientes.md).
 - [Actualizar módulos y capturas de la portada](../how-to/actualizar-portada.md).
 
 ## Referencia y decisiones
+
+- [ADR 0047: catálogo compartido y contexto del Menubar](../explanation/adr-0047-menubar-contextual-compartido.md).
+- [Seguimiento de usabilidad del Menubar](../agent-notes/menubar-usabilidad.md).
 
 - [Tablero financiero y composición de su interfaz](../reference/tablero-financiero.md).
 - [Validar el tablero en escritorio, móvil y temas](../how-to/validar-tablero.md).

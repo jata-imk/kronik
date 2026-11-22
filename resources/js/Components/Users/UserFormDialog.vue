@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch, onMounted, onUnmounted } from "vue";
-import { useForm } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
+import { confirmFormDiscard } from "@/Utils/unsavedChanges";
 import axios from "axios";
 import { useToast } from "primevue/usetoast";
 
@@ -136,6 +137,7 @@ const submit = () => {
                 summary: props.user ? "Usuario actualizado" : "Invitación enviada",
                 life: 3000,
             });
+            form.defaults?.();
             emit("close");
         },
         onError: (errors) => toast.add({
@@ -152,15 +154,19 @@ const submit = () => {
         form.post(route("admin.users.store"), options);
     }
 };
+function requestClose() {
+    if (!props.readonly && !confirmFormDiscard(form)) return;
+    emit("close");
+}
 </script>
 
 <template>
     <Dialog
-        v-model:visible="visible"
+        :visible="visible"
         :header="readonly ? 'Consultar usuario' : user ? 'Editar usuario' : 'Invitar usuario'"
         modal
         :style="{ width: '760px', maxWidth: '95vw' }"
-        @hide="emit('close')"
+        @update:visible="value => { if (!value) requestClose(); }"
     >
         <Message v-if="optionError" severity="error">{{ optionError }} <Button label="Reintentar carga" text @click="loadOptions" /></Message>
         <Message v-if="readonly" severity="info" :closable="false">Consulta · solo lectura.</Message>
@@ -278,7 +284,7 @@ const submit = () => {
             </section>
 
             <div class="flex justify-end gap-2">
-                <Button :label="readonly ? 'Cerrar consulta' : 'Cancelar'" severity="secondary" @click.prevent="emit('close')" />
+                <Button :label="readonly ? 'Cerrar consulta' : 'Cancelar'" severity="secondary" @click.prevent="requestClose" />
                 <Button v-if="!readonly" label="Guardar" icon="pi pi-check" type="submit" :loading="form.processing || optionLoading" :disabled="Boolean(optionError) || optionLoading" />
             </div>
         </form>

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch } from "vue";
-import { router, useForm, usePage } from "@inertiajs/vue3";
+import { router, usePage } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import ActionSection from "@/Components/ActionSection.vue";
 import ConfirmsPassword from "@/Components/ConfirmsPassword.vue";
 import InputLabel from "@/Components/InputLabel.vue";

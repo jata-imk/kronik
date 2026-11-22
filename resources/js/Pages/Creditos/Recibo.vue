@@ -1,5 +1,6 @@
 <script setup>
-import { Link, useForm } from "@inertiajs/vue3";
+import { Link } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import { ref } from "vue";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import PageHeader from "@/Components/PageHeader.vue";

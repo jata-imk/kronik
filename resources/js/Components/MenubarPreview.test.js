@@ -1,0 +1,24 @@
+import { flushPromises, shallowMount } from "@vue/test-utils";
+import { expect, it, vi } from "vitest";
+import Preview from "./MenubarPreview.vue";
+const api = vi.hoisted(() => ({ post: vi.fn() }));
+vi.mock("axios", () => ({ default: { post: api.post, isCancel: error => error?.code === "ERR_CANCELED" } }));
+const global = { mocks: { route: name => name } };
+it("no previsualiza silenciosamente y descarta respuestas del borrador anterior", async () => {
+    let resolve;
+    api.post.mockReturnValue(new Promise(done => { resolve = done; }));
+    window.route = name => name;
+    const wrapper = shallowMount(Preview, { props: { draft: { label: "Antes" }, screens: [] }, global });
+    expect(api.post).not.toHaveBeenCalled();
+    wrapper.vm.screen = "clientes.index";
+    await flushPromises();
+    await wrapper.get('button-stub[label="Ver vista previa"]').trigger("click");
+    const signal = api.post.mock.calls.at(-1)[2].signal;
+    await wrapper.setProps({ draft: { label: "Después" } });
+    expect(signal.aborted).toBe(true);
+    resolve({ data: { items: [{ label: "Respuesta vieja" }] } });
+    await flushPromises();
+    expect(wrapper.vm.items).toBeNull();
+    expect(wrapper.text()).not.toContain("Respuesta vieja");
+    wrapper.unmount();
+});

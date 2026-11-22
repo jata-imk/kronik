@@ -1,74 +1,20 @@
-import { mount } from "@vue/test-utils";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { shallowMount } from "@vue/test-utils";
+import { beforeEach, expect, it, vi } from "vitest";
 import AppMenubar from "./AppMenubar.vue";
-
-const page = vi.hoisted(() => ({
-    props: {
-        menubarAdmin: false,
-        menubarItems: [],
-    },
-}));
-
-vi.mock("@inertiajs/vue3", () => ({
-    usePage: () => page,
-}));
-
-const MenubarStub = {
-    props: ["model"],
-    template: `
-        <nav>
-            <template v-for="item in model" :key="item.label">
-                <slot name="item" :item="item" :props="{ action: { class: 'action' } }" />
-            </template>
-            <slot name="end" />
-        </nav>
-    `,
-};
-
-const renderMenubar = () => mount(AppMenubar, {
-    global: {
-        stubs: {
-            Menubar: MenubarStub,
-            MenubarQuickAdd: true,
-            Button: true,
-            SplitButton: true,
-        },
-    },
+const page = vi.hoisted(() => ({ props: {} }));
+vi.mock("@inertiajs/vue3", () => ({ usePage: () => page, router: { visit: vi.fn(), reload: vi.fn() } }));
+beforeEach(() => { page.props = { menubarItems: [], menubarAdmin: null }; globalThis.route = () => "/admin/menubar-items"; });
+const mountBar = () => shallowMount(AppMenubar, { global: { stubs: { MenubarModel: { name: "MenubarModel", props: ["model"], template: '<nav><slot name="end"/></nav>' }, MenubarQuickAdd: true } } });
+it("filtra acciones del sistema por identidad y conserva etiquetas personalizadas", () => {
+    page.props.menubarItems = [{ kind: "system", label: "Regresar" }, { kind: "group", label: "Administración", items: [{ label: "Abrir" }] }];
+    const wrapper = mountBar();
+    expect(wrapper.findComponent({ name: "MenubarModel" }).props("model")).toEqual([page.props.menubarItems[1]]);
+    expect(wrapper.find("button-stub").exists()).toBe(false);
 });
-
-describe("AppMenubar", () => {
-    beforeEach(() => {
-        page.props.menubarAdmin = false;
-        page.props.menubarItems = [];
-        page.props.auth = {};
-        globalThis.route = vi.fn(() => "/admin/menubar-items");
-    });
-
-    it("renderiza las acciones con URL como enlaces navegables", () => {
-        page.props.menubarItems = [
-            {
-                label: "Editar cliente",
-                icon: "pi pi-pencil",
-                url: "https://app.test/clientes/15/edit",
-            },
-            { label: "Clientes", items: [] },
-        ];
-
-        const wrapper = renderMenubar();
-
-        expect(wrapper.get("a").attributes("href")).toBe(
-            "https://app.test/clientes/15/edit",
-        );
-        expect(wrapper.get("a").text()).toContain("Editar cliente");
-        expect(wrapper.findAll("nav > span")).toHaveLength(1);
-    });
-
-    it.each([
-        ["consulta sin permiso", {}, false],
-        ["permiso explícito", { permissions: { "read-menubar-items": true } }, true],
-        ["Super Admin global", { is_super_admin: true }, true],
-    ])("controla el acceso a configurar menubar para %s", (_perfil, auth, visible) => {
-        page.props.auth = auth;
-        expect(renderMenubar().find("split-button-stub").exists()).toBe(visible);
-    });
+it("configurar ofrece únicamente las capacidades autorizadas", () => {
+    page.props.menubarAdmin = { canRead: true, canCreate: false };
+    const wrapper = mountBar();
+    expect(wrapper.find("button-stub[label='Configurar']").exists()).toBe(true);
+    expect(wrapper.find("menu-stub").attributes("model")).toBeDefined();
+    expect(wrapper.find("split-button-stub").exists()).toBe(false);
 });

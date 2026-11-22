@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from "vue";
-import { useForm } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 
 const props = defineProps({ solicitud: Object, can: Object, responsables: Array });
 const form = useForm({ accion: null, motivo: "", responsable_id: props.solicitud.responsable_id, lock_version: props.solicitud.lock_version });
