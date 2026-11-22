@@ -31,12 +31,15 @@ test("publica la plantilla y compara vencimientos con teclado y en móvil", asyn
     await fechas.nth(1).fill(fechaRepetida);
     await fechas.nth(2).fill("2026-03-01\u2066");
     await fechas.nth(3).fill("2026-03-01\u2066");
+    await fechas.nth(4).fill("2026-02-30");
+    await fechas.nth(5).fill("2026-02-30");
     await editor.getByRole("button", { name: "Guardar borrador" }).click();
     await expect(editor.getByText(/Hay fechas repetidas en feriados/)).toBeVisible();
     await expect(fechas.nth(1)).toHaveAttribute("aria-invalid", "true");
     await fechas.nth(1).fill(fechaOriginal);
     await expect(editor.getByText(/Hay fechas repetidas en feriados/)).toHaveCount(0);
     await expect(fechas.nth(2)).toHaveAttribute("aria-invalid", "true");
+    await expect(fechas.nth(4)).toHaveAttribute("aria-invalid", "true");
     await fechas.nth(1).fill(fechaRepetida);
     await editor.getByRole("button", { name: "Guardar borrador" }).click();
     await expect(editor.getByText(/Hay fechas repetidas en feriados/)).toBeVisible();
