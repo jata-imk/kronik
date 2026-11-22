@@ -136,7 +136,7 @@ class MenubarDestinoService
         }
         if ($name === 'productos-crediticios.calendario.show') {
             return $gate->allows(CalendarioCrediticioService::CONSULTAR)
-                && ($version = $model('version', CalendarioCrediticioVersion::class))
+                && ($version = $model('versionCalendario', CalendarioCrediticioVersion::class))
                 && ($version->publicada_en !== null || $gate->allows(CalendarioCrediticioService::EDITAR));
         }
         $permissions = match ($name) {

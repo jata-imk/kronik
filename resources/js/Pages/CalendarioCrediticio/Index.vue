@@ -31,6 +31,10 @@ watch(() => props.version?.id, () => {
     tab.value = "calendario";
 });
 
+watch(() => props.puedeEditar, puedeEditar => {
+    if (!puedeEditar && editor.value === "nuevo") editor.value = null;
+});
+
 function confirmarPublicacion() {
     if (!props.puedePublicar || !props.version || props.version.publicada_en) return;
     avisoPublicacion.value = "";
