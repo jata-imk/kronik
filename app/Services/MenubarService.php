@@ -92,6 +92,9 @@ class MenubarService
         if (! Route::has($index)) {
             $index = collect(app(MenubarCatalogoService::class)->pantallas())->first(fn ($screen) => $screen['module_id'] === $module->id && str_ends_with($screen['key'], '.index'))['key'] ?? $name;
         }
+        if (str_starts_with($name, 'productos-crediticios.calendario.')) {
+            $index = 'productos-crediticios.calendario.index';
+        }
         $home = $name === $index || $name === 'dashboard' || str_ends_with($name, '.index');
         array_unshift($menu, [
             'key' => 'system:'.($home ? 'home' : 'back'), 'kind' => 'system',

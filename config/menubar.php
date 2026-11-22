@@ -26,6 +26,8 @@ return [
     ]],
     'productos-crediticios' => ['Productos crediticios', [
         'productos-crediticios.index' => 'Productos y simulador', 'originacion-politicas.show' => 'Política de originación',
+        'productos-crediticios.calendario.index' => 'Calendario crediticio',
+        'productos-crediticios.calendario.show' => 'Versión del calendario crediticio',
     ]],
     'plantillas-documentos' => ['Plantillas de documentos', ['plantillas-documentos.index' => 'Plantillas, versiones y recursos']],
     'documentos' => ['Documentos', [

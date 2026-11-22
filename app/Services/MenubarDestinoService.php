@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CalendarioCrediticioVersion;
 use App\Models\Cliente;
 use App\Models\Credito;
 use App\Models\CreditoPago;
@@ -11,6 +12,7 @@ use App\Models\SicQuery;
 use App\Models\Solicitud;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\Credito\CalendarioCrediticioService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
 
@@ -35,6 +37,7 @@ class MenubarDestinoService
             str_starts_with($name, 'creditos.') => ['read creditos', 'read solicitudes', 'read clientes'],
             $name === 'documentos-generados.view' => ['read documentos'],
             $name === 'originacion-politicas.show' => ['read productos-crediticios'],
+            $name === 'productos-crediticios.calendario.show' => [CalendarioCrediticioService::CONSULTAR],
             $name === 'teams.show' => [],
             default => null,
         };
@@ -131,10 +134,16 @@ class MenubarDestinoService
         if ($name === 'originacion-politicas.show') {
             return $gate->allows('read productos-crediticios') && $model('version', ProductoVersion::class) !== null;
         }
+        if ($name === 'productos-crediticios.calendario.show') {
+            return $gate->allows(CalendarioCrediticioService::CONSULTAR)
+                && ($version = $model('versionCalendario', CalendarioCrediticioVersion::class))
+                && ($version->publicada_en !== null || $gate->allows(CalendarioCrediticioService::EDITAR));
+        }
         $permissions = match ($name) {
             'evaluacion-solicitudes.index' => ['read solicitudes', 'read clientes', 'read evaluacion-solicitudes'],
             'cumplimiento.index' => ['read solicitudes', 'read clientes', 'read cumplimiento'],
             'productos-crediticios.index' => ['read productos-crediticios'],
+            'productos-crediticios.calendario.index' => [CalendarioCrediticioService::CONSULTAR],
             'plantillas-documentos.index' => ['read plantillas-documentos'],
             'admin.dashboard' => ['access admin'],
             'admin.users.index' => ['read users'], 'admin.users.activity' => ['read activity-log'],
