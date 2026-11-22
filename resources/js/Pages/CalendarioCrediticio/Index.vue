@@ -9,6 +9,7 @@ import EjemplosCalendario from "./EjemplosCalendario.vue";
 const props = defineProps({ version: Object, vigenteId: Number, versiones: Object, puedeEditar: Boolean, puedePublicar: Boolean, plantilla: Object, hoy: String });
 const tab = ref("calendario");
 const editor = ref(null);
+const editorCalendario = ref(null);
 const confirmacion = ref(false);
 const avisoPublicacion = ref("");
 const publicacion = useForm({ revision: null });
@@ -17,6 +18,10 @@ const estado = computed(() => {
     if (!props.version?.publicada_en) return "Borrador";
     return props.version.id === props.vigenteId ? "Vigente" : "Publicación histórica";
 });
+
+function cerrarEditor() {
+    if (editorCalendario.value?.confirmarSalida() !== false) editor.value = null;
+}
 
 watch(() => props.version?.id, () => {
     editor.value = null;
@@ -107,8 +112,8 @@ function publicar() {
                     </TabPanels>
                 </Tabs>
 
-                <Dialog :visible="editor !== null" :header="editor === 'nuevo' ? 'Nuevo borrador' : 'Configuración de la versión'" modal class="w-[min(94vw,48rem)]" @update:visible="editor = null">
-                    <EditorCalendario v-if="editor" :key="`${editor}-${editorReadonly}`" :version="editor === 'actual' ? version : null" :hoy="hoy" :plantilla="plantilla"
+                <Dialog :visible="editor !== null" :header="editor === 'nuevo' ? 'Nuevo borrador' : 'Configuración de la versión'" modal class="w-[min(94vw,48rem)]" @update:visible="cerrarEditor">
+                    <EditorCalendario v-if="editor" ref="editorCalendario" :key="`${editor}-${editorReadonly}`" :version="editor === 'actual' ? version : null" :hoy="hoy" :plantilla="plantilla"
                         :readonly="editorReadonly" @guardado="editor = null" />
                 </Dialog>
                 <Dialog v-model:visible="confirmacion" header="Publicar calendario" modal class="w-[min(94vw,32rem)]">

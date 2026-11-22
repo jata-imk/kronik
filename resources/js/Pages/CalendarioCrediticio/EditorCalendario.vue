@@ -1,16 +1,18 @@
 <script setup>
-import { useForm } from "@inertiajs/vue3";
+import { useGuardedForm } from "@/Composables/useGuardedForm";
 import { formatDateOnly, parseDateOnly } from "@/Utils/date";
+import { confirmFormDiscard } from "@/Utils/unsavedChanges";
 
 const props = defineProps({ version: Object, plantilla: Object, hoy: String, readonly: Boolean });
 const emit = defineEmits(["guardado"]);
 const copia = (dato) => JSON.parse(JSON.stringify(dato));
-const form = useForm({
+const form = useGuardedForm({
     revision: props.version?.publicada_en ? undefined : props.version?.revision,
     configuracion: copia(props.version?.configuracion ?? {
         desde: props.hoy, hasta: props.hoy, semana_habil: [1, 2, 3, 4, 5], fuente: "", feriados: [], excepciones: [],
     }),
 });
+defineExpose({ confirmarSalida: () => props.readonly || confirmFormDiscard(form) });
 const semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map((texto, indice) => ({ texto, dia: indice + 1 }));
 const grupos = [{ clave: "feriados", titulo: "Feriados" }, { clave: "excepciones", titulo: "Excepciones de apertura o cierre" }];
 const tipos = [{ texto: "Apertura", habil: true }, { texto: "Cierre", habil: false }];
