@@ -2,8 +2,9 @@
 
 use App\Enums\MetodoAmortizacion;
 use App\Enums\PeriodicidadCredito;
-use App\Services\Credito\CatInformativoService;
+use App\Models\SolicitudRevision;
 use App\Services\Credito\CalendarioCrediticioService;
+use App\Services\Credito\CatInformativoService;
 use App\Services\Credito\ConsultaCartera;
 use App\Services\Credito\SimuladorCreditoSimple;
 use App\Services\ProductoVersionService;
@@ -89,7 +90,19 @@ test('el contrato y desembolso Bullet conservan la fecha aprobada y su proyecci√
     $primera = $calendario->guardar(null, ['configuracion' => $this->plantilla], $this->actor);
     $calendario->publicar($primera, 1, $this->actor);
     $producto = \Tests\Support\BulletScenario::producto($this->actor, $politica, ajuste: 'siguiente_habil');
-    $solicitud = \Tests\Support\BulletScenario::aprobar(\Tests\Support\BulletScenario::solicitud($this->actor, $producto), $this->actor);
+    $solicitud = \Tests\Support\BulletScenario::aprobar(
+        \Tests\Support\BulletScenario::solicitud($this->actor, $producto),
+        $this->actor,
+        prepararRevision: function (SolicitudRevision $revision) {
+            // Fixture: simula un CAT informado por un c√°lculo anterior, antes del dictamen.
+            $snapshot = $revision->snapshot;
+            $snapshot['simulacion_informativa']['cat'] = '61.1';
+            $json = json_encode($snapshot, JSON_THROW_ON_ERROR);
+            DB::table('solicitud_revisiones')->where('id', $revision->id)->update([
+                'snapshot' => $json, 'snapshot_hash' => hash('sha256', $json),
+            ]);
+        },
+    );
 
     $excepcion = ['fecha' => '2026-11-14', 'nombre' => 'Apertura posterior', 'habil' => true];
     $segunda = $calendario->guardar(null, ['configuracion' => [...$this->plantilla, 'excepciones' => [$excepcion]]], $this->actor);
@@ -100,7 +113,7 @@ test('el contrato y desembolso Bullet conservan la fecha aprobada y su proyecci√
     expect($tabla['tabla'][2]['fecha_original'])->toBe('2026-11-14')
         ->and($tabla['tabla'][2]['fecha'])->toBe('2026-11-17')
         ->and($tabla['calendario_crediticio']['version_id'])->toBe($primera->id)
-        ->and($tabla['cat'])->toBe($solicitud->revisiones()->sole()->snapshot['simulacion_informativa']['cat']);
+        ->and($tabla['cat'])->toBe('61.1');
     expect(view('documentos.paquete-anexo', ['snapshot' => $paquete->snapshot])->render())
         ->toContain('Calendario crediticio, versi√≥n', '2026-11-17', 'Original: 2026-11-14');
     $entrada = \Tests\Support\BulletScenario::desembolso($solicitud, $paquete);

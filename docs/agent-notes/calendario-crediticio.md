@@ -51,3 +51,6 @@ consulta. Playwright MCP reprodujo la previa del 14 al 17 de noviembre.
 - El paquete fiscal reproduce el CAT aprobado. La búsqueda decimal de pago
   único usa cotas y reserva los enteros exactos para empates. El caso sintético
   de 18 263 días tardó 10 ms en PHP 8.3.16 en el worktree local.
+- El recorrido de originación compara el paquete con una revisión sintética
+  cuyo CAT aprobado difiere del cálculo actual. Prueba el valor conservado
+  durante la formalización en ambas políticas Bullet.

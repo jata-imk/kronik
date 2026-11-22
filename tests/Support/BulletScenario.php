@@ -89,10 +89,11 @@ final class BulletScenario
         ], $actor)->fresh();
     }
 
-    public static function aprobar(Solicitud $solicitud, User $actor): Solicitud
+    public static function aprobar(Solicitud $solicitud, User $actor, ?\Closure $prepararRevision = null): Solicitud
     {
         $service = app(SolicitudService::class);
         $solicitud = $service->enviar($solicitud, $solicitud->lock_version, $actor);
+        $prepararRevision?->__invoke($solicitud->revisiones()->latest('numero')->firstOrFail());
         foreach (['evaluacion', 'pld'] as $tipo) {
             $solicitud = $service->dictaminar($solicitud, [
                 'lock_version' => $solicitud->lock_version, 'tipo_dictamen' => $tipo,
