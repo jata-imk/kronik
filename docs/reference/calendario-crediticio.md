@@ -54,9 +54,9 @@ la evidencia congelada. Los nombres y motivos de las fechas se consultan en la
 versión del catálogo con su permiso propio. La previa usa datos sintéticos y
 calcula en memoria.
 
-Para CAT se conservan los intervalos uniformes de pagos periódicos. Cuando se
-aplica la nueva política a un único pago al vencimiento, el exponente usa días
-efectivos entre 360 según el numeral 5.1 f de la
+Para CAT se conservan los intervalos uniformes de pagos periódicos. En nuevas
+simulaciones con el motor Act/360, un único pago al vencimiento usa días
+efectivos entre 360 con cualquiera de las políticas de calendario, según el numeral 5.1 f de la
 [Circular 21/2009 de Banxico](https://www.banxico.org.mx/marco-normativo/normativa-emitida-por-el-banco-de-mexico/circular-21-2009/costo-anual-total-disposicion.html).
 El paquete conserva el CAT informado en la revisión original al generar la
 tabla fiscal.

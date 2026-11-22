@@ -76,3 +76,9 @@ consulta. Playwright MCP reprodujo la previa del 14 al 17 de noviembre.
 - La revisión medium corrigió el diagnóstico de fórmula del simulador. El
   caso mensual verifica el ancla nominal del 28 de febrero, el cierre ajustado
   del 2 de marzo y el siguiente vencimiento del 31 de marzo.
+- El barrido acumulado sobre `da529b2` revisó ambas PR. La versión de calendario
+  tiene un parámetro de menú propio y el editor se cierra al perder edición.
+  Chromium verificó el foco en el error y que los errores de otras filas
+  permanecen al quitar una. El CAT de pago único Act/360 usa los días efectivos
+  con ambas políticas, con pruebas de equivalencia y de conservación del CAT
+  aprobado en expedientes con y sin ajuste.

@@ -6,6 +6,7 @@ use App\Services\Credito\DesembolsoService;
 use App\Services\Credito\PagoService;
 use App\Services\ProductoVersionService;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -46,13 +47,30 @@ function operacionBulletQa($test, $credito, string $tipo, string $importe, strin
     return [$data, $preview];
 }
 
+test('el paquete sin ajuste conserva el CAT informado en una revisión histórica', function () {
+    $actor = actingAsSuperAdmin();
+    $this->actingAs($actor);
+    $version = BulletScenario::producto($actor, 'al_vencimiento');
+    $solicitud = BulletScenario::aprobar(BulletScenario::solicitud($actor, $version), $actor, function ($revision) {
+        $snapshot = $revision->snapshot;
+        $snapshot['simulacion_informativa']['cat'] = '26.0';
+        $json = json_encode($snapshot, JSON_THROW_ON_ERROR);
+        DB::table('solicitud_revisiones')->where('id', $revision->id)->update([
+            'snapshot' => $json, 'snapshot_hash' => hash('sha256', $json),
+        ]);
+    });
+
+    $paquete = BulletScenario::formalizar($solicitud, $actor);
+    expect($paquete->snapshot['tabla']['cat'])->toBe('26.0');
+});
+
 test('ciclo QA conserva política tabla CAT firma crédito anticipos liquidación y auditoría', function (string $politica, string $base) {
     [$actor, $credito, $version, $paquete, $desembolso] = originarBulletQa($this, $politica, $base);
     $tabla = $paquete->snapshot['tabla'];
     expect(array_column(array_slice($tabla['tabla'], 1), 'pago_total'))->toBe($politica === 'periodicos' ? ['248.00', '12224.00'] : ['0.00', '12472.00'])
         ->and($tabla['politica_interes_bullet'])->toBe($politica)
-        // Independent quadratic/root calculation of the two monthly cash flows.
-        ->and($tabla['cat'])->toBe($politica === 'periodicos' ? '26.3' : '26.0')
+        // Dos pagos con CAT mensual o un solo pago de 12,472 a 59 días.
+        ->and($tabla['cat'])->toBe($politica === 'periodicos' ? '26.3' : '26.5')
         ->and($credito->condiciones['producto'])->toBe($paquete->snapshot['producto'])
         ->and($credito->cronogramas()->sole()->snapshot)->toBe($tabla)
         ->and($paquete->formalizacion->snapshot['paquete_hash'])->toBe($paquete->snapshot_hash);

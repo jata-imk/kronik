@@ -86,6 +86,32 @@ test('el CAT de pago único conserva el empate decimal al redondear', function (
         ->and($cat->calcular('10000.00', ['314383.33'], PeriodicidadCredito::Mensual, 18263))->toBe('7.0');
 });
 
+test('el CAT de un pago nuevo es igual si ambas políticas producen los mismos flujos', function () {
+    $calendario = app(CalendarioCrediticioService::class);
+    $publicada = $calendario->guardar(null, ['configuracion' => $this->plantilla], $this->actor);
+    $calendario->publicar($publicada, 1, $this->actor);
+    $datos = productoPayload([
+        'periodicidades' => [['periodicidad' => 'semanal', 'plazo_minimo' => 1, 'plazo_maximo' => 5, 'plazo_predeterminado' => 1]],
+    ]);
+    $productos = app(ProductoVersionService::class);
+    $producto = $productos->crear($datos, $this->actor->id)->versiones()->sole();
+    $simulador = app(SimuladorCreditoSimple::class);
+    $parametros = [$producto, '12000', PeriodicidadCredito::Semanal, 1, MetodoAmortizacion::CapitalFijo, CarbonImmutable::parse('2026-11-03')];
+    $sinAjuste = $simulador->simular(...$parametros);
+    $historica = $simulador->simular(...$parametros, reproducir: true);
+
+    $datos['version']['reglas']['ajuste_dia_inhabil'] = 'siguiente_habil';
+    $productos->actualizar($producto->producto, $producto, $datos);
+    $producto->refresh();
+    $ajustada = $simulador->simular(...$parametros);
+
+    expect($sinAjuste['tabla'][1])->toMatchArray(['fecha' => '2026-11-10', 'dias' => 7, 'interes' => '84.00'])
+        ->and($ajustada['tabla'][1]['fecha'])->toBe($sinAjuste['tabla'][1]['fecha'])
+        ->and($sinAjuste['cat'])->toBe('43.2')
+        ->and($ajustada['cat'])->toBe($sinAjuste['cat'])
+        ->and($historica['cat'])->toBe('43.7');
+});
+
 test('una política inválida identifica el campo de vencimientos en días inhábiles', function () {
     $datos = productoPayload();
     $datos['version']['reglas']['ajuste_dia_inhabil'] = 'no_valida';

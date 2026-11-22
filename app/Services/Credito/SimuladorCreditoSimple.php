@@ -139,9 +139,10 @@ final class SimuladorCreditoSimple
         unset($fila);
 
         [$montoRecibidoCat, $pagosCat] = $this->flujosCatBase($version, $monto, $metodo, $fecha, $resolucion['obligatorias'], $fechas);
+        $usaDiasRealesCat = $motor === VersionMotorCredito::Act360Racional && (! $reproducir || $evidencia !== null);
         $cat = $version->cat_aplica
             ? $this->catService->calcular($montoRecibidoCat, $pagosCat, $periodicidad,
-                $evidencia === null ? null : (new DiasReales360)->dias($fecha, end($fechas)))
+                $usaDiasRealesCat ? (new DiasReales360)->dias($fecha, end($fechas)) : null)
             : null;
 
         $totalIntereses = $this->sumar($tabla, 'interes');

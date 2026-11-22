@@ -179,13 +179,9 @@ class SolicitudPaqueteService
             calendarioCongelado: $simulacion['calendario_crediticio'] ?? null,
             reproducir: true);
 
-        if (isset($simulacion['calendario_crediticio'])) {
-            $tabla = array_replace($tabla, array_intersect_key($simulacion, array_flip([
-                'cat', 'cat_contexto', 'cat_leyenda', 'monto_recibido_cat',
-            ])));
-        }
-
-        return $tabla;
+        return array_replace($tabla, array_intersect_key($simulacion, array_flip([
+            'cat', 'cat_contexto', 'cat_leyenda', 'monto_recibido_cat',
+        ])));
     }
 
     private function registrar(Solicitud $solicitud, DocumentoGenerado $documento, User $actor): void
