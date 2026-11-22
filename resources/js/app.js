@@ -1,5 +1,6 @@
 import { createApp, h } from "vue";
-import { createInertiaApp } from "@inertiajs/vue3";
+import { createInertiaApp, router } from "@inertiajs/vue3";
+import { installUnsavedChangesGuard } from "@/Utils/unsavedChanges";
 import { resolvePageComponent } from "laravel-vite-plugin/inertia-helpers";
 import { ZiggyVue } from "../../vendor/tightenco/ziggy";
 
@@ -24,6 +25,7 @@ import "../css/kronik.css";
 
 const appName = import.meta.env.VITE_APP_NAME || "Laravel";
 guardPrimeVueSelectOverlay(Select);
+installUnsavedChangesGuard(router);
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,

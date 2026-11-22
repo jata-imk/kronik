@@ -1,6 +1,7 @@
 import { router, usePage } from "@inertiajs/vue3";
 import axios from "axios";
 import { onMounted, onUnmounted, watch } from "vue";
+import { forgetUnsavedChanges } from "@/Utils/unsavedChanges";
 
 export function operationalDestination(href, teamChanged = false) {
     if (teamChanged) return "/dashboard";
@@ -27,6 +28,7 @@ export function useOperationalContext() {
     const leave = (teamChanged) => {
         if (leaving) return;
         leaving = true;
+        forgetUnsavedChanges();
         router.cancel();
         window.location.replace(operationalDestination(window.location.href, teamChanged));
     };
@@ -41,8 +43,10 @@ export function useOperationalContext() {
                 leave(data.team_id !== previous.team_id);
             }
         } catch (exception) {
-            if ([401, 419].includes(exception.response?.status)) window.location.replace("/login");
-            else if (exception.response?.status === 403) window.location.replace("/dashboard");
+            if ([401, 419, 403].includes(exception.response?.status)) {
+                forgetUnsavedChanges();
+                window.location.replace(exception.response.status === 403 ? "/dashboard" : "/login");
+            }
         } finally {
             controller = null;
         }

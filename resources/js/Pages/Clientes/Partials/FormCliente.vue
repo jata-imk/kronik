@@ -1,5 +1,6 @@
 <script setup>
-import { useForm, usePage } from "@inertiajs/vue3";
+import { usePage } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import { useToast } from "primevue/usetoast";
 import { computed, nextTick, reactive, ref, watch } from "vue";
 

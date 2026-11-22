@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from "vue";
-import { useForm, usePage } from "@inertiajs/vue3";
+import { usePage } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import ActionMessage from "@/Components/ActionMessage.vue";
 import ActionSection from "@/Components/ActionSection.vue";
 import ConfirmationModal from "@/Components/ConfirmationModal.vue";

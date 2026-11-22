@@ -74,6 +74,13 @@ test('oculta los borradores reservados antes de validar la previa', function () 
         $this->putJson(route('productos-crediticios.calendario.update', $id), [])->assertForbidden();
         $this->postJson(route('productos-crediticios.calendario.publicar', $id), [])->assertForbidden();
     }
+
+    $destinos = app(\App\Services\MenubarDestinoService::class);
+    $contexto = app(\App\Services\TeamContext::class);
+    $contexto->run($usuario, $equipo, function () use ($destinos, $usuario, $borrador) {
+        expect($destinos->permitido('productos-crediticios.calendario.index', [], $usuario))->toBeTrue()
+            ->and($destinos->permitido('productos-crediticios.calendario.show', ['version' => $borrador->id], $usuario))->toBeFalse();
+    });
 });
 
 test('expone el nombre de negocio de un feriado incompleto', function () {
