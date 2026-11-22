@@ -219,7 +219,7 @@ final class SimuladorCreditoSimple
         }
 
         if ($incluirFormula) {
-            $respuesta['formula_debug'] = $this->formula($version, $saldoFinanciado, $resultado, $tabla);
+            $respuesta['formula_debug'] = $this->formula($version, $saldoFinanciado, $resultado, $tabla, $evidencia !== null);
         }
 
         return $respuesta;
@@ -342,13 +342,17 @@ final class SimuladorCreditoSimple
         ];
     }
 
-    private function formula(ProductoVersion $version, string $saldoFinanciado, array $resultado, array $tabla): array
+    private function formula(ProductoVersion $version, string $saldoFinanciado, array $resultado, array $tabla, bool $usaCalendarioCrediticio): array
     {
         $politica = CapacidadesProducto::condiciones($version)['reglas']['politica_interes_bullet'] ?? null;
+        $calendario = 'Las fechas nominales se obtienen sumando 7 días por semana o 15 por quincena. En periodos mensuales se conserva el día de la disposición o el fin de mes si la disposición se hizo al cierre del mes. Un día inexistente se ajusta solo para ese mes.';
+        if ($usaCalendarioCrediticio) {
+            $calendario .= ' Con la política Siguiente día hábil, la fecha resultante determina el vencimiento y el cierre del periodo de interés ordinario. Las fechas nominales siguientes conservan su ancla.';
+        }
 
         return [
             'convencion' => 'días reales / 360',
-            'calendario' => 'Semanal suma 7 días; quincenal suma 15 días; mensual conserva el día de la disposición. Si la disposición es fin de mes, todos los vencimientos permanecen en fin de mes; un día inexistente se ajusta solo para ese mes.',
+            'calendario' => $calendario,
             'metodo' => 'El interés de cada periodo usa el saldo inicial y sus días reales; la última cuota liquida el residuo.',
             'interes' => 'Iₖ = Sₖ₋₁ × (tasa anual / 100) × (díasₖ / 360)',
             'cuota_nivelada' => 'C = P ÷ Σ[1 ÷ Π(1 + iⱼ)]',

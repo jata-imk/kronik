@@ -61,6 +61,24 @@ test('la simulación anterior reproduce las fechas congeladas tras otra publicac
         ->assertJsonMissingPath('calendario_crediticio');
 });
 
+test('el diagnóstico distingue el fin de mes nominal del cierre ajustado de intereses', function () {
+    $calendario = app(CalendarioCrediticioService::class);
+    $publicada = $calendario->guardar(null, ['configuracion' => $this->plantilla], $this->actor);
+    $calendario->publicar($publicada, 1, $this->actor);
+    $datos = productoPayload();
+    $datos['version']['reglas']['ajuste_dia_inhabil'] = 'siguiente_habil';
+    $producto = app(ProductoVersionService::class)->crear($datos, $this->actor->id)->versiones()->sole();
+
+    $simulacion = app(SimuladorCreditoSimple::class)->simular(
+        $producto, '12000', PeriodicidadCredito::Mensual, 3, MetodoAmortizacion::CapitalFijo,
+        CarbonImmutable::parse('2026-01-31'), incluirFormula: true,
+    );
+
+    expect($simulacion['tabla'][1])->toMatchArray(['fecha_original' => '2026-02-28', 'fecha' => '2026-03-02', 'dias' => 30])
+        ->and($simulacion['tabla'][2]['fecha'])->toBe('2026-03-31')
+        ->and($simulacion['formula_debug']['calendario'])->toContain('fechas nominales', 'cierre del periodo de interés ordinario');
+});
+
 test('el CAT de pago único conserva el empate decimal al redondear', function () {
     $cat = app(CatInformativoService::class);
     expect($cat->calcular('10000.00', ['10005.00'], PeriodicidadCredito::Mensual, 360))->toBe('0.1')

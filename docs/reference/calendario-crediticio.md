@@ -38,6 +38,8 @@ mensuales, en cuota nivelada, capital fijo y ambas políticas Bullet.
 
 El motor obtiene las fechas nominales antes de mover cada cierre, conserva las
 anclas siguientes y calcula el periodo con días reales entre fechas ajustadas.
+El diagnóstico del simulador identifica tanto el ancla nominal como el cierre
+de interés ordinario que usa el cálculo.
 Valida cobertura para las fechas consultadas y exige vencimientos crecientes.
 El atraso comienza al día civil siguiente si queda una obligación impaga.
 La gracia conserva sus días naturales y la política de mora del producto.

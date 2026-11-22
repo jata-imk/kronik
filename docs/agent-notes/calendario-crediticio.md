@@ -65,8 +65,14 @@ consulta. Playwright MCP reprodujo la previa del 14 al 17 de noviembre.
   comprobó la previa con teclado y la vista móvil en tema oscuro.
 - La ejecución local dirigida de calendario, originación y menú aprobó 23
   pruebas y 504 aserciones sobre la base actualizada.
+- Sobre `dbd4b99` aprobaron 1 013 pruebas backend, 48 011 aserciones y
+  207 pruebas frontend. Dos pruebas backend se omitieron. También aprobó
+  Chromium para la previa, el editor y la publicación.
 - El intento de CI `44458919363` agotó el tiempo de la prueba de aprobación
   dual después del desembolso. Su reintento reutilizó la solicitud desembolsada.
   El recorrido local posterior aprobó en 2.7 minutos con SQLite nueva y sin
   reintentos. Cubrió formalización, desembolso, pago, reverso, anticipo y
   liquidación.
+- La revisión medium corrigió el diagnóstico de fórmula del simulador. El
+  caso mensual verifica el ancla nominal del 28 de febrero, el cierre ajustado
+  del 2 de marzo y el siguiente vencimiento del 31 de marzo.
