@@ -140,11 +140,11 @@ Route::middleware([
     Route::prefix('productos-crediticios/calendario')->name('productos-crediticios.calendario.')
         ->controller(\App\Http\Controllers\CalendarioCrediticioController::class)->group(function () {
             Route::get('/', 'index')->name('index');
-            Route::get('/{version}', 'show')->whereNumber('version')->name('show');
+            Route::get('/{versionCalendario}', 'show')->whereNumber('versionCalendario')->name('show');
             Route::post('/', 'store')->name('store');
-            Route::put('/{version}', 'update')->whereNumber('version')->name('update');
-            Route::post('/{version}/previa', 'previa')->whereNumber('version')->name('previa');
-            Route::post('/{version}/publicar', 'publicar')->whereNumber('version')->name('publicar');
+            Route::put('/{versionCalendario}', 'update')->whereNumber('versionCalendario')->name('update');
+            Route::post('/{versionCalendario}/previa', 'previa')->whereNumber('versionCalendario')->name('previa');
+            Route::post('/{versionCalendario}/publicar', 'publicar')->whereNumber('versionCalendario')->name('publicar');
         });
 
     Route::get('productos-crediticios', [ProductoCrediticioController::class, 'index'])->name('productos-crediticios.index');

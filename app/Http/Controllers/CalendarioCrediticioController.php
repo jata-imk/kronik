@@ -21,11 +21,11 @@ final class CalendarioCrediticioController extends Controller
         return $this->pagina($request, $calendario, null);
     }
 
-    public function show(Request $request, CalendarioCrediticioService $calendario, string $version)
+    public function show(Request $request, CalendarioCrediticioService $calendario, string $versionCalendario)
     {
         Gate::authorize(CalendarioCrediticioService::CONSULTAR);
 
-        return $this->pagina($request, $calendario, CalendarioCrediticioVersion::findOrFail($version));
+        return $this->pagina($request, $calendario, CalendarioCrediticioVersion::findOrFail($versionCalendario));
     }
 
     public function store(GuardarCalendarioCrediticioRequest $request, CalendarioCrediticioService $calendario)
@@ -43,10 +43,10 @@ final class CalendarioCrediticioController extends Controller
         return to_route('productos-crediticios.calendario.show', $version);
     }
 
-    public function publicar(Request $request, CalendarioCrediticioService $calendario, string $version)
+    public function publicar(Request $request, CalendarioCrediticioService $calendario, string $versionCalendario)
     {
         abort_unless($request->user()->is_super_admin, 403);
-        $version = CalendarioCrediticioVersion::findOrFail($version);
+        $version = CalendarioCrediticioVersion::findOrFail($versionCalendario);
         $datos = $request->validate(['revision' => ['required', 'integer', 'min:1']]);
         $calendario->publicar($version, $datos['revision'], $request->user());
 

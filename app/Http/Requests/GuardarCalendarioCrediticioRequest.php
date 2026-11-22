@@ -16,7 +16,7 @@ final class GuardarCalendarioCrediticioRequest extends FormRequest
         if (! $this->user()->can(CalendarioCrediticioService::CONSULTAR) || ! $this->user()->can(CalendarioCrediticioService::EDITAR)) {
             return false;
         }
-        if (($id = $this->route('version')) !== null) {
+        if (($id = $this->route('versionCalendario')) !== null) {
             $this->versionCalendario = CalendarioCrediticioVersion::findOrFail($id);
         }
 

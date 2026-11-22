@@ -1,9 +1,14 @@
 <script setup>
+import { useToast } from "primevue/usetoast";
+import { nextTick, ref } from "vue";
 import { useGuardedForm } from "@/Composables/useGuardedForm";
 import { confirmFormDiscard } from "@/Utils/unsavedChanges";
 
 const props = defineProps({ version: Object, plantilla: Object, hoy: String, readonly: Boolean });
 const emit = defineEmits(["guardado"]);
+const toast = useToast();
+const editor = ref(null);
+const resumenErrores = ref(null);
 const copia = (dato) => JSON.parse(JSON.stringify(dato));
 const form = useGuardedForm({
     revision: props.version?.publicada_en ? undefined : props.version?.revision,
@@ -32,21 +37,39 @@ function agregar(clave) {
 
 function quitar(clave, indice) {
     form.configuracion[clave].splice(indice, 1);
-    limpiarErroresDe(`configuracion.${clave}.`);
+    const prefijo = `configuracion.${clave}.`;
+    const movidos = {};
+    for (const [campo, mensaje] of Object.entries(form.errors)) {
+        if (!campo.startsWith(prefijo)) continue;
+        const [posicion, ...resto] = campo.slice(prefijo.length).split(".");
+        const fila = Number(posicion);
+        if (!Number.isInteger(fila) || fila < indice) continue;
+        form.clearErrors(campo);
+        if (fila > indice) movidos[[`configuracion.${clave}`, fila - 1, ...resto].join(".")] = mensaje;
+    }
+    form.setError(movidos);
+}
+
+async function mostrarErrores() {
+    await nextTick();
+    const campo = editor.value?.querySelector('[aria-invalid="true"]') ?? resumenErrores.value;
+    campo?.focus();
+    toast.add({ severity: "error", summary: "Revisa la configuración del calendario", life: 5000 });
 }
 
 function guardar() {
     if (props.readonly || form.processing) return;
+    const opciones = { onSuccess: () => emit("guardado"), onError: mostrarErrores };
     if (props.version && !props.version.publicada_en) {
-        form.put(route("productos-crediticios.calendario.update", props.version.id), { onSuccess: () => emit("guardado") });
+        form.put(route("productos-crediticios.calendario.update", props.version.id), opciones);
     } else {
-        form.post(route("productos-crediticios.calendario.store"), { onSuccess: () => emit("guardado") });
+        form.post(route("productos-crediticios.calendario.store"), opciones);
     }
 }
 </script>
 
 <template>
-    <form class="space-y-5" @submit.prevent="guardar">
+    <form ref="editor" class="space-y-5" @submit.prevent="guardar">
         <Button v-if="!readonly && plantilla" type="button" label="Cargar plantilla CNBV 2026" icon="pi pi-download" severity="secondary" outlined
             @click="cargarPlantilla" />
         <p v-if="!readonly" id="cal-formato-fecha" class="text-sm text-surface-600 dark:text-surface-300">Escribe las fechas en formato AAAA-MM-DD.</p>
@@ -86,7 +109,7 @@ function guardar() {
                 </AccordionContent>
             </AccordionPanel>
         </Accordion>
-        <div v-if="form.hasErrors" aria-live="polite">
+        <div v-if="form.hasErrors" ref="resumenErrores" tabindex="-1" aria-live="polite">
             <Message v-for="(mensaje, campo) in form.errors" :key="campo" severity="error" class="mb-2">{{ mensaje }}</Message>
         </div>
         <Button v-if="!readonly" type="submit" label="Guardar borrador" icon="pi pi-save" :loading="form.processing" />

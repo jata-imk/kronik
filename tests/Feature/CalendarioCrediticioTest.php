@@ -85,7 +85,15 @@ test('oculta los borradores reservados antes de validar la previa', function () 
     $contexto = app(\App\Services\TeamContext::class);
     $contexto->run($usuario, $equipo, function () use ($destinos, $usuario, $borrador) {
         expect($destinos->permitido('productos-crediticios.calendario.index', [], $usuario))->toBeTrue()
-            ->and($destinos->permitido('productos-crediticios.calendario.show', ['version' => $borrador->id], $usuario))->toBeFalse();
+            ->and($destinos->permitido('productos-crediticios.calendario.show', ['versionCalendario' => $borrador->id], $usuario))->toBeFalse();
+    });
+
+    app(CalendarioCrediticioService::class)->publicar($borrador, 1, $this->actor);
+    $contexto->run($usuario, $equipo, function () use ($destinos, $usuario, $borrador) {
+        $ruta = app('router')->getRoutes()->getByName('productos-crediticios.calendario.show');
+        expect($ruta->parameterNames())->toBe(['versionCalendario'])
+            ->and($destinos->permitido($ruta->getName(), ['version' => $borrador->id], $usuario))->toBeFalse()
+            ->and($destinos->permitido($ruta->getName(), ['versionCalendario' => $borrador->id], $usuario))->toBeTrue();
     });
 });
 

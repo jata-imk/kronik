@@ -19,7 +19,7 @@ final class PreviaCalendarioCrediticioRequest extends FormRequest
         if (! $this->user()->can(CalendarioCrediticioService::CONSULTAR)) {
             return false;
         }
-        $this->versionCalendario = CalendarioCrediticioVersion::findOrFail($this->route('version'));
+        $this->versionCalendario = CalendarioCrediticioVersion::findOrFail($this->route('versionCalendario'));
         abort_if(! $this->versionCalendario->publicada_en && ! $this->user()->can(CalendarioCrediticioService::EDITAR), 404);
 
         return true;
