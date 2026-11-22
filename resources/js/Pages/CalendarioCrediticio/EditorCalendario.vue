@@ -20,7 +20,15 @@ defineExpose({ confirmarSalida: () => props.readonly || confirmFormDiscard(form)
 const semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map((texto, indice) => ({ texto, dia: indice + 1 }));
 const grupos = [{ clave: "feriados", titulo: "Feriados" }, { clave: "excepciones", titulo: "Excepciones de apertura o cierre" }];
 const tipos = [{ texto: "Apertura", habil: true }, { texto: "Cierre", habil: false }];
-const normalizarFecha = fecha => fecha?.trim() ?? "";
+// TrimStrings de Laravel también retira caracteres invisibles en los bordes.
+const bordeFecha = "[\\p{White_Space}\\0\\u00AD\\u034F\\u061C\\u115F\\u1160\\u17B4-\\u17B5\\u180E\\u200B-\\u200F\\u2060-\\u206F\\u2800\\u3164\\uFEFF\\uFFA0\\u{1D159}\\u{1D173}-\\u{1D17A}\\u{E0020}]";
+const bordesFecha = new RegExp("^" + bordeFecha + "+|" + bordeFecha + "+$", "gu");
+function normalizarFecha(valor) {
+    const fecha = (valor ?? "").replace(bordesFecha, "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return "";
+    const dia = new Date(fecha + "T00:00:00Z");
+    return Number.isFinite(dia.getTime()) && dia.toISOString().slice(0, 10) === fecha ? fecha : "";
+}
 const fechasRepetidas = computed(() => Object.fromEntries(grupos.map(({ clave }) => {
     const conteo = new Map();
     for (const fila of form.configuracion[clave]) {

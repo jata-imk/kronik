@@ -76,6 +76,11 @@ final class GuardarCalendarioCrediticioRequest extends FormRequest
     {
         return [function (Validator $validator) {
             $configuracion = $this->input('configuracion');
+            $errores = $validator->errors();
+            $desde = data_get($configuracion, 'desde');
+            $hasta = data_get($configuracion, 'hasta');
+            $coberturaValida = is_string($desde) && is_string($hasta)
+                && ! $errores->hasAny(['configuracion.desde', 'configuracion.hasta']);
             foreach (['feriados', 'excepciones'] as $campo) {
                 $filas = data_get($configuracion, $campo);
                 if (! is_array($filas)) {
@@ -84,23 +89,17 @@ final class GuardarCalendarioCrediticioRequest extends FormRequest
                 $fechas = [];
                 foreach ($filas as $indice => $fila) {
                     $fecha = data_get($fila, 'fecha');
-                    if (is_string($fecha) && ! $validator->errors()->has("configuracion.{$campo}.{$indice}.fecha")) {
-                        $fechas[] = $fecha;
+                    $atributo = "configuracion.{$campo}.{$indice}.fecha";
+                    if (! is_string($fecha) || $errores->has($atributo)) {
+                        continue;
+                    }
+                    $fechas[] = $fecha;
+                    if ($coberturaValida && ($fecha < $desde || $fecha > $hasta)) {
+                        $errores->add($atributo, 'La fecha debe estar dentro de la cobertura revisada.');
                     }
                 }
                 if (count($fechas) !== count(array_unique($fechas))) {
-                    $validator->errors()->add("configuracion.{$campo}.fechas_repetidas", "Hay fechas repetidas en {$campo}. Usa una fecha distinta en cada fila.");
-                }
-            }
-
-            if ($validator->errors()->isNotEmpty()) {
-                return;
-            }
-            foreach (['feriados', 'excepciones'] as $campo) {
-                foreach ($configuracion[$campo] as $indice => $dia) {
-                    if ($dia['fecha'] < $configuracion['desde'] || $dia['fecha'] > $configuracion['hasta']) {
-                        $validator->errors()->add("configuracion.{$campo}.{$indice}.fecha", 'La fecha debe estar dentro de la cobertura revisada.');
-                    }
+                    $errores->add("configuracion.{$campo}.fechas_repetidas", "Hay fechas repetidas en {$campo}. Usa una fecha distinta en cada fila.");
                 }
             }
         }];

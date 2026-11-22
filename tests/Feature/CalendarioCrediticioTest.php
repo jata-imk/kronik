@@ -109,8 +109,11 @@ test('expone el nombre de negocio de un feriado incompleto', function () {
 test('identifica fechas repetidas sin mezclar feriados con excepciones', function () {
     $configuracion = $this->plantilla;
     $configuracion['feriados'][] = $configuracion['feriados'][0];
+    $configuracion['excepciones'] = [['fecha' => '2027-01-01', 'nombre' => 'Fuera de cobertura', 'habil' => true]];
     $this->postJson(route('productos-crediticios.calendario.store'), ['configuracion' => [...$configuracion, 'fuente' => '']])
-        ->assertUnprocessable()->assertJsonValidationErrors(['configuracion.fuente', 'configuracion.feriados.fechas_repetidas']);
+        ->assertUnprocessable()->assertJsonValidationErrors([
+            'configuracion.fuente', 'configuracion.feriados.fechas_repetidas', 'configuracion.excepciones.0.fecha',
+        ]);
 
     $configuracion['excepciones'] = [[...array_pop($configuracion['feriados']), 'habil' => true]];
     $this->post(route('productos-crediticios.calendario.store'), ['configuracion' => $configuracion])
