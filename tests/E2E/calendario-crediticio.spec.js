@@ -10,6 +10,9 @@ test("publica la plantilla y compara vencimientos con teclado y en móvil", asyn
     await page.getByRole("button", { name: "Cargar plantilla CNBV 2026" }).click();
     await page.getByLabel("Cobertura hasta").fill("2027-01-01");
     await page.getByLabel("Cobertura hasta").press("Tab");
+    page.once("dialog", aviso => aviso.dismiss());
+    await page.getByRole("dialog", { name: "Nuevo borrador" }).getByRole("button", { name: /^(Cerrar|Close)$/i }).click();
+    await expect(page.getByLabel("Cobertura hasta")).toHaveValue("2027-01-01");
     await page.getByRole("button", { name: "Guardar borrador" }).click();
     await expect(page).toHaveURL(/calendario\/\d+$/);
     await page.getByRole("button", { name: "Publicar", exact: true }).click();

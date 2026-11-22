@@ -22,6 +22,8 @@ es una fuente anual editable en borrador. Cada instalación revisa su aplicabili
   El acceso a la configuración del menú contextual requiere permiso de
   lectura de menús o Super Admin global. Los enlaces contextuales autorizados
   siguen visibles para usuarios que consultan el calendario.
+- Al cerrar un editor con cambios sin guardar se puede cancelar el descarte
+  para conservar la captura.
 - Ejecutar la migración y actualizar el catálogo de permisos y menú mediante
   `ModulesAndPermissionsSeeder` y `MenubarItemsSeeder` en el orden habitual.
   La navegación del menú mantiene sus activaciones configurables. El reinicio
