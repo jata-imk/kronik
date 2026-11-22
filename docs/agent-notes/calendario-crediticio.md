@@ -54,3 +54,19 @@ consulta. Playwright MCP reprodujo la previa del 14 al 17 de noviembre.
 - El recorrido de originación compara el paquete con una revisión sintética
   cuyo CAT aprobado difiere del cálculo actual. Prueba el valor conservado
   durante la formalización en ambas políticas Bullet.
+
+## 21/11/2026
+
+- La base de ambas PR incorpora `da529b2`. Calendario tiene destinos propios en
+  el menú contextual. El permiso de consulta admite las publicaciones y el
+  acceso a un borrador exige permiso de edición sobre el equipo activo.
+- Chromium confirmó que cancelar el descarte conserva la cobertura capturada
+  y que luego se puede guardar y publicar el borrador. El recorrido también
+  comprobó la previa con teclado y la vista móvil en tema oscuro.
+- La ejecución local dirigida de calendario, originación y menú aprobó 23
+  pruebas y 504 aserciones sobre la base actualizada.
+- El intento de CI `44458919363` agotó el tiempo de la prueba de aprobación
+  dual después del desembolso. Su reintento reutilizó la solicitud desembolsada.
+  El recorrido local posterior aprobó en 2.7 minutos con SQLite nueva y sin
+  reintentos. Cubrió formalización, desembolso, pago, reverso, anticipo y
+  liquidación.
