@@ -1,6 +1,5 @@
 <script setup>
 import { reactive, toRef } from "vue";
-import { formatDateOnly, parseDateOnly } from "@/Utils/date";
 import { usePreviaCalendarioCrediticio } from "@/Composables/usePreviaCalendarioCrediticio";
 
 const props = defineProps({ version: Object });
@@ -25,7 +24,7 @@ const monedas = new Intl.NumberFormat("es-MX", { style: "currency", currency: "M
         <form class="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-3" @submit.prevent="calcular">
             <div>
                 <label for="ejemplo-inicio" class="mb-1 block font-medium">Fecha de disposición</label>
-                <DatePicker input-id="ejemplo-inicio" :model-value="parseDateOnly(escenario.inicio)" @update:model-value="escenario.inicio = formatDateOnly($event)" date-format="yy-mm-dd" fluid />
+                <InputText id="ejemplo-inicio" v-model="escenario.inicio" placeholder="AAAA-MM-DD" fluid />
             </div>
             <div>
                 <label for="ejemplo-periodicidad" class="mb-1 block font-medium">Periodicidad</label>

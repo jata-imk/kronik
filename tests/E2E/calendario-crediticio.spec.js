@@ -8,6 +8,10 @@ test("publica la plantilla y compara vencimientos con teclado y en móvil", asyn
     await expect(page.getByRole("heading", { name: "Calendario crediticio", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "Nuevo borrador" }).click();
     await page.getByRole("button", { name: "Cargar plantilla CNBV 2026" }).click();
+    await page.getByLabel("Cobertura hasta").fill("2026-02-30");
+    await page.getByLabel("Cobertura hasta").press("Enter");
+    await expect(page.getByText(/fin de cobertura.*ser una fecha válida/)).toBeVisible();
+    await expect(page.getByLabel("Cobertura hasta")).toHaveValue("2026-02-30");
     await page.getByLabel("Cobertura hasta").fill("2027-01-01");
     await page.getByLabel("Cobertura hasta").press("Tab");
     page.once("dialog", aviso => aviso.dismiss());

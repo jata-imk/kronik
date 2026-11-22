@@ -3,21 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\GuardarCalendarioCrediticioRequest;
+use App\Http\Requests\PreviaCalendarioCrediticioRequest;
 use App\Models\CalendarioCrediticioVersion;
 use App\Services\Credito\CalendarioCrediticioService;
+use App\Services\Credito\PreviaCalendarioCrediticio;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 final class CalendarioCrediticioController extends Controller
 {
     public function index(Request $request, CalendarioCrediticioService $calendario)
     {
+        Gate::authorize(CalendarioCrediticioService::CONSULTAR);
+
         return $this->pagina($request, $calendario, null);
     }
 
-    public function show(Request $request, CalendarioCrediticioService $calendario, CalendarioCrediticioVersion $version)
+    public function show(Request $request, CalendarioCrediticioService $calendario, string $version)
     {
-        return $this->pagina($request, $calendario, $version);
+        Gate::authorize(CalendarioCrediticioService::CONSULTAR);
+
+        return $this->pagina($request, $calendario, CalendarioCrediticioVersion::findOrFail($version));
     }
 
     public function store(GuardarCalendarioCrediticioRequest $request, CalendarioCrediticioService $calendario)
@@ -45,10 +53,11 @@ final class CalendarioCrediticioController extends Controller
         return to_route('productos-crediticios.calendario.show', $version);
     }
 
-    public function previa(\App\Http\Requests\PreviaCalendarioCrediticioRequest $request, CalendarioCrediticioVersion $version, \App\Services\Credito\PreviaCalendarioCrediticio $previa)
+    public function previa(PreviaCalendarioCrediticioRequest $request, PreviaCalendarioCrediticio $previa)
     {
+        $version = $request->versionCalendario();
         if ($version->revision !== (int) $request->validated('revision')) {
-            throw \Illuminate\Validation\ValidationException::withMessages(['revision' => 'El borrador cambió. Vuelve a abrir esta versión para calcular con las fechas actualizadas.']);
+            throw ValidationException::withMessages(['revision' => 'El borrador cambió. Vuelve a abrir esta versión para calcular con las fechas actualizadas.']);
         }
 
         return response()->json($previa->calcular($version, $request->validated()));
@@ -57,7 +66,6 @@ final class CalendarioCrediticioController extends Controller
     private function pagina(Request $request, CalendarioCrediticioService $calendario, ?CalendarioCrediticioVersion $version)
     {
         $actor = $request->user();
-        \Illuminate\Support\Facades\Gate::authorize(CalendarioCrediticioService::CONSULTAR);
         $edita = $actor->can(CalendarioCrediticioService::EDITAR);
         abort_if($version && ! $version->publicada_en && ! $edita, 404);
         $vigente = $calendario->vigente();

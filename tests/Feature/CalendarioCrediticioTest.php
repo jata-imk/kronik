@@ -65,12 +65,18 @@ test('oculta los borradores reservados antes de validar la previa', function () 
     $usuario = \App\Models\User::factory()->withPersonalTeam()->create();
     $equipo = $usuario->ownedTeams()->sole();
     $usuario->forceFill(['current_team_id' => $equipo->id])->save();
-    grantTeamPermissions($usuario, $equipo, [CalendarioCrediticioService::CONSULTAR]);
     $this->actingAs($usuario);
 
+    foreach ([$borrador->id, $borrador->id + 1] as $id) {
+        $this->get(route('productos-crediticios.calendario.show', $id))->assertForbidden();
+        $this->postJson(route('productos-crediticios.calendario.previa', $id), [])->assertForbidden();
+    }
+
+    grantTeamPermissions($usuario, $equipo, [CalendarioCrediticioService::CONSULTAR]);
     $this->postJson(route('productos-crediticios.calendario.previa', $borrador), [])->assertNotFound();
     $this->postJson(route('productos-crediticios.calendario.previa', $borrador->id + 1), [])->assertNotFound();
     foreach ([$borrador->id, $borrador->id + 1] as $id) {
+        $this->get(route('productos-crediticios.calendario.show', $id))->assertNotFound();
         $this->putJson(route('productos-crediticios.calendario.update', $id), [])->assertForbidden();
         $this->postJson(route('productos-crediticios.calendario.publicar', $id), [])->assertForbidden();
     }

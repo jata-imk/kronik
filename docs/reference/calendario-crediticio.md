@@ -25,6 +25,8 @@ es una fuente anual editable en borrador. Cada instalación revisa su aplicabili
   siguen visibles para usuarios que consultan el calendario.
 - Al cerrar un editor con cambios sin guardar se puede cancelar el descarte
   para conservar la captura.
+- El editor y la previa reciben fechas con formato `AAAA-MM-DD`. Si la fecha
+  es inválida, el servidor muestra el error y conserva la captura para corregirla.
 - Ejecutar la migración y actualizar el catálogo de permisos y menú mediante
   `ModulesAndPermissionsSeeder` y `MenubarItemsSeeder` en el orden habitual.
   La navegación del menú mantiene sus activaciones configurables. El reinicio
