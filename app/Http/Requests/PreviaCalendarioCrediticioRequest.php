@@ -12,16 +12,22 @@ use Illuminate\Validation\Rule;
 
 final class PreviaCalendarioCrediticioRequest extends FormRequest
 {
+    private CalendarioCrediticioVersion $versionCalendario;
+
     public function authorize(): bool
     {
         if (! $this->user()->can(CalendarioCrediticioService::CONSULTAR)) {
             return false;
         }
-        $version = $this->route('version');
-        abort_unless($version instanceof CalendarioCrediticioVersion, 404);
-        abort_if(! $version->publicada_en && ! $this->user()->can(CalendarioCrediticioService::EDITAR), 404);
+        $this->versionCalendario = CalendarioCrediticioVersion::findOrFail($this->route('version'));
+        abort_if(! $this->versionCalendario->publicada_en && ! $this->user()->can(CalendarioCrediticioService::EDITAR), 404);
 
         return true;
+    }
+
+    public function versionCalendario(): CalendarioCrediticioVersion
+    {
+        return $this->versionCalendario;
     }
 
     public function rules(): array
