@@ -12,6 +12,9 @@
         <p>Fiscalidad no definida. Los importes siguientes son anteriores a impuestos; esto no significa exención ni tasa cero. No autoriza firma, desembolso ni cobro.</p>
     @endif
     <p>Condiciones y simulación conservadas de la revisión {{ $snapshot['revision_id'] }}. La disposición indicada es una fecha estimada, no un movimiento realizado.</p>
+    @if (isset($snapshot['tabla']['calendario_crediticio']['version_id']))
+        <p>Calendario crediticio, versión {{ $snapshot['tabla']['calendario_crediticio']['version_id'] }}. Cuando la fecha original es inhábil, el vencimiento y el cierre del periodo se trasladan al siguiente día hábil.</p>
+    @endif
     <p>Monto: ${{ number_format((float) $snapshot['tabla']['monto'], 2) }} MXN · {{ $snapshot['tabla']['plazo'] }} periodos · {{ $snapshot['tabla']['periodicidad'] }} · {{ $snapshot['tabla']['metodo'] }}</p>
     <p>Destino: {{ $snapshot['condiciones']['destino'] }}</p>
     <p>Producto versión {{ $snapshot['producto']['numero'] }} · Tasa ordinaria anual: {{ $snapshot['producto']['tasa_ordinaria_anual'] }}% · Tasa moratoria anual: {{ $snapshot['producto']['tasa_moratoria_anual'] }}% · Días de gracia configurados: {{ $snapshot['producto']['dias_gracia_mora'] }}.</p>
@@ -65,7 +68,12 @@
         @foreach ($snapshot['tabla']['tabla'] as $fila)
             <tr style="page-break-inside:avoid">
                 <td style="padding:5px; border-bottom:1px solid #ddd">{{ $fila['numero'] === 0 ? 'Disposición estimada' : $fila['numero'] }}</td>
-                <td>{{ $fila['fecha'] }}</td>
+                <td>
+                    {{ $fila['fecha'] }}
+                    @if (isset($fila['fecha_original']) && $fila['fecha_original'] !== $fila['fecha'])
+                        <br><small>Original: {{ $fila['fecha_original'] }}</small>
+                    @endif
+                </td>
                 @foreach (['capital', 'interes', 'comisiones', ...($conImpuestos ? ['impuestos'] : []), 'pago_total', 'saldo_final'] as $campo)
                     <td style="text-align:right">${{ number_format((float) $fila[$campo], 2) }}</td>
                 @endforeach

@@ -60,6 +60,7 @@ class ProductoVersionService
             if (! array_key_exists('politica_mora', $data['version'])) {
                 $data['version']['politica_mora'] = $version->politica_mora;
             }
+            $data['version']['reglas']['ajuste_dia_inhabil'] ??= $version->reglas?->ajuste_dia_inhabil ?? 'sin_ajuste';
             \App\Services\Credito\CapacidadesProducto::validar($data['version'], \App\Enums\VersionMotorCredito::actual(), 'version.', configuracion: true);
             PoliticaMora::validate($data['version']);
             $before = [$this->contenidoVersion($version), $version->vigente_desde?->toDateString()];
@@ -217,7 +218,7 @@ class ProductoVersionService
 
     private function camposReglas(array $data): array
     {
-        return [...Arr::only($data, ['metodos_amortizacion', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago']), 'convencion_interes' => \App\Enums\ConvencionInteres::desdeReglas($data)->value, 'base_ordinaria' => $data['base_ordinaria'] ?? 'saldo_insoluto', 'politica_interes_bullet' => $data['politica_interes_bullet'] ?? null, 'base_moratoria' => $data['base_moratoria'] ?? 'capital_vencido', 'ajuste_dia_inhabil' => 'sin_ajuste', 'redondeo' => 'half_up'];
+        return [...Arr::only($data, ['metodos_amortizacion', 'permite_prepago_parcial', 'permite_liquidacion_anticipada', 'monto_minimo_prepago', 'aplicacion_prepago']), 'convencion_interes' => \App\Enums\ConvencionInteres::desdeReglas($data)->value, 'base_ordinaria' => $data['base_ordinaria'] ?? 'saldo_insoluto', 'politica_interes_bullet' => $data['politica_interes_bullet'] ?? null, 'base_moratoria' => $data['base_moratoria'] ?? 'capital_vencido', 'ajuste_dia_inhabil' => $data['ajuste_dia_inhabil'] ?? 'sin_ajuste', 'redondeo' => 'half_up'];
     }
 
     private function reglasVersion(ProductoVersion $version): array

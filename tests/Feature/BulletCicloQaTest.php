@@ -2,10 +2,13 @@
 
 use App\Enums\ActivityEvent;
 use App\Models\Activity;
+use App\Models\ConceptoComision;
 use App\Services\Credito\DesembolsoService;
 use App\Services\Credito\PagoService;
+use App\Services\FechaEmpresa;
 use App\Services\ProductoVersionService;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -46,13 +49,51 @@ function operacionBulletQa($test, $credito, string $tipo, string $importe, strin
     return [$data, $preview];
 }
 
+test('el paquete sin ajuste conserva el CAT informado en una revisión histórica', function () {
+    $actor = actingAsSuperAdmin();
+    $this->actingAs($actor);
+    $version = BulletScenario::producto($actor, 'al_vencimiento');
+    $solicitud = BulletScenario::aprobar(BulletScenario::solicitud($actor, $version), $actor, function ($revision) {
+        $snapshot = $revision->snapshot;
+        $snapshot['simulacion_informativa']['cat'] = '26.0';
+        $json = json_encode($snapshot, JSON_THROW_ON_ERROR);
+        DB::table('solicitud_revisiones')->where('id', $revision->id)->update([
+            'snapshot' => $json, 'snapshot_hash' => hash('sha256', $json),
+        ]);
+    });
+
+    $paquete = BulletScenario::formalizar($solicitud, $actor);
+    expect($paquete->snapshot['tabla']['cat'])->toBe('26.0');
+});
+
+test('el paquete reproduce el CAT aprobado que supera el límite de la búsqueda histórica', function () {
+    $actor = actingAsSuperAdmin();
+    $this->actingAs($actor);
+    $version = BulletScenario::producto($actor, 'al_vencimiento', activar: false);
+    $concepto = ConceptoComision::create(['clave' => 'PRUEBA', 'nombre' => 'Comisión sintética', 'activo' => true]);
+    $version->comisiones()->create([
+        'concepto_comision_id' => $concepto->id, 'tipo_importe' => 'fijo', 'importe' => '11990',
+        'base_calculo' => 'no_aplica', 'momento_cobro' => 'desembolso_descuento',
+        'obligatoria' => true, 'incluye_cat' => true, 'fiscalidad' => ['tratamiento' => 'no_causa'],
+    ]);
+    $version = app(ProductoVersionService::class)->activar($version, app(FechaEmpresa::class)->hoy()->toDateString());
+    $solicitud = BulletScenario::solicitud($actor, $version);
+    $solicitud->update(['plazo' => 1]);
+    $solicitud = BulletScenario::aprobar($solicitud->fresh(), $actor);
+    $simulacion = $solicitud->revisiones()->sole()->snapshot['simulacion_informativa'];
+
+    $paquete = BulletScenario::formalizar($solicitud, $actor);
+    expect($simulacion['monto_recibido_cat'])->toBe('10.00')
+        ->and($paquete->snapshot['tabla']['cat'])->toBe($simulacion['cat']);
+});
+
 test('ciclo QA conserva política tabla CAT firma crédito anticipos liquidación y auditoría', function (string $politica, string $base) {
     [$actor, $credito, $version, $paquete, $desembolso] = originarBulletQa($this, $politica, $base);
     $tabla = $paquete->snapshot['tabla'];
     expect(array_column(array_slice($tabla['tabla'], 1), 'pago_total'))->toBe($politica === 'periodicos' ? ['248.00', '12224.00'] : ['0.00', '12472.00'])
         ->and($tabla['politica_interes_bullet'])->toBe($politica)
-        // Independent quadratic/root calculation of the two monthly cash flows.
-        ->and($tabla['cat'])->toBe($politica === 'periodicos' ? '26.3' : '26.0')
+        // Dos pagos con CAT mensual o un solo pago de 12,472 a 59 días.
+        ->and($tabla['cat'])->toBe($politica === 'periodicos' ? '26.3' : '26.5')
         ->and($credito->condiciones['producto'])->toBe($paquete->snapshot['producto'])
         ->and($credito->cronogramas()->sole()->snapshot)->toBe($tabla)
         ->and($paquete->formalizacion->snapshot['paquete_hash'])->toBe($paquete->snapshot_hash);

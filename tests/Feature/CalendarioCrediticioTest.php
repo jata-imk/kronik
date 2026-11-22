@@ -106,6 +106,16 @@ test('expone el nombre de negocio de un feriado incompleto', function () {
         ->toBe(['El campo nombre del feriado es obligatorio.']);
 });
 
+test('la publicación revierte la versión si falla la auditoría', function () {
+    $version = app(CalendarioCrediticioService::class)->guardar(null, ['configuracion' => $this->plantilla], $this->actor);
+    $this->mock(\App\Services\ActivityLogService::class)->shouldReceive('log')->once()->andThrow(new RuntimeException('Fallo de auditoría'));
+
+    expect(fn () => app(CalendarioCrediticioService::class)->publicar($version, 1, $this->actor))
+        ->toThrow(RuntimeException::class, 'Fallo de auditoría');
+    expect($version->fresh()->publicada_en)->toBeNull()
+        ->and($version->fresh()->orden_publicacion)->toBeNull();
+});
+
 test('identifica fechas repetidas sin mezclar feriados con excepciones', function () {
     $configuracion = $this->plantilla;
     $configuracion['feriados'][] = $configuracion['feriados'][0];

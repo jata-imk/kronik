@@ -121,7 +121,7 @@ function publicar() {
                         :readonly="editorReadonly" @guardado="editor = null" />
                 </Dialog>
                 <Dialog v-model:visible="confirmacion" header="Publicar calendario" modal class="w-[min(94vw,32rem)]">
-                    <p>La versión pasará a ser la referencia institucional del catálogo. Podrás comparar su efecto en Ejemplos. La cobertura que estás publicando va del {{ version?.configuracion.desde }} al {{ version?.configuracion.hasta }}.</p>
+                    <p>La versión se aplicará en todas las sucursales a los nuevos envíos con la política Siguiente día hábil. Cada solicitud enviada conserva sus fechas. La cobertura que estás publicando va del {{ version?.configuracion.desde }} al {{ version?.configuracion.hasta }}.</p>
                     <template #footer>
                         <Button label="Cancelar" severity="secondary" text @click="confirmacion = false" />
                         <Button label="Publicar versión" :loading="publicacion.processing" @click="publicar" />

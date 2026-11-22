@@ -8,6 +8,7 @@ use App\Enums\PeriodicidadCredito;
 use App\Enums\PoliticaInteresBullet;
 use App\Enums\VersionMotorCredito;
 use App\Models\ProductoVersion;
+use App\Services\Credito\Convenciones\DiasReales360;
 use App\Support\Decimal;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
@@ -21,10 +22,11 @@ final class SimuladorCreditoSimple
         private readonly TablaAmortizacionCreditoSimple $amortizacion,
         private readonly ResolverComisionesCreditoSimple $resolverComisiones,
         private readonly ImpuestoConceptoService $impuestos,
+        private readonly CalendarioCrediticioService $calendarioCrediticio,
     ) {}
 
     /** @return array<string, mixed> */
-    public function simular(ProductoVersion $version, string $monto, PeriodicidadCredito $periodicidad, int $plazo, MetodoAmortizacion $metodo, CarbonImmutable $fecha, array $comisionesOpcionales = [], bool $incluirFormula = false, bool $incluirImpuestos = false): array
+    public function simular(ProductoVersion $version, string $monto, PeriodicidadCredito $periodicidad, int $plazo, MetodoAmortizacion $metodo, CarbonImmutable $fecha, array $comisionesOpcionales = [], bool $incluirFormula = false, bool $incluirImpuestos = false, ?array $calendarioCongelado = null, bool $reproducir = false, bool $calcularCat = true): array
     {
         $version->loadMissing(['periodicidades', 'reglas', 'comisiones.concepto']);
         $resolucion = $this->resolverComisiones->resolver($version, $comisionesOpcionales);
@@ -45,6 +47,27 @@ final class SimuladorCreditoSimple
 
         $fechas = $this->calendario->fechas($fecha, $periodicidad, $plazo);
         $motor = $this->versionMotor($version);
+        $ajuste = CapacidadesProducto::condiciones($version)['reglas']['ajuste_dia_inhabil'] ?? CalendarioCrediticioService::CONSERVAR;
+        $evidencia = null;
+        if ($ajuste !== CalendarioCrediticioService::CONSERVAR) {
+            if ($ajuste !== CalendarioCrediticioService::AJUSTAR || $motor !== VersionMotorCredito::Act360Racional) {
+                throw ValidationException::withMessages(['calendario' => 'La política de calendario no es compatible con esta versión de cálculo.']);
+            }
+            $evidencia = $calendarioCongelado;
+            if (! $reproducir) {
+                $publicada = $this->calendarioCrediticio->vigente();
+                if (! $publicada) {
+                    throw ValidationException::withMessages(['calendario' => 'Publica un calendario con cobertura revisada antes de aplicar el ajuste.']);
+                }
+                $evidencia = $this->calendarioCrediticio->ajustar($publicada, $fechas);
+            }
+            if (empty($evidencia['version_id']) || empty($evidencia['huella'])
+                || array_column($evidencia['fechas'] ?? [], 'fecha_original') !== array_map(fn ($dia) => $dia->toDateString(), $fechas)
+                || count(array_column($evidencia['fechas'], 'fecha')) !== count($fechas)) {
+                throw ValidationException::withMessages(['calendario' => 'Falta la evidencia del calendario ajustado de esta solicitud.']);
+            }
+            $fechas = array_map(fn ($dia) => CarbonImmutable::parse($dia['fecha'], $fecha->getTimezone()), $evidencia['fechas']);
+        }
         $convencion = $this->convencion($version);
         $politica = $this->politicaBullet($version, $metodo);
         $resultado = $this->amortizacion->calcular($saldoFinanciado, (string) $version->tasa_ordinaria_anual, $fecha, $fechas, $metodo, $motor, $convencion, $politica);
@@ -87,7 +110,10 @@ final class SimuladorCreditoSimple
                 'impuestos_detalle' => array_column($detalleInicial, 'fiscalidad')];
         }
 
-        foreach ($tabla as &$fila) {
+        foreach ($tabla as $indice => &$fila) {
+            if ($evidencia !== null) {
+                $fila['fecha_original'] = $evidencia['fechas'][$indice]['fecha_original'];
+            }
             $detalle = $this->detalle($cadaPago, $monto, $incluirImpuestos);
             $totalComisiones = array_reduce($detalle, fn (string $total, array $item) => Decimal::add($total, $item['importe']), '0');
             $totalCat = array_reduce($detalle, fn (string $total, array $item) => $item['incluye_cat'] ? Decimal::add($total, $item['importe']) : $total, '0');
@@ -112,9 +138,11 @@ final class SimuladorCreditoSimple
         }
         unset($fila);
 
-        [$montoRecibidoCat, $pagosCat] = $this->flujosCatBase($version, $monto, $periodicidad, $plazo, $metodo, $fecha, $resolucion['obligatorias']);
-        $cat = $version->cat_aplica
-            ? $this->catService->calcular($montoRecibidoCat, $pagosCat, $periodicidad)
+        [$montoRecibidoCat, $pagosCat] = $this->flujosCatBase($version, $monto, $metodo, $fecha, $resolucion['obligatorias'], $fechas);
+        $usaDiasRealesCat = $motor === VersionMotorCredito::Act360Racional && (! $reproducir || $evidencia !== null);
+        $cat = $calcularCat && $version->cat_aplica
+            ? $this->catService->calcular($montoRecibidoCat, $pagosCat, $periodicidad,
+                $usaDiasRealesCat ? (new DiasReales360)->dias($fecha, end($fechas)) : null)
             : null;
 
         $totalIntereses = $this->sumar($tabla, 'interes');
@@ -164,6 +192,14 @@ final class SimuladorCreditoSimple
             'tabla' => [$filaCero, ...array_map(fn (array $fila) => collect($fila)->except('pago_cat')->all(), $tabla)],
         ];
 
+        if ($evidencia !== null) {
+            $evidencia['fechas'] = array_map(
+                fn (array $dia) => ['fecha_original' => $dia['fecha_original'], 'fecha' => $dia['fecha']],
+                $evidencia['fechas'],
+            );
+            $respuesta['calendario_crediticio'] = ['politica' => $ajuste, ...$evidencia];
+        }
+
         $respuesta['fiscalidad'] = [
             'estado' => $incluirImpuestos ? 'proyeccion' : 'no_calculada',
             'uso' => $version->fiscalidad['uso'] ?? null,
@@ -184,7 +220,7 @@ final class SimuladorCreditoSimple
         }
 
         if ($incluirFormula) {
-            $respuesta['formula_debug'] = $this->formula($version, $saldoFinanciado, $resultado, $tabla);
+            $respuesta['formula_debug'] = $this->formula($version, $saldoFinanciado, $resultado, $tabla, $evidencia !== null);
         }
 
         return $respuesta;
@@ -252,12 +288,11 @@ final class SimuladorCreditoSimple
     }
 
     /** @return array{0: string, 1: array<int, string>} */
-    private function flujosCatBase(ProductoVersion $version, string $monto, PeriodicidadCredito $periodicidad, int $plazo, MetodoAmortizacion $metodo, CarbonImmutable $fecha, Collection $comisiones): array
+    private function flujosCatBase(ProductoVersion $version, string $monto, MetodoAmortizacion $metodo, CarbonImmutable $fecha, Collection $comisiones, array $fechas): array
     {
         $iniciales = $comisiones->filter->esInicial();
         $financiadas = $this->totalPorModalidad($iniciales, $monto, 'financiada');
         $saldo = Decimal::round(Decimal::add($monto, $financiadas));
-        $fechas = $this->calendario->fechas($fecha, $periodicidad, $plazo);
         $resultado = $this->amortizacion->calcular($saldo, (string) $version->tasa_ordinaria_anual, $fecha, $fechas, $metodo, $this->versionMotor($version), $this->convencion($version), $this->politicaBullet($version, $metodo));
         $cadaPago = $comisiones->where('momento_cobro', 'cada_pago');
         $pagos = array_map(function (array $fila) use ($cadaPago, $monto): string {
@@ -308,13 +343,17 @@ final class SimuladorCreditoSimple
         ];
     }
 
-    private function formula(ProductoVersion $version, string $saldoFinanciado, array $resultado, array $tabla): array
+    private function formula(ProductoVersion $version, string $saldoFinanciado, array $resultado, array $tabla, bool $usaCalendarioCrediticio): array
     {
         $politica = CapacidadesProducto::condiciones($version)['reglas']['politica_interes_bullet'] ?? null;
+        $calendario = 'Las fechas nominales se obtienen sumando 7 días por semana o 15 por quincena. En periodos mensuales se conserva el día de la disposición o el fin de mes si la disposición se hizo al cierre del mes. Un día inexistente se ajusta solo para ese mes.';
+        if ($usaCalendarioCrediticio) {
+            $calendario .= ' Con la política Siguiente día hábil, la fecha resultante determina el vencimiento y el cierre del periodo de interés ordinario. Las fechas nominales siguientes conservan su ancla.';
+        }
 
         return [
             'convencion' => 'días reales / 360',
-            'calendario' => 'Semanal suma 7 días; quincenal suma 15 días; mensual conserva el día de la disposición. Si la disposición es fin de mes, todos los vencimientos permanecen en fin de mes; un día inexistente se ajusta solo para ese mes.',
+            'calendario' => $calendario,
             'metodo' => 'El interés de cada periodo usa el saldo inicial y sus días reales; la última cuota liquida el residuo.',
             'interes' => 'Iₖ = Sₖ₋₁ × (tasa anual / 100) × (díasₖ / 360)',
             'cuota_nivelada' => 'C = P ÷ Σ[1 ÷ Π(1 + iⱼ)]',

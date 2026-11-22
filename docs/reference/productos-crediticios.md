@@ -37,7 +37,7 @@ los acumuladores y los límites están en [versión del motor](core-crediticio.m
 - El motor 2 rechaza combinaciones que generen capital no positivo o superior al
   saldo en los métodos actuales; no devuelve tablas con intereses/capital negativos
   para simular una amortización inválida. Bullet permite explícitamente capital intermedio cero y principal final positivo.
-- El plazo define periodos de duración; en Bullet al vencimiento no implica pagos intermedios. Las fechas avanzan +7 días, +15 días o por ancla mensual. El fin de mes permanece como fin de mes; un día inexistente se ajusta solo ese mes y luego recupera el ancla. V1 no ajusta días inhábiles.
+- El plazo define periodos de duración; en Bullet al vencimiento no implica pagos intermedios. Las fechas avanzan +7 días, +15 días o por ancla mensual. El fin de mes permanece como fin de mes; un día inexistente se ajusta solo ese mes y luego recupera el ancla. Las versiones de producto con la política Siguiente día hábil aplican el [calendario crediticio](calendario-crediticio.md).
 - La mora usa las bases contractuales compatibles con cada método; las tres bases Bullet y su disparador se describen en el contrato del core.
 
 ## Preparar condiciones Bullet
