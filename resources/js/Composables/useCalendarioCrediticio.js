@@ -41,7 +41,9 @@ export function useCalendarioCrediticio(version, hoy) {
     const celdas = computed(() => {
         const comienzo = inicioMes.value;
         const espacio = (comienzo.getUTCDay() + 6) % 7;
-        const dias = new Date(Date.UTC(comienzo.getUTCFullYear(), comienzo.getUTCMonth() + 1, 0)).getUTCDate();
+        const ultimo = new Date(comienzo);
+        ultimo.setUTCMonth(ultimo.getUTCMonth() + 1, 0);
+        const dias = ultimo.getUTCDate();
         return Array.from({ length: espacio + dias }, (_, indice) => {
             if (indice < espacio) return { clave: `espacio-${indice}` };
             const fecha = new Date(comienzo);
@@ -61,6 +63,7 @@ export function useCalendarioCrediticio(version, hoy) {
     function moverMes(delta) {
         const fecha = new Date(inicioMes.value);
         fecha.setUTCMonth(fecha.getUTCMonth() + delta);
+        if (fecha.getUTCFullYear() < 0 || fecha.getUTCFullYear() > 9999) return;
         mes.value = fechaCivil(fecha).slice(0, 7);
         seleccionado.value = fechaCivil(fecha);
     }
