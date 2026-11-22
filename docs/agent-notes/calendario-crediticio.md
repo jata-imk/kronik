@@ -92,3 +92,17 @@ consulta. Playwright MCP reprodujo la previa del 14 al 17 de noviembre.
   omisiones. Se usó un directorio de archivos de prueba separado para evitar
   colisiones con el proceso de revisión. Chromium sobre `a2214e0` verificó que
   editar o quitar una fecha repetida elimina el aviso y conserva los demás.
+
+## Integración del 21/11/2026
+
+- [PR #86](https://github.com/jata-imk/kronik/pull/86) integrada en `main` como
+  `b30a900`. [PR #87](https://github.com/jata-imk/kronik/pull/87) pasó a
+  `main` después del catálogo y quedó integrada como `a14a959`. El árbol
+  final coincide con `bb33689`, la revisión validada antes de integrar.
+- CI de las PR aprobada en [catálogo](https://github.com/jata-imk/kronik/actions/runs/44983267126)
+  y [originación](https://github.com/jata-imk/kronik/actions/runs/44983266826).
+  La [ejecución en main](https://github.com/jata-imk/kronik/actions/runs/44984209293)
+  corresponde a la integración de ambos incrementos.
+- Siguiente paso en QA compartido. Aplicar la migración, actualizar los catálogos
+  de permisos y menú, y seguir el [recorrido de validación](../how-to/qa-calendario-crediticio.md).
+  Despliegue y aceptación pendientes de evidencia del responsable de QA.
