@@ -16,8 +16,23 @@ const semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado",
 const grupos = [{ clave: "feriados", titulo: "Feriados" }, { clave: "excepciones", titulo: "Excepciones de apertura o cierre" }];
 const tipos = [{ texto: "Apertura", habil: true }, { texto: "Cierre", habil: false }];
 
+function limpiarErroresDe(prefijo) {
+    const campos = Object.keys(form.errors).filter(campo => campo.startsWith(prefijo));
+    if (campos.length) form.clearErrors(...campos);
+}
+
+function cargarPlantilla() {
+    form.configuracion = copia(props.plantilla);
+    limpiarErroresDe("configuracion");
+}
+
 function agregar(clave) {
     form.configuracion[clave].push({ fecha: "", nombre: "", ...(clave === "excepciones" ? { habil: false } : {}) });
+}
+
+function quitar(clave, indice) {
+    form.configuracion[clave].splice(indice, 1);
+    limpiarErroresDe(`configuracion.${clave}.`);
 }
 
 function guardar() {
@@ -33,7 +48,7 @@ function guardar() {
 <template>
     <form class="space-y-5" @submit.prevent="guardar">
         <Button v-if="!readonly && plantilla" type="button" label="Cargar plantilla CNBV 2026" icon="pi pi-download" severity="secondary" outlined
-            @click="form.configuracion = copia(plantilla)" />
+            @click="cargarPlantilla" />
         <p v-if="!readonly" id="cal-formato-fecha" class="text-sm text-surface-600 dark:text-surface-300">Escribe las fechas en formato AAAA-MM-DD.</p>
         <div class="grid gap-3 sm:grid-cols-2">
             <div v-for="{ clave, etiqueta } in [{ clave: 'desde', etiqueta: 'Cobertura desde' }, { clave: 'hasta', etiqueta: 'Cobertura hasta' }]" :key="clave">
@@ -65,7 +80,7 @@ function guardar() {
                             :invalid="!!form.errors[`configuracion.${clave}.${indice}.fecha`]" :aria-describedby="readonly ? undefined : 'cal-formato-fecha'" fluid />
                         <InputText v-model="dia.nombre" :readonly="readonly" aria-label="Nombre o motivo" placeholder="Nombre o motivo" fluid />
                         <Select v-if="clave === 'excepciones'" v-model="dia.habil" :options="tipos" option-label="texto" option-value="habil" :disabled="readonly" aria-label="Tipo de excepción" />
-                        <Button v-if="!readonly" type="button" icon="pi pi-trash" severity="danger" text aria-label="Quitar fecha" @click="form.configuracion[clave].splice(indice, 1)" />
+                        <Button v-if="!readonly" type="button" icon="pi pi-trash" severity="danger" text aria-label="Quitar fecha" @click="quitar(clave, indice)" />
                     </div>
                     <Button v-if="!readonly" type="button" icon="pi pi-plus" label="Agregar fecha" text @click="agregar(clave)" />
                 </AccordionContent>

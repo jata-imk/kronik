@@ -26,6 +26,8 @@ es una fuente anual editable en borrador. Cada instalación revisa su aplicabili
   para conservar la captura.
 - El editor y la previa reciben fechas con formato `AAAA-MM-DD`. Si la fecha
   es inválida, el servidor muestra el error y conserva la captura para corregirla.
+  Al quitar una fila o cargar la plantilla se limpian los mensajes de las
+  filas afectadas.
 - Ejecutar la migración y actualizar el catálogo de permisos y menú mediante
   `ModulesAndPermissionsSeeder` y `MenubarItemsSeeder` en el orden habitual.
   La navegación del menú mantiene sus activaciones configurables. El reinicio

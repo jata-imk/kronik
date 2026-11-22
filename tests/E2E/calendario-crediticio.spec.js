@@ -13,6 +13,14 @@ test("publica la plantilla y compara vencimientos con teclado y en móvil", asyn
     await expect(page.getByText(/fin de cobertura.*ser una fecha válida/)).toBeVisible();
     await expect(page.getByLabel("Cobertura hasta")).toHaveValue("2026-02-30");
     await page.getByLabel("Cobertura hasta").fill("2027-01-01");
+    const feriados = page.getByRole("dialog", { name: "Nuevo borrador" });
+    await feriados.getByRole("textbox", { name: "Fecha", exact: true }).first().fill("2026-02-30");
+    await feriados.getByRole("button", { name: "Guardar borrador" }).click();
+    await expect(feriados.getByText(/fecha del feriado.*ser una fecha válida/)).toBeVisible();
+    await feriados.getByRole("button", { name: "Quitar fecha" }).first().click();
+    await expect(feriados.getByText(/fecha del feriado.*ser una fecha válida/)).toHaveCount(0);
+    await feriados.getByRole("button", { name: "Cargar plantilla CNBV 2026" }).click();
+    await page.getByLabel("Cobertura hasta").fill("2027-01-01");
     await page.getByLabel("Cobertura hasta").press("Tab");
     page.once("dialog", aviso => aviso.dismiss());
     await page.getByRole("dialog", { name: "Nuevo borrador" }).getByRole("button", { name: /^(Cerrar|Close)$/i }).click();
