@@ -88,3 +88,7 @@ consulta. Playwright MCP reprodujo la previa del 14 al 17 de noviembre.
   histórica no tenga un resultado utilizable. Aprobaron 72 pruebas dirigidas.
 - El parámetro contextual de la versión cambió durante la revisión de PR.
   La base `da529b2` aún carece del catálogo y de ese destino configurable.
+- Sobre `6d3d5c4` aprobaron 1 018 pruebas backend, 48 047 aserciones y dos
+  omisiones. Se usó un directorio de archivos de prueba separado para evitar
+  colisiones con el proceso de revisión. Chromium sobre `a2214e0` verificó que
+  editar o quitar una fecha repetida elimina el aviso y conserva los demás.

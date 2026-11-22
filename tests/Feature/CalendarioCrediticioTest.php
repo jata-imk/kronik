@@ -119,8 +119,8 @@ test('la publicación revierte la versión si falla la auditoría', function () 
 test('identifica fechas repetidas sin mezclar feriados con excepciones', function () {
     $configuracion = $this->plantilla;
     $configuracion['feriados'][] = $configuracion['feriados'][0];
-    $this->postJson(route('productos-crediticios.calendario.store'), ['configuracion' => $configuracion])
-        ->assertUnprocessable()->assertJsonValidationErrors('configuracion.feriados.fechas_repetidas');
+    $this->postJson(route('productos-crediticios.calendario.store'), ['configuracion' => [...$configuracion, 'fuente' => '']])
+        ->assertUnprocessable()->assertJsonValidationErrors(['configuracion.fuente', 'configuracion.feriados.fechas_repetidas']);
 
     $configuracion['excepciones'] = [[...array_pop($configuracion['feriados']), 'habil' => true]];
     $this->post(route('productos-crediticios.calendario.store'), ['configuracion' => $configuracion])
