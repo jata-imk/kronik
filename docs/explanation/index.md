@@ -1,6 +1,6 @@
 # Explicación
 
-- [ADR 0047 · Calendario crediticio y condiciones congeladas](adr-0047-calendario-crediticio.md)
+- [ADR 0048 · Calendario crediticio y condiciones congeladas](adr-0048-calendario-crediticio.md)
 
 - [ADR 0046: lecturas financieras derivadas del core](adr-0046-lecturas-financieras-tablero.md).
 

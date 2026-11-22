@@ -52,5 +52,5 @@ El paquete conserva el CAT informado en la revisión original al generar la
 tabla fiscal.
 La periodicidad diaria mantiene su propio alcance.
 
-- [Decisión de arquitectura](../explanation/adr-0047-calendario-crediticio.md)
+- [Decisión de arquitectura](../explanation/adr-0048-calendario-crediticio.md)
 - [Recorrido QA](../how-to/qa-calendario-crediticio.md)

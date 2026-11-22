@@ -1,4 +1,4 @@
-# ADR 0047 · Calendario institucional y evidencia contractual
+# ADR 0048 · Calendario institucional y evidencia contractual
 
 ## Estado
 
