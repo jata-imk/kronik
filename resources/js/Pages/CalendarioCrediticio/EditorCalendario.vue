@@ -21,7 +21,7 @@ const semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado",
 const grupos = [{ clave: "feriados", titulo: "Feriados" }, { clave: "excepciones", titulo: "Excepciones de apertura o cierre" }];
 const tipos = [{ texto: "Apertura", habil: true }, { texto: "Cierre", habil: false }];
 // TrimStrings de Laravel también retira caracteres invisibles en los bordes.
-const bordeFecha = "[\\p{White_Space}\\0\\u00AD\\u034F\\u061C\\u115F\\u1160\\u17B4-\\u17B5\\u180E\\u200B-\\u200F\\u2060-\\u206F\\u2800\\u3164\\uFEFF\\uFFA0\\u{1D159}\\u{1D173}-\\u{1D17A}\\u{E0020}]";
+const bordeFecha = "[\\p{White_Space}\\0\\u00AD\\u034F\\u061C\\u115F\\u1160\\u17B4-\\u17B5\\u180E\\u200B-\\u200F\\u2060-\\u2065\\u206A-\\u206F\\u2800\\u3164\\uFEFF\\uFFA0\\u{1D159}\\u{1D173}-\\u{1D17A}\\u{E0020}]";
 const bordesFecha = new RegExp("^" + bordeFecha + "+|" + bordeFecha + "+$", "gu");
 function normalizarFecha(valor) {
     const fecha = (valor ?? "").replace(bordesFecha, "");
