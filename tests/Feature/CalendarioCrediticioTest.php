@@ -106,6 +106,17 @@ test('expone el nombre de negocio de un feriado incompleto', function () {
         ->toBe(['El campo nombre del feriado es obligatorio.']);
 });
 
+test('identifica fechas repetidas sin mezclar feriados con excepciones', function () {
+    $configuracion = $this->plantilla;
+    $configuracion['feriados'][] = $configuracion['feriados'][0];
+    $this->postJson(route('productos-crediticios.calendario.store'), ['configuracion' => $configuracion])
+        ->assertUnprocessable()->assertJsonValidationErrors('configuracion.feriados.fechas_repetidas');
+
+    $configuracion['excepciones'] = [[...array_pop($configuracion['feriados']), 'habil' => true]];
+    $this->post(route('productos-crediticios.calendario.store'), ['configuracion' => $configuracion])
+        ->assertRedirect()->assertSessionHasNoErrors();
+});
+
 test('el ajuste reporta la primera fecha fuera de cobertura y rechaza vencimientos coincidentes', function () {
     $calendario = app(CalendarioCrediticioService::class);
     $version = new CalendarioCrediticioVersion(['configuracion' => $this->plantilla]);

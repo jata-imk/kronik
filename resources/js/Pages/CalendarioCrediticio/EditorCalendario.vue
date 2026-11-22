@@ -1,6 +1,6 @@
 <script setup>
 import { useToast } from "primevue/usetoast";
-import { nextTick, ref } from "vue";
+import { computed, nextTick, ref } from "vue";
 import { useGuardedForm } from "@/Composables/useGuardedForm";
 import { confirmFormDiscard } from "@/Utils/unsavedChanges";
 
@@ -20,6 +20,12 @@ defineExpose({ confirmarSalida: () => props.readonly || confirmFormDiscard(form)
 const semana = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"].map((texto, indice) => ({ texto, dia: indice + 1 }));
 const grupos = [{ clave: "feriados", titulo: "Feriados" }, { clave: "excepciones", titulo: "Excepciones de apertura o cierre" }];
 const tipos = [{ texto: "Apertura", habil: true }, { texto: "Cierre", habil: false }];
+const fechasRepetidas = computed(() => Object.fromEntries(grupos.map(({ clave }) => {
+    const conteo = new Map();
+    for (const { fecha } of form.configuracion[clave]) conteo.set(fecha, (conteo.get(fecha) ?? 0) + 1);
+    const repetidas = new Set([...conteo].filter(([fecha, total]) => fecha && total > 1).map(([fecha]) => fecha));
+    return [clave, repetidas];
+})));
 
 function limpiarErroresDe(prefijo) {
     const campos = Object.keys(form.errors).filter(campo => campo.startsWith(prefijo));
@@ -48,11 +54,13 @@ function quitar(clave, indice) {
         if (fila > indice) movidos[[`configuracion.${clave}`, fila - 1, ...resto].join(".")] = mensaje;
     }
     form.setError(movidos);
+    if (!fechasRepetidas.value[clave].size) form.clearErrors(`configuracion.${clave}.fechas_repetidas`);
 }
 
 async function mostrarErrores() {
     await nextTick();
-    const campo = editor.value?.querySelector('[aria-invalid="true"]') ?? resumenErrores.value;
+    const campos = editor.value?.querySelectorAll('[aria-invalid="true"]') ?? [];
+    const campo = Array.from(campos).find(input => input.getClientRects().length) ?? resumenErrores.value;
     campo?.focus();
     toast.add({ severity: "error", summary: "Revisa la configuración del calendario", life: 5000 });
 }
@@ -100,7 +108,8 @@ function guardar() {
                     <p v-if="!form.configuracion[clave].length" class="mt-2 text-surface-500">Aún no hay fechas registradas.</p>
                     <div v-for="(dia, indice) in form.configuracion[clave]" :key="indice" class="mb-2 grid gap-2 sm:grid-cols-[10rem_1fr_auto_auto]">
                         <InputText v-model="dia.fecha" :readonly="readonly" aria-label="Fecha"
-                            :invalid="!!form.errors[`configuracion.${clave}.${indice}.fecha`]" :aria-describedby="readonly ? undefined : 'cal-formato-fecha'" fluid />
+                            :invalid="!!form.errors[`configuracion.${clave}.${indice}.fecha`] || (!!form.errors[`configuracion.${clave}.fechas_repetidas`] && fechasRepetidas[clave].has(dia.fecha))"
+                            :aria-describedby="readonly ? undefined : 'cal-formato-fecha'" fluid />
                         <InputText v-model="dia.nombre" :readonly="readonly" aria-label="Nombre o motivo" placeholder="Nombre o motivo" fluid />
                         <Select v-if="clave === 'excepciones'" v-model="dia.habil" :options="tipos" option-label="texto" option-value="habil" :disabled="readonly" aria-label="Tipo de excepción" />
                         <Button v-if="!readonly" type="button" icon="pi pi-trash" severity="danger" text aria-label="Quitar fecha" @click="quitar(clave, indice)" />

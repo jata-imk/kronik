@@ -43,8 +43,8 @@ final class GuardarCalendarioCrediticioRequest extends FormRequest
             'configuracion.excepciones' => ['present', 'array', 'max:730'],
             'configuracion.excepciones.*' => ['required', 'array:fecha,nombre,habil'],
             'configuracion.excepciones.*.habil' => ['required', 'boolean'],
-            'configuracion.feriados.*.fecha' => ['required', 'date_format:Y-m-d', 'distinct'],
-            'configuracion.excepciones.*.fecha' => ['required', 'date_format:Y-m-d', 'distinct'],
+            'configuracion.feriados.*.fecha' => ['required', 'date_format:Y-m-d'],
+            'configuracion.excepciones.*.fecha' => ['required', 'date_format:Y-m-d'],
             'configuracion.feriados.*.nombre' => ['required', 'string', 'max:120'],
             'configuracion.excepciones.*.nombre' => ['required', 'string', 'max:120'],
         ];
@@ -81,6 +81,10 @@ final class GuardarCalendarioCrediticioRequest extends FormRequest
 
             $configuracion = $this->input('configuracion');
             foreach (['feriados', 'excepciones'] as $campo) {
+                $fechas = array_column($configuracion[$campo], 'fecha');
+                if (count($fechas) !== count(array_unique($fechas))) {
+                    $validator->errors()->add("configuracion.{$campo}.fechas_repetidas", "Hay fechas repetidas en {$campo}. Conserva una fila por fecha.");
+                }
                 foreach ($configuracion[$campo] as $indice => $dia) {
                     if ($dia['fecha'] < $configuracion['desde'] || $dia['fecha'] > $configuracion['hasta']) {
                         $validator->errors()->add("configuracion.{$campo}.{$indice}.fecha", 'La fecha debe estar dentro de la cobertura revisada.');

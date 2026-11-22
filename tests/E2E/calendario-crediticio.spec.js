@@ -26,6 +26,12 @@ test("publica la plantilla y compara vencimientos con teclado y en móvil", asyn
     await expect(fechas.first()).toHaveAttribute("aria-invalid", "true");
     await editor.getByRole("button", { name: "Cargar plantilla CNBV 2026" }).click();
     await expect(editor.getByText(/fecha del feriado es obligatorio/)).toHaveCount(0);
+    await fechas.nth(1).fill(await fechas.first().inputValue());
+    await editor.getByRole("button", { name: "Guardar borrador" }).click();
+    await expect(editor.getByText(/Hay fechas repetidas en feriados/)).toBeVisible();
+    await editor.getByRole("button", { name: "Quitar fecha" }).first().click();
+    await expect(editor.getByText(/Hay fechas repetidas en feriados/)).toHaveCount(0);
+    await editor.getByRole("button", { name: "Cargar plantilla CNBV 2026" }).click();
     await page.getByLabel("Cobertura hasta").fill("2027-01-01");
     await page.getByLabel("Cobertura hasta").press("Tab");
     page.once("dialog", aviso => aviso.dismiss());
