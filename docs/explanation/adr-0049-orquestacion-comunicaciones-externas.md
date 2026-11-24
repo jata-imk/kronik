@@ -2,6 +2,10 @@
 
 Estado: aceptado para implementación local, 2026-11-20.
 
+La elección del proveedor SMS queda sustituida por
+[ADR 0050: LabsMobile](adr-0050-proveedor-sms-labsmobile.md), aceptado el 2026-11-24.
+El código de esta rama todavía usa Infobip; el resto de la decisión se conserva.
+
 ## Contexto
 
 La nota de producto requiere correo, SMS y WhatsApp, consentimiento por prestamista y finalidad, salida idempotente y seguimiento honesto. Los créditos anteriores no guardaban un equipo estable y los proveedores requieren elegibilidad y credenciales externas. Los avisos internos y eventos candidatos ya existen. La decisión de [ADR 0048](adr-0048-eventos-candidatos-comunicacion.md) conserva estos eventos separados de los transportes.

@@ -1,5 +1,12 @@
 # Explicación
 
+- [Evaluación del editor para plantillas de notificaciones](editor-plantillas-notificaciones.md).
+
+- [Investigación de LabsMobile para SMS: estados, cobertura y piloto](integracion-sms-labsmobile.md).
+- [ADR 0050: LabsMobile como proveedor SMS](adr-0050-proveedor-sms-labsmobile.md).
+
+- [Evaluación de proveedores SMS para México](evaluacion-proveedores-sms-mexico.md).
+
 - [ADR 0047: bandeja interna contextual](adr-0047-bandeja-interna-contextual.md).
 
 - [ADR 0046: lecturas financieras derivadas del core](adr-0046-lecturas-financieras-tablero.md).

@@ -1,5 +1,11 @@
 # Canales externos de comunicación
 
+Decisión posterior de planeación: José eligió LabsMobile para SMS el 2026-11-24;
+ver [ADR 0050](../explanation/adr-0050-proveedor-sms-labsmobile.md) e
+[investigación técnica](../explanation/integracion-sms-labsmobile.md). El código
+todavía usa Infobip: los detalles siguientes describen ese comportamiento vigente
+en la rama, sin acreditar implementación ni activación de LabsMobile.
+
 La [nota original de producto](comunicaciones-por-canales-envios-y-seguimiento.md) fija el alcance. Este contrato describe el código de la rama de comunicaciones. La salida externa permanece desactivada hasta configurar `COMMUNICATIONS_SEND_ENABLED=true` en un entorno autorizado, con proveedor, consentimiento y reglas aprobados para cada equipo. La configuración y las pruebas locales no acreditan entrega real ni despliegue.
 
 ## Propiedad, consentimiento y permisos

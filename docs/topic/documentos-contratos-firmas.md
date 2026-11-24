@@ -26,6 +26,7 @@ aceptación documental y desembolso.
 
 ## Seguimiento y temas relacionados
 
+- [Evaluación de reutilización del editor para notificaciones](../explanation/editor-plantillas-notificaciones.md).
 - [Nota de documentos digitales](../agent-notes/03.5-documentos-digitales-y-plantillas.md).
 - [Originación](originacion-solicitudes.md) y [desembolso](cartera-pagos.md).
 

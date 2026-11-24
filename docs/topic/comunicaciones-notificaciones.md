@@ -16,6 +16,10 @@ La rama incluye la bandeja contextual, eventos de pago/vencimiento y orquestaci�
 
 ## Seguimiento
 
+- [Evaluación de editor, variables y categoría de notificaciones](../explanation/editor-plantillas-notificaciones.md).
+- [Investigación de LabsMobile: API, estados, OMV y caducidad](../explanation/integracion-sms-labsmobile.md).
+- [ADR 0050: elección de LabsMobile para SMS](../explanation/adr-0050-proveedor-sms-labsmobile.md).
+- [Comparación inicial de proveedores SMS para México](../explanation/evaluacion-proveedores-sms-mexico.md).
 - [Set de pruebas y revisión manual](../how-to/probar-comunicaciones.md).
 - [Agent Note de la implementación](../agent-notes/comunicaciones-notificaciones.md).
 - [Nota original en Notion](https://app.notion.com/p/Kronik-Comunicaciones-por-canales-env-os-y-seguimiento-3fe61db7db7f81e4af50c4f0f3ab7e41).

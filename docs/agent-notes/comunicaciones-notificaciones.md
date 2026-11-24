@@ -22,6 +22,121 @@ El entorno local sigue con `MAIL_MAILER=log`. La barrera `COMMUNICATIONS_SEND_EN
 - Parametrización posterior: **14 pruebas focalizadas, 257 aserciones** de preparación, gestión y entregas; otras **20 pruebas, 312 aserciones** de pagos, webhooks y transportes; tras ajustar valores iniciales, **11 pruebas, 196 aserciones** de preparación y entregas. Build Vite aprobado. `schedule:list` reflejó intervalos temporales de 15 y 10 minutos configurados por entorno.
 - Cierre de parametrización: **37 pruebas, 615 aserciones** de comunicaciones y pagos con SQLite aislado y PHP 8.4. Incluye dos canales con anticipaciones distintas para un solo vencimiento, reprogramación de salida ya en cola, valores predeterminados variables y validación de rango. Build Vite, Pint y enlaces locales de la documentación aprobados. No se enviaron mensajes reales.
 
-## Siguiente paso
+## Traspaso anterior — 2026-11-20
 
 El 2026-11-20, los commits pendientes se publicaron mediante la API Git Data de GitHub, conservando sus SHA y sin forzar la rama; el remoto quedó en `909bb24`. La PR #91 se cerró sin integrar y se canceló el merge local de `main`; la rama de desarrollo es la entrega vigente. El transporte Git HTTPS directo sigue sin conexión y `ssh.github.com:443` rechazó la llave disponible. Para QA real, configurar SMTP con dominio y destinatario de prueba autorizado; para SMS/WhatsApp, obtener aprobación escrita de uso, cuentas, remitentes, plantillas y webhook HTTPS antes de activar. Registrar recepción real y operación del programador/worker solo cuando haya evidencia. Actualizar Notion al confirmar integración/QA.
+
+## Retoma de SMS — 2026-11-24
+
+Estado: preparación del checkout completada; LabsMobile elegido y planeación SMS
+en progreso con José.
+La tarea de Notion consultada conserva la evaluación de SMS a cargo de José y
+WhatsApp/Facebook a cargo de Brian. José pidió comparar proveedores y después
+eligió LabsMobile por costo. La presencia del adaptador Infobip es evidencia
+del código anterior, no una integración LabsMobile ni habilitación real.
+
+- `main` y `origin/main`: `217acef`; `fetch origin` y `pull --ff-only origin main`
+  completados por HTTPS. El bloqueo de transporte del traspaso anterior no se
+  reprodujo. Los ocho archivos documentales locales revisados conservaron sus
+  hashes SHA-256 y el estado Git original permaneció igual.
+- Worktree: `storage/framework/testing/comunicaciones-worktree`, rama local
+  `feat/comunicaciones-notificaciones`, seguimiento de su homónima en `origin`,
+  base funcional `ecb9d4a`. Al prepararlo coincidía con el remoto. La investigación
+  y el traspaso se conservan después en un commit documental local, sin push.
+- La comparación `main...origin/feat/comunicaciones-notificaciones` muestra
+  89 commits exclusivos de `main` y siete de comunicaciones. No se fusionaron
+  las ramas; la sincronización se revisará antes de implementar para conservar
+  los contratos financieros vigentes y el trabajo compartido de comunicaciones.
+- Se inspeccionaron el adaptador SMS, la orquestación, la configuración, el
+  seguimiento de webhooks y las pruebas existentes. Los resultados del 20/11
+  son evidencia histórica; no se ejecutaron nuevamente suites funcionales.
+- No se prepararon dependencias, `.env` ni BD de ejecución en este worktree.
+  No hubo migraciones, cambios de configuración, envíos ni acceso a VPS.
+  Esta retoma documental no añade acciones auditables ni requiere nuevos eventos.
+
+### Punto de partida anterior a la elección
+
+1. Confirmar proveedor y caso inicial dentro de los avisos operativos/preventivos.
+   Verificar documentación vigente y condiciones de la cuenta: ruta mexicana,
+   uso financiero, remitente, costos por segmento y reportes de entrega.
+2. Contrastar el adaptador existente con la API elegida: autenticación, formato
+   telefónico, texto/codificación, respuesta de aceptación y webhook autenticado.
+   Identificar ajustes antes de configurar credenciales o habilitar tráfico.
+3. Preparar pruebas aisladas de aceptación/rechazo, timeout incierto, duplicados,
+   estados fuera de orden, consentimiento/contacto, contexto de equipo/sucursal
+   y auditoría sin secretos. Reutilizar la orquestación y los contratos actuales.
+4. Definir un piloto con destinatario y entorno autorizados, límite de gasto y
+   evidencia separada de aceptación y entrega. La autorización de un correo de
+   prueba anterior no autoriza un número SMS. Registrar los resultados efectivos.
+
+### Siguiente paso
+
+José confirmó LabsMobile por costo el 2026-11-24. Se registró
+[ADR 0050](../explanation/adr-0050-proveedor-sms-labsmobile.md), que sustituye
+únicamente la elección de Infobip del ADR anterior. La
+[investigación de LabsMobile](../explanation/integracion-sms-labsmobile.md)
+documenta API, estados, callbacks, OMV, caducidad, remitente, métricas, soporte y
+piloto. El código sigue en `ecb9d4a`, sin implementación LabsMobile.
+
+Hallazgos materiales: la ficha mexicana describe acuses de red, no prueba al
+dispositivo; anuncia 100% de cobertura sin listar los tres OMV consultados;
+la caducidad habitual citada es 72 horas, sin TTL de API identificado; la firma
+del callback y la consulta autenticada por mensaje siguen sin contrato público
+encontrado. La publicidad menciona 99.9% de entrega; el SLA de términos es 99.4%
+de disponibilidad mensual, otra métrica. Los ejemplos mexicanos con 521 requieren
+contraste antes de implementarlos. No se contactó a proveedores ni se abrieron
+cuentas; la investigación no ejecutó pruebas autenticadas ni envíos.
+
+Siguiente paso: iniciar la sesión de planeación desde el traspaso siguiente;
+incluir sustitución de Infobip y evaluación del editor. Las preguntas para
+soporte/cuenta y la definición del piloto siguen identificadas en la investigación.
+La elección está aceptada; contratación, implementación, despliegue y validación
+siguen pendientes. Documentación, índices, referencia de canales y Notion se
+actualizan; no hay permisos, migraciones ni acciones auditables nuevas.
+
+La validación anterior cubrió ocho archivos y 96 enlaces; el traspaso amplía la
+revisión a los documentos nuevos y sus índices. No se repitieron suites
+funcionales: no hubo cambios de código.
+
+## Traspaso a la nueva sesión — 2026-11-24
+
+José comenzará la planeación en una nueva sesión. Esta entrega conserva solo
+investigación, selección de LabsMobile y evaluación preliminar, sin implementación
+ni activación. Commit local de documentación:
+`docs(comunicaciones): conservar investigación SMS y plan de retoma`.
+El SHA se registra en Notion y en la entrega al usuario, sin autorreferencia en
+este archivo; consultar `git log -- docs/agent-notes/comunicaciones-notificaciones.md`.
+Sin push, PR, integración ni despliegue de este traspaso.
+
+Punto de entrada de la siguiente sesión:
+
+1. Usar el worktree `storage/framework/testing/comunicaciones-worktree` y la rama
+   `feat/comunicaciones-notificaciones`. Preservar cambios ajenos y revisar la
+   divergencia con `main` antes de proponer compatibilidad; no fusionar durante
+   la planeación ni reabrir la elección de LabsMobile.
+2. Leer ADR 0050, la [investigación y sustitución de Infobip](../explanation/integracion-sms-labsmobile.md)
+   y la [evaluación del editor](../explanation/editor-plantillas-notificaciones.md),
+   junto con el alcance vigente de Notion.
+3. Proponer un incremento de reemplazo completo de Infobip: transporte,
+   configuración, UI, conexión, webhook/conciliación, pruebas, credenciales,
+   jobs pendientes y procedencia histórica. Hay referencias activas en varias
+   capas y las salidas no guardan un proveedor propio; no borrar evidencia ni
+   mantener un proveedor de respaldo implícito.
+4. Evaluar la propuesta de editor visual con categoría Notificaciones: compartir
+   inserción/búsqueda de variables, texto plano, vista previa y segmentación
+   después de sustituir variables. Decidir alcance global/equipo, permisos,
+   versiones y compatibilidad entre sintaxis. No habilitar todo el catálogo
+   documental por agregar un enum ni crear PDF para un SMS.
+5. Presentar plan de incrementos, dependencias, criterios de aceptación, pruebas
+   y preguntas externas pendientes. Mantener auditoría, lecturas financieras y
+   aislamiento. Continuar la planeación; la implementación será trabajo posterior.
+
+El editor actual usa HTML/Quill; su panel está en la página de plantillas y sus
+registros son globales. Las comunicaciones se configuran por equipo y canal.
+Reutilizar UI es viable, pero no se decidió todavía compartir persistencia ni
+agregar la categoría al enum documental. No se modificó ni eliminó Infobip.
+
+Validación del traspaso: diez documentos UTF-8 sin BOM, LF y salto final,
+128 enlaces locales con destino existente y `git diff --check` aprobado.
+El checkout principal conserva los hashes de los ocho documentos locales
+preexistentes revisados. No corresponden nuevas pruebas funcionales a este commit.
