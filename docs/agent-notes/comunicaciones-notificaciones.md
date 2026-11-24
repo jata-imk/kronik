@@ -175,3 +175,20 @@ cuenta Meta, número receptor WhatsApp autorizado, plantilla aprobada y webhook
 HTTPS. No se enviaron mensajes reales ni se accedió a la VPS. No se usó el
 correo autorizado como autorización de un número telefónico. Este incremento no
 agrega migraciones, seeders ni variables de entorno.
+
+## Solicitud de prueba real WhatsApp — 2026-11-24
+
+El usuario autorizó una prueba con un número propio como remitente y otro número
+concreto como receptor. Los números personales no se versionan aquí. Se comprobó
+el entorno local sin modificar datos: `.env` usa MySQL y no define credenciales
+Meta ni `COMMUNICATIONS_SEND_ENABLED`; al arrancar temporalmente MySQL, la base
+`kronik_softcredito9` no contenía `communication_channels`. MySQL se detuvo de
+forma ordenada después de la consulta. La API Graph de Meta responde desde esta
+máquina, pero no hay token, ID de teléfono WABA ni plantilla aprobada para enviar.
+No se ejecutaron migraciones, no se llamó al endpoint de mensajes y no hay
+aceptación ni entrega que acreditar. El navegador virtual disponible tampoco
+tenía una sesión de Meta; la app personal de WhatsApp no prueba Cloud API.
+
+Siguiente paso: confirmar que el número remitente está registrado en una WABA
+accesible, configurar token/ID/plantilla en un entorno QA aislado y registrar
+aceptación `wamid`, entrega y lectura por webhook para el receptor autorizado.
