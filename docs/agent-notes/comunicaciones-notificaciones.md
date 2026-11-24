@@ -145,3 +145,33 @@ La publicación usó `SKIP_PRE_PUSH=1` solo en el proceso de push, tras verifica
 que el avance contiene exclusivamente documentación; se restauró el entorno al
 terminar. Es la exención del hook del repositorio, coherente con la entrega
 documental; no se ejecutaron suites funcionales ni se preparó una BD.
+
+## Integración WhatsApp — 2026-11-24
+
+Brian confirmó que José desarrolla SMS y que esta sesión corresponde a WhatsApp.
+Se creó `feat/comunicaciones-whatsapp` desde `547d9e5` para aislar el trabajo;
+no se modificó el adaptador Infobip ni la elección LabsMobile. La integración
+Cloud API existente se reforzó para consultar en Meta la plantilla aprobada por
+nombre e idioma y para impedir POST si hay componentes invisibles en la vista
+previa, variables vacías o destino inválido. El destino se entrega a Meta como
+dígitos internacionales; el contacto normalizado de consentimiento se conserva.
+La verificación GET del webhook devuelve el desafío incluso cuando PHP normaliza
+`hub.challenge` a `hub_challenge`. Los recibos Meta se asocian únicamente a
+salidas WhatsApp del equipo, aunque SMS tenga el mismo identificador externo.
+
+Se mantienen los eventos de auditoría existentes: inicio, aceptación, fallo y
+transición por webhook. No hay una acción auditable nueva; se actualizaron la
+matriz y las pruebas del fallo previo al POST y del aislamiento por canal.
+Revisar [canales](../reference/canales-comunicacion.md) y la
+[guía de prueba](../how-to/probar-comunicaciones.md) para configuración.
+
+Evidencia local: 25 pruebas y 386 aserciones del conjunto de comunicaciones
+(Delivery, Management, Webhook, Readiness y Transport) con PHP 8.4/SQLite aislado;
+prueba GET del desafío de Meta y rechazo de token incorrecto; Pint y
+`git diff --check` aprobados. Proveedores HTTP simulados, sin credenciales reales.
+
+Estado: implementado localmente, pendiente de validación autenticada con una
+cuenta Meta, número receptor WhatsApp autorizado, plantilla aprobada y webhook
+HTTPS. No se enviaron mensajes reales ni se accedió a la VPS. No se usó el
+correo autorizado como autorización de un número telefónico. Este incremento no
+agrega migraciones, seeders ni variables de entorno.

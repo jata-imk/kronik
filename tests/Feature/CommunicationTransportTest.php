@@ -25,11 +25,44 @@ test('Meta verifica plantilla aprobada y texto vigente antes del POST con parám
             'components' => [['type' => 'BODY', 'text' => 'Otro mensaje']]]]], 200);
     $receipt = app(MetaWhatsAppTransport::class)->send($channel, $rule, '+525512345678', '', 'Hola Ana, pago registrado.', ['nombre' => 'Ana']);
     expect($receipt)->toBe(['status' => 'accepted', 'message_id' => 'wamid.qa']);
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/message_templates?')
+        && $request->method() === 'GET'
+        && $request->data()['language'] === 'es_MX'
+        && $request->data()['status'] === 'APPROVED');
     Http::assertSent(fn ($request) => str_ends_with($request->url(), '/messages')
+        && $request['to'] === '525512345678'
         && $request['template']['components'][0]['parameters'][0]['text'] === 'Ana');
 
     expect(app(MetaWhatsAppTransport::class)->send($channel, $rule, '+525512345678', '', 'Hola Ana, pago registrado.', ['nombre' => 'Ana'])['status'])->toBe('failed');
     Http::assertSentCount(3);
+});
+
+test('Meta bloquea plantillas con contenido no visible y variables vacías sin enviar', function () {
+    $admin = actingAsSuperAdmin();
+    $channel = CommunicationChannel::create(['team_id' => $admin->current_team_id, 'channel' => 'whatsapp',
+        'provider' => 'meta_cloud', 'sender' => '123456', 'eligibility' => 'approved', 'enabled' => true,
+        'secret' => json_encode(['token' => 'token-qa', 'api_version' => 'v27.0', 'waba_id' => '654321',
+            'phone_number_id' => '123456'])]);
+    $rule = CommunicationRule::create(['team_id' => $admin->current_team_id, 'event_type' => 'payment_received',
+        'channel' => 'whatsapp', 'body' => 'Hola {nombre}, pago registrado.', 'external_template_name' => 'pago_qa',
+        'external_template_locale' => 'es_MX', 'external_template_status' => 'approved']);
+    Http::fakeSequence()
+        ->push(['data' => [['name' => 'pago_qa', 'language' => 'es_MX', 'status' => 'APPROVED',
+            'components' => [['type' => 'BODY', 'text' => 'Hola {{1}}, pago registrado.'],
+                ['type' => 'FOOTER', 'text' => 'Contenido adicional']]]]], 200)
+        ->push(['data' => [['name' => 'pago_qa', 'language' => 'es_MX', 'status' => 'APPROVED',
+            'components' => [['type' => 'BODY', 'text' => 'Hola {{1}}, pago registrado.']]]]], 200)
+        ->push(['data' => [['name' => 'pago_qa', 'language' => 'es_MX', 'status' => 'APPROVED',
+            'components' => [['type' => 'BODY', 'text' => 'Hola {{1}}, pago registrado.']]]]], 200)
+        ->push(['error' => ['message' => 'temporarily unavailable']], 503);
+
+    $transport = app(MetaWhatsAppTransport::class);
+    expect($transport->send($channel, $rule, '+525512345678', '', '', ['nombre' => 'Ana'])['status'])->toBe('failed');
+    expect($transport->send($channel, $rule, '+525512345678', '', '', ['nombre' => ' '])['status'])->toBe('failed');
+    expect($transport->send($channel, $rule, '++525512345678', '', '', ['nombre' => 'Ana'])['status'])->toBe('failed');
+    expect($transport->send($channel, $rule, '+525512345678', '', '', ['nombre' => 'Ana'])['status'])->toBe('failed');
+    Http::assertSentCount(4);
+    Http::assertNotSent(fn ($request) => str_ends_with($request->url(), '/messages'));
 });
 
 test('Infobip usa el host de cuenta validado y conserva aceptación separada de entrega', function () {

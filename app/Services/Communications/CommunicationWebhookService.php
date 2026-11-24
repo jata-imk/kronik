@@ -33,7 +33,9 @@ final class CommunicationWebhookService
             if (DB::table('communication_webhook_events')->where('event_key', $key)->exists()) {
                 return;
             }
-            $delivery = CommunicationDelivery::where('team_id', $teamId)->where('provider_message_id', $messageId)
+            $channel = $provider === 'meta_cloud' ? 'whatsapp' : 'sms';
+            $delivery = CommunicationDelivery::where('team_id', $teamId)->where('channel', $channel)
+                ->where('provider_message_id', $messageId)
                 ->lockForUpdate()->first();
             $inserted = DB::table('communication_webhook_events')->insertOrIgnore([
                 'team_id' => $teamId, 'communication_delivery_id' => $delivery?->id,

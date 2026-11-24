@@ -8,6 +8,17 @@ use Illuminate\Support\Facades\DB;
 
 beforeEach(fn () => $this->withoutVite());
 
+test('Meta verifica el callback solo con el token del equipo', function () {
+    $admin = actingAsSuperAdmin();
+    CommunicationChannel::create(['team_id' => $admin->current_team_id, 'channel' => 'whatsapp',
+        'provider' => 'meta_cloud', 'sender' => '123456789', 'eligibility' => 'approved', 'enabled' => true,
+        'secret' => json_encode(['verify_token' => 'verify-qa', 'app_secret' => 'signed-secret'])]);
+    $url = route('webhooks.comunicaciones.whatsapp.verify', $admin->current_team_id);
+    $this->get($url.'?hub.mode=subscribe&hub.verify_token=incorrecto&hub.challenge=challenge-qa')->assertForbidden();
+    $this->get($url.'?hub.mode=subscribe&hub.verify_token=verify-qa&hub.challenge=challenge-qa')
+        ->assertOk()->assertSeeText('challenge-qa');
+});
+
 test('Meta exige firma y número del equipo, deduplica y no retrocede de leído a entregado', function () {
     [$actor, $credit, $data] = creditoPagableQa($this);
     $data['previa_hash'] = $this->postJson(route('creditos.pagos.preview', $credit), $data)->assertOk()->json('previa_hash');
@@ -79,4 +90,25 @@ test('un webhook adelantado se asocia después con el envío sin perder el estad
     $service->reconcile($delivery);
     expect($delivery->fresh()->status)->toBe('read')->and($delivery->fresh()->delivered_at)->not->toBeNull()
         ->and(DB::table('communication_webhook_events')->where('communication_delivery_id', $delivery->id)->count())->toBe(1);
+});
+
+test('un estado de Meta no altera una entrega SMS con el mismo identificador externo', function () {
+    [$actor, $credit, $data] = creditoPagableQa($this);
+    $data['previa_hash'] = $this->postJson(route('creditos.pagos.preview', $credit), $data)->assertOk()->json('previa_hash');
+    $this->post(route('creditos.pagos.store', $credit), $data)->assertSessionHasNoErrors();
+    $event = CommunicationEvent::where('event_type', 'payment_received')->sole();
+    $sms = CommunicationDelivery::create(['team_id' => $credit->team_id, 'communication_event_id' => $event->id,
+        'cliente_id' => $credit->cliente_id, 'credito_id' => $credit->id, 'channel' => 'sms',
+        'recipient_hash' => str_repeat('a', 64), 'template_version' => 1, 'status' => 'accepted',
+        'provider_message_id' => 'same-id']);
+    $service = app(CommunicationWebhookService::class);
+    $service->apply($credit->team_id, 'meta_cloud', 'same-id', 'read', '100');
+    expect($sms->fresh()->status)->toBe('accepted')
+        ->and(DB::table('communication_webhook_events')->whereNull('communication_delivery_id')->count())->toBe(1);
+    $whatsapp = CommunicationDelivery::create(['team_id' => $credit->team_id, 'communication_event_id' => $event->id,
+        'cliente_id' => $credit->cliente_id, 'credito_id' => $credit->id, 'channel' => 'whatsapp',
+        'recipient_hash' => str_repeat('b', 64), 'template_version' => 1, 'status' => 'accepted',
+        'provider_message_id' => 'same-id']);
+    $service->reconcile($whatsapp);
+    expect($whatsapp->fresh()->status)->toBe('read')->and($sms->fresh()->status)->toBe('accepted');
 });

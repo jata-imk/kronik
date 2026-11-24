@@ -33,9 +33,13 @@ final class MetaWhatsAppTransport implements ChannelTransport
         $templateResponse = Http::withToken($settings['token'])->timeout(20)
             ->get("https://graph.facebook.com/{$version}/{$settings['waba_id']}/message_templates", [
                 'name' => $rule->external_template_name,
+                'language' => $rule->external_template_locale,
+                'status' => 'APPROVED',
+                'fields' => 'name,language,status,components',
             ]);
         if (! $templateResponse->successful()) {
-            return ['status' => 'uncertain', 'message_id' => null];
+            // No message POST occurred, so the outcome is known.
+            return ['status' => 'failed', 'message_id' => null];
         }
         $template = collect($templateResponse->json('data', []))->first(fn ($item) => ($item['name'] ?? null) === $rule->external_template_name
             && ($item['language'] ?? null) === $rule->external_template_locale
@@ -49,16 +53,28 @@ final class MetaWhatsAppTransport implements ChannelTransport
             $position = strpos($expectedBody, $placeholder);
             $expectedBody = substr_replace($expectedBody, '{{'.($index + 1).'}}', $position, strlen($placeholder));
         }
-        $externalBody = collect($template['components'] ?? [])->first(fn ($component) => ($component['type'] ?? null) === 'BODY')['text'] ?? null;
-        if ($externalBody !== $expectedBody) {
+        $externalComponents = $template['components'] ?? null;
+        // Local preview and consent cover only body text; extra Meta components would be sent unseen.
+        if (! is_array($externalComponents) || count($externalComponents) !== 1
+            || ($externalComponents[0]['type'] ?? null) !== 'BODY'
+            || ($externalComponents[0]['text'] ?? null) !== $expectedBody) {
             return ['status' => 'failed', 'message_id' => null];
         }
+        foreach ($matches[1] as $name) {
+            if (! is_scalar($variables[$name] ?? null) || trim((string) $variables[$name]) === '') {
+                return ['status' => 'failed', 'message_id' => null];
+            }
+        }
+        if (! preg_match('/\A\+?[1-9][0-9]{7,14}\z/', $recipient)) {
+            return ['status' => 'failed', 'message_id' => null];
+        }
+        $destination = ltrim($recipient, '+');
         $components = $matches[1] ? [['type' => 'body', 'parameters' => array_map(
             fn ($name) => ['type' => 'text', 'text' => $variables[$name] ?? ''], $matches[1],
         )]] : [];
         $response = Http::withToken($settings['token'])->timeout(20)
             ->post("https://graph.facebook.com/{$version}/{$phoneId}/messages", [
-                'messaging_product' => 'whatsapp', 'to' => $recipient, 'type' => 'template',
+                'messaging_product' => 'whatsapp', 'to' => $destination, 'type' => 'template',
                 'template' => ['name' => $rule->external_template_name, 'language' => ['code' => $rule->external_template_locale],
                     'components' => $components],
             ]);
