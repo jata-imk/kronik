@@ -42,7 +42,7 @@ del código anterior, no una integración LabsMobile ni habilitación real.
 - Worktree: `storage/framework/testing/comunicaciones-worktree`, rama local
   `feat/comunicaciones-notificaciones`, seguimiento de su homónima en `origin`,
   base funcional `ecb9d4a`. Al prepararlo coincidía con el remoto. La investigación
-  y el traspaso se conservan después en un commit documental local, sin push.
+  y el traspaso se publicaron después en el commit documental `6b11bf6`.
 - La comparación `main...origin/feat/comunicaciones-notificaciones` muestra
   89 commits exclusivos de `main` y siete de comunicaciones. No se fusionaron
   las ramas; la sincronización se revisará antes de implementar para conservar
@@ -102,11 +102,11 @@ funcionales: no hubo cambios de código.
 
 José comenzará la planeación en una nueva sesión. Esta entrega conserva solo
 investigación, selección de LabsMobile y evaluación preliminar, sin implementación
-ni activación. Commit local de documentación:
-`docs(comunicaciones): conservar investigación SMS y plan de retoma`.
-El SHA se registra en Notion y en la entrega al usuario, sin autorreferencia en
-este archivo; consultar `git log -- docs/agent-notes/comunicaciones-notificaciones.md`.
-Sin push, PR, integración ni despliegue de este traspaso.
+ni activación. Commit de documentación:
+[`6b11bf6`: conservar investigación SMS y plan de retoma](https://github.com/jata-imk/kronik/commit/6b11bf6abfd24de3fea0a32a01d9fad80d6b2d0d).
+Push a `origin/feat/comunicaciones-notificaciones` confirmado el 2026-11-24 por
+petición de José; el remoto avanzó desde `ecb9d4a` sin forzar. Sin PR, integración
+en `main` ni despliegue de este traspaso.
 
 Punto de entrada de la siguiente sesión:
 
@@ -140,3 +140,8 @@ Validación del traspaso: diez documentos UTF-8 sin BOM, LF y salto final,
 128 enlaces locales con destino existente y `git diff --check` aprobado.
 El checkout principal conserva los hashes de los ocho documentos locales
 preexistentes revisados. No corresponden nuevas pruebas funcionales a este commit.
+
+La publicación usó `SKIP_PRE_PUSH=1` solo en el proceso de push, tras verificar
+que el avance contiene exclusivamente documentación; se restauró el entorno al
+terminar. Es la exención del hook del repositorio, coherente con la entrega
+documental; no se ejecutaron suites funcionales ni se preparó una BD.
