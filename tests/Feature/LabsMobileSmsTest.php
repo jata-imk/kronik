@@ -192,3 +192,26 @@ test('el limitador no oculta un fallo de dominio como si fuera saturación', fun
     expect(fn () => app(LabsMobileRequestLimiter::class)->run(fn () => throw new RuntimeException('synthetic-domain-failure')))
         ->toThrow(RuntimeException::class, 'synthetic-domain-failure');
 });
+
+test('una escritura de caché rechazada sin excepción también impide HTTP', function () {
+    $cache = Mockery::mock(\Illuminate\Cache\Repository::class);
+    $cache->shouldReceive('lock')->once()->andReturn(new class
+    {
+        public function get(callable $callback): mixed
+        {
+            return $callback();
+        }
+    });
+    $cache->shouldReceive('get')->once()->andReturn(0);
+    $cache->shouldReceive('put')->once()->andReturn(false);
+    config(['comunicaciones.sms.rate_cache_store' => 'unwritable']);
+    Cache::shouldReceive('store')->with('unwritable')->once()->andReturn($cache);
+    $called = false;
+    expect(app(LabsMobileRequestLimiter::class)->run(function () use (&$called) {
+        $called = true;
+
+        return true;
+    }))->toBeNull();
+    expect($called)->toBeFalse();
+    Http::assertNothingSent();
+});

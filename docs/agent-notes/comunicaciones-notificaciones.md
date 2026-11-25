@@ -23,8 +23,25 @@ identificados, con rollback y auditoría; conserva correo, Meta y colas comparti
 Las filas canceladas neutralizan trabajos no identificados. Una nueva ejecución
 no desactiva reglas de un canal LabsMobile configurado después.
 
-Validación y publicación en curso; registrar SHA, PR, resultados, revisión medium
-y CI final antes de cerrar. No se modificó `.env`, se ejecutó limpieza operativa,
+Código PHP `f824640`; recorrido E2E y capturas `30a1689` (la captura de escritorio
+se ajusta después para iniciar arriba). Suite backend completa: 1,069 aprobadas,
+dos omitidas optativas, 48,623 aserciones; frontend completo: 67 archivos / 177
+pruebas aprobadas. Build Vite y Pint aprobados. E2E Chromium en SQLite nueva:
+dos recorridos aprobados, escritorio y móvil, con barreras cerradas y credenciales
+vacías. El fallo inicial de selector E2E se resolvió tras revisar traza, captura,
+video y consola; la repetición pasó. UTF-8/LF y 205 enlaces locales de 57 archivos
+textuales del rango comprobados; 11 documentos con índice y tema.
+
+Publicación y cierre en curso. La primera revisión medium se interrumpió por
+cuota del CLI. La segunda, esfuerzo medium y base `547d9e5`, no encontró
+regresiones accionables; aprobó cuatro pruebas frontend y 81 backend, con dos
+fallos de preparación documental al ejecutar simultáneamente el pre-push. Se
+repetirá la validación focal de forma secuencial para descartar interferencia de
+archivos fake compartidos. La revisión interna añadió una comprobación de caché
+que rechaza la llamada también cuando `put()` devuelve false sin excepción, con
+regresión específica. Repetir medium sobre el código final después de ese cambio.
+El push conserva el pre-push completo. Registrar PR, SHA revisado, resultado y CI
+final antes de cerrar. No se modificó `.env`, se ejecutó limpieza operativa,
 se habilitó tráfico, se accedió a VPS ni se desplegó. Las pruebas usan datos
 sintéticos y BD aisladas. Seguimiento I2, editor I3, Integraciones y piloto siguen
 pendientes. Entregar prompt I2 al cerrar y detenerse.

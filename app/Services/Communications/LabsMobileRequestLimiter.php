@@ -27,7 +27,9 @@ final class LabsMobileRequestLimiter
                 }
                 $rate = min(10, max(1, (int) config('comunicaciones.sms.requests_per_second', 5)));
                 // Fail closed even if the post-request cache write fails or the worker dies.
-                $cache->put($key, $time + 120, 180);
+                if (! $cache->put($key, $time + 120, 180)) {
+                    return null;
+                }
                 $entered = true;
                 try {
                     return ['result' => $request()];
