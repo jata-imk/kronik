@@ -47,6 +47,19 @@ Pruebas exclusivamente aisladas y secuenciales. No se modificó `.env`, no hubo
 migración/limpieza operativa, envíos reales, merge, despliegue ni acceso a VPS.
 No se implementó editor ni Integraciones. La iniciativa permanece abierta.
 
+### Ampliación de I3 confirmada — 25/11/2026
+
+José pidió previsualización compartida de texto plano SMS y HTML renderizado para
+correo/documentos, sin generar PDF siempre. Para documentos acepta HTML continuo
+sin paginación; PDF queda opcional. Reutilizar la base HTML existente del backend
+y completar cambios sin guardar, sin renderer PDF ni registros de negocio.
+Correo actual usa texto: conservar ese flujo y asegurar coherencia entre el HTML
+que se previsualiza y el formato real soportado. Detalle y aceptación en la
+[evaluación del editor](../explanation/editor-plantillas-notificaciones.md).
+Solo se amplía el traspaso documental; no se inicia implementación I3.
+CI #313 aprobado corresponde al cierre anterior `e7d287d`; código revisado `c7a31bd`
+sin cambios. Verificar el HEAD documental y sus checks vigentes al retomar.
+
 ### Siguiente sesión: solo I3
 
 > Continuemos SMS de Kronik, exclusivamente I3: Notificaciones globales y editor.
@@ -62,6 +75,19 @@ No se implementó editor ni Integraciones. La iniciativa permanece abierta.
 > (consulta, creación, edición, versionado, activación y retiro), sin exclusividad
 > de Super Admin. Reutiliza panel/búsqueda/inserción de variables del editor documental;
 > SMS conserva texto plano y solo sus variables aprobadas, no todo el catálogo documental.
+> Integra una sección compartida de Previsualización con formato explícito:
+> texto plano para SMS y HTML renderizado para correo y plantillas documentales.
+> Para documentos, HTML continuo sin paginación; generar PDF solo por acción explícita
+> opcional. No usar renderer PDF/Chromium ni crear recursos de negocio para texto/HTML.
+> Previsualiza cambios sin guardar y versiones guardadas exactas con datos sintéticos,
+> variables permitidas, estilos y recursos autorizados. Reutiliza compilación y
+> saneamiento existentes; ya existe DocumentoPlantillaController::preview para HTML
+> de versiones guardadas. No crear otro motor ni limitarse a mostrar código fuente.
+> El correo actual usa texto: conservar ese flujo e integrar HTML saneado cuando
+> corresponda, con vista previa coherente con el cuerpo real y sin cambiar proveedor.
+> HTML aislado, sin scripts ni recursos no autorizados. Mantén consulta sin mutaciones,
+> permisos por acción, descarte de respuestas tardías, móvil y teclado. Prueba que
+> texto/HTML no invocan PDF y conserva las regresiones de correo y generación PDF.
 > Una instalación es una financiera; equipos son departamentos/contextos de permisos.
 > Conserva nombre como primer nombre y fecha del evento; máximo dos segmentos tras
 > sustitución en backend, sin truncar ni quitar acentos. Vista previa sintética estimada.

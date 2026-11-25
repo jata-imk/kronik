@@ -27,6 +27,12 @@ sesiones. [ADR 0050](adr-0050-proveedor-sms-labsmobile.md) fija LabsMobile.
 - Compartir panel/búsqueda/inserción del editor documental; SMS persiste texto
   plano y conserva `{nombre}` como primer nombre y `{fecha_vencimiento}` como fecha
   del evento. No exponer automáticamente todo el catálogo documental.
+- Ampliación I3 confirmada el 25/11/2026: sección compartida de previsualización
+  de texto plano (SMS) y HTML renderizado (correo/documentos). HTML documental
+  continuo sin paginación; PDF opcional por acción explícita. Previsualizar cambios
+  sin guardar y versiones exactas con datos sintéticos, sin renderer PDF ni recursos
+  de negocio. Conservar saneamiento, permisos y correspondencia con el formato real
+  del correo, incluido el texto existente. Ver [detalle del editor](editor-plantillas-notificaciones.md).
 - Máximo dos segmentos tras sustituir variables; verificar en backend antes de
   despachar, sin truncar ni quitar acentos. La vista previa sintética es estimación.
 - Versiones activas inmutables. Activar otra redacción o retirar la utilizada
@@ -55,7 +61,7 @@ entregas; una sincronización posterior requiere su propia evaluación.
 | I0 — preparación | Matriz de compatibilidad, inventario de solo lectura y pruebas aisladas. Completar la clasificación de tablas de comunicaciones en el reinicio QA y corregir fixtures de menús preexistentes; sin cambiar el transporte. |
 | I1 — sustitución directa | LabsMobile HTTP, variables de entorno, UI sin escritura de secretos, comprobación técnica, barrera SMS, límites y pruebas sin tráfico real. Retirar referencias activas de Infobip y resolver sus configuraciones, salidas y jobs desechables de dev/QA mediante limpieza explícita; conservar correo y Meta. Los nuevos intentos guardan proveedor y correlación propios. No desarrollar recuperación de históricos ni compatibilidad con callbacks Infobip. |
 | I2 — seguimiento LabsMobile | Autenticidad confirmada antes de aceptar callbacks; persistencia, correlación, deduplicación, desorden, niveles de acuse y conciliación de los nuevos intentos LabsMobile. |
-| I3 — Notificaciones | Editor de texto plano y variables, catálogo global, permisos por acción, versiones completas, vista previa y segmentos. No se requiere migrar las plantillas desechables de prueba. |
+| I3 — Notificaciones | Editor de texto plano y variables, catálogo global, permisos por acción, versiones completas, vista previa texto/HTML sin generar PDF, PDF opcional y segmentos. No se requiere migrar las plantillas desechables de prueba. |
 | I4 — cierre técnico | Regresión conjunta, documentación y auditoría completas, barrido acumulado de todas las PR contra `ecb9d4a`, procedimiento de piloto y pendientes externos. |
 
 Esta secuencia sustituye la anterior I1–I5: el antiguo I1 de procedencia histórica
