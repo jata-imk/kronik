@@ -1,6 +1,67 @@
 # Comunicaciones y notificaciones
 
-## Retoma vigente — SMS I1 publicado, 25/11/2026
+## Retoma vigente — I2 núcleo interno, 25/11/2026
+
+Rama `feat/sms-i2-seguimiento`, creada desde `85d2db6`; PR hacia
+`feat/comunicaciones-notificaciones`, pendiente de publicación al redactar esta nota.
+#93 y #94 siguen abiertas, sin integrar. I1: código revisado `cacf89f`, HEAD
+`85d2db6`, CI #311 aprobado; sin hilos pendientes y revisión medium documentada
+en la PR. Se comprobó identidad del árbol funcional. Main continúa `217acef`,
+ancestro `bfa0b87`, divergencia 20/89 contra I1; no se fusionó.
+
+José confirmó que aún no creó cuenta LabsMobile ni compró saldo. El plan aprobado
+permite implementar solo trabajo seguro independiente: normalización tipada,
+persistencia, correlación original, deduplicación, conciliación y coordinación
+con HTTP, ejercitados con datos sintéticos. La autenticidad de callbacks sigue
+sin contrato verificable: no hay ruta, ackurl, verificador provisional ni entrada
+CLI. Las capacidades externas continúan deshabilitadas. **I2 no acredita
+seguimiento externo completo ni recepción autenticada.**
+
+El [contrato canónico](../reference/seguimiento-sms.md) registra niveles y privacidad.
+La migración aditiva `2026_11_25_180000` amplía la tabla de acuses; sin backfill ni
+tablas nuevas. El reinicio QA conserva su clasificación. El orquestador no pierde
+ID/aceptación HTTP cuando un acuse llega primero, y un timeout no degrada una entrega
+ya confirmada internamente ni autoriza reenvío. No se atribuye lectura al SMS.
+Auditoría reutilizada, transaccional y sin datos sensibles; correo/Meta intactos.
+
+Regresión focal inicial: 154 aprobadas, 1,569 aserciones. Frontend focal:
+cinco aprobadas en dos archivos. Se añadieron después dos regresiones de
+respuesta tardía y acuse posterior a timeout; el pre-push final debe incluirlas.
+Revisión medium y publicación aún en curso.
+Pruebas exclusivamente aisladas y secuenciales. No se modificó `.env`, no hubo
+migración/limpieza operativa, envíos reales, merge, despliegue ni acceso a VPS.
+No se implementó editor ni Integraciones. La iniciativa permanece abierta.
+
+### Siguiente sesión: solo I3
+
+> Continuemos SMS de Kronik, exclusivamente I3: Notificaciones globales y editor.
+> Worktree: C:\Users\jose.tejero\Documents\Proyectos\kronik\storage\framework\testing\comunicaciones-worktree.
+> Lee AGENTS.md, esta Agent Note, docs/explanation/plan-incrementos-sms.md,
+> docs/explanation/editor-plantillas-notificaciones.md, docs/reference/canales-comunicacion.md
+> y docs/reference/seguimiento-sms.md. Contrasta Notion 3fe61db7db7f81e4af50c4f0f3ab7e41.
+> Verifica PR/SHA/CI/revisión e integración reales de I0 #93, I1 #94 e I2 antes
+> de elegir base; conserva su código revisado aunque sigan abiertas. No fusiones main.
+> Implementa solo I3: catálogo global de Notificaciones con permisos por acción
+> (consulta, creación, edición, versionado, activación y retiro), sin exclusividad
+> de Super Admin. Reutiliza panel/búsqueda/inserción de variables del editor documental;
+> SMS conserva texto plano y solo sus variables aprobadas, no todo el catálogo documental.
+> Una instalación es una financiera; equipos son departamentos/contextos de permisos.
+> Conserva nombre como primer nombre y fecha del evento; máximo dos segmentos tras
+> sustitución en backend, sin truncar ni quitar acentos. Vista previa sintética estimada.
+> Versiones activas inmutables. Activar otra redacción o retirar cancela pendientes
+> y bloquea uso nuevo, sin recrear el mismo aviso. Conservar versión/evidencia exactas.
+> No migrar plantillas de prueba desechables. No implementar catálogo de Integraciones.
+> I2 solo tiene núcleo interno: no existe cuenta LabsMobile ni contrato de autenticidad.
+> Mantén recepción y capacidades externas cerradas; no inventes firma o consulta.
+> Mantén ambas barreras cerradas, correo, Meta, límites, elegibilidad y auditoría.
+> Pruebas con BD/HTTP aislados, un solo proceso PHP por checkout. Sin envíos reales,
+> compras, despliegues ni acceso a VPS. Una sesión y una PR hacia
+> feat/comunicaciones-notificaciones; /review medium, resolver hallazgos y registrar
+> base/SHA/CI/evidencia. Actualiza documentación, índices, Agent Note y Notion.
+> Entrega prompt I4 y detente. I4 exige barrido completo de todas las PR contra ecb9d4a,
+> además de registrar el pendiente externo de autenticidad antes de cualquier piloto.
+
+## Antecedente — SMS I1 publicado, 25/11/2026
 
 - [PR I1 #94](https://github.com/jata-imk/kronik/pull/94), abierta hacia
   `feat/comunicaciones-notificaciones`, rama `feat/sms-i1-labsmobile` creada desde
@@ -40,7 +101,7 @@ aisladas de pruebas. Main sigue en `217acef`, ancestro `bfa0b87`, divergencia de
 arranque 89/15; no se fusionó ni se sobrescribió trabajo compartido. Base funcional
 del barrido final de **I4: `ecb9d4a`**. Integraciones y piloto siguen pendientes.
 
-### Siguiente sesión: solo I2
+### Prompt anterior: solo I2
 
 Prompt de continuación:
 

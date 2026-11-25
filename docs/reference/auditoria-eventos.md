@@ -90,6 +90,7 @@ un solo código por acción, sin crear catálogos paralelos.
 | `comunicaciones` | Timeout o interrupción | `communication.delivery_uncertain` | S | Salida | Incierto, sin reintento ciego | Equipo/sucursal del evento | state | Q | Implementado localmente, pendiente PR/QA | CommunicationOrchestrator::send/markInterruptedUncertain | CommunicationDeliveryTest, LabsMobileSmsTest |
 | `comunicaciones` | Cambió elegibilidad antes de enviar | `communication.delivery_cancelled` | S | Salida | Cancelada | Equipo/sucursal del evento | state | Q | Implementado localmente, pendiente PR/QA | CommunicationOrchestrator::send | CommunicationDeliveryTest, LabsMobileSmsTest |
 | `comunicaciones` | Webhook Meta firmado confirma entrega/lectura/fallo | `communication.delivery_status_updated` | S | Salida | Estado nuevo sin retroceso | Equipo/sucursal del evento | state, provider | Q | Implementado localmente, pendiente PR/QA | CommunicationWebhookService::promote | CommunicationWebhookTest |
+| `comunicaciones` | Núcleo interno concilia avance de acuse SMS sintético; sin recepción pública | `communication.delivery_status_updated` | S; sin atribuir al operador actual | Salida | Avance de estado o nivel, sin lectura SMS | Equipo/sucursal originales del evento | state, provider, result (nivel) | Q | Implementado I2 en rama, autenticación externa pendiente | LabsMobileAcknowledgementService::reconcileLocked | LabsMobileAcknowledgementTest (Feature) |
 | `comunicaciones` | CLI retira configuración, jobs o callbacks SMS de prueba | `communication.sms_test_data_cleaned` | S; invocación CLI explícita, sin atribuir usuario de negocio | Canal, salida de job o contexto de callbacks | Retirado; idempotente | Equipo original; sucursal de salida/job o null para configuración/callbacks | state, result | Q | Implementado I1 en rama, pendiente integración/QA | SmsTestDataCleanup::run | SmsTestDataCleanupTest |
 | `creditos` | Reconstrucción administrativa de lecturas | `credito.projections_rebuilt` | S; iniciador CLI desconocido explícito | — | completada/incompleta | Equipo/sucursal null explícitos; no heredar sesión | result | G | Implementado, pendiente integración/QA | ProyectarCreditos | TableroFinancieroTest |
 | `teams` | Equipo creado | `team.created` | U | Equipo | Cambio aplicado | T | changed_fields, related, result | Q | Implementado; validar entrega en Agent Note | TeamManagementService::create | AuditCoverageTest |
@@ -345,3 +346,13 @@ El inventario I0 sigue siendo consulta y no requiere eventos nuevos. La UI de
 presencia tampoco añade una acción auditable. No se persisten secretos, teléfono,
 texto, payloads de job ni respuestas crudas. El seguimiento autenticado SMS queda
 para I2; solo Meta emite actualización por webhook en I1.
+
+### Seguimiento interno SMS I2
+
+Reutiliza `CommunicationDeliveryStatusUpdated`; no necesita código adicional.
+Acuse, aplicación, salida y actividad comparten transacción. El actor es sistema,
+con contexto original e `inheritActorContext: false`. Solo avances efectivos
+emiten actividad; duplicados y desorden sin avance conservan evidencia sin
+actividad adicional. No hay evento de recepción externa porque no existe entrada
+pública autenticada. El [contrato](seguimiento-sms.md) y las pruebas cubren datos
+permitidos, cambios de preferencias, ausencia de teléfono/texto/secretos y rollback.

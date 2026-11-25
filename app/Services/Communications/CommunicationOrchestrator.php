@@ -284,6 +284,23 @@ final class CommunicationOrchestrator
         DB::transaction(function () use ($id, $receipt, $sucursalId) {
             $delivery = CommunicationDelivery::lockForUpdate()->findOrFail($id);
             if ($delivery->status !== 'sending') {
+                // An early SMS acknowledgement must not discard the later HTTP evidence.
+                if ($delivery->channel === 'sms' && $delivery->provider === 'labsmobile'
+                    && in_array($delivery->status, ['uncertain', 'accepted', 'failed', 'delivered'], true)
+                    && $receipt['status'] === 'accepted' && $receipt['message_id'] === $delivery->provider_correlation_id
+                    && $delivery->accepted_at === null) {
+                    $update = ['provider_message_id' => $receipt['message_id'], 'accepted_at' => now()];
+                    if ($delivery->status === 'uncertain') {
+                        $update['status'] = 'accepted';
+                    }
+                    $delivery->update($update);
+                    $this->audit(ActivityEvent::CommunicationDeliveryAccepted, $delivery, $delivery->team_id, $sucursalId);
+                } elseif ($delivery->channel === 'sms' && $delivery->provider === 'labsmobile'
+                    && in_array($delivery->status, ['uncertain', 'accepted'], true) && $receipt['status'] === 'failed') {
+                    $delivery->update(['status' => 'failed']);
+                    $this->audit(ActivityEvent::CommunicationDeliveryFailed, $delivery, $delivery->team_id, $sucursalId);
+                }
+
                 return;
             }
             $delivery->update(['status' => $receipt['status'], 'provider_message_id' => $receipt['message_id'],
@@ -295,6 +312,9 @@ final class CommunicationOrchestrator
             };
             $this->audit($activity, $delivery, $delivery->team_id, $sucursalId);
         });
+        if ($channel->channel === 'sms') {
+            app(LabsMobileAcknowledgementService::class)->reconcile(CommunicationDelivery::findOrFail($id));
+        }
         if ($receipt['message_id'] && $channel->channel === 'whatsapp') {
             app(CommunicationWebhookService::class)->reconcile(CommunicationDelivery::findOrFail($id));
         }

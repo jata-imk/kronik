@@ -68,6 +68,18 @@ revisión si cambia código después. No considerar una solicitud de revisión c
 evidencia de revisión terminada. El pase de rango completo de I4 complementa esas
 revisiones individuales; no cerrarlo anticipadamente por terminar I0 o integrar una PR.
 
+## Estado de I2 — núcleo interno, recepción pendiente
+
+Rama `feat/sms-i2-seguimiento` desde `85d2db6`, dependiente de #93 y #94,
+ambas abiertas al inicio. CI #311 aprobado para I1, revisión medium de código
+`cacf89f` sin hilos pendientes. Árbol funcional idéntico en `85d2db6`. Main sigue
+en `217acef`, ancestro `bfa0b87`, divergencia 20/89 respecto de I1, sin fusionar.
+
+El usuario no tiene cuenta ni saldo LabsMobile. El [núcleo interno](../reference/seguimiento-sms.md)
+se implementa con pruebas sintéticas; autenticación y recepción externa quedan
+pendientes, sin declarar completo el seguimiento operativo. No añadir endpoint,
+ackurl ni verificador permisivo. Evidencia de validación y publicación en la Agent Note.
+
 ## Estado de I1 — publicado el 25/11/2026
 
 [PR I1 #94](https://github.com/jata-imk/kronik/pull/94), código revisado `cacf89f`.

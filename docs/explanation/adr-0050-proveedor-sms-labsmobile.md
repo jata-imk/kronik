@@ -2,7 +2,8 @@
 
 Estado: aceptado el 2026-11-24 por decisión de José. Transporte/configuración I1
 implementados en su rama el 2026-11-25; integración, despliegue, contratación y
-activación no acreditados. Seguimiento LabsMobile pendiente de I2.
+activación no acreditados. Núcleo interno de seguimiento I2 implementado;
+recepción externa pendiente de autenticidad verificable.
 El [contrato de canales](../reference/canales-comunicacion.md) describe el código vigente.
 
 ## Contexto
@@ -37,12 +38,16 @@ I1 adapta transporte, configuración/UI y orquestación, y retira recepción y
 conciliación Infobip, con pruebas y auditoría. El contrato vigente describe
 LabsMobile; `ecb9d4a` conserva el antecedente funcional anterior. La divergencia
 frente a `main` se revisó sin fusionar, conservando la elegibilidad financiera.
-El seguimiento LabsMobile se implementará en I2 tras confirmar autenticidad.
+I2 implementa normalización, persistencia y conciliación internas sin entrada externa,
+según el [contrato de seguimiento](../reference/seguimiento-sms.md). La decisión
+del 25/11/2026 mantiene desacoplado ese núcleo: no se publica recepción mientras
+no se confirme autenticidad. El usuario aún no tiene cuenta ni ha comprado saldo.
 
 La revisión pública deja pendientes cobertura concreta de OMV de Altán, vigencia
 de entrega por ruta, autenticación/conciliación de callbacks y tarifa de cuenta.
 Estas preguntas delimitan la prueba de la integración, sin reabrir la elección
-de proveedor ya aceptada. No hay migraciones ni cambios funcionales en este ADR.
+de proveedor ya aceptada. La elección inicial fue documental; los contratos de
+canales y seguimiento describen las migraciones de I1 e I2.
 
 El [plan de sustitución](integracion-sms-labsmobile.md#sustitución-del-código-infobip)
 debe incluir las referencias activas, configuración y jobs del proveedor anterior

@@ -16,6 +16,7 @@ La rama incluye la bandeja contextual, eventos de pago/vencimiento y orquestaci�
 
 ## Seguimiento
 
+- [Seguimiento interno SMS: niveles de acuse y frontera de autenticación](../reference/seguimiento-sms.md).
 - [Plan SMS por incrementos y sesiones, con matriz de compatibilidad](../explanation/plan-incrementos-sms.md).
 - [Inventario previo al corte SMS: comando, alcance y límites](../reference/inventario-sms.md).
 - [Tarea posterior: catálogo de Integraciones por entorno](https://app.notion.com/p/42361db7db7f81e6b747c5ea0241cbb4).
