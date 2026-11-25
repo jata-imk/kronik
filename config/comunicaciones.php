@@ -6,6 +6,15 @@ $maxDailyLimit = max(1, (int) env('COMMUNICATIONS_MAX_DAILY_LIMIT', 5));
 return [
     // An operator setting alone can never enable external traffic in a new environment.
     'send_enabled' => env('COMMUNICATIONS_SEND_ENABLED', false),
+    'sms_send_enabled' => env('COMMUNICATIONS_SMS_SEND_ENABLED', false),
+    'sms' => [
+        'base_url' => rtrim(env('LABSMOBILE_BASE_URL', 'https://api.labsmobile.com/json'), '/'),
+        'username' => env('LABSMOBILE_USERNAME'),
+        'token' => env('LABSMOBILE_TOKEN'),
+        'sender' => env('LABSMOBILE_SENDER'),
+        'requests_per_second' => min(10, max(1, (int) env('LABSMOBILE_REQUESTS_PER_SECOND', 5))),
+        'rate_cache_store' => env('LABSMOBILE_RATE_CACHE_STORE', 'database'),
+    ],
     'test_recipient' => env('COMMUNICATIONS_TEST_RECIPIENT'),
     'default_lead_days' => min($maxLeadDays, max(1, (int) env('COMMUNICATIONS_DEFAULT_LEAD_DAYS', 3))),
     'max_lead_days' => $maxLeadDays,

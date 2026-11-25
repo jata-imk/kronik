@@ -43,25 +43,9 @@ test('Meta exige firma y número del equipo, deduplica y no retrocede de leído 
     expect(\App\Models\Activity::where('event', 'communication.delivery_status_updated')->count())->toBe(1);
 });
 
-test('Infobip solo acepta reporte firmado y entrega confirmada al dispositivo', function () {
-    [$actor, $credit, $data] = creditoPagableQa($this);
-    $data['previa_hash'] = $this->postJson(route('creditos.pagos.preview', $credit), $data)->assertOk()->json('previa_hash');
-    $this->post(route('creditos.pagos.store', $credit), $data)->assertSessionHasNoErrors();
-    $event = CommunicationEvent::where('event_type', 'payment_received')->sole();
-    CommunicationChannel::create(['team_id' => $credit->team_id, 'channel' => 'sms', 'provider' => 'infobip',
-        'sender' => 'Kronik', 'eligibility' => 'approved', 'enabled' => true,
-        'secret' => json_encode(['api_key' => 'test', 'base_url' => 'tenant.api.infobip.com', 'webhook_secret' => 'sms-secret'])]);
-    $delivery = CommunicationDelivery::create(['team_id' => $credit->team_id, 'communication_event_id' => $event->id,
-        'cliente_id' => $credit->cliente_id, 'credito_id' => $credit->id, 'channel' => 'sms',
-        'recipient_hash' => str_repeat('a', 64), 'template_version' => 1, 'status' => 'accepted',
-        'provider_message_id' => 'sms-123']);
-    $raw = json_encode(['results' => [['messageId' => 'sms-123', 'doneAt' => '2026-11-20T10:00:00',
-        'status' => ['name' => 'DELIVERED_TO_HANDSET']]]], JSON_THROW_ON_ERROR);
-    $url = route('webhooks.comunicaciones.sms', $credit->team_id);
-    $this->call('POST', $url, [], [], [], ['CONTENT_TYPE' => 'application/json'], $raw)->assertForbidden();
-    $this->call('POST', $url, [], [], [], ['CONTENT_TYPE' => 'application/json',
-        'HTTP_X_HUB_SIGNATURE' => 'sha256='.hash_hmac('sha256', $raw, 'sms-secret')], $raw)->assertOk();
-    expect($delivery->fresh()->status)->toBe('delivered')->and($delivery->fresh()->delivered_at)->not->toBeNull();
+test('el endpoint SMS anterior está retirado y no se publica uno LabsMobile', function () {
+    $this->postJson('/api/webhooks/comunicaciones/sms/1', ['results' => []])->assertNotFound();
+    expect(\Illuminate\Support\Facades\Route::has('webhooks.comunicaciones.sms'))->toBeFalse();
 });
 
 test('un webhook adelantado se asocia después con el envío sin perder el estado', function () {

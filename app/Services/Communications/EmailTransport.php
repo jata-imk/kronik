@@ -14,7 +14,7 @@ final class EmailTransport implements ChannelTransport
         return ['templates' => true, 'attachments' => false, 'replies' => false, 'delivery_receipts' => false, 'read_receipts' => false];
     }
 
-    public function send(CommunicationChannel $channel, CommunicationRule $rule, string $recipient, string $subject, string $body, array $variables = []): array
+    public function send(CommunicationChannel $channel, CommunicationRule $rule, string $recipient, string $subject, string $body, array $variables = [], ?string $correlationId = null): array
     {
         Mail::to($recipient)->send(new CommunicationMail($subject, $body, $channel->sender));
 

@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('webhooks/comunicaciones/whatsapp/{team}', [\App\Http\Controllers\CommunicationWebhookController::class, 'verifyMeta'])->whereNumber('team')->name('webhooks.comunicaciones.whatsapp.verify');
 Route::post('webhooks/comunicaciones/whatsapp/{team}', [\App\Http\Controllers\CommunicationWebhookController::class, 'meta'])->whereNumber('team')->name('webhooks.comunicaciones.whatsapp');
-Route::post('webhooks/comunicaciones/sms/{team}', [\App\Http\Controllers\CommunicationWebhookController::class, 'sms'])->whereNumber('team')->name('webhooks.comunicaciones.sms');
 
 Route::group(['middleware' => ['auth:sanctum', 'active', \App\Http\Middleware\TeamsPermission::class]], function () {
     Route::get('/user', function (Request $request) {

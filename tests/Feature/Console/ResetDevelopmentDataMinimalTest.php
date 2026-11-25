@@ -321,14 +321,14 @@ it('removes a full credit cycle with prepayment reversal SIC evidence templates 
         'cliente_id' => $credito->cliente_id, 'credito_id' => $credito->id, 'channel' => 'sms',
         'recipient_hash' => str_repeat('a', 64), 'template_version' => 1, 'status' => 'uncertain', 'provider_message_id' => 'qa-reset-id']);
     App\Models\CommunicationChannel::create(['team_id' => $event->team_id, 'channel' => 'sms',
-        'provider' => 'infobip', 'secret' => '{"api_key":"synthetic-reset-key"}']);
+        'provider' => 'labsmobile', 'secret' => null]);
     App\Models\CommunicationRule::create(['team_id' => $event->team_id, 'event_type' => 'payment_received',
         'channel' => 'sms', 'body' => 'Texto sintético QA']);
     App\Models\CommunicationConsent::create(['team_id' => $event->team_id, 'cliente_id' => $credito->cliente_id,
         'channel' => 'sms', 'purpose' => 'operational', 'contact_hash' => str_repeat('b', 64),
         'source' => 'QA', 'evidence_reference' => 'QA', 'recorded_by' => $admin->id, 'granted_at' => now()]);
     DB::table('communication_webhook_events')->insert(['team_id' => $event->team_id, 'communication_delivery_id' => $delivery->id,
-        'provider' => 'infobip', 'provider_message_id' => 'qa-reset-id', 'event_key' => 'reset:callback',
+        'provider' => 'labsmobile', 'provider_message_id' => 'qa-reset-id', 'event_key' => 'reset:callback',
         'status' => 'delivered', 'received_at' => now()]);
     DB::table('operator_notifications')->insert(['user_id' => $admin->id, 'team_id' => $event->team_id,
         'sucursal_id' => $credito->sucursal_id, 'event' => 'qa', 'title' => 'QA', 'body' => 'QA', 'dedup_key' => 'reset:notification']);

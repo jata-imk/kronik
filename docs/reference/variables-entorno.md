@@ -94,7 +94,24 @@ El geocodificador actual usa Nominatim y no consume una API key configurable.
 - `COMMUNICATIONS_PAYMENT_VALIDITY_HOURS` (24): vigencia máxima de un candidato de pago antes del envío.
 - `COMMUNICATIONS_QUEUE_STALE_MINUTES` (15) y `COMMUNICATIONS_SENDING_UNCERTAIN_MINUTES` (5): recuperación de trabajo en cola y clasificación conservadora de intento interrumpido. No reenvían automáticamente un intento incierto.
 - `COMMUNICATIONS_DUE_SCHEDULE_MINUTES` (60) y `COMMUNICATIONS_DISPATCH_SCHEDULE_MINUTES` (5): frecuencia del scheduler, de 1 a 60 minutos; usar divisores de 60 para una cadencia uniforme. Requiere cron real del servidor.
-- Las credenciales SMS y WhatsApp se cifran por equipo en la base. Consultar [canales de comunicación](canales-comunicacion.md) antes de configurarlas.
+- WhatsApp conserva credenciales cifradas por equipo; SMS usa exclusivamente el entorno. Consultar [canales de comunicación](canales-comunicacion.md).
+
+### SMS LabsMobile (I1)
+
+| Variable | Valor inicial / contrato |
+| --- | --- |
+| `COMMUNICATIONS_SMS_SEND_ENABLED` | `false`; exige además barrera global, elegibilidad, canal y regla autorizados. |
+| `LABSMOBILE_BASE_URL` | `https://api.labsmobile.com/json`; solo se admite ese host/ruta HTTPS, sin redirecciones. |
+| `LABSMOBILE_USERNAME` | Usuario de cuenta; sin valor inicial. No se devuelve a la UI. |
+| `LABSMOBILE_TOKEN` | Token API; sin valor inicial. No guardar en Git, BD, UI o auditoría. |
+| `LABSMOBILE_SENDER` | Remitente autorizado; sin valor inicial. Numérico de hasta 16 dígitos o alfanumérico de hasta 11 caracteres. |
+| `LABSMOBILE_REQUESTS_PER_SECOND` | 5; acotado entre 1 y 10, compartido por cuenta, saldo y envíos. |
+| `LABSMOBILE_RATE_CACHE_STORE` | `database`; almacén de caché con locks compartidos por todos los workers. `array` solo en testing. |
+
+El código usa `config()` para respetar el caché de configuración. Rotar credenciales
+requiere actualizar ese caché y reiniciar workers mediante el procedimiento del
+entorno; después repetir comprobación técnica. La presencia no acredita conexión
+actual ni autorización de tráfico. Esta entrega no cambia `.env` ni habilita envíos.
 
 - `MAIL_*`: configure SMTP antes de enviar correo real. `MAIL_MAILER=log` solo
   sirve para pruebas controladas.

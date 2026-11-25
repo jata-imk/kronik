@@ -2,7 +2,6 @@
 
 use App\Models\CommunicationChannel;
 use App\Models\CommunicationRule;
-use App\Services\Communications\InfobipSmsTransport;
 use App\Services\Communications\MetaWhatsAppTransport;
 use Illuminate\Support\Facades\Http;
 
@@ -30,19 +29,4 @@ test('Meta verifica plantilla aprobada y texto vigente antes del POST con parám
 
     expect(app(MetaWhatsAppTransport::class)->send($channel, $rule, '+525512345678', '', 'Hola Ana, pago registrado.', ['nombre' => 'Ana'])['status'])->toBe('failed');
     Http::assertSentCount(3);
-});
-
-test('Infobip usa el host de cuenta validado y conserva aceptación separada de entrega', function () {
-    $admin = actingAsSuperAdmin();
-    $channel = CommunicationChannel::create(['team_id' => $admin->current_team_id, 'channel' => 'sms',
-        'provider' => 'infobip', 'sender' => 'KronikQA', 'eligibility' => 'approved', 'enabled' => true,
-        'secret' => json_encode(['api_key' => 'clave-qa', 'base_url' => 'tenant.api.infobip.com', 'webhook_secret' => 'firma-qa'])]);
-    $rule = CommunicationRule::create(['team_id' => $admin->current_team_id, 'event_type' => 'payment_received',
-        'channel' => 'sms', 'body' => 'Pago registrado.']);
-    Http::fake(['tenant.api.infobip.com/*' => Http::response(['messages' => [['messageId' => 'sms-qa']]], 200)]);
-    $receipt = app(InfobipSmsTransport::class)->send($channel, $rule, '+525512345678', '', 'Pago registrado.');
-    expect($receipt)->toBe(['status' => 'accepted', 'message_id' => 'sms-qa']);
-    Http::assertSent(fn ($request) => $request->url() === 'https://tenant.api.infobip.com/sms/3/messages'
-        && $request['messages'][0]['destinations'][0]['to'] === '525512345678'
-        && $request->hasHeader('Authorization', 'App clave-qa'));
 });

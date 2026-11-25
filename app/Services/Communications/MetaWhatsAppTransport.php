@@ -14,7 +14,7 @@ final class MetaWhatsAppTransport implements ChannelTransport
         return ['templates' => true, 'attachments' => false, 'replies' => false, 'delivery_receipts' => true, 'read_receipts' => true];
     }
 
-    public function send(CommunicationChannel $channel, CommunicationRule $rule, string $recipient, string $subject, string $body, array $variables = []): array
+    public function send(CommunicationChannel $channel, CommunicationRule $rule, string $recipient, string $subject, string $body, array $variables = [], ?string $correlationId = null): array
     {
         if ($rule->external_template_status !== 'approved' || ! $rule->external_template_name || ! $rule->external_template_locale) {
             throw new RuntimeException('La plantilla de WhatsApp no tiene aprobación registrada.');

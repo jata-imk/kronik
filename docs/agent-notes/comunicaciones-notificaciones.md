@@ -1,6 +1,35 @@
 # Comunicaciones y notificaciones
 
-## Retoma vigente — SMS I0, 25/11/2026
+## Retoma vigente — SMS I1, 25/11/2026
+
+Implementación en `feat/sms-i1-labsmobile`, creada desde `9d0473d` en el worktree
+acordado. PR hacia `feat/comunicaciones-notificaciones`, dependiente de I0 #93
+mientras siga abierta. No se fusionó main ni se integró una PR. Base funcional
+para el pase final de I4: `ecb9d4a`.
+
+Al arrancar, Git remoto confirma `9d0473d`; la API de #93 todavía devuelve
+`213a4b6` como HEAD, PR abierta y sin hilos pendientes. Revisión medium acreditada
+sobre `3095384`; CI verde para ese código y `213a4b6`, sin comprobaciones visibles
+para `9d0473d`. Main sigue en `217acef`, ancestro `bfa0b87`, divergencia 89/15.
+Se mantienen los cruces ya documentados para una integración futura.
+
+I1 implementa HTTP LabsMobile, configuración por entorno mediante `config()`,
+UI de presencia sin escritura de secretos/remitente, comprobación de saldo sin
+SMS, doble barrera, dos segmentos tras sustitución, limitación atómica por cuenta
+y proveedor/correlación antes del envío. Retira adaptador, endpoint y conciliación
+Infobip; Meta conserva seguimiento. La nueva migración es aditiva y no hace
+backfill. La limpieza QA selectiva invalida salidas anteriores y elimina solo jobs
+identificados, con rollback y auditoría; conserva correo, Meta y colas compartidas.
+Las filas canceladas neutralizan trabajos no identificados. Una nueva ejecución
+no desactiva reglas de un canal LabsMobile configurado después.
+
+Validación y publicación en curso; registrar SHA, PR, resultados, revisión medium
+y CI final antes de cerrar. No se modificó `.env`, se ejecutó limpieza operativa,
+se habilitó tráfico, se accedió a VPS ni se desplegó. Las pruebas usan datos
+sintéticos y BD aisladas. Seguimiento I2, editor I3, Integraciones y piloto siguen
+pendientes. Entregar prompt I2 al cerrar y detenerse.
+
+## Antecedente — SMS I0, 25/11/2026
 
 **Corrección de alcance confirmada por José el 25/11/2026:** Kronik solo está en
 desarrollo y QA; nunca ha estado en producción, no existen clientes ni datos

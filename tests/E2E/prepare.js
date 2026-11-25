@@ -49,6 +49,11 @@ export function e2eEnvironment() {
         DB_PASSWORD: process.env.E2E_DB_PASSWORD ?? "",
         CACHE_STORE: "array",
         MAIL_MAILER: "array",
+        COMMUNICATIONS_SEND_ENABLED: "false",
+        COMMUNICATIONS_SMS_SEND_ENABLED: "false",
+        LABSMOBILE_USERNAME: "",
+        LABSMOBILE_TOKEN: "",
+        LABSMOBILE_SENDER: "",
         QUEUE_CONNECTION: "sync",
         // File mtime follows the OS clock; dated scenarios need session timestamps from Laravel.
         SESSION_DRIVER: process.env.E2E_BULLET_FIXTURES === "true" ? "database" : "file",

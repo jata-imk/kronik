@@ -41,20 +41,4 @@ class CommunicationWebhookController extends Controller
 
         return response()->json(['received' => true]);
     }
-
-    public function sms(Request $request, int $team, CommunicationWebhookService $service)
-    {
-        $channel = CommunicationChannel::where('team_id', $team)->where('channel', 'sms')->firstOrFail();
-        $settings = json_decode($channel->secret ?? '{}', true);
-        $signature = $request->header('X-Hub-Signature', '');
-        $expected = is_array($settings) && filled($settings['webhook_secret'] ?? null)
-            ? hash_hmac('sha256', $request->getContent(), $settings['webhook_secret']) : '';
-        abort_unless($expected !== '' && (hash_equals($expected, $signature) || hash_equals('sha256='.$expected, $signature)), 403);
-        foreach ($request->input('results', []) as $result) {
-            $service->apply($team, 'infobip', (string) ($result['messageId'] ?? ''),
-                (string) ($result['status']['name'] ?? ''), (string) ($result['doneAt'] ?? ''));
-        }
-
-        return response()->json(['received' => true]);
-    }
 }

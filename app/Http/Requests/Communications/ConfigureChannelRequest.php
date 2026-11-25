@@ -16,11 +16,17 @@ class ConfigureChannelRequest extends FormRequest
     {
         return [
             'channel' => ['required', Rule::in(['email', 'sms', 'whatsapp'])],
-            'sender' => ['required', 'string', 'max:255'],
-            'secret' => ['nullable', 'string', 'max:2000'],
+            'sender' => $this->input('channel') === 'sms' ? ['prohibited'] : ['required', 'string', 'max:255'],
+            'secret' => $this->input('channel') === 'sms' ? ['prohibited'] : ['nullable', 'string', 'max:2000'],
             'enabled' => ['required', 'boolean'],
             'eligibility' => ['required', Rule::in(['unverified', 'testing', 'approved', 'rejected'])],
             'eligibility_reference' => ['required_if:eligibility,approved', 'nullable', 'string', 'max:255'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return ['sender.prohibited' => 'El remitente SMS se configura en el entorno.',
+            'secret.prohibited' => 'Las credenciales SMS se configuran en el entorno.'];
     }
 }

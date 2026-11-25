@@ -18,11 +18,6 @@ final class CommunicationWebhookService
             'meta_cloud' => match ($providerStatus) {
                 'sent' => 'accepted', 'delivered' => 'delivered', 'read' => 'read', 'failed' => 'failed', default => null,
             },
-            'infobip' => match ($providerStatus) {
-                'DELIVERED_TO_HANDSET' => 'delivered',
-                'REJECTED', 'UNDELIVERABLE', 'EXPIRED' => 'failed',
-                default => null,
-            },
             default => null,
         };
         if (! $status || $messageId === '') {
@@ -34,6 +29,7 @@ final class CommunicationWebhookService
                 return;
             }
             $delivery = CommunicationDelivery::where('team_id', $teamId)->where('provider_message_id', $messageId)
+                ->where('channel', 'whatsapp')
                 ->lockForUpdate()->first();
             $inserted = DB::table('communication_webhook_events')->insertOrIgnore([
                 'team_id' => $teamId, 'communication_delivery_id' => $delivery?->id,
@@ -48,12 +44,12 @@ final class CommunicationWebhookService
 
     public function reconcile(CommunicationDelivery $delivery): void
     {
-        if (! $delivery->provider_message_id) {
+        if ($delivery->channel !== 'whatsapp' || ! $delivery->provider_message_id) {
             return;
         }
         DB::transaction(function () use ($delivery) {
             $delivery = CommunicationDelivery::lockForUpdate()->findOrFail($delivery->id);
-            $provider = $delivery->channel === 'sms' ? 'infobip' : 'meta_cloud';
+            $provider = 'meta_cloud';
             $pending = DB::table('communication_webhook_events')->where('team_id', $delivery->team_id)
                 ->where('provider', $provider)->where('provider_message_id', $delivery->provider_message_id)
                 ->whereNull('communication_delivery_id')->orderBy('id')->get();

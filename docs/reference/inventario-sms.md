@@ -27,7 +27,7 @@ El informe no comprueba recepción, procedencia histórica ni preparación produ
 | Sección | Evidencia |
 | --- | --- |
 | `channels` | Canales SMS totales, habilitados, con secreto almacenado y por proveedor conocido. Presencia de secreto no acredita validez y no lo descifra. |
-| `deliveries` | Salidas SMS por estado e identificadores externos presentes. Sin columna propia de proveedor, `provider_provenance=not_recorded`; nunca se infiere Infobip por el canal. |
+| `deliveries` | Salidas SMS por estado e identificadores externos presentes. Sin columna propia de proveedor, `provider_provenance=not_recorded`; con la columna aditiva I1 devuelve `requires_evidence_review`. No clasifica filas ni infiere Infobip por el canal. |
 | `webhooks` | Callbacks de todos los proveedores de comunicaciones, agrupados por proveedor y pendientes de asociación. No atribuye a SMS los de origen desconocido. |
 | `queue` | Driver activo y, por cada conexión `database` configurada, candidatos de comunicaciones listos, retrasados y reservados. `active` identifica su correspondencia con `queue.default`; `active_inspectable` exige poder leer ese almacén concreto. Inspecciona también los almacenes database cuando el driver activo sea `sync`. |
 | `failed_jobs` | Candidatos de comunicaciones fallidos, únicamente para almacenamiento configurado `database` o `database-uuids`. No lee el texto de excepciones. |

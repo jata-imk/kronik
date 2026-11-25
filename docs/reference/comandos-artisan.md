@@ -136,3 +136,12 @@ instancia con datos reales.
 ## Completar folios históricos
 
 `php artisan folios:completar --dry-run` valida prefijos y cuenta pendientes sin escribir. `php artisan folios:completar` asigna los pendientes sin regenerar documentos. Confirmar entorno y respaldo, activar mantenimiento y detener workers. [Contrato y recuperación](folios.md).
+
+### Limpieza selectiva SMS de prueba
+
+`php artisan comunicaciones:limpiar-sms-prueba` muestra conteos sin escribir.
+`--apply --confirm-qa` aplica la retirada de configuración, callbacks y jobs
+anteriores inequívocamente identificados, invalida salidas y desactiva reglas SMS.
+Exige ambas barreras cerradas; fuera de local/testing exige mantenimiento.
+No purga colas compartidas ni modifica correo/Meta. Revisar el
+[procedimiento y sus límites](../how-to/limpiar-sms-prueba.md).

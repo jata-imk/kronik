@@ -1,7 +1,9 @@
 # ADR 0050: LabsMobile como proveedor del canal SMS
 
-Estado: aceptado para la planeación el 2026-11-24 por decisión de José.
-Implementación, contratación y activación pendientes.
+Estado: aceptado el 2026-11-24 por decisión de José. Transporte/configuración I1
+implementados en su rama el 2026-11-25; integración, despliegue, contratación y
+activación no acreditados. Seguimiento LabsMobile pendiente de I2.
+El [contrato de canales](../reference/canales-comunicacion.md) describe el código vigente.
 
 ## Contexto
 

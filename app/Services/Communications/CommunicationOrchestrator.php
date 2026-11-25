@@ -99,14 +99,17 @@ final class CommunicationOrchestrator
                         ->where('enabled', true)->where('eligibility', 'approved')->first();
                     $contact = $client ? $this->contact($client, $rule->channel) : null;
                     if (! $channel || ! $contact || ! $this->hasConsent($event, $rule->channel, $contact)
+                        || ($rule->channel === 'sms' && $channel->provider !== 'labsmobile')
                         || ! $this->ruleMatchesEvent($event, $rule)) {
                         continue;
                     }
-                    if (DB::transaction(function () use ($event, $rule, $contact) {
+                    if (DB::transaction(function () use ($event, $rule, $contact, $channel) {
                         $delivery = CommunicationDelivery::firstOrCreate(
                             ['communication_event_id' => $event->id, 'channel' => $rule->channel],
                             ['team_id' => $event->team_id, 'cliente_id' => $event->cliente_id, 'credito_id' => $event->credito_id,
-                                'recipient_hash' => $this->contactHash($contact), 'template_version' => $rule->template_version, 'status' => 'prepared'],
+                                'recipient_hash' => $this->contactHash($contact), 'template_version' => $rule->template_version, 'status' => 'prepared',
+                                'provider' => $channel->provider,
+                                'provider_correlation_id' => $rule->channel === 'sms' ? bin2hex(random_bytes(10)) : null],
                         );
                         if ($delivery->wasRecentlyCreated) {
                             $this->audit(ActivityEvent::CommunicationDeliveryPrepared, $delivery, $event->team_id, $event->sucursal_id);
@@ -138,6 +141,9 @@ final class CommunicationOrchestrator
                     if (! $delivery || $delivery->status !== 'prepared') {
                         return false;
                     }
+                    if ($delivery->channel === 'sms' && ! app(LabsMobileConfiguration::class)->sendingEnabled()) {
+                        return false;
+                    }
                     $event = CommunicationEvent::find($delivery->communication_event_id);
                     $rule = CommunicationRule::where('team_id', $delivery->team_id)
                         ->where('event_type', $event?->event_type)->where('channel', $delivery->channel)
@@ -161,12 +167,38 @@ final class CommunicationOrchestrator
 
     public function send(int $id): bool
     {
+        $sms = CommunicationDelivery::whereKey($id)->where('channel', 'sms')->exists();
+        if (! $sms) {
+            return $this->sendDelivery($id);
+        }
+        if (! app(LabsMobileConfiguration::class)->sendingEnabled() || ! app(LabsMobileConfiguration::class)->configured()) {
+            return false;
+        }
+        $result = app(LabsMobileRequestLimiter::class)->run(fn () => $this->sendDelivery($id));
+        if ($result === null) {
+            DB::transaction(function () use ($id) {
+                $delivery = CommunicationDelivery::lockForUpdate()->find($id);
+                if ($delivery?->status === 'queued') {
+                    $delivery->update(['status' => 'prepared', 'reason' => 'sms_rate_limited', 'queued_at' => null]);
+                    $this->audit(ActivityEvent::CommunicationDeliveryRequeued, $delivery, $delivery->team_id, $delivery->event?->sucursal_id);
+                }
+            });
+        }
+
+        return $result === true;
+    }
+
+    private function sendDelivery(int $id): bool
+    {
         $payload = DB::transaction(function () use ($id) {
-            $delivery = CommunicationDelivery::lockForUpdate()->findOrFail($id);
-            if ($delivery->status !== 'queued') {
+            $delivery = CommunicationDelivery::lockForUpdate()->find($id);
+            if (! $delivery || $delivery->status !== 'queued') {
                 return null;
             }
             if (config('comunicaciones.send_enabled') !== true) {
+                return null;
+            }
+            if ($delivery->channel === 'sms' && ! app(LabsMobileConfiguration::class)->sendingEnabled()) {
                 return null;
             }
             $event = CommunicationEvent::find($delivery->communication_event_id);
@@ -180,6 +212,10 @@ final class CommunicationOrchestrator
                 || ! $rule || ! $channel || ! $contact || ! hash_equals($delivery->recipient_hash, $this->contactHash($contact))
                 || ! $this->hasConsent($event, $delivery->channel, $contact)
                 || ($rule && $rule->template_version !== $delivery->template_version);
+            if ($delivery->channel === 'sms') {
+                $invalid = $invalid || $delivery->provider !== 'labsmobile' || $channel?->provider !== 'labsmobile'
+                    || ! preg_match('/\A[a-f0-9]{20}\z/', $delivery->provider_correlation_id ?? '');
+            }
             if ($invalid) {
                 $delivery->update(['status' => 'cancelled', 'reason' => 'eligibility_changed']);
                 $this->audit(ActivityEvent::CommunicationDeliveryCancelled, $delivery, $delivery->team_id, $event?->sucursal_id);
@@ -212,23 +248,35 @@ final class CommunicationOrchestrator
                 return null;
             }
             $message = $this->render($rule, $event, $client);
+            if ($delivery->channel === 'sms') {
+                $measure = app(SmsText::class)->measure($message['body']);
+                if ($measure['segments'] < 1 || $measure['segments'] > 2 || ! preg_match('/\A\+[1-9][0-9]{7,14}\z/', $contact)) {
+                    $delivery->update(['status' => 'cancelled', 'reason' => 'sms_content_invalid']);
+                    $this->audit(ActivityEvent::CommunicationDeliveryCancelled, $delivery, $delivery->team_id, $event->sucursal_id);
+
+                    return null;
+                }
+                if (! app(LabsMobileConfiguration::class)->configured()) {
+                    return null;
+                }
+            }
             $delivery->update(['status' => 'sending', 'attempted_at' => now()]);
             $this->audit(ActivityEvent::CommunicationDeliverySending, $delivery, $delivery->team_id, $event->sucursal_id);
 
-            return [$delivery->id, $channel, $rule, $contact, $message['subject'], $message['body'], $message['variables'], $event->sucursal_id];
+            return [$delivery->id, $channel, $rule, $contact, $message['subject'], $message['body'], $message['variables'], $event->sucursal_id, $delivery->provider_correlation_id];
         });
         if (! $payload) {
             return false;
         }
-        [$id, $channel, $rule, $contact, $subject, $body, $variables, $sucursalId] = $payload;
+        [$id, $channel, $rule, $contact, $subject, $body, $variables, $sucursalId, $correlationId] = $payload;
         try {
             $transport = match ($channel->channel) {
                 'email' => app(EmailTransport::class),
-                'sms' => app(InfobipSmsTransport::class),
+                'sms' => app(LabsMobileSmsTransport::class),
                 'whatsapp' => app(MetaWhatsAppTransport::class),
                 default => throw new RuntimeException('No existe adaptador de envío para este canal.'),
             };
-            $receipt = $transport->send($channel, $rule, $contact, $subject, $body, $variables);
+            $receipt = $transport->send($channel, $rule, $contact, $subject, $body, $variables, $correlationId);
         } catch (\Throwable $exception) {
             // Transport exceptions, including timeouts, can follow an actual send.
             $receipt = ['status' => 'uncertain', 'message_id' => null];
@@ -247,7 +295,7 @@ final class CommunicationOrchestrator
             };
             $this->audit($activity, $delivery, $delivery->team_id, $sucursalId);
         });
-        if ($receipt['message_id']) {
+        if ($receipt['message_id'] && $channel->channel === 'whatsapp') {
             app(CommunicationWebhookService::class)->reconcile(CommunicationDelivery::findOrFail($id));
         }
 

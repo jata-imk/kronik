@@ -68,6 +68,26 @@ revisión si cambia código después. No considerar una solicitud de revisión c
 evidencia de revisión terminada. El pase de rango completo de I4 complementa esas
 revisiones individuales; no cerrarlo anticipadamente por terminar I0 o integrar una PR.
 
+## Estado de I1 — 25/11/2026
+
+Rama `feat/sms-i1-labsmobile` creada desde `9d0473d` con dependencia de PR #93,
+aún abierta. Se conserva I0 y el trabajo compartido. Las consultas al inicio
+acreditan CI verde para `3095384` y `213a4b6`, revisión medium final de código
+`3095384` y ningún hilo pendiente. El remoto Git apunta a `9d0473d`, aunque la
+API de la PR devuelve todavía `213a4b6`; no hay comprobaciones visibles para la
+corrección exclusivamente documental. No se afirma aprobación CI de ese SHA.
+
+I1 implementa transporte/configuración por entorno, UI de presencia, consulta de
+saldo, doble barrera, dos segmentos, limitador de cuenta con lock y correlación
+persistida. Retira transporte/endpoint/conciliación Infobip y añade
+[limpieza selectiva QA](../how-to/limpiar-sms-prueba.md). No incorpora seguimiento
+LabsMobile, editor o Integraciones. Evidencia de entrega en la Agent Note.
+
+Main sigue en `217acef`; ancestro `bfa0b87`, 89 commits exclusivos de main y 15
+de I0 al arrancar I1. Se inspeccionó la divergencia sin fusionar. Los cruces
+financieros, de navegación, permisos, auditoría e índices listados a continuación
+siguen pendientes de integración conjunta.
+
 ## Compatibilidad observada en I0
 
 Base funcional `ecb9d4a`; punto de arranque documental `547d9e5` después de
