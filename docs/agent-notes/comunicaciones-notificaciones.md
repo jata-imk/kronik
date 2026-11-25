@@ -1,5 +1,65 @@
 # Comunicaciones y notificaciones
 
+## Retoma vigente — SMS I0, 25/11/2026
+
+José autorizó la implementación y después pidió **una sesión y una PR por
+incremento** para no arrastrar contexto. Cada cierre debe conservar esta Agent
+Note, evidencia en Notion y prompt de continuación. `/review medium` y hallazgos
+resueltos en cada PR; al cerrar SMS, pase acumulado de todas las PR contra
+`ecb9d4a`, sin sustituirlo por las revisiones individuales.
+
+- Rama de I0: `feat/sms-i0-inventario`, creada desde `547d9e5` dentro del worktree
+  `storage/framework/testing/comunicaciones-worktree`. Base de la PR:
+  `feat/comunicaciones-notificaciones`. No se fusionó main ni se forzó historia.
+- Alcance I0: comando `comunicaciones:inventariar-sms`, servicio agregado de solo
+  lectura, contrato y matriz de compatibilidad. Conserva Infobip y no cambia
+  conexiones, jobs, reglas, proyecciones ni auditoría de negocio existentes.
+- El [plan canónico por incrementos](../explanation/plan-incrementos-sms.md)
+  registra las decisiones finales y cruces con main; prevalece sobre alternativas
+  abiertas del traspaso anterior. Una instalación es una financiera; los equipos
+  son departamentos. Credenciales por entorno, plantillas de Notificaciones
+  globales con permisos por acción, sin exclusividad de Super Admin, dos segmentos
+  tras sustitución y cancelación de pendientes al cambiar/retirar redacción.
+- [Tarea de Integraciones creada en Notion](https://app.notion.com/p/42361db7db7f81e6b747c5ea0241cbb4),
+  pendiente para después. No se implementa su catálogo ni se modifican CDC o Meta
+  en I0. Brian conserva WhatsApp/Facebook y su trabajo compartido.
+- Dependencias instaladas desde lockfiles sin cambios versionados; `.env` local
+  sintético con SQLite `:memory:`, correo `array` y envíos desactivados. No se
+  copiaron secretos ni se preparó una BD operativa. PHP 8.3.29 / Node 22.22.3.
+- Prueba focal: 13 aprobadas, 109 aserciones. Pint de los tres PHP aprobado.
+  Regresión general, build, publicación y revisión: en curso en esta sesión.
+- No hay migraciones, seeders ni variables nuevas de este incremento. El comando
+  CLI de consulta no necesita evento auditable nuevo; justificación y pruebas
+  enlazadas desde la matriz. No hay UI nueva ni E2E adicional requerido para I0.
+
+### Siguiente sesión
+
+Retomar **I1, procedencia y corte**, después de verificar el estado y SHA de la PR
+I0. Conservar el código revisado de I0 aunque aún no esté integrado y no asumir
+que publicar una rama equivale a integración. No empezar I2–I5 en esa sesión.
+Resolver primero cualquier hallazgo pendiente de I0 y elegir la base de la nueva
+PR desde el estado real; nunca mezclar main ni sobrescribir comunicaciones.
+
+Prompt de continuación (completar con PR/SHA finales de esta nota al cerrar):
+
+> Continuemos SMS de Kronik, exclusivamente el incremento I1 (procedencia y corte).
+> Trabaja en C:\Users\jose.tejero\Documents\Proyectos\kronik\storage\framework\testing\comunicaciones-worktree.
+> Lee AGENTS.md, docs/agent-notes/comunicaciones-notificaciones.md,
+> docs/explanation/plan-incrementos-sms.md, docs/reference/inventario-sms.md y el
+> alcance vigente de Notion 3fe61db7db7f81e4af50c4f0f3ab7e41.
+> Verifica la PR I0 y su SHA registrados en la nota, revisiones y estado de
+> integración antes de elegir la rama de I1; preserva todo el trabajo compartido.
+> Base funcional del barrido final: ecb9d4a. No fusiones main ni habilites tráfico.
+> Implementa solo I1: procedencia estable, recuperación histórica desde evidencia,
+> pendientes y jobs anteriores seguros, con pruebas aisladas y auditoría.
+> Credenciales por entorno; plantillas globales con permisos por acción; equipos
+> son departamentos, no financieras. No implementes el catálogo de Integraciones,
+> que tiene su tarea independiente, ni transportes/editor de incrementos posteriores.
+> Publica la PR del incremento, ejecuta /review medium y resuelve hallazgos.
+> Actualiza documentación, Agent Note y Notion; entrega prompt para I2.
+> Una sesión por incremento. Al terminar I5 exige pase del rango completo y todas
+> las PR contra ecb9d4a antes de cerrar la funcionalidad.
+
 ## Referencias
 
 - [Requisito de Notion](https://app.notion.com/p/Kronik-Comunicaciones-por-canales-env-os-y-seguimiento-3fe61db7db7f81e4af50c4f0f3ab7e41) y [copia literal conservada](../reference/comunicaciones-por-canales-envios-y-seguimiento.md).
