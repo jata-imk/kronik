@@ -230,3 +230,9 @@ las aserciones; se usó `vendor/bin/pest` con la extensión SQLite explícita.
 Meta Business mostró inicio de sesión en el navegador integrado; no hubo
 cuenta autenticada ni acceso a WABA, ID de teléfono, token, plantilla aprobada
 o webhook HTTPS público. No se llamó a `/messages` ni se enviaron mensajes.
+
+El código y las guías de esta preparación se publicaron en
+`feat/comunicaciones-whatsapp` mediante `c5b5a0f`; se verificó el SHA remoto.
+No hay PR ni despliegue de esta entrega. La siguiente validación depende del
+acceso a Meta Business del prestamista y de su WABA, número, token, plantillas
+aprobadas y callback HTTPS firmado.
