@@ -17,7 +17,10 @@ npm run test:e2e -- communications.spec.js
 ```
 
 El harness E2E fuerza ambas barreras cerradas y credenciales LabsMobile vacías.
-Las suites SMS bloquean HTTP no simulado. También prueban doble barrera, formato
+Las suites SMS bloquean HTTP no simulado. Ejecutar un solo proceso PHP de pruebas
+por checkout: los fixtures documentales reutilizan `Storage::fake('local')` y
+otro proceso puede limpiar sus archivos durante una prueba. Hacer la validación
+focal del revisor y el pre-push de forma secuencial. También prueban doble barrera, formato
 JSON/Basic Auth, saldo cero, respuesta ambigua/timeout, proveedor/correlación
 previos al HTTP, máximo dos segmentos tras sustitución, exclusión compartida de
 cuenta y limpieza selectiva con rollback. No ejecutan limpieza operativa.

@@ -32,16 +32,19 @@ vacías. El fallo inicial de selector E2E se resolvió tras revisar traza, captu
 video y consola; la repetición pasó. UTF-8/LF y 205 enlaces locales de 57 archivos
 textuales del rango comprobados; 11 documentos con índice y tema.
 
-Publicación y cierre en curso. La primera revisión medium se interrumpió por
-cuota del CLI. La segunda, esfuerzo medium y base `547d9e5`, no encontró
-regresiones accionables; aprobó cuatro pruebas frontend y 81 backend, con dos
-fallos de preparación documental al ejecutar simultáneamente el pre-push. Se
-repetirá la validación focal de forma secuencial para descartar interferencia de
-archivos fake compartidos. La revisión interna añadió una comprobación de caché
-que rechaza la llamada también cuando `put()` devuelve false sin excepción, con
-regresión específica. Repetir medium sobre el código final después de ese cambio.
-El push conserva el pre-push completo. Registrar PR, SHA revisado, resultado y CI
-final antes de cerrar. No se modificó `.env`, se ejecutó limpieza operativa,
+Código final `cacf89f`; revisión medium completa contra `547d9e5`, Codex CLI
+0.172.0, terminada sin regresiones accionables. Su validación secuencial aprobó
+70 pruebas backend y cuatro frontend. Incluye la regresión de escritura de caché
+rechazada sin excepción. No quedan hallazgos de código pendientes.
+
+La primera revisión se interrumpió por cuota. La segunda no encontró hallazgos,
+pero su ejecución simultánea con el pre-push causó fallos documentales: ambos
+procesos limpiaban el mismo `Storage::fake('local')`. El primer push se detuvo
+por un fallo del ciclo Bullet con ese mismo archivo. No se descartaron esos
+resultados como aprobados; revisión final y pre-push se ejecutan ahora de forma
+secuencial, según la guía QA. Publicación/CI todavía en curso; registrar PR y
+resultado antes de cerrar.
+No se modificó `.env`, se ejecutó limpieza operativa,
 se habilitó tráfico, se accedió a VPS ni se desplegó. Las pruebas usan datos
 sintéticos y BD aisladas. Seguimiento I2, editor I3, Integraciones y piloto siguen
 pendientes. Entregar prompt I2 al cerrar y detenerse.
