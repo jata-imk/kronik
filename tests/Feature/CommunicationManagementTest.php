@@ -125,3 +125,59 @@ test('la comprobación de conexión consulta APIs sin enviar mensajes ni confund
     Http::assertNotSent(fn ($request) => $request->method() !== 'GET');
     expect(Activity::where('event', 'communication.test_sent')->count())->toBe(2);
 });
+
+test('la prueba WhatsApp usa solo el destinatario permitido, datos ficticios y deja auditoría', function () {
+    $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
+    $admin = actingAsSuperAdmin();
+    $this->actingAs($admin);
+    config(['comunicaciones.whatsapp_test_enabled' => true,
+        'comunicaciones.whatsapp_test_recipient' => '+525512345678']);
+    CommunicationChannel::create(['team_id' => $admin->current_team_id, 'channel' => 'whatsapp',
+        'provider' => 'meta_cloud', 'sender' => '123456', 'eligibility' => 'testing', 'enabled' => false,
+        'secret' => json_encode(['token' => 'token-qa', 'api_version' => 'v27.0', 'waba_id' => '654321',
+            'phone_number_id' => '123456', 'app_secret' => 'app-qa', 'verify_token' => 'verify-qa'])]);
+    CommunicationRule::create(['team_id' => $admin->current_team_id, 'event_type' => 'payment_received',
+        'channel' => 'whatsapp', 'body' => 'Hola {nombre}, registramos tu pago.',
+        'external_template_name' => 'pago_qa', 'external_template_locale' => 'es_MX',
+        'external_template_status' => 'approved', 'enabled' => false]);
+    Http::fakeSequence()
+        ->push(['data' => [['name' => 'pago_qa', 'language' => 'es_MX', 'status' => 'APPROVED',
+            'components' => [['type' => 'BODY', 'text' => 'Hola {{1}}, registramos tu pago.']]]]], 200)
+        ->push(['messages' => [['id' => 'wamid.test']]], 200);
+
+    $this->post(route('comunicaciones.whatsapp.test'), ['recipient' => '+525512345678',
+        'event_type' => 'payment_received'])->assertSessionHasNoErrors()
+        ->assertSessionHas('success', 'Meta aceptó la prueba WhatsApp; verifica el teléfono receptor. Esto no confirma entrega.')
+        ->assertSessionHas('whatsappTestMessageId', 'wamid.test');
+    Http::assertSentCount(2);
+    Http::assertSent(fn ($request) => str_ends_with($request->url(), '/messages')
+        && $request['to'] === '525512345678'
+        && $request['template']['components'][0]['parameters'][0]['text'] === 'Prueba técnica');
+    $audit = Activity::where('event', 'communication.test_sent')->sole();
+    expect($audit->team_id)->toBe($admin->current_team_id)
+        ->and($audit->sucursal_id)->toBe($admin->current_sucursal_id)
+        ->and($audit->causer_id)->toBe($admin->id);
+    expect(json_encode($audit->toArray()))->not->toContain('token-qa')->not->toContain('525512345678');
+
+    $other = User::factory()->withPersonalTeam()->create();
+    $this->actingAs($other)->post(route('comunicaciones.whatsapp.test'), ['recipient' => '+525512345678',
+        'event_type' => 'payment_received'])->assertForbidden();
+    Http::assertSentCount(2);
+});
+
+test('la prueba WhatsApp bloquea destino distinto, plantilla ausente y formato inválido sin llamar a Meta', function () {
+    $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
+    $admin = actingAsSuperAdmin();
+    $this->actingAs($admin);
+    config(['comunicaciones.whatsapp_test_enabled' => true,
+        'comunicaciones.whatsapp_test_recipient' => '+525512345678']);
+    Http::fake();
+    $this->post(route('comunicaciones.whatsapp.test'), ['recipient' => '5512345678',
+        'event_type' => 'payment_received'])->assertSessionHasErrors(['recipient' => 'Indica el número en formato internacional, por ejemplo +525512345678.']);
+    $this->post(route('comunicaciones.whatsapp.test'), ['recipient' => '+525598765432',
+        'event_type' => 'payment_received'])->assertSessionHasErrors('recipient');
+    $this->post(route('comunicaciones.whatsapp.test'), ['recipient' => '+525512345678',
+        'event_type' => 'payment_received'])->assertSessionHasErrors('recipient');
+    Http::assertNothingSent();
+    expect(Activity::where('event', 'communication.test_sent')->count())->toBe(0);
+});

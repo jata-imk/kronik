@@ -6,10 +6,13 @@ test("el operador configura reglas de comunicaciones sin activar tráfico extern
     await login(page);
     await page.goto("/comunicaciones");
     await expect(page.getByRole("heading", { name: "Comunicaciones", exact: true })).toBeVisible();
-    await expect(page.getByRole("status")).toContainText("Los envíos externos están desactivados");
+    await expect(page.getByRole("status")).toContainText("Los envíos automáticos externos están desactivados");
     await expect(page.getByRole("heading", { name: "Correo" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "SMS" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "WhatsApp" })).toBeVisible();
+    await page.getByRole("combobox", { name: "Canal", exact: true }).selectOption("whatsapp");
+    await expect(page.getByRole("button", { name: "Enviar una prueba" })).toBeDisabled();
+    await expect(page.getByText("La prueba está desactivada")).toBeVisible();
     await page.screenshot({ path: "test-results/communications-desktop.png", fullPage: true });
 
     await page.getByRole("button", { name: "Reglas y plantillas" }).click();

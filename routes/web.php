@@ -66,6 +66,8 @@ Route::middleware([
     Route::put('comunicaciones/canales', [\App\Http\Controllers\CommunicationController::class, 'configureChannel'])->name('comunicaciones.channels.update');
     Route::put('comunicaciones/reglas', [\App\Http\Controllers\CommunicationController::class, 'configureRule'])->name('comunicaciones.rules.update');
     Route::post('comunicaciones/prueba', [\App\Http\Controllers\CommunicationController::class, 'sendTest'])->name('comunicaciones.test');
+    Route::post('comunicaciones/prueba-whatsapp', [\App\Http\Controllers\CommunicationController::class, 'sendWhatsAppTest'])
+        ->middleware('throttle:2,60')->name('comunicaciones.whatsapp.test');
     Route::post('comunicaciones/comprobar-conexion', [\App\Http\Controllers\CommunicationController::class, 'checkConnection'])->name('comunicaciones.connection.check');
     Route::post('clientes/{cliente}/comunicaciones/consentimientos', [\App\Http\Controllers\CommunicationController::class, 'grantConsent'])->name('comunicaciones.consents.store');
     Route::patch('clientes/{cliente}/comunicaciones/consentimientos/{consent}/revocar', [\App\Http\Controllers\CommunicationController::class, 'revokeConsent'])->name('comunicaciones.consents.revoke');

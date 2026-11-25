@@ -6,6 +6,7 @@ use App\Enums\ActivityEvent;
 use App\Http\Requests\Communications\ConfigureChannelRequest;
 use App\Http\Requests\Communications\ConfigureRuleRequest;
 use App\Http\Requests\Communications\GrantConsentRequest;
+use App\Http\Requests\Communications\SendWhatsAppTestRequest;
 use App\Mail\CommunicationMail;
 use App\Models\Cliente;
 use App\Models\CommunicationChannel;
@@ -84,6 +85,10 @@ class CommunicationController extends Controller
             'canTest' => $request->user()->can('send test comunicaciones'),
             'sendingEnabled' => config('comunicaciones.send_enabled') === true,
             'testRecipient' => $request->user()->can('send test comunicaciones') ? config('comunicaciones.test_recipient') : null,
+            'whatsappTestEnabled' => config('comunicaciones.whatsapp_test_enabled') === true
+                && filled(config('comunicaciones.whatsapp_test_recipient')),
+            'whatsappTestMessageId' => $request->user()->can('send test comunicaciones')
+                ? $request->session()->get('whatsappTestMessageId') : null,
         ]);
     }
 
@@ -221,6 +226,52 @@ class CommunicationController extends Controller
             sucursalId: $request->user()->current_sucursal_id, inheritActorContext: false);
 
         return back()->with('success', $result === 'accepted' ? 'El servidor aceptó la prueba; verifica el buzón.' : 'El resultado es incierto; revisa el proveedor antes de repetir.');
+    }
+
+    public function sendWhatsAppTest(SendWhatsAppTestRequest $request, ActivityLogService $activity, MetaWhatsAppTransport $transport)
+    {
+        $data = $request->validated();
+        $allowedRecipient = config('comunicaciones.whatsapp_test_recipient');
+        if (config('comunicaciones.whatsapp_test_enabled') !== true
+            || ! is_string($allowedRecipient)
+            || ! preg_match('/\A\+[1-9][0-9]{7,14}\z/', $allowedRecipient)
+            || ! hash_equals($allowedRecipient, $data['recipient'])) {
+            throw ValidationException::withMessages(['recipient' => 'El número no está autorizado para pruebas WhatsApp en este entorno.']);
+        }
+        $teamId = $request->user()->current_team_id;
+        $channel = CommunicationChannel::where('team_id', $teamId)->where('channel', 'whatsapp')
+            ->where('provider', 'meta_cloud')->whereIn('eligibility', ['testing', 'approved'])->first();
+        if (! $channel || ! filled($channel->secret)) {
+            throw ValidationException::withMessages(['recipient' => 'Configura primero el canal WhatsApp de este equipo.']);
+        }
+        $rule = CommunicationRule::where('team_id', $teamId)->where('channel', 'whatsapp')
+            ->where('event_type', $data['event_type'])->first();
+        if (! $rule || $rule->external_template_status !== 'approved'
+            || ! $rule->external_template_name || ! $rule->external_template_locale) {
+            throw ValidationException::withMessages(['event_type' => 'Configura una plantilla WhatsApp aprobada para este evento.']);
+        }
+        $variables = [
+            'nombre' => 'Prueba técnica',
+            'fecha_vencimiento' => now()->timezone($rule->timezone)
+                ->addDays($rule->lead_days ?? config('comunicaciones.default_lead_days'))->format('d/m/Y'),
+        ];
+        $body = strtr($rule->body, ['{nombre}' => $variables['nombre'],
+            '{fecha_vencimiento}' => $variables['fecha_vencimiento']]);
+        try {
+            $receipt = $transport->send($channel, $rule, $data['recipient'], '', $body, $variables);
+        } catch (\Throwable $exception) {
+            $receipt = ['status' => 'uncertain', 'message_id' => null];
+        }
+        $activity->log(ActivityEvent::CommunicationTestSent, 'Prueba técnica de WhatsApp realizada', $channel,
+            ['state' => 'test', 'result' => $receipt['status'], 'provider' => 'meta_cloud'],
+            causer: $request->user(), teamId: $teamId,
+            sucursalId: $request->user()->current_sucursal_id, inheritActorContext: false);
+
+        return back()->with('success', match ($receipt['status']) {
+            'accepted' => 'Meta aceptó la prueba WhatsApp; verifica el teléfono receptor. Esto no confirma entrega.',
+            'failed' => 'Meta no aceptó la prueba WhatsApp. Revisa la plantilla, el número y la conexión antes de repetir.',
+            default => 'El resultado de la prueba WhatsApp es incierto; revisa Meta antes de repetir para evitar duplicados.',
+        })->with('whatsappTestMessageId', $receipt['message_id']);
     }
 
     public function checkConnection(Request $request, ActivityLogService $activity)

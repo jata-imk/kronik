@@ -7,6 +7,8 @@ return [
     // An operator setting alone can never enable external traffic in a new environment.
     'send_enabled' => env('COMMUNICATIONS_SEND_ENABLED', false),
     'test_recipient' => env('COMMUNICATIONS_TEST_RECIPIENT'),
+    'whatsapp_test_enabled' => env('COMMUNICATIONS_WHATSAPP_TEST_ENABLED', false),
+    'whatsapp_test_recipient' => env('COMMUNICATIONS_WHATSAPP_TEST_RECIPIENT'),
     'default_lead_days' => min($maxLeadDays, max(1, (int) env('COMMUNICATIONS_DEFAULT_LEAD_DAYS', 3))),
     'max_lead_days' => $maxLeadDays,
     'default_timezone' => env('COMMUNICATIONS_DEFAULT_TIMEZONE', 'America/Mexico_City'),

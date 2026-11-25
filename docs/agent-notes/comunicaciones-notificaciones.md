@@ -192,3 +192,41 @@ tenía una sesión de Meta; la app personal de WhatsApp no prueba Cloud API.
 Siguiente paso: confirmar que el número remitente está registrado en una WABA
 accesible, configurar token/ID/plantilla en un entorno QA aislado y registrar
 aceptación `wamid`, entrega y lectura por webhook para el receptor autorizado.
+
+## Preparación de piloto WhatsApp — 2026-11-24
+
+Se preparó una base SQLite QA nueva y aislada en
+`storage/framework/testing/kronik-e2e-dc868276-2874-4453-8629-6d01f45d4922.sqlite`.
+Se verificó que el archivo estaba vacío antes de ejecutar `migrate --seed` con
+PHP 8.4 y `E2eSeeder`, `APP_ENV=e2e`, correo `array` y envíos externos desactivados.
+Contiene ocho usuarios sintéticos, tres permisos de comunicaciones y ninguna
+credencial Meta. El MySQL operativo no recibió migraciones ni seeders. El PHP
+predeterminado 8.2 falló antes de migrar; la repetición con 8.4 completó el
+esquema. `public/hot` se conservó y restauró tras cada recorrido.
+
+Se añadió una prueba técnica WhatsApp con flag y destinatario E.164 permitidos
+por entorno, permiso específico y límite de dos peticiones por hora. Usa la
+plantilla aprobada del equipo y variables ficticias, sin activar envíos
+automáticos; expone la referencia Meta tras aceptación y audita el resultado
+sin guardar número ni secreto. La prueba no crea una salida de negocio ni
+certifica entrega. Backend focalizado: 15 pruebas, 188 aserciones; build Vite
+aprobado. El recorrido E2E inicial de escritorio y móvil pasó (2 pruebas)
+contra la base QA antes de agregar el control de envío WhatsApp. El recorrido
+actualizado pasó de nuevo (2 pruebas, escritorio y móvil); verificó que la
+prueba está visible pero bloqueada sin habilitación de entorno. El servidor
+QA se detuvo y `public/hot` se restauró.
+
+Se agregó `tests/E2E/run-whatsapp-qa.ps1` para reabrir esa base aislada en
+`127.0.0.1`, con envíos automáticos desactivados y prueba WhatsApp habilitable
+solo al pasar un destinatario E.164. Se comprobó que rechaza un Vite inactivo
+y que, con Vite activo, sirve la pantalla de acceso con HTTP 200. El lanzador
+no altera `public/hot` ni abre un endpoint público para Meta.
+
+La regresión conjunta de Delivery, Management, Webhook, Readiness y Transport
+pasó con PHP 8.4 y SQLite: 27 pruebas, 406 aserciones. `php artisan test`
+invocó el PHP predeterminado sin SQLite en sus procesos hijos y falló antes de
+las aserciones; se usó `vendor/bin/pest` con la extensión SQLite explícita.
+
+Meta Business mostró inicio de sesión en el navegador integrado; no hubo
+cuenta autenticada ni acceso a WABA, ID de teléfono, token, plantilla aprobada
+o webhook HTTPS público. No se llamó a `/messages` ni se enviaron mensajes.

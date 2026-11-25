@@ -14,6 +14,8 @@ const props = defineProps({
     canTest: Boolean,
     sendingEnabled: Boolean,
     testRecipient: String,
+    whatsappTestEnabled: Boolean,
+    whatsappTestMessageId: String,
     filters: { type: Object, required: true },
     activeTab: String,
     notice: String,
@@ -31,6 +33,7 @@ const channelForm = useForm({ channel: "email", sender: "", secret: "", enabled:
 const ruleForm = useForm({ event_type: "payment_received", channel: "email", enabled: false, lead_days: props.ruleDefaults.leadDays, timezone: props.ruleDefaults.timezone, window_start: props.ruleDefaults.windowStart, window_end: props.ruleDefaults.windowEnd, daily_limit: props.ruleDefaults.dailyLimit, subject: "Confirmación de pago", body: "Hola {nombre}, registramos tu pago. Gracias.", external_template_name: "", external_template_locale: "es_MX", external_template_status: "draft" });
 const consentForm = useForm({ cliente_id: props.filters.cliente_id || "", channel: "email", purpose: "operational", source: "documento firmado", evidence_reference: "" });
 const testForm = useForm({ channel: "email", recipient: props.testRecipient || "" });
+const whatsappTestForm = useForm({ recipient: "", event_type: "payment_received" });
 const checkForm = useForm({ channel: "sms" });
 
 function loadChannel() {
@@ -83,7 +86,7 @@ function filterHistory() {
                 <h1 class="text-2xl font-semibold">Comunicaciones</h1>
                 <p class="text-surface-600 dark:text-surface-300">Configuración y seguimiento del equipo activo. El destinatario no necesita acceder a Kronik.</p>
             </header>
-            <div v-if="!sendingEnabled" class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900 dark:bg-amber-950 dark:text-amber-100" role="status">Los envíos externos están desactivados en este entorno. Configura y prueba con datos autorizados antes de habilitarlos.</div>
+            <div v-if="!sendingEnabled" class="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900 dark:bg-amber-950 dark:text-amber-100" role="status">Los envíos automáticos externos están desactivados en este entorno. Configura y prueba con datos autorizados antes de habilitarlos.</div>
             <div v-if="notice" class="rounded-lg border border-green-300 p-3 text-green-800 dark:text-green-200" role="status">{{ notice }}</div>
             <nav class="flex flex-wrap gap-2 border-b border-surface-200 pb-3 dark:border-surface-700" aria-label="Secciones de comunicaciones">
                 <button v-for="item in [{ id: 'channels', label: 'Canales' }, { id: 'rules', label: 'Reglas y plantillas' }, { id: 'consents', label: 'Consentimientos' }, { id: 'history', label: 'Historial' }]" :key="item.id" type="button" class="rounded px-3 py-2 focus-visible:outline-2 focus-visible:outline-primary-500" :class="tab === item.id ? 'bg-primary-600 text-white' : 'bg-surface-100 dark:bg-surface-800'" :aria-current="tab === item.id ? 'page' : undefined" @click="tab = item.id">{{ item.label }}</button>
@@ -123,6 +126,16 @@ function filterHistory() {
                     <p class="mt-2 text-sm">Consulta la API sin enviar mensajes. Una respuesta válida no confirma que el proveedor permita avisos financieros ni que un destinatario los reciba.</p>
                     <p v-if="checkForm.errors.channel" class="text-red-600" role="alert">{{ checkForm.errors.channel }}</p>
                 </div>
+                <form v-if="canTest && selectedChannel === 'whatsapp'" class="grid gap-3 rounded-lg border border-surface-200 p-4 dark:border-surface-700 sm:grid-cols-2" @submit.prevent="whatsappTestForm.post(route('comunicaciones.whatsapp.test'), { preserveScroll: true })">
+                    <h2 class="font-semibold sm:col-span-2">Enviar prueba WhatsApp</h2>
+                    <label class="grid gap-1">Destinatario autorizado en formato internacional<input v-model="whatsappTestForm.recipient" type="tel" inputmode="tel" autocomplete="off" placeholder="+525512345678" class="rounded border p-2 dark:bg-surface-900" required /></label>
+                    <label class="grid gap-1">Plantilla del evento<select v-model="whatsappTestForm.event_type" class="rounded border p-2 dark:bg-surface-900"><option value="payment_received">Pago recibido</option><option value="upcoming_due">Próximo vencimiento</option></select></label>
+                    <button type="submit" class="rounded border border-primary-600 px-4 py-2 disabled:opacity-50 sm:col-span-2" :disabled="whatsappTestForm.processing || !whatsappTestEnabled || !selectedChannelData?.has_secret">Enviar una prueba</button>
+                    <p class="text-sm sm:col-span-2">Usa datos ficticios, la plantilla aprobada del equipo y solo el número permitido en el entorno. Esta prueba es independiente de los envíos automáticos; la aceptación de Meta no confirma entrega.</p>
+                    <p v-if="whatsappTestMessageId" class="break-all text-sm sm:col-span-2">Referencia de aceptación Meta: {{ whatsappTestMessageId }}</p>
+                    <p v-if="!whatsappTestEnabled" class="text-amber-700 sm:col-span-2" role="status">La prueba está desactivada: configura el destinatario permitido y habilita la prueba en el entorno.</p>
+                    <p v-if="Object.keys(whatsappTestForm.errors).length" class="text-red-600 sm:col-span-2" role="alert">{{ Object.values(whatsappTestForm.errors).join(" ") }}</p>
+                </form>
             </section>
 
             <section v-if="tab === 'rules'" class="space-y-4">
