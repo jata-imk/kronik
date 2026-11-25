@@ -12,7 +12,7 @@ resueltos en cada PR; al cerrar SMS, pase acumulado de todas las PR contra
   `storage/framework/testing/comunicaciones-worktree`. Base de la PR:
   `feat/comunicaciones-notificaciones`. No se fusionó main ni se forzó historia.
 - [PR #93](https://github.com/jata-imk/kronik/pull/93), abierta y no integrada.
-  Código final `b6899f56810f34bd4e372edd341a744b4cddfe32`; arranque `0fe03d5`.
+  Código y pruebas finales `3095384a5be2b94e2f29be35b4ea826ebbbbc764`; arranque `0fe03d5`.
   El commit documental posterior registra este cierre sin cambiar código.
 - Alcance I0: comando `comunicaciones:inventariar-sms`, servicio agregado de solo
   lectura, contrato y matriz de compatibilidad. El inventario conserva Infobip y
@@ -36,7 +36,7 @@ resueltos en cada PR; al cerrar SMS, pase acumulado de todas las PR contra
   copiaron secretos ni se preparó una BD operativa. PHP 8.3.29 / Node 22.22.3.
 - Prueba nueva del inventario: 14 aprobadas, 116 aserciones. Conjunto final de
   inventario, menús y reinicio QA: 53 aprobadas, 504 aserciones. Pint aprobado y
-  build Vite aprobado. El pre-push completo sobre `b6899f5` aprobó **1,016 pruebas,
+  build Vite aprobado. El pre-push completo sobre `3095384` aprobó **1,016 pruebas,
   48,249 aserciones**, con dos omitidas optativas (renderer Chromium real y
   benchmark de cartera). Ejecutó también build sin saltar el hook. UTF-8/LF,
   salto final y 144 enlaces locales de 15 archivos comprobados.
@@ -50,6 +50,11 @@ resueltos en cada PR; al cerrar SMS, pase acumulado de todas las PR contra
   el diff de la PR, incluidos los ajustes de QA. El señalamiento anterior quedó
   resuelto; no hay hallazgos de código pendientes. El pase acumulado de SMS contra
   `ecb9d4a` sigue siendo requisito de I5, no está acreditado por esta revisión.
+- Ajuste final de portabilidad de pruebas `3095384`: el esquema ausente se
+  simula en otra conexión SQLite, sin renombrar tablas de la aplicación ni DDL
+  en su transacción. Las 14 pruebas/116 aserciones pasaron de nuevo. Tercera
+  revisión medium del diff completo de la PR sobre ese SHA: sin defectos
+  accionables. Después pasó también el pre-push completo y build citados arriba.
 - Publicación Git confirmada a `origin/feat/sms-i0-inventario`; Notion registra
   PR y evidencia. CI remoto y cualquier integración deben comprobarse por su SHA
   al retomar; no se afirma despliegue ni validación contra proveedores.
@@ -73,7 +78,7 @@ Prompt de continuación:
 > docs/explanation/plan-incrementos-sms.md, docs/reference/inventario-sms.md y el
 > alcance vigente de Notion 3fe61db7db7f81e4af50c4f0f3ab7e41.
 > I0 está en la PR #93 https://github.com/jata-imk/kronik/pull/93,
-> rama feat/sms-i0-inventario, código revisado b6899f5. Verifica revisiones, CI y estado de
+> rama feat/sms-i0-inventario, código y pruebas revisados 3095384. Verifica revisiones, CI y estado de
 > integración antes de elegir la rama de I1; preserva todo el trabajo compartido.
 > Base funcional del barrido final: ecb9d4a. No fusiones main ni habilites tráfico.
 > Implementa solo I1: procedencia estable, recuperación histórica desde evidencia,
