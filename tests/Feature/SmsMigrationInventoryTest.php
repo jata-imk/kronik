@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 beforeEach(function () {
@@ -184,13 +183,19 @@ test('JSON de consola es procesable sin cabecera y conserva el código de observ
 });
 
 test('tablas de comunicaciones ausentes producen secciones no disponibles', function () {
-    Schema::rename('communication_channels', 'inventory_saved_channels');
+    $originalConnection = DB::getDefaultConnection();
+    config(['database.connections.inventory_absent' => [
+        'driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '', 'foreign_key_constraints' => true,
+    ]]);
+    // Never rename application tables: DDL would implicitly commit RefreshDatabase on MariaDB.
+    DB::setDefaultConnection('inventory_absent');
     try {
         $report = app(SmsMigrationInventory::class)->collect();
         expect($report['channels'])->toBe(['status' => 'unavailable', 'reason' => 'missing_table'])
             ->and($report['complete'])->toBeFalse();
     } finally {
-        Schema::rename('inventory_saved_channels', 'communication_channels');
+        DB::setDefaultConnection($originalConnection);
+        DB::purge('inventory_absent');
     }
 });
 

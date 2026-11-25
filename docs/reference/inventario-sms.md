@@ -61,6 +61,9 @@ teléfonos, remitentes, secretos, hashes de contacto, payloads ni errores del
 proveedor. No debe registrarse una acción auditable nueva por esta consulta
 técnica agregada. `SmsMigrationInventoryTest` prueba lecturas, privacidad,
 ausencia de envíos y de nueva actividad.
+El escenario de esquema ausente usa una conexión SQLite independiente, sin
+renombrar tablas de la aplicación ni ejecutar DDL dentro de la transacción del
+test principal; así puede ejecutarse también cuando CI utiliza MariaDB.
 
 ## Siguiente paso operativo
 
