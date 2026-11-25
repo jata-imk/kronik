@@ -56,3 +56,7 @@ un payload sintácticamente válido no acredita autenticidad. Se simulan acuses
 durante HTTP fake y se verifica que aceptación/timeout posteriores conservan
 identificadores y estado sin reenvío. GET/POST públicos siguen respondiendo 404.
 No usar cuenta, credenciales ni SMS reales para este recorrido.
+
+La reversión de esquema I2 se prueba en otra conexión SQLite `:memory:` y
+restaura el Schema builder al terminar. No ejecutar DDL sobre la transacción de
+`RefreshDatabase`: MariaDB la confirmaría implícitamente.

@@ -190,19 +190,34 @@ test('la recepción pública permanece cerrada y las capacidades no prometen seg
 });
 
 test('la migración aditiva se revierte sin perder columnas y filas del contrato anterior', function () {
-    [, , , $delivery] = labsAckFixture($this);
-    DB::table('communication_webhook_events')->insert(['team_id' => $delivery->team_id, 'provider' => 'meta_cloud',
-        'provider_message_id' => 'synthetic-meta', 'event_key' => 'synthetic-migration', 'status' => 'read', 'received_at' => now()]);
-    $migration = require database_path('migrations/2026_11_25_180000_add_labsmobile_acknowledgements_to_webhook_events.php');
+    $original = Schema::getFacadeRoot();
+    config(['database.connections.sms_ack_schema' => [
+        'driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '', 'foreign_key_constraints' => true,
+    ]]);
+    $connection = DB::connection('sms_ack_schema');
+    $schema = $connection->getSchemaBuilder();
     try {
-        $migration->down();
-        expect(Schema::hasColumn('communication_webhook_events', 'ack_level'))->toBeFalse()
-            ->and(DB::table('communication_webhook_events')->value('provider_message_id'))->toBe('synthetic-meta');
-    } finally {
+        // DDL must never implicitly commit the application's RefreshDatabase transaction on MariaDB.
+        Schema::swap($schema);
+        $schema->create('teams', fn ($table) => $table->id());
+        $schema->create('communication_deliveries', fn ($table) => $table->id());
+        $connection->table('teams')->insert(['id' => 1]);
+        $baseline = require database_path('migrations/2026_11_20_100100_create_communication_webhook_events_table.php');
+        $baseline->up();
+        $connection->table('communication_webhook_events')->insert(['team_id' => 1, 'provider' => 'meta_cloud',
+            'provider_message_id' => 'synthetic-meta', 'event_key' => 'synthetic-migration', 'status' => 'read', 'received_at' => now()]);
+        $migration = require database_path('migrations/2026_11_25_180000_add_labsmobile_acknowledgements_to_webhook_events.php');
         $migration->up();
+        $migration->down();
+        expect($schema->hasColumn('communication_webhook_events', 'ack_level'))->toBeFalse()
+            ->and($connection->table('communication_webhook_events')->value('provider_message_id'))->toBe('synthetic-meta');
+        $migration->up();
+        expect($schema->hasColumn('communication_webhook_events', 'ack_level'))->toBeTrue()
+            ->and($connection->table('communication_webhook_events')->value('ack_level'))->toBeNull();
+    } finally {
+        Schema::swap($original);
+        DB::purge('sms_ack_schema');
     }
-    expect(Schema::hasColumn('communication_webhook_events', 'ack_level'))->toBeTrue()
-        ->and(DB::table('communication_webhook_events')->value('ack_level'))->toBeNull();
 });
 
 test('el instante UTC del proveedor se convierte a la zona de almacenamiento de la aplicación', function () {
