@@ -57,7 +57,7 @@ test('gestión de menú audita actor contexto y resultado sin copiar rutas ni pa
     if (! $super) {
         grantTeamPermissions($actor, $actor->currentTeam, ['create menubar-items', 'update menubar-items', 'delete menubar-items']);
     }
-    $module = Module::create(['name' => 'clientes', 'route_name' => 'clientes']);
+    $module = Module::firstOrCreate(['name' => 'clientes'], ['route_name' => 'clientes']);
     $fields = ['label' => 'PRIVATE-LABEL', 'type' => 'route:name', 'value' => 'clientes.index', 'params' => '{"reserved":"PRIVATE-PARAMETER"}', 'modules' => [$module->id => ['routes' => ['clientes.index']]]];
     $this->actingAs($actor)->post(route('admin.menubar-items.store'), $fields)->assertSessionHasNoErrors();
     $item = MenubarItem::where('label', 'PRIVATE-LABEL')->sole();
@@ -78,8 +78,9 @@ test('gestión de menú audita actor contexto y resultado sin copiar rutas ni pa
 test('fallo de auditoría revierte alta de menú y vínculos', function () {
     $actor = actingAsSuperAdmin();
     $before = MenubarItem::count();
-    $module = Module::create(['name' => 'clientes', 'route_name' => 'clientes']);
+    $beforeLinks = \Illuminate\Support\Facades\DB::table('menubar_item_module')->count();
+    $module = Module::firstOrCreate(['name' => 'clientes'], ['route_name' => 'clientes']);
     $this->mock(ActivityLogService::class)->shouldReceive('log')->once()->andThrow(new RuntimeException('fallo de prueba'));
     expect(fn () => app(MenubarItemService::class)->guardar(null, ['label' => 'No persiste', 'type' => 'menu', 'modules' => [$module->id => ['routes' => ['clientes.index']]]], $actor))->toThrow(RuntimeException::class);
-    expect(MenubarItem::count())->toBe($before)->and(\Illuminate\Support\Facades\DB::table('menubar_item_module')->count())->toBe(0);
+    expect(MenubarItem::count())->toBe($before)->and(\Illuminate\Support\Facades\DB::table('menubar_item_module')->count())->toBe($beforeLinks);
 });

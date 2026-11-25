@@ -62,6 +62,10 @@ Con `APP_ENV=production`, el comando solo permite el modo mínimo, con mantenimi
 
 ## Qué elimina
 
+- Notificaciones internas y datos QA de comunicaciones: callbacks, salidas,
+  consentimientos, reglas, conexiones guardadas en BD y eventos candidatos. Se
+  eliminan antes de créditos, clientes y equipos para conservar las claves
+  foráneas. No cancela mensajes ya aceptados por un proveedor externo.
 - Clientes, datos fiscales, direcciones, referencias, avales/vínculos, garantías, documentos y consentimientos SIC.
 - Consultas SIC, resultados, eventos y evidencias, incluidos registros históricos de simulación.
 - Solicitudes, revisiones, dictámenes, resoluciones, eventos, paquetes, firmas y formalizaciones.
@@ -80,7 +84,9 @@ No se borran directorios completos de almacenamiento. Archivos huérfanos sin re
 
 - Países, regímenes fiscales SAT, divisiones administrativas y códigos postales SEPOMEX. Se verifican sus conteos dentro de la transacción; pueden aumentar en modo demo si faltaban catálogos mínimos.
 - Módulos, permisos, roles globales y sus permisos, proveedores/APIs SIC y catálogo de conceptos de comisión. En modo demo `SystemSeeder` vuelve a sembrarlos idempotentemente; en mínimo y vacío no se modifica su configuración.
-- `.env`, credenciales de proveedores, `APP_KEY`, configuración técnica y código.
+- `.env`, credenciales de proveedores administradas mediante entorno, `APP_KEY`,
+  configuración técnica y código. Las conexiones QA guardadas en
+  `communication_channels` sí forman parte de la eliminación indicada arriba.
 - Configuración de almacenamiento (`config/filesystems.php` y sus variables de entorno): define las carpetas privadas/públicas donde Laravel guarda archivos, o la conexión a un servicio como S3. El comando elimina los archivos registrados incluidos en su alcance y mantiene esas ubicaciones y conexiones disponibles para archivos nuevos.
 - El historial de mantenimiento `development_data_resets`, separado de la actividad operativa QA que se borra.
 - En modo mínimo: la configuración de empresa y su logotipo; el ID, contraseña, verificación, 2FA y foto del administrador seleccionado; su primer equipo propio por ID y Matriz si existen. Si faltan, se crean el equipo «Administración» y Matriz. Ambos quedan activos y el administrador queda situado en ellos.

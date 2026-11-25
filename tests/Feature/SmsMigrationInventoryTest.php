@@ -112,7 +112,7 @@ test('cuenta trabajos listos retrasados reservados y fallidos sin deserializar s
     $report = app(SmsMigrationInventory::class)->collect();
     expect($report['queue']['scope'])->toBe('communication_jobs_all_channels')
         ->and($report['queue']['database_stores'][0])->toBe([
-            'status' => 'available', 'ready' => 1, 'delayed' => 1, 'reserved' => 1, 'unrelated' => 1, 'unclassified' => 0,
+            'status' => 'available', 'ready' => 1, 'delayed' => 1, 'reserved' => 1, 'unrelated' => 1, 'unclassified' => 0, 'active' => true,
         ])
         ->and($report['failed_jobs']['communication'])->toBe(1)
         ->and(DB::table('jobs')->count())->toBe(4)
@@ -142,7 +142,7 @@ test('almacenes ausentes o deshabilitados no se presentan como conteos cero', fu
     config(['queue.connections.database.table' => 'missing_inventory_jobs', 'queue.failed.driver' => null]);
     $report = app(SmsMigrationInventory::class)->collect();
     expect($report['complete'])->toBeFalse()
-        ->and($report['queue']['database_stores'][0])->toBe(['status' => 'unavailable', 'reason' => 'missing_table'])
+        ->and($report['queue']['database_stores'][0])->toBe(['status' => 'unavailable', 'reason' => 'missing_table', 'active' => true])
         ->and($report['failed_jobs'])->toBe(['status' => 'unavailable', 'reason' => 'unsupported_or_disabled_storage']);
 });
 
@@ -150,7 +150,7 @@ test('un error de conexión se informa sin exponer la excepción ni configuraci�
     config(['queue.connections.database.connection' => 'PRIVATE-NONEXISTENT-CONNECTION']);
     $report = app(SmsMigrationInventory::class)->collect();
     expect($report['complete'])->toBeFalse()
-        ->and($report['queue']['database_stores'][0])->toBe(['status' => 'unavailable', 'reason' => 'read_failed'])
+        ->and($report['queue']['database_stores'][0])->toBe(['status' => 'unavailable', 'reason' => 'read_failed', 'active' => true])
         ->and(json_encode($report))->not->toContain('PRIVATE-NONEXISTENT-CONNECTION');
 });
 
@@ -233,4 +233,19 @@ test('respeta tablas y conexiones separadas de jobs y fallidos sin usar el almac
     } finally {
         DB::purge('inventory_queue');
     }
+});
+
+test('la conexión database activa se identifica aunque haya otros almacenes configurados', function () {
+    config(['queue.default' => 'secondary',
+        'queue.connections.secondary' => ['driver' => 'database', 'connection' => null, 'table' => 'missing_secondary_jobs']]);
+    $report = app(SmsMigrationInventory::class)->collect();
+    expect($report['queue']['database_stores'][0]['active'])->toBeFalse()
+        ->and($report['queue']['database_stores'][0]['status'])->toBe('available')
+        ->and($report['queue']['database_stores'][1]['active'])->toBeTrue()
+        ->and($report['queue']['active_inspectable'])->toBeFalse()
+        ->and($report['complete'])->toBeFalse();
+    config(['queue.default' => 'database']);
+    $report = app(SmsMigrationInventory::class)->collect();
+    expect($report['queue']['active_inspectable'])->toBeTrue()
+        ->and($report['complete'])->toBeFalse();
 });

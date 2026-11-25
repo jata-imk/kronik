@@ -46,7 +46,7 @@ entregas; una sincronización posterior requiere su propia evaluación.
 
 | Incremento | Entrega verificable |
 | --- | --- |
-| I0 — preparación | Matriz de compatibilidad, inventario de solo lectura y pruebas aisladas; sin cambiar transporte ni datos de negocio. |
+| I0 — preparación | Matriz de compatibilidad, inventario de solo lectura y pruebas aisladas. Completar la clasificación de tablas de comunicaciones en el reinicio QA y corregir fixtures de menús preexistentes; sin cambiar el transporte. |
 | I1 — procedencia y corte | Proveedor/cuenta/revisión/correlación estables, históricos desde evidencia, pendientes y jobs anteriores seguros. No reinterpretar IDs ni reenviar inciertos. |
 | I2 — transporte/configuración | LabsMobile HTTP, variables de entorno, UI sin escritura de secretos, comprobación técnica, barrera SMS, límites y pruebas sin tráfico real. |
 | I3 — seguimiento/retiro | Autenticidad confirmada antes de aceptar callbacks; persistencia, correlación, deduplicación, desorden y niveles de acuse. Retirar consumidores Infobip cuando cierre su histórico. |
@@ -85,6 +85,14 @@ I0 prueba el [contrato del inventario](../reference/inventario-sms.md) con BD ai
 sin HTTP ni escritura de dominio/auditoría. El cambio es CLI; no requiere capturas
 ni E2E nuevos. Los siguientes incrementos deben agregar sus pruebas propias y
 preservar las regresiones de pagos, proyecciones, correo, Meta y editor documental.
+
+La regresión detectó problemas previos de esta rama: el reinicio QA rechazaba las
+siete tablas de comunicaciones sin clasificar y las pruebas de menús suponían un
+catálogo vacío aunque las migraciones ya registran módulos/vínculos. I0 clasifica
+esas tablas en orden de dependencias y conserva todas las barreras de QA,
+confirmación, entorno y tablas desconocidas. La prueba de ciclo completo verifica
+su limpieza con claves foráneas activas; los fixtures de menú reutilizan el módulo
+y comparan el conteo original de vínculos. No se ejecutó un reinicio operativo.
 
 Antes de piloto, confirmar autenticidad y recuperación de callbacks, ruta mexicana
 y OMV/portados, formato telefónico, remitente, niveles de acuse, caducidad/cancelación,

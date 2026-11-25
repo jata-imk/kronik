@@ -24,7 +24,7 @@ El informe no comprueba recepción, procedencia histórica ni preparación produ
 | `channels` | Canales SMS totales, habilitados, con secreto almacenado y por proveedor conocido. Presencia de secreto no acredita validez y no lo descifra. |
 | `deliveries` | Salidas SMS por estado e identificadores externos presentes. Sin columna propia de proveedor, `provider_provenance=not_recorded`; nunca se infiere Infobip por el canal. |
 | `webhooks` | Callbacks de todos los proveedores de comunicaciones, agrupados por proveedor y pendientes de asociación. No atribuye a SMS los de origen desconocido. |
-| `queue` | Driver activo y, por cada conexión `database` configurada, candidatos de comunicaciones listos, retrasados y reservados. Inspecciona también esos almacenes cuando el driver activo sea `sync`. |
+| `queue` | Driver activo y, por cada conexión `database` configurada, candidatos de comunicaciones listos, retrasados y reservados. `active` identifica su correspondencia con `queue.default`; `active_inspectable` exige poder leer ese almacén concreto. Inspecciona también los almacenes database cuando el driver activo sea `sync`. |
 | `failed_jobs` | Candidatos de comunicaciones fallidos, únicamente para almacenamiento configurado `database` o `database-uuids`. No lee el texto de excepciones. |
 | `complete` | Las secciones configuradas pudieron leerse, el driver activo es inspeccionable y no hubo payloads sin clasificar. No prueba cobertura de almacenes retirados de la configuración. |
 | `cutover_ready` | Siempre `false`: el inventario por sí solo no autoriza ni ejecuta el corte. |

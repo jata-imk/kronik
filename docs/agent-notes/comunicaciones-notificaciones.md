@@ -12,8 +12,13 @@ resueltos en cada PR; al cerrar SMS, pase acumulado de todas las PR contra
   `storage/framework/testing/comunicaciones-worktree`. Base de la PR:
   `feat/comunicaciones-notificaciones`. No se fusionó main ni se forzó historia.
 - Alcance I0: comando `comunicaciones:inventariar-sms`, servicio agregado de solo
-  lectura, contrato y matriz de compatibilidad. Conserva Infobip y no cambia
-  conexiones, jobs, reglas, proyecciones ni auditoría de negocio existentes.
+  lectura, contrato y matriz de compatibilidad. El inventario conserva Infobip y
+  no cambia conexiones, jobs, reglas, proyecciones ni auditoría de negocio.
+- Compatibilidad de QA: se clasifican las siete tablas de comunicaciones en el
+  reinicio existente, respetando sus barreras y claves foráneas, y se corrigen
+  fixtures de menús que chocaban con módulos/vínculos ya registrados. El ciclo
+  completo de reinicio se probó solo en SQLite aislado; no se reinició ningún
+  entorno operativo. No cambia el flujo normal de pagos ni de comunicaciones.
 - El [plan canónico por incrementos](../explanation/plan-incrementos-sms.md)
   registra las decisiones finales y cruces con main; prevalece sobre alternativas
   abiertas del traspaso anterior. Una instalación es una financiera; los equipos
@@ -26,8 +31,15 @@ resueltos en cada PR; al cerrar SMS, pase acumulado de todas las PR contra
 - Dependencias instaladas desde lockfiles sin cambios versionados; `.env` local
   sintético con SQLite `:memory:`, correo `array` y envíos desactivados. No se
   copiaron secretos ni se preparó una BD operativa. PHP 8.3.29 / Node 22.22.3.
-- Prueba focal: 13 aprobadas, 109 aserciones. Pint de los tres PHP aprobado.
-  Regresión general, build, publicación y revisión: en curso en esta sesión.
+- Prueba nueva del inventario: 14 aprobadas, 116 aserciones. Conjunto final de
+  inventario, menús y reinicio QA: 53 aprobadas, 504 aserciones. Pint aprobado y
+  build Vite aprobado. Regresión general final, publicación y segunda revisión:
+  en curso en esta sesión.
+- Primera revisión medium sobre `0fe03d5`: señaló la identificación del almacén
+  database activo con varias conexiones. La completitud ya consideraba todos
+  los almacenes; se corrigió además `active_inspectable`, se agregó `active` por
+  almacén y se probaron ambas selecciones de cola. Se repetirá la revisión del
+  rango completo de esta PR después de los cambios de código y fixtures.
 - No hay migraciones, seeders ni variables nuevas de este incremento. El comando
   CLI de consulta no necesita evento auditable nuevo; justificación y pruebas
   enlazadas desde la matriz. No hay UI nueva ni E2E adicional requerido para I0.

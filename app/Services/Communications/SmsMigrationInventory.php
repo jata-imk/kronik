@@ -66,18 +66,23 @@ final class SmsMigrationInventory
         });
 
         $connections = config('queue.connections', []);
-        $activeDriver = is_array($connections) ? ($connections[config('queue.default')]['driver'] ?? null) : null;
+        $activeConnection = config('queue.default');
+        $activeDriver = is_array($connections) ? ($connections[$activeConnection]['driver'] ?? null) : null;
+        $activeInspectable = in_array($activeDriver, ['sync', 'null'], true);
         $queues = [];
-        foreach (is_array($connections) ? $connections : [] as $settings) {
+        foreach (is_array($connections) ? $connections : [] as $name => $settings) {
             if (is_array($settings) && ($settings['driver'] ?? null) === 'database') {
                 // Inspect configured database spools even when the active driver is sync or Redis.
-                $queues[] = $this->inspect(fn () => $this->queuedJobs($settings));
+                $store = $this->inspect(fn () => $this->queuedJobs($settings));
+                $store['active'] = $name === $activeConnection;
+                if ($store['active']) {
+                    $activeInspectable = $store['status'] === 'available';
+                }
+                $queues[] = $store;
             }
         }
         $failed = $this->inspect(fn () => $this->failedJobs());
         $sections = [$channels, $deliveries, $webhooks, ...$queues, $failed];
-        $activeInspectable = in_array($activeDriver, ['database', 'sync', 'null'], true)
-            && ($activeDriver !== 'database' || $queues !== []);
         $complete = $activeInspectable && ! in_array(false, array_map(
             fn (array $section) => $section['status'] === 'available' && ($section['unclassified'] ?? 0) === 0,
             $sections,
