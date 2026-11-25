@@ -19,6 +19,7 @@ test("el operador configura reglas de comunicaciones sin activar tráfico extern
     await page.getByRole("button", { name: "Guardar canal" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Canal actualizado." })).toBeVisible();
     await expect(page.getByTestId("sms-environment")).toBeVisible();
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: "test-results/communications-desktop.png", fullPage: true });
 
     await page.getByRole("button", { name: "Reglas y plantillas" }).click();
