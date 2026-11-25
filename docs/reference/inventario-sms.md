@@ -5,6 +5,11 @@ sustituir Infobip por LabsMobile. `--json` devuelve únicamente el informe JSON.
 Es una operación de consulta: no descifra credenciales, deserializa comandos PHP,
 envía mensajes, encola trabajos, modifica registros ni escribe actividad.
 
+José confirmó el 25/11/2026 que Kronik solo existe en desarrollo y QA, sin clientes
+ni históricos que conservar; los datos de prueba son desechables. Este comando
+queda como herramienta opcional de diagnóstico de QA. No es un requisito para
+migrar históricos ni justifica mantener compatibilidad con Infobip.
+
 ## Entorno y alcance
 
 El comando usa la configuración efectiva de Laravel del entorno donde se ejecute.
@@ -67,11 +72,12 @@ test principal; así puede ejecutarse también cuando CI utiliza MariaDB.
 
 ## Siguiente paso operativo
 
-Antes del corte real, detener SMS de forma controlada, identificar workers y
-almacenes antiguos, repetir el inventario y resolver las evidencias originales.
-La cancelación de pendientes, conservación de inciertos, migración de procedencia
-y retiro del adaptador pertenecen al siguiente incremento. No purgar la cola
-compartida ni reenviar una salida incierta para aclarar su estado.
+El siguiente incremento sustituirá Infobip directamente por LabsMobile. Resolver
+datos y jobs de prueba mediante limpieza explícita de dev/QA cuando corresponda,
+con SMS desactivado y workers controlados; conservar las colas compartidas de
+correo y Meta. No se requiere conservar o conciliar los intentos Infobip de prueba
+ni desarrollar una migración de procedencia. No se ha ejecutado una limpieza por
+documentar esta decisión.
 
 Ver [plan por incrementos y compatibilidad](../explanation/plan-incrementos-sms.md),
 [contrato de canales](canales-comunicacion.md) y

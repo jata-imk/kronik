@@ -2,6 +2,16 @@
 
 ## Retoma vigente — SMS I0, 25/11/2026
 
+**Corrección de alcance confirmada por José el 25/11/2026:** Kronik solo está en
+desarrollo y QA; nunca ha estado en producción, no existen clientes ni datos
+históricos que conservar y los datos de prueba son desechables. La suposición de
+necesitar una migración histórica fue incorrecta. Se elimina ese incremento
+independiente: el siguiente I1 implementa directamente LabsMobile y retira
+Infobip, tratando datos/jobs de prueba mediante limpieza explícita cuando haga
+falta. No desarrollar backfill, compatibilidad de callbacks ni conciliación de
+históricos Infobip. El inventario I0 queda como herramienta opcional de QA.
+La corrección es documental: no se borraron datos ni se ejecutó I1.
+
 José autorizó la implementación y después pidió **una sesión y una PR por
 incremento** para no arrastrar contexto. Cada cierre debe conservar esta Agent
 Note, evidencia en Notion y prompt de continuación. `/review medium` y hallazgos
@@ -49,7 +59,7 @@ resueltos en cada PR; al cerrar SMS, pase acumulado de todas las PR contra
   `547d9e5` y código `b6899f5`, terminó sin defectos accionables. Se revisó todo
   el diff de la PR, incluidos los ajustes de QA. El señalamiento anterior quedó
   resuelto; no hay hallazgos de código pendientes. El pase acumulado de SMS contra
-  `ecb9d4a` sigue siendo requisito de I5, no está acreditado por esta revisión.
+  `ecb9d4a` sigue siendo requisito del cierre final, no está acreditado por esta revisión.
 - Ajuste final de portabilidad de pruebas `3095384`: el esquema ausente se
   simula en otra conexión SQLite, sin renombrar tablas de la aplicación ni DDL
   en su transacción. Las 14 pruebas/116 aserciones pasaron de nuevo. Tercera
@@ -64,15 +74,16 @@ resueltos en cada PR; al cerrar SMS, pase acumulado de todas las PR contra
 
 ### Siguiente sesión
 
-Retomar **I1, procedencia y corte**, después de verificar el estado y SHA de la
+Retomar **I1, sustitución directa de Infobip por LabsMobile**, después de verificar
+el estado y SHA de la
 [PR I0 #93](https://github.com/jata-imk/kronik/pull/93). Conservar el código revisado de I0 aunque aún no esté integrado y no asumir
-que publicar una rama equivale a integración. No empezar I2–I5 en esa sesión.
+que publicar una rama equivale a integración. No empezar I2–I4 en esa sesión.
 Resolver primero cualquier hallazgo pendiente de I0 y elegir la base de la nueva
 PR desde el estado real; nunca mezclar main ni sobrescribir comunicaciones.
 
 Prompt de continuación:
 
-> Continuemos SMS de Kronik, exclusivamente el incremento I1 (procedencia y corte).
+> Continuemos SMS de Kronik, exclusivamente el incremento I1 (sustitución directa por LabsMobile).
 > Trabaja en C:\Users\jose.tejero\Documents\Proyectos\kronik\storage\framework\testing\comunicaciones-worktree.
 > Lee AGENTS.md, docs/agent-notes/comunicaciones-notificaciones.md,
 > docs/explanation/plan-incrementos-sms.md, docs/reference/inventario-sms.md y el
@@ -81,17 +92,23 @@ Prompt de continuación:
 > rama feat/sms-i0-inventario, código y pruebas revisados 3095384. Verifica revisiones, CI y estado de
 > integración antes de elegir la rama de I1; preserva todo el trabajo compartido.
 > Base funcional del barrido final: ecb9d4a. No fusiones main ni habilites tráfico.
-> Implementa solo I1: procedencia estable, recuperación histórica desde evidencia,
-> pendientes y jobs anteriores seguros, con pruebas aisladas y auditoría.
+> Kronik solo existe en dev/QA: nunca estuvo en producción, no hay clientes ni
+> históricos que conservar y sus datos de prueba son desechables. No implementes
+> migración histórica ni compatibilidad con Infobip. El inventario I0 es opcional.
+> Implementa solo I1: transporte LabsMobile, configuración por entorno, UI sin
+> escritura de secretos, comprobación de conexión, barrera SMS, límites y retiro
+> activo de Infobip, con pruebas aisladas y auditoría. Resuelve datos y jobs de
+> prueba mediante limpieza explícita cuando corresponda, sin purgar colas ajenas
+> ni modificar correo/Meta. Guarda proveedor/correlación de los nuevos intentos.
 > Credenciales por entorno; plantillas globales con permisos por acción; equipos
 > son departamentos, no financieras. No implementes el catálogo de Integraciones,
-> que tiene su tarea independiente, ni transportes/editor de incrementos posteriores.
+> que tiene su tarea independiente, ni seguimiento/editor de incrementos posteriores.
 > Publica la PR del incremento, ejecuta /review medium y resuelve hallazgos.
 > Actualiza documentación, Agent Note y Notion; entrega prompt para I2.
-> Una sesión por incremento. Al terminar I5 exige pase del rango completo y todas
+> Una sesión por incremento. Al terminar I4 exige pase del rango completo y todas
 > las PR contra ecb9d4a antes de cerrar la funcionalidad.
 
-Si I1 o I4 añaden tablas, clasificarlas también en el reinicio QA y mantener su
+Si algún incremento añade tablas, clasificarlas también en el reinicio QA y mantener su
 regresión en esa misma PR. I0 descubrió y corrigió ese faltante de la base anterior.
 
 ## Referencias
@@ -213,9 +230,10 @@ Punto de entrada de la siguiente sesión:
    junto con el alcance vigente de Notion.
 3. Proponer un incremento de reemplazo completo de Infobip: transporte,
    configuración, UI, conexión, webhook/conciliación, pruebas, credenciales,
-   jobs pendientes y procedencia histórica. Hay referencias activas en varias
-   capas y las salidas no guardan un proveedor propio; no borrar evidencia ni
-   mantener un proveedor de respaldo implícito.
+   jobs pendientes. La petición inicial de procedencia histórica queda sustituida
+   por la confirmación del 25/11/2026: solo existen dev/QA y datos desechables.
+   Hay referencias activas en varias capas; no mantener un proveedor de respaldo
+   implícito ni desarrollar compatibilidad histórica innecesaria.
 4. Evaluar la propuesta de editor visual con categoría Notificaciones: compartir
    inserción/búsqueda de variables, texto plano, vista previa y segmentación
    después de sustituir variables. Decidir alcance global/equipo, permisos,

@@ -7,6 +7,12 @@ sesiones. [ADR 0050](adr-0050-proveedor-sms-labsmobile.md) fija LabsMobile.
 
 ## Decisiones aceptadas
 
+- José confirmó el 25/11/2026 que Kronik solo ha llegado a desarrollo y QA: no
+  existe producción, clientes ni datos históricos que conservar; los datos de
+  prueba son desechables. Se elimina el incremento de migración histórica y su
+  convivencia con Infobip. La sustitución será directa, con limpieza explícita de
+  datos/jobs de prueba cuando corresponda y envíos desactivados. El inventario de
+  I0 es una herramienta opcional de QA, no un requisito para demostrar históricos.
 - Una instalación corresponde a una financiera; los equipos son departamentos o
   contextos de permisos, no financieras independientes. Conservar el contexto
   original de las operaciones sin usarlo como propietario de catálogos globales.
@@ -47,15 +53,19 @@ entregas; una sincronización posterior requiere su propia evaluación.
 | Incremento | Entrega verificable |
 | --- | --- |
 | I0 — preparación | Matriz de compatibilidad, inventario de solo lectura y pruebas aisladas. Completar la clasificación de tablas de comunicaciones en el reinicio QA y corregir fixtures de menús preexistentes; sin cambiar el transporte. |
-| I1 — procedencia y corte | Proveedor/cuenta/revisión/correlación estables, históricos desde evidencia, pendientes y jobs anteriores seguros. No reinterpretar IDs ni reenviar inciertos. |
-| I2 — transporte/configuración | LabsMobile HTTP, variables de entorno, UI sin escritura de secretos, comprobación técnica, barrera SMS, límites y pruebas sin tráfico real. |
-| I3 — seguimiento/retiro | Autenticidad confirmada antes de aceptar callbacks; persistencia, correlación, deduplicación, desorden y niveles de acuse. Retirar consumidores Infobip cuando cierre su histórico. |
-| I4 — Notificaciones | Editor de texto plano y variables, catálogo global, permisos por acción, versiones completas, migración conservadora de textos, vista previa y segmentos. |
-| I5 — cierre técnico | Regresión conjunta, documentación y auditoría completas, barrido acumulado de todas las PR contra `ecb9d4a`, procedimiento de piloto y pendientes externos. |
+| I1 — sustitución directa | LabsMobile HTTP, variables de entorno, UI sin escritura de secretos, comprobación técnica, barrera SMS, límites y pruebas sin tráfico real. Retirar referencias activas de Infobip y resolver sus configuraciones, salidas y jobs desechables de dev/QA mediante limpieza explícita; conservar correo y Meta. Los nuevos intentos guardan proveedor y correlación propios. No desarrollar recuperación de históricos ni compatibilidad con callbacks Infobip. |
+| I2 — seguimiento LabsMobile | Autenticidad confirmada antes de aceptar callbacks; persistencia, correlación, deduplicación, desorden, niveles de acuse y conciliación de los nuevos intentos LabsMobile. |
+| I3 — Notificaciones | Editor de texto plano y variables, catálogo global, permisos por acción, versiones completas, vista previa y segmentos. No se requiere migrar las plantillas desechables de prueba. |
+| I4 — cierre técnico | Regresión conjunta, documentación y auditoría completas, barrido acumulado de todas las PR contra `ecb9d4a`, procedimiento de piloto y pendientes externos. |
+
+Esta secuencia sustituye la anterior I1–I5: el antiguo I1 de procedencia histórica
+se elimina como entrega independiente y el transporte pasa a I1. Seguimiento,
+editor y cierre pasan respectivamente a I2, I3 e I4. Las referencias anteriores a
+I5 corresponden al cierre de la secuencia sustituida.
 
 Cada PR requiere `/review medium`, base y SHA revisados, hallazgos resueltos y nueva
 revisión si cambia código después. No considerar una solicitud de revisión como
-evidencia de revisión terminada. El pase de rango completo de I5 complementa esas
+evidencia de revisión terminada. El pase de rango completo de I4 complementa esas
 revisiones individuales; no cerrarlo anticipadamente por terminar I0 o integrar una PR.
 
 ## Compatibilidad observada en I0

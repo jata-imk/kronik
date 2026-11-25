@@ -15,31 +15,31 @@ un incremento concreto, sin un segundo proveedor activo ni fallback automático.
 | Superficie identificada en `ecb9d4a` | Trabajo que debe incluir el plan |
 | --- | --- |
 | `InfobipSmsTransport` y `ChannelTransport` | Implementar LabsMobile con el contrato compartido y retirar el adaptador anterior cuando no queden consumidores necesarios. No renombrarlo conservando su payload. |
-| `CommunicationController` | Sustituir selección, capacidades, validación de credenciales/host y prueba de conexión; conservar permisos, cifrado y eventos. |
+| `CommunicationController` | Sustituir selección, capacidades y prueba de conexión; configuración técnica por entorno y UI sin escritura de secretos. Conservar permisos y eventos. |
 | `CommunicationOrchestrator` | Cambiar la resolución del transporte SMS conservando consentimiento, reglas, contexto, cola, idempotencia y resultado incierto. |
-| `CommunicationWebhookController`, rutas y `CommunicationWebhookService` | Definir recepción LabsMobile con autenticidad y nivel de acuse; separar cualquier conciliación histórica Infobip que siga siendo necesaria. |
+| `CommunicationWebhookController`, rutas y `CommunicationWebhookService` | Retirar recepción y conciliación Infobip; definir recepción LabsMobile con autenticidad y nivel de acuse. No se requiere convivencia histórica. |
 | `Communications/Index.vue` | Actualizar proveedor, campos, ayudas y estados; impedir que secretos Infobip se interpreten como credenciales LabsMobile. |
 | Pruebas de transporte, gestión, preparación y webhooks | Cambiar fixtures del proveedor y añadir regresiones del corte, manteniendo comportamiento genérico y aislamiento. |
 | Contrato, guía QA, matriz de auditoría y variables | Actualizar lo que realmente cambie; preservar ADR y evidencia histórica del proveedor anterior. |
 
-Antes de convertir datos, comprobar en el entorno autorizado si existen canales,
-jobs pendientes, salidas e identificadores del proveedor anterior. La nota previa
-de ausencia de tráfico no sustituye una comprobación del entorno de migración.
-No convertir IDs externos, reutilizar secretos ni borrar evidencia para facilitar
-el cambio. No ejecutar estas comprobaciones contra una BD operativa en esta sesión.
+José confirmó el 25/11/2026 que Kronik solo existe en desarrollo y QA, nunca ha
+estado en producción, no tiene clientes ni históricos que conservar y sus datos
+de prueba son desechables. Esta confirmación sustituye la hipótesis anterior de
+una migración histórica: no desarrollar backfill, convivencia de callbacks ni
+conciliación Infobip para preservar datos de prueba.
 
-La salida actual no guarda un proveedor propio: `communication_deliveries`
-conserva canal, versión e ID externo, y la conciliación deduce Infobip por ser SMS.
-Cambiar la conexión mutable del equipo no debe reinterpretar envíos anteriores.
-El plan debe resolver procedencia estable del intento y convivencia de callbacks
-antiguos si existen, además de qué hacer con jobs preparados al cambiar proveedor.
-Definir la migración según evidencia; no se aprueba aquí una estructura concreta.
+La sustitución será directa. Resolver configuraciones y datos/jobs SMS de prueba
+mediante limpieza explícita en el entorno correspondiente, con envíos desactivados
+y sin afectar las colas o datos compartidos de correo y Meta. No se ejecuta ninguna
+limpieza en esta corrección documental. Los nuevos intentos LabsMobile deberán
+guardar proveedor y correlación propios para su seguimiento normal.
 
-Secuencia propuesta: inventario y contrato de corte; adaptación y pruebas fake;
-tratamiento explícito de configuración/jobs/históricos; sustitución de referencias
-activas; retiro de código sin uso; piloto autorizado. Conservar el orquestador y
-los contratos comunes. Revisar también la divergencia frente a `main`, sin fusionar
-la rama ni desplazar el trabajo de Brian durante este traspaso.
+Secuencia vigente en el [plan por incrementos](plan-incrementos-sms.md): transporte,
+configuración y retiro activo de Infobip; seguimiento LabsMobile; editor; cierre
+y piloto autorizado. El inventario I0 es opcional para QA y no bloquea la
+sustitución por falta de datos históricos. Conservar el orquestador y los contratos
+comunes. Revisar la divergencia frente a `main`, sin fusionar la rama ni desplazar
+el trabajo de Brian.
 
 ## Editor visual de plantillas: evaluación pendiente
 
