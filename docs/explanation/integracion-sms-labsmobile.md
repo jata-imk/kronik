@@ -1,7 +1,8 @@
 # Investigación de LabsMobile para los SMS de Kronik
 
-Consulta: 2026-11-24. José eligió LabsMobile por costo; la integración, la cuenta
-y el piloto permanecen pendientes. Ver [ADR 0050](adr-0050-proveedor-sms-labsmobile.md)
+Consulta técnica: 2026-11-24. José eligió LabsMobile por costo; transporte y
+configuración I1 se implementan el 25/11/2026. Cuenta, activación y piloto siguen
+pendientes. Ver [ADR 0050](adr-0050-proveedor-sms-labsmobile.md)
 y [Agent Note](../agent-notes/comunicaciones-notificaciones.md).
 El [contrato de canales](../reference/canales-comunicacion.md) describe el transporte
 LabsMobile implementado en I1. Esta investigación conserva los antecedentes y los

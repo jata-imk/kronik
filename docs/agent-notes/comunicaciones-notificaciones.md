@@ -1,53 +1,77 @@
 # Comunicaciones y notificaciones
 
-## Retoma vigente — SMS I1, 25/11/2026
+## Retoma vigente — SMS I1 publicado, 25/11/2026
 
-Implementación en `feat/sms-i1-labsmobile`, creada desde `9d0473d` en el worktree
-acordado. PR hacia `feat/comunicaciones-notificaciones`, dependiente de I0 #93
-mientras siga abierta. No se fusionó main ni se integró una PR. Base funcional
-para el pase final de I4: `ecb9d4a`.
-
-Al arrancar, Git remoto confirma `9d0473d`; la API de #93 todavía devuelve
-`213a4b6` como HEAD, PR abierta y sin hilos pendientes. Revisión medium acreditada
-sobre `3095384`; CI verde para ese código y `213a4b6`, sin comprobaciones visibles
-para `9d0473d`. Main sigue en `217acef`, ancestro `bfa0b87`, divergencia 89/15.
-Se mantienen los cruces ya documentados para una integración futura.
+- [PR I1 #94](https://github.com/jata-imk/kronik/pull/94), abierta hacia
+  `feat/comunicaciones-notificaciones`, rama `feat/sms-i1-labsmobile` creada desde
+  `9d0473d`. Depende de I0 #93 mientras siga abierta. Sin merge ni despliegue.
+- Código final revisado: `cacf89f`. Publicación inicial: `02d34ca`; los cierres
+  posteriores son documentales. `/review medium` completo contra `547d9e5`,
+  Codex CLI 0.172.0, sin regresiones accionables; focal del revisor: 70 backend y
+  cuatro frontend aprobadas. [Evidencia de revisión](https://github.com/jata-imk/kronik/pull/94#issuecomment-7173834618).
+- Pre-push final sin saltar el hook: **1,071 aprobadas, dos omitidas optativas,
+  48,633 aserciones**, build Vite aprobado. Frontend completo: 67 archivos / 177
+  pruebas. E2E Chromium con SQLite nueva: dos recorridos aprobados, escritorio y
+  móvil, con barreras cerradas y credenciales vacías. Capturas actualizadas.
+  Pint, diff --check, UTF-8/LF, enlaces locales y cobertura temática comprobados.
+- CI remoto: consultar Checks de #94 por SHA publicado; la evidencia del resultado
+  se registra en la PR y en Notion. La validación local no acredita integración,
+  ejecución de scheduler/worker, despliegue ni aceptación del proveedor.
+- Una revisión inicial se interrumpió por cuota. Otra ejecución simultánea con
+  el pre-push compartió archivos de `Storage::fake('local')` y produjo fallos de
+  documentos. Se descartaron esas pasadas como validación aprobada y se repitieron
+  revisión y suite de forma secuencial, sin fallos. Seguir la guía QA: un solo
+  proceso PHP de pruebas por checkout.
 
 I1 implementa HTTP LabsMobile, configuración por entorno mediante `config()`,
-UI de presencia sin escritura de secretos/remitente, comprobación de saldo sin
-SMS, doble barrera, dos segmentos tras sustitución, limitación atómica por cuenta
-y proveedor/correlación antes del envío. Retira adaptador, endpoint y conciliación
-Infobip; Meta conserva seguimiento. La nueva migración es aditiva y no hace
-backfill. La limpieza QA selectiva invalida salidas anteriores y elimina solo jobs
+UI de presencia sin escritura de secretos/remitente, consulta de saldo sin SMS,
+doble barrera, dos segmentos tras sustitución, limitador atómico por cuenta y
+proveedor/correlación antes del HTTP. Incluye cierre ante caché que devuelve false
+sin excepción. Retira adaptador, endpoint y conciliación Infobip; Meta conserva
+seguimiento. La migración `2026_11_25_170000` es aditiva y no hace backfill.
+La limpieza QA selectiva invalida salidas anteriores y elimina solo jobs
 identificados, con rollback y auditoría; conserva correo, Meta y colas compartidas.
-Las filas canceladas neutralizan trabajos no identificados. Una nueva ejecución
-no desactiva reglas de un canal LabsMobile configurado después.
+Las filas canceladas neutralizan trabajos no identificados; repetir la limpieza
+conserva reglas de un canal LabsMobile configurado después.
 
-Código PHP `f824640`; recorrido E2E y capturas `30a1689` (la captura de escritorio
-se ajusta después para iniciar arriba). Suite backend completa: 1,069 aprobadas,
-dos omitidas optativas, 48,623 aserciones; frontend completo: 67 archivos / 177
-pruebas aprobadas. Build Vite y Pint aprobados. E2E Chromium en SQLite nueva:
-dos recorridos aprobados, escritorio y móvil, con barreras cerradas y credenciales
-vacías. El fallo inicial de selector E2E se resolvió tras revisar traza, captura,
-video y consola; la repetición pasó. UTF-8/LF y 205 enlaces locales de 57 archivos
-textuales del rango comprobados; 11 documentos con índice y tema.
+No se modificó `.env`, se ejecutó limpieza operativa, se habilitó tráfico, se
+accedió a VPS ni se desplegó. Solo se migraron y limpiaron datos sintéticos en BD
+aisladas de pruebas. Main sigue en `217acef`, ancestro `bfa0b87`, divergencia de
+arranque 89/15; no se fusionó ni se sobrescribió trabajo compartido. Base funcional
+del barrido final de **I4: `ecb9d4a`**. Integraciones y piloto siguen pendientes.
 
-Código final `cacf89f`; revisión medium completa contra `547d9e5`, Codex CLI
-0.172.0, terminada sin regresiones accionables. Su validación secuencial aprobó
-70 pruebas backend y cuatro frontend. Incluye la regresión de escritura de caché
-rechazada sin excepción. No quedan hallazgos de código pendientes.
+### Siguiente sesión: solo I2
 
-La primera revisión se interrumpió por cuota. La segunda no encontró hallazgos,
-pero su ejecución simultánea con el pre-push causó fallos documentales: ambos
-procesos limpiaban el mismo `Storage::fake('local')`. El primer push se detuvo
-por un fallo del ciclo Bullet con ese mismo archivo. No se descartaron esos
-resultados como aprobados; revisión final y pre-push se ejecutan ahora de forma
-secuencial, según la guía QA. Publicación/CI todavía en curso; registrar PR y
-resultado antes de cerrar.
-No se modificó `.env`, se ejecutó limpieza operativa,
-se habilitó tráfico, se accedió a VPS ni se desplegó. Las pruebas usan datos
-sintéticos y BD aisladas. Seguimiento I2, editor I3, Integraciones y piloto siguen
-pendientes. Entregar prompt I2 al cerrar y detenerse.
+Prompt de continuación:
+
+> Continuemos SMS de Kronik, exclusivamente I2: seguimiento LabsMobile.
+> Worktree: C:\Users\jose.tejero\Documents\Proyectos\kronik\storage\framework\testing\comunicaciones-worktree.
+> Lee AGENTS.md, esta Agent Note, docs/explanation/plan-incrementos-sms.md,
+> docs/explanation/adr-0050-proveedor-sms-labsmobile.md,
+> docs/explanation/integracion-sms-labsmobile.md y docs/reference/canales-comunicacion.md.
+> Contrasta Notion https://app.notion.com/p/3fe61db7db7f81e4af50c4f0f3ab7e41.
+> I1 está publicado en https://github.com/jata-imk/kronik/pull/94,
+> rama feat/sms-i1-labsmobile, código revisado cacf89f; I0 es PR #93.
+> Verifica SHA, CI, revisión e integración reales antes de elegir base y crear rama.
+> Conserva el trabajo compartido y contrasta main sin fusionarlo.
+> Implementa solo seguimiento/conciliación LabsMobile: confirmar autenticidad antes
+> de aceptar callbacks, persistencia, correlación, deduplicación, eventos adelantados
+> y desordenados y niveles de acuse. Conserva provider, provider_correlation_id y
+> provider_message_id del intento y el contexto original de equipo/sucursal.
+> No confundas acuse de operador con entrega al dispositivo ni atribuyas lectura al SMS.
+> Verifica fuentes primarias y contrato de cuenta; no inventes HMAC, consulta de estado
+> o garantía de idempotencia. La correlación no autentica callbacks. Si falta contrato
+> verificable, no publiques una recepción que acepte estados sin autenticar; registra
+> el pendiente externo y avanza solo en trabajo seguro e independiente.
+> Kronik solo existe en dev/QA, sin clientes ni históricos; datos desechables.
+> No implementes compatibilidad Infobip, backfill, editor ni catálogo de Integraciones.
+> Mantén ambas barreras cerradas, sin envíos reales, despliegue o acceso a VPS.
+> Pruebas con BD/HTTP aislados y un solo proceso PHP por checkout; conserva correo,
+> Meta, límites, elegibilidad financiera, auditoría y metadatos permitidos sin secretos.
+> Una sesión y una PR para I2, hacia feat/comunicaciones-notificaciones. Publica,
+> ejecuta /review medium, resuelve hallazgos y registra base/SHA/CI/evidencia.
+> Actualiza documentación, índices, Agent Note y Notion; entrega prompt I3 y detente.
+> En I4 sigue obligatorio el barrido completo de todas las PR contra ecb9d4a.
 
 ## Antecedente — SMS I0, 25/11/2026
 

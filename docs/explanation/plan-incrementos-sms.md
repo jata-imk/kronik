@@ -68,8 +68,9 @@ revisión si cambia código después. No considerar una solicitud de revisión c
 evidencia de revisión terminada. El pase de rango completo de I4 complementa esas
 revisiones individuales; no cerrarlo anticipadamente por terminar I0 o integrar una PR.
 
-## Estado de I1 — 25/11/2026
+## Estado de I1 — publicado el 25/11/2026
 
+[PR I1 #94](https://github.com/jata-imk/kronik/pull/94), código revisado `cacf89f`.
 Rama `feat/sms-i1-labsmobile` creada desde `9d0473d` con dependencia de PR #93,
 aún abierta. Se conserva I0 y el trabajo compartido. Las consultas al inicio
 acreditan CI verde para `3095384` y `213a4b6`, revisión medium final de código
