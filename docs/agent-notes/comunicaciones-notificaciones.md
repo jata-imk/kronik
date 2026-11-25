@@ -11,6 +11,9 @@ resueltos en cada PR; al cerrar SMS, pase acumulado de todas las PR contra
 - Rama de I0: `feat/sms-i0-inventario`, creada desde `547d9e5` dentro del worktree
   `storage/framework/testing/comunicaciones-worktree`. Base de la PR:
   `feat/comunicaciones-notificaciones`. No se fusionó main ni se forzó historia.
+- [PR #93](https://github.com/jata-imk/kronik/pull/93), abierta y no integrada.
+  Código final `b6899f56810f34bd4e372edd341a744b4cddfe32`; arranque `0fe03d5`.
+  El commit documental posterior registra este cierre sin cambiar código.
 - Alcance I0: comando `comunicaciones:inventariar-sms`, servicio agregado de solo
   lectura, contrato y matriz de compatibilidad. El inventario conserva Infobip y
   no cambia conexiones, jobs, reglas, proyecciones ni auditoría de negocio.
@@ -33,33 +36,44 @@ resueltos en cada PR; al cerrar SMS, pase acumulado de todas las PR contra
   copiaron secretos ni se preparó una BD operativa. PHP 8.3.29 / Node 22.22.3.
 - Prueba nueva del inventario: 14 aprobadas, 116 aserciones. Conjunto final de
   inventario, menús y reinicio QA: 53 aprobadas, 504 aserciones. Pint aprobado y
-  build Vite aprobado. Regresión general final, publicación y segunda revisión:
-  en curso en esta sesión.
+  build Vite aprobado. El pre-push completo sobre `b6899f5` aprobó **1,016 pruebas,
+  48,249 aserciones**, con dos omitidas optativas (renderer Chromium real y
+  benchmark de cartera). Ejecutó también build sin saltar el hook. UTF-8/LF,
+  salto final y 144 enlaces locales de 15 archivos comprobados.
 - Primera revisión medium sobre `0fe03d5`: señaló la identificación del almacén
   database activo con varias conexiones. La completitud ya consideraba todos
   los almacenes; se corrigió además `active_inspectable`, se agregó `active` por
-  almacén y se probaron ambas selecciones de cola. Se repetirá la revisión del
-  rango completo de esta PR después de los cambios de código y fixtures.
+  almacén y se probaron ambas selecciones de cola. La revisión del rango de esta
+  PR se repitió después de los cambios de código y fixtures.
+- Segunda `/review medium`: Codex CLI 0.172.0 con esfuerzo medium, base
+  `547d9e5` y código `b6899f5`, terminó sin defectos accionables. Se revisó todo
+  el diff de la PR, incluidos los ajustes de QA. El señalamiento anterior quedó
+  resuelto; no hay hallazgos de código pendientes. El pase acumulado de SMS contra
+  `ecb9d4a` sigue siendo requisito de I5, no está acreditado por esta revisión.
+- Publicación Git confirmada a `origin/feat/sms-i0-inventario`; Notion registra
+  PR y evidencia. CI remoto y cualquier integración deben comprobarse por su SHA
+  al retomar; no se afirma despliegue ni validación contra proveedores.
 - No hay migraciones, seeders ni variables nuevas de este incremento. El comando
   CLI de consulta no necesita evento auditable nuevo; justificación y pruebas
   enlazadas desde la matriz. No hay UI nueva ni E2E adicional requerido para I0.
 
 ### Siguiente sesión
 
-Retomar **I1, procedencia y corte**, después de verificar el estado y SHA de la PR
-I0. Conservar el código revisado de I0 aunque aún no esté integrado y no asumir
+Retomar **I1, procedencia y corte**, después de verificar el estado y SHA de la
+[PR I0 #93](https://github.com/jata-imk/kronik/pull/93). Conservar el código revisado de I0 aunque aún no esté integrado y no asumir
 que publicar una rama equivale a integración. No empezar I2–I5 en esa sesión.
 Resolver primero cualquier hallazgo pendiente de I0 y elegir la base de la nueva
 PR desde el estado real; nunca mezclar main ni sobrescribir comunicaciones.
 
-Prompt de continuación (completar con PR/SHA finales de esta nota al cerrar):
+Prompt de continuación:
 
 > Continuemos SMS de Kronik, exclusivamente el incremento I1 (procedencia y corte).
 > Trabaja en C:\Users\jose.tejero\Documents\Proyectos\kronik\storage\framework\testing\comunicaciones-worktree.
 > Lee AGENTS.md, docs/agent-notes/comunicaciones-notificaciones.md,
 > docs/explanation/plan-incrementos-sms.md, docs/reference/inventario-sms.md y el
 > alcance vigente de Notion 3fe61db7db7f81e4af50c4f0f3ab7e41.
-> Verifica la PR I0 y su SHA registrados en la nota, revisiones y estado de
+> I0 está en la PR #93 https://github.com/jata-imk/kronik/pull/93,
+> rama feat/sms-i0-inventario, código revisado b6899f5. Verifica revisiones, CI y estado de
 > integración antes de elegir la rama de I1; preserva todo el trabajo compartido.
 > Base funcional del barrido final: ecb9d4a. No fusiones main ni habilites tráfico.
 > Implementa solo I1: procedencia estable, recuperación histórica desde evidencia,
@@ -71,6 +85,9 @@ Prompt de continuación (completar con PR/SHA finales de esta nota al cerrar):
 > Actualiza documentación, Agent Note y Notion; entrega prompt para I2.
 > Una sesión por incremento. Al terminar I5 exige pase del rango completo y todas
 > las PR contra ecb9d4a antes de cerrar la funcionalidad.
+
+Si I1 o I4 añaden tablas, clasificarlas también en el reinicio QA y mantener su
+regresión en esa misma PR. I0 descubrió y corrigió ese faltante de la base anterior.
 
 ## Referencias
 
