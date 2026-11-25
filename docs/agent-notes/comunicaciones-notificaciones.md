@@ -1,9 +1,11 @@
 # Comunicaciones y notificaciones
 
-## Retoma vigente — I2 núcleo interno, 25/11/2026
+## Retoma vigente — I2 publicado y revisado, 25/11/2026
 
-Rama `feat/sms-i2-seguimiento`, creada desde `85d2db6`; PR hacia
-`feat/comunicaciones-notificaciones`, pendiente de publicación al redactar esta nota.
+Rama `feat/sms-i2-seguimiento`, creada desde `85d2db6`;
+[PR I2 #95](https://github.com/jata-imk/kronik/pull/95) abierta hacia
+`feat/comunicaciones-notificaciones`, sin integrar. Código final revisado:
+`c7a31bd1c8d382c8eb4f4557ae1aebb2778336ba`. Cierres posteriores solo documentales.
 #93 y #94 siguen abiertas, sin integrar. I1: código revisado `cacf89f`, HEAD
 `85d2db6`, CI #311 aprobado; sin hilos pendientes y revisión medium documentada
 en la PR. Se comprobó identidad del árbol funcional. Main continúa `217acef`,
@@ -24,10 +26,23 @@ ID/aceptación HTTP cuando un acuse llega primero, y un timeout no degrada una e
 ya confirmada internamente ni autoriza reenvío. No se atribuye lectura al SMS.
 Auditoría reutilizada, transaccional y sin datos sensibles; correo/Meta intactos.
 
-Regresión focal inicial: 154 aprobadas, 1,569 aserciones. Frontend focal:
-cinco aprobadas en dos archivos. Se añadieron después dos regresiones de
-respuesta tardía y acuse posterior a timeout; el pre-push final debe incluirlas.
-Revisión medium y publicación aún en curso.
+Validación del código `c7a31bd`: pre-push completo sin omitir el hook, **1,119
+aprobadas, dos omitidas optativas y 49,088 aserciones**; build Vite aprobado.
+Incluye los 48 casos nuevos I2 y la regresión del reinicio QA con los nuevos campos.
+Frontend focal: cinco aprobadas en dos archivos. Pint, diff --check, UTF-8/LF,
+enlaces locales y cobertura temática comprobados.
+
+`/review medium` completo de todo el diff de la PR contra `547d9e5`, Codex CLI
+0.172.0, código `c7a31bd`: **sin defectos accionables**. El revisor aprobó además
+118 pruebas backend y 970 aserciones. [Evidencia de revisión](https://github.com/jata-imk/kronik/pull/95#issuecomment-7175492447).
+CI se verifica por SHA publicado y se registra en la PR y Notion; consultar
+[Checks de #95](https://github.com/jata-imk/kronik/pull/95/checks). La validación
+local y revisión no acreditan integración, proveedor, scheduler/worker o despliegue.
+
+La primera pasada de pre-push se interrumpió al detectar que el DDL de la prueba
+podía confirmar RefreshDatabase en MariaDB; se sustituyó por otra conexión SQLite
+`:memory:`. La pasada interrumpida no cuenta como aprobación; la repetición completa
+sobre `c7a31bd` y la revisión posterior son las evidencias válidas.
 Pruebas exclusivamente aisladas y secuenciales. No se modificó `.env`, no hubo
 migración/limpieza operativa, envíos reales, merge, despliegue ni acceso a VPS.
 No se implementó editor ni Integraciones. La iniciativa permanece abierta.
@@ -39,7 +54,9 @@ No se implementó editor ni Integraciones. La iniciativa permanece abierta.
 > Lee AGENTS.md, esta Agent Note, docs/explanation/plan-incrementos-sms.md,
 > docs/explanation/editor-plantillas-notificaciones.md, docs/reference/canales-comunicacion.md
 > y docs/reference/seguimiento-sms.md. Contrasta Notion 3fe61db7db7f81e4af50c4f0f3ab7e41.
-> Verifica PR/SHA/CI/revisión e integración reales de I0 #93, I1 #94 e I2 antes
+> I2 está publicado en https://github.com/jata-imk/kronik/pull/95, rama
+> feat/sms-i2-seguimiento, código revisado c7a31bd; cierres posteriores documentales.
+> Verifica PR/SHA/CI/revisión e integración reales de I0 #93, I1 #94 e I2 #95 antes
 > de elegir base; conserva su código revisado aunque sigan abiertas. No fusiones main.
 > Implementa solo I3: catálogo global de Notificaciones con permisos por acción
 > (consulta, creación, edición, versionado, activación y retiro), sin exclusividad

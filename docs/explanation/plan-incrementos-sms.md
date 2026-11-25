@@ -78,7 +78,9 @@ en `217acef`, ancestro `bfa0b87`, divergencia 20/89 respecto de I1, sin fusionar
 El usuario no tiene cuenta ni saldo LabsMobile. El [núcleo interno](../reference/seguimiento-sms.md)
 se implementa con pruebas sintéticas; autenticación y recepción externa quedan
 pendientes, sin declarar completo el seguimiento operativo. No añadir endpoint,
-ackurl ni verificador permisivo. Evidencia de validación y publicación en la Agent Note.
+ackurl ni verificador permisivo. [PR #95](https://github.com/jata-imk/kronik/pull/95), código revisado `c7a31bd`: review
+medium sin defectos accionables, 1,119 pruebas aprobadas y build. Evidencia, CI
+por SHA y prompt I3 en la Agent Note y Notion.
 
 ## Estado de I1 — publicado el 25/11/2026
 
