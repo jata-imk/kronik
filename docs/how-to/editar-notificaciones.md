@@ -41,3 +41,8 @@ BD y destinatarios sintéticos, correo fake y HTTP simulado. Revisar borradores 
 guardar, históricos, permisos, teclado, móvil, respuestas tardías y ausencia de
 peticiones PDF al usar texto/HTML. La generación PDF se comprueba por separado.
 No modificar .env ni activar proveedores para este recorrido.
+
+## Evidencia visual
+
+Capturas sintéticas de I3: [escritorio](../assets/notificaciones-i3-desktop.png) y
+[móvil](../assets/notificaciones-i3-mobile.png). La versión consultada es inmutable.

@@ -1,39 +1,115 @@
 # Comunicaciones y notificaciones
 
-## I3 en implementación — 26/11/2026
+## I3 publicado y revisado — 26/11/2026
 
-Rama `feat/comunicaciones-i3-notificaciones` desde `2c865b1`, worktree indicado
-en el traspaso. José confirmó varias plantillas globales seleccionables para
-SMS y correo; WhatsApp conserva su flujo. Decisión en
+[PR I3 #96](https://github.com/jata-imk/kronik/pull/96) abierta hacia
+`feat/comunicaciones-notificaciones`, sin integrar. Rama
+`feat/comunicaciones-i3-notificaciones` desde `2c865b1`, en el worktree del traspaso.
+Código final revisado: `6a48765054faca9fe99e557e9eec4420c1784a06`.
+Los cierres posteriores son exclusivamente documentales; CI se verifica por SHA.
+
+José confirmó varias plantillas globales seleccionables de SMS y correo.
+WhatsApp conserva su flujo. Catálogo/versiones propios, seis permisos por acción,
+versiones activas/retiradas inmutables, reglas con selección y cancelación
+transaccional de pendientes sin recreación. El intento conserva contenido,
+formato y variables cifrados; no se exponen en props ni auditoría.
+Desactivar reglas no requiere una plantilla activa; habilitarlas sí.
+
+Texto SMS y correo, HTML de correo coherente con el MIME real y HTML documental
+continuo reutilizan compilador, sanitizador, estilos, recursos autorizados y panel
+de variables. Texto/HTML no invocan PDF/Chromium. PDF permanece explícito.
+Se conservan ID/versiones exactas, consulta inmutable, borradores, descarte de
+respuestas tardías, teclado y móvil. Véanse
 [ADR 0051](../explanation/adr-0051-notificaciones-globales-y-previas-html.md),
-[contrato](../reference/plantillas-notificaciones.md) y
-[guía](../how-to/editar-notificaciones.md).
+[contrato](../reference/plantillas-notificaciones.md),
+[guía](../how-to/editar-notificaciones.md) y
+[evaluación del editor](../explanation/editor-plantillas-notificaciones.md).
 
-Retoma comprobada: #93/#94/#95 abiertas, sin integración, revisiones medium
-documentadas y sin hilos pendientes. CI #309 aprobado para 213a4b6; la rama I0
-real está en 9d0473d, cierre solo documental sin ejecución propia visible.
-I1 85d2db6 tiene CI #311 aprobado y mismo árbol funcional que cacf89f.
-I2 2c865b1 tiene CI #314 aprobado, sin cambios funcionales desde c7a31bd.
-Main 217acef; divergencia 89/24 respecto de I2, contrastada sin fusionar.
+Migración aditiva `2026_11_26_100000`, sin backfill ni conversión de textos
+desechables; FK con nombre compatible MariaDB/MySQL. Módulo/menús y tablas
+clasificadas en reinicio QA. Sin variables nuevas ni migraciones operativas.
 
-Implementación local: catálogo global/versiones propias, permisos por acción,
-selección en reglas, cancelación transaccional de pendientes sin recreación,
-snapshot cifrado y previas texto/HTML. La parte MIME de texto conserva entidades y etiquetas literales para coincidir con la previa; HTML requiere su formato explícito. El formato viaja congelado al transporte.
-Compilación, saneamiento, recursos y estilos se reutilizan sin renderer PDF;
-PDF sigue explícito. Migración aditiva 2026_11_26_100000, sin backfill ni
-migraciones operativas; FK de salida con nombre explícito dentro del límite MariaDB/MySQL; tablas clasificadas en reinicio QA.
+Evidencia del código final:
 
-Primera suite completa antes de los últimos ajustes: 1,145 aprobadas, dos omitidas optativas y 49,380 aserciones. Commit inicial I3: 847d8cb. La pasada final debe cubrir los casos agregados después y el SHA revisado.
+- Pre-push completo, sin omitir hook: **1,160 aprobadas, dos omitidas optativas y 49,501 aserciones**; build Vite aprobado.
+- Frontend completo: **184 pruebas / 71 archivos**.
+- E2E locales: cuatro finales aprobados (Comunicaciones escritorio/móvil,
+  SMS con versiones/teclado/móvil y HTML correo/documentos sin PDF). También
+  aprobaron consulta histórica documental, consulta de productos y editor/PDF
+  multipágina. PDF real: 9,704 bytes. BD/HTTP aislados.
+- Una pasada conjunta previa tuvo un timeout bajo carga simultánea de Vitest;
+  se descartó como resultado global y se repitieron aislados los cuatro flujos.
+  El PHP CLI-server local usó un ini temporal ignorado con presupuesto de 60 s
+  para PDF; no se cambió .env ni configuración operativa.
+- `/review medium` completo contra `547d9e5`, CLI 0.172.0:
+  **sin regresiones accionables**. Hallazgos anteriores resueltos con pruebas:
+  conservación de captura/errores y desactivación de reglas sin versión activa.
+  Revisión final estática, sin pruebas PHP concurrentes.
+  [Evidencia en PR](https://github.com/jata-imk/kronik/pull/96#issuecomment-7203281121).
+- Resultado remoto y SHA del HEAD final: [comentario de cierre de la PR](https://github.com/jata-imk/kronik/pull/96#issuecomment-7203281121) y [Checks de #96](https://github.com/jata-imk/kronik/pull/96/checks). No atribuir a un cierre documental el resultado CI de otro SHA.
+- Pint, diff --check, UTF-8/LF, enlaces locales, índices y cobertura temática
+  comprobados. Capturas [escritorio](../assets/notificaciones-i3-desktop.png)
+  y [móvil](../assets/notificaciones-i3-mobile.png).
 
-Evidencia intermedia: 90 pruebas backend / 912 aserciones; frontend completo
-70 archivos / 181 pruebas; build aprobado. Primera suite backend completa aprobada; la pasada final debe cubrir los casos añadidos después. Primera revisión medium de cc6c131 contra 547d9e5: sin regresiones accionables, sin pruebas PHP simultáneas. E2E detectó un selector exacto incorrecto, una espera de navegación ausente y el límite PHP local de 30 s para PDF; se corrigen/revalidan antes del cierre. La segunda pasada E2E detectó columnas ambiguas en el resumen de la versión activa al existir plantillas: se califican las columnas y se añade regresión de metadatos/permisos. La segunda revisión medium señaló pérdida de captura al volver de validación: se conserva borrador/errores cuando no cambian recurso, modo o autorización, con regresión de edición y creación. El enlace de regreso usa la clave normalizada de auth.permissions y su regresión de autorización. La tercera revisión detectó el mismo patrón en reglas: el reinicio queda limitado a cambio de selección/contexto/permisos o guardado exitoso, con guarda de solo lectura. WhatsApp conserva su validación local y cancelación diferida, con regresión explícita; los nombres de campos nuevos se revisan en lang/es/validation.php. La validación completa se repite sin simultanear Vitest y navegador: esa carga agotó el plazo de un E2E pese a respuestas correctas. E2E final, revisión posterior y PR única pendientes de resultado final. No contar estas
-validaciones intermedias como cierre ni como CI del futuro SHA publicado.
+Retoma y dependencias: #93/#94/#95 siguen abiertas y sin integrar.
+I0: la API de PR muestra `213a4b6` con CI #309 aprobado; rama real
+`9d0473d`, cierre documental sin CI propio visible. I1: `85d2db6`,
+CI #311 aprobado, mismo árbol funcional que el código revisado `cacf89f`.
+I2: `2c865b1`, **CI #314 aprobado**, mismo árbol funcional que el código
+revisado `c7a31bd`; #313 corresponde a `e7d287d`.
+Main `217acef` y destino `547d9e5` siguen sin cambios, contrastados sin fusionar.
+Divergencia main/I2 al arranque: 89/24. No se acredita ejecución combinada.
 
-Ambas barreras SMS cerradas; autenticidad/recepción externa I2 pendientes.
-Sin envíos reales, compras, .env operativo, Integraciones, merge, despliegue o VPS.
-I4 sigue obligatorio contra ecb9d4a; no se inicia en esta sesión.
+Ambas barreras SMS siguen cerradas. I2 acredita solo núcleo interno:
+recepción externa autenticada, cuenta/ruta y piloto pendientes. No se inventan
+firmas, callbacks, ackurl ni consultas del proveedor. Sin envíos reales, compras,
+Integraciones, limpieza operativa, merge, despliegue o VPS.
+Notion conserva la iniciativa Doing: I4 y los pendientes externos impiden cerrarla.
 
-## Retoma vigente — I2 publicado y revisado, 25/11/2026
+### Siguiente sesión: solo I4
+
+> Continuemos Kronik, exclusivamente I4: cierre técnico conjunto de Comunicaciones.
+>
+> Worktree: C:\Users\jose.tejero\Documents\Proyectos\kronik\storage\framework\testing\comunicaciones-worktree
+>
+> Lee AGENTS.md y esta Agent Note. Consulta docs/index.md, el plan de incrementos
+> SMS, ADR 0051, evaluación del editor, contratos de canales/seguimiento SMS,
+> Notificaciones, renderizado documental, consulta/históricos y auditoría.
+> Contrasta alcance vigente con
+> https://app.notion.com/p/3fe61db7db7f81e4af50c4f0f3ab7e41.
+>
+> Antes de elegir base, verifica HEAD reales, revisiones terminadas, hilos,
+> CI por SHA e integración de #93, #94, #95 y #96. I3 código revisado 6a48765;
+> consulta la evidencia de CI registrada arriba y cualquier cambio posterior.
+> Conserva todos los incrementos; contrasta main sin fusionarlo.
+>
+> Revisa conjuntamente TODAS las PR y cambios de la iniciativa contra la base
+> funcional ecb9d4a, incluido el antecedente #91 cerrado sin integrar.
+> El barrido debe cubrir el rango completo y las interacciones entre PR,
+> no solo el diff de I4: migraciones/rollback/reinicio QA, permisos/contextos,
+> versiones exactas e inmutables, reglas/salidas/cancelación y concurrencia,
+> variables SMS y dos segmentos tras sustitución sin truncar ni quitar acentos,
+> texto/HTML sin PDF, aislamiento/recursos autorizados, borradores e históricos,
+> descarte de respuestas tardías, teclado/móvil, correo/SMTP, Meta, consentimiento,
+> límites, elegibilidad financiera, transacciones/proyecciones y auditoría.
+> Registra evidencia y resuelve hallazgos con sus regresiones.
+>
+> I2 solo tiene núcleo interno. La recepción externa autenticada sigue pendiente;
+> no inventes firmas, callbacks, ackurl, entradas provisionales ni consultas del
+> proveedor. Mantén ambas barreras cerradas. No implementes Integraciones.
+> Documenta el procedimiento de piloto y los pendientes verificables sin
+> ejecutarlo. Sin envíos reales, compras, despliegues, merge ni acceso a VPS.
+>
+> Usa BD y HTTP aislados, un solo proceso PHP de pruebas por checkout, también
+> durante review. Completa comprobaciones aplicables, documentación, índices,
+> matriz de auditoría, Agent Note y Notion. Si I4 requiere cambios, publícalos
+> en una sola PR hacia feat/comunicaciones-notificaciones, ejecuta /review medium,
+> resuelve hallazgos y verifica CI del SHA final.
+> Distingue cierre técnico, integración, despliegue y validación externa;
+> no cierres la iniciativa por una PR integrada ni declares seguimiento externo
+> completo sin contrato/evidencia. Entrega el estado y pendientes reales y detente.
+
+## Antecedente — I2 publicado y revisado, 25/11/2026
 
 Rama `feat/sms-i2-seguimiento`, creada desde `85d2db6`;
 [PR I2 #95](https://github.com/jata-imk/kronik/pull/95) abierta hacia
@@ -93,7 +169,7 @@ Solo se amplía el traspaso documental; no se inicia implementación I3.
 CI #313 aprobado corresponde al cierre anterior `e7d287d`; código revisado `c7a31bd`
 sin cambios. Verificar el HEAD documental y sus checks vigentes al retomar.
 
-### Siguiente sesión: solo I3
+### Prompt anterior: solo I3
 
 > Continuemos SMS de Kronik, exclusivamente I3: Notificaciones globales y editor.
 > Worktree: C:\Users\jose.tejero\Documents\Proyectos\kronik\storage\framework\testing\comunicaciones-worktree.
