@@ -54,7 +54,7 @@ Texto conserva acentos, saltos y entidades literales. HTML se sanea mediante el
 compilador documental y sustituye valores escapados. El correo HTML admite formato
 de texto del editor; no incluye imágenes privadas ni paginación. Su presentación
 coincide con el HTML preparado para el Mailable. Correo de texto conserva la vista
-anterior y SMTP; aceptación no acredita entrega al buzón.
+de texto y SMTP; su parte MIME de texto conserva entidades y etiquetas literales sin aplicar escape HTML. Aceptación no acredita entrega al buzón.
 
 La previa SMS mide el texto sintético ya sustituido mediante `SmsText`. Informa
 codificación, unidades y segmentos estimados. El backend vuelve a medir el mensaje

@@ -27,7 +27,7 @@ return new class extends Migration
             $table->longText('body');
             $table->string('content_hash', 64);
             $table->string('change_summary', 500)->nullable();
-            $table->foreignId('created_by')->nullable()->constrained('users');
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('activated_at')->nullable();
             $table->timestamp('retired_at')->nullable();
             $table->timestamps();
@@ -35,7 +35,8 @@ return new class extends Migration
         });
         Schema::table('communication_rules', fn (Blueprint $table) => $table->foreignId('notification_template_id')->nullable()->constrained());
         Schema::table('communication_deliveries', function (Blueprint $table) {
-            $table->foreignId('notification_template_version_id')->nullable()->constrained();
+            $table->foreignId('notification_template_version_id')->nullable();
+            $table->foreign('notification_template_version_id', 'comm_delivery_notification_version_fk')->references('id')->on('notification_template_versions');
             $table->longText('message_snapshot')->nullable();
         });
         (new Database\Seeders\ModulesAndPermissionsSeeder)->run();
@@ -45,7 +46,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('communication_deliveries', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('notification_template_version_id');
+            $table->dropForeign('comm_delivery_notification_version_fk');
+            $table->dropColumn('notification_template_version_id');
             $table->dropColumn('message_snapshot');
         });
         Schema::table('communication_rules', fn (Blueprint $table) => $table->dropConstrainedForeignId('notification_template_id'));

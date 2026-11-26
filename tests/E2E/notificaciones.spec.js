@@ -37,6 +37,7 @@ test("SMS conserva texto y versiones exactas sin PDF, también en móvil y tecla
     await page.getByRole("button", { name: "Actualizar previsualización" }).click();
     await expect(page.getByTestId("text-preview")).toHaveText("Otra redacción para María.");
     await page.getByRole("button", { name: /^V1 · Activa/ }).click();
+    await expect(page.getByRole("heading", { name: /Consultar versión 1 · Activa/ })).toBeVisible();
     await page.getByRole("button", { name: "Actualizar previsualización" }).click();
     await expect(page.getByTestId("text-preview")).toHaveText("Hola María, á &amp; <b>literal</b>.");
     await page.setViewportSize({ width: 390, height: 844 });

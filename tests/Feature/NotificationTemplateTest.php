@@ -270,3 +270,24 @@ test('version_id solo resuelve su plantilla exacta aunque los filtros la oculten
         ->assertOk()->assertInertia(fn (Assert $p) => $p->where('selected.id', $target->id)->where('version.id', $version->id));
     expect(fn () => $version->update(['state' => 'draft']))->toThrow(ValidationException::class);
 });
+
+test('eliminar la cuenta autora conserva la versión y su contenido institucional', function () {
+    $author = User::factory()->create();
+    $template = notificationTemplateQa(['created_by' => $author->id]);
+    $version = $template->versions()->sole();
+    $hash = $version->content_hash;
+    Illuminate\Support\Facades\DB::table('users')->where('id', $author->id)->delete();
+    expect($version->fresh()->created_by)->toBeNull()->and($version->fresh()->content_hash)->toBe($hash)
+        ->and($version->fresh()->state)->toBe('active');
+});
+
+test('correo de texto conserva entidades y etiquetas literales iguales a su previa sin habilitar HTML', function () {
+    $this->actingAs(actingAsSuperAdmin());
+    $body = 'Hola {nombre}: á &amp; <b>literal</b>.';
+    $preview = $this->postJson(route('notificaciones.preview-draft'), ['channel' => 'email', 'format' => 'text', 'subject' => 'Aviso', 'body' => $body])->assertOk();
+    $mail = new App\Mail\CommunicationMail('Aviso', $preview->json('body'), 'qa@example.test');
+    expect($mail->render())->toBe($preview->json('body')."\n");
+    expect($mail->build()->textView)->toBe('emails.communication')->and($mail->messageFormat)->toBe('text');
+    Http::assertNothingSent();
+    Mail::assertNothingSent();
+});

@@ -18,16 +18,15 @@ Main 217acef; divergencia 89/24 respecto de I2, contrastada sin fusionar.
 
 Implementación local: catálogo global/versiones propias, permisos por acción,
 selección en reglas, cancelación transaccional de pendientes sin recreación,
-snapshot cifrado y previas texto/HTML. El formato viaja congelado al transporte.
+snapshot cifrado y previas texto/HTML. La parte MIME de texto conserva entidades y etiquetas literales para coincidir con la previa; HTML requiere su formato explícito. El formato viaja congelado al transporte.
 Compilación, saneamiento, recursos y estilos se reutilizan sin renderer PDF;
 PDF sigue explícito. Migración aditiva 2026_11_26_100000, sin backfill ni
-migraciones operativas; tablas clasificadas en reinicio QA.
+migraciones operativas; FK de salida con nombre explícito dentro del límite MariaDB/MySQL; tablas clasificadas en reinicio QA.
 
 Primera suite completa antes de los últimos ajustes: 1,145 aprobadas, dos omitidas optativas y 49,380 aserciones. Commit inicial I3: 847d8cb. La pasada final debe cubrir los casos agregados después y el SHA revisado.
 
 Evidencia intermedia: 90 pruebas backend / 912 aserciones; frontend completo
-70 archivos / 181 pruebas; build aprobado. Suite backend completa, E2E,
-review medium y PR única pendientes de resultado final. No contar estas
+70 archivos / 181 pruebas; build aprobado. Primera suite backend completa aprobada; la pasada final debe cubrir los casos añadidos después. Primera revisión medium de cc6c131 contra 547d9e5: sin regresiones accionables, sin pruebas PHP simultáneas. E2E detectó un selector exacto incorrecto, una espera de navegación ausente y el límite PHP local de 30 s para PDF; se corrigen/revalidan antes del cierre. E2E final y PR única pendientes de resultado final. No contar estas
 validaciones intermedias como cierre ni como CI del futuro SHA publicado.
 
 Ambas barreras SMS cerradas; autenticidad/recepción externa I2 pendientes.
