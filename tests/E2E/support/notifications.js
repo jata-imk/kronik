@@ -8,7 +8,7 @@ export async function createNotification(page, { key, channel = "sms", event = "
     await page.getByLabel("Evento de la plantilla").selectOption(event);
     if (channel === "email") {
         await page.getByLabel("Asunto", { exact: true }).fill("Aviso para {nombre}");
-        await page.getByLabel("Formato", { exact: true }).selectOption(format);
+        await page.getByRole("combobox", { name: /^Formato/ }).selectOption(format);
     }
     if (format === "html") await page.locator(".ql-editor").fill(body);
     else await page.getByLabel("Contenido", { exact: true }).fill(body);

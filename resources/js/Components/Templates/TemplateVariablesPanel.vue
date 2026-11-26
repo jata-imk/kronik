@@ -9,7 +9,7 @@ const groups = computed(() => {
     const map = new Map();
     for (const item of props.variables) {
         if (query.value && !`${item.nombre} ${item.clave} ${item.origen}`.toLocaleLowerCase("es-MX").includes(query.value.toLocaleLowerCase("es-MX"))) continue;
-        const key = item.clave.split(".")[0];
+        const key = props.document ? item.clave.split(".")[0] : "notificacion";
         if (!map.has(key)) map.set(key, { key, label: ({ documento: "Documento", empresa: "Empresa", cliente: "Cliente", garantia: "Garantía" })[key] ?? "Notificación", items: [] });
         map.get(key).items.push(item);
     }

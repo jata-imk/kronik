@@ -375,7 +375,7 @@ watch(selected, (item) => {
                     <section class="k-feature overflow-hidden p-5 sm:p-6">
                         <div class="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
                             <div class="min-w-0"><div class="flex flex-wrap gap-2"><Tag :value="typeLabel(selected.tipo)" severity="secondary" rounded /><Tag :value="selected.clave" severity="contrast" rounded /></div><p class="mt-3 text-sm">Plantilla: {{ selected.activa ? 'Habilitada' : 'Inactiva' }}</p><h2 class="mt-4 truncate text-2xl font-bold">{{ selected.nombre }}</h2><p class="mt-2 max-w-2xl text-sm text-white/70">{{ selected.descripcion || 'Sin descripción comercial. Puedes agregarla en el próximo borrador.' }}</p></div>
-                            <Button v-if="selectedVersion" label="Previsualizar" icon="pi pi-eye" severity="secondary" @click="showPreview(selectedVersion)" />
+                            <Button v-if="selectedVersion" label="Previsualizar PDF" icon="pi pi-eye" severity="secondary" @click="showPreview(selectedVersion)" />
                         </div>
                         <div class="mt-6 grid gap-3 sm:grid-cols-3">
                             <div class="rounded-xl bg-white/10 p-3"><p class="text-xs text-white/60">Versión seleccionada</p><p class="mt-1 text-lg font-semibold">V{{ selectedVersion?.numero ?? '—' }}</p></div>
@@ -416,7 +416,7 @@ watch(selected, (item) => {
                         <TemplatePreview :source="htmlPreviewSource" :identity="[editorTemplateId, editingVersion?.id, editorReadonly].join(':')" />
                         <div><label for="watermark" class="field-label">Marca de agua (opcional)</label><InputText :readonly="editorReadonly" id="watermark" v-model="form.presentacion.marca_agua" maxlength="80" placeholder="Ejemplo: BORRADOR" fluid /><small class="block text-surface-500">Texto tenue en todas las páginas. Déjalo vacío para desactivarlo.</small><Message v-if="form.errors['presentacion.marca_agua']" severity="error">{{ form.errors['presentacion.marca_agua'] }}</Message></div><p v-if="editorReadonly" class="text-sm">Formato conservado: {{ editingVersion.presentacion?.formato ?? 'Sin marca histórica' }} · PDF A4 vertical.</p><div class="flex flex-col-reverse gap-2 border-t border-surface-200 pt-4 sm:flex-row sm:justify-end"><Button type="button" :label="editorReadonly ? 'Cerrar consulta' : 'Cancelar'" severity="secondary" @click="closeEditor" /><Button v-if="editorReadonly" type="button" label="Previsualizar PDF" icon="pi pi-eye" severity="secondary" @click="showPreview(editingVersion)" /><Button v-if="!editorReadonly" type="button" label="Previsualizar PDF de los cambios" icon="pi pi-eye" severity="secondary" @click="previewDraft" /><Button v-if="!editorReadonly" type="submit" label="Guardar borrador" icon="pi pi-save" :loading="form.processing" /></div>
                     </div>
-                    <TemplateVariablesPanel :variables="availableVariables" :readonly="editorReadonly" document @insert="insertVariable" />
+                    <TemplateVariablesPanel :key="[editorTemplateId, editingVersion?.id, editorReadonly, form.tipo].join(':')" :variables="availableVariables" :readonly="editorReadonly" document @insert="insertVariable" />
                 </form>
             </Dialog>
 

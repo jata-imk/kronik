@@ -23,6 +23,8 @@ Compilación, saneamiento, recursos y estilos se reutilizan sin renderer PDF;
 PDF sigue explícito. Migración aditiva 2026_11_26_100000, sin backfill ni
 migraciones operativas; tablas clasificadas en reinicio QA.
 
+Primera suite completa antes de los últimos ajustes: 1,145 aprobadas, dos omitidas optativas y 49,380 aserciones. Commit inicial I3: 847d8cb. La pasada final debe cubrir los casos agregados después y el SHA revisado.
+
 Evidencia intermedia: 90 pruebas backend / 912 aserciones; frontend completo
 70 archivos / 181 pruebas; build aprobado. Suite backend completa, E2E,
 review medium y PR única pendientes de resultado final. No contar estas
