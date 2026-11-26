@@ -21,6 +21,11 @@ test("SMS conserva texto y versiones exactas sin PDF, también en móvil y tecla
     await page.getByRole("button", { name: "Actualizar previsualización" }).click();
     await expect(page.getByTestId("text-preview")).toHaveText("Hola María, á &amp; <b>literal</b>.");
     await expect(page.getByText(/Estimación:/)).toBeVisible();
+    await content.fill("Hola {no_permitida}.");
+    await page.getByRole("button", { name: "Guardar borrador", exact: true }).click();
+    await expect(page.getByText(/La plantilla contiene una variable no permitida/)).toBeVisible();
+    await expect(content).toHaveValue("Hola {no_permitida}.");
+    await content.fill("Hola {nombre}, á &amp; <b>literal</b>.");
     await page.getByRole("button", { name: "Guardar borrador", exact: true }).click();
     await expect(page.getByRole("heading", { name: /Consultar versión 1/ })).toBeVisible();
     page.once("dialog", dialog => dialog.accept());
@@ -49,7 +54,7 @@ test("SMS conserva texto y versiones exactas sin PDF, también en móvil y tecla
 });
 
 test("correo HTML y documentos muestran HTML continuo sin solicitar PDF", async ({ page }) => {
-    const assertConsole = await failOnConsoleErrors(page);
+    const assertConsole = await failOnConsoleErrors(page, { sandboxedHtml: true });
     let pdf = 0;
     page.on("request", request => { if (request.url().includes("previsualizar-pdf")) pdf++; });
     await login(page);
@@ -57,6 +62,7 @@ test("correo HTML y documentos muestran HTML continuo sin solicitar PDF", async 
     await page.getByRole("button", { name: "Actualizar previsualización" }).click();
     const frame = page.frameLocator('iframe[title="Previsualización HTML"]');
     await expect(frame.locator("article")).toContainText("Hola María, correo institucional.");
+    await expect(frame.locator("script")).toHaveCount(0);
     await expect(page.locator('iframe[title="Previsualización HTML"]')).toHaveAttribute("sandbox", "");
     await expect(page.getByRole("button", { name: "Imagen", exact: true })).toHaveCount(0);
     await page.screenshot({ path: "test-results/notificaciones-desktop.png", fullPage: true });

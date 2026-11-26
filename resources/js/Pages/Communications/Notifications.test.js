@@ -17,6 +17,10 @@ it("consulta no guarda por teclado y descarta captura cuando cambia capacidad o 
     const w = shallowMount(Notifications, { props: { templates: { data: [] }, selected: { id: 2, key: "qa", name: "QA", channel: "sms", event_type: "payment_received" }, version, versions: { data: [version] }, filters: {}, mode: "edicion", permissions }, global: { mocks: { route: globalThis.route }, stubs: { AppLayout: { template: "<main><slot name='card-content'/></main>" } } } });
     expect(w.vm.editable).toBe(true);
     w.vm.form.body = "Sin guardar";
+    w.vm.form.errors = { body: "Variable no permitida" };
+    await w.setProps({ version: { ...version }, permissions: { ...permissions } });
+    expect(w.vm.form.body).toBe("Sin guardar");
+    expect(w.vm.form.errors.body).toBe("Variable no permitida");
     await w.setProps({ permissions: { read: true, update: false, create: false } });
     expect(w.vm.editable).toBe(false);
     expect(w.vm.form.body).toBe("Original");
@@ -29,5 +33,15 @@ it("consulta no guarda por teclado y descarta captura cuando cambia capacidad o 
     expect(w.vm.form.body).toBe("Histórica");
     state.page.props.contextoOperativo.team_id = 2; await nextTick();
     expect(w.vm.form.body).toBe("Histórica");
+    await w.setProps({ permissions });
+    w.vm.create(); await nextTick();
+    w.vm.form.name = "Nueva sin guardar";
+    w.vm.form.body = "Texto {desconocida}";
+    w.vm.form.errors = { body: "Variable no permitida" };
+    await w.setProps({ selected: { ...w.props("selected") }, version: { ...w.props("version") }, permissions: { ...permissions } });
+    expect(w.vm.creating).toBe(true);
+    expect(w.vm.form.name).toBe("Nueva sin guardar");
+    expect(w.vm.form.body).toBe("Texto {desconocida}");
+    expect(w.vm.form.errors.body).toBe("Variable no permitida");
     w.unmount();
 });

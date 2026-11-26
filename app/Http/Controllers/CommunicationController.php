@@ -43,6 +43,7 @@ class CommunicationController extends Controller
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d'],
         ]);
+        $versionSummary = fn ($query) => $query->select('notification_template_versions.id', 'notification_template_versions.notification_template_id', 'notification_template_versions.number', 'notification_template_versions.state');
         $history = CommunicationDelivery::with('notificationVersion:id,notification_template_id,number,state')->where('team_id', $teamId)
             ->whereHas('event', fn ($query) => $query->where('sucursal_id', $request->user()->current_sucursal_id)
                 ->when($filters['event_type'] ?? null, fn ($query, $event) => $query->where('event_type', $event)))
@@ -70,8 +71,8 @@ class CommunicationController extends Controller
                 'sms' => app(LabsMobileSmsTransport::class)->capabilities(),
                 'whatsapp' => app(MetaWhatsAppTransport::class)->capabilities()],
             'canReadNotifications' => $request->user()->can('read plantillas-notificaciones'),
-            'notificationTemplates' => \App\Models\NotificationTemplate::whereHas('activeVersion')->with('activeVersion:id,notification_template_id,number,state')->orderBy('name')->get(['id', 'name', 'channel', 'event_type']),
-            'rules' => CommunicationRule::with(['notificationTemplate:id,name,channel,event_type', 'notificationTemplate.activeVersion:id,notification_template_id,number,state'])->where('team_id', $teamId)->orderBy('event_type')->get(),
+            'notificationTemplates' => \App\Models\NotificationTemplate::whereHas('activeVersion')->with(['activeVersion' => $versionSummary])->orderBy('name')->get(['id', 'name', 'channel', 'event_type']),
+            'rules' => CommunicationRule::with(['notificationTemplate:id,name,channel,event_type', 'notificationTemplate.activeVersion' => $versionSummary])->where('team_id', $teamId)->orderBy('event_type')->get(),
             'ruleDefaults' => [
                 'leadDays' => config('comunicaciones.default_lead_days'),
                 'maxLeadDays' => config('comunicaciones.max_lead_days'),

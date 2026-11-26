@@ -34,7 +34,21 @@ function load() {
     form.reset(); form.clearErrors();
     activeField.value = "body";
 }
-watch(() => [props.selected, props.version, props.mode, props.permissions, page.props.contextoOperativo], load, { immediate: true, deep: true });
+let loadedIdentity = null;
+function syncFromServer() {
+    const current = JSON.stringify([
+        props.selected?.id, props.version?.id, props.mode, props.version?.state, props.version?.can_edit,
+        ...["read", "create", "update", "version", "activate", "retire"].map(key => !!props.permissions[key]),
+        page.props.contextoOperativo?.team_id, page.props.contextoOperativo?.sucursal_id,
+    ]);
+    if (current !== loadedIdentity) {
+        loadedIdentity = current;
+        load();
+    } else if (!creating.value && !editable.value) {
+        load();
+    }
+}
+watch(() => [props.selected, props.version, props.mode, props.permissions, page.props.contextoOperativo], syncFromServer, { immediate: true, deep: true });
 function create() {
     if (!props.permissions.read || !props.permissions.create) return;
     load();

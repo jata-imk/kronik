@@ -291,3 +291,17 @@ test('correo de texto conserva entidades y etiquetas literales iguales a su prev
     Http::assertNothingSent();
     Mail::assertNothingSent();
 });
+
+test('comunicaciones selecciona metadatos de versiones activas sin ambigüedad ni conceder lectura del cuerpo', function () {
+    $admin = actingAsSuperAdmin();
+    $template = notificationTemplateQa(['body' => 'CONTENIDO-INSTITUCIONAL-RESERVADO']);
+    $reader = User::factory()->withPersonalTeam()->create(['current_sucursal_id' => $admin->current_sucursal_id]);
+    grantTeamPermissions($reader, $reader->currentTeam, ['read comunicaciones']);
+    App\Models\CommunicationRule::create(['team_id' => $reader->current_team_id, 'event_type' => 'payment_received', 'channel' => 'sms',
+        'notification_template_id' => $template->id, 'body' => '']);
+    $response = $this->actingAs($reader)->get(route('comunicaciones.index'))->assertOk()
+        ->assertInertia(fn (Assert $p) => $p->where('canReadNotifications', false)
+            ->where('notificationTemplates.0.active_version.number', 1)->where('rules.0.notification_template.active_version.number', 1));
+    expect($response->getContent())->not->toContain('CONTENIDO-INSTITUCIONAL-RESERVADO');
+    $this->get(route('notificaciones.index'))->assertForbidden();
+});
