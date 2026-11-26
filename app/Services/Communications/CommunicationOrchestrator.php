@@ -115,6 +115,12 @@ final class CommunicationOrchestrator
                         continue;
                     }
                     if (DB::transaction(function () use ($event, $rule, $contact, $channel) {
+                        // Match the sender's order, including FK locks acquired by INSERT.
+                        Credito::whereKey($event->credito_id)->lockForUpdate()->first();
+                        $event = CommunicationEvent::find($event->id);
+                        if (! $event || ! $this->eventCurrent($event)) {
+                            return false;
+                        }
                         $version = null;
                         if ($rule->channel !== 'whatsapp') {
                             $template = \App\Models\NotificationTemplate::lockForUpdate()->find($rule->notification_template_id);

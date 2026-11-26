@@ -40,6 +40,12 @@ El registro de módulos/menús no concede los permisos nuevos a roles existentes
 Asignar explícitamente los permisos autorizados por equipo. No ejecutar
 `migrate:fresh`, seeders generales ni limpieza de datos/jobs como parte del despliegue.
 
+Permisos del módulo: `read comunicaciones`, `manage comunicaciones` y
+`send test comunicaciones`. El catálogo global usa acciones independientes
+`read`, `create`, `update`, `version`, `activate` y `retire` sobre
+`plantillas-notificaciones`; no exige Super Admin. Registrar o revocar
+consentimiento requiere además autorización para actualizar al cliente de la sucursal.
+
 ## Variables y credenciales
 
 Mantener inicialmente:

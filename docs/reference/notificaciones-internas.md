@@ -28,4 +28,8 @@ La lectura registra `operator_notification.read` una vez mediante `ActivityLogSe
 
 ## Límites de esta etapa
 
-No se ha habilitado correo, SMS, WhatsApp ni Telegram para acreditados. Consentimiento por canal y propósito, configuración de proveedores, reglas, plantillas, envíos e intentos pertenecen al siguiente incremento. El requisito indica que WhatsApp necesita decisión y revisión específica antes de construcción productiva. La aceptación por un transporte nunca debe mostrarse como entrega o lectura.
+La bandeja interna no habilita canales para acreditados. Consentimiento,
+proveedores, reglas, plantillas e intentos externos tienen su implementación y
+límites en [el contrato de canales](canales-comunicacion.md); sus barreras permanecen
+cerradas hasta validar cada activación. Telegram continúa fuera de esta entrega.
+La aceptación por un transporte nunca debe mostrarse como entrega o lectura.

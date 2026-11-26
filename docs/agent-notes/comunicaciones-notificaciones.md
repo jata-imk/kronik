@@ -34,6 +34,14 @@ para usar pago ordinario exigible y sincronizar cortes antes del pago; los inten
 interrumpidos no cuentan como aprobación. Revisión final, suite completa,
 E2E/PDF/CI/publicación e integración todavía pendientes en esta entrada.
 
+Revisión medium de `5fe2d88`: los seis casos anteriores quedaron corregidos;
+detectó además inversión de bloqueos preparación/envío por la FK del crédito.
+Se adquiere también crédito primero en preparación y se revalida el evento.
+El harness ampliado aprobó el cruce prepare/send sin deadlock. Los E2E iniciales
+aprobaron seis recorridos; política falló por esperar el estado antes de completar
+POST/redirección (traza, captura y vídeo conservados). Se añade espera de respuesta
+y el helper de mocks/consola, sin omitir pasos; repetición aislada pendiente.
+
 La [guía de VPS](../how-to/preparar-comunicaciones-vps.md) explica variables,
 reutilización del SMTP existente (incluido ZeptoMail), configuración efectiva,
 cola/scheduler y prueba técnica de correo. Si la VPS usa main, hay que evaluar

@@ -61,16 +61,22 @@ try {
         $operation = json_decode($argv[2], true, flags: JSON_THROW_ON_ERROR);
         relojComunicaciones($operation['date']);
         $ready = false;
-        DB::connection()->beforeExecuting(function ($sql) use ($operation, &$ready) {
-            if (! $ready && str_contains($sql, 'for update')
-                && (str_contains($sql, 'from `creditos`') || str_contains($sql, 'from `clientes`') || str_contains($sql, 'from `communication_deliveries`'))) {
+        DB::connection()->beforeExecuting(function ($sql, $bindings) use ($operation, &$ready) {
+            if (isset($operation['credit']) && str_contains($sql, 'from `creditos`') && ! in_array($operation['credit'], $bindings)) {
+                return;
+            }
+            if (! $ready && ((str_contains($sql, 'for update')
+                && (str_contains($sql, 'from `creditos`') || str_contains($sql, 'from `clientes`') || str_contains($sql, 'from `communication_deliveries`')))
+                || (($operation['action'] ?? '') === 'prepare' && str_starts_with($sql, 'insert into `communication_deliveries`')))) {
                 $ready = true;
                 file_put_contents($operation['barrier'].'/'.$operation['slot'].'.ready', 'ready');
             }
         });
         $connection = (int) DB::selectOne('SELECT CONNECTION_ID() AS id')->id;
-        $sent = app(CommunicationOrchestrator::class)->send($operation['delivery']);
-        echo json_encode(['sent' => $sent, 'connection' => $connection], JSON_THROW_ON_ERROR);
+        $result = ($operation['action'] ?? '') === 'prepare'
+            ? ['prepared' => app(CommunicationOrchestrator::class)->prepare()]
+            : ['sent' => app(CommunicationOrchestrator::class)->send($operation['delivery'])];
+        echo json_encode([...$result, 'connection' => $connection], JSON_THROW_ON_ERROR);
         exit(0);
     }
 
@@ -125,7 +131,8 @@ try {
         $service->grantConsent($credit->cliente->fresh(), $actor->current_team_id,
             ['channel' => $name, 'purpose' => 'operational', 'source' => 'QA', 'evidence_reference' => 'EVID-I4'], $actor);
     }
-    comprobarComunicaciones($service->prepare() === 4 && $service->process() === 4, 'Deben prepararse los dos canales de ambos créditos sintéticos.');
+    comprobarComunicaciones($service->prepare() >= 4 && $service->process() >= 4, 'Deben prepararse los dos canales de ambos créditos sintéticos.');
+    comprobarComunicaciones(CommunicationDelivery::whereIn('credito_id', [$credit->id, $otherCredit->id])->count() === 4, 'Deben existir exactamente los cuatro avisos de este escenario.');
     $deliveries = CommunicationDelivery::where(fn ($query) => $query->where('credito_id', $credit->id)->where('channel', 'email'))
         ->orWhere(fn ($query) => $query->where('credito_id', $otherCredit->id)->where('channel', 'sms'))->orderBy('id')->get();
     $barrier = storage_path('framework/testing/communications-race-'.Str::uuid());
@@ -191,7 +198,49 @@ try {
     comprobarComunicaciones(! $result['sent'] && $pending->fresh()->status === 'cancelled' && $pending->fresh()->attempted_at === null,
         'Un reverso confirmado no impidió el intento del worker en espera.');
     app(App\Services\Credito\ProyeccionCreditoService::class)->diagnosticar($reversedCredit->fresh());
-    echo "Concurrencia de comunicaciones aprobada: dos créditos/canales y conexiones, un intento; reverso confirmado cancela el worker en espera.\n";
+
+    // Preparation also inserts a credit FK: it must not own the template before the credit.
+    foreach (glob($barrier.'/*') as $file) {
+        unlink($file);
+    }
+    $accepted = CommunicationDelivery::whereIn('id', $deliveries->modelKeys())->where('status', 'accepted')->sole();
+    $currentCredit = App\Models\Credito::findOrFail($accepted->credito_id);
+    $queued = CommunicationDelivery::where('credito_id', $currentCredit->id)->where('status', 'queued')->sole();
+    CommunicationRule::where('team_id', $accepted->team_id)->update(['daily_limit' => 1]);
+    $nextData = ['operacion' => 'pago', 'importe' => '1.00', 'fecha_pago' => $paymentDate,
+        'referencia' => 'COM-PREPARE-'.Str::uuid(), 'idempotency_key' => (string) Str::uuid(), 'confirmacion_qa' => true];
+    $nextData['previa_hash'] = $payments->previa($currentCredit, $nextData, $actor)['previa_hash'];
+    $nextPayment = $payments->registrar($currentCredit, $nextData, $actor);
+    $nextEvent = App\Models\CommunicationEvent::where('event_key', 'payment:'.$nextPayment->id)->sole();
+    DB::beginTransaction();
+    DB::table('creditos')->where('id', $currentCredit->id)->lockForUpdate()->get();
+    $crossing = [];
+    foreach (['send', 'prepare'] as $action) {
+        $process = new Process([PHP_BINARY, __FILE__, 'worker', json_encode(['delivery' => $queued->id,
+            'credit' => $currentCredit->id, 'action' => $action, 'date' => $paymentDate,
+            'barrier' => $barrier, 'slot' => $action], JSON_THROW_ON_ERROR)], base_path());
+        $process->setTimeout(45);
+        $process->start();
+        $processes[] = $process;
+        $crossing[$action] = $process;
+        $deadline = microtime(true) + 20;
+        while (! file_exists($barrier.'/'.$action.'.ready')) {
+            comprobarComunicaciones($process->isRunning(), 'Un proceso terminó antes del cruce prepare/send: '.$process->getErrorOutput().$process->getOutput());
+            comprobarComunicaciones(microtime(true) < $deadline, 'El cruce prepare/send no alcanzó el bloqueo.');
+            usleep(10000);
+        }
+    }
+    DB::commit();
+    $crossResults = [];
+    foreach ($crossing as $action => $process) {
+        comprobarComunicaciones($process->wait() === 0, 'El cruce prepare/send falló: '.$process->getErrorOutput().$process->getOutput());
+        $crossResults[$action] = json_decode(trim($process->getOutput()), true, flags: JSON_THROW_ON_ERROR);
+    }
+    comprobarComunicaciones($crossResults['send']['connection'] !== $crossResults['prepare']['connection'], 'El cruce necesita conexiones distintas.');
+    comprobarComunicaciones(! $crossResults['send']['sent'] && $crossResults['prepare']['prepared'] >= 2,
+        'Preparación y envío deben terminar sin exceder el cupo ni perder candidatos.');
+    comprobarComunicaciones(CommunicationDelivery::where('communication_event_id', $nextEvent->id)->count() === 2, 'El cruce debe conservar una salida por canal del nuevo evento.');
+    echo "Concurrencia de comunicaciones aprobada: cupo entre créditos/canales, reverso antes del intento y cruce prepare/send sin deadlock.\n";
 } catch (Throwable $exception) {
     fwrite(STDERR, $exception->getMessage()."\n");
     $exitCode = 1;

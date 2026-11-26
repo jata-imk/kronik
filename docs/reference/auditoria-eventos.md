@@ -388,6 +388,8 @@ generan eventos de negocio nuevos.
 El harness `tests/Concurrency/comunicaciones.php` comprueba una sola transición
 `communication.delivery_sending` para el cupo diario compartido de dos créditos
 y canales, además de cancelar sin intento después de un reverso confirmado.
+También cruza preparación/envío, preservando una salida por evento/canal sin
+deadlock ni emisiones adicionales por disputar un bloqueo.
 `CommunicationManagementTest` comprueba que calcular `effective_status` no emite
 actividad ni devuelve contacto/hash/evidencia. La campana conserva la única
 emisión backend de `operator_notification.read`; su cola frontend no crea otro

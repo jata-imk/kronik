@@ -31,6 +31,13 @@ la proyección debe conservar consistencia. Usa HTTP/correo fake, configuración
 sintética de proceso y barreras de sincronización. Ejecutarlo separado de Pest y
 de otros harness PHP; CI configura su MariaDB aislada. No trasladar sus banderas
 temporales al entorno operativo.
+
+El mismo harness cruza preparación del scheduler con un worker del mismo crédito:
+ambos adquieren crédito antes de plantilla, incluidas las comprobaciones de FK al
+insertar. Debe completar sin deadlock ni candidatos perdidos. La regresión E2E
+de política espera la respuesta del POST antes de comprobar la redirección y usa
+los mocks/diagnósticos de consola compartidos; conserva los pasos y las aserciones
+de consulta histórica, sin depender del proveedor IP externo.
 Las suites SMS bloquean HTTP no simulado. Ejecutar un solo proceso PHP de pruebas
 por checkout: los fixtures documentales reutilizan `Storage::fake('local')` y
 otro proceso puede limpiar sus archivos durante una prueba. Hacer la validación
