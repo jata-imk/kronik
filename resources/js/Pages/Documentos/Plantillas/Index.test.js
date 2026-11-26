@@ -3,7 +3,7 @@ import {reactive,nextTick} from "vue";
 import {expect,it,vi} from "vitest";
 import Index from "./Index.vue";
 const state=vi.hoisted(()=>({page:null,submit:vi.fn()}));
-vi.mock("@inertiajs/vue3",()=>({router:{get:vi.fn()},usePage:()=>state.page,useForm:data=>{let defaults=data;const f=reactive({...data,errors:{},processing:false});Object.assign(f,{cancel(){},defaults:v=>{defaults=v;},reset:()=>Object.assign(f,JSON.parse(JSON.stringify(defaults))),clearErrors:()=>{f.errors={};},put:state.submit,post:state.submit});return f;}}));
+vi.mock("@inertiajs/vue3",()=>({router:{get:vi.fn()},usePage:()=>state.page,useForm:data=>{let defaults=data;const f=reactive({...data,errors:{},processing:false});Object.assign(f,{data:()=>Object.fromEntries(Object.keys(data).map(key=>[key,f[key]])),cancel(){},defaults:v=>{defaults=v;},reset:()=>Object.assign(f,JSON.parse(JSON.stringify(defaults))),clearErrors:()=>{f.errors={};},put:state.submit,post:state.submit});return f;}}));
 vi.mock("@/Composables/useListadoServidor",()=>({useListadoServidor:()=>({visit:vi.fn()})}));
 vi.mock("primevue/useconfirm",()=>({useConfirm:()=>({})}));
 vi.mock("primevue/usetoast",()=>({useToast:()=>({add:vi.fn()})}));

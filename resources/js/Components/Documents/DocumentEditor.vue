@@ -5,7 +5,7 @@ import "../../../css/document-content.css";
 import { onMounted, onBeforeUnmount, ref, watch } from "vue";
 import DocumentImageLibrary from "./DocumentImageLibrary.vue";
 
-const props = defineProps({ modelValue: { type: String, default: "" }, section: { type: String, required: true }, readonly: Boolean });
+const props = defineProps({ modelValue: { type: String, default: "" }, section: { type: String, required: true }, readonly: Boolean, profile: { type: String, default: "document" } });
 const emit = defineEmits(["update:modelValue"]);
 const host = ref(null);
 const toolbar = ref(null);
@@ -64,9 +64,9 @@ function insert(value, type = "text") {
     quill.focus();
     quill.history.cutoff();
 }
-function insertVariable(variable) { insert(`{{${variable.clave}}}`); }
+function insertVariable(variable) { insert(variable.token ?? ("{{" + variable.clave + "}}")); }
 function openLibrary() {
-    if (props.readonly) return;
+    if (props.readonly || props.profile !== "document") return;
     selection = quill.getSelection() ?? selection;
     library.value = true;
 }
@@ -92,14 +92,14 @@ onMounted(() => {
     quill = new Quill(host.value, {
         theme: "snow",
         readOnly: props.readonly,
-        formats: ["header", "font", "size", "bold", "italic", "underline", "strike", "align", "indent", "list", "blockquote", "color", "background", "resourceImage", ...(props.section === "contenido_html" ? ["pageBreak"] : [])],
+        formats: ["header", "font", "size", "bold", "italic", "underline", "strike", "align", "indent", "list", "blockquote", "color", "background", ...(props.profile === "document" ? ["resourceImage", ...(props.section === "contenido_html" ? ["pageBreak"] : [])] : [])],
         modules: { toolbar: toolbar.value, history: { userOnly: true } },
     });
     quill.root.classList.add("document-content");
     quill.root.setAttribute("aria-label", `Editor de ${props.section === 'contenido_html' ? 'contenido' : props.section === 'encabezado_html' ? 'encabezado' : 'pie de página'}`);
     quill.clipboard.addMatcher("IMG", (node) => {
         const Delta = Quill.import("delta");
-        return /^[a-f0-9-]{36}$/.test(node.getAttribute("data-recurso-id") ?? "") ? new Delta().insert({ resourceImage: ResourceImage.value(node) }) : new Delta();
+        return props.profile === "document" && /^[a-f0-9-]{36}$/.test(node.getAttribute("data-recurso-id") ?? "") ? new Delta().insert({ resourceImage: ResourceImage.value(node) }) : new Delta();
     });
     quill.setContents(quill.clipboard.convert({ html: props.modelValue ?? "" }));
     quill.history.clear();
@@ -134,8 +134,8 @@ defineExpose({ insertVariable });
         <div v-if="!readonly" class="flex flex-wrap gap-2 border-x border-surface-300 bg-surface-50 p-2 dark:bg-surface-900">
             <Button type="button" label="Deshacer" icon="pi pi-undo" text size="small" @click="quill?.history.undo()" />
             <Button type="button" label="Rehacer" icon="pi pi-refresh" text size="small" @click="quill?.history.redo()" />
-            <Button type="button" label="Imagen" icon="pi pi-image" text size="small" @mousedown.prevent @click="openLibrary" />
-            <Button v-if="section === 'contenido_html'" type="button" label="Salto de página" icon="pi pi-file" text size="small" @click="insert(true, 'pageBreak')" />
+            <Button v-if="profile === 'document'" type="button" label="Imagen" icon="pi pi-image" text size="small" @mousedown.prevent @click="openLibrary" />
+            <Button v-if="profile === 'document' && section === 'contenido_html'" type="button" label="Salto de página" icon="pi pi-file" text size="small" @click="insert(true, 'pageBreak')" />
         </div>
         <div ref="host" />
         <div v-if="!readonly && selectedImage" class="flex flex-wrap items-end gap-3 border border-surface-200 p-3">
@@ -143,7 +143,7 @@ defineExpose({ insertVariable });
             <label class="text-sm">Texto alternativo<input v-model="imageAlt" maxlength="160" class="ml-2 rounded border p-2" @change="updateImage" /></label>
             <span class="text-xs text-surface-500">Usa la alineación del párrafo para colocar la imagen.</span>
         </div>
-        <DocumentImageLibrary v-if="!readonly" v-model:visible="library" @select="chooseImage" />
+        <DocumentImageLibrary v-if="!readonly && profile === 'document'" v-model:visible="library" @select="chooseImage" />
     </div>
 </template>
 

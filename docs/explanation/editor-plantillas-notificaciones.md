@@ -1,7 +1,6 @@
 # Evaluación del editor para plantillas de notificaciones
 
-Fecha: 2026-11-24. Estado: evaluación preliminar solicitada por José; diseño final
-e implementación pendientes para la siguiente sesión. Complementa la
+Fecha: 2026-11-24. Evaluación inicial; ver la decisión I3 vigente. Complementa la
 [planeación SMS](integracion-sms-labsmobile.md) y el
 [contrato documental](../reference/documentos-y-plantillas.md).
 
@@ -156,3 +155,7 @@ segundo módulo. Si cambian modelos o límites, registrar el ADR correspondiente
 
 Esta entrega solo inspecciona código y deja la evaluación. No cambió componentes,
 modelos, tipos, permisos, datos, eventos auditables ni reglas operativas.
+
+## Resolución I3 — 26/11/2026
+
+José confirmó varias plantillas globales seleccionables, exclusivamente SMS/correo. Se adopta persistencia propia en Comunicaciones, panel compartido y capacidades acotadas del editor, sin nuevo tipo documental. HTML continuo y PDF opcional se separan. La implementación y sus límites se rigen por [ADR 0051](adr-0051-notificaciones-globales-y-previas-html.md) y [el contrato](../reference/plantillas-notificaciones.md); las alternativas anteriores son antecedentes. Integración, CI final y revisión se acreditan en la Agent Note.

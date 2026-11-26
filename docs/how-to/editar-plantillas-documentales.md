@@ -49,3 +49,7 @@ Selecciona la versión, aunque esté en otra página, y pulsa **Ver versión**.
 Cambia entre Encabezado, Contenido y Pie; consulta las variables y usa
 **Previsualizar PDF** para revisar esa versión guardada. Cerrar consulta conserva
 la selección. Editar solo se ofrece para borradores sin usos y con permiso.
+
+## Previsualización HTML de I3
+
+El editor ofrece HTML continuo de versiones exactas y borradores sin guardar mediante **Actualizar previsualización**, sin generar PDF ni invocar Chromium. Encabezado, cuerpo, pie, recursos privados verificados y fuentes locales se compilan con datos sintéticos. El botón de PDF permanece explícito y separado. Ver [contrato de previas](../reference/plantillas-notificaciones.md#previsualización).

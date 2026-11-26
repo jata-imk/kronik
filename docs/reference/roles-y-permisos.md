@@ -64,3 +64,7 @@ La suite de Jetstream debe permanecer verde porque CI ejecuta `php artisan test`
 El [contrato transversal de contexto y listados](contexto-sucursal-consultas.md)
 describe parámetros de consulta, paginadores y selección independiente de la
 página, conservando los permisos y la naturaleza global o por equipo del módulo.
+
+## Notificaciones globales I3
+
+El módulo plantillas-notificaciones separa read, create, update, version, activate y retire. El catálogo es global, con autorización en el equipo activo; no exige Super Admin ni read/manage comunicaciones para consultar. Gestionar reglas permite seleccionar metadatos de plantillas compatibles, sin editar ni obtener sus cuerpos mediante ese permiso. Ver [contrato](plantillas-notificaciones.md).

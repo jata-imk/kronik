@@ -60,3 +60,7 @@ No usar cuenta, credenciales ni SMS reales para este recorrido.
 La reversión de esquema I2 se prueba en otra conexión SQLite `:memory:` y
 restaura el Schema builder al terminar. No ejecutar DDL sobre la transacción de
 `RefreshDatabase`: MariaDB la confirmaría implícitamente.
+
+## QA de I3
+
+Para SMS/correo, redactar y activar una plantilla global antes de configurar la regla. Los textos de prueba anteriores no se migran. La edición ya no ocurre dentro de cada regla. Seguir [el procedimiento de Notificaciones](editar-notificaciones.md), que incluye previas texto/HTML, versiones exactas y PDF explícito. WhatsApp conserva el recorrido anterior. Nuevos E2E: notificaciones.spec.js; mantener regresiones communications.spec.js, documentos-editor.spec.js y consulta-versiones.spec.js.

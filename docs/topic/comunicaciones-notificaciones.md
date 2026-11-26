@@ -29,3 +29,7 @@ La rama incluye la bandeja contextual, eventos de pago/vencimiento y orquestaci�
 - [Limpieza selectiva de configuraciones y jobs SMS anteriores de prueba](../how-to/limpiar-sms-prueba.md).
 - [Agent Note de la implementación](../agent-notes/comunicaciones-notificaciones.md).
 - [Nota original en Notion](https://app.notion.com/p/Kronik-Comunicaciones-por-canales-env-os-y-seguimiento-3fe61db7db7f81e4af50c4f0f3ab7e41).
+
+- [Catálogo global de Notificaciones y sus versiones](../reference/plantillas-notificaciones.md).
+- [Editar SMS/correo y comprobar las previas](../how-to/editar-notificaciones.md).
+- [ADR 0051: catálogo global y previas de texto/HTML](../explanation/adr-0051-notificaciones-globales-y-previas-html.md).

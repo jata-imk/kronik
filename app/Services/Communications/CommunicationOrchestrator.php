@@ -104,10 +104,23 @@ final class CommunicationOrchestrator
                         continue;
                     }
                     if (DB::transaction(function () use ($event, $rule, $contact, $channel) {
+                        $version = null;
+                        if ($rule->channel !== 'whatsapp') {
+                            $template = \App\Models\NotificationTemplate::lockForUpdate()->find($rule->notification_template_id);
+                            $rule = CommunicationRule::lockForUpdate()->find($rule->id);
+                            if (! $template || ! $rule?->enabled || $template->id !== $rule->notification_template_id || $template->channel !== $rule->channel || $template->event_type !== $rule->event_type) {
+                                return false;
+                            }
+                            $version = $template->activeVersion()->lockForUpdate()->first();
+                            if (! $version) {
+                                return false;
+                            }
+                        }
                         $delivery = CommunicationDelivery::firstOrCreate(
                             ['communication_event_id' => $event->id, 'channel' => $rule->channel],
                             ['team_id' => $event->team_id, 'cliente_id' => $event->cliente_id, 'credito_id' => $event->credito_id,
-                                'recipient_hash' => $this->contactHash($contact), 'template_version' => $rule->template_version, 'status' => 'prepared',
+                                'recipient_hash' => $this->contactHash($contact), 'template_version' => $rule->template_version,
+                                'notification_template_version_id' => $version?->id, 'status' => 'prepared',
                                 'provider' => $channel->provider,
                                 'provider_correlation_id' => $rule->channel === 'sms' ? bin2hex(random_bytes(10)) : null],
                         );
@@ -191,6 +204,14 @@ final class CommunicationOrchestrator
     private function sendDelivery(int $id): bool
     {
         $payload = DB::transaction(function () use ($id) {
+            $initial = CommunicationDelivery::find($id);
+            if ($initial && $initial->channel !== 'whatsapp') {
+                $templateId = $initial->notificationVersion?->notification_template_id;
+                if ($templateId) {
+                    \App\Models\NotificationTemplate::whereKey($templateId)->lockForUpdate()->first();
+                }
+            }
+            $lockedRule = $initial ? CommunicationRule::where('team_id', $initial->team_id)->where('event_type', $initial->event?->event_type)->where('channel', $initial->channel)->where('enabled', true)->lockForUpdate()->first() : null;
             $delivery = CommunicationDelivery::lockForUpdate()->find($id);
             if (! $delivery || $delivery->status !== 'queued') {
                 return null;
@@ -202,8 +223,7 @@ final class CommunicationOrchestrator
                 return null;
             }
             $event = CommunicationEvent::find($delivery->communication_event_id);
-            $rule = CommunicationRule::where('team_id', $delivery->team_id)->where('event_type', $event?->event_type)
-                ->where('channel', $delivery->channel)->where('enabled', true)->first();
+            $rule = $lockedRule;
             $channel = CommunicationChannel::where('team_id', $delivery->team_id)->where('channel', $delivery->channel)
                 ->where('enabled', true)->where('eligibility', 'approved')->first();
             $client = Cliente::find($delivery->cliente_id);
@@ -212,6 +232,11 @@ final class CommunicationOrchestrator
                 || ! $rule || ! $channel || ! $contact || ! hash_equals($delivery->recipient_hash, $this->contactHash($contact))
                 || ! $this->hasConsent($event, $delivery->channel, $contact)
                 || ($rule && $rule->template_version !== $delivery->template_version);
+            if ($delivery->channel !== 'whatsapp') {
+                $version = \App\Models\NotificationTemplateVersion::whereKey($delivery->notification_template_version_id)->lockForUpdate()->first();
+                $invalid = $invalid || ! $version || $version->state !== 'active'
+                    || $version->notification_template_id !== $rule?->notification_template_id;
+            }
             if ($delivery->channel === 'sms') {
                 $invalid = $invalid || $delivery->provider !== 'labsmobile' || $channel?->provider !== 'labsmobile'
                     || ! preg_match('/\A[a-f0-9]{20}\z/', $delivery->provider_correlation_id ?? '');
@@ -247,7 +272,14 @@ final class CommunicationOrchestrator
 
                 return null;
             }
-            $message = $this->render($rule, $event, $client);
+            try {
+                $message = $this->render($rule, $event, $client, $version ?? null);
+            } catch (\Illuminate\Validation\ValidationException $error) {
+                $delivery->update(['status' => 'cancelled', 'reason' => 'notification_content_invalid']);
+                $this->audit(ActivityEvent::CommunicationDeliveryCancelled, $delivery, $delivery->team_id, $event->sucursal_id);
+
+                return null;
+            }
             if ($delivery->channel === 'sms') {
                 $measure = app(SmsText::class)->measure($message['body']);
                 if ($measure['segments'] < 1 || $measure['segments'] > 2 || ! preg_match('/\A\+[1-9][0-9]{7,14}\z/', $contact)) {
@@ -260,15 +292,16 @@ final class CommunicationOrchestrator
                     return null;
                 }
             }
-            $delivery->update(['status' => 'sending', 'attempted_at' => now()]);
+            $delivery->update(['status' => 'sending', 'attempted_at' => now(),
+                'message_snapshot' => $delivery->channel !== 'whatsapp' ? $message : null]);
             $this->audit(ActivityEvent::CommunicationDeliverySending, $delivery, $delivery->team_id, $event->sucursal_id);
 
-            return [$delivery->id, $channel, $rule, $contact, $message['subject'], $message['body'], $message['variables'], $event->sucursal_id, $delivery->provider_correlation_id];
+            return [$delivery->id, $channel, $rule, $contact, $message['subject'], $message['body'], $message['variables'], $event->sucursal_id, $delivery->provider_correlation_id, $message['format'] ?? 'text'];
         });
         if (! $payload) {
             return false;
         }
-        [$id, $channel, $rule, $contact, $subject, $body, $variables, $sucursalId, $correlationId] = $payload;
+        [$id, $channel, $rule, $contact, $subject, $body, $variables, $sucursalId, $correlationId, $format] = $payload;
         try {
             $transport = match ($channel->channel) {
                 'email' => app(EmailTransport::class),
@@ -276,7 +309,7 @@ final class CommunicationOrchestrator
                 'whatsapp' => app(MetaWhatsAppTransport::class),
                 default => throw new RuntimeException('No existe adaptador de envío para este canal.'),
             };
-            $receipt = $transport->send($channel, $rule, $contact, $subject, $body, $variables, $correlationId);
+            $receipt = $transport->send($channel, $rule, $contact, $subject, $body, $variables, $correlationId, $format);
         } catch (\Throwable $exception) {
             // Transport exceptions, including timeouts, can follow an actual send.
             $receipt = ['status' => 'uncertain', 'message_id' => null];
@@ -414,10 +447,18 @@ final class CommunicationOrchestrator
             ->whereNull('revoked_at')->exists();
     }
 
-    public function render(CommunicationRule $rule, CommunicationEvent $event, Cliente $client): array
+    public function render(CommunicationRule $rule, CommunicationEvent $event, Cliente $client, ?\App\Models\NotificationTemplateVersion $version = null): array
     {
         $variables = ['nombre' => trim($client->primer_nombre),
             'fecha_vencimiento' => $event->due_date?->format('d/m/Y') ?? ''];
+        if ($rule->channel !== 'whatsapp') {
+            $version ??= $rule->notificationTemplate?->activeVersion;
+            if (! $version) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['notification_template_id' => 'Seleccione una plantilla global con una versión activa.']);
+            }
+
+            return app(NotificationContent::class)->render($version->toArray(), $variables);
+        }
         $values = ['{nombre}' => $variables['nombre'], '{fecha_vencimiento}' => $variables['fecha_vencimiento']];
 
         return ['subject' => strtr($rule->subject ?? '', $values), 'body' => strtr($rule->body, $values), 'variables' => $variables];

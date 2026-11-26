@@ -1,9 +1,12 @@
 import { test, expect } from "@playwright/test";
+import { createNotification } from "./support/notifications.js";
 import { failOnConsoleErrors, login } from "./support/auth.js";
 
 test("el operador configura reglas de comunicaciones sin activar tráfico externo", async ({ page }) => {
     const assertConsole = await failOnConsoleErrors(page);
     await login(page);
+    const key = "regla-correo-" + Date.now();
+    await createNotification(page, { key, channel: "email" });
     await page.goto("/comunicaciones");
     await expect(page.getByRole("heading", { name: "Comunicaciones", exact: true })).toBeVisible();
     await expect(page.getByRole("status")).toContainText("Los envíos externos están desactivados");
@@ -24,8 +27,7 @@ test("el operador configura reglas de comunicaciones sin activar tráfico extern
 
     await page.getByRole("button", { name: "Reglas y plantillas" }).click();
     await expect(page.getByText("Eventos iniciales: pago recibido")).toBeVisible();
-    await page.getByRole("textbox", { name: "Texto local" }).fill("Hola {nombre}, registramos tu pago.");
-    await expect(page.getByText("Hola María, registramos tu pago.")).toBeVisible();
+    await page.getByRole("combobox", { name: "Plantilla global" }).selectOption({ label: "QA " + key + " · V1" });
     await page.getByRole("button", { name: "Guardar regla" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Regla y plantilla actualizadas" })).toBeVisible();
     await page.getByRole("button", { name: "Historial" }).click();

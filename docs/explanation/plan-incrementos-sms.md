@@ -155,3 +155,7 @@ El trabajo con fakes no valida una ruta real ni habilita operaciones con dinero.
 La [Agent Note](../agent-notes/comunicaciones-notificaciones.md) mantiene SHA, PR,
 pruebas/review y el prompt vigente. No cerrar la iniciativa hasta el barrido final
 y la resolución o identificación expresa de pendientes externos.
+
+## Resolución de I3 — 26/11/2026
+
+Confirmado por José: varias plantillas globales seleccionables para SMS y correo. WhatsApp conserva su flujo. Catálogo/versiones propios, previas texto/HTML, HTML documental continuo y PDF explícito según [ADR 0051](adr-0051-notificaciones-globales-y-previas-html.md). No hay migración de textos desechables. Evidencia y estado final se registran en la Agent Note; I4 mantiene el barrido acumulado contra ecb9d4a.

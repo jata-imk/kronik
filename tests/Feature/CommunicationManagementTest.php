@@ -43,15 +43,18 @@ test('la gestión valida elegibilidad y plantillas; la prueba real queda bloquea
     $data = ['event_type' => 'payment_received', 'channel' => 'email', 'enabled' => true,
         'timezone' => 'America/Mexico_City', 'window_start' => '09:00', 'window_end' => '20:00',
         'daily_limit' => 1, 'subject' => 'Pago recibido', 'body' => 'Hola {nombre}, registramos tu pago.'];
-    $this->put(route('comunicaciones.rules.update'), [...$data, 'body' => 'Saldo {importe}'])->assertSessionHasErrors('body');
+    $data['notification_template_id'] = notificationTemplateQa($data)->id;
+    $this->put(route('comunicaciones.rules.update'), [...$data, 'notification_template_id' => null])->assertSessionHasErrors('notification_template_id');
     $this->put(route('comunicaciones.rules.update'), [...$data, 'window_end' => '08:00'])
         ->assertSessionHasErrors(['window_end' => 'El campo fin de la ventana debe ser posterior a inicio de la ventana.']);
     $this->put(route('comunicaciones.rules.update'), $data)->assertSessionHasNoErrors();
     expect(CommunicationRule::sole()->template_version)->toBe(1);
-    $this->put(route('comunicaciones.rules.update'), [...$data, 'body' => 'Gracias por tu pago, {nombre}.'])->assertSessionHasNoErrors();
+    $replacement = notificationTemplateQa([...$data, 'body' => 'Gracias por tu pago, {nombre}.']);
+    $this->put(route('comunicaciones.rules.update'), [...$data, 'notification_template_id' => $replacement->id])->assertSessionHasNoErrors();
     expect(CommunicationRule::sole()->template_version)->toBe(2);
     expect(Activity::where('event', 'communication.rule_configured')->count())->toBe(2);
     $dueRule = [...$data, 'event_type' => 'upcoming_due', 'lead_days' => 0];
+    $dueRule['notification_template_id'] = notificationTemplateQa($dueRule)->id;
     $this->put(route('comunicaciones.rules.update'), $dueRule)->assertSessionHasErrors('lead_days');
     $this->put(route('comunicaciones.rules.update'), [...$dueRule, 'lead_days' => 31])->assertSessionHasErrors('lead_days');
     $this->put(route('comunicaciones.rules.update'), [...$dueRule, 'lead_days' => 7])->assertSessionHasNoErrors();

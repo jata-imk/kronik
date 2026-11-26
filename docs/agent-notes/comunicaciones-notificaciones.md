@@ -1,5 +1,37 @@
 # Comunicaciones y notificaciones
 
+## I3 en implementación — 26/11/2026
+
+Rama `feat/comunicaciones-i3-notificaciones` desde `2c865b1`, worktree indicado
+en el traspaso. José confirmó varias plantillas globales seleccionables para
+SMS y correo; WhatsApp conserva su flujo. Decisión en
+[ADR 0051](../explanation/adr-0051-notificaciones-globales-y-previas-html.md),
+[contrato](../reference/plantillas-notificaciones.md) y
+[guía](../how-to/editar-notificaciones.md).
+
+Retoma comprobada: #93/#94/#95 abiertas, sin integración, revisiones medium
+documentadas y sin hilos pendientes. CI #309 aprobado para 213a4b6; la rama I0
+real está en 9d0473d, cierre solo documental sin ejecución propia visible.
+I1 85d2db6 tiene CI #311 aprobado y mismo árbol funcional que cacf89f.
+I2 2c865b1 tiene CI #314 aprobado, sin cambios funcionales desde c7a31bd.
+Main 217acef; divergencia 89/24 respecto de I2, contrastada sin fusionar.
+
+Implementación local: catálogo global/versiones propias, permisos por acción,
+selección en reglas, cancelación transaccional de pendientes sin recreación,
+snapshot cifrado y previas texto/HTML. El formato viaja congelado al transporte.
+Compilación, saneamiento, recursos y estilos se reutilizan sin renderer PDF;
+PDF sigue explícito. Migración aditiva 2026_11_26_100000, sin backfill ni
+migraciones operativas; tablas clasificadas en reinicio QA.
+
+Evidencia intermedia: 90 pruebas backend / 912 aserciones; frontend completo
+70 archivos / 181 pruebas; build aprobado. Suite backend completa, E2E,
+review medium y PR única pendientes de resultado final. No contar estas
+validaciones intermedias como cierre ni como CI del futuro SHA publicado.
+
+Ambas barreras SMS cerradas; autenticidad/recepción externa I2 pendientes.
+Sin envíos reales, compras, .env operativo, Integraciones, merge, despliegue o VPS.
+I4 sigue obligatorio contra ecb9d4a; no se inicia en esta sesión.
+
 ## Retoma vigente — I2 publicado y revisado, 25/11/2026
 
 Rama `feat/sms-i2-seguimiento`, creada desde `85d2db6`;

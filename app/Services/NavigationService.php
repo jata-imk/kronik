@@ -48,6 +48,10 @@ class NavigationService
             $operacion[] = $item('Comunicaciones', 'pi pi-envelope', 'comunicaciones.index');
         }
 
+        if ($allowed(['read plantillas-notificaciones'])) {
+            $operacion[] = $item('Notificaciones', 'pi pi-comment', 'notificaciones.index');
+        }
+
         $configuracion = [];
         if ($allowed(['read productos-crediticios'])) {
             $configuracion[] = $item('Productos crediticios', 'pi pi-sliders-h', 'productos-crediticios.index', ['originacion-politicas.*']);

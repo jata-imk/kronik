@@ -148,6 +148,7 @@ class ModulesAndPermissionsSeeder extends Seeder
         $actionsPerModule = [
             'creditos' => ['read', 'disburse', 'pay', 'reverse payments', 'prepay', 'settle'],
             'comunicaciones' => ['read', 'manage', 'send test'],
+            'plantillas-notificaciones' => ['read', 'create', 'update', 'version', 'activate', 'retire'],
             'solicitudes' => ['create', 'read', 'update', 'assign', 'review', 'cancel', 'approve', 'prepare package', 'receive signature', 'review signature'],
             'evaluacion-solicitudes' => ['create', 'read'],
             'cumplimiento' => ['create', 'read'],
@@ -174,6 +175,7 @@ class ModulesAndPermissionsSeeder extends Seeder
             Module::updateOrCreate(['name' => 'solicitudes'], ['icon' => 'pi-folder-open', 'route_name' => 'solicitudes', 'parent_id' => null]),
             Module::updateOrCreate(['name' => 'evaluacion-solicitudes'], ['icon' => 'pi-chart-bar', 'route_name' => 'evaluacion-solicitudes', 'parent_id' => null]),
             Module::updateOrCreate(['name' => 'cumplimiento'], ['icon' => 'pi-shield', 'route_name' => 'cumplimiento', 'parent_id' => null]),
+            Module::updateOrCreate(['name' => 'plantillas-notificaciones'], ['icon' => 'pi-comment', 'route_name' => 'notificaciones.index', 'parent_id' => null]),
             $dashboard,
             $admin,
             $users,

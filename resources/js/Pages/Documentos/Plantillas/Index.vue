@@ -2,6 +2,8 @@
 import { useListadoServidor } from "@/Composables/useListadoServidor";
 import ListadoPaginador from "@/Components/ListadoPaginador.vue";
 import PageHeader from "@/Components/PageHeader.vue";
+import TemplateVariablesPanel from "@/Components/Templates/TemplateVariablesPanel.vue";
+import TemplatePreview from "@/Components/Templates/TemplatePreview.vue";
 import DocumentEditor from "@/Components/Documents/DocumentEditor.vue";
 import DocumentPdfPreview from "@/Components/Documents/DocumentPdfPreview.vue";
 import DocumentVersionStatus from "@/Components/Documents/DocumentVersionStatus.vue";
@@ -85,38 +87,6 @@ const activeCount = computed(() => props.resumenListado?.activas ?? 0);
 const draftCount = computed(() => props.resumenListado?.borradores ?? 0);
 const usedCount = computed(() => props.resumenListado?.generados ?? 0);
 const availableVariables = computed(() => props.variables[form.tipo] ?? []);
-const normalizedVariableQuery = computed(() =>
-    variableQuery.value.trim().toLocaleLowerCase("es-MX"),
-);
-const groupedVariables = computed(() => {
-    const groups = new Map();
-    const labels = {
-        documento: "Documento",
-        empresa: "Empresa",
-        cliente: "Cliente",
-        garantia: "Garantía",
-    };
-
-    for (const variable of availableVariables.value) {
-        const haystack = `${variable.nombre} ${variable.clave} ${variable.origen}`.toLocaleLowerCase("es-MX");
-        if (
-            normalizedVariableQuery.value &&
-            !haystack.includes(normalizedVariableQuery.value)
-        )
-            continue;
-
-        const namespace = variable.clave.split(".")[0];
-        if (!groups.has(namespace))
-            groups.set(namespace, {
-                key: namespace,
-                label: labels[namespace] ?? namespace,
-                variables: [],
-            });
-        groups.get(namespace).variables.push(variable);
-    }
-
-    return [...groups.values()];
-});
 const sectionLabel = computed(
     () =>
         ({
@@ -283,6 +253,9 @@ const showPreview = (version) => {
     previewSource.value = { method: "get", url: route("plantillas-documentos.preview-pdf", version.id) };
     previewVisible.value = true;
 };
+const htmlPreviewSource = computed(() => editorVisible.value ? (editorReadonly.value
+    ? { method: "get", url: route("plantillas-documentos.preview", editingVersion.value.id) }
+    : { method: "post", url: route("plantillas-documentos.preview-html-draft"), data: { ...form.data(), version_id: editingVersion.value?.id } }) : null);
 const previewDraft = () => {
     if (editorReadonly.value) return;
     previewSource.value = { method: "post", url: route("plantillas-documentos.preview-draft"), data: JSON.parse(JSON.stringify(form.data())) };
@@ -440,9 +413,10 @@ watch(selected, (item) => {
                         <div class="grid gap-4 md:grid-cols-2"><div><label for="template-name" class="field-label">Nombre *</label><InputText :readonly="editorReadonly" id="template-name" v-model="form.nombre" :invalid="!!form.errors.nombre" :aria-invalid="!!form.errors.nombre" fluid /><Message v-if="form.errors.nombre" severity="error" size="small">{{ form.errors.nombre }}</Message></div><div><label for="template-key" class="field-label">Clave *</label><InputText :readonly="editorReadonly" id="template-key" v-model="form.clave" :disabled="editorReadonly || !!editingVersion" :invalid="!!form.errors.clave" :aria-invalid="!!form.errors.clave" fluid @input="handleKeyInput" /><small class="mt-1 block text-surface-500">Se genera desde el nombre y puedes editarla. No admite espacios; usa minúsculas, números, guiones o guiones bajos.</small><Message v-if="form.errors.clave" severity="error" size="small">{{ form.errors.clave }}</Message></div><div><span class="field-label">Tipo *</span><SelectButton v-model="form.tipo" :options="tipos" option-label="label" option-value="value" :disabled="!!editingVersion" :allow-empty="false" aria-label="Tipo de plantilla" /></div><div><label for="change-summary" class="field-label">Resumen de cambios</label><InputText :readonly="editorReadonly" id="change-summary" v-model="form.resumen_cambios" fluid /></div><div class="md:col-span-2"><label for="template-description" class="field-label">Descripción comercial</label><Textarea :readonly="editorReadonly" id="template-description" v-model="form.descripcion" rows="2" fluid /></div></div>
                         <div class="overflow-hidden rounded-2xl border border-surface-200 dark:border-surface-700"><div class="flex flex-wrap items-center justify-between gap-2 bg-surface-50 px-3 py-2 dark:bg-surface-800"><SelectButton v-model="section" :options="[{label:'Encabezado',value:'encabezado_html'},{label:'Contenido',value:'contenido_html'},{label:'Pie de página',value:'pie_html'}]" option-label="label" option-value="value" :allow-empty="false" aria-label="Sección de la plantilla" /><span class="text-xs text-surface-500">{{ editorReadonly ? 'Consultando' : 'Editando' }}: {{ sectionLabel }}</span></div><DocumentEditor v-for="field in sections" v-show="section === field.value" :key="`${editingVersion?.id ?? 'nuevo'}-${editorReadonly}-${field.value}`" :readonly="editorReadonly" :ref="el => { editorRefs[field.value] = el; }" v-model="form[field.value]" :section="field.value" /></div>
                         <Message v-if="form.errors[section] || form.errors.contenido_html" severity="error" :closable="false">{{ form.errors[section] || form.errors.contenido_html }}</Message>
-                        <div><label for="watermark" class="field-label">Marca de agua (opcional)</label><InputText :readonly="editorReadonly" id="watermark" v-model="form.presentacion.marca_agua" maxlength="80" placeholder="Ejemplo: BORRADOR" fluid /><small class="block text-surface-500">Texto tenue en todas las páginas. Déjalo vacío para desactivarlo.</small><Message v-if="form.errors['presentacion.marca_agua']" severity="error">{{ form.errors['presentacion.marca_agua'] }}</Message></div><p v-if="editorReadonly" class="text-sm">Formato conservado: {{ editingVersion.presentacion?.formato ?? 'Sin marca histórica' }} · PDF A4 vertical.</p><div class="flex flex-col-reverse gap-2 border-t border-surface-200 pt-4 sm:flex-row sm:justify-end"><Button type="button" :label="editorReadonly ? 'Cerrar consulta' : 'Cancelar'" severity="secondary" @click="closeEditor" /><Button v-if="editorReadonly" type="button" label="Previsualizar PDF" icon="pi pi-eye" severity="secondary" @click="showPreview(editingVersion)" /><Button v-if="!editorReadonly" type="button" label="Previsualizar cambios" icon="pi pi-eye" severity="secondary" @click="previewDraft" /><Button v-if="!editorReadonly" type="submit" label="Guardar borrador" icon="pi pi-save" :loading="form.processing" /></div>
+                        <TemplatePreview :source="htmlPreviewSource" :identity="[editorTemplateId, editingVersion?.id, editorReadonly].join(':')" />
+                        <div><label for="watermark" class="field-label">Marca de agua (opcional)</label><InputText :readonly="editorReadonly" id="watermark" v-model="form.presentacion.marca_agua" maxlength="80" placeholder="Ejemplo: BORRADOR" fluid /><small class="block text-surface-500">Texto tenue en todas las páginas. Déjalo vacío para desactivarlo.</small><Message v-if="form.errors['presentacion.marca_agua']" severity="error">{{ form.errors['presentacion.marca_agua'] }}</Message></div><p v-if="editorReadonly" class="text-sm">Formato conservado: {{ editingVersion.presentacion?.formato ?? 'Sin marca histórica' }} · PDF A4 vertical.</p><div class="flex flex-col-reverse gap-2 border-t border-surface-200 pt-4 sm:flex-row sm:justify-end"><Button type="button" :label="editorReadonly ? 'Cerrar consulta' : 'Cancelar'" severity="secondary" @click="closeEditor" /><Button v-if="editorReadonly" type="button" label="Previsualizar PDF" icon="pi pi-eye" severity="secondary" @click="showPreview(editingVersion)" /><Button v-if="!editorReadonly" type="button" label="Previsualizar PDF de los cambios" icon="pi pi-eye" severity="secondary" @click="previewDraft" /><Button v-if="!editorReadonly" type="submit" label="Guardar borrador" icon="pi pi-save" :loading="form.processing" /></div>
                     </div>
-                    <aside class="variable-panel rounded-2xl border border-primary-100 bg-primary-50/70 p-4 dark:border-primary-900 dark:bg-primary-950/20"><div class="flex items-center gap-2"><span class="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-contrast"><i class="pi pi-code" /></span><div><h3 class="font-semibold">Variables permitidas</h3><p class="text-xs text-surface-500">{{ editorReadonly ? 'Consulta las variables permitidas; no se insertan en este modo.' : 'Coloca el cursor y selecciona una variable para insertarla.' }}</p></div></div><IconField class="mt-4"><InputIcon class="pi pi-search" /><InputText v-model="variableQuery" aria-label="Buscar variables" placeholder="Buscar variable" fluid /></IconField><div class="mt-3 max-h-[calc(100dvh-19rem)] space-y-4 overflow-auto pr-1"><section v-for="group in groupedVariables" :key="group.key"><h4 class="mb-2 text-xs font-bold uppercase tracking-wide text-surface-500">{{ group.label }}</h4><div class="space-y-2"><button v-for="variable in group.variables" :key="variable.clave" :disabled="editorReadonly" type="button" class="w-full rounded-xl border border-transparent bg-surface-0 p-3 text-left transition hover:border-primary-300 hover:shadow-sm dark:bg-surface-900" @mousedown.prevent @click="insertVariable(variable)"><span class="block text-sm font-medium">{{ variable.nombre }} <span v-if="variable.requerida" class="mt-1 block text-xs font-normal text-amber-700 dark:text-amber-300">Requerida para generar: si falta este dato en el expediente, no podrá generarse el PDF.</span></span><code class="mt-1 block truncate text-xs text-primary">{{ tokenLabel(variable.clave) }}</code><span class="mt-1 block truncate text-xs text-surface-500">{{ variable.origen }} · {{ variable.formato }}</span></button></div></section><p v-if="!groupedVariables.length" class="py-8 text-center text-sm text-surface-500">No hay variables que coincidan con la búsqueda.</p></div><Message class="mt-3" severity="info" size="small" :closable="false">No se admite código HTML libre en las variables ni el acceso a otros datos.</Message></aside>
+                    <TemplateVariablesPanel :variables="availableVariables" :readonly="editorReadonly" document @insert="insertVariable" />
                 </form>
             </Dialog>
 

@@ -6,7 +6,6 @@ use App\Models\Activity;
 use App\Models\CommunicationChannel;
 use App\Models\CommunicationDelivery;
 use App\Models\CommunicationEvent;
-use App\Models\CommunicationRule;
 use App\Services\Communications\CommunicationOrchestrator;
 use App\Services\Credito\ProyeccionCreditoService;
 use Carbon\CarbonImmutable;
@@ -73,7 +72,7 @@ test('la anticipación de cada regla cambia el día de preparación y el despach
     [$actor, $credito, $data] = creditoPagableQa($this);
     $credito->cliente->update(['email' => 'cliente@example.test']);
     $due = CarbonImmutable::parse($data['fecha_pago'].' 12:00:00', 'America/Mexico_City');
-    $rule = CommunicationRule::create([
+    $rule = communicationRuleQa([
         'team_id' => $credito->team_id, 'event_type' => 'upcoming_due', 'channel' => 'email',
         'enabled' => true, 'lead_days' => 5, 'timezone' => 'America/Mexico_City',
         'window_start' => '09:00:00', 'window_end' => '20:00:00', 'daily_limit' => 1,
@@ -132,7 +131,7 @@ test('dos canales pueden preparar el mismo vencimiento en días distintos sin du
     $credito->cliente->update(['email' => 'cliente@example.test']);
     $due = CarbonImmutable::parse($data['fecha_pago'].' 12:00:00', 'America/Mexico_City');
     foreach (['email' => 5, 'sms' => 3] as $channel => $days) {
-        CommunicationRule::create(['team_id' => $credito->team_id, 'event_type' => 'upcoming_due',
+        communicationRuleQa(['team_id' => $credito->team_id, 'event_type' => 'upcoming_due',
             'channel' => $channel, 'enabled' => true, 'lead_days' => $days,
             'timezone' => 'America/Mexico_City', 'window_start' => '09:00:00', 'window_end' => '20:00:00',
             'daily_limit' => 2, 'subject' => 'Vencimiento', 'body' => 'Hola {nombre}, vence el {fecha_vencimiento}.',

@@ -12,6 +12,11 @@ class ConfigureRuleRequest extends FormRequest
         return $this->user()?->can('manage comunicaciones') && $this->user()?->current_team_id !== null;
     }
 
+    public function attributes(): array
+    {
+        return ['notification_template_id' => 'plantilla global'];
+    }
+
     public function rules(): array
     {
         return [
@@ -23,8 +28,9 @@ class ConfigureRuleRequest extends FormRequest
             'window_start' => ['required', 'date_format:H:i'],
             'window_end' => ['required', 'date_format:H:i', 'after:window_start'],
             'daily_limit' => ['required', 'integer', 'between:1,'.config('comunicaciones.max_daily_limit')],
-            'subject' => ['required_if:channel,email', 'nullable', 'string', 'max:160'],
-            'body' => ['required', 'string', 'max:2000'],
+            'notification_template_id' => ['required_unless:channel,whatsapp', 'nullable', 'integer', 'exists:notification_templates,id'],
+            'subject' => ['nullable', 'string', 'max:160'],
+            'body' => ['required_if:channel,whatsapp', 'nullable', 'string', 'max:2000'],
             'external_template_name' => ['required_if:channel,whatsapp', 'nullable', 'string', 'max:120', 'regex:/\A[a-z0-9_]+\z/'],
             'external_template_locale' => ['required_if:channel,whatsapp', 'nullable', 'string', 'max:20'],
             'external_template_status' => ['nullable', Rule::in(['draft', 'submitted', 'approved', 'rejected'])],

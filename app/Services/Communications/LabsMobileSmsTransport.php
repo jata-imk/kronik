@@ -18,7 +18,7 @@ final class LabsMobileSmsTransport implements ChannelTransport
         return ['templates' => true, 'attachments' => false, 'replies' => false, 'delivery_receipts' => false, 'read_receipts' => false];
     }
 
-    public function send(CommunicationChannel $channel, CommunicationRule $rule, string $recipient, string $subject, string $body, array $variables = [], ?string $correlationId = null): array
+    public function send(CommunicationChannel $channel, CommunicationRule $rule, string $recipient, string $subject, string $body, array $variables = [], ?string $correlationId = null, string $format = 'text'): array
     {
         $failed = ['status' => 'failed', 'message_id' => null];
         $uncertain = ['status' => 'uncertain', 'message_id' => null];

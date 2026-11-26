@@ -84,3 +84,5 @@
 - [ADR 0045: fechas efectivas y captura histórica QA](adr-0045-fechas-efectivas-captura-historica.md).
 - [ADR 0048: eventos candidatos antes de seleccionar canal](adr-0048-eventos-candidatos-comunicacion.md).
 - [ADR 0049: orquestación de comunicaciones externas](adr-0049-orquestacion-comunicaciones-externas.md).
+
+- [ADR 0051: Notificaciones globales y previsualización HTML](adr-0051-notificaciones-globales-y-previas-html.md).

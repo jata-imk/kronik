@@ -86,14 +86,16 @@ class DocumentoPlantillaController extends Controller implements HasMiddleware
     {
         $version->loadMissing('plantilla');
         $this->authorize('view', $version->plantilla);
-        $values = $this->previewValues();
 
-        return response()->json([
-            'header' => $compiler->render($version->encabezado_html ?? '', $values),
-            'body' => $compiler->render($version->contenido_html, $values),
-            'footer' => $compiler->render($version->pie_html ?? '', $values),
-            'notice' => 'Previsualización con datos sintéticos. No es el PDF final.',
-        ], 200, ['Cache-Control' => 'private, no-store']);
+        return response()->json(app(\App\Services\Documentos\DocumentoHtmlPreview::class)->render($version->toArray()), 200, ['Cache-Control' => 'private, no-store']);
+    }
+
+    public function previewDraft(\App\Http\Requests\PreviewDocumentHtmlRequest $request, DocumentoPlantillaVersionService $versions)
+    {
+        $data = $request->validated();
+        $content = $versions->content(DocumentoPlantillaTipo::from($data['tipo']), $data);
+
+        return response()->json(app(\App\Services\Documentos\DocumentoHtmlPreview::class)->render($content), 200, ['Cache-Control' => 'private, no-store']);
     }
 
     public static function previewValues(): array
