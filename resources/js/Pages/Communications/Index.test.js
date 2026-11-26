@@ -105,3 +105,15 @@ it("una validación de regla conserva captura y errores hasta cambiar contexto o
     expect(sent).not.toHaveBeenCalled();
 });
 
+
+it("una regla sin versión activa puede desactivarse sin elegir reemplazo", async () => {
+    const wrapper = render({ activeTab: "rules", rules: [{ id: 4, event_type: "payment_received", channel: "email", enabled: true, notification_template_id: 8, notification_template: { name: "Aviso retirado", active_version: null } }] });
+    const selector = wrapper.findAll("select").find(item => item.text().includes("Seleccione una plantilla activa"));
+    expect(selector.text()).toContain("Aviso retirado · Sin versión activa");
+    expect(selector.attributes("required")).toBeDefined();
+    wrapper.vm.ruleForm.enabled = false;
+    await wrapper.vm.$nextTick();
+    expect(selector.attributes("required")).toBeUndefined();
+    wrapper.vm.saveRule();
+    expect(sent).toHaveBeenCalledWith("comunicaciones.rules.update", expect.objectContaining({ enabled: false, notification_template_id: 8 }));
+});

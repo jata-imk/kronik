@@ -28,7 +28,9 @@ misma plantilla. Retirar no borra el historial ni permite reactivarlo.
 
 Las reglas SMS/correo eligen una plantilla compatible y utilizan su versión activa.
 Horario, anticipación, consentimiento, límites y elegibilidad siguen operando por
-su contexto original. No se copia el texto a cada equipo ni se modifica una
+su contexto original. Una regla sin selección o cuya plantilla quedó sin versión activa puede desactivarse
+sin elegir reemplazo; volver a habilitarla exige una plantilla compatible activa.
+No se copia el texto a cada equipo ni se modifica una
 plantilla mediante el permiso de gestionar reglas.
 
 Cada salida conserva `notification_template_version_id`; al intentar el envío,

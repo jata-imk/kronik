@@ -151,3 +151,23 @@ test('WhatsApp conserva texto local validación y cancelación diferida sin usar
     Http::assertNothingSent();
     Mail::assertNothingSent();
 });
+
+test('permite desactivar reglas sin versión activa pero impide volver a habilitarlas', function ($channel, $missing) {
+    Http::preventStrayRequests();
+    Mail::fake();
+    $actor = actingAsSuperAdmin();
+    $this->actingAs($actor);
+    $template = $missing ? null : notificationTemplateQa(['channel' => $channel], 'retired');
+    $data = ['event_type' => 'payment_received', 'channel' => $channel, 'enabled' => true,
+        'timezone' => 'America/Mexico_City', 'window_start' => '09:00', 'window_end' => '20:00',
+        'daily_limit' => 1, 'notification_template_id' => $template?->id];
+    $rule = CommunicationRule::create([...$data, 'team_id' => $actor->current_team_id, 'body' => '']);
+    $this->put(route('comunicaciones.rules.update'), [...$data, 'enabled' => false])->assertSessionHasNoErrors();
+    expect($rule->fresh()->enabled)->toBeFalse()
+        ->and($rule->fresh()->notification_template_id)->toBe($template?->id);
+    expect(Activity::where('event', 'communication.rule_configured')->count())->toBe(1);
+    $this->put(route('comunicaciones.rules.update'), $data)->assertSessionHasErrors('notification_template_id');
+    expect($rule->fresh()->enabled)->toBeFalse();
+    Http::assertNothingSent();
+    Mail::assertNothingSent();
+})->with(['sms', 'email'])->with([true, false]);

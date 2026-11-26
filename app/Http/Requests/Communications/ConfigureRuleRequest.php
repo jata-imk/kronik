@@ -28,7 +28,7 @@ class ConfigureRuleRequest extends FormRequest
             'window_start' => ['required', 'date_format:H:i'],
             'window_end' => ['required', 'date_format:H:i', 'after:window_start'],
             'daily_limit' => ['required', 'integer', 'between:1,'.config('comunicaciones.max_daily_limit')],
-            'notification_template_id' => ['required_unless:channel,whatsapp', 'nullable', 'integer', 'exists:notification_templates,id'],
+            'notification_template_id' => [Rule::requiredIf(fn () => $this->boolean('enabled') && $this->input('channel') !== 'whatsapp'), 'nullable', 'integer', 'exists:notification_templates,id'],
             'subject' => ['nullable', 'string', 'max:160'],
             'body' => ['required_if:channel,whatsapp', 'nullable', 'string', 'max:2000'],
             'external_template_name' => ['required_if:channel,whatsapp', 'nullable', 'string', 'max:120', 'regex:/\A[a-z0-9_]+\z/'],

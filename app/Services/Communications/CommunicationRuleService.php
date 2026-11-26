@@ -25,7 +25,8 @@ final class CommunicationRuleService
             $old = $rule->exists ? $rule->only(['subject', 'body', 'external_template_name', 'external_template_locale', 'notification_template_id']) : null;
             if ($data['channel'] !== 'whatsapp') {
                 $template = $locked->get($data['notification_template_id'] ?? null);
-                if (! $template || $template->channel !== $data['channel'] || $template->event_type !== $data['event_type'] || ! $template->activeVersion()->lockForUpdate()->first()) {
+                if (($template && ($template->channel !== $data['channel'] || $template->event_type !== $data['event_type']))
+                    || ($data['enabled'] && (! $template || ! $template->activeVersion()->lockForUpdate()->first()))) {
                     throw ValidationException::withMessages(['notification_template_id' => 'Seleccione una plantilla global compatible con una versión activa.']);
                 }
                 $data = Arr::except($data, ['body', 'subject', 'external_template_name', 'external_template_locale', 'external_template_status']);
