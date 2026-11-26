@@ -15,8 +15,11 @@ const context = computed(() =>
 let timer;
 let generation = 0;
 let requestSerial = 0;
+let readQueue = Promise.resolve();
+const pendingReadIds = new Set();
 
 async function refresh() {
+    if (pendingReadIds.size) return;
     const requestGeneration = generation;
     const serial = ++requestSerial;
     loading.value = true;
@@ -37,21 +40,27 @@ async function refresh() {
 }
 
 async function markRead(item) {
-    if (item.read_at) return;
+    if (item.read_at || pendingReadIds.has(item.id)) return;
     const requestGeneration = generation;
+    pendingReadIds.add(item.id);
     ++requestSerial;
-    try {
-        const { data } = await axios.patch(
-            route("notifications.read", item.id),
-        );
+    loading.value = false;
+    readQueue = readQueue.then(async () => {
         if (requestGeneration !== generation) return;
-        ++requestSerial;
-        unreadCount.value = data.unread_count;
-        items.value = data.items;
-        error.value = false;
-    } catch {
-        if (requestGeneration === generation) error.value = true;
-    }
+        try {
+            const { data } = await axios.patch(route("notifications.read", item.id));
+            if (requestGeneration !== generation) return;
+            ++requestSerial;
+            unreadCount.value = data.unread_count;
+            items.value = data.items;
+            error.value = false;
+        } catch {
+            if (requestGeneration === generation) error.value = true;
+        } finally {
+            if (requestGeneration === generation) pendingReadIds.delete(item.id);
+        }
+    });
+    return readQueue;
 }
 
 function toggle() {
@@ -69,6 +78,8 @@ watch(context, () => {
     open.value = false;
     unreadCount.value = 0;
     items.value = [];
+    pendingReadIds.clear();
+    readQueue = Promise.resolve();
     refresh();
 });
 

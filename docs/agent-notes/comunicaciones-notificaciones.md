@@ -1,5 +1,47 @@
 # Comunicaciones y notificaciones
 
+## I4 en validación — 26/11/2026
+
+Rama `feat/comunicaciones-i4-cierre` desde I3 `82c7756`, en el worktree de esta
+nota. José confirmó en esta sesión consolidar #93–#96 e I4 en la rama original
+de Bryan, `feat/comunicaciones-notificaciones`, conservando ramas auxiliares.
+Esta autorización sustituye exclusivamente el «sin merge» del prompt anterior
+para ese destino. No incluye `main` ni `feat/comunicaciones-whatsapp`.
+
+Retoma comprobada: #91 cerrada sin integrar; #93–#96 abiertas, sin hilos pendientes.
+I0: PR `213a4b6`, CI #309 aprobado; ref real `9d0473d` documental sin CI propio.
+I1 `85d2db6`/CI #311, I2 `2c865b1`/CI #314 e I3 `82c7756`/CI #316 aprobados.
+Los cierres posteriores a los códigos revisados solo modifican documentos.
+La rama original sigue `547d9e5`; main `217acef`, divergencia 89/32 frente a I3.
+Los cuatro incrementos forman una cadena de ancestros; se conservan íntegros.
+
+El barrido comprende `ecb9d4a..I4` y el antecedente `bfa0b87..ecb9d4a` de #91,
+no solo el diff nuevo. La revisión medium estática inicial del commit `82c7756`
+terminó con cuatro hallazgos: cupo diario concurrente, snapshot financiero previo
+a reverso, zona de almacenamiento en madrugada y consentimiento mostrado como
+vigente tras cambiar contacto. La inspección/regresión añadió campana concurrente
+y rollback SQLite de la FK abreviada I3. Se corrigen dentro de I4, sin eventos
+auditables nuevos ni cambios operativos.
+
+Regresiones ya comprobadas: MariaDB reprodujo el exceso de cupo antes del arreglo;
+Vitest reprodujo lecturas duplicadas de campana. Tras corregir, focal backend
+25/545 y frontend 11 aprobadas. El ciclo SQLite I1–I3 conserva correo/Meta y
+reinstala sin duplicar permisos. MariaDB aislada aprobó dos créditos/canales del
+mismo cliente disputando cupo y un reverso confirmado mientras espera el worker;
+el segundo se cancela sin intento y se diagnostica su proyección. Frontend
+completo 188/71 archivos y build aprobados. La preparación del fixture se corrigió
+para usar pago ordinario exigible y sincronizar cortes antes del pago; los intentos
+interrumpidos no cuentan como aprobación. Revisión final, suite completa,
+E2E/PDF/CI/publicación e integración todavía pendientes en esta entrada.
+
+La [guía de VPS](../how-to/preparar-comunicaciones-vps.md) explica variables,
+reutilización del SMTP existente (incluido ZeptoMail), configuración efectiva,
+cola/scheduler y prueba técnica de correo. Si la VPS usa main, hay que evaluar
+la integración posterior antes de cambiar de rama; I4 no incorpora sus commits.
+Ambas barreras permanecen cerradas, sin envíos, compras, limpieza operativa,
+Integraciones, despliegue ni VPS. Autenticidad/recepción SMS, cuenta/ruta y piloto
+siguen pendientes; la iniciativa no se cierra por integrar estas PR.
+
 ## I3 publicado y revisado — 26/11/2026
 
 [PR I3 #96](https://github.com/jata-imk/kronik/pull/96) abierta hacia

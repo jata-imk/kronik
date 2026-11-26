@@ -14,6 +14,7 @@
 - [Migrar VPS](migrar-vps.md)
 - [Probar correos de acceso y seguridad](probar-correos-acceso.md)
 - [Probar comunicaciones y notificaciones](probar-comunicaciones.md)
+- [Preparar variables y probar Comunicaciones en la VPS](preparar-comunicaciones-vps.md)
 - [Retirar SMS anteriores de desarrollo o QA](limpiar-sms-prueba.md)
 - [Probar anticipos y liquidación QA](qa-anticipos-liquidacion.md)
 - [Desplegar y comprobar ambas políticas Bullet en QA](qa-bullet.md)

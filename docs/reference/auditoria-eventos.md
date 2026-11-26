@@ -374,3 +374,22 @@ Los snapshots cifrados permanecen en dominio, nunca en metadatos.
 Estado, versión, cancelaciones y actividad se confirman o revierten juntos.
 Pruebas: NotificationTemplateTest y DocumentoEditorTest; no acredita integración
 ni cumplimiento legal. No se modifica la auditoría de correo, Meta o PDF.
+
+## Cierre conjunto I4
+
+La revisión acumulada incluye #91 y #93–#96 contra `ecb9d4a`, con el antecedente
+original `bfa0b87..ecb9d4a`. I4 mantiene los emisores de la matriz: serializar
+crédito/cliente antes del intento, corregir los límites horarios, coordinar
+lecturas de campana y resolver el estado efectivo de consentimiento no incorpora
+acciones de negocio nuevas. Consultar vigencia no revoca ni concede autorización
+y no necesita actividad adicional. Rollback/reinstalación de esquema y CI tampoco
+generan eventos de negocio nuevos.
+
+El harness `tests/Concurrency/comunicaciones.php` comprueba una sola transición
+`communication.delivery_sending` para el cupo diario compartido de dos créditos
+y canales, además de cancelar sin intento después de un reverso confirmado.
+`CommunicationManagementTest` comprueba que calcular `effective_status` no emite
+actividad ni devuelve contacto/hash/evidencia. La campana conserva la única
+emisión backend de `operator_notification.read`; su cola frontend no crea otro
+evento. Se mantienen las regresiones de rollback, actor/contexto originales y
+privacidad de las suites I0–I3. Evidencia final por SHA en la Agent Note.

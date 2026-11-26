@@ -18,6 +18,12 @@ El catálogo inicial es `OperatorNotificationEvent`: solicitud asignada, solicit
 - La campana del encabezado consulta al abrir, al montar y cada 60 segundos mientras la pestaña esté visible. Se limpia al cambiar el contexto operativo. Incluye vacío, carga, error, recarga, historial, teclado y vista adaptable.
 - En móvil, el panel de la campana se centra bajo el encabezado para que su contenido no quede fuera de la pantalla; desde el ancho `sm` vuelve a quedar anclado a la campana.
 
+Las lecturas de la campana se serializan por contexto; repetir un clic pendiente
+no duplica la petición. Mientras haya lecturas en curso, no se aplican recargas
+del resumen. Una consulta iniciada antes de la lectura y las respuestas del
+contexto anterior se descartan. Cambiar de contexto cancela lógicamente las
+lecturas aún no iniciadas y limpia contador, errores y listado.
+
 La lectura registra `operator_notification.read` una vez mediante `ActivityLogService` con actor, sujeto y equipo/sucursal originales. La creación del aviso se representa por el evento de negocio que la origina; no duplica su auditoría.
 
 ## Límites de esta etapa

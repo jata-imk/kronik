@@ -6,6 +6,7 @@ on:
     branches:
       - devjatejero
       - main
+      - feat/comunicaciones-notificaciones
 
 jobs:
   test:
@@ -125,6 +126,9 @@ jobs:
 
       - name: Verify Bullet financial concurrency on isolated MariaDB
         run: php tests/Concurrency/bullet.php
+
+      - name: Verify communication concurrency on isolated MariaDB
+        run: php tests/Concurrency/comunicaciones.php
 
       - name: Install browsers for UI and PDF verification
         run: |

@@ -1,5 +1,13 @@
 # ADR 0049: orquestación de comunicaciones externas
 
+Ampliación I4, 26/11/2026: el inicio del intento se coordina con el bloqueo del
+crédito utilizado por pagos/proyecciones, antes de plantilla, regla, cliente y
+salida. La identidad inicial se obtiene fuera de la transacción para no fijar un
+snapshot previo a la espera. Un bloqueo compartido del cliente entre canales y
+créditos, con lectura actual de intentos, protege el cupo diario. La transacción
+concluye antes de HTTP/SMTP. No se añade motor financiero ni se contabilizan devengos
+por leer. Se conserva la auditoría transaccional y la separación de pendientes externos.
+
 Estado: aceptado para implementación local, 2026-11-20.
 
 La elección del proveedor SMS queda sustituida por

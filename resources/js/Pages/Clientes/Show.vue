@@ -36,7 +36,7 @@ const nombreCompleto = computed(() =>
                 <ul v-if="page.props.communicationConsents.length" class="mt-3 divide-y divide-surface-200 dark:divide-surface-700">
                     <li v-for="consent in page.props.communicationConsents" :key="consent.id" class="flex flex-wrap justify-between gap-2 py-2 text-sm">
                         <span>{{ { email: 'Correo', sms: 'SMS', whatsapp: 'WhatsApp' }[consent.channel] }} · {{ consent.purpose === 'operational' ? 'Operación' : 'Recordatorio preventivo' }}</span>
-                        <span>{{ consent.revoked_at ? 'Revocado' : 'Vigente' }} · {{ new Date(consent.granted_at).toLocaleDateString('es-MX') }}</span>
+                        <span>{{ { revoked: 'Revocado', current: 'Vigente', contact_changed: 'Contacto cambiado; requiere nueva autorización' }[consent.effective_status] }} · {{ new Date(consent.granted_at).toLocaleDateString('es-MX') }}</span>
                     </li>
                 </ul>
                 <p v-else class="mt-3 text-sm">No hay consentimientos registrados para este equipo.</p>
