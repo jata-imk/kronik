@@ -305,3 +305,13 @@ test('comunicaciones selecciona metadatos de versiones activas sin ambigüedad n
     expect($response->getContent())->not->toContain('CONTENIDO-INSTITUCIONAL-RESERVADO');
     $this->get(route('notificaciones.index'))->assertForbidden();
 });
+
+test('la previa usa nombres de campos y errores de validación en español', function () {
+    $this->actingAs(actingAsSuperAdmin());
+    $response = $this->postJson(route('notificaciones.preview-draft'), ['channel' => 'sms', 'format' => 'text', 'body' => 'Hola', 'version_id' => 'abc'])
+        ->assertUnprocessable()->assertJsonValidationErrors('version_id');
+    expect($response->json('errors.version_id.0'))->toContain('versión')->not->toContain('validation.');
+    $format = $this->postJson(route('notificaciones.preview-draft'), ['channel' => 'sms', 'format' => 'rtf', 'body' => 'Hola'])
+        ->assertUnprocessable()->assertJsonValidationErrors('format');
+    expect($format->json('errors.format.0'))->toContain('formato')->not->toContain('validation.');
+});

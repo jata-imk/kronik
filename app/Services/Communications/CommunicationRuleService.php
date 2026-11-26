@@ -32,7 +32,12 @@ final class CommunicationRuleService
                 $data['body'] = '';
                 $data['subject'] = null;
             } else {
-                app(NotificationContent::class)->content('sms', ['body' => $data['body'], 'format' => 'text']);
+                foreach ([$data['subject'] ?? '', $data['body']] as $text) {
+                    preg_match_all('/\{([^{}]+)\}/u', $text, $matches);
+                    if (array_diff($matches[1], NotificationContent::VARIABLES)) {
+                        throw ValidationException::withMessages(['body' => 'La plantilla contiene una variable no permitida.']);
+                    }
+                }
                 $data['notification_template_id'] = null;
             }
             if ($data['event_type'] === 'payment_received') {
@@ -44,7 +49,7 @@ final class CommunicationRuleService
                 $rule->template_version++;
             }
             $rule->save();
-            if ($changed) {
+            if ($changed && $rule->channel !== 'whatsapp') {
                 app(NotificationTemplateService::class)->cancelPending(CommunicationDelivery::where('team_id', $rule->team_id)->where('channel', $rule->channel)->whereHas('event', fn ($q) => $q->where('event_type', $rule->event_type)));
             }
             app(ActivityLogService::class)->log(ActivityEvent::CommunicationRuleConfigured, 'Regla de comunicación configurada', $rule,

@@ -15,3 +15,7 @@ Ninguna clave interna de Laravel como `validation.required`, `validation.integer
 ## Verificacion
 
 Las pruebas de flujos visibles deben comprobar el texto relevante con `assertSessionHasErrors`. Durante QA manual, provocar al menos un error por formulario y confirmar que no aparece ninguna cadena que empiece con `validation.`.
+
+## Notificaciones globales
+
+Guardar plantillas y previsualizar texto/HTML conservan errores y captura del mismo borrador. Las claves de versión, plantilla, formato y selección global tienen nombres en español; las reglas usan los mensajes generales de integer/in y mensajes de dominio para variables, formato y estado. Regresión: NotificationTemplateTest y Communications/Notifications.test.js; ver [contrato](plantillas-notificaciones.md).

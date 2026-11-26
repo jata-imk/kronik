@@ -130,3 +130,24 @@ test('la comprobación de conexión consulta APIs sin enviar mensajes ni confund
     Http::assertNotSent(fn ($request) => $request->method() !== 'GET');
     expect(Activity::where('event', 'communication.test_sent')->count())->toBe(2);
 });
+
+test('WhatsApp conserva texto local validación y cancelación diferida sin usar catálogo global', function () {
+    Http::preventStrayRequests();
+    Mail::fake();
+    [$actor, $credit, $event] = communicationReadyPayment($this);
+    $this->actingAs($actor);
+    $data = ['event_type' => 'payment_received', 'channel' => 'whatsapp', 'enabled' => true,
+        'timezone' => 'America/Mexico_City', 'window_start' => '09:00', 'window_end' => '20:00', 'daily_limit' => 1,
+        'body' => 'Aviso {} para {nombre}.', 'external_template_name' => 'pago_qa',
+        'external_template_locale' => 'es_MX', 'external_template_status' => 'approved'];
+    $this->put(route('comunicaciones.rules.update'), $data)->assertSessionHasNoErrors();
+    $rule = CommunicationRule::where('channel', 'whatsapp')->sole();
+    $delivery = App\Models\CommunicationDelivery::create(['team_id' => $event->team_id, 'communication_event_id' => $event->id,
+        'cliente_id' => $credit->cliente_id, 'credito_id' => $credit->id, 'channel' => 'whatsapp',
+        'recipient_hash' => str_repeat('a', 64), 'template_version' => 1, 'status' => 'prepared']);
+    $this->put(route('comunicaciones.rules.update'), [...$data, 'body' => 'Otro aviso {} para {nombre}.'])->assertSessionHasNoErrors();
+    expect($rule->fresh()->notification_template_id)->toBeNull()->and($rule->fresh()->template_version)->toBe(2)
+        ->and($delivery->fresh()->status)->toBe('prepared')->and(App\Models\NotificationTemplate::count())->toBe(1);
+    Http::assertNothingSent();
+    Mail::assertNothingSent();
+});

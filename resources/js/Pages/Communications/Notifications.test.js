@@ -3,7 +3,7 @@ import { reactive, nextTick } from "vue";
 import { expect, it, vi } from "vitest";
 import Notifications from "./Notifications.vue";
 const state = vi.hoisted(() => ({ page: null, submit: vi.fn() }));
-vi.mock("@inertiajs/vue3", () => ({ Link: { template: "<a><slot/></a>" }, router: { get: vi.fn(), post: vi.fn() }, usePage: () => state.page, useForm: (data) => {
+vi.mock("@inertiajs/vue3", () => ({ Link: { name: "Link", template: "<a><slot/></a>" }, router: { get: vi.fn(), post: vi.fn() }, usePage: () => state.page, useForm: (data) => {
     let defaults = data;
     const f = reactive({ ...data, errors: {}, processing: false });
     Object.assign(f, { data: () => Object.fromEntries(Object.keys(data).map(key => [key, f[key]])), cancel() {}, defaults: value => { defaults = value; }, reset: () => Object.assign(f, defaults), clearErrors: () => { f.errors = {}; }, post: state.submit, put: state.submit });
@@ -11,11 +11,14 @@ vi.mock("@inertiajs/vue3", () => ({ Link: { template: "<a><slot/></a>" }, router
 } }));
 it("consulta no guarda por teclado y descarta captura cuando cambia capacidad o versión", async () => {
     globalThis.route = () => "/";
-    state.page = reactive({ props: { auth: { permissions: {} }, contextoOperativo: { team_id: 1, sucursal_id: 1 } } });
+    state.page = reactive({ props: { auth: { permissions: { "read-comunicaciones": true } }, contextoOperativo: { team_id: 1, sucursal_id: 1 } } });
     const version = { id: 1, number: 1, state: "draft", format: "text", body: "Original", can_edit: true };
     const permissions = { read: true, update: true, create: true };
-    const w = shallowMount(Notifications, { props: { templates: { data: [] }, selected: { id: 2, key: "qa", name: "QA", channel: "sms", event_type: "payment_received" }, version, versions: { data: [version] }, filters: {}, mode: "edicion", permissions }, global: { mocks: { route: globalThis.route }, stubs: { AppLayout: { template: "<main><slot name='card-content'/></main>" } } } });
+    const w = shallowMount(Notifications, { props: { templates: { data: [] }, selected: { id: 2, key: "qa", name: "QA", channel: "sms", event_type: "payment_received" }, version, versions: { data: [version] }, filters: {}, mode: "edicion", permissions }, global: { mocks: { route: globalThis.route }, stubs: { Link: false, AppLayout: { template: "<main><slot name='card-content'/></main>" } } } });
     expect(w.vm.editable).toBe(true);
+    expect(w.find("a").text()).toBe("Comunicaciones");
+    state.page.props.auth.permissions["read-comunicaciones"] = false; await nextTick();
+    expect(w.find("a").exists()).toBe(false);
     w.vm.form.body = "Sin guardar";
     w.vm.form.errors = { body: "Variable no permitida" };
     await w.setProps({ version: { ...version }, permissions: { ...permissions } });

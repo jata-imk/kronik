@@ -47,6 +47,7 @@ test("SMS conserva texto y versiones exactas sin PDF, también en móvil y tecla
     await expect(page.getByTestId("text-preview")).toHaveText("Hola María, á &amp; <b>literal</b>.");
     await page.setViewportSize({ width: 390, height: 844 });
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: "test-results/notificaciones-mobile.png", fullPage: true });
     await testInfo.attach("notificaciones-mobile", { path: "test-results/notificaciones-mobile.png", contentType: "image/png" });
     expect(pdfRequests).toEqual([]);
@@ -65,6 +66,7 @@ test("correo HTML y documentos muestran HTML continuo sin solicitar PDF", async 
     await expect(frame.locator("script")).toHaveCount(0);
     await expect(page.locator('iframe[title="Previsualización HTML"]')).toHaveAttribute("sandbox", "");
     await expect(page.getByRole("button", { name: "Imagen", exact: true })).toHaveCount(0);
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: "test-results/notificaciones-desktop.png", fullPage: true });
     await page.goto("/plantillas-documentos");
     await page.getByRole("button", { name: "Nueva plantilla", exact: true }).click();

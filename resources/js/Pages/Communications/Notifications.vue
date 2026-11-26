@@ -111,7 +111,7 @@ const stateLabel = (state) => ({ draft: "Borrador", active: "Activa", retired: "
             <header class="flex flex-wrap items-start justify-between gap-3">
                 <div><h1 class="text-2xl font-semibold">Notificaciones</h1><p class="text-sm">Catálogo global de SMS y correo · versiones y contenido institucional.</p></div>
                 <div class="flex flex-wrap gap-2">
-                    <Link v-if="page.props.auth?.permissions?.['read comunicaciones']" :href="route('comunicaciones.index')" class="rounded border p-2">Comunicaciones</Link>
+                    <Link v-if="page.props.auth?.permissions?.['read-comunicaciones']" :href="route('comunicaciones.index')" class="rounded border p-2">Comunicaciones</Link>
                     <button v-if="permissions.create" type="button" class="rounded bg-primary px-3 py-2 text-primary-contrast" @click="create">Nueva plantilla</button>
                 </div>
             </header>

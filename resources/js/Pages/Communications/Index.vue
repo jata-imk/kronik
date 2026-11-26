@@ -11,6 +11,7 @@ const props = defineProps({
     consents: { type: Array, required: true },
     deliveries: { type: Object, required: true },
     canManage: Boolean,
+    contextoOperativo: { type: Object, default: () => ({}) },
     canReadNotifications: Boolean,
     notificationTemplates: { type: Array, default: () => [] },
     canTest: Boolean,
@@ -59,7 +60,7 @@ loadChannel();
 loadRule();
 watch(() => selectedChannelData.value?.id, loadChannel);
 watch(() => props.canManage, (allowed) => { if (!allowed) loadChannel(); });
-watch([() => props.rules, () => props.canManage], loadRule);
+watch([() => props.canManage, () => props.contextoOperativo.team_id, () => props.contextoOperativo.sucursal_id], loadRule);
 
 const compatibleTemplates = computed(() => props.notificationTemplates.filter(item => item.channel === selectedRuleChannel.value && item.event_type === selectedEvent.value));
 const preview = computed(() => {
@@ -80,7 +81,10 @@ function checkConnection() {
     checkForm.channel = selectedChannel.value;
     checkForm.post(route("comunicaciones.connection.check"), { preserveScroll: true });
 }
-function saveRule() { ruleForm.put(route("comunicaciones.rules.update"), { preserveScroll: true }); }
+function saveRule() {
+    if (!props.canManage || ruleForm.processing) return;
+    ruleForm.put(route("comunicaciones.rules.update"), { preserveScroll: true, onSuccess: loadRule });
+}
 function saveConsent() { consentForm.post(route("comunicaciones.consents.store", consentForm.cliente_id), { preserveScroll: true, onSuccess: () => consentForm.reset("evidence_reference") }); }
 function revokeConsent(item) {
     if (window.confirm("¿Revocar este consentimiento? Los envíos pendientes se cancelarán.")) {
