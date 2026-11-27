@@ -51,8 +51,21 @@ del panel de variables, con aserciones geométricas E2E a 1024/1280/1536 px.
 La segunda publicación también se interrumpió durante el hook, sin push ni
 resultado global. La corrección visual tiene frontend completo (225/82), build
 y E2E geométrico (una aprobada, tres anchos) aprobados, con captura de escritorio
-renovada y revisada. La comprobación móvil y la revisión del ajuste siguen en
-curso; la revisión de `09b3d53` acredita el código anterior a ese ajuste.
+renovada y revisada. La repetición móvil de `3fa940f` también aprobó y su captura
+se renovó e inspeccionó. La revisión adicional del CLI quedó sin resultado por
+cuota; José autorizó delegar la revisión medium estática del resultado completo.
+Esa revisión de `3fa940f`, contra ambos padres y el acumulado, terminó con un P2:
+las aserciones de menús de main suponían una tabla vacía, aunque las migraciones
+de Comunicaciones registran elementos. Sin otros defectos accionables, incluido
+el ajuste visual. La revisión de `09b3d53` acredita el código anterior a ese ajuste.
+
+La primera suite completa terminada produjo 1,208 aprobadas, dos omisiones
+optativas, once fallos y 50,213 aserciones (579.70 s), sin push. Los once fallos
+corresponden al P2: se corrigen los tres puntos de aserción comparando con el
+conteo inicial y el cambio esperado, conservando la comprobación de ausencia de
+escrituras/actividad. No se vacían tablas ni se eliminan pruebas. Focal de menús:
+25 aprobadas / 194 aserciones. Revisión de la corrección y suite completa
+corregida pendientes de terminar.
 
 Evidencia local del código corregido:
 

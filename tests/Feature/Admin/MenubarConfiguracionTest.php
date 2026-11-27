@@ -53,12 +53,13 @@ test('catálogo ofrece pantallas humanas sin escrituras ni búsquedas JSON', fun
 });
 
 test('previsualización reemplaza un elemento en memoria sin enlaces ni actividad ni persistencia', function () {
+    $initialItems = MenubarItem::count();
     $item = app(MenubarItemService::class)->guardar(null, menuFields($this->module), $this->actor);
     $before = Activity::count();
     $this->postJson(route('admin.menubar-items.previsualizacion'), ['screen' => 'clientes.index', 'selected_item_id' => $item->id,
         'draft' => menuFields($this->module, ['label' => 'Solo en vista previa'])])->assertOk()
         ->assertJsonPath('items.0.label', 'Solo en vista previa')->assertJsonPath('items.0.url', null)->assertJsonPath('items.0.preview', true);
-    expect($item->fresh()->label)->toBe('Acción sintética')->and(MenubarItem::count())->toBe(1)->and(Activity::count())->toBe($before);
+    expect($item->fresh()->label)->toBe('Acción sintética')->and(MenubarItem::count())->toBe($initialItems + 1)->and(Activity::count())->toBe($before);
 });
 
 test('acción nueva conserva el mismo orden en vista previa y después de guardar', function () {
@@ -98,19 +99,21 @@ test('retirar todas las pantallas persiste y audita una sola modificación', fun
 });
 
 test('jerarquía impide ciclos y eliminación en cascada de grupos con contenido', function () {
+    $initialItems = MenubarItem::count();
     $service = app(MenubarItemService::class);
     $parent = $service->guardar(null, menuFields($this->module, ['type' => 'menu', 'value' => null]), $this->actor);
     $child = $service->guardar(null, menuFields($this->module, ['type' => 'menu', 'value' => null, 'parent_id' => $parent->id]), $this->actor);
     $this->putJson(route('admin.menubar-items.update', $parent), menuFields($this->module, ['type' => 'menu', 'value' => null, 'parent_id' => $child->id]))
         ->assertUnprocessable()->assertJsonValidationErrors('parent_id');
     $this->deleteJson(route('admin.menubar-items.destroy', $parent))->assertUnprocessable()->assertJsonValidationErrors('parent_id');
-    expect(MenubarItem::count())->toBe(2)->and($parent->fresh()->parent_id)->toBeNull();
+    expect(MenubarItem::count())->toBe($initialItems + 2)->and($parent->fresh()->parent_id)->toBeNull();
 });
 
 test('rutas parámetros activaciones y orden inválidos producen mensajes españoles', function (array $extra, string $field) {
+    $initialItems = MenubarItem::count();
     $response = $this->postJson(route('admin.menubar-items.store'), menuFields($this->module, $extra))->assertUnprocessable()->assertJsonValidationErrors($field);
     expect($response->getContent())->not->toContain('validation.');
-    expect(MenubarItem::count())->toBe(0);
+    expect(MenubarItem::count())->toBe($initialItems);
 })->with([
     [['value' => 'ruta.inexistente'], 'value'], [['value' => 'solicitudes.store'], 'value'],
     [['value' => 'componentes'], 'value'], [['value' => 'documentos-generados.download'], 'value'],
