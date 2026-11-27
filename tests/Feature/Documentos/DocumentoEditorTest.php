@@ -148,3 +148,38 @@ test('previsualizaciones HTML y PDF muestran folios sintéticos sin reservar num
         ->and($version->fresh()->contenido_hash)->toBe($hash)
         ->and(\Illuminate\Support\Facades\DB::table('folio_asignaciones')->count())->toBe($reservas);
 });
+
+test('HTML guardado y sin guardar reutiliza recursos sin resolver PDF ni persistir generaciones', function () {
+    Storage::fake('local');
+    $user = actingAsSuperAdmin();
+    $this->actingAs($user);
+    $this->app->bind(\App\Services\Documentos\DocumentoRenderService::class, fn () => throw new RuntimeException('La vista HTML no debe resolver PDF'));
+    $this->app->bind(DocumentoPdfRenderer::class, fn () => throw new RuntimeException('La vista HTML no debe resolver Chromium'));
+    $resource = app(DocumentoRecursoService::class)->upload(UploadedFile::fake()->image('logo.png', 80, 40), $user->id);
+    $payload = editorPayload(['contenido_html' => '<p>{{cliente.nombre_completo}}</p><img data-recurso-id="'.$resource->id.'" width="80">']);
+    $template = app(DocumentoPlantillaVersionService::class)->create($payload, $user->id);
+    $version = $template->versiones()->sole();
+    $count = \App\Models\Activity::count();
+    $saved = $this->getJson(route('plantillas-documentos.preview', $version))->assertOk();
+    expect($saved->json('html'))->toContain('María Ejemplo López', 'data:image/png;base64,', 'default-src')
+        ->not->toContain('https://', 'allow-scripts');
+    $this->postJson(route('plantillas-documentos.preview-html-draft'), [...$payload, 'version_id' => $version->id, 'contenido_html' => '<h2>Sin guardar</h2>'])
+        ->assertOk()->assertJsonPath('body', '<h2>Sin guardar</h2>');
+    expect($version->fresh()->contenido_html)->toContain('{{cliente.nombre_completo}}');
+    expect(DocumentoGenerado::count())->toBe(0)->and($template->versiones()->count())->toBe(1)->and(\App\Models\Activity::count())->toBe($count);
+    app(DocumentoPlantillaVersionService::class)->activate($version);
+    $this->postJson(route('plantillas-documentos.preview-html-draft'), [...$payload, 'version_id' => $version->id])->assertForbidden();
+});
+
+test('HTML documental conserva lectura independiente y protege borradores y recursos ajenos', function () {
+    $admin = actingAsSuperAdmin();
+    $template = app(DocumentoPlantillaVersionService::class)->create(editorPayload(), $admin->id);
+    $version = $template->versiones()->sole();
+    $reader = User::factory()->withPersonalTeam()->create(['current_sucursal_id' => $admin->current_sucursal_id]);
+    grantTeamPermissions($reader, $reader->currentTeam, ['read plantillas-documentos']);
+    $this->actingAs($reader)->getJson(route('plantillas-documentos.preview', $version))->assertOk();
+    $this->postJson(route('plantillas-documentos.preview-html-draft'), editorPayload())->assertForbidden();
+    $this->actingAs($admin)->postJson(route('plantillas-documentos.preview-html-draft'),
+        editorPayload(['contenido_html' => '<p>Recurso inexistente</p><img data-recurso-id="aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee">']))
+        ->assertUnprocessable()->assertJsonValidationErrors('contenido_html');
+});

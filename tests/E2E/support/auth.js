@@ -15,7 +15,7 @@ export async function login(page, user = users.superAdmin) {
     await expect(page).toHaveURL(/\/dashboard$/, { timeout: 30_000 });
 }
 
-export async function failOnConsoleErrors(page) {
+export async function failOnConsoleErrors(page, { sandboxedHtml = false } = {}) {
     await page.route("https://ipapi.co/**", route => route.fulfill({
         contentType: "application/json",
         body: JSON.stringify({ country_code: "MX" }),
@@ -58,7 +58,8 @@ export async function failOnConsoleErrors(page) {
             externalResource.startsWith("https://fonts.bunny.net/") ||
             externalResource.startsWith("https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/");
 
-        if (message.type() === "error" && !isKnownExternalResource) {
+        const expectedSandboxBlock = sandboxedHtml && message.text() === "Blocked script execution in 'about:srcdoc' because the document's frame is sandboxed and the 'allow-scripts' permission is not set.";
+        if (message.type() === "error" && !isKnownExternalResource && !expectedSandboxBlock) {
             errors.push(message.text());
         }
     });

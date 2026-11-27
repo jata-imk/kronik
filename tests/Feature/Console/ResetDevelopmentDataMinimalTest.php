@@ -317,12 +317,13 @@ it('removes a full credit cycle with prepayment reversal SIC evidence templates 
     $event = App\Models\CommunicationEvent::create(['event_key' => 'reset:communication', 'event_type' => 'payment_received',
         'team_id' => $admin->current_team_id, 'credito_id' => $credito->id, 'cliente_id' => $credito->cliente_id,
         'sucursal_id' => $credito->sucursal_id, 'source_pago_id' => $pago->id]);
-    $delivery = App\Models\CommunicationDelivery::create(['team_id' => $event->team_id, 'communication_event_id' => $event->id,
+    $template = notificationTemplateQa();
+    $delivery = App\Models\CommunicationDelivery::create(['notification_template_version_id' => $template->versions()->sole()->id, 'team_id' => $event->team_id, 'communication_event_id' => $event->id,
         'cliente_id' => $credito->cliente_id, 'credito_id' => $credito->id, 'channel' => 'sms',
         'recipient_hash' => str_repeat('a', 64), 'template_version' => 1, 'status' => 'uncertain', 'provider_message_id' => 'qa-reset-id']);
     App\Models\CommunicationChannel::create(['team_id' => $event->team_id, 'channel' => 'sms',
         'provider' => 'labsmobile', 'secret' => null]);
-    App\Models\CommunicationRule::create(['team_id' => $event->team_id, 'event_type' => 'payment_received',
+    App\Models\CommunicationRule::create(['notification_template_id' => $template->id, 'team_id' => $event->team_id, 'event_type' => 'payment_received',
         'channel' => 'sms', 'body' => 'Texto sintético QA']);
     App\Models\CommunicationConsent::create(['team_id' => $event->team_id, 'cliente_id' => $credito->cliente_id,
         'channel' => 'sms', 'purpose' => 'operational', 'contact_hash' => str_repeat('b', 64),
@@ -341,7 +342,7 @@ it('removes a full credit cycle with prepayment reversal SIC evidence templates 
         'documentos_generados', 'documento_recursos', 'documento_version_recursos', 'documento_plantillas', 'documento_plantilla_versiones',
         'originacion_politicas', 'producto_version_usos', 'producto_versiones', 'productos_crediticios', 'clientes', 'cliente_documentos',
         'cliente_consentimientos_sic', 'activity_log', 'communication_webhook_events', 'communication_deliveries',
-        'communication_consents', 'communication_rules', 'communication_channels', 'communication_events', 'operator_notifications'] as $table) {
+        'communication_consents', 'communication_rules', 'notification_template_versions', 'notification_templates', 'communication_channels', 'communication_events', 'operator_notifications'] as $table) {
         $this->assertDatabaseCount($table, 0);
     }
     Storage::disk('local')->assertMissing([$docPath, $pdfPath, $consentPath, $resourcePath, $firmaPath]);

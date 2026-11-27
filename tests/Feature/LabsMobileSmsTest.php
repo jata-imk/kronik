@@ -25,7 +25,7 @@ beforeEach(function () {
     Queue::fake();
 });
 
-function labsMobileReadyPayment($test): array
+function labsMobileReadyPayment($test, string $body = 'Hola {nombre}, registramos tu pago.'): array
 {
     [$actor, $credit, $data] = creditoPagableQa($test);
     $data['previa_hash'] = $test->postJson(route('creditos.pagos.preview', $credit), $data)->assertOk()->json('previa_hash');
@@ -34,9 +34,9 @@ function labsMobileReadyPayment($test): array
     $credit->cliente->update(['telefono_codigo_pais' => '52', 'telefono' => '5512345678']);
     $channel = CommunicationChannel::create(['team_id' => $credit->team_id, 'channel' => 'sms', 'provider' => 'labsmobile',
         'eligibility' => 'approved', 'enabled' => true]);
-    $rule = CommunicationRule::create(['team_id' => $credit->team_id, 'event_type' => 'payment_received', 'channel' => 'sms',
+    $rule = communicationRuleQa(['team_id' => $credit->team_id, 'event_type' => 'payment_received', 'channel' => 'sms',
         'enabled' => true, 'timezone' => 'America/Mexico_City', 'window_start' => '00:00:00', 'window_end' => '23:59:59',
-        'daily_limit' => 5, 'body' => 'Hola {nombre}, registramos tu pago.']);
+        'daily_limit' => 5, 'body' => $body]);
     $service = app(CommunicationOrchestrator::class);
     $service->grantConsent($credit->cliente, $credit->team_id,
         ['channel' => 'sms', 'purpose' => 'operational', 'source' => 'QA', 'evidence_reference' => 'SYNTHETIC-EVIDENCE'], $actor);
@@ -86,9 +86,8 @@ test('cada barrera SMS bloquea cola y jobs existentes sin afectar las otras barr
 })->with([[false, false], [true, false], [false, true]]);
 
 test('texto expandido excesivo se cancela sin HTTP ni truncamiento', function () {
-    [, $credit, , , $rule, $delivery] = labsMobileReadyPayment($this);
+    [, $credit, , , $rule, $delivery] = labsMobileReadyPayment($this, '{nombre}{nombre}{nombre}');
     $credit->cliente->update(['primer_nombre' => str_repeat('á', 60)]);
-    $rule->update(['body' => '{nombre}{nombre}{nombre}']);
     config(['comunicaciones.send_enabled' => true, 'comunicaciones.sms_send_enabled' => true]);
     $service = app(CommunicationOrchestrator::class);
     $service->process();

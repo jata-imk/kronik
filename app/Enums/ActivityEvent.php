@@ -129,6 +129,11 @@ enum ActivityEvent: string
     case CreditProductVersioned = 'producto_crediticio.versioned';
     case CreditProductActivated = 'producto_crediticio.activated';
     case CreditProductRetired = 'producto_crediticio.retired';
+    case NotificationTemplateCreated = 'notification_template.created';
+    case NotificationTemplateUpdated = 'notification_template.updated';
+    case NotificationTemplateVersioned = 'notification_template.versioned';
+    case NotificationTemplateActivated = 'notification_template.activated';
+    case NotificationTemplateRetired = 'notification_template.retired';
     case DocumentTemplateCreated = 'documento_plantilla.created';
     case DocumentResourceCreated = 'documento_recurso.created';
     case DocumentTemplateUpdated = 'documento_plantilla.updated';
@@ -272,6 +277,11 @@ enum ActivityEvent: string
             self::CreditProductVersioned => 'Producto crediticio versionado',
             self::CreditProductActivated => 'Versión de producto activada',
             self::CreditProductRetired => 'Versión de producto retirada',
+            self::NotificationTemplateCreated => 'Plantilla de notificación creada',
+            self::NotificationTemplateUpdated => 'Borrador de notificación actualizado',
+            self::NotificationTemplateVersioned => 'Plantilla de notificación versionada',
+            self::NotificationTemplateActivated => 'Versión de notificación activada',
+            self::NotificationTemplateRetired => 'Versión de notificación retirada',
             self::DocumentTemplateCreated => 'Plantilla documental creada',
             self::DocumentResourceCreated => 'Imagen documental incorporada',
             self::DocumentTemplateUpdated => 'Borrador de plantilla actualizado',

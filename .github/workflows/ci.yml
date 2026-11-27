@@ -163,6 +163,11 @@ jobs:
       - name: Verify client generic RFC capture end to end
         run: npm run test:e2e -- clientes-rfc-genericos.spec.js --output=test-results-rfc
 
+      - name: Verify notification editor and HTML previews
+        env:
+          E2E_FRESH_DATABASE: "true"
+        run: npm run test:e2e -- notificaciones.spec.js communications.spec.js documentos-editor.spec.js consulta-versiones.spec.js --output=test-results-notificaciones
+
       - name: Upload browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -172,6 +177,7 @@ jobs:
             test-results/
             test-results-gracia/
             test-results-tablero/
+            test-results-notificaciones/
             playwright-report/
             test-results-rfc/
             test-results-historico/

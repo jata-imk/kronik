@@ -9,10 +9,10 @@ final class SmsText
     private const EXTENDED = "\f^{}\\[~]|€";
 
     /** Counts encoded units and packs complete characters, including extension escapes/surrogates. */
-    public function measure(string $text): array
+    public function measure(string $text, bool $detailed = false): array
     {
         if ($text === '' || ! mb_check_encoding($text, 'UTF-8')) {
-            return ['segments' => 0, 'unicode' => false];
+            return $this->result(0, false, 0, $detailed);
         }
         $characters = mb_str_split($text);
         $unicode = false;
@@ -26,7 +26,7 @@ final class SmsText
             ? strlen(mb_convert_encoding($character, 'UTF-16BE', 'UTF-8')) / 2
             : (str_contains(self::EXTENDED, $character) ? 2 : 1), $characters);
         if (array_sum($units) <= ($unicode ? 70 : 160)) {
-            return ['segments' => 1, 'unicode' => $unicode];
+            return $this->result(1, $unicode, (int) array_sum($units), $detailed);
         }
         $capacity = $unicode ? 67 : 153;
         $segments = 1;
@@ -39,6 +39,11 @@ final class SmsText
             $used += $length;
         }
 
-        return ['segments' => $segments, 'unicode' => $unicode];
+        return $this->result($segments, $unicode, (int) array_sum($units), $detailed);
+    }
+
+    private function result(int $segments, bool $unicode, int $units, bool $detailed): array
+    {
+        return ['segments' => $segments, 'unicode' => $unicode] + ($detailed ? ['units' => $units, 'encoding' => $unicode ? 'Unicode (UTF-16)' : 'GSM-7'] : []);
     }
 }

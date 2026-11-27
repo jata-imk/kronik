@@ -155,3 +155,13 @@ El trabajo con fakes no valida una ruta real ni habilita operaciones con dinero.
 La [Agent Note](../agent-notes/comunicaciones-notificaciones.md) mantiene SHA, PR,
 pruebas/review y el prompt vigente. No cerrar la iniciativa hasta el barrido final
 y la resolución o identificación expresa de pendientes externos.
+
+## Resolución de I3 — 26/11/2026
+
+Confirmado por José: varias plantillas globales seleccionables para SMS y correo. WhatsApp conserva su flujo. Catálogo/versiones propios, previas texto/HTML, HTML documental continuo y PDF explícito según [ADR 0051](adr-0051-notificaciones-globales-y-previas-html.md). No hay migración de textos desechables. Evidencia y estado final se registran en la Agent Note; I4 mantiene el barrido acumulado contra ecb9d4a.
+
+I3 publicado en [PR #96](https://github.com/jata-imk/kronik/pull/96), sin integrar.
+Código revisado 6a48765: review medium sin regresiones accionables, pre-push
+1,160 pruebas backend / 49,501 aserciones y build, frontend 184 pruebas,
+E2E aislados aprobados. La Agent Note enlaza evidencia por SHA y prompt I4;
+I2 externo y piloto siguen pendientes. No se declara cierre de la iniciativa.

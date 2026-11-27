@@ -43,15 +43,18 @@ test('la gestión valida elegibilidad y plantillas; la prueba real queda bloquea
     $data = ['event_type' => 'payment_received', 'channel' => 'email', 'enabled' => true,
         'timezone' => 'America/Mexico_City', 'window_start' => '09:00', 'window_end' => '20:00',
         'daily_limit' => 1, 'subject' => 'Pago recibido', 'body' => 'Hola {nombre}, registramos tu pago.'];
-    $this->put(route('comunicaciones.rules.update'), [...$data, 'body' => 'Saldo {importe}'])->assertSessionHasErrors('body');
+    $data['notification_template_id'] = notificationTemplateQa($data)->id;
+    $this->put(route('comunicaciones.rules.update'), [...$data, 'notification_template_id' => null])->assertSessionHasErrors('notification_template_id');
     $this->put(route('comunicaciones.rules.update'), [...$data, 'window_end' => '08:00'])
         ->assertSessionHasErrors(['window_end' => 'El campo fin de la ventana debe ser posterior a inicio de la ventana.']);
     $this->put(route('comunicaciones.rules.update'), $data)->assertSessionHasNoErrors();
     expect(CommunicationRule::sole()->template_version)->toBe(1);
-    $this->put(route('comunicaciones.rules.update'), [...$data, 'body' => 'Gracias por tu pago, {nombre}.'])->assertSessionHasNoErrors();
+    $replacement = notificationTemplateQa([...$data, 'body' => 'Gracias por tu pago, {nombre}.']);
+    $this->put(route('comunicaciones.rules.update'), [...$data, 'notification_template_id' => $replacement->id])->assertSessionHasNoErrors();
     expect(CommunicationRule::sole()->template_version)->toBe(2);
     expect(Activity::where('event', 'communication.rule_configured')->count())->toBe(2);
     $dueRule = [...$data, 'event_type' => 'upcoming_due', 'lead_days' => 0];
+    $dueRule['notification_template_id'] = notificationTemplateQa($dueRule)->id;
     $this->put(route('comunicaciones.rules.update'), $dueRule)->assertSessionHasErrors('lead_days');
     $this->put(route('comunicaciones.rules.update'), [...$dueRule, 'lead_days' => 31])->assertSessionHasErrors('lead_days');
     $this->put(route('comunicaciones.rules.update'), [...$dueRule, 'lead_days' => 7])->assertSessionHasNoErrors();
@@ -127,3 +130,44 @@ test('la comprobación de conexión consulta APIs sin enviar mensajes ni confund
     Http::assertNotSent(fn ($request) => $request->method() !== 'GET');
     expect(Activity::where('event', 'communication.test_sent')->count())->toBe(2);
 });
+
+test('WhatsApp conserva texto local validación y cancelación diferida sin usar catálogo global', function () {
+    Http::preventStrayRequests();
+    Mail::fake();
+    [$actor, $credit, $event] = communicationReadyPayment($this);
+    $this->actingAs($actor);
+    $data = ['event_type' => 'payment_received', 'channel' => 'whatsapp', 'enabled' => true,
+        'timezone' => 'America/Mexico_City', 'window_start' => '09:00', 'window_end' => '20:00', 'daily_limit' => 1,
+        'body' => 'Aviso {} para {nombre}.', 'external_template_name' => 'pago_qa',
+        'external_template_locale' => 'es_MX', 'external_template_status' => 'approved'];
+    $this->put(route('comunicaciones.rules.update'), $data)->assertSessionHasNoErrors();
+    $rule = CommunicationRule::where('channel', 'whatsapp')->sole();
+    $delivery = App\Models\CommunicationDelivery::create(['team_id' => $event->team_id, 'communication_event_id' => $event->id,
+        'cliente_id' => $credit->cliente_id, 'credito_id' => $credit->id, 'channel' => 'whatsapp',
+        'recipient_hash' => str_repeat('a', 64), 'template_version' => 1, 'status' => 'prepared']);
+    $this->put(route('comunicaciones.rules.update'), [...$data, 'body' => 'Otro aviso {} para {nombre}.'])->assertSessionHasNoErrors();
+    expect($rule->fresh()->notification_template_id)->toBeNull()->and($rule->fresh()->template_version)->toBe(2)
+        ->and($delivery->fresh()->status)->toBe('prepared')->and(App\Models\NotificationTemplate::count())->toBe(1);
+    Http::assertNothingSent();
+    Mail::assertNothingSent();
+});
+
+test('permite desactivar reglas sin versión activa pero impide volver a habilitarlas', function ($channel, $missing) {
+    Http::preventStrayRequests();
+    Mail::fake();
+    $actor = actingAsSuperAdmin();
+    $this->actingAs($actor);
+    $template = $missing ? null : notificationTemplateQa(['channel' => $channel], 'retired');
+    $data = ['event_type' => 'payment_received', 'channel' => $channel, 'enabled' => true,
+        'timezone' => 'America/Mexico_City', 'window_start' => '09:00', 'window_end' => '20:00',
+        'daily_limit' => 1, 'notification_template_id' => $template?->id];
+    $rule = CommunicationRule::create([...$data, 'team_id' => $actor->current_team_id, 'body' => '']);
+    $this->put(route('comunicaciones.rules.update'), [...$data, 'enabled' => false])->assertSessionHasNoErrors();
+    expect($rule->fresh()->enabled)->toBeFalse()
+        ->and($rule->fresh()->notification_template_id)->toBe($template?->id);
+    expect(Activity::where('event', 'communication.rule_configured')->count())->toBe(1);
+    $this->put(route('comunicaciones.rules.update'), $data)->assertSessionHasErrors('notification_template_id');
+    expect($rule->fresh()->enabled)->toBeFalse();
+    Http::assertNothingSent();
+    Mail::assertNothingSent();
+})->with(['sms', 'email'])->with([true, false]);

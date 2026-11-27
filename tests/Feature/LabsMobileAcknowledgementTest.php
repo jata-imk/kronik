@@ -4,7 +4,6 @@ use App\Models\Activity;
 use App\Models\CommunicationChannel;
 use App\Models\CommunicationDelivery;
 use App\Models\CommunicationEvent;
-use App\Models\CommunicationRule;
 use App\Services\ActivityLogService;
 use App\Services\Communications\CommunicationOrchestrator;
 use App\Services\Communications\LabsMobileAcknowledgement;
@@ -35,7 +34,7 @@ function labsAckFixture($test): array
     $credit->cliente->update(['telefono_codigo_pais' => '52', 'telefono' => '5512345678']);
     CommunicationChannel::create(['team_id' => $credit->team_id, 'channel' => 'sms', 'provider' => 'labsmobile',
         'eligibility' => 'approved', 'enabled' => true]);
-    CommunicationRule::create(['team_id' => $credit->team_id, 'event_type' => 'payment_received', 'channel' => 'sms',
+    communicationRuleQa(['team_id' => $credit->team_id, 'event_type' => 'payment_received', 'channel' => 'sms',
         'enabled' => true, 'timezone' => 'America/Mexico_City', 'window_start' => '00:00:00', 'window_end' => '23:59:59',
         'daily_limit' => 5, 'body' => 'Hola {nombre}, registramos tu pago.']);
     $service = app(CommunicationOrchestrator::class);

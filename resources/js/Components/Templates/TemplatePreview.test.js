@@ -1,0 +1,34 @@
+import { flushPromises, mount } from "@vue/test-utils";
+import { expect, it, vi } from "vitest";
+import axios from "axios";
+import TemplatePreview from "./TemplatePreview.vue";
+vi.mock("axios", () => ({ default: { request: vi.fn(), isCancel: () => false } }));
+it("cancela peticiones y descarta respuestas tardías al cambiar versión", async () => {
+    let first, second;
+    axios.request.mockImplementationOnce(() => new Promise(resolve => { first = resolve; })).mockImplementationOnce(() => new Promise(resolve => { second = resolve; }));
+    const w = mount(TemplatePreview, { props: { source: { method: "get", url: "/version/1" }, identity: "1" } });
+    expect(axios.request).not.toHaveBeenCalled();
+    await w.get("button").trigger("click");
+    const signal = axios.request.mock.calls[0][0].signal;
+    await w.setProps({ source: { method: "get", url: "/version/2" }, identity: "2" });
+    expect(signal.aborted).toBe(true);
+    await w.get("button").trigger("click");
+    second({ data: { format: "html", html: "<p>Versión dos</p>", notice: "Sintética" } });
+    await flushPromises();
+    first({ data: { format: "text", body: "Versión anterior" } });
+    await flushPromises();
+    expect(w.get("iframe").attributes("srcdoc")).toContain("Versión dos");
+    expect(w.get("iframe").attributes("sandbox")).toBe("");
+    expect(w.text()).not.toContain("Versión anterior");
+    await w.setProps({ source: null, identity: "sin-permiso" });
+    expect(w.find("iframe").exists()).toBe(false);
+    w.unmount();
+});
+it("texto plano se presenta literalmente sin interpretar etiquetas", async () => {
+    axios.request.mockResolvedValueOnce({ data: { format: "text", body: "á <script>alert(1)</script> &amp;", measurement: { segments: 1, units: 20, encoding: "Unicode" } } });
+    const w = mount(TemplatePreview, { props: { source: { url: "/sms" } } });
+    await w.get("button").trigger("click"); await flushPromises();
+    expect(w.get("pre").text()).toBe("á <script>alert(1)</script> &amp;");
+    expect(w.find("script").exists()).toBe(false);
+    expect(w.find("iframe").exists()).toBe(false);
+});

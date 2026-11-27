@@ -8,5 +8,10 @@ class CommunicationRule extends Model
 {
     protected $guarded = [];
 
+    public function notificationTemplate()
+    {
+        return $this->belongsTo(NotificationTemplate::class);
+    }
+
     protected $casts = ['enabled' => 'boolean', 'lead_days' => 'integer', 'daily_limit' => 'integer', 'template_version' => 'integer'];
 }

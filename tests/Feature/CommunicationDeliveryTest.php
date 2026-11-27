@@ -22,7 +22,7 @@ function communicationReadyPayment($test): array
     $credit->cliente->update(['email' => 'acreditada@example.test']);
     CommunicationChannel::create(['team_id' => $credit->team_id, 'channel' => 'email', 'provider' => 'smtp',
         'sender' => 'avisos@example.test', 'eligibility' => 'approved', 'eligibility_reference' => 'QA-1', 'enabled' => true]);
-    CommunicationRule::create(['team_id' => $credit->team_id, 'event_type' => 'payment_received', 'channel' => 'email',
+    communicationRuleQa(['team_id' => $credit->team_id, 'event_type' => 'payment_received', 'channel' => 'email',
         'enabled' => true, 'timezone' => 'America/Mexico_City', 'window_start' => '09:00:00', 'window_end' => '20:00:00',
         'daily_limit' => 1, 'subject' => 'Pago recibido', 'body' => 'Hola {nombre}, registramos tu pago.', 'template_version' => 1]);
 
@@ -169,7 +169,7 @@ test('una plantilla de Meta distinta a la aprobada localmente se rechaza sin pub
         'sender' => '123456', 'eligibility' => 'approved', 'enabled' => true,
         'secret' => json_encode(['token' => 'token-qa', 'api_version' => 'v27.0', 'waba_id' => '654321',
             'phone_number_id' => '123456', 'app_secret' => 'app-qa', 'verify_token' => 'verify-qa'])]);
-    CommunicationRule::create(['team_id' => $credit->team_id, 'event_type' => 'payment_received', 'channel' => 'whatsapp',
+    communicationRuleQa(['team_id' => $credit->team_id, 'event_type' => 'payment_received', 'channel' => 'whatsapp',
         'enabled' => true, 'timezone' => 'America/Mexico_City', 'window_start' => '09:00:00', 'window_end' => '20:00:00',
         'daily_limit' => 1, 'body' => 'Hola {nombre}, pago registrado.', 'template_version' => 1,
         'external_template_name' => 'pago_qa', 'external_template_locale' => 'es_MX', 'external_template_status' => 'approved']);

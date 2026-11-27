@@ -43,7 +43,8 @@ class CommunicationController extends Controller
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d'],
         ]);
-        $history = CommunicationDelivery::where('team_id', $teamId)
+        $versionSummary = fn ($query) => $query->select('notification_template_versions.id', 'notification_template_versions.notification_template_id', 'notification_template_versions.number', 'notification_template_versions.state');
+        $history = CommunicationDelivery::with('notificationVersion:id,notification_template_id,number,state')->where('team_id', $teamId)
             ->whereHas('event', fn ($query) => $query->where('sucursal_id', $request->user()->current_sucursal_id)
                 ->when($filters['event_type'] ?? null, fn ($query, $event) => $query->where('event_type', $event)))
             ->when($filters['channel'] ?? null, fn ($query, $channel) => $query->where('channel', $channel))
@@ -69,7 +70,9 @@ class CommunicationController extends Controller
             'capabilities' => ['email' => app(EmailTransport::class)->capabilities(),
                 'sms' => app(LabsMobileSmsTransport::class)->capabilities(),
                 'whatsapp' => app(MetaWhatsAppTransport::class)->capabilities()],
-            'rules' => CommunicationRule::where('team_id', $teamId)->orderBy('event_type')->get(),
+            'canReadNotifications' => $request->user()->can('read plantillas-notificaciones'),
+            'notificationTemplates' => \App\Models\NotificationTemplate::whereHas('activeVersion')->with(['activeVersion' => $versionSummary])->orderBy('name')->get(['id', 'name', 'channel', 'event_type']),
+            'rules' => CommunicationRule::with(['notificationTemplate:id,name,channel,event_type', 'notificationTemplate.activeVersion' => $versionSummary])->where('team_id', $teamId)->orderBy('event_type')->get(),
             'ruleDefaults' => [
                 'leadDays' => config('comunicaciones.default_lead_days'),
                 'maxLeadDays' => config('comunicaciones.max_lead_days'),
@@ -85,7 +88,7 @@ class CommunicationController extends Controller
                 ->latest()->limit(30)->get()->map(fn ($item) => $item->only(['id', 'cliente_id', 'channel', 'purpose', 'source', 'granted_at', 'revoked_at'])),
             'deliveries' => $history->paginate(20)->withQueryString()->through(fn ($item) => $item->only(['id', 'communication_event_id',
                 'cliente_id', 'credito_id', 'channel', 'status', 'reason', 'attempted_at', 'accepted_at', 'delivered_at',
-                'read_at', 'queued_at', 'created_at', 'provider_message_id', 'provider', 'provider_correlation_id', 'template_version']) + ['event_type' => $item->event?->event_type]),
+                'read_at', 'queued_at', 'created_at', 'provider_message_id', 'provider', 'provider_correlation_id', 'template_version', 'notification_template_version_id']) + ['notification_version' => $item->notificationVersion, 'event_type' => $item->event?->event_type]),
             'filters' => $filters,
             'activeTab' => in_array($request->query('tab'), ['channels', 'rules', 'consents', 'history'], true)
                 ? $request->query('tab') : 'channels',
@@ -104,31 +107,9 @@ class CommunicationController extends Controller
         return back()->with('success', 'Canal actualizado.');
     }
 
-    public function configureRule(ConfigureRuleRequest $request, ActivityLogService $activity)
+    public function configureRule(ConfigureRuleRequest $request, \App\Services\Communications\CommunicationRuleService $service)
     {
-        $data = $request->validated();
-        foreach ([$data['subject'] ?? '', $data['body']] as $text) {
-            preg_match_all('/\{([^{}]+)\}/u', $text, $matches);
-            if (array_diff($matches[1], ['nombre', 'fecha_vencimiento'])) {
-                throw ValidationException::withMessages(['body' => 'La plantilla contiene una variable no permitida.']);
-            }
-        }
-        $teamId = $request->user()->current_team_id;
-        DB::transaction(function () use ($data, $teamId, $request, $activity) {
-            $item = CommunicationRule::firstOrNew(['team_id' => $teamId, 'event_type' => $data['event_type'], 'channel' => $data['channel']]);
-            $old = $item->exists ? [$item->subject, $item->body, $item->external_template_name, $item->external_template_locale] : null;
-            if ($data['event_type'] === 'payment_received') {
-                $data['lead_days'] = config('comunicaciones.default_lead_days');
-            }
-            $item->fill($data);
-            if ($old && $old !== [$item->subject, $item->body, $item->external_template_name, $item->external_template_locale]) {
-                $item->template_version++;
-            }
-            $item->save();
-            $activity->log(ActivityEvent::CommunicationRuleConfigured, 'Regla de comunicación configurada', $item,
-                ['state' => $item->enabled ? 'enabled' : 'disabled'], causer: $request->user(),
-                teamId: $teamId, sucursalId: $request->user()->current_sucursal_id, inheritActorContext: false);
-        });
+        $service->save($request->validated(), $request->user());
 
         return back()->with('success', 'Regla y plantilla actualizadas.');
     }

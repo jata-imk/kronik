@@ -59,7 +59,7 @@ test("editor conserva listas, cursor, recursos y PDF multipágina", async ({ pag
     await page.getByRole("button", {name: "Insertar logo-qa", exact: true}).click();
     await expect(editor.locator(`img[data-recurso-id="${resourceId}"]`)).toHaveCount(1);
     await page.getByLabel("Marca de agua (opcional)").fill("PRUEBA QA");
-    await page.getByRole("button", {name: "Previsualizar cambios"}).click();
+    await page.getByRole("button", {name: "Previsualizar PDF de los cambios"}).click();
     await expect(page.getByLabel("Previsualización segura de la plantilla")).toBeVisible({timeout: 40_000});
     await expect(page.getByText("Página 1 / 2", {exact:true})).toBeVisible();
     await page.getByLabel("Página 2 de 2").scrollIntoViewIfNeeded();

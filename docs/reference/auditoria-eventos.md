@@ -8,7 +8,7 @@ y `producto_crediticio.*`; prellenar no es una acción auditable nueva.
 de condiciones e históricos. El parámetro no se copia como valor al log.
 
 Reconciliación técnica del 05/11/2026, continuidad `80b2f92`, base funcional
-`0707ce9`. Esta es la única matriz de eventos. El inventario parte de los 20
+`0707ce9`. Esta es la única matriz de eventos. El inventario parte del catálogo vigente de
 módulos de `ModulesAndPermissionsSeeder` y añade autenticación, perfil, API y
 procesos automáticos. No presupone el catálogo de una instalación desplegada.
 La [Agent Note](../agent-notes/auditoria-actividad.md) acredita pruebas, commit,
@@ -73,13 +73,18 @@ un solo código por acción, sin crear catálogos paralelos.
 
 | Módulo | Acción/disparador | Código | Actor/iniciador | Sujeto | Resultado | Equipo/sucursal | Metadatos permitidos | Consulta | Estado | Emisor | Prueba |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `plantillas-notificaciones` | Crear plantilla global | `notification_template.created` | U | Plantilla global; versión en related | Aplicado una vez | Equipo/sucursal originales del actor; recurso global | related, state, result | Q/G | Implementado I3; integración pendiente | NotificationTemplateService::create | NotificationTemplateTest |
+| `plantillas-notificaciones` | Guardar cambios efectivos en borrador | `notification_template.updated` | U | Plantilla global; versión en related | Aplicado una vez | Equipo/sucursal originales del actor; recurso global | related, state, result | Q/G | Implementado I3; integración pendiente | NotificationTemplateService::update | NotificationTemplateTest |
+| `plantillas-notificaciones` | Duplicar una versión exacta en borrador | `notification_template.versioned` | U | Plantilla global; versión en related | Aplicado una vez | Equipo/sucursal originales del actor; recurso global | related, state, result | Q/G | Implementado I3; integración pendiente | NotificationTemplateService::duplicate | NotificationTemplateTest |
+| `plantillas-notificaciones` | Activar borrador y sustituir activa anterior | `notification_template.activated` | U | Plantilla global; versión en related | Aplicado una vez | Equipo/sucursal originales del actor; recurso global | related, state, result | Q/G | Implementado I3; integración pendiente | NotificationTemplateService::activate | NotificationTemplateTest |
+| `plantillas-notificaciones` | Retirar versión activa explícita o sustituida | `notification_template.retired` | U | Plantilla global; versión en related | Aplicado una vez | Equipo/sucursal originales del actor; recurso global | related, state, result | Q/G | Implementado I3; integración pendiente | NotificationTemplateService::retireLocked | NotificationTemplateTest |
 | `Notificaciones internas` | Operador marca como leído un aviso propio | `operator_notification.read` | U | Aviso interno | Leído una vez | Contexto original del aviso | result | Q | Implementado localmente, pendiente PR/QA | OperatorNotificationService::markRead | OperatorNotificationsTest |
 | `comunicaciones` | Pago QA o vencimiento elegible prepara candidato | `communication.event_prepared` | S; pago iniciador acreditado por evento del crédito | Evento candidato | Preparado | Equipo estable del crédito o null histórico; sucursal del crédito | related, state | Q/G | Implementado localmente, pendiente PR/QA | CommunicationEventService::paymentRecorded/reconcileCreditReminders | CreditoPagosTest, CommunicationReadinessTest |
 | `comunicaciones` | Reverso o lectura desactualizada cancela candidato | `communication.event_cancelled` | S; pago iniciador acreditado por evento del crédito | Evento candidato | Cancelado | Equipo estable del crédito o null histórico; sucursal del crédito | related, state | Q/G | Implementado localmente, pendiente PR/QA | CommunicationEventService::paymentReversed/reconcileCreditReminders | CreditoPagosTest |
 | `comunicaciones` | Operador registra autorización de contacto | `communication.consent_granted` | U | Consentimiento | Registrado | Equipo seleccionado y sucursal del cliente | state | Q | Implementado localmente, pendiente PR/QA | CommunicationOrchestrator::grantConsent | CommunicationManagementTest |
 | `comunicaciones` | Operador revoca autorización | `communication.consent_revoked` | U | Consentimiento | Revocado | Equipo original y sucursal del cliente | state | Q | Implementado localmente, pendiente PR/QA | CommunicationOrchestrator::revokeConsent | CommunicationManagementTest |
 | `comunicaciones` | Operador configura o deshabilita canal | `communication.channel_configured` | U | Canal | Habilitado/deshabilitado | Equipo seleccionado y sucursal del actor | state, provider | Q | Implementado localmente, pendiente PR/QA | CommunicationChannelService::configure | CommunicationManagementTest, LabsMobileConfigurationTest |
-| `comunicaciones` | Operador configura regla y plantilla | `communication.rule_configured` | U | Regla | Habilitada/deshabilitada; versión conservada | Equipo seleccionado y sucursal del actor | state | Q | Implementado localmente, pendiente PR/QA | CommunicationController::configureRule | CommunicationManagementTest |
+| `comunicaciones` | Operador configura regla y plantilla | `communication.rule_configured` | U | Regla | Habilitada/deshabilitada; versión conservada | Equipo seleccionado y sucursal del actor | state | Q | Implementado localmente, pendiente PR/QA | CommunicationRuleService::save | CommunicationManagementTest |
 | `comunicaciones` | Operador solicita prueba de correo o consulta de conexión SMS/WhatsApp | `communication.test_sent` | U | Canal | Aceptado/incierto/fallido; consulta de API no equivale a entrega | Equipo seleccionado y sucursal del actor | state, result | Q | Implementado localmente, pendiente PR/QA | CommunicationController::sendTest/checkConnection | CommunicationManagementTest, LabsMobileConfigurationTest |
 | `comunicaciones` | Regla, canal y consentimiento preparan salida | `communication.delivery_prepared` | S | Salida | Preparada | Equipo/sucursal del evento | state | Q | Implementado localmente, pendiente PR/QA | CommunicationOrchestrator::prepare | CommunicationDeliveryTest, LabsMobileSmsTest |
 | `comunicaciones` | Salida pasa a cola | `communication.delivery_queued` | S | Salida | En cola | Equipo/sucursal del evento | state | Q | Implementado localmente, pendiente PR/QA | CommunicationOrchestrator::process | CommunicationDeliveryTest, LabsMobileSmsTest |
@@ -356,3 +361,16 @@ emiten actividad; duplicados y desorden sin avance conservan evidencia sin
 actividad adicional. No hay evento de recepción externa porque no existe entrada
 pública autenticada. El [contrato](seguimiento-sms.md) y las pruebas cubren datos
 permitidos, cambios de preferencias, ausencia de teléfono/texto/secretos y rollback.
+
+## Notificaciones globales I3
+
+El módulo `plantillas-notificaciones` incorpora cinco eventos de gestión en la
+matriz anterior; leer catálogo/versiones y previsualizar texto/HTML no son lecturas
+expresamente auditables y no crean actividad adicional. La gestión usa actor y
+contexto capturados, sujeto plantilla global y versión por `related`.
+Las cancelaciones derivadas reutilizan `communication.delivery_cancelled` con
+contexto original de cada salida y el operador iniciador cuando corresponde.
+Los snapshots cifrados permanecen en dominio, nunca en metadatos.
+Estado, versión, cancelaciones y actividad se confirman o revierten juntos.
+Pruebas: NotificationTemplateTest y DocumentoEditorTest; no acredita integración
+ni cumplimiento legal. No se modifica la auditoría de correo, Meta o PDF.

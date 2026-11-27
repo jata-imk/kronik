@@ -171,6 +171,15 @@ Route::middleware([
     Route::post('plantillas-documentos/{plantilla}/versiones/{version}/duplicar', [DocumentoPlantillaController::class, 'versionar'])->name('plantillas-documentos.versionar');
     Route::post('plantilla-documento-versiones/{version}/activar', [DocumentoPlantillaController::class, 'activar'])->name('plantillas-documentos.activar');
     Route::post('plantilla-documento-versiones/{version}/retirar', [DocumentoPlantillaController::class, 'retirar'])->name('plantillas-documentos.retirar');
+    Route::get('comunicaciones/notificaciones', [\App\Http\Controllers\NotificationTemplateController::class, 'index'])->name('notificaciones.index');
+    Route::post('comunicaciones/notificaciones', [\App\Http\Controllers\NotificationTemplateController::class, 'store'])->name('notificaciones.store');
+    Route::put('comunicaciones/notificaciones/{template}/versiones/{version}', [\App\Http\Controllers\NotificationTemplateController::class, 'update'])->name('notificaciones.update');
+    Route::post('comunicaciones/notificaciones/{template}/versiones/{version}/duplicar', [\App\Http\Controllers\NotificationTemplateController::class, 'duplicate'])->name('notificaciones.duplicate');
+    Route::post('comunicaciones/notificaciones/versiones/{version}/activar', [\App\Http\Controllers\NotificationTemplateController::class, 'activate'])->name('notificaciones.activate');
+    Route::post('comunicaciones/notificaciones/versiones/{version}/retirar', [\App\Http\Controllers\NotificationTemplateController::class, 'retire'])->name('notificaciones.retire');
+    Route::get('comunicaciones/notificaciones/versiones/{version}/previsualizar', [\App\Http\Controllers\NotificationTemplateController::class, 'preview'])->middleware('throttle:document-preview')->name('notificaciones.preview');
+    Route::post('comunicaciones/notificaciones/previsualizar', [\App\Http\Controllers\NotificationTemplateController::class, 'previewDraft'])->middleware('throttle:document-preview')->name('notificaciones.preview-draft');
+    Route::post('plantillas-documentos/previsualizar-html', [DocumentoPlantillaController::class, 'previewDraft'])->middleware('throttle:document-preview')->name('plantillas-documentos.preview-html-draft');
     Route::get('plantilla-documento-versiones/{version}/previsualizar', [DocumentoPlantillaController::class, 'preview'])->name('plantillas-documentos.preview');
 
     Route::post('clientes/{cliente}/documentos-generados', [DocumentoGeneradoController::class, 'store'])->name('documentos-generados.store');

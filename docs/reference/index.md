@@ -48,3 +48,5 @@
 - [Escenarios SIC QA](sic-escenarios-qa.md).
 
 - [Fechas efectivas y captura histórica](captura-historica-creditos.md).
+
+- [Plantillas globales de Notificaciones: versiones, permisos y previas](plantillas-notificaciones.md).

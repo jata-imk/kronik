@@ -72,6 +72,7 @@ it("consulta no ofrece ni ejecuta configuración por teclado o manejador", async
     expect(wrapper.find("form").exists()).toBe(false);
     await wrapper.trigger("keydown", { key: "Enter" });
     wrapper.vm.saveChannel();
+    wrapper.vm.saveRule();
     wrapper.vm.checkConnection();
     expect(sent).not.toHaveBeenCalled();
 });
@@ -86,4 +87,33 @@ it("recargar la misma selección conserva errores y retirar permiso cancela edic
     expect(wrapper.find("form").exists()).toBe(false);
     wrapper.vm.saveChannel();
     expect(sent).not.toHaveBeenCalled();
+});
+
+it("una validación de regla conserva captura y errores hasta cambiar contexto o permisos", async () => {
+    const rule = { id: 4, event_type: "payment_received", channel: "email", enabled: true, timezone: "America/Mexico_City", window_start: "09:00:00", window_end: "20:00:00", daily_limit: 1, notification_template_id: 8 };
+    const wrapper = render({ rules: [rule], contextoOperativo: { team_id: 1, sucursal_id: 1 } });
+    wrapper.vm.ruleForm.window_end = "08:00";
+    wrapper.vm.ruleForm.errors.window_end = "El fin debe ser posterior al inicio";
+    await wrapper.setProps({ rules: [{ ...rule }] });
+    expect(wrapper.vm.ruleForm.window_end).toBe("08:00");
+    expect(wrapper.vm.ruleForm.errors.window_end).toContain("posterior");
+    await wrapper.setProps({ contextoOperativo: { team_id: 2, sucursal_id: 1 } });
+    expect(wrapper.vm.ruleForm.window_end).toBe("20:00");
+    expect(wrapper.vm.ruleForm.errors).toEqual({});
+    await wrapper.setProps({ canManage: false });
+    wrapper.vm.saveRule();
+    expect(sent).not.toHaveBeenCalled();
+});
+
+
+it("una regla sin versión activa puede desactivarse sin elegir reemplazo", async () => {
+    const wrapper = render({ activeTab: "rules", rules: [{ id: 4, event_type: "payment_received", channel: "email", enabled: true, notification_template_id: 8, notification_template: { name: "Aviso retirado", active_version: null } }] });
+    const selector = wrapper.findAll("select").find(item => item.text().includes("Seleccione una plantilla activa"));
+    expect(selector.text()).toContain("Aviso retirado · Sin versión activa");
+    expect(selector.attributes("required")).toBeDefined();
+    wrapper.vm.ruleForm.enabled = false;
+    await wrapper.vm.$nextTick();
+    expect(selector.attributes("required")).toBeUndefined();
+    wrapper.vm.saveRule();
+    expect(sent).toHaveBeenCalledWith("comunicaciones.rules.update", expect.objectContaining({ enabled: false, notification_template_id: 8 }));
 });

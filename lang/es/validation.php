@@ -88,6 +88,10 @@ return [
     ],
 
     'attributes' => [
+        'format' => 'formato',
+        'version_id' => 'versión',
+        'plantilla_id' => 'plantilla',
+        'notification_template_id' => 'plantilla global de notificación',
         'channel' => 'canal de comunicación',
         'sender' => 'remitente',
         'secret' => 'credenciales del proveedor',

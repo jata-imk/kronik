@@ -27,7 +27,7 @@ La presentación por versión contiene `formato: 2` y `marca_agua` (texto opcion
 
 La biblioteca global recibe imágenes privadas PNG/JPEG de hasta 2 MB y 2048 × 2048 px, recodificadas por GD a PNG. Recursos UUID inmutables y referencias por versión evitan cambios retroactivos de logotipos. Se permite ancho de 24–650 px y texto alternativo de hasta 160 caracteres. No hay URLs externas, SVG ni eliminación de recursos desde la aplicación. La carga registra un evento de auditoría sin contenido ni rutas del archivo.
 
-Las previsualizaciones guardada y sin guardar usan PDF real con datos sintéticos, sin crear registros de generación. PDF.js presenta todas las páginas en scroll continuo y conserva navegación por página, zoom y ajuste al ancho. Cada solicitud exige permiso de lectura; previsualizar cambios y cargar recursos exige además creación o actualización. Ambos endpoints de trabajo tienen límite de 10 solicitudes/minuto/usuario. Ver [guía de edición y despliegue](../how-to/editar-plantillas-documentales.md).
+Las previsualizaciones guardada y sin guardar ofrecen HTML continuo con datos sintéticos, sin crear registros de generación ni invocar el renderer PDF. PDF real queda como acción explícita opcional. PDF.js presenta todas las páginas en scroll continuo y conserva navegación por página, zoom y ajuste al ancho. Cada solicitud exige permiso de lectura; previsualizar cambios y cargar recursos exige además creación o actualización. Ambos endpoints de trabajo tienen límite de 10 solicitudes/minuto/usuario. Ver [guía de edición y despliegue](../how-to/editar-plantillas-documentales.md).
 
 ## Archivos privados
 
@@ -63,9 +63,11 @@ página, conservando los permisos y la naturaleza global o por equipo del módul
 
 Ver versión abre el editor completo de la versión seleccionada en consulta,
 con encabezado, cuerpo, pie, variables y presentación. Quill queda deshabilitado,
-sin biblioteca, inserciones ni envío. La vista PDF usa el GET del ID guardado;
+sin biblioteca, inserciones ni envío. Las vistas HTML y PDF usan GET del ID guardado;
 la previsualización de cambios sigue reservada a edición. Estado de plantilla y
 estado de versión se identifican por separado.
 
 Actualizar/activar/retirar serializan por plantilla y revalidan la versión
 persistida, rechazando instancias desactualizadas. Ver [contrato transversal](consulta-edicion-historicos.md).
+
+La vista HTML reutiliza compilador, saneamiento, recursos verificados y estilos/fuentes locales del PDF, en un iframe aislado. Los cambios sin guardar usan una ruta propia autorizada por creación o edición efectiva; la consulta usa el ID exacto. Ver [previas compartidas](plantillas-notificaciones.md#previsualización).
