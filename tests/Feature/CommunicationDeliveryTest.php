@@ -13,6 +13,37 @@ use Illuminate\Support\Facades\Mail;
 
 beforeEach(fn () => $this->withoutVite());
 
+test('el límite diario usa la zona de almacenamiento también durante la madrugada', function () {
+    [$actor, $credit, $event] = communicationReadyPayment($this);
+    $originalTimezone = date_default_timezone_get();
+    $originalConfigTimezone = config('app.timezone');
+    try {
+        config(['app.timezone' => 'America/Mexico_City', 'comunicaciones.send_enabled' => true]);
+        date_default_timezone_set('America/Mexico_City');
+        $this->travelTo(\Carbon\CarbonImmutable::parse('2027-02-01 01:00:00', 'America/Mexico_City'));
+        $event->update(['created_at' => now()]);
+        CommunicationRule::sole()->update(['window_start' => '00:00:00', 'window_end' => '23:59:59']);
+        $service = app(CommunicationOrchestrator::class);
+        $service->grantConsent($credit->cliente, $credit->team_id,
+            ['channel' => 'email', 'purpose' => 'operational', 'source' => 'QA', 'evidence_reference' => 'EVID-TZ'], $actor);
+        Mail::fake();
+        expect($service->prepare())->toBe(1);
+        $service->process();
+        expect($service->send(CommunicationDelivery::sole()->id))->toBeTrue();
+        CommunicationEvent::create(['event_key' => 'payment:timezone:'.\Illuminate\Support\Str::uuid(),
+            'event_type' => 'payment_received', 'team_id' => $credit->team_id, 'credito_id' => $credit->id,
+            'cliente_id' => $credit->cliente_id, 'sucursal_id' => $credit->sucursal_id, 'source_pago_id' => $event->source_pago_id]);
+        expect($service->prepare())->toBe(1);
+        $service->process();
+        $pending = CommunicationDelivery::latest('id')->firstOrFail();
+        expect($service->send($pending->id))->toBeFalse()->and($pending->fresh()->attempted_at)->toBeNull();
+        Mail::assertSentCount(1);
+    } finally {
+        date_default_timezone_set($originalTimezone);
+        config(['app.timezone' => $originalConfigTimezone]);
+    }
+});
+
 function communicationReadyPayment($test): array
 {
     [$actor, $credit, $data] = creditoPagableQa($test);

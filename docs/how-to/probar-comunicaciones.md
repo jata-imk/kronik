@@ -17,6 +17,27 @@ npm run test:e2e -- communications.spec.js
 ```
 
 El harness E2E fuerza ambas barreras cerradas y credenciales LabsMobile vacías.
+
+I4 añade `CommunicationSchemaTest` para migraciones I1–I3: instalación, rollback
+y reinstalación en otra conexión SQLite en memoria, conservando correo/Meta y sin
+DDL en la transacción original. La FK con nombre abreviado de I3 incluye sus
+columnas al retirarse para soportar también SQLite.
+
+`php tests/Concurrency/comunicaciones.php` requiere expresamente `APP_ENV=testing`
+y MariaDB `kronik_test`; rechaza otras bases. Dos workers con conexiones distintas,
+créditos diferentes y el mismo cliente disputan el cupo diario entre correo/SMS.
+Otra espera se cruza con un reverso real: el worker debe cancelar sin intento y
+la proyección debe conservar consistencia. Usa HTTP/correo fake, configuración
+sintética de proceso y barreras de sincronización. Ejecutarlo separado de Pest y
+de otros harness PHP; CI configura su MariaDB aislada. No trasladar sus banderas
+temporales al entorno operativo.
+
+El mismo harness cruza preparación del scheduler con un worker del mismo crédito:
+ambos adquieren crédito antes de plantilla, incluidas las comprobaciones de FK al
+insertar. Debe completar sin deadlock ni candidatos perdidos. La regresión E2E
+de política espera la respuesta del POST antes de comprobar la redirección y usa
+los mocks/diagnósticos de consola compartidos; conserva los pasos y las aserciones
+de consulta histórica, sin depender del proveedor IP externo.
 Las suites SMS bloquean HTTP no simulado. Ejecutar un solo proceso PHP de pruebas
 por checkout: los fixtures documentales reutilizan `Storage::fake('local')` y
 otro proceso puede limpiar sus archivos durante una prueba. Hacer la validación
@@ -64,3 +85,7 @@ restaura el Schema builder al terminar. No ejecutar DDL sobre la transacción de
 ## QA de I3
 
 Para SMS/correo, redactar y activar una plantilla global antes de configurar la regla. Los textos de prueba anteriores no se migran. La edición ya no ocurre dentro de cada regla. Seguir [el procedimiento de Notificaciones](editar-notificaciones.md), que incluye previas texto/HTML, versiones exactas y PDF explícito. WhatsApp conserva el recorrido anterior. Nuevos E2E: notificaciones.spec.js; mantener regresiones communications.spec.js, documentos-editor.spec.js y consulta-versiones.spec.js.
+
+La [guía de VPS](preparar-comunicaciones-vps.md) distingue actualización de rama,
+variables, reutilización de SMTP/ZeptoMail, prueba técnica de correo y pendientes
+externos de SMS/Meta. No ejecutar envíos reales como parte de la regresión I4.

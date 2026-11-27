@@ -82,10 +82,11 @@ class CommunicationController extends Controller
                 'dailyLimit' => config('comunicaciones.default_daily_limit'),
                 'maxDailyLimit' => config('comunicaciones.max_daily_limit'),
             ],
-            'consents' => CommunicationConsent::where('team_id', $teamId)->whereHas('cliente',
+            'consents' => CommunicationConsent::with('cliente:id,email,telefono_codigo_pais,telefono')->where('team_id', $teamId)->whereHas('cliente',
                 fn ($query) => $query->where('sucursal_id', $request->user()->current_sucursal_id))
                 ->when($filters['cliente_id'] ?? null, fn ($query, $client) => $query->where('cliente_id', $client))
-                ->latest()->limit(30)->get()->map(fn ($item) => $item->only(['id', 'cliente_id', 'channel', 'purpose', 'source', 'granted_at', 'revoked_at'])),
+                ->latest()->limit(30)->get()->map(fn ($item) => $item->only(['id', 'cliente_id', 'channel', 'purpose', 'source', 'granted_at', 'revoked_at'])
+                    + ['effective_status' => app(CommunicationOrchestrator::class)->consentStatus($item)]),
             'deliveries' => $history->paginate(20)->withQueryString()->through(fn ($item) => $item->only(['id', 'communication_event_id',
                 'cliente_id', 'credito_id', 'channel', 'status', 'reason', 'attempted_at', 'accepted_at', 'delivered_at',
                 'read_at', 'queued_at', 'created_at', 'provider_message_id', 'provider', 'provider_correlation_id', 'template_version', 'notification_template_version_id']) + ['notification_version' => $item->notificationVersion, 'event_type' => $item->event?->event_type]),

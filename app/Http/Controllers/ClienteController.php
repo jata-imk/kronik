@@ -122,7 +122,8 @@ class ClienteController extends Controller implements HasMiddleware
             'communicationConsents' => Gate::allows('read comunicaciones')
                 ? \App\Models\CommunicationConsent::where('team_id', $request->user()->current_team_id)
                     ->where('cliente_id', $cliente->id)->latest()->get()
-                    ->map(fn ($item) => $item->only(['id', 'channel', 'purpose', 'granted_at', 'revoked_at']))
+                    ->map(fn ($item) => $item->only(['id', 'channel', 'purpose', 'granted_at', 'revoked_at'])
+                        + ['effective_status' => app(\App\Services\Communications\CommunicationOrchestrator::class)->consentStatus($item, $cliente)])
                 : null,
             'canManageCommunications' => Gate::allows('manage comunicaciones') && Gate::allows('update', $cliente),
             'paises' => $paises,

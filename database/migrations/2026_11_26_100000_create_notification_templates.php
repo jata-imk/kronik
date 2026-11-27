@@ -46,7 +46,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('communication_deliveries', function (Blueprint $table) {
-            $table->dropForeign('comm_delivery_notification_version_fk');
+            $table->dropForeign('comm_delivery_notification_version_fk')->columns(['notification_template_version_id']);
             $table->dropColumn('notification_template_version_id');
             $table->dropColumn('message_snapshot');
         });

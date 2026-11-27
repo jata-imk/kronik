@@ -12,6 +12,30 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(fn () => $this->withoutVite());
 
+test('la consulta distingue consentimiento vigente contacto cambiado y revocado sin exponer el hash', function (string $channel, bool $removeContact) {
+    $admin = actingAsSuperAdmin();
+    $client = Cliente::factory()->create(['sucursal_id' => $admin->current_sucursal_id,
+        'email' => 'original@example.test', 'telefono_codigo_pais' => '52', 'telefono' => '5512345678']);
+    $this->actingAs($admin);
+    $this->post(route('comunicaciones.consents.store', $client), ['channel' => $channel, 'purpose' => 'operational',
+        'source' => 'contrato', 'evidence_reference' => 'evidencia-reservada-i4'])->assertSessionHasNoErrors();
+    $consent = CommunicationConsent::sole();
+    $audits = Activity::count();
+    $this->get(route('clientes.show', $client))->assertInertia(fn (Assert $page) => $page
+        ->where('communicationConsents.0.effective_status', 'current')->missing('communicationConsents.0.contact_hash'));
+    $field = $channel === 'email' ? 'email' : 'telefono';
+    $client->update([$field => $removeContact ? '' : ($channel === 'email' ? 'nuevo@example.test' : '5598765432')]);
+    $this->get(route('clientes.show', $client))->assertInertia(fn (Assert $page) => $page
+        ->where('communicationConsents.0.effective_status', 'contact_changed')->missing('communicationConsents.0.evidence_reference'));
+    $response = $this->get(route('comunicaciones.index'))->assertInertia(fn (Assert $page) => $page
+        ->where('consents.0.effective_status', 'contact_changed')->missing('consents.0.contact_hash')->missing('consents.0.cliente'));
+    expect($response->getContent())->not->toContain($consent->contact_hash, 'evidencia-reservada-i4', 'nuevo@example.test', '5598765432');
+    expect(Activity::count())->toBe($audits)->and($consent->fresh()->revoked_at)->toBeNull();
+    $this->patch(route('comunicaciones.consents.revoke', [$client, $consent]))->assertSessionHasNoErrors();
+    $this->get(route('comunicaciones.index'))->assertInertia(fn (Assert $page) => $page
+        ->where('consents.0.effective_status', 'revoked'));
+})->with(['email', 'sms', 'whatsapp'])->with([false, true]);
+
 test('solo permisos del equipo activo permiten configurar y consultar sin exponer credenciales', function () {
     $admin = actingAsSuperAdmin();
     $this->actingAs($admin);

@@ -48,6 +48,13 @@ test("plantilla activa y retirada abren el editor exacto sin mutaciones", async 
 
 
 test("originación distingue números y conserva políticas históricas en consulta", async ({page}, testInfo) => {
+    const noErrors = await failOnConsoleErrors(page);
+    const savePolicy = async () => {
+        const response = page.waitForResponse(response => response.request().method() === "POST"
+            && response.url().includes("/politica-originacion") && response.status() < 400);
+        await page.getByRole("button", { name: "Guardar nueva versión de política", exact: true }).click();
+        await response;
+    };
     await login(page);
     await page.goto("/productos-crediticios");
     await page.getByRole("link", {name:"Consultar política",exact:true}).first().click();
@@ -62,13 +69,13 @@ test("originación distingue números y conserva políticas históricas en consu
     await page.locator("#pol-capacidad").fill("Evaluar evidencias de ingresos y egresos conforme al procedimiento interno de QA.");
     await page.locator("#pol-validacion").fill("Acta interna QA de criterios para pruebas, sin operación real.");
     await page.locator("#pol-confirmacion").check();
-    await page.getByRole("button",{name:"Guardar nueva versión de política",exact:true}).click();
+    await savePolicy();
     await expect(page.getByText("Consulta · política 1 · versión de producto 1.",{exact:true})).toBeVisible();
     await page.getByRole("button",{name:"Nueva versión de política",exact:true}).click();
     await page.locator("#pol-vigencia").fill("31");
     await page.locator("#pol-validacion").fill("Acta interna QA segunda revisión de criterios de prueba.");
     await page.locator("#pol-confirmacion").check();
-    await page.getByRole("button",{name:"Guardar nueva versión de política",exact:true}).click();
+    await savePolicy();
     await expect(page.getByText("Política actual: versión 2.",{exact:true})).toBeVisible();
     await page.getByRole("button",{name:"Consultar política 1",exact:true}).click();
     await expect(page.locator("#pol-vigencia")).toHaveValue("30");
@@ -79,4 +86,5 @@ test("originación distingue números y conserva políticas históricas en consu
     expect(writes).toEqual([]);
     await page.setViewportSize({width:390,height:844});
     await page.screenshot({path:testInfo.outputPath("politica-historica-movil.png"),fullPage:true});
+    noErrors();
 });

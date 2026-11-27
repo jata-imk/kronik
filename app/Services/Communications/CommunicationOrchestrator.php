@@ -38,6 +38,17 @@ final class CommunicationOrchestrator
         return hash_hmac('sha256', $contact, config('app.key'));
     }
 
+    public function consentStatus(CommunicationConsent $consent, ?Cliente $client = null): string
+    {
+        if ($consent->revoked_at) {
+            return 'revoked';
+        }
+        $client ??= $consent->cliente;
+        $contact = $client ? $this->contact($client, $consent->channel) : null;
+
+        return $contact && hash_equals($consent->contact_hash, $this->contactHash($contact)) ? 'current' : 'contact_changed';
+    }
+
     public function grantConsent(Cliente $client, int $teamId, array $data, User $actor): CommunicationConsent
     {
         $contact = $this->contact($client, $data['channel']);
@@ -104,6 +115,12 @@ final class CommunicationOrchestrator
                         continue;
                     }
                     if (DB::transaction(function () use ($event, $rule, $contact, $channel) {
+                        // Match the sender's order, including FK locks acquired by INSERT.
+                        Credito::whereKey($event->credito_id)->lockForUpdate()->first();
+                        $event = CommunicationEvent::find($event->id);
+                        if (! $event || ! $this->eventCurrent($event)) {
+                            return false;
+                        }
                         $version = null;
                         if ($rule->channel !== 'whatsapp') {
                             $template = \App\Models\NotificationTemplate::lockForUpdate()->find($rule->notification_template_id);
@@ -203,8 +220,15 @@ final class CommunicationOrchestrator
 
     private function sendDelivery(int $id): bool
     {
-        $payload = DB::transaction(function () use ($id) {
-            $initial = CommunicationDelivery::find($id);
+        // Resolve only lock identities outside the transaction. A consistent read here
+        // would pin an InnoDB snapshot before waiting for payments or another worker.
+        $initial = CommunicationDelivery::with(['notificationVersion', 'event'])->find($id);
+        $payload = DB::transaction(function () use ($id, $initial) {
+            // Financial operations also acquire the credit first. Revalidate only
+            // after owning it, so a committed reversal/projection cannot be missed.
+            if ($initial) {
+                Credito::whereKey($initial->credito_id)->lockForUpdate()->first();
+            }
             if ($initial && $initial->channel !== 'whatsapp') {
                 $templateId = $initial->notificationVersion?->notification_template_id;
                 if ($templateId) {
@@ -212,6 +236,8 @@ final class CommunicationOrchestrator
                 }
             }
             $lockedRule = $initial ? CommunicationRule::where('team_id', $initial->team_id)->where('event_type', $initial->event?->event_type)->where('channel', $initial->channel)->where('enabled', true)->lockForUpdate()->first() : null;
+            // This row is shared by all channels and credits of the same recipient.
+            $client = $initial ? Cliente::whereKey($initial->cliente_id)->lockForUpdate()->first() : null;
             $delivery = CommunicationDelivery::lockForUpdate()->find($id);
             if (! $delivery || $delivery->status !== 'queued') {
                 return null;
@@ -226,7 +252,6 @@ final class CommunicationOrchestrator
             $rule = $lockedRule;
             $channel = CommunicationChannel::where('team_id', $delivery->team_id)->where('channel', $delivery->channel)
                 ->where('enabled', true)->where('eligibility', 'approved')->first();
-            $client = Cliente::find($delivery->cliente_id);
             $contact = $client ? $this->contact($client, $delivery->channel) : null;
             $invalid = ! $event || $event->team_id !== $delivery->team_id || ! $this->eventCurrent($event)
                 || ! $rule || ! $channel || ! $contact || ! hash_equals($delivery->recipient_hash, $this->contactHash($contact))
@@ -258,8 +283,10 @@ final class CommunicationOrchestrator
             if ($time < $rule->window_start || $time >= $rule->window_end) {
                 return null;
             }
-            $dayStart = $local->copy()->startOfDay()->utc();
-            $dayEnd = $local->copy()->endOfDay()->utc();
+            $dayStart = $local->copy()->startOfDay()->setTimezone(config('app.timezone'));
+            $dayEnd = $local->copy()->endOfDay()->setTimezone(config('app.timezone'));
+            // No consistent read precedes the shared client lock. This view already
+            // contains prior reservations; receipt transitions need not be locked.
             $dailyCount = CommunicationDelivery::where('team_id', $delivery->team_id)->where('cliente_id', $delivery->cliente_id)
                 ->whereIn('status', ['sending', 'accepted', 'delivered', 'read', 'uncertain'])
                 ->whereBetween('attempted_at', [$dayStart, $dayEnd])->count();

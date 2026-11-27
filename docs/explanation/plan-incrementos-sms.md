@@ -165,3 +165,26 @@ Código revisado 6a48765: review medium sin regresiones accionables, pre-push
 1,160 pruebas backend / 49,501 aserciones y build, frontend 184 pruebas,
 E2E aislados aprobados. La Agent Note enlaza evidencia por SHA y prompt I4;
 I2 externo y piloto siguen pendientes. No se declara cierre de la iniciativa.
+
+## Resolución técnica de I4 — 27/11/2026
+
+Barrido completo `ecb9d4a..3f62b15` más el antecedente original
+`bfa0b87..ecb9d4a` (#91 y #93–#96). Siete defectos corregidos con regresiones:
+cupo concurrente, snapshot anterior a reverso, día no UTC, consentimiento tras
+cambio de contacto, lecturas de campana, rollback SQLite y bloqueos prepare/send.
+Revisión medium final sin otros defectos accionables. La
+[Agent Note](../agent-notes/comunicaciones-notificaciones.md) concentra pruebas,
+CI por SHA y el estado vigente de publicación/integración; las secciones previas
+conservan la evidencia histórica de cada incremento.
+
+José autorizó consolidar I0–I4 en `feat/comunicaciones-notificaciones`, la rama
+original de Bryan, conservando ramas auxiliares. Se excluyen main y
+`feat/comunicaciones-whatsapp`; no se acredita una ejecución combinada con main.
+La [guía de VPS](../how-to/preparar-comunicaciones-vps.md) documenta preparación,
+variables y reutilización del SMTP existente, incluido ZeptoMail. Una VPS en main
+requiere evaluar primero la integración posterior.
+
+El cierre técnico no resuelve recepción SMS externa autenticada, cuenta/ruta,
+remitente/tarifas ni piloto. Ambas barreras permanecen cerradas y la iniciativa
+permanece Doing. Sin Integraciones, envíos reales, compras, limpieza operativa,
+despliegue ni acceso a VPS.

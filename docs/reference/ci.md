@@ -36,6 +36,11 @@ El proyecto debe tener CI real en GitHub Actions ademas de hooks locales.
 
 ## Workflow Actual
 
+En la rama de Comunicaciones, el workflow corre para PR y para pushes a `main`,
+`devjatejero` y `feat/comunicaciones-notificaciones`. Este último disparador permite
+comprobar el SHA consolidado de I4; un resultado de otra revisión o commit no se
+atribuye a ese HEAD. La integración en esta rama no acredita integración en `main`.
+
 La regresión de días de gracia corre en CI con
 `npm run test:e2e -- dias-gracia.spec.js --output=test-results-gracia`.
 Su evidencia se conserva aparte de los siguientes escenarios Bullet y dual.
@@ -52,12 +57,13 @@ Su evidencia se conserva aparte de los siguientes escenarios Bullet y dual.
 - `npm run build`.
 - `npm run test:unit` con Vitest, Vue Test Utils y jsdom.
 - `php artisan test`.
-- Concurrencia de folios y auditoría con procesos independientes en MariaDB aislada.
+- Concurrencia de folios, auditoría, Bullet y Comunicaciones con procesos independientes en MariaDB aislada.
 
-Playwright no se ejecuta en GitHub Actions. Los recorridos E2E son una
-verificacion local deliberada porque requieren un navegador completo y se
-ejecutan bajo demanda en la computadora de desarrollo. CI conserva el build,
-Vitest y Pest como verificaciones obligatorias de cada PR.
+El workflow instala Chromium y ejecuta preflight PDF real y recorridos Playwright
+aislados de gracia, tablero, históricos, Bullet, originación dual, RFC genéricos,
+Comunicaciones, Notificaciones y documentos/consulta de versiones. Conserva las
+trazas/capturas de navegador como artifacts. Los escenarios y comandos vigentes
+son los declarados en el YAML, además de build, Vitest y Pest.
 
 El build frontend corre antes de los tests porque las pruebas HTTP que renderizan Inertia necesitan `public/build/manifest.json` en el runner limpio de GitHub Actions.
 
@@ -69,8 +75,8 @@ La regresión de RFC genéricos corre también en CI con
 `npm run test:e2e -- clientes-rfc-genericos.spec.js --output=test-results-rfc`.
 Su evidencia se conserva aparte de los otros recorridos E2E.
 
-Playwright es exclusivamente local: no debe ejecutarse en GitHub Actions ni en
-la VPS de QA/produccion.
+Playwright también se puede ejecutar localmente. No ejecutar el harness sobre la
+BD operativa de la VPS: usa exclusivamente sus bases y fixtures aislados.
 
 La primera vez se instala Chromium con:
 

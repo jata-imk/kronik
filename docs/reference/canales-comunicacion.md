@@ -4,7 +4,9 @@ I1 sustituye directamente Infobip por LabsMobile en desarrollo/QA, conforme al
 [ADR 0050](../explanation/adr-0050-proveedor-sms-labsmobile.md). No existe migración
 histórica ni convivencia de proveedores. I2 implementa el [núcleo interno de seguimiento](seguimiento-sms.md)
 con pruebas sintéticas; recepción autenticada externa pendiente. I3 incorpora el [catálogo global de Notificaciones](plantillas-notificaciones.md) para SMS y correo.
-Piloto/cierre (I4) siguen pendientes. Esta implementación no habilita tráfico.
+I4 corrige los hallazgos del barrido conjunto; su evidencia e integración constan
+en la [Agent Note](../agent-notes/comunicaciones-notificaciones.md). El piloto externo
+sigue pendiente. Esta implementación no habilita tráfico.
 
 La [nota original de producto](comunicaciones-por-canales-envios-y-seguimiento.md) fija el alcance. Este contrato describe el código de la rama de comunicaciones. La salida externa permanece desactivada hasta configurar `COMMUNICATIONS_SEND_ENABLED=true` en un entorno autorizado, con proveedor, consentimiento y reglas aprobados para cada equipo. La configuración y las pruebas locales no acreditan entrega real ni despliegue.
 
@@ -15,6 +17,12 @@ Los créditos nuevos conservan `team_id` del desembolso. La migración recupera 
 `communication_consents` guarda cliente, equipo, canal, finalidad (`operational` o `preventive`), fecha, origen, referencia a evidencia protegida y hash del contacto autorizado. Registrar consentimiento exige permiso de gestión y edición del cliente en su sucursal. La evidencia permanece en su repositorio protegido y no se copia a esta tabla; el operador registra una referencia verificable. La baja revoca autorizaciones y cancela salidas preparadas. Cambiar correo o teléfono invalida el hash. Nunca se utilizan referencias ni terceros.
 
 La ficha de consulta del cliente muestra el estado de sus consentimientos solo a quien puede leer comunicaciones en el equipo activo; enlaza al formulario de gestión con ese cliente preseleccionado cuando también puede editarlo. La presencia de correo o teléfono en la ficha no significa que estén verificados. No se añade una marca de verificación que los datos actuales no pueden acreditar.
+
+Ficha e historial de consentimientos reciben `effective_status`: `current`,
+`contact_changed` o `revoked`. Backend compara el contacto actual normalizado con
+el hash autorizado; un contacto ausente o cambiado muestra «Contacto cambiado;
+requiere nueva autorización». La consulta no revoca ni recrea consentimientos,
+no expone hashes/evidencia y no añade eventos de auditoría por calcular el estado.
 
 ## Matriz inicial
 
@@ -28,6 +36,15 @@ No existen reglas activas por defecto. El comando `comunicaciones:preparar-venci
 Cada regla incluye anticipación en días para vencimientos, zona horaria, ventana diaria, límite por cliente compartido entre canales, selección de plantilla global y versión. El valor inicial de anticipación es tres días y el operador autorizado puede elegir de 1 a 30 días por canal; el máximo es configurable. El candidato se crea en cada día correspondiente y el job confirma de nuevo la regla vigente. Variables locales permitidas: `{nombre}` y `{fecha_vencimiento}`. Se usa texto sin enlaces a un portal de cliente. En SMS/correo, el texto se administra en el catálogo global y cada salida referencia su versión exacta. Sustituir o retirar redacción cancela pendientes sin recrearlos. WhatsApp conserva su texto local y contador de versión. Cambiar la anticipación también impide el envío fuera del nuevo día elegido. No hay reintento automático de una salida incierta. `communication_deliveries` conserva preparado, en proceso, aceptado por proveedor, entregado, leído, fallido, cancelado o incierto. Solo un recibo autenticado del proveedor eleva el estado a entregado o leído. Los webhooks Meta duplicados se deduplican y los adelantados se concilian al conocer el identificador del mensaje. SMS conserva aceptación o resultado fallido/incierto en su flujo externo; no recibe callbacks. I2 añade conciliación interna de evidencia sintética, con niveles separados y sin lectura SMS. Correo admite texto o HTML saneado según la versión seleccionada. Correo SMTP solo acredita aceptación del servidor; no incorpora rebotes ni lectura sin un proveedor de eventos de correo adicional.
 
 La lista de reglas muestra anticipación y horario a quienes pueden consultar comunicaciones. Cambiar la anticipación deja una salida aún no intentada en estado preparado hasta el nuevo día configurado; una salida que ya llegó al proveedor no se duplica. El historial de auditoría conserva cada transición.
+
+I4 coordina el inicio del intento con pagos/reversos mediante el bloqueo del
+crédito antes de plantilla, regla, cliente y salida. Las lecturas financieras se
+realizan después de adquirirlo, sin reutilizar un snapshot anterior a la espera.
+El bloqueo del cliente y la lectura actual de los intentos serializan el límite
+diario entre canales y créditos del mismo titular. Los límites del día de la regla
+se expresan en la zona de almacenamiento de la aplicación, también en madrugada.
+La reserva del intento y su auditoría siguen en la misma transacción; no se
+mantiene esa transacción abierta durante el HTTP/SMTP.
 
 ## Conexiones
 

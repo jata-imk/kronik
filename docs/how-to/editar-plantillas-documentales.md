@@ -6,7 +6,7 @@
 2. Crea una plantilla o edita un borrador sin usos. Una versión activa, retirada o utilizada es inmutable: usa **Duplicar** para proponer cambios.
 3. Edita por separado encabezado, contenido y pie. Cada sección conserva su cursor. Al pulsar una variable se inserta en el cursor o reemplaza la selección; deshacer/rehacer funciona también para esa inserción.
 4. Usa títulos 1–3, fuentes sans/serif/monoespaciada, tamaños, listas, sangrías, alineación, negrita, cursiva, subrayado, tachado, citas, color y resaltado. Los saltos manuales de página se insertan solo en el contenido.
-5. Pulsa **Previsualizar cambios** para revisar el PDF A4 vertical sin guardar. Puedes cambiar página, ajustar el ancho o ampliar. La vista usa datos sintéticos y el mismo motor de la generación final. Cerrar la vista previa no cierra el editor.
+5. Pulsa **Actualizar previsualización** para revisar HTML continuo sin guardar, con datos sintéticos y sin invocar PDF/Chromium. Usa la acción explícita de PDF para comprobar el A4 vertical, páginas, ajuste al ancho y zoom con el motor de la generación final. Cerrar la vista previa no cierra el editor.
 6. Guarda el borrador. La marca de agua y las imágenes se guardan en esa versión. Actívala cuando esté aprobada; se retira la versión activa anterior. Al volver a una plantilla se muestra su versión activa, si existe; después de crear o duplicar se selecciona el nuevo borrador.
 
 Las variables marcadas como requeridas exigen un valor **si se usan**; no obligan a incluirlas todas. El contenido no puede estar vacío ni contener únicamente espacios, imágenes o saltos. No se ejecutan HTML activo, imágenes externas ni código pegado desde otros programas.
