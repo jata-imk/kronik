@@ -3,11 +3,25 @@ import { failOnConsoleErrors, login, users } from "./support/auth.js";
 
 const editor = page => page.getByRole("dialog", { name: "Configurar elemento de menú", exact: true });
 test.setTimeout(180_000);
-async function choose(page, control, option) {
+async function openOptions(page, control) {
+    await control.scrollIntoViewIfNeeded();
     await control.click();
-    const filter = page.locator(".p-select-filter:visible");
-    if (await filter.count()) await filter.fill(typeof option === "string" ? option : option.source.replace(/^\^/, ""));
-    await page.getByRole("option", { name: option, exact: true }).click();
+    const combobox = await control.getAttribute("role") === "combobox" ? control : control.getByRole("combobox");
+    await expect(combobox).toHaveAttribute("aria-expanded", "true");
+    const listbox = page.locator(`[id="${await combobox.getAttribute("aria-controls")}"]`);
+    const overlay = listbox.locator("xpath=ancestor::*[@data-pc-section='overlay'][1]");
+    await expect(overlay).toBeVisible();
+    await expect(overlay).not.toHaveClass(/p-connected-overlay-enter/);
+    return { overlay, listbox };
+}
+async function choose(page, control, option) {
+    const { overlay, listbox } = await openOptions(page, control);
+    const filter = overlay.getByRole("searchbox");
+    if (await filter.count()) {
+        await filter.fill(typeof option === "string" ? option : option.source.replace(/^\^/, ""));
+        await expect(listbox.getByRole("option")).toHaveCount(1);
+    }
+    await listbox.getByRole("option", { name: option, exact: true }).click();
     if (typeof option === "string") await expect(control).toContainText(option);
 }
 async function createGroup(page, label) {
@@ -21,8 +35,8 @@ async function createGroup(page, label) {
 for (const mobile of [false, true]) {
     for (const dark of [false, true]) {
         test(`configura y previsualiza menú en ${mobile ? "móvil" : "escritorio"} ${dark ? "oscuro" : "claro"}`, async ({ page }, testInfo) => {
-            const group = `Cliente QA ${mobile ? "móvil" : "escritorio"} ${dark ? "oscuro" : "claro"}`;
-            const label = `Listado QA ${mobile ? "móvil" : "escritorio"} ${dark ? "oscuro" : "claro"}`;
+            const group = `Cliente QA ${mobile ? "móvil" : "escritorio"} ${dark ? "oscuro" : "claro"} intento ${testInfo.retry}`;
+            const label = `Listado QA ${mobile ? "móvil" : "escritorio"} ${dark ? "oscuro" : "claro"} intento ${testInfo.retry}`;
             await page.setViewportSize(mobile ? { width: 390, height: 844 } : { width: 1440, height: 1000 });
             await page.addInitScript(darkTheme => localStorage.setItem("layoutConfig", JSON.stringify({ darkTheme, primary: "emerald", surface: "zinc" })), dark);
             const assertConsole = await failOnConsoleErrors(page);
@@ -38,9 +52,12 @@ for (const mobile of [false, true]) {
             await dialog.locator("#menubar-order").press("7");
             await dialog.locator("#menubar-order").press("Tab");
             await expect(dialog.locator("#menubar-order")).toHaveValue("7");
-            await dialog.locator(".p-multiselect").click();
-            await page.locator(".p-multiselect-filter").fill("Clientes · Editar cliente");
-            await page.getByRole("option", { name: "Clientes · Editar cliente", exact: true }).click();
+            const screens = await openOptions(page, dialog.locator(".p-multiselect"));
+            await screens.overlay.getByRole("searchbox").fill("Clientes · Editar cliente");
+            await expect(screens.listbox.getByRole("option")).toHaveCount(1);
+            const screen = screens.listbox.getByRole("option", { name: "Clientes · Editar cliente", exact: true });
+            await screen.click();
+            await expect(screen).toHaveAttribute("aria-selected", "true");
             await expect(dialog.locator(".p-multiselect")).toContainText("Clientes · Editar cliente");
             await page.keyboard.press("Escape");
             await expect(page.getByRole("dialog", { name: "¿Descartar los cambios?", exact: true })).toHaveCount(0);

@@ -13,6 +13,32 @@
 
 ### Integración de main en curso — 27/11/2026
 
+[PR #98](https://github.com/jata-imk/kronik/pull/98) abierta hacia la original.
+Código `ba23d136d1c83ac022633b0eb3edbcb1a52ac6e7`: revisión medium delegada
+final terminada sin defectos accionables pendientes, con autorización de José;
+[informe](https://github.com/jata-imk/kronik/pull/98#issuecomment-7224508158).
+Pre-push completo: 1,219 aprobadas, dos omisiones optativas, 50,215 aserciones
+(636.96 s) y build (37 s), sin omitir el hook. Navegación local: 20 aprobadas;
+calendario: una aprobada, ambos aislados. La aplicación conserva identidad con
+`3fa940f` después de corregir las aserciones de fixtures.
+
+[CI #319](https://github.com/jata-imk/kronik/actions/runs/46042491736), de
+`ba23d13`, falló solo en cuatro variantes del editor del menú (16 aprobadas en
+ese grupo); todos los pasos anteriores, incluidos backend, cinco harness, PDF
+y los demás E2E, aprobaron. Se descargaron y revisaron capturas, vídeo, trazas
+y consola. La primera selección se intenta durante la entrada/realineación
+del desplegable, el autoscroll lo cierra y la máscara intercepta el click.
+El retry duplica después la etiqueta del grupo ya creado; es un efecto del
+fallo inicial. Sin errores JavaScript, salvo un mensaje informativo de autofocus.
+El intento local anterior al ajuste con Chromium de Playwright y modo CI pasó
+una prueba; no reproduce ni invalida el fallo de Linux.
+
+Se ajusta exclusivamente el E2E: control visible antes de abrir, listbox exacto
+por ARIA, espera de transición/filtro terminado y etiquetas por reintento.
+Conserva el click real, la selección, Escape, consulta y persistencia; sin force,
+pausas arbitrarias ni cambios al modelo. Siete pruebas locales con Chromium
+de Playwright, revisión y nueva publicación/CI pendientes de terminar.
+
 Rama `integracion/main-comunicaciones-2026-11-27` desde el traspaso local
 `9d938590664d92a87aaa2fbe0c9a11445af896e5`, conservado sobre el destino remoto
 `f0485cf1539a42800304da2068507d7450772856`. Main incorporado como origen:
