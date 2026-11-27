@@ -16,7 +16,7 @@ class CommunicationWebhookController extends Controller
             && ($request->query('hub.mode') ?? $request->query('hub_mode')) === 'subscribe'
             && hash_equals($settings['verify_token'], (string) ($request->query('hub.verify_token') ?? $request->query('hub_verify_token'))), 403);
 
-        return response((string) $request->query('hub.challenge'), 200)->header('Content-Type', 'text/plain');
+        return response((string) ($request->query('hub.challenge') ?? $request->query('hub_challenge')), 200)->header('Content-Type', 'text/plain');
     }
 
     public function meta(Request $request, int $team, CommunicationWebhookService $service)

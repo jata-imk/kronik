@@ -1,5 +1,8 @@
 # How-to
 
+- [Validar expansión, selección y accesibilidad del sidebar](validar-sidebar.md).
+- [Validar el calendario crediticio en QA](qa-calendario-crediticio.md)
+
 - [Preparar y validar cifras, proyecciones y diseño del tablero](validar-tablero.md).
 
 [Buscar por tema](../topic/index.md) · [Índice general](../index.md)
@@ -9,6 +12,7 @@
 - [Configurar Empresa](configurar-empresa.md)
 - [Configurar y comprobar la fiscalidad de un producto](configurar-fiscalidad-productos.md)
 - [Cargar el catálogo del menú contextual](configurar-menu-contextual.md)
+- [Validar el menú contextual y la navegación](validar-menu-contextual.md)
 - [Desplegar Kronik en una VPS Debian 12](desplegar-vps-nuevo.md)
 - [Editar plantillas documentales](editar-plantillas-documentales.md)
 - [Migrar VPS](migrar-vps.md)

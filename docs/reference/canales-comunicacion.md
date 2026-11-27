@@ -46,6 +46,15 @@ se expresan en la zona de almacenamiento de la aplicación, también en madrugad
 La reserva del intento y su auditoría siguen en la misma transacción; no se
 mantiene esa transacción abierta durante el HTTP/SMTP.
 
+La integración con main conserva las fechas civiles de pagos/reversos y el
+calendario contractual congelado. Los candidatos utilizan las obligaciones
+proyectadas con su vencimiento ajustado, sin volver a calcularlo desde el
+calendario vigente. Sin cobertura financiera válida no se prepara un aviso.
+Los formularios de canales, reglas, consentimientos y Notificaciones comparten
+la protección de captura al navegar; cancelar conserva los datos y errores.
+Un cambio efectivo de equipo/sucursal o una retirada de permisos cancela y
+limpia la captura correspondiente, sin guardar ni auditar esa limpieza visual.
+
 ## Conexiones
 
 - **Correo:** usa el transporte Laravel `MAIL_*` del entorno y un remitente por equipo. No introducir credenciales SMTP en la UI. Probar únicamente con el destinatario autorizado en `COMMUNICATIONS_TEST_RECIPIENT`; el endpoint rechaza transportes `log` y `array`. Confirmar dominio, SPF, DKIM, DMARC y política del proveedor antes de activar. El botón de prueba informa aceptación técnica, no recepción.
@@ -105,8 +114,11 @@ El costo de SMTP depende del contrato del remitente. [Amazon SES](https://aws.am
 Migraciones: `2026_11_20_100000`, `100100`, `100200` y `100300`. `100200` registra módulo, permisos y menú; no concede permisos automáticamente a roles existentes. `100300` conserva tres días para reglas existentes hasta que el operador los cambie. Asignar `read/manage/send test comunicaciones` a los roles autorizados para el equipo correspondiente. Revisar `MAIL_*`, `QUEUE_CONNECTION`, scheduler, HTTPS público y las credenciales individuales de cada prestamista. El usuario administra exclusivamente la VPS; estos pasos deben ejecutarlos sus responsables y verificarse mediante salidas compartidas.
 
 El endpoint `/api/webhooks/comunicaciones/whatsapp/{team}` conserva GET de
-verificación y POST de estados firmados Meta. El endpoint SMS anterior está
-retirado. I2 tampoco publica un endpoint LabsMobile: autenticidad de cuenta sigue pendiente,
+verificación y POST de estados firmados Meta.
+La verificación devuelve el desafío exacto también cuando PHP normaliza los
+parámetros `hub.*` como `hub_*`, conservando la comprobación del token por equipo.
+No registra mensajes, acuses ni actividad de negocio por verificar la conexión.
+El endpoint SMS anterior está retirado. I2 tampoco publica un endpoint LabsMobile: autenticidad de cuenta sigue pendiente,
 y el núcleo interno no habilita aceptación de estados externos. No se atienden
 respuestas conversacionales ni campañas.
 

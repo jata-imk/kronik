@@ -1,4 +1,4 @@
-# ADR 0047: bandeja interna contextual
+# ADR 0052: bandeja interna contextual
 
 ## Estado
 
@@ -17,3 +17,9 @@ Por ahora no se guardan enlaces a recursos ni datos personales del cliente en el
 ## Consecuencias
 
 La tabla es adicional y permite construir una bandeja segura sin alterar correos de acceso. Los avisos de otros contextos permanecen en historial persistido, pero no son visibles al cambiar de equipo o sucursal. El siguiente incremento debe resolver enlaces autorizados y caducidad del acceso al recurso antes de mostrar detalles de negocio.
+
+## Renumeración de integración — 27/11/2026
+
+Originalmente ADR 0047 en la rama de Comunicaciones. Se renumera a 0052
+para conservar el ADR 0047 independiente de main, sin cambiar esta decisión
+ni su contexto histórico.

@@ -109,7 +109,7 @@ de I0 al arrancar I1. Se inspeccionó la divergencia sin fusionar. Los cruces
 financieros, de navegación, permisos, auditoría e índices listados a continuación
 siguen pendientes de integración conjunta.
 
-## Compatibilidad observada en I0
+## Compatibilidad observada en I0 (evidencia histórica)
 
 Base funcional `ecb9d4a`; punto de arranque documental `547d9e5` después de
 `6b11bf6`. `main=217acef`; ancestro común `bfa0b87`. Al inspeccionar el 25/11/2026
@@ -188,3 +188,16 @@ El cierre técnico no resuelve recepción SMS externa autenticada, cuenta/ruta,
 remitente/tarifas ni piloto. Ambas barreras permanecen cerradas y la iniciativa
 permanece Doing. Sin Integraciones, envíos reales, compras, limpieza operativa,
 despliegue ni acceso a VPS.
+
+## Integración posterior de main — 27/11/2026
+
+Autorizada por José en una entrega independiente desde el traspaso `9d93859`.
+La rama `integracion/main-comunicaciones-2026-11-27` reúne main `217acef` e I0–I4:
+fechas civiles y eventos transaccionales, catálogo único de navegación, guardas
+de captura, calendario contractual congelado, auditoría, reinicio QA y CI conjunto.
+Los ADR 0047/0048 de Comunicaciones pasan a 0052/0053; main conserva los suyos.
+Las tablas y advertencias anteriores describen la divergencia histórica, no
+pendientes que deban repetirse después de validar esta integración.
+La Agent Note registra el estado real de revisión, pruebas, PR y CI por SHA.
+El destino sigue siendo la rama original de Bryan; no se modifica main ni se
+incorpora WhatsApp separada. La integración no autoriza despliegue o envíos.

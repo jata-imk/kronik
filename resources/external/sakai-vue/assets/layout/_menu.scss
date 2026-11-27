@@ -31,12 +31,12 @@
             margin: 0.75rem 0;
         }
 
-        > a {
+        > :is(a, button.k-sidebar-group) {
             display: none;
         }
     }
 
-    a {
+    :is(a, button.k-sidebar-group) {
         user-select: none;
 
         &.active-menuitem {
@@ -47,7 +47,7 @@
     }
 
     li.active-menuitem {
-        > a {
+        > :is(a, button.k-sidebar-group) {
             .layout-submenu-toggler {
                 transform: rotate(-180deg);
             }
@@ -59,7 +59,7 @@
         padding: 0;
         list-style-type: none;
 
-        a {
+        :is(a, button.k-sidebar-group) {
             display: flex;
             align-items: center;
             position: relative;
@@ -101,33 +101,39 @@
             border-radius: var(--content-border-radius);
 
             li {
-                a {
-                    margin-left: 1rem;
+                :is(a, button.k-sidebar-group) {
+                    --k-sidebar-indent: 1rem;
+                    margin-left: var(--k-sidebar-indent);
                 }
 
                 li {
-                    a {
-                        margin-left: 2rem;
+                    :is(a, button.k-sidebar-group) {
+                        --k-sidebar-indent: 2rem;
+                        margin-left: var(--k-sidebar-indent);
                     }
 
                     li {
-                        a {
-                            margin-left: 2.5rem;
+                        :is(a, button.k-sidebar-group) {
+                            --k-sidebar-indent: 2.5rem;
+                            margin-left: var(--k-sidebar-indent);
                         }
 
                         li {
-                            a {
-                                margin-left: 3rem;
+                            :is(a, button.k-sidebar-group) {
+                                --k-sidebar-indent: 3rem;
+                                margin-left: var(--k-sidebar-indent);
                             }
 
                             li {
-                                a {
-                                    margin-left: 3.5rem;
+                                :is(a, button.k-sidebar-group) {
+                                    --k-sidebar-indent: 3.5rem;
+                                    margin-left: var(--k-sidebar-indent);
                                 }
 
                                 li {
-                                    a {
-                                        margin-left: 4rem;
+                                    :is(a, button.k-sidebar-group) {
+                                        --k-sidebar-indent: 4rem;
+                                        margin-left: var(--k-sidebar-indent);
                                     }
                                 }
                             }

@@ -124,6 +124,9 @@ enum ActivityEvent: string
     case SicEvidenceViewed = 'cliente.sic.evidence_viewed';
     case ClientSicFintechScoreQueried = 'cliente.sic.fintech_score.queried';
     case ClientSicCreditReportFicoQueried = 'cliente.sic.credit_report_fico.queried';
+    case CreditCalendarDraftSaved = 'calendario_crediticio.draft_saved';
+    case CreditCalendarPublished = 'calendario_crediticio.published';
+
     case CreditProductCreated = 'producto_crediticio.created';
     case CreditProductUpdated = 'producto_crediticio.updated';
     case CreditProductVersioned = 'producto_crediticio.versioned';
@@ -272,6 +275,8 @@ enum ActivityEvent: string
             self::SicAttemptReconciled => 'Intento SIC conciliado',
             self::ClientSicFintechScoreQueried => 'Consulta SIC Fintech Score',
             self::ClientSicCreditReportFicoQueried => 'Consulta de reporte de crédito con FICO Score',
+            self::CreditCalendarDraftSaved => 'Borrador de calendario crediticio guardado',
+            self::CreditCalendarPublished => 'Calendario crediticio publicado',
             self::CreditProductCreated => 'Producto crediticio creado',
             self::CreditProductUpdated => 'Producto crediticio actualizado',
             self::CreditProductVersioned => 'Producto crediticio versionado',

@@ -34,27 +34,32 @@ const selectedItem = ref(null);
 const showForm = ref(false);
 const readonly = computed(() => selectedItem.value ? page.props.modoMenu !== 'edicion' || !can('update-menubar-items') : !can('create-menubar-items'));
 const formRevision = ref(0);
+const dismissedId = ref(null);
 watch([() => page.props.menubarSeleccionado, () => page.props.modoMenu, () => readonly.value], () => {
+    if (dismissedId.value && page.props.menubarSeleccionado?.id === dismissedId.value) return;
+    if (!page.props.menubarSeleccionado) dismissedId.value = null;
     if (showForm.value && selectedItem.value?.id === page.props.menubarSeleccionado?.id && !readonly.value) return;
     selectedItem.value = page.props.menubarSeleccionado ?? null; showForm.value = Boolean(selectedItem.value); formRevision.value++;
 }, {immediate:true});
 
 const createItem = () => {
     if (!can('create-menubar-items')) return;
+    dismissedId.value = page.props.menubarSeleccionado?.id ?? null;
     selectedItem.value = null;
     showForm.value = true;
 };
 const editItem = (item) => {
     if (!can('update-menubar-items')) return;
+    dismissedId.value = null;
     serverList.visit({selected_item_id:item.id,modo:'edicion',page:page.props.listado?.current_page ?? 1});
 };
-const viewItem = item => serverList.visit({selected_item_id:item.id,modo:'consulta',page:page.props.listado?.current_page ?? 1});
-const closeForm = () => { showForm.value = false; serverList.visit({selected_item_id:null,modo:null,page:page.props.listado?.current_page ?? 1}); };
+const viewItem = item => { dismissedId.value = null; serverList.visit({selected_item_id:item.id,modo:'consulta',page:page.props.listado?.current_page ?? 1}); };
+const closeForm = () => { dismissedId.value = selectedItem.value?.id ?? null; showForm.value = false; selectedItem.value = null; serverList.visit({selected_item_id:null,modo:null,page:page.props.listado?.current_page ?? 1}); };
 const deleteItem = (item) => {
     if (!can('delete-menubar-items')) return;
-    if (confirm("¿Seguro que deseas eliminar este item?")) {
+    if (confirm("¿Seguro que deseas eliminar este elemento?")) {
         router.delete(route("admin.menubar-items.destroy", item.id), {
-            only: ["menubarCatalogo", "menubarItems", "menubarSeleccionado", "modoMenu", "listado", "auth"],
+            only: ["menubarCatalogo", "catalogoMenu", "menubarItems", "menubarEstado", "menubarSeleccionado", "modoMenu", "listado", "auth"],
         });
     }
 };
@@ -63,17 +68,19 @@ const deleteItem = (item) => {
 <template>
     <AppLayout title="Configuración de barra de menú por módulos">
         <template #card-header>
-            <PageHeader eyebrow="Administración · Navegación" title="Menú contextual por módulos" description="Configura las acciones locales de cada módulo.">
+            <PageHeader eyebrow="Administración · Navegación" title="Menú contextual por módulos" description="Organiza grupos y acciones, y elige en qué pantallas aparecen. Configuración compartida para toda la instalación.">
                 <template #actions><Button icon="pi pi-arrow-left" label="Volver" severity="secondary" as="a" :href="route('admin.dashboard')" /></template>
             </PageHeader>
         </template>
 
         <template #card-content>
             <div class="p-4"><InputText v-model="filters.global.value" aria-label="Buscar acciones de menú" placeholder="Buscar acciones de menú" /><ListadoPaginador /></div>
+            <Message v-if="Object.keys(page.props.errors ?? {}).length && !showForm" severity="error" role="alert" class="mb-4"><ul><li v-for="(message, field) in page.props.errors" :key="field">{{ message }}</li></ul></Message>
             <div class="flex justify-end pb-8">
-                <Button v-if="can('create-menubar-items')" label="Crear nuevo" icon="pi pi-plus" class="mt-3" @click="createItem" />
+                <Button v-if="can('create-menubar-items')" label="Agregar acción o grupo" icon="pi pi-plus" class="mt-3" @click="createItem" />
             </div>
 
+            <Message v-if="!items.length" severity="info" class="mb-4">No hay elementos con estos filtros. Puedes cambiar la búsqueda o agregar un grupo o acción si tienes permiso.</Message>
             <TreeTable :value="items" lazy :rows="10" :loading="loading" responsiveLayout="scroll">
                 <Column field="label" header="Etiqueta" expander>
                     <template #body="{ node }">
@@ -81,7 +88,7 @@ const deleteItem = (item) => {
                         <span class="ml-2">{{ node.data.label }}</span>
                     </template>
                 </Column>
-                <Column field="module_id" header="Modulo(s)" :pt="{ columnheadercontent: { class: 'justify-center' } }">
+                <Column field="module_id" header="Ámbito" :pt="{ columnheadercontent: { class: 'justify-center' } }">
                     <template #body="{ node }">
                         <div class="w-full flex flex-col items-center gap-2">
                             <Tag
@@ -90,70 +97,23 @@ const deleteItem = (item) => {
                                 :key="module.id"
                                 severity="primary"
                                 rounded="">
-                                {{ module.name }}
+                                {{ page.props.catalogoMenu?.acciones.find(action => action.module === module.name)?.group ?? module.name }}
                             </Tag>
                         </div>
                     </template>
                 </Column>
-                <Column header="Tipo y valor" :pt="{ columnheadercontent: { class: 'justify-center' } }">
+                <Column header="Tipo">
+                    <template #body="{ node }"><Tag :severity="node.data.type === 'menu' ? 'info' : 'secondary'">{{ node.data.type === "menu" ? "Grupo" : node.data.type === "route:name" ? "Acción" : "Avanzado" }}</Tag></template>
+                </Column>
+                <Column header="Dónde aparece">
                     <template #body="{ node }">
-                        <Tag
-                            v-if="node.data.type === 'menu'"
-                            severity="info"
-                            rounded
-                            icon="pi pi-folder"
-                            class="mx-auto">
-                            Carpeta
-                        </Tag>
-                        
-                        <div
-                            v-if="node.data.type === 'route:name' && node.data.value"
-                            class="w-full flex flex-col items-center justify-center gap-2">
-                            <Tag
-                                severity="info"
-                                rounded>
-                                    Ruta de Laravel
-                            </Tag>
-                            <Tag
-                                severity="contrast"
-                                rounded>
-                                    <span class="pi pi-directions"></span>
-                                    <p 
-                                        class="max-w-40 truncate text-ellipsis overflow-hidden"
-                                        :title="`route('${node.data.value}')`">
-                                        route('{{ node.data.value }}')
-                                    </p>
-                            </Tag>
-                        </div>
-
-                        <Tag
-                            v-else-if="node.data.type === 'route:dynamic'"
-                            severity="warn"
-                            rounded
-                            class="mx-auto max-w-40 truncate text-ellipsis overflow-hidden"
-                            icon="pi pi-code">
-                            Dinámica
-                        </Tag>
-                        
-                        <Tag
-                            v-else-if="node.data.type === 'route:static' && node.data.value"
-                            severity="secondary"
-                            rounded
-                            class="mx-auto max-w-40 truncate text-ellipsis overflow-hidden"
-                            icon="pi pi-link">
-                            {{ node.data.value }}
-                        </Tag>
-                    </template>
-                </Column>
-                <Column field="modules" header="Rutas">
-                    <template #body="{ node }">
-                        <div class="flex flex-col gap-2">
-                            <div v-if="node.data.modules" v-for="module in node.data.modules">
-                                <div v-if="module.menubar_item_module" v-for="route in module.menubar_item_module.routes">{{ route }}</div>
-                            </div>
+                        <div class="flex flex-col gap-1 text-sm">
+                            <span v-for="screen in node.data.modules?.flatMap(module => module.menubar_item_module?.routes ?? [])" :key="screen">{{ page.props.catalogoMenu?.pantallas.find(option => option.key === screen)?.label ?? "Pantalla guardada · consulta avanzada" }}</span>
+                            <span v-if="!node.data.modules?.some(module => module.menubar_item_module?.routes?.length)" class="text-surface-500">{{ node.data.type === "menu" ? "Según sus acciones" : "Sin pantallas asignadas" }}</span>
                         </div>
                     </template>
                 </Column>
+                <Column field="sort_order" header="Orden" />
                 <Column header="Acciones">
                     <template #body="{ node }">
                         <Button :aria-label="`Ver ${node.data.label}`" icon="pi pi-eye" @click="viewItem(node.data)" text />
@@ -164,7 +124,7 @@ const deleteItem = (item) => {
                 </Column>
             </TreeTable>
 
-            <MenubarItemForm v-if="showForm" :key="`${selectedItem?.id ?? 'nuevo'}:${readonly}:${formRevision}`" :readonly="readonly" :modules="modules" :menubar-items="menubarItems" :item="selectedItem"
+            <MenubarItemForm v-if="showForm" :key="`${selectedItem?.id ?? 'nuevo'}:${readonly}:${formRevision}`" :readonly="readonly" :catalogo="page.props.catalogoMenu" :modules="modules" :menubar-items="menubarItems" :item="selectedItem"
                 @close="closeForm" />
         </template>
     </AppLayout>

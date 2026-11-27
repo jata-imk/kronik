@@ -1,6 +1,6 @@
 # Cargar el catálogo del menú contextual
 
-El seeder existente `MenubarItemsSeeder` carga 19 módulos y 45 acciones de navegación en **Administración → Menú contextual por módulos**. Incluye clientes/expedientes, solicitudes, evaluación, cumplimiento, SIC/reportes, créditos/pagos/anticipos, productos, documentos, empresa, usuarios, equipos, sucursales, roles, actividad, perfil y tokens API.
+El seeder existente `MenubarItemsSeeder` carga los 19 módulos y las acciones navegables de `config/menubar.php` en **Administración → Menú contextual por módulos**. Incluye clientes/expedientes, solicitudes, evaluación, cumplimiento, SIC/reportes, créditos/pagos/anticipos, productos, documentos, empresa, usuarios, equipos, sucursales, roles, actividad, perfil y tokens API. Se excluyen las búsquedas auxiliares JSON; las configuraciones antiguas se conservan para revisión explícita.
 
 ## Cargar después del reinicio QA
 
@@ -43,3 +43,18 @@ Pruebas aisladas:
 ```bash
 php artisan test --filter=Menubar
 ```
+
+## Configurar sin nombres de rutas
+
+1. Abre Menú contextual por módulos y pulsa Agregar acción o grupo.
+2. Elige Grupo de menú o una acción existente en Qué abre. Indica su etiqueta.
+3. Elige icono opcional, grupo y orden; los números menores aparecen primero.
+4. Marca las pantallas en Dónde aparece. Los grupos aparecen según sus acciones.
+5. Selecciona una pantalla de vista previa y pulsa Ver vista previa. Puedes abrir
+   grupos; las acciones no navegan ni guardan. Sin recurso, el menú explica qué falta.
+6. Pulsa Guardar para aplicar este elemento o Cancelar para conservar/descartar su edición.
+
+La configuración se comparte en toda la instalación. No concede permisos sobre
+los destinos. Consulta usa el mismo formulario sin controles de mutación.
+Los valores técnicos existentes permanecen en Opciones avanzadas. El agregado
+rápido usa este formulario y preselecciona la pantalla desde la que se abrió.

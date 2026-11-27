@@ -6,6 +6,8 @@ Los documentos distinguen diseño aprobado de capacidades implementadas.
 
 ## Referencia y decisiones
 
+- [Calendario crediticio](../reference/calendario-crediticio.md) · [ADR 0048](../explanation/adr-0048-calendario-crediticio.md) · [Guía QA](../how-to/qa-calendario-crediticio.md).
+
 - [Contrato de lectura financiera y proyecciones](../reference/tablero-financiero.md).
 - [ADR 0046: lecturas derivadas y consistencia transaccional](../explanation/adr-0046-lecturas-financieras-tablero.md).
 

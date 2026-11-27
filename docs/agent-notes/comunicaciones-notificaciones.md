@@ -11,6 +11,107 @@
 
 ## Estado — 27/11/2026
 
+### Integración de main en curso — 27/11/2026
+
+[PR #98](https://github.com/jata-imk/kronik/pull/98) abierta hacia la original.
+Código `ba23d136d1c83ac022633b0eb3edbcb1a52ac6e7`: revisión medium delegada
+final terminada sin defectos accionables pendientes, con autorización de José;
+[informe](https://github.com/jata-imk/kronik/pull/98#issuecomment-7224508158).
+Pre-push completo: 1,219 aprobadas, dos omisiones optativas, 50,215 aserciones
+(636.96 s) y build (37 s), sin omitir el hook. Navegación local: 20 aprobadas;
+calendario: una aprobada, ambos aislados. La aplicación conserva identidad con
+`3fa940f` después de corregir las aserciones de fixtures.
+
+[CI #319](https://github.com/jata-imk/kronik/actions/runs/46042491736), de
+`ba23d13`, falló solo en cuatro variantes del editor del menú (16 aprobadas en
+ese grupo); todos los pasos anteriores, incluidos backend, cinco harness, PDF
+y los demás E2E, aprobaron. Se descargaron y revisaron capturas, vídeo, trazas
+y consola. La primera selección se intenta durante la entrada/realineación
+del desplegable, el autoscroll lo cierra y la máscara intercepta el click.
+El retry duplica después la etiqueta del grupo ya creado; es un efecto del
+fallo inicial. Sin errores JavaScript, salvo un mensaje informativo de autofocus.
+El intento local anterior al ajuste con Chromium de Playwright y modo CI pasó
+una prueba; no reproduce ni invalida el fallo de Linux.
+
+Se ajusta exclusivamente el E2E: control visible antes de abrir, listbox exacto
+por ARIA, espera de transición/filtro terminado y etiquetas por reintento.
+Conserva el click real, la selección, Escape, consulta y persistencia; sin force,
+pausas arbitrarias ni cambios al modelo. Siete pruebas locales con Chromium
+de Playwright, revisión y nueva publicación/CI pendientes de terminar.
+
+Rama `integracion/main-comunicaciones-2026-11-27` desde el traspaso local
+`9d938590664d92a87aaa2fbe0c9a11445af896e5`, conservado sobre el destino remoto
+`f0485cf1539a42800304da2068507d7450772856`. Main incorporado como origen:
+`217aceff88e938b9037b8a11990916beb9fe4f19`; WhatsApp excluida y sin cambios,
+`871936207889c0d429cd1d0fe9c0d546f2094997`. Refs revalidados mediante fetch.
+El CI #318 aprueba únicamente `f0485cf`, no el resultado combinado.
+
+Resolución conjunta: fechas civiles/reversos con eventos y proyecciones atómicos;
+catálogo único de main ampliado con Comunicaciones/Notificaciones; guardas de
+captura aplicadas a los formularios nuevos y conservadas en el editor documental;
+calendario, permisos, auditoría, rutas, validación española y reinicio QA reunidos.
+CI conserva ambos recorridos y los cinco harness MariaDB. ADR originales de
+Comunicaciones 0047/0048 renumerados a 0052/0053, con contexto histórico y enlaces;
+0047/0048 de main conservan su identidad. Sin nuevas API, migraciones o variables.
+
+Código corregido: `09b3d53383ccc065bdac9eda56fc5cee1194ef68`, después del merge
+`183cae5d0b571e85dc6458454b0c3edd48f6f1d0` con padres `9d93859` y `217acef`.
+La integración aún no acredita publicación, despliegue ni QA externo. La
+iniciativa sigue Doing y ambas barreras permanecen cerradas.
+
+Primera revisión medium de `183cae5`, contra ambos padres y acumulado
+`bfa0b87..183cae5`: dos P2. Se corrigen la clasificación de destinos del menú
+contextual con lectura independiente y el desafío Meta normalizado por PHP,
+con regresiones de renderizado/permisos y verificación sin efectos.
+**Revisión medium final de `09b3d53`: sin defectos accionables pendientes**,
+contra ambos padres y el acumulado `bfa0b87..09b3d53`, incluida la base
+`ecb9d4a` y #91/#93–#97. Informes locales ignorados:
+`storage/framework/testing/main-review-{final-,}result.txt`.
+La primera publicación se interrumpió
+durante el hook al detectar el cruce del menú, sin resultado global ni push;
+no se considera una pasada aprobada.
+
+La inspección visual de las capturas detectó después un solapamiento de campos
+en escritorio con el sidebar de main. Se ajustan anchos mínimos y distribución
+del panel de variables, con aserciones geométricas E2E a 1024/1280/1536 px.
+La segunda publicación también se interrumpió durante el hook, sin push ni
+resultado global. La corrección visual tiene frontend completo (225/82), build
+y E2E geométrico (una aprobada, tres anchos) aprobados, con captura de escritorio
+renovada y revisada. La repetición móvil de `3fa940f` también aprobó y su captura
+se renovó e inspeccionó. La revisión adicional del CLI quedó sin resultado por
+cuota; José autorizó delegar la revisión medium estática del resultado completo.
+Esa revisión de `3fa940f`, contra ambos padres y el acumulado, terminó con un P2:
+las aserciones de menús de main suponían una tabla vacía, aunque las migraciones
+de Comunicaciones registran elementos. Sin otros defectos accionables, incluido
+el ajuste visual. La revisión de `09b3d53` acredita el código anterior a ese ajuste.
+
+La primera suite completa terminada produjo 1,208 aprobadas, dos omisiones
+optativas, once fallos y 50,213 aserciones (579.70 s), sin push. Los once fallos
+corresponden al P2: se corrigen los tres puntos de aserción comparando con el
+conteo inicial y el cambio esperado, conservando la comprobación de ausencia de
+escrituras/actividad. No se vacían tablas ni se eliminan pruebas. Focal de menús:
+25 aprobadas / 194 aserciones. Revisión de la corrección y suite completa
+corregida pendientes de terminar.
+
+Evidencia local del código corregido:
+
+- Focal de integración/Meta: 10 pruebas / 106 aserciones aprobadas.
+- Frontend completo: 225 pruebas / 82 archivos y build aprobados; identidad
+  del frontend comprobada entre `183cae5` probado y `09b3d53`.
+- MariaDB 11 aislada `kronik_test`, puerto local 33317: instalación acumulada y
+  los cinco harness (folios, auditoría, Bullet, Comunicaciones y calendario)
+  aprobados. HTTP/correo falsos y configuración sintética de proceso.
+- PDF real: 9,704 bytes. Cuatro guardas Node E2E aprobadas.
+- E2E conjuntos de `09b3d53`: ocho aprobados en una pasada aislada (6.1 min), incluidos
+  históricos, PDF multipágina, texto/HTML, móvil/teclado y descarte del borrador.
+  Capturas del resultado combinado revisadas: [escritorio](../assets/notificaciones-main-desktop.png)
+  y [móvil](../assets/notificaciones-main-mobile.png).
+- Pint aprobado; UTF-8/LF, diff, 515 enlaces e índices/temas comprobados.
+- Suite backend completa, E2E de navegación/calendario, PR y CI por SHA pendientes de terminar;
+  no se atribuye a este código el CI #318 ni una pasada interrumpida.
+
+El resto de esta nota conserva la evidencia histórica de I0–I4 y del traspaso.
+
 **Cierre técnico I4 entregado y consolidado en la rama original de Bryan.** José autorizó consolidar #93–#96 e I4 en la
 rama original, conservando ramas auxiliares. Sustituye el «sin merge» del
 traspaso solo para ese destino. No incluye `main` ni la rama separada de Bryan
@@ -46,8 +147,9 @@ resultado, por lo que se incluyó expresamente en el barrido I4.
 
 Las revisiones medium terminadas constan en las PR; los cierres posteriores
 solo cambian documentación, con identidad funcional comprobada. Sin hilos
-pendientes al retomar. La discrepancia API/ref de I0 se conserva explícita;
-`9d0473d` es ancestro de I1–I4, no se pierde su corrección documental.
+pendientes al retomar. La discrepancia API/ref de I0 fue histórica: después de
+consolidar, GitHub muestra `9d0473d` y #93 integrada. Ese HEAD es ancestro de
+I1–I4 y su corrección documental queda conservada.
 
 Revisión medium acumulada inicial de `82c7756`: cuatro hallazgos. Revisión de
 `5fe2d88`: seis correcciones confirmadas y un hallazgo adicional de bloqueos.
@@ -139,9 +241,10 @@ el código; no confirma los secretos ni la ejecución de la VPS.
 
 ## Pendientes reales y siguiente paso
 
-I4 no requiere más desarrollo dentro de este alcance. Conservar main y todas las
-ramas auxiliares. Para la próxima validación, obtener primero rama/SHA de la VPS
-y seguir la guía enlazada; si usa main, evaluar una integración posterior separada.
+I4 está cerrado técnicamente. José confirmó preparar una nueva sesión para
+**integrar main en la rama original de Comunicaciones**, conservando ambos
+trabajos; no ejecutar esa integración durante este traspaso. Después se podrá
+preparar la validación VPS según la guía, con rama/SHA reales del servidor.
 
 Después del cierre técnico quedan recepción SMS externa autenticada,
 cuenta/ruta mexicana/remitente/tarifas, presupuesto y piloto con números aprobados.
@@ -151,3 +254,91 @@ Ambas barreras permanecen cerradas; sin envíos reales, compras, Integraciones,
 limpieza operativa, despliegue, SSH ni acceso a VPS. La iniciativa permanece
 Doing y no se cierra por integrar PR. El usuario ejecutará los comandos de la
 guía de VPS y compartirá sus resultados para registrar el QA posterior.
+
+## Traspaso — integrar main en Comunicaciones, 27/11/2026
+
+Esta sesión solo prepara el traspaso. No se ha ejecutado merge de main, modificado
+código funcional ni iniciado despliegue. La integración siguiente está pendiente;
+el CI de I4 no acredita todavía una ejecución combinada con main.
+
+Estado comprobado al preparar el traspaso:
+
+- Remoto original: `f0485cf1539a42800304da2068507d7450772856`,
+  [CI #318 aprobado](https://github.com/jata-imk/kronik/actions/runs/46020691744).
+- Main: `217aceff88e938b9037b8a11990916beb9fe4f19`. Ancestro común `bfa0b87`;
+  89 commits exclusivos de main y 41 de Comunicaciones, antes del commit
+  exclusivamente documental de este traspaso. No son ramas en una sola línea.
+- WhatsApp separada: `871936207889c0d429cd1d0fe9c0d546f2094997`, excluida.
+- #93–#97 integradas en original; #91 cerrada sin integrar en main. La evidencia
+  de revisión/CI consolidada está en el
+  [comentario final de #97](https://github.com/jata-imk/kronik/pull/97#issuecomment-7221737172).
+- El commit local de este traspaso solo cambia esta nota y no se publica en esta
+  sesión. Preservarlo al crear la rama de integración; no atribuirle CI propio.
+  Revalidar HEAD locales/remotos, PR, revisiones e integración al retomar.
+
+### Siguiente sesión: integrar main en la rama original de Bryan
+
+> Continuemos Kronik con la integración de main en Comunicaciones.
+>
+> Worktree: C:\Users\jose.tejero\Documents\Proyectos\kronik\storage\framework\testing\comunicaciones-worktree
+>
+> Lee AGENTS.md y ejecuta este traspaso de
+> docs/agent-notes/comunicaciones-notificaciones.md. Consulta docs/index.md,
+> la tarea Notion 3fe61db7db7f81e4af50c4f0f3ab7e41, el plan de incrementos,
+> contratos de canales/seguimiento SMS, Notificaciones, consulta/históricos,
+> auditoría, tablero financiero y renderizado documental.
+>
+> Objetivo autorizado: incorporar los cambios vigentes de origin/main en
+> feat/comunicaciones-notificaciones, la rama original de Bryan, conservando
+> íntegramente el trabajo de main y Comunicaciones I0–I4. No incorporar
+> feat/comunicaciones-whatsapp ni otras ramas de trabajo. No integrar
+> Comunicaciones en main, reabrir #91, reescribir historia ni borrar ramas.
+>
+> Primero verifica estado limpio, refs reales y cualquier cambio posterior;
+> actualiza refs remotos sin sobrescribir trabajo local. Preserva el commit
+> documental de este traspaso aunque esté por delante del remoto. Referencia
+> funcional de Comunicaciones: f0485cf, CI #318 aprobado; main al traspasar:
+> 217acef. Si han avanzado, inspecciona y registra el alcance vigente. No uses
+> el CI anterior para acreditar la combinación pendiente.
+>
+> Crea una rama temporal de integración desde la original con el traspaso y
+> fusiona origin/main mediante merge, sin rebase/squash ni force push. Revisa
+> la divergencia completa y las interacciones, no solo conflictos textuales.
+> Conserva ambas implementaciones al resolver cada cruce, sin sustituir
+> archivos completos por una rama ni eliminar pruebas para hacerlos pasar.
+>
+> Revisar especialmente PagoService y fechas civiles/reversos, transacciones y
+> ProyeccionCreditoService, eventos de comunicación y contexto original,
+> cupos/bloqueos I4, navegación/catálogos/seeders/permisos por equipo, rutas y
+> mensajes españoles, enum/matriz de auditoría, editor documental/previas HTML
+> y PDF explícito, históricos/versiones/consulta inmutable, migraciones y
+> rollback/reinicio QA, CI e índices. Resolver la colisión de numeración ADR
+> 0047/0048 conservando las decisiones históricas y todos los enlaces.
+>
+> Validar contra ambos padres y la base funcional ecb9d4a: demostrar que se
+> mantienen los cambios de main y toda la iniciativa #91/#93–#97. Ejecutar
+> regresiones específicas de los cruces, suite backend completa, frontend/build,
+> harness MariaDB de concurrencia, PDF real y E2E aplicables en BD/HTTP aislados.
+> Un único proceso PHP de pruebas por checkout, también durante review.
+> Revisar trazas/capturas/vídeo/consola ante fallos; no presentar pasadas fallidas
+> o CI de otro SHA como aprobaciones del resultado final.
+>
+> Publicar una PR de integración hacia feat/comunicaciones-notificaciones,
+> completar /review medium de todo el resultado, resolver hallazgos y comprobar
+> CI del HEAD final. Integrarla en la rama original después de esas validaciones,
+> conservar todas las ramas y verificar también el CI del destino consolidado.
+> No mover main. Si aparecen decisiones de producto no resueltas, documentarlas
+> y preguntar solo por ellas, continuando el trabajo independiente posible.
+>
+> Mantener ambas barreras cerradas, credenciales de correo existentes y flujo
+> Meta; no añadir recepción SMS/ackurl/firmas provisionales ni declarar completo
+> I2 externo. Sin envíos reales, compras, Integraciones, limpieza operativa,
+> cambios de .env, despliegue, SSH o acceso a VPS. No habilitar SIC productivo
+> ni operaciones con dinero real. El usuario conserva la administración de VPS.
+>
+> Actualizar documentación/índices, matriz de auditoría, esta Agent Note, guía
+> de VPS y Notion. La guía deberá reflejar la integración efectivamente validada;
+> no conservar como pendiente un cruce ya resuelto ni prometer despliegue.
+> Separar integrado en original, integrado en main, desplegado y validado
+> externamente. La iniciativa sigue Doing mientras subsistan los pendientes
+> externos de SMS/cuenta/ruta/piloto. Entregar SHA/PR/CI finales y pendientes.

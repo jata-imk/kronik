@@ -38,12 +38,31 @@ const layoutState = reactive({
     configSidebarVisible: false,
     staticMenuMobileActive: false,
     menuHoverActive: false,
-    activeMenuItem: route().current() || null,
+    expandedMenuItem: null,
+    menuNavigationPath: null,
+    menuStructure: null,
 });
 
 export function useLayout() {
-    const setActiveMenuItem = (item) => {
-        layoutState.activeMenuItem = item.value || item;
+    const toggleMenuGroup = (key) => {
+        const expanded = layoutState.expandedMenuItem;
+        layoutState.expandedMenuItem =
+            expanded === key || expanded?.startsWith(`${key}-`)
+                ? key.includes("-")
+                    ? key.slice(0, key.lastIndexOf("-"))
+                    : null
+                : key;
+    };
+
+    const syncMenuNavigation = (path, structure, activeAncestor) => {
+        if (
+            path !== layoutState.menuNavigationPath ||
+            structure !== layoutState.menuStructure
+        ) {
+            layoutState.expandedMenuItem = activeAncestor;
+            layoutState.menuNavigationPath = path;
+            layoutState.menuStructure = structure;
+        }
     };
 
     const toggleDarkMode = () => {
@@ -66,7 +85,8 @@ export function useLayout() {
 
     const toggleMenu = () => {
         if (window.innerWidth <= 991) {
-            layoutState.staticMenuMobileActive = !layoutState.staticMenuMobileActive;
+            layoutState.staticMenuMobileActive =
+                !layoutState.staticMenuMobileActive;
             layoutState.overlayMenuActive = false;
         } else if (layoutConfig.menuMode === "overlay") {
             layoutState.overlayMenuActive = !layoutState.overlayMenuActive;
@@ -101,7 +121,8 @@ export function useLayout() {
         isDarkTheme,
         getPrimary,
         getSurface,
-        setActiveMenuItem,
+        toggleMenuGroup,
+        syncMenuNavigation,
         toggleDarkMode,
     };
 }

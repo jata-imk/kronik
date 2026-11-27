@@ -10,8 +10,8 @@ La rama incluye la bandeja contextual, eventos de pago/vencimiento y orquestaci�
 - [Contrato de eventos candidatos](../reference/eventos-comunicacion.md).
 - [Contrato de canales externos, consentimiento y seguimiento](../reference/canales-comunicacion.md).
 - [Matriz de auditoría](../reference/auditoria-eventos.md).
-- [ADR 0047: bandeja interna contextual](../explanation/adr-0047-bandeja-interna-contextual.md).
-- [ADR 0048: eventos candidatos antes de seleccionar canal](../explanation/adr-0048-eventos-candidatos-comunicacion.md).
+- [ADR 0052: bandeja interna contextual](../explanation/adr-0052-bandeja-interna-contextual.md).
+- [ADR 0053: eventos candidatos antes de seleccionar canal](../explanation/adr-0053-eventos-candidatos-comunicacion.md).
 - [ADR 0049: orquestación de comunicaciones externas](../explanation/adr-0049-orquestacion-comunicaciones-externas.md).
 
 ## Seguimiento

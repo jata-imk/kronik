@@ -130,6 +130,9 @@ jobs:
       - name: Verify communication concurrency on isolated MariaDB
         run: php tests/Concurrency/comunicaciones.php
 
+      - name: Verify concurrent calendar publications on isolated MariaDB
+        run: php tests/Concurrency/calendario.php
+
       - name: Install browsers for UI and PDF verification
         run: |
           npx playwright install --with-deps chromium
@@ -172,6 +175,16 @@ jobs:
           E2E_FRESH_DATABASE: "true"
         run: npm run test:e2e -- notificaciones.spec.js communications.spec.js documentos-editor.spec.js consulta-versiones.spec.js --output=test-results-notificaciones
 
+      - name: Verify credit calendar and adjusted due dates
+        env:
+          E2E_FRESH_DATABASE: "true"
+        run: npm run test:e2e -- calendario-crediticio.spec.js --output=test-results-calendario
+
+      - name: Verify protected navigation and contextual menus
+        env:
+          E2E_FRESH_DATABASE: "true"
+        run: npm run test:e2e -- menubar.spec.js menubar-navegacion.spec.js sidebar.spec.js --output=test-results-navegacion
+
       - name: Upload browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -185,4 +198,6 @@ jobs:
             playwright-report/
             test-results-rfc/
             test-results-historico/
+            test-results-calendario/
+            test-results-navegacion/
           retention-days: 7

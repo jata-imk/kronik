@@ -3,7 +3,8 @@ import ListadoPaginador from "@/Components/ListadoPaginador.vue";
 import { useListadoServidor } from "@/Composables/useListadoServidor";
 import PageHeader from "@/Components/PageHeader.vue";
 import { ref } from "vue";
-import { useForm, usePage } from "@inertiajs/vue3";
+import { usePage } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import { useToast } from "primevue/usetoast";
 
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";

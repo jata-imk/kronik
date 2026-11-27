@@ -15,10 +15,12 @@ git rev-parse HEAD
 ```
 
 El destino de I0–I4 es `feat/comunicaciones-notificaciones`, la rama original de
-Bryan. `main` tiene trabajo independiente que no se incorporó en I4. Si la VPS
-usa `main` u otra rama, **no cambiarla ni mezclarla automáticamente**: compartir
-rama/SHA y evaluar primero la integración conjunta. Cambiar directamente a la
-rama de Comunicaciones podría retirar otras funcionalidades de la instalación.
+Bryan. La integración de main `217acef` se prepara en
+`integracion/main-comunicaciones-2026-11-27`; consultar en la
+[Agent Note](../agent-notes/comunicaciones-notificaciones.md) su estado real,
+SHA, PR y CI antes de considerar una actualización. Si la VPS usa `main` u otra
+rama, compartir rama/SHA para preparar un cambio autorizado con esa evidencia.
+La integración del repositorio no autoriza cambiar la rama del servidor.
 La rama `feat/comunicaciones-whatsapp` contiene otro trabajo de Bryan y tampoco
 forma parte de esta consolidación.
 

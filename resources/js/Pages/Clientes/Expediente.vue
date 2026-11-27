@@ -1,5 +1,7 @@
 <script setup>
-import { router, useForm, usePage } from "@inertiajs/vue3";
+import { router, usePage } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
+import { discardMessage } from "@/Utils/unsavedChanges";
 import axios from "axios";
 import {
     BadgeCheck,
@@ -125,9 +127,9 @@ const generationCheckLoading = ref(false);
 let generationCheckRequest;
 
 function openGeneration() {
+    generationForm.defaults({ version_id: null, garantia_id: null, idempotency_key: crypto.randomUUID(), confirm_duplicate: false });
     generationForm.reset();
-    generationForm.idempotency_key = crypto.randomUUID();
-    generationForm.confirm_duplicate = false;
+    generationForm.clearErrors();
     generationMatch.value = null;
     generationDialog.value = true;
 }
@@ -408,7 +410,7 @@ const reviewForm = useForm({ estado: "validado", motivo_rechazo: "" });
 
 const referenceDialog = ref(false);
 const editingReference = ref(null);
-const referenceForm = useForm({
+const referenceDefaults = () => ({
     tipo: "personal",
     nombre: "",
     relacion: "",
@@ -419,6 +421,7 @@ const referenceForm = useForm({
     email: "",
     notas: "",
 });
+const referenceForm = useForm(referenceDefaults());
 
 const linkDialog = ref(false);
 const linkForm = useForm({
@@ -429,7 +432,7 @@ const linkForm = useForm({
 
 const guaranteeDialog = ref(false);
 const editingGuarantee = ref(null);
-const guaranteeForm = useForm({
+const guaranteeDefaults = () => ({
     propietario_cliente_id: null,
     tipo: "prendaria",
     descripcion: "",
@@ -437,6 +440,7 @@ const guaranteeForm = useForm({
     moneda: props.opciones.moneda,
     notas: "",
 });
+const guaranteeForm = useForm(guaranteeDefaults());
 
 const consentDialog = ref(false);
 const consentForm = useForm({
@@ -453,6 +457,23 @@ watch(consentDialog, (visible) => {
     consentForm.clearErrors();
 });
 
+const expedienteEditors = {
+    document: { dialog: documentDialog, form: documentForm },
+    generation: { dialog: generationDialog, form: generationForm },
+    review: { dialog: reviewDialog, form: reviewForm },
+    reference: { dialog: referenceDialog, form: referenceForm },
+    link: { dialog: linkDialog, form: linkForm },
+    guarantee: { dialog: guaranteeDialog, form: guaranteeForm },
+    consent: { dialog: consentDialog, form: consentForm },
+};
+function closeEditor(name) {
+    const { dialog, form } = expedienteEditors[name];
+    if (form.isDirty && !window.confirm(discardMessage)) return;
+    form.reset();
+    form.clearErrors();
+    dialog.value = false;
+}
+
 const saveProfile = () => {
     profileForm.patch(
         route("clientes.expediente.perfil.update", props.cliente.id),
@@ -462,12 +483,9 @@ const saveProfile = () => {
 
 const openDocumentUpload = (documento = null) => {
     selectedDocument.value = documento;
-    documentForm.defaults({ tipo: "adicional", nombre: "", archivo: null, reemplaza_documento_id: null, vence_en: null, notas: "" });
+    documentForm.defaults({ tipo: documento?.tipo ?? "adicional", nombre: documento?.nombre ?? "", archivo: null, reemplaza_documento_id: documento?.id ?? null, vence_en: null, notas: "" });
     documentForm.reset();
     documentForm.clearErrors();
-    documentForm.tipo = documento?.tipo ?? "adicional";
-    documentForm.nombre = documento?.nombre ?? "";
-    documentForm.reemplaza_documento_id = documento?.id ?? null;
     documentDialog.value = true;
 };
 const uploadDocument = () => {
@@ -502,6 +520,7 @@ const updateDocumentStatus = () => {
 
 const openReference = (reference = null) => {
     editingReference.value = reference;
+    referenceForm.defaults(referenceDefaults());
     referenceForm.reset();
     referenceForm.clearErrors();
     if (reference) {
@@ -517,6 +536,8 @@ const openReference = (reference = null) => {
             notas: reference.notas ?? "",
         });
     }
+    referenceForm.defaults();
+    referenceForm.reset();
     referenceDialog.value = true;
 };
 
@@ -548,6 +569,7 @@ const saveLink = () => {
 
 const openGuarantee = (guarantee = null) => {
     editingGuarantee.value = guarantee;
+    guaranteeForm.defaults(guaranteeDefaults());
     guaranteeForm.reset();
     guaranteeForm.clearErrors();
     guaranteeForm.moneda = props.opciones.moneda;
@@ -563,6 +585,8 @@ const openGuarantee = (guarantee = null) => {
             notas: guarantee.notas ?? "",
         });
     }
+    guaranteeForm.defaults();
+    guaranteeForm.reset();
     guaranteeDialog.value = true;
 };
 
@@ -588,8 +612,8 @@ const saveConsent = () => {
         {
             ...formOptions("Consentimiento SIC registrado", () => {
                 consentDialog.value = false;
+                consentForm.defaults({ medio: "firma_autografa", otorgado_en: new Date(), vence_en: null, evidencia: null, notas: "" });
                 consentForm.reset();
-                consentForm.otorgado_en = new Date();
             }),
             forceFormData: true,
         },
@@ -990,7 +1014,7 @@ function formatCurrency(value, currency = props.opciones.moneda) {
             </div>
         </div>
 
-        <Dialog v-model:visible="documentDialog" modal :header="selectedDocument?.nombre_original ? 'Sustituir documento' : 'Recibir documento'" class="responsive-dialog">
+        <Dialog :visible="documentDialog" @update:visible="visible => !visible && closeEditor('document')" modal :header="selectedDocument?.nombre_original ? 'Sustituir documento' : 'Recibir documento'" class="responsive-dialog">
             <form class="dialog-form" @submit.prevent="uploadDocument">
                 <div><label>Tipo</label><Select v-model="documentForm.tipo" :options="opciones.documentos" optionLabel="label" optionValue="value" fluid :disabled="selectedDocument !== null" /></div>
                 <div v-if="documentForm.tipo === 'adicional'"><label>Nombre del documento</label><InputText v-model="documentForm.nombre" fluid /></div>
@@ -998,11 +1022,11 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                 <div><label>Archivo privado</label><DocumentFileInput v-model="documentForm.archivo" :error="documentForm.errors.archivo" @clear-error="documentForm.clearErrors('archivo')" /></div>
                 <div><label>Notas</label><Textarea v-model="documentForm.notas" rows="3" fluid /></div>
                 <Message v-for="error in Object.fromEntries(Object.entries(documentForm.errors).filter(([key]) => key !== 'archivo'))" :key="error" severity="error" size="small">{{ error }}</Message>
-                <div class="dialog-actions"><Button type="button" label="Cancelar" text @click="documentDialog = false" /><Button type="submit" label="Guardar archivo" :loading="documentForm.processing"><template #icon><Upload :size="17" /></template></Button></div>
+                <div class="dialog-actions"><Button type="button" label="Cancelar" text @click="closeEditor('document')" /><Button type="submit" label="Guardar archivo" :loading="documentForm.processing"><template #icon><Upload :size="17" /></template></Button></div>
             </form>
         </Dialog>
 
-        <Dialog v-model:visible="generationDialog" modal header="Generar documento final" class="responsive-dialog">
+        <Dialog :visible="generationDialog" @update:visible="visible => !visible && closeEditor('generation')" modal header="Generar documento final" class="responsive-dialog">
             <form class="dialog-form" @submit.prevent="generateDocument">
                 <Message severity="info" :closable="false">El PDF usará la versión activa exacta y una copia cifrada de los valores utilizados. No representa una firma.</Message>
                 <fieldset>
@@ -1040,21 +1064,21 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                     <Message v-if="generationForm.errors.confirm_duplicate" severity="error" size="small" class="mt-2">{{ generationForm.errors.confirm_duplicate }}</Message>
                 </div>
                 <Message v-if="!generationOptions.length" severity="warn" :closable="false">No hay versiones activas disponibles. Activa una plantilla desde el Centro documental.</Message>
-                <div class="dialog-actions"><Button type="button" label="Cancelar" text @click="generationDialog = false" /><Button v-empresa-operacion="'documentar'" type="submit" :label="generationMatch?.estado === 'generado' ? 'Generar otra copia' : 'Generar PDF'" icon="pi pi-file-pdf" :loading="generationForm.processing" :disabled="generationCheckLoading || generationMatch?.bloquea || (generationMatch?.estado === 'generado' && !generationForm.confirm_duplicate) || !generationOptions.length || !generationForm.version_id || (selectedGeneration?.tipo === 'garantia' && !generationForm.garantia_id)" /></div>
+                <div class="dialog-actions"><Button type="button" label="Cancelar" text @click="closeEditor('generation')" /><Button v-empresa-operacion="'documentar'" type="submit" :label="generationMatch?.estado === 'generado' ? 'Generar otra copia' : 'Generar PDF'" icon="pi pi-file-pdf" :loading="generationForm.processing" :disabled="generationCheckLoading || generationMatch?.bloquea || (generationMatch?.estado === 'generado' && !generationForm.confirm_duplicate) || !generationOptions.length || !generationForm.version_id || (selectedGeneration?.tipo === 'garantia' && !generationForm.garantia_id)" /></div>
             </form>
         </Dialog>
         <PrivateDocumentViewer v-model:visible="viewerVisible" :url="viewer.url" :download-url="viewer.downloadUrl" :name="viewer.name" />
 
-        <Dialog v-model:visible="reviewDialog" modal header="Revisión documental" class="responsive-dialog narrow-dialog">
+        <Dialog :visible="reviewDialog" @update:visible="visible => !visible && closeEditor('review')" modal header="Revisión documental" class="responsive-dialog narrow-dialog">
             <form class="dialog-form" @submit.prevent="updateDocumentStatus">
                 <SelectButton v-model="reviewForm.estado" :options="[{ label: 'Validar', value: 'validado' }, { label: 'Rechazar', value: 'rechazado' }, { label: 'Vencido', value: 'vencido' }]" optionLabel="label" optionValue="value" :allowEmpty="false" />
                 <div v-if="reviewForm.estado === 'rechazado'"><label for="document-rejection-reason">Motivo de rechazo</label><Textarea id="document-rejection-reason" v-model="reviewForm.motivo_rechazo" rows="4" maxlength="2000" fluid /><small class="text-surface-500">Entre 10 y 2000 caracteres.</small></div>
                 <Message v-for="error in reviewForm.errors" :key="error" severity="error" size="small">{{ error }}</Message>
-                <div class="dialog-actions"><Button type="button" label="Cancelar" text @click="reviewDialog = false" /><Button type="submit" label="Aplicar estado" :loading="reviewForm.processing" /></div>
+                <div class="dialog-actions"><Button type="button" label="Cancelar" text @click="closeEditor('review')" /><Button type="submit" label="Aplicar estado" :loading="reviewForm.processing" /></div>
             </form>
         </Dialog>
 
-        <Dialog v-model:visible="referenceDialog" modal :header="editingReference ? 'Editar referencia' : 'Nueva referencia'" class="responsive-dialog">
+        <Dialog :visible="referenceDialog" @update:visible="visible => !visible && closeEditor('reference')" modal :header="editingReference ? 'Editar referencia' : 'Nueva referencia'" class="responsive-dialog">
             <form class="dialog-form two-columns" @submit.prevent="saveReference">
                 <div><label>Tipo</label><SelectButton v-model="referenceForm.tipo" :options="opciones.referencias" optionLabel="label" optionValue="value" :allowEmpty="false" /></div>
                 <div><label>Nombre</label><InputText v-model="referenceForm.nombre" fluid /></div>
@@ -1064,22 +1088,22 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                 <div><label>Email</label><InputText v-model="referenceForm.email" fluid /></div>
                 <div class="full-field"><label>Notas</label><Textarea v-model="referenceForm.notas" rows="3" fluid /></div>
                 <Message v-for="error in referenceForm.errors" :key="error" severity="error" size="small" class="full-field">{{ error }}</Message>
-                <div class="dialog-actions full-field"><Button type="button" label="Cancelar" text @click="referenceDialog = false" /><Button type="submit" label="Guardar referencia" :loading="referenceForm.processing" /></div>
+                <div class="dialog-actions full-field"><Button type="button" label="Cancelar" text @click="closeEditor('reference')" /><Button type="submit" label="Guardar referencia" :loading="referenceForm.processing" /></div>
             </form>
         </Dialog>
 
-        <Dialog v-model:visible="linkDialog" modal header="Vincular cliente" class="responsive-dialog narrow-dialog">
+        <Dialog :visible="linkDialog" @update:visible="visible => !visible && closeEditor('link')" modal header="Vincular cliente" class="responsive-dialog narrow-dialog">
             <form class="dialog-form" @submit.prevent="saveLink">
                 <div><label>Cliente</label><Select v-model="linkForm.cliente_vinculado_id" :options="candidateOptions" optionLabel="label" optionValue="id" filter @filter="candidates.search" :loading="candidates.loading.value" fluid><template #option="{ option }"><div><strong>{{ option.label }}</strong><small class="block">{{ option.rfc }}</small></div></template></Select></div>
                 <Message v-if="candidates.error.value" severity="error">{{ candidates.error.value }}</Message>
                 <div><label>Responsabilidad</label><SelectButton v-model="linkForm.rol" :options="opciones.vinculos" optionLabel="label" optionValue="value" :allowEmpty="false" /></div>
                 <div><label>Notas</label><Textarea v-model="linkForm.notas" rows="3" fluid /></div>
                 <Message v-for="error in linkForm.errors" :key="error" severity="error" size="small">{{ error }}</Message>
-                <div class="dialog-actions"><Button type="button" label="Cancelar" text @click="linkDialog = false" /><Button type="submit" label="Vincular" :loading="linkForm.processing" /></div>
+                <div class="dialog-actions"><Button type="button" label="Cancelar" text @click="closeEditor('link')" /><Button type="submit" label="Vincular" :loading="linkForm.processing" /></div>
             </form>
         </Dialog>
 
-        <Dialog v-model:visible="guaranteeDialog" modal :header="editingGuarantee ? 'Editar garantía' : 'Registrar garantía'" class="responsive-dialog">
+        <Dialog :visible="guaranteeDialog" @update:visible="visible => !visible && closeEditor('guarantee')" modal :header="editingGuarantee ? 'Editar garantía' : 'Registrar garantía'" class="responsive-dialog">
             <form class="dialog-form two-columns" @submit.prevent="saveGuarantee">
                 <div><label>Tipo</label><Select v-model="guaranteeForm.tipo" :options="opciones.garantias" optionLabel="label" optionValue="value" fluid /></div>
                 <div><label>Propietario</label><Select v-model="guaranteeForm.propietario_cliente_id" :options="relatedClientOptions" optionLabel="label" optionValue="id" showClear filter placeholder="El cliente titular" fluid /></div>
@@ -1088,11 +1112,11 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                 <div><label>Moneda</label><InputText v-model="guaranteeForm.moneda" maxlength="3" fluid /></div>
                 <div class="full-field"><label>Notas</label><Textarea v-model="guaranteeForm.notas" rows="3" fluid /></div>
                 <Message v-for="error in guaranteeForm.errors" :key="error" severity="error" size="small" class="full-field">{{ error }}</Message>
-                <div class="dialog-actions full-field"><Button type="button" label="Cancelar" text @click="guaranteeDialog = false" /><Button type="submit" label="Guardar garantía" :loading="guaranteeForm.processing" /></div>
+                <div class="dialog-actions full-field"><Button type="button" label="Cancelar" text @click="closeEditor('guarantee')" /><Button type="submit" label="Guardar garantía" :loading="guaranteeForm.processing" /></div>
             </form>
         </Dialog>
 
-        <Dialog v-model:visible="consentDialog" modal header="Registrar consentimiento SIC" class="responsive-dialog">
+        <Dialog :visible="consentDialog" @update:visible="visible => !visible && closeEditor('consent')" modal header="Registrar consentimiento SIC" class="responsive-dialog">
             <form class="dialog-form two-columns" @submit.prevent="saveConsent">
                 <div><label>Medio</label><Select v-model="consentForm.medio" :options="opciones.medios_consentimiento" optionLabel="label" optionValue="value" fluid /></div>
                 <div><label>Fecha y hora</label><DatePicker v-model="consentForm.otorgado_en" dateFormat="dd-mm-yy" showTime hourFormat="24" showIcon fluid /></div>
@@ -1100,7 +1124,7 @@ function formatCurrency(value, currency = props.opciones.moneda) {
                 <div><label>Evidencia privada</label><DocumentFileInput v-model="consentForm.evidencia" :error="consentForm.errors.evidencia" @clear-error="consentForm.clearErrors('evidencia')" /></div>
                 <div class="full-field"><label>Notas</label><Textarea v-model="consentForm.notas" rows="3" fluid /></div>
                 <Message v-for="error in Object.fromEntries(Object.entries(consentForm.errors).filter(([key]) => key !== 'evidencia'))" :key="error" severity="error" size="small" class="full-field">{{ error }}</Message>
-                <div class="dialog-actions full-field"><Button type="button" label="Cancelar" text @click="consentDialog = false" /><Button type="submit" label="Registrar consentimiento" :loading="consentForm.processing"><template #icon><ShieldCheck :size="17" /></template></Button></div>
+                <div class="dialog-actions full-field"><Button type="button" label="Cancelar" text @click="closeEditor('consent')" /><Button type="submit" label="Registrar consentimiento" :loading="consentForm.processing"><template #icon><ShieldCheck :size="17" /></template></Button></div>
             </form>
         </Dialog>
     </AppLayout>

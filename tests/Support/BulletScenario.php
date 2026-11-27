@@ -22,7 +22,7 @@ use Illuminate\Support\Str;
 /** Fixtures por servicios reales, sin injertar condiciones, tablas ni hashes. */
 final class BulletScenario
 {
-    public static function producto(User $actor, string $politica, string $base = 'obligacion_vencida', bool $activar = true): ProductoVersion
+    public static function producto(User $actor, string $politica, string $base = 'obligacion_vencida', bool $activar = true, string $ajuste = 'sin_ajuste'): ProductoVersion
     {
         self::aislado();
         $service = app(ProductoVersionService::class);
@@ -37,7 +37,7 @@ final class BulletScenario
                     'ordinario' => ['tratamiento' => 'no_causa'], 'moratorio' => ['tratamiento' => 'no_causa']],
                 'periodicidades' => [['periodicidad' => 'mensual', 'plazo_minimo' => 1, 'plazo_maximo' => 24, 'plazo_predeterminado' => 2]],
                 'reglas' => ['metodos_amortizacion' => ['bullet'], 'politica_interes_bullet' => $politica,
-                    'base_ordinaria' => 'saldo_insoluto', 'base_moratoria' => $base, 'convencion_interes' => 'dias_reales_360',
+                    'ajuste_dia_inhabil' => $ajuste, 'base_ordinaria' => 'saldo_insoluto', 'base_moratoria' => $base, 'convencion_interes' => 'dias_reales_360',
                     'permite_prepago_parcial' => true, 'permite_liquidacion_anticipada' => true,
                     'monto_minimo_prepago' => '100.00', 'aplicacion_prepago' => 'conservar_fecha'],
                 'comisiones' => [],
@@ -89,10 +89,11 @@ final class BulletScenario
         ], $actor)->fresh();
     }
 
-    public static function aprobar(Solicitud $solicitud, User $actor): Solicitud
+    public static function aprobar(Solicitud $solicitud, User $actor, ?\Closure $prepararRevision = null): Solicitud
     {
         $service = app(SolicitudService::class);
         $solicitud = $service->enviar($solicitud, $solicitud->lock_version, $actor);
+        $prepararRevision?->__invoke($solicitud->revisiones()->latest('numero')->firstOrFail());
         foreach (['evaluacion', 'pld'] as $tipo) {
             $solicitud = $service->dictaminar($solicitud, [
                 'lock_version' => $solicitud->lock_version, 'tipo_dictamen' => $tipo,

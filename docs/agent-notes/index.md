@@ -2,6 +2,9 @@
 
 - [Comunicaciones y notificaciones](comunicaciones-notificaciones.md)
 
+- [Sidebar: expansión manual, selección y validación](sidebar-desplegables.md).
+- [Calendario crediticio](calendario-crediticio.md)
+
 - [Tablero: implementación de diseño y proyecciones financieras](tablero-propuesta-visual.md)
 
 - [Días de gracia predeterminados de Empresa](empresa-dias-gracia.md)
@@ -77,3 +80,5 @@ Consulta el [índice temático](../topic/index.md) para encontrar material relac
 - [SIC QA por escenarios](sic-escenarios-qa.md).
 
 - [Desembolsos históricos y captura cronológica](desembolsos-historicos.md).
+
+- [Usabilidad del Menubar](menubar-usabilidad.md).

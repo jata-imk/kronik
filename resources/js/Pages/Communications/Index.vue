@@ -1,6 +1,8 @@
 <script setup>
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { Link, router, useForm } from "@inertiajs/vue3";
+import { useGuardedForm } from "@/Composables/useGuardedForm";
+import { confirmFormDiscard } from "@/Utils/unsavedChanges";
 import { computed, ref, watch } from "vue";
 
 const props = defineProps({
@@ -31,10 +33,10 @@ const selectedEvent = ref("payment_received");
 const selectedRuleChannel = ref("email");
 const selectedChannelData = computed(() => props.channels.find((item) => item.channel === selectedChannel.value));
 const selectedRuleData = computed(() => props.rules.find((item) => item.event_type === selectedEvent.value && item.channel === selectedRuleChannel.value));
-const channelForm = useForm({ channel: "email", sender: "", secret: "", enabled: false, eligibility: "unverified", eligibility_reference: "" });
-const ruleForm = useForm({ notification_template_id: null, event_type: "payment_received", channel: "email", enabled: false, lead_days: props.ruleDefaults.leadDays, timezone: props.ruleDefaults.timezone, window_start: props.ruleDefaults.windowStart, window_end: props.ruleDefaults.windowEnd, daily_limit: props.ruleDefaults.dailyLimit, subject: "Confirmación de pago", body: "Hola {nombre}, registramos tu pago. Gracias.", external_template_name: "", external_template_locale: "es_MX", external_template_status: "draft" });
-const consentForm = useForm({ cliente_id: props.filters.cliente_id || "", channel: "email", purpose: "operational", source: "documento firmado", evidence_reference: "" });
-const testForm = useForm({ channel: "email", recipient: props.testRecipient || "" });
+const channelForm = useGuardedForm({ channel: "email", sender: "", secret: "", enabled: false, eligibility: "unverified", eligibility_reference: "" });
+const ruleForm = useGuardedForm({ notification_template_id: null, event_type: "payment_received", channel: "email", enabled: false, lead_days: props.ruleDefaults.leadDays, timezone: props.ruleDefaults.timezone, window_start: props.ruleDefaults.windowStart, window_end: props.ruleDefaults.windowEnd, daily_limit: props.ruleDefaults.dailyLimit, subject: "Confirmación de pago", body: "Hola {nombre}, registramos tu pago. Gracias.", external_template_name: "", external_template_locale: "es_MX", external_template_status: "draft" });
+const consentForm = useGuardedForm({ cliente_id: props.filters.cliente_id || "", channel: "email", purpose: "operational", source: "documento firmado", evidence_reference: "" });
+const testForm = useGuardedForm({ channel: "email", recipient: props.testRecipient || "" });
 const checkForm = useForm({ channel: "sms" });
 
 function loadChannel() {
@@ -56,11 +58,29 @@ function loadRule() {
     ruleForm.reset();
 }
 
+function selectChannel(event) {
+    if (!confirmFormDiscard(channelForm)) { event.target.value = selectedChannel.value; return; }
+    selectedChannel.value = event.target.value;
+    loadChannel();
+}
+function selectRule(kind, event) {
+    const selected = kind === "event" ? selectedEvent : selectedRuleChannel;
+    if (!confirmFormDiscard(ruleForm)) { event.target.value = selected.value; return; }
+    selected.value = event.target.value;
+    loadRule();
+}
+
 loadChannel();
 loadRule();
 watch(() => selectedChannelData.value?.id, loadChannel);
 watch(() => props.canManage, (allowed) => { if (!allowed) loadChannel(); });
 watch([() => props.canManage, () => props.contextoOperativo.team_id, () => props.contextoOperativo.sucursal_id], loadRule);
+watch([() => props.contextoOperativo.team_id, () => props.contextoOperativo.sucursal_id], () => {
+    loadChannel();
+    for (const form of [consentForm, testForm, checkForm]) { form.cancel(); form.reset(); form.clearErrors(); }
+});
+watch(() => props.canManage, allowed => { if (!allowed) { consentForm.cancel(); consentForm.reset(); consentForm.clearErrors(); } });
+watch(() => props.canTest, allowed => { if (!allowed) { testForm.cancel(); testForm.reset(); testForm.clearErrors(); checkForm.cancel(); } });
 
 const compatibleTemplates = computed(() => props.notificationTemplates.filter(item => item.channel === selectedRuleChannel.value && item.event_type === selectedEvent.value));
 const preview = computed(() => {
@@ -85,7 +105,10 @@ function saveRule() {
     if (!props.canManage || ruleForm.processing) return;
     ruleForm.put(route("comunicaciones.rules.update"), { preserveScroll: true, onSuccess: loadRule });
 }
-function saveConsent() { consentForm.post(route("comunicaciones.consents.store", consentForm.cliente_id), { preserveScroll: true, onSuccess: () => consentForm.reset("evidence_reference") }); }
+function saveConsent() {
+    if (!props.canManage || consentForm.processing) return;
+    consentForm.post(route("comunicaciones.consents.store", consentForm.cliente_id), { preserveScroll: true, onSuccess: () => { consentForm.reset("evidence_reference"); consentForm.defaults(); } });
+}
 function revokeConsent(item) {
     if (window.confirm("¿Revocar este consentimiento? Los envíos pendientes se cancelarán.")) {
         useForm({}).patch(route("comunicaciones.consents.revoke", [item.cliente_id, item.id]), { preserveScroll: true });
@@ -126,7 +149,7 @@ function filterHistory() {
                 </div>
                 <form v-if="canManage" class="grid gap-4 rounded-lg border border-surface-200 p-4 dark:border-surface-700 md:grid-cols-2" @submit.prevent="saveChannel">
                     <h2 class="md:col-span-2 text-lg font-semibold">Configurar canal</h2>
-                    <label class="grid gap-1">Canal<select v-model="selectedChannel" class="rounded border p-2 dark:bg-surface-900" @change="loadChannel"><option value="email">Correo SMTP</option><option value="sms">SMS LabsMobile</option><option value="whatsapp">WhatsApp Cloud API</option></select></label>
+                    <label class="grid gap-1">Canal<select :value="selectedChannel" class="rounded border p-2 dark:bg-surface-900" @change="selectChannel"><option value="email">Correo SMTP</option><option value="sms">SMS LabsMobile</option><option value="whatsapp">WhatsApp Cloud API</option></select></label>
                     <label v-if="selectedChannel !== 'sms'" class="grid gap-1">{{ selectedChannel === 'email' ? 'Correo remitente' : 'ID del número de Meta' }}<input v-model="channelForm.sender" class="rounded border p-2 dark:bg-surface-900" required /><small>{{ channelForm.errors.sender }}</small></label>
                     <label class="grid gap-1">Elegibilidad<select v-model="channelForm.eligibility" class="rounded border p-2 dark:bg-surface-900"><option value="unverified">Sin verificar</option><option value="testing">Pruebas</option><option value="approved">Aprobada para este uso</option><option value="rejected">Rechazada</option></select></label>
                     <label class="grid gap-1">Referencia de aprobación<input v-model="channelForm.eligibility_reference" class="rounded border p-2 dark:bg-surface-900" placeholder="Folio o referencia interna" /><small>{{ channelForm.errors.eligibility_reference }}</small></label>
@@ -141,7 +164,7 @@ function filterHistory() {
                     <button type="submit" class="rounded bg-primary-600 px-4 py-2 text-white disabled:opacity-50" :disabled="channelForm.processing">Guardar canal</button>
                     <p v-if="Object.keys(channelForm.errors).length" class="text-red-600 md:col-span-2" role="alert">{{ Object.values(channelForm.errors).join(" ") }}</p>
                 </form>
-                <form v-if="canTest && selectedChannel === 'email'" class="flex flex-wrap items-end gap-3 rounded-lg border border-surface-200 p-4 dark:border-surface-700" @submit.prevent="testForm.post(route('comunicaciones.test'))">
+                <form v-if="canTest && selectedChannel === 'email'" class="flex flex-wrap items-end gap-3 rounded-lg border border-surface-200 p-4 dark:border-surface-700" @submit.prevent="testForm.post(route('comunicaciones.test'), { onSuccess: () => testForm.defaults() })">
                     <label class="grid gap-1">Destinatario de prueba autorizado<input v-model="testForm.recipient" type="email" class="rounded border p-2 dark:bg-surface-900" required /></label>
                     <button type="submit" class="rounded border border-primary-600 px-4 py-2" :disabled="testForm.processing">Enviar prueba técnica</button>
                     <p class="w-full text-sm">La aceptación por SMTP no demuestra entrega al buzón. La prueba requiere transporte real y el destinatario configurado en el entorno.</p>
@@ -165,8 +188,8 @@ function filterHistory() {
                 </div>
                 <p v-else>No hay reglas configuradas para este equipo.</p>
                 <form v-if="canManage" class="grid gap-4 rounded-lg border border-surface-200 p-4 dark:border-surface-700 md:grid-cols-2" @submit.prevent="saveRule">
-                    <label class="grid gap-1">Evento<select v-model="selectedEvent" class="rounded border p-2 dark:bg-surface-900" @change="loadRule"><option value="payment_received">Pago recibido</option><option value="upcoming_due">Próximo vencimiento</option></select></label>
-                    <label class="grid gap-1">Canal<select v-model="selectedRuleChannel" class="rounded border p-2 dark:bg-surface-900" @change="loadRule"><option value="email">Correo</option><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option></select></label>
+                    <label class="grid gap-1">Evento<select :value="selectedEvent" class="rounded border p-2 dark:bg-surface-900" @change="selectRule('event', $event)"><option value="payment_received">Pago recibido</option><option value="upcoming_due">Próximo vencimiento</option></select></label>
+                    <label class="grid gap-1">Canal<select :value="selectedRuleChannel" class="rounded border p-2 dark:bg-surface-900" @change="selectRule('channel', $event)"><option value="email">Correo</option><option value="sms">SMS</option><option value="whatsapp">WhatsApp</option></select></label>
                     <label v-if="selectedEvent === 'upcoming_due'" class="grid gap-1">Días antes del vencimiento<input v-model.number="ruleForm.lead_days" type="number" min="1" :max="ruleDefaults.maxLeadDays" class="rounded border p-2 dark:bg-surface-900" required /><small>{{ ruleForm.errors.lead_days }}</small></label>
                     <label class="grid gap-1">Zona horaria<input v-model="ruleForm.timezone" class="rounded border p-2 dark:bg-surface-900" required /></label>
                     <label class="grid gap-1">Límite diario conjunto<input v-model.number="ruleForm.daily_limit" type="number" min="1" :max="ruleDefaults.maxDailyLimit" class="rounded border p-2 dark:bg-surface-900" /></label>

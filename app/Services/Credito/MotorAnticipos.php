@@ -268,7 +268,12 @@ final class MotorAnticipos
                 }
             }
         }
+        $evidencia = $tabla['calendario_crediticio'] ?? null;
+        $nominales = array_column($evidencia['fechas'] ?? [], 'fecha_original', 'fecha');
         foreach ($filas as &$f) {
+            if (isset($nominales[$f['fecha']])) {
+                $f['fecha_original'] = $nominales[$f['fecha']];
+            }
             $comisiones = [];
             foreach ($state['cargos'] as $c) {
                 if ($c['tipo'] === 'comision' && $c['fecha'] === $f['fecha'] && ($c['vigente'] ?? true)) {
@@ -288,7 +293,8 @@ final class MotorAnticipos
         }
         unset($f);
 
-        return ['formato' => 2, 'motor_calculo_version' => $motor->value, 'convencion_interes' => $convencion->value, 'metodo' => $metodo->value, 'cuota_base' => $base, 'tabla' => $filas];
+        return ['formato' => 2, 'motor_calculo_version' => $motor->value, 'convencion_interes' => $convencion->value, 'metodo' => $metodo->value, 'cuota_base' => $base, 'tabla' => $filas,
+            ...($evidencia === null ? [] : ['calendario_crediticio' => $evidencia])];
     }
 
     private function proyectarBullet(array $state, string $saldo, CarbonImmutable $inicio, array $fechas, VersionMotorCredito $motor, ConvencionInteres $convencion): array

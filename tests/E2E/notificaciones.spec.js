@@ -41,6 +41,7 @@ test("SMS conserva texto y versiones exactas sin PDF, también en móvil y tecla
     await content.fill("Otra redacción para {nombre}.");
     await page.getByRole("button", { name: "Actualizar previsualización" }).click();
     await expect(page.getByTestId("text-preview")).toHaveText("Otra redacción para María.");
+    page.once("dialog", dialog => dialog.accept());
     await page.getByRole("button", { name: /^V1 · Activa/ }).click();
     await expect(page.getByRole("heading", { name: /Consultar versión 1 · Activa/ })).toBeVisible();
     await page.getByRole("button", { name: "Actualizar previsualización" }).click();
@@ -51,6 +52,27 @@ test("SMS conserva texto y versiones exactas sin PDF, también en móvil y tecla
     await page.screenshot({ path: "test-results/notificaciones-mobile.png", fullPage: true });
     await testInfo.attach("notificaciones-mobile", { path: "test-results/notificaciones-mobile.png", contentType: "image/png" });
     expect(pdfRequests).toEqual([]);
+    assertConsole();
+});
+
+test("la navegación conjunta permite conservar o descartar un borrador de notificación", async ({ page }) => {
+    const assertConsole = await failOnConsoleErrors(page);
+    await login(page);
+    await page.goto("/comunicaciones/notificaciones");
+    await page.getByRole("button", { name: "Nueva plantilla", exact: true }).click();
+    await page.getByLabel("Nombre", { exact: true }).fill("Borrador protegido sin guardar");
+    await page.getByLabel("Contenido", { exact: true }).fill("Aviso sintético {nombre}");
+    page.once("dialog", dialog => dialog.dismiss());
+    await page.getByRole("button", { name: "Nueva plantilla", exact: true }).click();
+    await expect(page.getByLabel("Nombre", { exact: true })).toHaveValue("Borrador protegido sin guardar");
+    page.once("dialog", dialog => dialog.dismiss());
+    await page.getByRole("link", { name: "Comunicaciones", exact: true }).last().click();
+    await expect(page).toHaveURL(/\/comunicaciones\/notificaciones/);
+    await expect(page.getByLabel("Contenido", { exact: true })).toHaveValue("Aviso sintético {nombre}");
+    page.once("dialog", dialog => dialog.accept());
+    await page.getByRole("link", { name: "Comunicaciones", exact: true }).last().click();
+    await expect(page).toHaveURL(/\/comunicaciones$/);
+    await expect(page.getByRole("status")).toContainText("Los envíos externos están desactivados");
     assertConsole();
 });
 
@@ -66,6 +88,20 @@ test("correo HTML y documentos muestran HTML continuo sin solicitar PDF", async 
     await expect(frame.locator("script")).toHaveCount(0);
     await expect(page.locator('iframe[title="Previsualización HTML"]')).toHaveAttribute("sandbox", "");
     await expect(page.getByRole("button", { name: "Imagen", exact: true })).toHaveCount(0);
+    for (const width of [1024, 1280, 1536]) {
+        await page.setViewportSize({ width, height: 900 });
+        await expect.poll(() => page.evaluate(() => {
+            const fields = [...document.querySelectorAll(".notification-form input, .notification-form select, .notification-form textarea")]
+                .filter(field => field.getBoundingClientRect().width > 0 && field.closest("label"));
+            return fields.length > 0 && fields.every(field => {
+                const control = field.getBoundingClientRect();
+                const label = field.closest("label").getBoundingClientRect();
+                return control.left >= label.left - 1 && control.right <= label.right + 1;
+            });
+        })).toBe(true);
+        await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    }
+    await page.setViewportSize({ width: 1280, height: 900 });
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: "test-results/notificaciones-desktop.png", fullPage: true });
     await page.goto("/plantillas-documentos");

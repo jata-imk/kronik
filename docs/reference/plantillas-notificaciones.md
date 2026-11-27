@@ -19,6 +19,18 @@ El listado y las versiones se paginan de diez en diez. `plantilla_id`,
 de filtros y páginas. Una versión ajena devuelve 404. Consulta reutiliza el
 formulario sin guardar, insertar variables ni ofrecer controles internos de edición.
 
+La navegación protegida comparte las guardas de los formularios de main.
+Cambiar plantilla, versión, modo o iniciar otro borrador exige confirmar el
+descarte cuando hay captura pendiente; cancelar conserva texto y errores.
+Guardar correctamente establece una nueva base limpia. Las recargas con la
+misma identidad conservan la captura; cambiar contexto o capacidad limpia el
+formulario y las previas sin ofrecer esa captura bajo el nuevo contexto.
+
+Con el sidebar visible, los campos conservan el ancho de su columna sin
+solaparse. El panel de variables pasa debajo del contenido hasta disponer del
+ancho de escritorio amplio; se comprueba a 1024, 1280 y 1536 píxeles, además
+del recorrido móvil. No cambia el contenido ni la autorización del editor.
+
 ## Versiones y uso
 
 Una versión borrador es editable. Activa y retirada conservan contenido, formato,
