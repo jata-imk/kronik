@@ -329,7 +329,8 @@ it('removes a full credit cycle with prepayment reversal SIC evidence templates 
         'source' => 'QA', 'evidence_reference' => 'QA', 'recorded_by' => $admin->id, 'granted_at' => now()]);
     DB::table('communication_webhook_events')->insert(['team_id' => $event->team_id, 'communication_delivery_id' => $delivery->id,
         'provider' => 'labsmobile', 'provider_message_id' => 'qa-reset-id', 'event_key' => 'reset:callback',
-        'status' => 'delivered', 'received_at' => now()]);
+        'status' => 'delivered', 'received_at' => now(), 'provider_correlation_id' => str_repeat('a', 20),
+        'ack_level' => 'handset', 'provider_status' => 'ok', 'provider_code' => 'DELIVRD', 'occurred_at' => now(), 'applied_at' => now()]);
     DB::table('operator_notifications')->insert(['user_id' => $admin->id, 'team_id' => $event->team_id,
         'sucursal_id' => $credito->sucursal_id, 'event' => 'qa', 'title' => 'QA', 'body' => 'QA', 'dedup_key' => 'reset:notification']);
 

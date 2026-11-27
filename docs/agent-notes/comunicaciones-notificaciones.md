@@ -1,6 +1,110 @@
 # Comunicaciones y notificaciones
 
-## Retoma vigente — SMS I1 publicado, 25/11/2026
+## Retoma vigente — I2 publicado y revisado, 25/11/2026
+
+Rama `feat/sms-i2-seguimiento`, creada desde `85d2db6`;
+[PR I2 #95](https://github.com/jata-imk/kronik/pull/95) abierta hacia
+`feat/comunicaciones-notificaciones`, sin integrar. Código final revisado:
+`c7a31bd1c8d382c8eb4f4557ae1aebb2778336ba`. Cierres posteriores solo documentales.
+#93 y #94 siguen abiertas, sin integrar. I1: código revisado `cacf89f`, HEAD
+`85d2db6`, CI #311 aprobado; sin hilos pendientes y revisión medium documentada
+en la PR. Se comprobó identidad del árbol funcional. Main continúa `217acef`,
+ancestro `bfa0b87`, divergencia 20/89 contra I1; no se fusionó.
+
+José confirmó que aún no creó cuenta LabsMobile ni compró saldo. El plan aprobado
+permite implementar solo trabajo seguro independiente: normalización tipada,
+persistencia, correlación original, deduplicación, conciliación y coordinación
+con HTTP, ejercitados con datos sintéticos. La autenticidad de callbacks sigue
+sin contrato verificable: no hay ruta, ackurl, verificador provisional ni entrada
+CLI. Las capacidades externas continúan deshabilitadas. **I2 no acredita
+seguimiento externo completo ni recepción autenticada.**
+
+El [contrato canónico](../reference/seguimiento-sms.md) registra niveles y privacidad.
+La migración aditiva `2026_11_25_180000` amplía la tabla de acuses; sin backfill ni
+tablas nuevas. El reinicio QA conserva su clasificación. El orquestador no pierde
+ID/aceptación HTTP cuando un acuse llega primero, y un timeout no degrada una entrega
+ya confirmada internamente ni autoriza reenvío. No se atribuye lectura al SMS.
+Auditoría reutilizada, transaccional y sin datos sensibles; correo/Meta intactos.
+
+Validación del código `c7a31bd`: pre-push completo sin omitir el hook, **1,119
+aprobadas, dos omitidas optativas y 49,088 aserciones**; build Vite aprobado.
+Incluye los 48 casos nuevos I2 y la regresión del reinicio QA con los nuevos campos.
+Frontend focal: cinco aprobadas en dos archivos. Pint, diff --check, UTF-8/LF,
+enlaces locales y cobertura temática comprobados.
+
+`/review medium` completo de todo el diff de la PR contra `547d9e5`, Codex CLI
+0.172.0, código `c7a31bd`: **sin defectos accionables**. El revisor aprobó además
+118 pruebas backend y 970 aserciones. [Evidencia de revisión](https://github.com/jata-imk/kronik/pull/95#issuecomment-7175492447).
+CI se verifica por SHA publicado y se registra en la PR y Notion; consultar
+[Checks de #95](https://github.com/jata-imk/kronik/pull/95/checks). La validación
+local y revisión no acreditan integración, proveedor, scheduler/worker o despliegue.
+
+La primera pasada de pre-push se interrumpió al detectar que el DDL de la prueba
+podía confirmar RefreshDatabase en MariaDB; se sustituyó por otra conexión SQLite
+`:memory:`. La pasada interrumpida no cuenta como aprobación; la repetición completa
+sobre `c7a31bd` y la revisión posterior son las evidencias válidas.
+Pruebas exclusivamente aisladas y secuenciales. No se modificó `.env`, no hubo
+migración/limpieza operativa, envíos reales, merge, despliegue ni acceso a VPS.
+No se implementó editor ni Integraciones. La iniciativa permanece abierta.
+
+### Ampliación de I3 confirmada — 25/11/2026
+
+José pidió previsualización compartida de texto plano SMS y HTML renderizado para
+correo/documentos, sin generar PDF siempre. Para documentos acepta HTML continuo
+sin paginación; PDF queda opcional. Reutilizar la base HTML existente del backend
+y completar cambios sin guardar, sin renderer PDF ni registros de negocio.
+Correo actual usa texto: conservar ese flujo y asegurar coherencia entre el HTML
+que se previsualiza y el formato real soportado. Detalle y aceptación en la
+[evaluación del editor](../explanation/editor-plantillas-notificaciones.md).
+Solo se amplía el traspaso documental; no se inicia implementación I3.
+CI #313 aprobado corresponde al cierre anterior `e7d287d`; código revisado `c7a31bd`
+sin cambios. Verificar el HEAD documental y sus checks vigentes al retomar.
+
+### Siguiente sesión: solo I3
+
+> Continuemos SMS de Kronik, exclusivamente I3: Notificaciones globales y editor.
+> Worktree: C:\Users\jose.tejero\Documents\Proyectos\kronik\storage\framework\testing\comunicaciones-worktree.
+> Lee AGENTS.md, esta Agent Note, docs/explanation/plan-incrementos-sms.md,
+> docs/explanation/editor-plantillas-notificaciones.md, docs/reference/canales-comunicacion.md
+> y docs/reference/seguimiento-sms.md. Contrasta Notion 3fe61db7db7f81e4af50c4f0f3ab7e41.
+> I2 está publicado en https://github.com/jata-imk/kronik/pull/95, rama
+> feat/sms-i2-seguimiento, código revisado c7a31bd; cierres posteriores documentales.
+> Verifica PR/SHA/CI/revisión e integración reales de I0 #93, I1 #94 e I2 #95 antes
+> de elegir base; conserva su código revisado aunque sigan abiertas. No fusiones main.
+> Implementa solo I3: catálogo global de Notificaciones con permisos por acción
+> (consulta, creación, edición, versionado, activación y retiro), sin exclusividad
+> de Super Admin. Reutiliza panel/búsqueda/inserción de variables del editor documental;
+> SMS conserva texto plano y solo sus variables aprobadas, no todo el catálogo documental.
+> Integra una sección compartida de Previsualización con formato explícito:
+> texto plano para SMS y HTML renderizado para correo y plantillas documentales.
+> Para documentos, HTML continuo sin paginación; generar PDF solo por acción explícita
+> opcional. No usar renderer PDF/Chromium ni crear recursos de negocio para texto/HTML.
+> Previsualiza cambios sin guardar y versiones guardadas exactas con datos sintéticos,
+> variables permitidas, estilos y recursos autorizados. Reutiliza compilación y
+> saneamiento existentes; ya existe DocumentoPlantillaController::preview para HTML
+> de versiones guardadas. No crear otro motor ni limitarse a mostrar código fuente.
+> El correo actual usa texto: conservar ese flujo e integrar HTML saneado cuando
+> corresponda, con vista previa coherente con el cuerpo real y sin cambiar proveedor.
+> HTML aislado, sin scripts ni recursos no autorizados. Mantén consulta sin mutaciones,
+> permisos por acción, descarte de respuestas tardías, móvil y teclado. Prueba que
+> texto/HTML no invocan PDF y conserva las regresiones de correo y generación PDF.
+> Una instalación es una financiera; equipos son departamentos/contextos de permisos.
+> Conserva nombre como primer nombre y fecha del evento; máximo dos segmentos tras
+> sustitución en backend, sin truncar ni quitar acentos. Vista previa sintética estimada.
+> Versiones activas inmutables. Activar otra redacción o retirar cancela pendientes
+> y bloquea uso nuevo, sin recrear el mismo aviso. Conservar versión/evidencia exactas.
+> No migrar plantillas de prueba desechables. No implementar catálogo de Integraciones.
+> I2 solo tiene núcleo interno: no existe cuenta LabsMobile ni contrato de autenticidad.
+> Mantén recepción y capacidades externas cerradas; no inventes firma o consulta.
+> Mantén ambas barreras cerradas, correo, Meta, límites, elegibilidad y auditoría.
+> Pruebas con BD/HTTP aislados, un solo proceso PHP por checkout. Sin envíos reales,
+> compras, despliegues ni acceso a VPS. Una sesión y una PR hacia
+> feat/comunicaciones-notificaciones; /review medium, resolver hallazgos y registrar
+> base/SHA/CI/evidencia. Actualiza documentación, índices, Agent Note y Notion.
+> Entrega prompt I4 y detente. I4 exige barrido completo de todas las PR contra ecb9d4a,
+> además de registrar el pendiente externo de autenticidad antes de cualquier piloto.
+
+## Antecedente — SMS I1 publicado, 25/11/2026
 
 - [PR I1 #94](https://github.com/jata-imk/kronik/pull/94), abierta hacia
   `feat/comunicaciones-notificaciones`, rama `feat/sms-i1-labsmobile` creada desde
@@ -40,7 +144,7 @@ aisladas de pruebas. Main sigue en `217acef`, ancestro `bfa0b87`, divergencia de
 arranque 89/15; no se fusionó ni se sobrescribió trabajo compartido. Base funcional
 del barrido final de **I4: `ecb9d4a`**. Integraciones y piloto siguen pendientes.
 
-### Siguiente sesión: solo I2
+### Prompt anterior: solo I2
 
 Prompt de continuación:
 

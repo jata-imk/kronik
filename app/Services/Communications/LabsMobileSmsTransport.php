@@ -14,7 +14,7 @@ final class LabsMobileSmsTransport implements ChannelTransport
 
     public function capabilities(): array
     {
-        // Tracking is deliberately unavailable until I2 establishes callback authenticity.
+        // External tracking remains unavailable until the account callback authenticity contract is verified.
         return ['templates' => true, 'attachments' => false, 'replies' => false, 'delivery_receipts' => false, 'read_receipts' => false];
     }
 

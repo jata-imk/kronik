@@ -1,5 +1,6 @@
 # Referencia
 
+- [Seguimiento interno LabsMobile: acuses, conciliación y autenticación pendiente](seguimiento-sms.md).
 - [Tablero financiero: fuentes, indicadores y consistencia](tablero-financiero.md)
 
 [Buscar por tema](../topic/index.md) · [Índice general](../index.md)

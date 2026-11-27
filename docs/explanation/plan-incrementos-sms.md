@@ -27,6 +27,12 @@ sesiones. [ADR 0050](adr-0050-proveedor-sms-labsmobile.md) fija LabsMobile.
 - Compartir panel/búsqueda/inserción del editor documental; SMS persiste texto
   plano y conserva `{nombre}` como primer nombre y `{fecha_vencimiento}` como fecha
   del evento. No exponer automáticamente todo el catálogo documental.
+- Ampliación I3 confirmada el 25/11/2026: sección compartida de previsualización
+  de texto plano (SMS) y HTML renderizado (correo/documentos). HTML documental
+  continuo sin paginación; PDF opcional por acción explícita. Previsualizar cambios
+  sin guardar y versiones exactas con datos sintéticos, sin renderer PDF ni recursos
+  de negocio. Conservar saneamiento, permisos y correspondencia con el formato real
+  del correo, incluido el texto existente. Ver [detalle del editor](editor-plantillas-notificaciones.md).
 - Máximo dos segmentos tras sustituir variables; verificar en backend antes de
   despachar, sin truncar ni quitar acentos. La vista previa sintética es estimación.
 - Versiones activas inmutables. Activar otra redacción o retirar la utilizada
@@ -55,7 +61,7 @@ entregas; una sincronización posterior requiere su propia evaluación.
 | I0 — preparación | Matriz de compatibilidad, inventario de solo lectura y pruebas aisladas. Completar la clasificación de tablas de comunicaciones en el reinicio QA y corregir fixtures de menús preexistentes; sin cambiar el transporte. |
 | I1 — sustitución directa | LabsMobile HTTP, variables de entorno, UI sin escritura de secretos, comprobación técnica, barrera SMS, límites y pruebas sin tráfico real. Retirar referencias activas de Infobip y resolver sus configuraciones, salidas y jobs desechables de dev/QA mediante limpieza explícita; conservar correo y Meta. Los nuevos intentos guardan proveedor y correlación propios. No desarrollar recuperación de históricos ni compatibilidad con callbacks Infobip. |
 | I2 — seguimiento LabsMobile | Autenticidad confirmada antes de aceptar callbacks; persistencia, correlación, deduplicación, desorden, niveles de acuse y conciliación de los nuevos intentos LabsMobile. |
-| I3 — Notificaciones | Editor de texto plano y variables, catálogo global, permisos por acción, versiones completas, vista previa y segmentos. No se requiere migrar las plantillas desechables de prueba. |
+| I3 — Notificaciones | Editor de texto plano y variables, catálogo global, permisos por acción, versiones completas, vista previa texto/HTML sin generar PDF, PDF opcional y segmentos. No se requiere migrar las plantillas desechables de prueba. |
 | I4 — cierre técnico | Regresión conjunta, documentación y auditoría completas, barrido acumulado de todas las PR contra `ecb9d4a`, procedimiento de piloto y pendientes externos. |
 
 Esta secuencia sustituye la anterior I1–I5: el antiguo I1 de procedencia histórica
@@ -67,6 +73,20 @@ Cada PR requiere `/review medium`, base y SHA revisados, hallazgos resueltos y n
 revisión si cambia código después. No considerar una solicitud de revisión como
 evidencia de revisión terminada. El pase de rango completo de I4 complementa esas
 revisiones individuales; no cerrarlo anticipadamente por terminar I0 o integrar una PR.
+
+## Estado de I2 — núcleo interno, recepción pendiente
+
+Rama `feat/sms-i2-seguimiento` desde `85d2db6`, dependiente de #93 y #94,
+ambas abiertas al inicio. CI #311 aprobado para I1, revisión medium de código
+`cacf89f` sin hilos pendientes. Árbol funcional idéntico en `85d2db6`. Main sigue
+en `217acef`, ancestro `bfa0b87`, divergencia 20/89 respecto de I1, sin fusionar.
+
+El usuario no tiene cuenta ni saldo LabsMobile. El [núcleo interno](../reference/seguimiento-sms.md)
+se implementa con pruebas sintéticas; autenticación y recepción externa quedan
+pendientes, sin declarar completo el seguimiento operativo. No añadir endpoint,
+ackurl ni verificador permisivo. [PR #95](https://github.com/jata-imk/kronik/pull/95), código revisado `c7a31bd`: review
+medium sin defectos accionables, 1,119 pruebas aprobadas y build. Evidencia, CI
+por SHA y prompt I3 en la Agent Note y Notion.
 
 ## Estado de I1 — publicado el 25/11/2026
 

@@ -5,6 +5,44 @@ e implementación pendientes para la siguiente sesión. Complementa la
 [planeación SMS](integracion-sms-labsmobile.md) y el
 [contrato documental](../reference/documentos-y-plantillas.md).
 
+## Ampliación confirmada de I3 — 25/11/2026
+
+José pidió que la integración del editor incluya una sección compartida de
+previsualización por formato: texto plano para SMS y HTML renderizado para correo
+y plantillas documentales. Para documentos se acepta HTML continuo, sin paginación
+ni fidelidad exacta al PDF. Generar PDF no debe ser requisito para previsualizar;
+conservarlo como una acción explícita opcional para documentos.
+
+La vista previa debe admitir cambios sin guardar y versiones guardadas, con datos
+sintéticos y las variables del recurso/canal. Mostrar formato y carácter estimado.
+Reutilizar compilación, saneamiento, estilos y permisos existentes; no crear otro
+motor de plantillas. La representación HTML debe estar aislada, sin scripts ni
+acceso a recursos ajenos o externos no autorizados. Texto SMS conserva saltos,
+acentos y entidades literales, sin interpretarse como HTML.
+
+El correo actual usa `CommunicationMail::text()`. La previsualización HTML de correo
+no puede ser solo un contenedor que muestre etiquetas como texto: debe corresponder
+al cuerpo real del formato soportado. Integrar HTML saneado en la experiencia del
+editor/correo cuando corresponda, conservando el correo de texto existente, SMTP,
+permisos, consentimiento, auditoría y barreras. No habilitar envíos reales.
+
+En el código revisado `c7a31bd` ya existe `DocumentoPlantillaController::preview()`:
+devuelve encabezado/cuerpo/pie HTML compilados de una versión guardada. La UI actual
+usa `DocumentPdfPreview` y endpoints PDF, incluso para cambios sin guardar.
+Aprovechar la ruta HTML existente y completar borradores/autorización al implementar.
+Las vistas de texto/HTML no llaman `DocumentoRenderService`, Chromium ni generan
+archivos, versiones o registros de negocio. Mantener el flujo PDF y sus controles.
+
+Pruebas de aceptación adicionales: texto/HTML sin invocar renderer PDF; versiones
+guardadas exactas y cambios sin guardar; variables y recursos autorizados; aislamiento
+HTML/XSS; consulta sin mutaciones, móvil y teclado; cancelación de solicitudes y
+respuestas tardías al cambiar versión/modo; regresión de correo y generación PDF.
+Registrar la decisión duradera correspondiente en el ADR de implementación I3.
+
+Esta ampliación fija requisitos para la siguiente sesión; no está implementada.
+Prevalece, junto con el [plan vigente](plan-incrementos-sms.md), sobre las alternativas
+preliminares que siguen a continuación.
+
 ## Propuesta y valoración
 
 Reutilizar la experiencia del editor existente para redactar notificaciones,

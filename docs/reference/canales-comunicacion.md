@@ -2,8 +2,9 @@
 
 I1 sustituye directamente Infobip por LabsMobile en desarrollo/QA, conforme al
 [ADR 0050](../explanation/adr-0050-proveedor-sms-labsmobile.md). No existe migración
-histórica ni convivencia de proveedores. Seguimiento LabsMobile (I2), editor (I3)
-y piloto/cierre (I4) siguen pendientes. Esta implementación no habilita tráfico.
+histórica ni convivencia de proveedores. I2 implementa el [núcleo interno de seguimiento](seguimiento-sms.md)
+con pruebas sintéticas; recepción autenticada externa pendiente. Editor (I3) y
+piloto/cierre (I4) siguen pendientes. Esta implementación no habilita tráfico.
 
 La [nota original de producto](comunicaciones-por-canales-envios-y-seguimiento.md) fija el alcance. Este contrato describe el código de la rama de comunicaciones. La salida externa permanece desactivada hasta configurar `COMMUNICATIONS_SEND_ENABLED=true` en un entorno autorizado, con proveedor, consentimiento y reglas aprobados para cada equipo. La configuración y las pruebas locales no acreditan entrega real ni despliegue.
 
@@ -24,7 +25,7 @@ La ficha de consulta del cliente muestra el estado de sus consentimientos solo a
 
 No existen reglas activas por defecto. El comando `comunicaciones:preparar-vencimientos` prepara candidatos horarios. `comunicaciones:despachar` corre cada cinco minutos, prepara una salida única por evento y canal, y encola un job después del commit. El job revalida todo antes de contactar al proveedor dentro de la ventana configurada. Si `COMMUNICATIONS_SEND_ENABLED=false`, no encola ni contacta a ningún proveedor. SMS exige además `COMMUNICATIONS_SMS_SEND_ENABLED=true`; ambas barreras están desactivadas por defecto y se comprueban de nuevo en el job. Ambos comandos requieren que el programador Laravel esté ejecutándose realmente en el entorno y el transporte `database` requiere un worker activo; `schedule:list` solo comprueba el registro de tareas.
 
-Cada regla incluye anticipación en días para vencimientos, zona horaria, ventana diaria, límite por cliente compartido entre canales, texto y versión. El valor inicial de anticipación es tres días y el operador autorizado puede elegir de 1 a 30 días por canal; el máximo es configurable. El candidato se crea en cada día correspondiente y el job confirma de nuevo la regla vigente. Variables locales permitidas: `{nombre}` y `{fecha_vencimiento}`. Se usa texto sin enlaces a un portal de cliente. La edición del texto incrementa `template_version`; una salida preparada con una versión anterior se cancela antes de salir. Cambiar la anticipación también impide el envío fuera del nuevo día elegido. No hay reintento automático de una salida incierta. `communication_deliveries` conserva preparado, en proceso, aceptado por proveedor, entregado, leído, fallido, cancelado o incierto. Solo un recibo autenticado del proveedor eleva el estado a entregado o leído. Los webhooks Meta duplicados se deduplican y los adelantados se concilian al conocer el identificador del mensaje. SMS conserva únicamente aceptación o resultado fallido/incierto durante I1; no recibe callbacks ni acredita entrega/lectura. Correo SMTP solo acredita aceptación del servidor; no incorpora rebotes ni lectura sin un proveedor de eventos de correo adicional.
+Cada regla incluye anticipación en días para vencimientos, zona horaria, ventana diaria, límite por cliente compartido entre canales, texto y versión. El valor inicial de anticipación es tres días y el operador autorizado puede elegir de 1 a 30 días por canal; el máximo es configurable. El candidato se crea en cada día correspondiente y el job confirma de nuevo la regla vigente. Variables locales permitidas: `{nombre}` y `{fecha_vencimiento}`. Se usa texto sin enlaces a un portal de cliente. La edición del texto incrementa `template_version`; una salida preparada con una versión anterior se cancela antes de salir. Cambiar la anticipación también impide el envío fuera del nuevo día elegido. No hay reintento automático de una salida incierta. `communication_deliveries` conserva preparado, en proceso, aceptado por proveedor, entregado, leído, fallido, cancelado o incierto. Solo un recibo autenticado del proveedor eleva el estado a entregado o leído. Los webhooks Meta duplicados se deduplican y los adelantados se concilian al conocer el identificador del mensaje. SMS conserva aceptación o resultado fallido/incierto en su flujo externo; no recibe callbacks. I2 añade conciliación interna de evidencia sintética, con niveles separados y sin lectura SMS. Correo SMTP solo acredita aceptación del servidor; no incorpora rebotes ni lectura sin un proveedor de eventos de correo adicional.
 
 La lista de reglas muestra anticipación y horario a quienes pueden consultar comunicaciones. Cambiar la anticipación deja una salida aún no intentada en estado preparado hasta el nuevo día configurado; una salida que ya llegó al proveedor no se duplica. El historial de auditoría conserva cada transición.
 
@@ -88,8 +89,11 @@ Migraciones: `2026_11_20_100000`, `100100`, `100200` y `100300`. `100200` regist
 
 El endpoint `/api/webhooks/comunicaciones/whatsapp/{team}` conserva GET de
 verificación y POST de estados firmados Meta. El endpoint SMS anterior está
-retirado. I1 no publica un endpoint LabsMobile: I2 deberá confirmar autenticidad,
-correlación y niveles de acuse antes de aceptar estados externos. No se atienden
+retirado. I2 tampoco publica un endpoint LabsMobile: autenticidad de cuenta sigue pendiente,
+y el núcleo interno no habilita aceptación de estados externos. No se atienden
 respuestas conversacionales ni campañas.
 
 Referencias: [ADR de arquitectura](../explanation/adr-0049-orquestacion-comunicaciones-externas.md), [eventos de negocio](eventos-comunicacion.md) y [guía de prueba](../how-to/probar-comunicaciones.md).
+
+La migración aditiva I2 `2026_11_25_180000` amplía los acuses existentes, sin
+backfill ni tablas nuevas. Ver el [contrato de seguimiento](seguimiento-sms.md).

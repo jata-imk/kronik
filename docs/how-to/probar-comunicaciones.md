@@ -45,4 +45,18 @@ Capturas de la revisión con datos sintéticos: [escritorio](../assets/comunicac
 
 El entorno local observado usa `MAIL_MAILER=log` y **no entrega correo**. Para una prueba real, el responsable del entorno debe configurar SMTP real y dominio autorizado, poner `COMMUNICATIONS_TEST_RECIPIENT` con el correo personal que el usuario autorizó, habilitar `COMMUNICATIONS_SEND_ENABLED=true` solo en QA, y comprobar conexión y política del proveedor. En la pantalla, activar el canal de correo del equipo y usar **Enviar prueba técnica** con esa misma dirección. El texto no contiene datos de clientes. Registrar la aceptación SMTP y comprobar el buzón; si el resultado es incierto, revisar el proveedor antes de repetir. La aceptación SMTP no prueba entrega ni lectura.
 
-No activar reglas de acreditados en un entorno con datos reales hasta verificar consentimientos, remitente y políticas. SMS usa LabsMobile por entorno, con barrera independiente desactivada. Su seguimiento queda para I2; no existe callback SMS en I1. Mantener pendiente el piloto autorizado, elegibilidad, remitente y contrato de autenticidad. Para retirar datos anteriores, usar la [limpieza selectiva SMS de prueba](limpiar-sms-prueba.md). WhatsApp requiere elegibilidad de la actividad, WABA/número, plantilla aprobada en Meta y webhook firmado. Las cuentas, credenciales, aprobaciones y recepción real no están disponibles en este repositorio.
+No activar reglas de acreditados en un entorno con datos reales hasta verificar consentimientos, remitente y políticas. SMS usa LabsMobile por entorno, con barrera independiente desactivada. I2 incorpora solo el [núcleo interno de seguimiento](../reference/seguimiento-sms.md); no existe callback SMS público. Mantener pendiente el piloto autorizado, elegibilidad, remitente y contrato de autenticidad. Para retirar datos anteriores, usar la [limpieza selectiva SMS de prueba](limpiar-sms-prueba.md). WhatsApp requiere elegibilidad de la actividad, WABA/número, plantilla aprobada en Meta y webhook firmado. Las cuentas, credenciales, aprobaciones y recepción real no están disponibles en este repositorio.
+
+## Regresión interna de I2
+
+`LabsMobileAcknowledgementTest` (Unit y Feature) valida niveles, fechas UTC,
+normalización estricta, correlación original, duplicados/desorden, HTTP adelantado,
+rollback de auditoría y reversión de migración. Solo las pruebas llaman `record()`;
+un payload sintácticamente válido no acredita autenticidad. Se simulan acuses
+durante HTTP fake y se verifica que aceptación/timeout posteriores conservan
+identificadores y estado sin reenvío. GET/POST públicos siguen respondiendo 404.
+No usar cuenta, credenciales ni SMS reales para este recorrido.
+
+La reversión de esquema I2 se prueba en otra conexión SQLite `:memory:` y
+restaura el Schema builder al terminar. No ejecutar DDL sobre la transacción de
+`RefreshDatabase`: MariaDB la confirmaría implícitamente.

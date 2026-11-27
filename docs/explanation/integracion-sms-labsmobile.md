@@ -6,14 +6,15 @@ pendientes. Ver [ADR 0050](adr-0050-proveedor-sms-labsmobile.md)
 y [Agent Note](../agent-notes/comunicaciones-notificaciones.md).
 El [contrato de canales](../reference/canales-comunicacion.md) describe el transporte
 LabsMobile implementado en I1. Esta investigación conserva los antecedentes y los
-pendientes externos; no acredita cuenta, tráfico, entrega ni seguimiento LabsMobile.
+pendientes externos; no acredita cuenta, tráfico, entrega ni seguimiento externo LabsMobile.
 
 ## Sustitución del código Infobip
 
 El inventario siguiente describe las superficies identificadas en la base funcional.
 I1 sustituye transporte, configuración y comprobación; retira la ruta y conciliación
-Infobip y añade limpieza selectiva QA. I2 deberá implementar seguimiento LabsMobile,
-con autenticidad confirmada. No hay un segundo proveedor activo ni fallback.
+Infobip y añade limpieza selectiva QA. I2 implementa el
+[núcleo interno de seguimiento](../reference/seguimiento-sms.md), sin recepción
+externa hasta confirmar autenticidad. No hay un segundo proveedor activo ni fallback.
 
 | Superficie identificada en `ecb9d4a` | Trabajo que debe incluir el plan |
 | --- | --- |
@@ -244,3 +245,12 @@ confirmación a dispositivo cuando exista, recepción manual, pendientes, fallos
 caducados y demoras. Acordar umbrales antes de evaluar; una muestra exploratoria
 no certifica porcentajes comerciales. Actualizar contrato, auditoría, pruebas y
 documentación con el comportamiento implementado antes de cerrar la integración.
+
+## Actualización I2 — 25/11/2026
+
+José confirmó que aún no creó cuenta ni compró saldo. Se revisó nuevamente la
+API pública: hay GET de acuses, pero no contrato verificable de autenticación
+para nuestra cuenta. I2 conserva recepción y capacidades cerradas y desarrolla
+solo el núcleo interno con evidencia sintética. El [contrato de seguimiento](../reference/seguimiento-sms.md)
+detalla persistencia, conciliación, límites y consulta preparada para soporte.
+No se envió esa consulta ni se probó el proveedor. No comprar saldo para los fakes.
