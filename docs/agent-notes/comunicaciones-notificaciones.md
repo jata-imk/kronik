@@ -28,17 +28,48 @@ CI conserva ambos recorridos y los cinco harness MariaDB. ADR originales de
 Comunicaciones 0047/0048 renumerados a 0052/0053, con contexto histórico y enlaces;
 0047/0048 de main conservan su identidad. Sin nuevas API, migraciones o variables.
 
-Validaciones, revisión medium, PR y CI del resultado/destino se registrarán al
-completarse. Esta integración aún no acredita publicación, despliegue ni QA
-externo. La iniciativa sigue Doing y ambas barreras permanecen cerradas.
+Código corregido: `09b3d53383ccc065bdac9eda56fc5cee1194ef68`, después del merge
+`183cae5d0b571e85dc6458454b0c3edd48f6f1d0` con padres `9d93859` y `217acef`.
+La integración aún no acredita publicación, despliegue ni QA externo. La
+iniciativa sigue Doing y ambas barreras permanecen cerradas.
 
 Primera revisión medium de `183cae5`, contra ambos padres y acumulado
 `bfa0b87..183cae5`: dos P2. Se corrigen la clasificación de destinos del menú
 contextual con lectura independiente y el desafío Meta normalizado por PHP,
-con regresiones de renderizado/permisos y verificación sin efectos. Requiere
-revisión final del código corregido. La primera publicación se interrumpió
+con regresiones de renderizado/permisos y verificación sin efectos.
+**Revisión medium final de `09b3d53`: sin defectos accionables pendientes**,
+contra ambos padres y el acumulado `bfa0b87..09b3d53`, incluida la base
+`ecb9d4a` y #91/#93–#97. Informes locales ignorados:
+`storage/framework/testing/main-review-{final-,}result.txt`.
+La primera publicación se interrumpió
 durante el hook al detectar el cruce del menú, sin resultado global ni push;
-no se considera una pasada aprobada. Frontend previo: 225/82 archivos y build.
+no se considera una pasada aprobada.
+
+La inspección visual de las capturas detectó después un solapamiento de campos
+en escritorio con el sidebar de main. Se ajustan anchos mínimos y distribución
+del panel de variables, con aserciones geométricas E2E a 1024/1280/1536 px.
+La segunda publicación también se interrumpió durante el hook, sin push ni
+resultado global. La corrección visual tiene frontend completo (225/82), build
+y E2E geométrico (una aprobada, tres anchos) aprobados, con captura de escritorio
+renovada y revisada. La comprobación móvil y la revisión del ajuste siguen en
+curso; la revisión de `09b3d53` acredita el código anterior a ese ajuste.
+
+Evidencia local del código corregido:
+
+- Focal de integración/Meta: 10 pruebas / 106 aserciones aprobadas.
+- Frontend completo: 225 pruebas / 82 archivos y build aprobados; identidad
+  del frontend comprobada entre `183cae5` probado y `09b3d53`.
+- MariaDB 11 aislada `kronik_test`, puerto local 33317: instalación acumulada y
+  los cinco harness (folios, auditoría, Bullet, Comunicaciones y calendario)
+  aprobados. HTTP/correo falsos y configuración sintética de proceso.
+- PDF real: 9,704 bytes. Cuatro guardas Node E2E aprobadas.
+- E2E conjuntos de `09b3d53`: ocho aprobados en una pasada aislada (6.1 min), incluidos
+  históricos, PDF multipágina, texto/HTML, móvil/teclado y descarte del borrador.
+  Capturas del resultado combinado revisadas: [escritorio](../assets/notificaciones-main-desktop.png)
+  y [móvil](../assets/notificaciones-main-mobile.png).
+- Pint aprobado; UTF-8/LF, diff, 515 enlaces e índices/temas comprobados.
+- Suite backend completa, E2E de navegación/calendario, PR y CI por SHA pendientes de terminar;
+  no se atribuye a este código el CI #318 ni una pasada interrumpida.
 
 El resto de esta nota conserva la evidencia histórica de I0–I4 y del traspaso.
 

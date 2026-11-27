@@ -88,6 +88,20 @@ test("correo HTML y documentos muestran HTML continuo sin solicitar PDF", async 
     await expect(frame.locator("script")).toHaveCount(0);
     await expect(page.locator('iframe[title="Previsualización HTML"]')).toHaveAttribute("sandbox", "");
     await expect(page.getByRole("button", { name: "Imagen", exact: true })).toHaveCount(0);
+    for (const width of [1024, 1280, 1536]) {
+        await page.setViewportSize({ width, height: 900 });
+        await expect.poll(() => page.evaluate(() => {
+            const fields = [...document.querySelectorAll(".notification-form input, .notification-form select, .notification-form textarea")]
+                .filter(field => field.getBoundingClientRect().width > 0 && field.closest("label"));
+            return fields.length > 0 && fields.every(field => {
+                const control = field.getBoundingClientRect();
+                const label = field.closest("label").getBoundingClientRect();
+                return control.left >= label.left - 1 && control.right <= label.right + 1;
+            });
+        })).toBe(true);
+        await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    }
+    await page.setViewportSize({ width: 1280, height: 900 });
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: "test-results/notificaciones-desktop.png", fullPage: true });
     await page.goto("/plantillas-documentos");

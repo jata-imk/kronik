@@ -151,7 +151,7 @@ const stateLabel = (state) => ({ draft: "Borrador", active: "Activa", retired: "
                             <button v-if="version.state === 'active' && permissions.retire" type="button" class="rounded border p-2" @click="action('retire')">Retirar versión</button>
                         </div>
                     </div>
-                    <form class="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_260px]" @submit.prevent="save">
+                    <form class="notification-form grid min-w-0 gap-4 2xl:grid-cols-[minmax(0,1fr)_260px]" @submit.prevent="save">
                         <div class="min-w-0 space-y-4">
                             <div class="grid gap-3 md:grid-cols-2">
                                 <label class="grid gap-1 text-sm">Nombre<input v-model="form.name" :readonly="!editable" class="rounded border p-2 dark:bg-surface-900" required maxlength="160" /></label>
@@ -180,3 +180,18 @@ const stateLabel = (state) => ({ draft: "Borrador", active: "Activa", retired: "
         </template>
     </AppLayout>
 </template>
+
+<style scoped>
+.notification-form label,
+.notification-form :deep(input),
+.notification-form :deep(select),
+.notification-form :deep(textarea) {
+    min-width: 0;
+}
+
+.notification-form :deep(input),
+.notification-form :deep(select),
+.notification-form :deep(textarea) {
+    width: 100%;
+}
+</style>
