@@ -15,10 +15,13 @@ git rev-parse HEAD
 ```
 
 El destino de I0–I4 es `feat/comunicaciones-notificaciones`, la rama original de
-Bryan. La integración de main `217acef` se prepara en
-`integracion/main-comunicaciones-2026-11-27`; consultar en la
-[Agent Note](../agent-notes/comunicaciones-notificaciones.md) su estado real,
-SHA, PR y CI antes de considerar una actualización. Si la VPS usa `main` u otra
+Bryan. Ya incorpora main `217acef` mediante la
+[PR #98](https://github.com/jata-imk/kronik/pull/98), merge `9ab3d20`, conservando
+ambos trabajos. Código `337704a` con revisión medium y
+[CI #320 aprobados](https://github.com/jata-imk/kronik/actions/runs/46047923792).
+La [Agent Note](../agent-notes/comunicaciones-notificaciones.md) enlaza el SHA y
+CI del cierre documental del destino. Este resultado acredita el repositorio;
+no confirma actualización ni ejecución del servidor. Si la VPS usa `main` u otra
 rama, compartir rama/SHA para preparar un cambio autorizado con esa evidencia.
 La integración del repositorio no autoriza cambiar la rama del servidor.
 La rama `feat/comunicaciones-whatsapp` contiene otro trabajo de Bryan y tampoco

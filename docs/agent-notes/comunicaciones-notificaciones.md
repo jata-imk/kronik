@@ -11,104 +11,79 @@
 
 ## Estado — 27/11/2026
 
-### Integración de main en curso — 27/11/2026
+### Integración de main consolidada en la original — 27/11/2026
 
-[PR #98](https://github.com/jata-imk/kronik/pull/98) abierta hacia la original.
-Código `ba23d136d1c83ac022633b0eb3edbcb1a52ac6e7`: revisión medium delegada
-final terminada sin defectos accionables pendientes, con autorización de José;
-[informe](https://github.com/jata-imk/kronik/pull/98#issuecomment-7224508158).
-Pre-push completo: 1,219 aprobadas, dos omisiones optativas, 50,215 aserciones
-(636.96 s) y build (37 s), sin omitir el hook. Navegación local: 20 aprobadas;
-calendario: una aprobada, ambos aislados. La aplicación conserva identidad con
-`3fa940f` después de corregir las aserciones de fixtures.
+[PR #98](https://github.com/jata-imk/kronik/pull/98) integrada mediante merge en
+`feat/comunicaciones-notificaciones`. Código revisado `337704a0a371ec3c2f7bf6409012f64551a0da9e`;
+merge del destino `9ab3d2081c713983784c63b65a52b6f258022401`. [CI #320 aprobado](https://github.com/jata-imk/kronik/actions/runs/46047923792)
+para el HEAD final de la PR, antes del merge. El SHA y el CI del cierre
+documental del destino constan en el [seguimiento final](https://github.com/jata-imk/kronik/pull/98#issuecomment-7225496262).
 
-[CI #319](https://github.com/jata-imk/kronik/actions/runs/46042491736), de
-`ba23d13`, falló solo en cuatro variantes del editor del menú (16 aprobadas en
-ese grupo); todos los pasos anteriores, incluidos backend, cinco harness, PDF
-y los demás E2E, aprobaron. Se descargaron y revisaron capturas, vídeo, trazas
-y consola. La primera selección se intenta durante la entrada/realineación
-del desplegable, el autoscroll lo cierra y la máscara intercepta el click.
-El retry duplica después la etiqueta del grupo ya creado; es un efecto del
-fallo inicial. Sin errores JavaScript, salvo un mensaje informativo de autofocus.
-El intento local anterior al ajuste con Chromium de Playwright y modo CI pasó
-una prueba; no reproduce ni invalida el fallo de Linux.
+Este cierre solo modifica la nota, el plan y la guía de VPS. Identidad funcional
+con `337704a` comprobada; publicación con la excepción documental del hook tras
+revisar UTF-8/LF, enlaces, índices y diff. Su HEAD requiere CI propio del destino,
+cuyo resultado por SHA se registra en el seguimiento enlazado.
 
-Se ajusta exclusivamente el E2E: control visible antes de abrir, listbox exacto
-por ARIA, espera de transición/filtro terminado y etiquetas por reintento.
-Conserva el click real, la selección, Escape, consulta y persistencia; sin force,
-pausas arbitrarias ni cambios al modelo. Siete pruebas locales con Chromium
-de Playwright, revisión y nueva publicación/CI pendientes de terminar.
+Main incorporado: `217aceff88e938b9037b8a11990916beb9fe4f19`, sobre el traspaso
+local `9d938590664d92a87aaa2fbe0c9a11445af896e5`, conservado sobre `f0485cf`.
+I0–I4 y las ramas auxiliares se conservan. Main mantiene su SHA; WhatsApp
+separada permanece en `871936207889c0d429cd1d0fe9c0d546f2094997`, excluida.
+#91 continúa cerrada sin integrar en main. La rama temporal se conserva.
 
-Rama `integracion/main-comunicaciones-2026-11-27` desde el traspaso local
-`9d938590664d92a87aaa2fbe0c9a11445af896e5`, conservado sobre el destino remoto
-`f0485cf1539a42800304da2068507d7450772856`. Main incorporado como origen:
-`217aceff88e938b9037b8a11990916beb9fe4f19`; WhatsApp excluida y sin cambios,
-`871936207889c0d429cd1d0fe9c0d546f2094997`. Refs revalidados mediante fetch.
-El CI #318 aprueba únicamente `f0485cf`, no el resultado combinado.
+Resolución conjunta: fechas civiles/reversos con eventos y proyecciones
+atómicos; calendario contractual congelado; catálogo único y permisos de lectura
+independientes por equipo; guardas de captura en Comunicaciones/Notificaciones y
+editor documental; consulta exacta, históricos y previas HTML/PDF explícito;
+auditoría, validación española, migraciones/reinicio QA y CI reunidos. Los ADR
+0047/0048 de Comunicaciones pasan a 0052/0053 con historia y enlaces; los ADR
+0047/0048 de main conservan su identidad. La resolución no añade migraciones,
+variables ni API: conserva las adiciones acumuladas de ambos lados.
 
-Resolución conjunta: fechas civiles/reversos con eventos y proyecciones atómicos;
-catálogo único de main ampliado con Comunicaciones/Notificaciones; guardas de
-captura aplicadas a los formularios nuevos y conservadas en el editor documental;
-calendario, permisos, auditoría, rutas, validación española y reinicio QA reunidos.
-CI conserva ambos recorridos y los cinco harness MariaDB. ADR originales de
-Comunicaciones 0047/0048 renumerados a 0052/0053, con contexto histórico y enlaces;
-0047/0048 de main conservan su identidad. Sin nuevas API, migraciones o variables.
+[Revisión medium final de `337704a`](https://github.com/jata-imk/kronik/pull/98#issuecomment-7225063205)
+terminada sin defectos accionables pendientes, delegada con autorización expresa
+de José tras agotarse la cuota del CLI. Barrido contra ambos padres originales
+`9d93859`/`217acef`, acumulado `bfa0b87..337704a`, base `ecb9d4a` e
+iniciativa #91/#93–#97. Se corrigieron y revisaron destinos autorizados del menú,
+desafío Meta original/normalizado por PHP, baseline de fixtures y geometría del
+editor con sidebar. Ninguna revisión ejecutó PHP simultáneamente con las suites.
 
-Código corregido: `09b3d53383ccc065bdac9eda56fc5cee1194ef68`, después del merge
-`183cae5d0b571e85dc6458454b0c3edd48f6f1d0` con padres `9d93859` y `217acef`.
-La integración aún no acredita publicación, despliegue ni QA externo. La
-iniciativa sigue Doing y ambas barreras permanecen cerradas.
+Evidencia:
 
-Primera revisión medium de `183cae5`, contra ambos padres y acumulado
-`bfa0b87..183cae5`: dos P2. Se corrigen la clasificación de destinos del menú
-contextual con lectura independiente y el desafío Meta normalizado por PHP,
-con regresiones de renderizado/permisos y verificación sin efectos.
-**Revisión medium final de `09b3d53`: sin defectos accionables pendientes**,
-contra ambos padres y el acumulado `bfa0b87..09b3d53`, incluida la base
-`ecb9d4a` y #91/#93–#97. Informes locales ignorados:
-`storage/framework/testing/main-review-{final-,}result.txt`.
-La primera publicación se interrumpió
-durante el hook al detectar el cruce del menú, sin resultado global ni push;
-no se considera una pasada aprobada.
+- Pre-push completo de `337704a`: **1219 aprobadas, 2 omisiones
+  optativas y 50215 aserciones**, 770.77 s; build aprobado,
+  sin omitir el hook. También pasó completo `ba23d13` (1,219/2/50,215).
+- Frontend: 225 pruebas / 82 archivos y build aprobados tras el ajuste visual
+  `3fa940f`; identidad comprobada hasta `337704a`. Focal integración/Meta:
+  10/106; focal de menús: 25/194.
+- MariaDB 11 aislada: instalación acumulada y los cinco harness de folios,
+  auditoría, Bullet, Comunicaciones y calendario aprobados. PDF real: 9,704 bytes;
+  cuatro guardas Node aprobadas. Datos sintéticos, HTTP/correo falsos.
+- E2E locales: ocho conjuntos en `09b3d53`; geometría a 1024/1280/1536 y móvil
+  repetidos en `3fa940f`; navegación 20 y calendario uno en `ba23d13`;
+  siete del menú corregido en `337704a`, Chromium de Playwright/modo CI.
+  [Escritorio](../assets/notificaciones-main-desktop.png) y
+  [móvil](../assets/notificaciones-main-mobile.png) inspeccionados.
+- CI final de la PR aprueba todos sus pasos, incluidos backend/frontend/build,
+  cinco harness, PDF real y todos los E2E de ambos trabajos. Pint, UTF-8/LF,
+  enlaces locales, índices/temas y diff revisados.
+- Contenedor y volumen MariaDB sintéticos propios retirados tras verificar sus
+  identificadores; no se hizo limpieza operativa.
 
-La inspección visual de las capturas detectó después un solapamiento de campos
-en escritorio con el sidebar de main. Se ajustan anchos mínimos y distribución
-del panel de variables, con aserciones geométricas E2E a 1024/1280/1536 px.
-La segunda publicación también se interrumpió durante el hook, sin push ni
-resultado global. La corrección visual tiene frontend completo (225/82), build
-y E2E geométrico (una aprobada, tres anchos) aprobados, con captura de escritorio
-renovada y revisada. La repetición móvil de `3fa940f` también aprobó y su captura
-se renovó e inspeccionó. La revisión adicional del CLI quedó sin resultado por
-cuota; José autorizó delegar la revisión medium estática del resultado completo.
-Esa revisión de `3fa940f`, contra ambos padres y el acumulado, terminó con un P2:
-las aserciones de menús de main suponían una tabla vacía, aunque las migraciones
-de Comunicaciones registran elementos. Sin otros defectos accionables, incluido
-el ajuste visual. La revisión de `09b3d53` acredita el código anterior a ese ajuste.
+Los dos hooks interrumpidos no cuentan como aprobación. La primera suite
+completa terminó con once fallos por conteos iniciales de menús; se corrigieron
+sin vaciar tablas ni retirar pruebas. [CI #319 fallido](https://github.com/jata-imk/kronik/actions/runs/46042491736)
+solo falló en cuatro variantes del menú: se revisaron trazas, capturas, vídeo
+y consola; entrada/realineación/autoscroll cerraban el desplegable durante el
+click. `337704a` sincroniza ARIA/transición/filtro y separa etiquetas por retry,
+con click real y selección/Escape/persistencia intactos. El CI posterior acredita
+la corrección; #319 y el antiguo #318 no acreditan el resultado final.
 
-La primera suite completa terminada produjo 1,208 aprobadas, dos omisiones
-optativas, once fallos y 50,213 aserciones (579.70 s), sin push. Los once fallos
-corresponden al P2: se corrigen los tres puntos de aserción comparando con el
-conteo inicial y el cambio esperado, conservando la comprobación de ausencia de
-escrituras/actividad. No se vacían tablas ni se eliminan pruebas. Focal de menús:
-25 aprobadas / 194 aserciones. Revisión de la corrección y suite completa
-corregida pendientes de terminar.
-
-Evidencia local del código corregido:
-
-- Focal de integración/Meta: 10 pruebas / 106 aserciones aprobadas.
-- Frontend completo: 225 pruebas / 82 archivos y build aprobados; identidad
-  del frontend comprobada entre `183cae5` probado y `09b3d53`.
-- MariaDB 11 aislada `kronik_test`, puerto local 33317: instalación acumulada y
-  los cinco harness (folios, auditoría, Bullet, Comunicaciones y calendario)
-  aprobados. HTTP/correo falsos y configuración sintética de proceso.
-- PDF real: 9,704 bytes. Cuatro guardas Node E2E aprobadas.
-- E2E conjuntos de `09b3d53`: ocho aprobados en una pasada aislada (6.1 min), incluidos
-  históricos, PDF multipágina, texto/HTML, móvil/teclado y descarte del borrador.
-  Capturas del resultado combinado revisadas: [escritorio](../assets/notificaciones-main-desktop.png)
-  y [móvil](../assets/notificaciones-main-mobile.png).
-- Pint aprobado; UTF-8/LF, diff, 515 enlaces e índices/temas comprobados.
-- Suite backend completa, E2E de navegación/calendario, PR y CI por SHA pendientes de terminar;
-  no se atribuye a este código el CI #318 ni una pasada interrumpida.
+**Integrado en la rama original; Comunicaciones no está integrado en main, ni
+desplegado o validado externamente.** Ambas barreras cerradas; correo existente y
+flujo Meta preservados. Sin envíos reales, compras, cambios de .env, Integraciones,
+limpieza operativa, despliegue, SSH o acceso a VPS. El usuario conserva su
+administración exclusiva. I2 externo, autenticidad/recepción SMS, cuenta,
+ruta/remitente/tarifas y piloto permanecen pendientes; iniciativa Doing/Done no.
 
 El resto de esta nota conserva la evidencia histórica de I0–I4 y del traspaso.
 
@@ -277,6 +252,9 @@ Estado comprobado al preparar el traspaso:
   Revalidar HEAD locales/remotos, PR, revisiones e integración al retomar.
 
 ### Siguiente sesión: integrar main en la rama original de Bryan
+
+Traspaso histórico ejecutado mediante la PR #98; consultar el cierre de integración
+al principio de esta nota. El prompt se conserva como evidencia del alcance.
 
 > Continuemos Kronik con la integración de main en Comunicaciones.
 >

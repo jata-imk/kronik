@@ -198,6 +198,9 @@ de captura, calendario contractual congelado, auditoría, reinicio QA y CI conju
 Los ADR 0047/0048 de Comunicaciones pasan a 0052/0053; main conserva los suyos.
 Las tablas y advertencias anteriores describen la divergencia histórica, no
 pendientes que deban repetirse después de validar esta integración.
-La Agent Note registra el estado real de revisión, pruebas, PR y CI por SHA.
-El destino sigue siendo la rama original de Bryan; no se modifica main ni se
-incorpora WhatsApp separada. La integración no autoriza despliegue o envíos.
+Consolidada mediante [PR #98](https://github.com/jata-imk/kronik/pull/98) en la
+rama original de Bryan, merge `9ab3d20`, código `337704a` con revisión medium y
+[CI #320 aprobados](https://github.com/jata-imk/kronik/actions/runs/46047923792).
+La Agent Note enlaza la evidencia por SHA del cierre documental y CI del destino.
+Main conserva `217acef` y WhatsApp separada permanece excluida. La integración
+no autoriza despliegue o envíos; SMS externo y piloto siguen pendientes, Doing.
