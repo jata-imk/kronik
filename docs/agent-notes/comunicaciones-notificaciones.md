@@ -46,8 +46,9 @@ resultado, por lo que se incluyó expresamente en el barrido I4.
 
 Las revisiones medium terminadas constan en las PR; los cierres posteriores
 solo cambian documentación, con identidad funcional comprobada. Sin hilos
-pendientes al retomar. La discrepancia API/ref de I0 se conserva explícita;
-`9d0473d` es ancestro de I1–I4, no se pierde su corrección documental.
+pendientes al retomar. La discrepancia API/ref de I0 fue histórica: después de
+consolidar, GitHub muestra `9d0473d` y #93 integrada. Ese HEAD es ancestro de
+I1–I4 y su corrección documental queda conservada.
 
 Revisión medium acumulada inicial de `82c7756`: cuatro hallazgos. Revisión de
 `5fe2d88`: seis correcciones confirmadas y un hallazgo adicional de bloqueos.
@@ -139,9 +140,10 @@ el código; no confirma los secretos ni la ejecución de la VPS.
 
 ## Pendientes reales y siguiente paso
 
-I4 no requiere más desarrollo dentro de este alcance. Conservar main y todas las
-ramas auxiliares. Para la próxima validación, obtener primero rama/SHA de la VPS
-y seguir la guía enlazada; si usa main, evaluar una integración posterior separada.
+I4 está cerrado técnicamente. José confirmó preparar una nueva sesión para
+**integrar main en la rama original de Comunicaciones**, conservando ambos
+trabajos; no ejecutar esa integración durante este traspaso. Después se podrá
+preparar la validación VPS según la guía, con rama/SHA reales del servidor.
 
 Después del cierre técnico quedan recepción SMS externa autenticada,
 cuenta/ruta mexicana/remitente/tarifas, presupuesto y piloto con números aprobados.
@@ -151,3 +153,91 @@ Ambas barreras permanecen cerradas; sin envíos reales, compras, Integraciones,
 limpieza operativa, despliegue, SSH ni acceso a VPS. La iniciativa permanece
 Doing y no se cierra por integrar PR. El usuario ejecutará los comandos de la
 guía de VPS y compartirá sus resultados para registrar el QA posterior.
+
+## Traspaso — integrar main en Comunicaciones, 27/11/2026
+
+Esta sesión solo prepara el traspaso. No se ha ejecutado merge de main, modificado
+código funcional ni iniciado despliegue. La integración siguiente está pendiente;
+el CI de I4 no acredita todavía una ejecución combinada con main.
+
+Estado comprobado al preparar el traspaso:
+
+- Remoto original: `f0485cf1539a42800304da2068507d7450772856`,
+  [CI #318 aprobado](https://github.com/jata-imk/kronik/actions/runs/46020691744).
+- Main: `217aceff88e938b9037b8a11990916beb9fe4f19`. Ancestro común `bfa0b87`;
+  89 commits exclusivos de main y 41 de Comunicaciones, antes del commit
+  exclusivamente documental de este traspaso. No son ramas en una sola línea.
+- WhatsApp separada: `871936207889c0d429cd1d0fe9c0d546f2094997`, excluida.
+- #93–#97 integradas en original; #91 cerrada sin integrar en main. La evidencia
+  de revisión/CI consolidada está en el
+  [comentario final de #97](https://github.com/jata-imk/kronik/pull/97#issuecomment-7221737172).
+- El commit local de este traspaso solo cambia esta nota y no se publica en esta
+  sesión. Preservarlo al crear la rama de integración; no atribuirle CI propio.
+  Revalidar HEAD locales/remotos, PR, revisiones e integración al retomar.
+
+### Siguiente sesión: integrar main en la rama original de Bryan
+
+> Continuemos Kronik con la integración de main en Comunicaciones.
+>
+> Worktree: C:\Users\jose.tejero\Documents\Proyectos\kronik\storage\framework\testing\comunicaciones-worktree
+>
+> Lee AGENTS.md y ejecuta este traspaso de
+> docs/agent-notes/comunicaciones-notificaciones.md. Consulta docs/index.md,
+> la tarea Notion 3fe61db7db7f81e4af50c4f0f3ab7e41, el plan de incrementos,
+> contratos de canales/seguimiento SMS, Notificaciones, consulta/históricos,
+> auditoría, tablero financiero y renderizado documental.
+>
+> Objetivo autorizado: incorporar los cambios vigentes de origin/main en
+> feat/comunicaciones-notificaciones, la rama original de Bryan, conservando
+> íntegramente el trabajo de main y Comunicaciones I0–I4. No incorporar
+> feat/comunicaciones-whatsapp ni otras ramas de trabajo. No integrar
+> Comunicaciones en main, reabrir #91, reescribir historia ni borrar ramas.
+>
+> Primero verifica estado limpio, refs reales y cualquier cambio posterior;
+> actualiza refs remotos sin sobrescribir trabajo local. Preserva el commit
+> documental de este traspaso aunque esté por delante del remoto. Referencia
+> funcional de Comunicaciones: f0485cf, CI #318 aprobado; main al traspasar:
+> 217acef. Si han avanzado, inspecciona y registra el alcance vigente. No uses
+> el CI anterior para acreditar la combinación pendiente.
+>
+> Crea una rama temporal de integración desde la original con el traspaso y
+> fusiona origin/main mediante merge, sin rebase/squash ni force push. Revisa
+> la divergencia completa y las interacciones, no solo conflictos textuales.
+> Conserva ambas implementaciones al resolver cada cruce, sin sustituir
+> archivos completos por una rama ni eliminar pruebas para hacerlos pasar.
+>
+> Revisar especialmente PagoService y fechas civiles/reversos, transacciones y
+> ProyeccionCreditoService, eventos de comunicación y contexto original,
+> cupos/bloqueos I4, navegación/catálogos/seeders/permisos por equipo, rutas y
+> mensajes españoles, enum/matriz de auditoría, editor documental/previas HTML
+> y PDF explícito, históricos/versiones/consulta inmutable, migraciones y
+> rollback/reinicio QA, CI e índices. Resolver la colisión de numeración ADR
+> 0047/0048 conservando las decisiones históricas y todos los enlaces.
+>
+> Validar contra ambos padres y la base funcional ecb9d4a: demostrar que se
+> mantienen los cambios de main y toda la iniciativa #91/#93–#97. Ejecutar
+> regresiones específicas de los cruces, suite backend completa, frontend/build,
+> harness MariaDB de concurrencia, PDF real y E2E aplicables en BD/HTTP aislados.
+> Un único proceso PHP de pruebas por checkout, también durante review.
+> Revisar trazas/capturas/vídeo/consola ante fallos; no presentar pasadas fallidas
+> o CI de otro SHA como aprobaciones del resultado final.
+>
+> Publicar una PR de integración hacia feat/comunicaciones-notificaciones,
+> completar /review medium de todo el resultado, resolver hallazgos y comprobar
+> CI del HEAD final. Integrarla en la rama original después de esas validaciones,
+> conservar todas las ramas y verificar también el CI del destino consolidado.
+> No mover main. Si aparecen decisiones de producto no resueltas, documentarlas
+> y preguntar solo por ellas, continuando el trabajo independiente posible.
+>
+> Mantener ambas barreras cerradas, credenciales de correo existentes y flujo
+> Meta; no añadir recepción SMS/ackurl/firmas provisionales ni declarar completo
+> I2 externo. Sin envíos reales, compras, Integraciones, limpieza operativa,
+> cambios de .env, despliegue, SSH o acceso a VPS. No habilitar SIC productivo
+> ni operaciones con dinero real. El usuario conserva la administración de VPS.
+>
+> Actualizar documentación/índices, matriz de auditoría, esta Agent Note, guía
+> de VPS y Notion. La guía deberá reflejar la integración efectivamente validada;
+> no conservar como pendiente un cruce ya resuelto ni prometer despliegue.
+> Separar integrado en original, integrado en main, desplegado y validado
+> externamente. La iniciativa sigue Doing mientras subsistan los pendientes
+> externos de SMS/cuenta/ruta/piloto. Entregar SHA/PR/CI finales y pendientes.
