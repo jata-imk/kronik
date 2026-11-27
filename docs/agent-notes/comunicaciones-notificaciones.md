@@ -1,595 +1,122 @@
 # Comunicaciones y notificaciones
 
-## I4 en validación — 26/11/2026
-
-Rama `feat/comunicaciones-i4-cierre` desde I3 `82c7756`, en el worktree de esta
-nota. José confirmó en esta sesión consolidar #93–#96 e I4 en la rama original
-de Bryan, `feat/comunicaciones-notificaciones`, conservando ramas auxiliares.
-Esta autorización sustituye exclusivamente el «sin merge» del prompt anterior
-para ese destino. No incluye `main` ni `feat/comunicaciones-whatsapp`.
-
-Retoma comprobada: #91 cerrada sin integrar; #93–#96 abiertas, sin hilos pendientes.
-I0: PR `213a4b6`, CI #309 aprobado; ref real `9d0473d` documental sin CI propio.
-I1 `85d2db6`/CI #311, I2 `2c865b1`/CI #314 e I3 `82c7756`/CI #316 aprobados.
-Los cierres posteriores a los códigos revisados solo modifican documentos.
-La rama original sigue `547d9e5`; main `217acef`, divergencia 89/32 frente a I3.
-Los cuatro incrementos forman una cadena de ancestros; se conservan íntegros.
-
-El barrido comprende `ecb9d4a..I4` y el antecedente `bfa0b87..ecb9d4a` de #91,
-no solo el diff nuevo. La revisión medium estática inicial del commit `82c7756`
-terminó con cuatro hallazgos: cupo diario concurrente, snapshot financiero previo
-a reverso, zona de almacenamiento en madrugada y consentimiento mostrado como
-vigente tras cambiar contacto. La inspección/regresión añadió campana concurrente
-y rollback SQLite de la FK abreviada I3. Se corrigen dentro de I4, sin eventos
-auditables nuevos ni cambios operativos.
-
-Regresiones ya comprobadas: MariaDB reprodujo el exceso de cupo antes del arreglo;
-Vitest reprodujo lecturas duplicadas de campana. Tras corregir, focal backend
-25/545 y frontend 11 aprobadas. El ciclo SQLite I1–I3 conserva correo/Meta y
-reinstala sin duplicar permisos. MariaDB aislada aprobó dos créditos/canales del
-mismo cliente disputando cupo y un reverso confirmado mientras espera el worker;
-el segundo se cancela sin intento y se diagnostica su proyección. Frontend
-completo 188/71 archivos y build aprobados. La preparación del fixture se corrigió
-para usar pago ordinario exigible y sincronizar cortes antes del pago; los intentos
-interrumpidos no cuentan como aprobación. Revisión final, suite completa,
-E2E/PDF/CI/publicación e integración todavía pendientes en esta entrada.
-
-Revisión medium de `5fe2d88`: los seis casos anteriores quedaron corregidos;
-detectó además inversión de bloqueos preparación/envío por la FK del crédito.
-Se adquiere también crédito primero en preparación y se revalida el evento.
-El harness ampliado aprobó el cruce prepare/send sin deadlock. Los E2E iniciales
-aprobaron seis recorridos; política falló por esperar el estado antes de completar
-POST/redirección (traza, captura y vídeo conservados). Se añade espera de respuesta
-y el helper de mocks/consola, sin omitir pasos; repetición aislada pendiente.
-
-La [guía de VPS](../how-to/preparar-comunicaciones-vps.md) explica variables,
-reutilización del SMTP existente (incluido ZeptoMail), configuración efectiva,
-cola/scheduler y prueba técnica de correo. Si la VPS usa main, hay que evaluar
-la integración posterior antes de cambiar de rama; I4 no incorpora sus commits.
-Ambas barreras permanecen cerradas, sin envíos, compras, limpieza operativa,
-Integraciones, despliegue ni VPS. Autenticidad/recepción SMS, cuenta/ruta y piloto
-siguen pendientes; la iniciativa no se cierra por integrar estas PR.
-
-## I3 publicado y revisado — 26/11/2026
-
-[PR I3 #96](https://github.com/jata-imk/kronik/pull/96) abierta hacia
-`feat/comunicaciones-notificaciones`, sin integrar. Rama
-`feat/comunicaciones-i3-notificaciones` desde `2c865b1`, en el worktree del traspaso.
-Código final revisado: `6a48765054faca9fe99e557e9eec4420c1784a06`.
-Los cierres posteriores son exclusivamente documentales; CI se verifica por SHA.
-
-José confirmó varias plantillas globales seleccionables de SMS y correo.
-WhatsApp conserva su flujo. Catálogo/versiones propios, seis permisos por acción,
-versiones activas/retiradas inmutables, reglas con selección y cancelación
-transaccional de pendientes sin recreación. El intento conserva contenido,
-formato y variables cifrados; no se exponen en props ni auditoría.
-Desactivar reglas no requiere una plantilla activa; habilitarlas sí.
-
-Texto SMS y correo, HTML de correo coherente con el MIME real y HTML documental
-continuo reutilizan compilador, sanitizador, estilos, recursos autorizados y panel
-de variables. Texto/HTML no invocan PDF/Chromium. PDF permanece explícito.
-Se conservan ID/versiones exactas, consulta inmutable, borradores, descarte de
-respuestas tardías, teclado y móvil. Véanse
-[ADR 0051](../explanation/adr-0051-notificaciones-globales-y-previas-html.md),
-[contrato](../reference/plantillas-notificaciones.md),
-[guía](../how-to/editar-notificaciones.md) y
-[evaluación del editor](../explanation/editor-plantillas-notificaciones.md).
-
-Migración aditiva `2026_11_26_100000`, sin backfill ni conversión de textos
-desechables; FK con nombre compatible MariaDB/MySQL. Módulo/menús y tablas
-clasificadas en reinicio QA. Sin variables nuevas ni migraciones operativas.
-
-Evidencia del código final:
-
-- Pre-push completo, sin omitir hook: **1,160 aprobadas, dos omitidas optativas y 49,501 aserciones**; build Vite aprobado.
-- Frontend completo: **184 pruebas / 71 archivos**.
-- E2E locales: cuatro finales aprobados (Comunicaciones escritorio/móvil,
-  SMS con versiones/teclado/móvil y HTML correo/documentos sin PDF). También
-  aprobaron consulta histórica documental, consulta de productos y editor/PDF
-  multipágina. PDF real: 9,704 bytes. BD/HTTP aislados.
-- Una pasada conjunta previa tuvo un timeout bajo carga simultánea de Vitest;
-  se descartó como resultado global y se repitieron aislados los cuatro flujos.
-  El PHP CLI-server local usó un ini temporal ignorado con presupuesto de 60 s
-  para PDF; no se cambió .env ni configuración operativa.
-- `/review medium` completo contra `547d9e5`, CLI 0.172.0:
-  **sin regresiones accionables**. Hallazgos anteriores resueltos con pruebas:
-  conservación de captura/errores y desactivación de reglas sin versión activa.
-  Revisión final estática, sin pruebas PHP concurrentes.
-  [Evidencia en PR](https://github.com/jata-imk/kronik/pull/96#issuecomment-7203281121).
-- Resultado remoto y SHA del HEAD final: [comentario de cierre de la PR](https://github.com/jata-imk/kronik/pull/96#issuecomment-7203281121) y [Checks de #96](https://github.com/jata-imk/kronik/pull/96/checks). No atribuir a un cierre documental el resultado CI de otro SHA.
-- Pint, diff --check, UTF-8/LF, enlaces locales, índices y cobertura temática
-  comprobados. Capturas [escritorio](../assets/notificaciones-i3-desktop.png)
-  y [móvil](../assets/notificaciones-i3-mobile.png).
-
-Retoma y dependencias: #93/#94/#95 siguen abiertas y sin integrar.
-I0: la API de PR muestra `213a4b6` con CI #309 aprobado; rama real
-`9d0473d`, cierre documental sin CI propio visible. I1: `85d2db6`,
-CI #311 aprobado, mismo árbol funcional que el código revisado `cacf89f`.
-I2: `2c865b1`, **CI #314 aprobado**, mismo árbol funcional que el código
-revisado `c7a31bd`; #313 corresponde a `e7d287d`.
-Main `217acef` y destino `547d9e5` siguen sin cambios, contrastados sin fusionar.
-Divergencia main/I2 al arranque: 89/24. No se acredita ejecución combinada.
-
-Ambas barreras SMS siguen cerradas. I2 acredita solo núcleo interno:
-recepción externa autenticada, cuenta/ruta y piloto pendientes. No se inventan
-firmas, callbacks, ackurl ni consultas del proveedor. Sin envíos reales, compras,
-Integraciones, limpieza operativa, merge, despliegue o VPS.
-Notion conserva la iniciativa Doing: I4 y los pendientes externos impiden cerrarla.
-
-### Siguiente sesión: solo I4
-
-> Continuemos Kronik, exclusivamente I4: cierre técnico conjunto de Comunicaciones.
->
-> Worktree: C:\Users\jose.tejero\Documents\Proyectos\kronik\storage\framework\testing\comunicaciones-worktree
->
-> Lee AGENTS.md y esta Agent Note. Consulta docs/index.md, el plan de incrementos
-> SMS, ADR 0051, evaluación del editor, contratos de canales/seguimiento SMS,
-> Notificaciones, renderizado documental, consulta/históricos y auditoría.
-> Contrasta alcance vigente con
-> https://app.notion.com/p/3fe61db7db7f81e4af50c4f0f3ab7e41.
->
-> Antes de elegir base, verifica HEAD reales, revisiones terminadas, hilos,
-> CI por SHA e integración de #93, #94, #95 y #96. I3 código revisado 6a48765;
-> consulta la evidencia de CI registrada arriba y cualquier cambio posterior.
-> Conserva todos los incrementos; contrasta main sin fusionarlo.
->
-> Revisa conjuntamente TODAS las PR y cambios de la iniciativa contra la base
-> funcional ecb9d4a, incluido el antecedente #91 cerrado sin integrar.
-> El barrido debe cubrir el rango completo y las interacciones entre PR,
-> no solo el diff de I4: migraciones/rollback/reinicio QA, permisos/contextos,
-> versiones exactas e inmutables, reglas/salidas/cancelación y concurrencia,
-> variables SMS y dos segmentos tras sustitución sin truncar ni quitar acentos,
-> texto/HTML sin PDF, aislamiento/recursos autorizados, borradores e históricos,
-> descarte de respuestas tardías, teclado/móvil, correo/SMTP, Meta, consentimiento,
-> límites, elegibilidad financiera, transacciones/proyecciones y auditoría.
-> Registra evidencia y resuelve hallazgos con sus regresiones.
->
-> I2 solo tiene núcleo interno. La recepción externa autenticada sigue pendiente;
-> no inventes firmas, callbacks, ackurl, entradas provisionales ni consultas del
-> proveedor. Mantén ambas barreras cerradas. No implementes Integraciones.
-> Documenta el procedimiento de piloto y los pendientes verificables sin
-> ejecutarlo. Sin envíos reales, compras, despliegues, merge ni acceso a VPS.
->
-> Usa BD y HTTP aislados, un solo proceso PHP de pruebas por checkout, también
-> durante review. Completa comprobaciones aplicables, documentación, índices,
-> matriz de auditoría, Agent Note y Notion. Si I4 requiere cambios, publícalos
-> en una sola PR hacia feat/comunicaciones-notificaciones, ejecuta /review medium,
-> resuelve hallazgos y verifica CI del SHA final.
-> Distingue cierre técnico, integración, despliegue y validación externa;
-> no cierres la iniciativa por una PR integrada ni declares seguimiento externo
-> completo sin contrato/evidencia. Entrega el estado y pendientes reales y detente.
-
-## Antecedente — I2 publicado y revisado, 25/11/2026
-
-Rama `feat/sms-i2-seguimiento`, creada desde `85d2db6`;
-[PR I2 #95](https://github.com/jata-imk/kronik/pull/95) abierta hacia
-`feat/comunicaciones-notificaciones`, sin integrar. Código final revisado:
-`c7a31bd1c8d382c8eb4f4557ae1aebb2778336ba`. Cierres posteriores solo documentales.
-#93 y #94 siguen abiertas, sin integrar. I1: código revisado `cacf89f`, HEAD
-`85d2db6`, CI #311 aprobado; sin hilos pendientes y revisión medium documentada
-en la PR. Se comprobó identidad del árbol funcional. Main continúa `217acef`,
-ancestro `bfa0b87`, divergencia 20/89 contra I1; no se fusionó.
-
-José confirmó que aún no creó cuenta LabsMobile ni compró saldo. El plan aprobado
-permite implementar solo trabajo seguro independiente: normalización tipada,
-persistencia, correlación original, deduplicación, conciliación y coordinación
-con HTTP, ejercitados con datos sintéticos. La autenticidad de callbacks sigue
-sin contrato verificable: no hay ruta, ackurl, verificador provisional ni entrada
-CLI. Las capacidades externas continúan deshabilitadas. **I2 no acredita
-seguimiento externo completo ni recepción autenticada.**
-
-El [contrato canónico](../reference/seguimiento-sms.md) registra niveles y privacidad.
-La migración aditiva `2026_11_25_180000` amplía la tabla de acuses; sin backfill ni
-tablas nuevas. El reinicio QA conserva su clasificación. El orquestador no pierde
-ID/aceptación HTTP cuando un acuse llega primero, y un timeout no degrada una entrega
-ya confirmada internamente ni autoriza reenvío. No se atribuye lectura al SMS.
-Auditoría reutilizada, transaccional y sin datos sensibles; correo/Meta intactos.
-
-Validación del código `c7a31bd`: pre-push completo sin omitir el hook, **1,119
-aprobadas, dos omitidas optativas y 49,088 aserciones**; build Vite aprobado.
-Incluye los 48 casos nuevos I2 y la regresión del reinicio QA con los nuevos campos.
-Frontend focal: cinco aprobadas en dos archivos. Pint, diff --check, UTF-8/LF,
-enlaces locales y cobertura temática comprobados.
-
-`/review medium` completo de todo el diff de la PR contra `547d9e5`, Codex CLI
-0.172.0, código `c7a31bd`: **sin defectos accionables**. El revisor aprobó además
-118 pruebas backend y 970 aserciones. [Evidencia de revisión](https://github.com/jata-imk/kronik/pull/95#issuecomment-7175492447).
-CI se verifica por SHA publicado y se registra en la PR y Notion; consultar
-[Checks de #95](https://github.com/jata-imk/kronik/pull/95/checks). La validación
-local y revisión no acreditan integración, proveedor, scheduler/worker o despliegue.
-
-La primera pasada de pre-push se interrumpió al detectar que el DDL de la prueba
-podía confirmar RefreshDatabase en MariaDB; se sustituyó por otra conexión SQLite
-`:memory:`. La pasada interrumpida no cuenta como aprobación; la repetición completa
-sobre `c7a31bd` y la revisión posterior son las evidencias válidas.
-Pruebas exclusivamente aisladas y secuenciales. No se modificó `.env`, no hubo
-migración/limpieza operativa, envíos reales, merge, despliegue ni acceso a VPS.
-No se implementó editor ni Integraciones. La iniciativa permanece abierta.
-
-### Ampliación de I3 confirmada — 25/11/2026
-
-José pidió previsualización compartida de texto plano SMS y HTML renderizado para
-correo/documentos, sin generar PDF siempre. Para documentos acepta HTML continuo
-sin paginación; PDF queda opcional. Reutilizar la base HTML existente del backend
-y completar cambios sin guardar, sin renderer PDF ni registros de negocio.
-Correo actual usa texto: conservar ese flujo y asegurar coherencia entre el HTML
-que se previsualiza y el formato real soportado. Detalle y aceptación en la
-[evaluación del editor](../explanation/editor-plantillas-notificaciones.md).
-Solo se amplía el traspaso documental; no se inicia implementación I3.
-CI #313 aprobado corresponde al cierre anterior `e7d287d`; código revisado `c7a31bd`
-sin cambios. Verificar el HEAD documental y sus checks vigentes al retomar.
-
-### Prompt anterior: solo I3
-
-> Continuemos SMS de Kronik, exclusivamente I3: Notificaciones globales y editor.
-> Worktree: C:\Users\jose.tejero\Documents\Proyectos\kronik\storage\framework\testing\comunicaciones-worktree.
-> Lee AGENTS.md, esta Agent Note, docs/explanation/plan-incrementos-sms.md,
-> docs/explanation/editor-plantillas-notificaciones.md, docs/reference/canales-comunicacion.md
-> y docs/reference/seguimiento-sms.md. Contrasta Notion 3fe61db7db7f81e4af50c4f0f3ab7e41.
-> I2 está publicado en https://github.com/jata-imk/kronik/pull/95, rama
-> feat/sms-i2-seguimiento, código revisado c7a31bd; cierres posteriores documentales.
-> Verifica PR/SHA/CI/revisión e integración reales de I0 #93, I1 #94 e I2 #95 antes
-> de elegir base; conserva su código revisado aunque sigan abiertas. No fusiones main.
-> Implementa solo I3: catálogo global de Notificaciones con permisos por acción
-> (consulta, creación, edición, versionado, activación y retiro), sin exclusividad
-> de Super Admin. Reutiliza panel/búsqueda/inserción de variables del editor documental;
-> SMS conserva texto plano y solo sus variables aprobadas, no todo el catálogo documental.
-> Integra una sección compartida de Previsualización con formato explícito:
-> texto plano para SMS y HTML renderizado para correo y plantillas documentales.
-> Para documentos, HTML continuo sin paginación; generar PDF solo por acción explícita
-> opcional. No usar renderer PDF/Chromium ni crear recursos de negocio para texto/HTML.
-> Previsualiza cambios sin guardar y versiones guardadas exactas con datos sintéticos,
-> variables permitidas, estilos y recursos autorizados. Reutiliza compilación y
-> saneamiento existentes; ya existe DocumentoPlantillaController::preview para HTML
-> de versiones guardadas. No crear otro motor ni limitarse a mostrar código fuente.
-> El correo actual usa texto: conservar ese flujo e integrar HTML saneado cuando
-> corresponda, con vista previa coherente con el cuerpo real y sin cambiar proveedor.
-> HTML aislado, sin scripts ni recursos no autorizados. Mantén consulta sin mutaciones,
-> permisos por acción, descarte de respuestas tardías, móvil y teclado. Prueba que
-> texto/HTML no invocan PDF y conserva las regresiones de correo y generación PDF.
-> Una instalación es una financiera; equipos son departamentos/contextos de permisos.
-> Conserva nombre como primer nombre y fecha del evento; máximo dos segmentos tras
-> sustitución en backend, sin truncar ni quitar acentos. Vista previa sintética estimada.
-> Versiones activas inmutables. Activar otra redacción o retirar cancela pendientes
-> y bloquea uso nuevo, sin recrear el mismo aviso. Conservar versión/evidencia exactas.
-> No migrar plantillas de prueba desechables. No implementar catálogo de Integraciones.
-> I2 solo tiene núcleo interno: no existe cuenta LabsMobile ni contrato de autenticidad.
-> Mantén recepción y capacidades externas cerradas; no inventes firma o consulta.
-> Mantén ambas barreras cerradas, correo, Meta, límites, elegibilidad y auditoría.
-> Pruebas con BD/HTTP aislados, un solo proceso PHP por checkout. Sin envíos reales,
-> compras, despliegues ni acceso a VPS. Una sesión y una PR hacia
-> feat/comunicaciones-notificaciones; /review medium, resolver hallazgos y registrar
-> base/SHA/CI/evidencia. Actualiza documentación, índices, Agent Note y Notion.
-> Entrega prompt I4 y detente. I4 exige barrido completo de todas las PR contra ecb9d4a,
-> además de registrar el pendiente externo de autenticidad antes de cualquier piloto.
-
-## Antecedente — SMS I1 publicado, 25/11/2026
-
-- [PR I1 #94](https://github.com/jata-imk/kronik/pull/94), abierta hacia
-  `feat/comunicaciones-notificaciones`, rama `feat/sms-i1-labsmobile` creada desde
-  `9d0473d`. Depende de I0 #93 mientras siga abierta. Sin merge ni despliegue.
-- Código final revisado: `cacf89f`. Publicación inicial: `02d34ca`; los cierres
-  posteriores son documentales. `/review medium` completo contra `547d9e5`,
-  Codex CLI 0.172.0, sin regresiones accionables; focal del revisor: 70 backend y
-  cuatro frontend aprobadas. [Evidencia de revisión](https://github.com/jata-imk/kronik/pull/94#issuecomment-7173834618).
-- Pre-push final sin saltar el hook: **1,071 aprobadas, dos omitidas optativas,
-  48,633 aserciones**, build Vite aprobado. Frontend completo: 67 archivos / 177
-  pruebas. E2E Chromium con SQLite nueva: dos recorridos aprobados, escritorio y
-  móvil, con barreras cerradas y credenciales vacías. Capturas actualizadas.
-  Pint, diff --check, UTF-8/LF, enlaces locales y cobertura temática comprobados.
-- CI remoto: consultar Checks de #94 por SHA publicado; la evidencia del resultado
-  se registra en la PR y en Notion. La validación local no acredita integración,
-  ejecución de scheduler/worker, despliegue ni aceptación del proveedor.
-- Una revisión inicial se interrumpió por cuota. Otra ejecución simultánea con
-  el pre-push compartió archivos de `Storage::fake('local')` y produjo fallos de
-  documentos. Se descartaron esas pasadas como validación aprobada y se repitieron
-  revisión y suite de forma secuencial, sin fallos. Seguir la guía QA: un solo
-  proceso PHP de pruebas por checkout.
-
-I1 implementa HTTP LabsMobile, configuración por entorno mediante `config()`,
-UI de presencia sin escritura de secretos/remitente, consulta de saldo sin SMS,
-doble barrera, dos segmentos tras sustitución, limitador atómico por cuenta y
-proveedor/correlación antes del HTTP. Incluye cierre ante caché que devuelve false
-sin excepción. Retira adaptador, endpoint y conciliación Infobip; Meta conserva
-seguimiento. La migración `2026_11_25_170000` es aditiva y no hace backfill.
-La limpieza QA selectiva invalida salidas anteriores y elimina solo jobs
-identificados, con rollback y auditoría; conserva correo, Meta y colas compartidas.
-Las filas canceladas neutralizan trabajos no identificados; repetir la limpieza
-conserva reglas de un canal LabsMobile configurado después.
-
-No se modificó `.env`, se ejecutó limpieza operativa, se habilitó tráfico, se
-accedió a VPS ni se desplegó. Solo se migraron y limpiaron datos sintéticos en BD
-aisladas de pruebas. Main sigue en `217acef`, ancestro `bfa0b87`, divergencia de
-arranque 89/15; no se fusionó ni se sobrescribió trabajo compartido. Base funcional
-del barrido final de **I4: `ecb9d4a`**. Integraciones y piloto siguen pendientes.
-
-### Prompt anterior: solo I2
-
-Prompt de continuación:
-
-> Continuemos SMS de Kronik, exclusivamente I2: seguimiento LabsMobile.
-> Worktree: C:\Users\jose.tejero\Documents\Proyectos\kronik\storage\framework\testing\comunicaciones-worktree.
-> Lee AGENTS.md, esta Agent Note, docs/explanation/plan-incrementos-sms.md,
-> docs/explanation/adr-0050-proveedor-sms-labsmobile.md,
-> docs/explanation/integracion-sms-labsmobile.md y docs/reference/canales-comunicacion.md.
-> Contrasta Notion https://app.notion.com/p/3fe61db7db7f81e4af50c4f0f3ab7e41.
-> I1 está publicado en https://github.com/jata-imk/kronik/pull/94,
-> rama feat/sms-i1-labsmobile, código revisado cacf89f; I0 es PR #93.
-> Verifica SHA, CI, revisión e integración reales antes de elegir base y crear rama.
-> Conserva el trabajo compartido y contrasta main sin fusionarlo.
-> Implementa solo seguimiento/conciliación LabsMobile: confirmar autenticidad antes
-> de aceptar callbacks, persistencia, correlación, deduplicación, eventos adelantados
-> y desordenados y niveles de acuse. Conserva provider, provider_correlation_id y
-> provider_message_id del intento y el contexto original de equipo/sucursal.
-> No confundas acuse de operador con entrega al dispositivo ni atribuyas lectura al SMS.
-> Verifica fuentes primarias y contrato de cuenta; no inventes HMAC, consulta de estado
-> o garantía de idempotencia. La correlación no autentica callbacks. Si falta contrato
-> verificable, no publiques una recepción que acepte estados sin autenticar; registra
-> el pendiente externo y avanza solo en trabajo seguro e independiente.
-> Kronik solo existe en dev/QA, sin clientes ni históricos; datos desechables.
-> No implementes compatibilidad Infobip, backfill, editor ni catálogo de Integraciones.
-> Mantén ambas barreras cerradas, sin envíos reales, despliegue o acceso a VPS.
-> Pruebas con BD/HTTP aislados y un solo proceso PHP por checkout; conserva correo,
-> Meta, límites, elegibilidad financiera, auditoría y metadatos permitidos sin secretos.
-> Una sesión y una PR para I2, hacia feat/comunicaciones-notificaciones. Publica,
-> ejecuta /review medium, resuelve hallazgos y registra base/SHA/CI/evidencia.
-> Actualiza documentación, índices, Agent Note y Notion; entrega prompt I3 y detente.
-> En I4 sigue obligatorio el barrido completo de todas las PR contra ecb9d4a.
-
-## Antecedente — SMS I0, 25/11/2026
-
-**Corrección de alcance confirmada por José el 25/11/2026:** Kronik solo está en
-desarrollo y QA; nunca ha estado en producción, no existen clientes ni datos
-históricos que conservar y los datos de prueba son desechables. La suposición de
-necesitar una migración histórica fue incorrecta. Se elimina ese incremento
-independiente: el siguiente I1 implementa directamente LabsMobile y retira
-Infobip, tratando datos/jobs de prueba mediante limpieza explícita cuando haga
-falta. No desarrollar backfill, compatibilidad de callbacks ni conciliación de
-históricos Infobip. El inventario I0 queda como herramienta opcional de QA.
-La corrección es documental: no se borraron datos ni se ejecutó I1.
-
-José autorizó la implementación y después pidió **una sesión y una PR por
-incremento** para no arrastrar contexto. Cada cierre debe conservar esta Agent
-Note, evidencia en Notion y prompt de continuación. `/review medium` y hallazgos
-resueltos en cada PR; al cerrar SMS, pase acumulado de todas las PR contra
-`ecb9d4a`, sin sustituirlo por las revisiones individuales.
-
-- Rama de I0: `feat/sms-i0-inventario`, creada desde `547d9e5` dentro del worktree
-  `storage/framework/testing/comunicaciones-worktree`. Base de la PR:
-  `feat/comunicaciones-notificaciones`. No se fusionó main ni se forzó historia.
-- [PR #93](https://github.com/jata-imk/kronik/pull/93), abierta y no integrada.
-  Código y pruebas finales `3095384a5be2b94e2f29be35b4ea826ebbbbc764`; arranque `0fe03d5`.
-  El commit documental posterior registra este cierre sin cambiar código.
-- Alcance I0: comando `comunicaciones:inventariar-sms`, servicio agregado de solo
-  lectura, contrato y matriz de compatibilidad. El inventario conserva Infobip y
-  no cambia conexiones, jobs, reglas, proyecciones ni auditoría de negocio.
-- Compatibilidad de QA: se clasifican las siete tablas de comunicaciones en el
-  reinicio existente, respetando sus barreras y claves foráneas, y se corrigen
-  fixtures de menús que chocaban con módulos/vínculos ya registrados. El ciclo
-  completo de reinicio se probó solo en SQLite aislado; no se reinició ningún
-  entorno operativo. No cambia el flujo normal de pagos ni de comunicaciones.
-- El [plan canónico por incrementos](../explanation/plan-incrementos-sms.md)
-  registra las decisiones finales y cruces con main; prevalece sobre alternativas
-  abiertas del traspaso anterior. Una instalación es una financiera; los equipos
-  son departamentos. Credenciales por entorno, plantillas de Notificaciones
-  globales con permisos por acción, sin exclusividad de Super Admin, dos segmentos
-  tras sustitución y cancelación de pendientes al cambiar/retirar redacción.
-- [Tarea de Integraciones creada en Notion](https://app.notion.com/p/42361db7db7f81e6b747c5ea0241cbb4),
-  pendiente para después. No se implementa su catálogo ni se modifican CDC o Meta
-  en I0. Brian conserva WhatsApp/Facebook y su trabajo compartido.
-- Dependencias instaladas desde lockfiles sin cambios versionados; `.env` local
-  sintético con SQLite `:memory:`, correo `array` y envíos desactivados. No se
-  copiaron secretos ni se preparó una BD operativa. PHP 8.3.29 / Node 22.22.3.
-- Prueba nueva del inventario: 14 aprobadas, 116 aserciones. Conjunto final de
-  inventario, menús y reinicio QA: 53 aprobadas, 504 aserciones. Pint aprobado y
-  build Vite aprobado. El pre-push completo sobre `3095384` aprobó **1,016 pruebas,
-  48,249 aserciones**, con dos omitidas optativas (renderer Chromium real y
-  benchmark de cartera). Ejecutó también build sin saltar el hook. UTF-8/LF,
-  salto final y 144 enlaces locales de 15 archivos comprobados.
-- Primera revisión medium sobre `0fe03d5`: señaló la identificación del almacén
-  database activo con varias conexiones. La completitud ya consideraba todos
-  los almacenes; se corrigió además `active_inspectable`, se agregó `active` por
-  almacén y se probaron ambas selecciones de cola. La revisión del rango de esta
-  PR se repitió después de los cambios de código y fixtures.
-- Segunda `/review medium`: Codex CLI 0.172.0 con esfuerzo medium, base
-  `547d9e5` y código `b6899f5`, terminó sin defectos accionables. Se revisó todo
-  el diff de la PR, incluidos los ajustes de QA. El señalamiento anterior quedó
-  resuelto; no hay hallazgos de código pendientes. El pase acumulado de SMS contra
-  `ecb9d4a` sigue siendo requisito del cierre final, no está acreditado por esta revisión.
-- Ajuste final de portabilidad de pruebas `3095384`: el esquema ausente se
-  simula en otra conexión SQLite, sin renombrar tablas de la aplicación ni DDL
-  en su transacción. Las 14 pruebas/116 aserciones pasaron de nuevo. Tercera
-  revisión medium del diff completo de la PR sobre ese SHA: sin defectos
-  accionables. Después pasó también el pre-push completo y build citados arriba.
-- Publicación Git confirmada a `origin/feat/sms-i0-inventario`; Notion registra
-  PR y evidencia. CI remoto y cualquier integración deben comprobarse por su SHA
-  al retomar; no se afirma despliegue ni validación contra proveedores.
-- No hay migraciones, seeders ni variables nuevas de este incremento. El comando
-  CLI de consulta no necesita evento auditable nuevo; justificación y pruebas
-  enlazadas desde la matriz. No hay UI nueva ni E2E adicional requerido para I0.
-
-### Siguiente sesión
-
-Retomar **I1, sustitución directa de Infobip por LabsMobile**, después de verificar
-el estado y SHA de la
-[PR I0 #93](https://github.com/jata-imk/kronik/pull/93). Conservar el código revisado de I0 aunque aún no esté integrado y no asumir
-que publicar una rama equivale a integración. No empezar I2–I4 en esa sesión.
-Resolver primero cualquier hallazgo pendiente de I0 y elegir la base de la nueva
-PR desde el estado real; nunca mezclar main ni sobrescribir comunicaciones.
-
-Prompt de continuación:
-
-> Continuemos SMS de Kronik, exclusivamente el incremento I1 (sustitución directa por LabsMobile).
-> Trabaja en C:\Users\jose.tejero\Documents\Proyectos\kronik\storage\framework\testing\comunicaciones-worktree.
-> Lee AGENTS.md, docs/agent-notes/comunicaciones-notificaciones.md,
-> docs/explanation/plan-incrementos-sms.md, docs/reference/inventario-sms.md y el
-> alcance vigente de Notion 3fe61db7db7f81e4af50c4f0f3ab7e41.
-> I0 está en la PR #93 https://github.com/jata-imk/kronik/pull/93,
-> rama feat/sms-i0-inventario, código y pruebas revisados 3095384. Verifica revisiones, CI y estado de
-> integración antes de elegir la rama de I1; preserva todo el trabajo compartido.
-> Base funcional del barrido final: ecb9d4a. No fusiones main ni habilites tráfico.
-> Kronik solo existe en dev/QA: nunca estuvo en producción, no hay clientes ni
-> históricos que conservar y sus datos de prueba son desechables. No implementes
-> migración histórica ni compatibilidad con Infobip. El inventario I0 es opcional.
-> Implementa solo I1: transporte LabsMobile, configuración por entorno, UI sin
-> escritura de secretos, comprobación de conexión, barrera SMS, límites y retiro
-> activo de Infobip, con pruebas aisladas y auditoría. Resuelve datos y jobs de
-> prueba mediante limpieza explícita cuando corresponda, sin purgar colas ajenas
-> ni modificar correo/Meta. Guarda proveedor/correlación de los nuevos intentos.
-> Credenciales por entorno; plantillas globales con permisos por acción; equipos
-> son departamentos, no financieras. No implementes el catálogo de Integraciones,
-> que tiene su tarea independiente, ni seguimiento/editor de incrementos posteriores.
-> Publica la PR del incremento, ejecuta /review medium y resuelve hallazgos.
-> Actualiza documentación, Agent Note y Notion; entrega prompt para I2.
-> Una sesión por incremento. Al terminar I4 exige pase del rango completo y todas
-> las PR contra ecb9d4a antes de cerrar la funcionalidad.
-
-Si algún incremento añade tablas, clasificarlas también en el reinicio QA y mantener su
-regresión en esa misma PR. I0 descubrió y corrigió ese faltante de la base anterior.
-
 ## Referencias
 
-- [Requisito de Notion](https://app.notion.com/p/Kronik-Comunicaciones-por-canales-env-os-y-seguimiento-3fe61db7db7f81e4af50c4f0f3ab7e41) y [copia literal conservada](../reference/comunicaciones-por-canales-envios-y-seguimiento.md).
-- Rama `feat/comunicaciones-notificaciones`; commits `793e684` (base), `1027e89` (móvil), `fb12c7f` (canales y seguimiento), `36da998` (evidencia), `04543e3` (parametrización) y `909bb24` (capturas y publicación). Publicada en GitHub al 2026-11-20. La [PR #91](https://github.com/jata-imk/kronik/pull/91) recibió `/review medium` y fue cerrada sin integrar por indicación del usuario: la entrega debe permanecer en esta rama de desarrollo, sin llevar cambios a `main`.
-- [Contrato de eventos](../reference/eventos-comunicacion.md), [canales](../reference/canales-comunicacion.md) y [ADR 0049](../explanation/adr-0049-orquestacion-comunicaciones-externas.md).
+- [Tarea en Notion](https://app.notion.com/p/3fe61db7db7f81e4af50c4f0f3ab7e41), estado Doing.
+- Destino autorizado: `feat/comunicaciones-notificaciones`, rama original de Bryan.
+- I4: `feat/comunicaciones-i4-cierre`, desde I3 `82c7756`.
+- PR: [#91 original](https://github.com/jata-imk/kronik/pull/91), [#93 I0](https://github.com/jata-imk/kronik/pull/93), [#94 I1](https://github.com/jata-imk/kronik/pull/94), [#95 I2](https://github.com/jata-imk/kronik/pull/95), [#96 I3](https://github.com/jata-imk/kronik/pull/96).
+- [Plan de incrementos](../explanation/plan-incrementos-sms.md), [ADR 0049](../explanation/adr-0049-orquestacion-comunicaciones-externas.md), [ADR 0050](../explanation/adr-0050-proveedor-sms-labsmobile.md), [ADR 0051](../explanation/adr-0051-notificaciones-globales-y-previas-html.md).
+- [Guía de VPS y variables](../how-to/preparar-comunicaciones-vps.md), [QA](../how-to/probar-comunicaciones.md), [seguimiento SMS](../reference/seguimiento-sms.md), [auditoría](../reference/auditoria-eventos.md).
 
-## Estado — 2026-11-20
+## Estado — 27/11/2026
 
-Implementado localmente en la rama: bandeja interna contextual; eventos candidatos para pago QA y próximo vencimiento con anticipación configurable por regla/canal (tres días iniciales); equipo estable de nuevos créditos y recuperación conservadora de históricos; consentimiento por equipo/canal/finalidad/contacto con acceso desde la ficha del cliente; reglas, plantillas y ventanas; adaptadores SMTP, Infobip y Meta; comprobaciones técnicas de conexión sin envío; salida en cola después del commit; revalidación previa; historial, filtros y webhooks firmados con deduplicación y conciliación. La vigencia del pago, las esperas operativas y el calendario del scheduler se parametrizan en el entorno. SMS y WhatsApp no están activados en ningún proveedor. Telegram permanece opcional y desactivado.
+Cierre técnico I4 en validación. José autorizó consolidar #93–#96 e I4 en la
+rama original, conservando ramas auxiliares. Sustituye el «sin merge» del
+traspaso solo para ese destino. No incluye `main` ni la rama separada de Bryan
+`feat/comunicaciones-whatsapp`. Sin despliegue ni validación externa.
 
-El entorno local sigue con `MAIL_MAILER=log`. La barrera `COMMUNICATIONS_SEND_ENABLED=false` es el valor predeterminado y no se envió correo al destinatario personal autorizado ni a acreditados. No se han configurado credenciales ni elegibilidad de prestamista/proveedor. La cuenta, identidad, remitente, permisos externos, plantilla Meta y ruta SMS mexicana requieren validación externa antes de tráfico real. No se ha desplegado en VPS ni confirmado cron/worker del servidor. El usuario administra la VPS; no se accedió a ella.
+Código final I4: `3f62b15f328afc8ae7b86fff13a41ea3d4612b80`, después de `5fe2d88`.
+Código publicado; PR, CI e integración pendientes de completar en esta sesión.
+Pre-push completo repetido: **1,168 aprobadas, dos omitidas optativas y 49,778
+aserciones**, duración 541.21 s; build Vite aprobado. Primera ejecución
+interrumpida sin resultado global, no computada como aprobación.
+El cierre posterior solo modifica documentos, con identidad funcional respecto
+a `3f62b15` comprobada. Su publicación usa la excepción documental del hook
+tras verificar UTF-8/LF, enlaces, índices y diff; conserva la pasada completa
+anterior y requiere CI propio del HEAD final de la PR.
 
-## Evidencia
+## Barrido conjunto y revisiones
 
-- Pest conjunto de comunicaciones, pagos, solicitudes y campana: **102 pruebas, 1,629 aserciones**, SQLite aislado con PHP 8.4, 2026-11-20. Incluye permisos, secretos, consentimientos, contacto cambiado, idempotencia, cola, rechazo/timeout, firmas, duplicados, desorden y conciliación de webhooks.
-- Prueba unitaria Vue de campana: 1 aprobada. Build Vite aprobado. `vendor/bin/pint --dirty` y `git diff --check` aprobados.
-- E2E con Edge y SQLite desechable: 2 recorridos aprobados, escritorio y móvil, regla/vista previa/historial y anchura de las cuatro secciones. Capturas sintéticas conservadas en `docs/assets/comunicaciones-desktop.png` y `docs/assets/comunicaciones-mobile.png`. El primer lanzador `tests/E2E/run.js` falló por una aserción interna de `fetch` de Node 24; la ejecución manual con servidor visible y la misma base aislada sí pasó. `public/hot` fue restaurado.
-- Regresión de crédito anticipado, Bullet y tablero: **26 pruebas, 1,234 aserciones** aprobadas con PHP 8.4 y SQLite aislado.
-- Tras integrar la ficha del cliente y el límite diario, **13 pruebas focalizadas, 238 aserciones** aprobadas; incluye webhooks, entregas, gestión, permisos y revocación. La comprobación técnica de APIs añadió otra prueba de gestión (**5 aprobadas, 79 aserciones**). Build Vite repetido con éxito. `route:list` y `schedule:list` registran las rutas y los dos comandos; esto no acredita ejecución del programador en VPS.
-- Parametrización posterior: **14 pruebas focalizadas, 257 aserciones** de preparación, gestión y entregas; otras **20 pruebas, 312 aserciones** de pagos, webhooks y transportes; tras ajustar valores iniciales, **11 pruebas, 196 aserciones** de preparación y entregas. Build Vite aprobado. `schedule:list` reflejó intervalos temporales de 15 y 10 minutos configurados por entorno.
-- Cierre de parametrización: **37 pruebas, 615 aserciones** de comunicaciones y pagos con SQLite aislado y PHP 8.4. Incluye dos canales con anticipaciones distintas para un solo vencimiento, reprogramación de salida ya en cola, valores predeterminados variables y validación de rango. Build Vite, Pint y enlaces locales de la documentación aprobados. No se enviaron mensajes reales.
+Se revisó todo `ecb9d4a..3f62b15` y el antecedente original
+`bfa0b87..ecb9d4a`, incluyendo #91 y las interacciones I0–I3. #91 continúa
+cerrada sin integrar en main; su revisión inicial solicitada no acreditaba
+resultado, por lo que se incluyó expresamente en el barrido I4.
 
-## Traspaso anterior — 2026-11-20
+| Incremento | Código revisado | HEAD previo a I4 / CI por SHA |
+| --- | --- | --- |
+| I0 / #93 | `3095384` | API PR `213a4b6`, [CI #309 aprobado](https://github.com/jata-imk/kronik/actions/runs/45646122948); ref Git real `9d0473d`, corrección documental sin CI propio |
+| I1 / #94 | `cacf89f` | `85d2db6`, [CI #311 aprobado](https://github.com/jata-imk/kronik/actions/runs/45696230037) |
+| I2 / #95 | `c7a31bd` | `2c865b1`, [CI #314 aprobado](https://github.com/jata-imk/kronik/actions/runs/45709799131) |
+| I3 / #96 | `6a48765` | `82c7756`, [CI #316 aprobado](https://github.com/jata-imk/kronik/actions/runs/45895167209) |
 
-El 2026-11-20, los commits pendientes se publicaron mediante la API Git Data de GitHub, conservando sus SHA y sin forzar la rama; el remoto quedó en `909bb24`. La PR #91 se cerró sin integrar y se canceló el merge local de `main`; la rama de desarrollo es la entrega vigente. El transporte Git HTTPS directo sigue sin conexión y `ssh.github.com:443` rechazó la llave disponible. Para QA real, configurar SMTP con dominio y destinatario de prueba autorizado; para SMS/WhatsApp, obtener aprobación escrita de uso, cuentas, remitentes, plantillas y webhook HTTPS antes de activar. Registrar recepción real y operación del programador/worker solo cuando haya evidencia. Actualizar Notion al confirmar integración/QA.
+Las revisiones medium terminadas constan en las PR; los cierres posteriores
+solo cambian documentación, con identidad funcional comprobada. Sin hilos
+pendientes al retomar. La discrepancia API/ref de I0 se conserva explícita;
+`9d0473d` es ancestro de I1–I4, no se pierde su corrección documental.
 
-## Retoma de SMS — 2026-11-24
+Revisión medium acumulada inicial de `82c7756`: cuatro hallazgos. Revisión de
+`5fe2d88`: seis correcciones confirmadas y un hallazgo adicional de bloqueos.
+**Revisión final de `3f62b15`, Codex CLI 0.172.0, medium: sin otros defectos
+accionables, todos los hallazgos resueltos.** Revisión estática, sin ejecutar
+PHP/pruebas concurrentes. Los informes ignorados están en
+`storage/framework/testing/i4-review-{inicial,final,release}-result.txt`.
 
-Estado: preparación del checkout completada; LabsMobile elegido y planeación SMS
-en progreso con José.
-La tarea de Notion consultada conserva la evaluación de SMS a cargo de José y
-WhatsApp/Facebook a cargo de Brian. José pidió comparar proveedores y después
-eligió LabsMobile por costo. La presencia del adaptador Infobip es evidencia
-del código anterior, no una integración LabsMobile ni habilitación real.
+## Correcciones I4
 
-- `main` y `origin/main`: `217acef`; `fetch origin` y `pull --ff-only origin main`
-  completados por HTTPS. El bloqueo de transporte del traspaso anterior no se
-  reprodujo. Los ocho archivos documentales locales revisados conservaron sus
-  hashes SHA-256 y el estado Git original permaneció igual.
-- Worktree: `storage/framework/testing/comunicaciones-worktree`, rama local
-  `feat/comunicaciones-notificaciones`, seguimiento de su homónima en `origin`,
-  base funcional `ecb9d4a`. Al prepararlo coincidía con el remoto. La investigación
-  y el traspaso se publicaron después en el commit documental `6b11bf6`.
-- La comparación `main...origin/feat/comunicaciones-notificaciones` muestra
-  89 commits exclusivos de `main` y siete de comunicaciones. No se fusionaron
-  las ramas; la sincronización se revisará antes de implementar para conservar
-  los contratos financieros vigentes y el trabajo compartido de comunicaciones.
-- Se inspeccionaron el adaptador SMS, la orquestación, la configuración, el
-  seguimiento de webhooks y las pruebas existentes. Los resultados del 20/11
-  son evidencia histórica; no se ejecutaron nuevamente suites funcionales.
-- No se prepararon dependencias, `.env` ni BD de ejecución en este worktree.
-  No hubo migraciones, cambios de configuración, envíos ni acceso a VPS.
-  Esta retoma documental no añade acciones auditables ni requiere nuevos eventos.
+- Serializar el cupo diario por cliente entre créditos/canales y contar el día
+  en la zona de los timestamps almacenados, incluida la madrugada no UTC.
+- Abrir la lectura consistente después de bloquear crédito/cliente para observar
+  reversos confirmados antes de reservar el intento. Orden común crédito →
+  plantilla → regla → cliente → salida; preparación también bloquea crédito
+  primero y revalida el evento, evitando inversión por la FK.
+- Derivar `effective_status` del consentimiento con el contacto actual: vigente,
+  contacto cambiado o revocado, sin exponer hash/evidencia ni mutar al consultar.
+- Serializar las lecturas de campana, deduplicar clics y descartar respuestas o
+  trabajos tardíos tras cambiar contexto; el resumen no recupera no leídos.
+- Revertir la FK I3 con nombre MariaDB y columnas SQLite; reinstalar I1–I3 sin
+  perder correo/Meta ni duplicar permisos.
 
-### Punto de partida anterior a la elección
+Son siete defectos corregidos, con regresiones. No se crean acciones auditables
+nuevas: se mantienen eventos, actor/iniciador, contexto original y privacidad.
+El [contrato de canales](../reference/canales-comunicacion.md) y la matriz
+explican las transacciones y la ausencia justificada de eventos adicionales.
+CI incluye ahora el harness de concurrencia de comunicaciones y el push al destino.
 
-1. Confirmar proveedor y caso inicial dentro de los avisos operativos/preventivos.
-   Verificar documentación vigente y condiciones de la cuenta: ruta mexicana,
-   uso financiero, remitente, costos por segmento y reportes de entrega.
-2. Contrastar el adaptador existente con la API elegida: autenticación, formato
-   telefónico, texto/codificación, respuesta de aceptación y webhook autenticado.
-   Identificar ajustes antes de configurar credenciales o habilitar tráfico.
-3. Preparar pruebas aisladas de aceptación/rechazo, timeout incierto, duplicados,
-   estados fuera de orden, consentimiento/contacto, contexto de equipo/sucursal
-   y auditoría sin secretos. Reutilizar la orquestación y los contratos actuales.
-4. Definir un piloto con destinatario y entorno autorizados, límite de gasto y
-   evidencia separada de aceptación y entrega. La autorización de un correo de
-   prueba anterior no autoriza un número SMS. Registrar los resultados efectivos.
+## Evidencia local del código final
 
-### Siguiente paso
+- Focal backend: 25 pruebas / 545 aserciones; casos posteriores incluidos en la suite completa.
+- Frontend completo: 188 pruebas / 71 archivos; build Vite aprobado.
+- Harness MariaDB 11 aislada: cupo compartido entre créditos/canales, reverso
+  confirmado antes del intento y cruce prepare/send sin deadlock, aprobados.
+  HTTP/Mail falsos, BD `kronik_test`, sin tráfico de proveedor.
+- Esquema: ciclo SQLite aislado de reversión/reinstalación I1–I3 aprobado,
+  preservando filas correo/Meta y sin duplicar módulos/permisos.
+- E2E: primera pasada conjunta, seis aprobados y uno fallido en política por
+  espera anterior al POST/redirección. Se conservaron traza, captura y vídeo;
+  se añadió espera de respuesta y mocks/consola compartidos sin omitir pasos.
+  Repetición aislada de política: una aprobada. No se presenta la pasada fallida
+  como aprobación global. CI debe repetir los siete recorridos sobre su SHA.
+- PDF real: 9,704 bytes. Guardas Node E2E: cuatro aprobadas. Pint, diff --check,
+  UTF-8/LF, enlaces locales, índices y cobertura temática comprobados.
+- Pruebas PHP secuenciales por checkout; revisión estática en paralelo sin PHP.
+  No se modificó `.env`, ni se ejecutaron migraciones o limpieza operativas.
 
-José confirmó LabsMobile por costo el 2026-11-24. Se registró
-[ADR 0050](../explanation/adr-0050-proveedor-sms-labsmobile.md), que sustituye
-únicamente la elección de Infobip del ADR anterior. La
-[investigación de LabsMobile](../explanation/integracion-sms-labsmobile.md)
-documenta API, estados, callbacks, OMV, caducidad, remitente, métricas, soporte y
-piloto. El código sigue en `ecb9d4a`, sin implementación LabsMobile.
+## Integración y límites
 
-Hallazgos materiales: la ficha mexicana describe acuses de red, no prueba al
-dispositivo; anuncia 100% de cobertura sin listar los tres OMV consultados;
-la caducidad habitual citada es 72 horas, sin TTL de API identificado; la firma
-del callback y la consulta autenticada por mensaje siguen sin contrato público
-encontrado. La publicidad menciona 99.9% de entrega; el SLA de términos es 99.4%
-de disponibilidad mensual, otra métrica. Los ejemplos mexicanos con 521 requieren
-contraste antes de implementarlos. No se contactó a proveedores ni se abrieron
-cuentas; la investigación no ejecutó pruebas autenticadas ni envíos.
+Antes de consolidar: destino `547d9e5`, main `217acef`, ancestro común `bfa0b87`;
+main/I3 divergían 89/32 commits. Main conserva cambios independientes de pagos,
+navegación, permisos, auditoría, rutas, editor, CI e índices. Hay colisión de
+numeración ADR 0047/0048. No se acredita ejecución combinada con main. El
+[plan](../explanation/plan-incrementos-sms.md#compatibilidad-observada-en-i0)
+registra los cruces que una integración posterior debe conservar.
 
-Siguiente paso: iniciar la sesión de planeación desde el traspaso siguiente;
-incluir sustitución de Infobip y evaluación del editor. Las preguntas para
-soporte/cuenta y la definición del piloto siguen identificadas en la investigación.
-La elección está aceptada; contratación, implementación, despliegue y validación
-siguen pendientes. Documentación, índices, referencia de canales y Notion se
-actualizan; no hay permisos, migraciones ni acciones auditables nuevas.
+La rama WhatsApp separada sigue `8719362`; su preparación de piloto no forma
+parte de I4. Si la VPS usa main, evaluar integración antes de cambiar ramas.
+El correo reutiliza el mailer Laravel existente: si la VPS usa SMTP ZeptoMail,
+usa sus mismas credenciales `MAIL_*`, con remitente autorizado. Esto describe
+el código; no confirma los secretos ni la ejecución de la VPS.
 
-La validación anterior cubrió ocho archivos y 96 enlaces; el traspaso amplía la
-revisión a los documentos nuevos y sus índices. No se repitieron suites
-funcionales: no hubo cambios de código.
+## Pendientes reales y siguiente paso
 
-## Traspaso a la nueva sesión — 2026-11-24
+Completar publicación/CI e integración autorizada en la rama original y registrar
+SHA, revisiones y resultado vigente. Conservar main y todas las ramas auxiliares.
 
-José comenzará la planeación en una nueva sesión. Esta entrega conserva solo
-investigación, selección de LabsMobile y evaluación preliminar, sin implementación
-ni activación. Commit de documentación:
-[`6b11bf6`: conservar investigación SMS y plan de retoma](https://github.com/jata-imk/kronik/commit/6b11bf6abfd24de3fea0a32a01d9fad80d6b2d0d).
-Push a `origin/feat/comunicaciones-notificaciones` confirmado el 2026-11-24 por
-petición de José; el remoto avanzó desde `ecb9d4a` sin forzar. Sin PR, integración
-en `main` ni despliegue de este traspaso.
-
-Punto de entrada de la siguiente sesión:
-
-1. Usar el worktree `storage/framework/testing/comunicaciones-worktree` y la rama
-   `feat/comunicaciones-notificaciones`. Preservar cambios ajenos y revisar la
-   divergencia con `main` antes de proponer compatibilidad; no fusionar durante
-   la planeación ni reabrir la elección de LabsMobile.
-2. Leer ADR 0050, la [investigación y sustitución de Infobip](../explanation/integracion-sms-labsmobile.md)
-   y la [evaluación del editor](../explanation/editor-plantillas-notificaciones.md),
-   junto con el alcance vigente de Notion.
-3. Proponer un incremento de reemplazo completo de Infobip: transporte,
-   configuración, UI, conexión, webhook/conciliación, pruebas, credenciales,
-   jobs pendientes. La petición inicial de procedencia histórica queda sustituida
-   por la confirmación del 25/11/2026: solo existen dev/QA y datos desechables.
-   Hay referencias activas en varias capas; no mantener un proveedor de respaldo
-   implícito ni desarrollar compatibilidad histórica innecesaria.
-4. Evaluar la propuesta de editor visual con categoría Notificaciones: compartir
-   inserción/búsqueda de variables, texto plano, vista previa y segmentación
-   después de sustituir variables. Decidir alcance global/equipo, permisos,
-   versiones y compatibilidad entre sintaxis. No habilitar todo el catálogo
-   documental por agregar un enum ni crear PDF para un SMS.
-5. Presentar plan de incrementos, dependencias, criterios de aceptación, pruebas
-   y preguntas externas pendientes. Mantener auditoría, lecturas financieras y
-   aislamiento. Continuar la planeación; la implementación será trabajo posterior.
-
-El editor actual usa HTML/Quill; su panel está en la página de plantillas y sus
-registros son globales. Las comunicaciones se configuran por equipo y canal.
-Reutilizar UI es viable, pero no se decidió todavía compartir persistencia ni
-agregar la categoría al enum documental. No se modificó ni eliminó Infobip.
-
-Validación del traspaso: diez documentos UTF-8 sin BOM, LF y salto final,
-128 enlaces locales con destino existente y `git diff --check` aprobado.
-El checkout principal conserva los hashes de los ocho documentos locales
-preexistentes revisados. No corresponden nuevas pruebas funcionales a este commit.
-
-La publicación usó `SKIP_PRE_PUSH=1` solo en el proceso de push, tras verificar
-que el avance contiene exclusivamente documentación; se restauró el entorno al
-terminar. Es la exención del hook del repositorio, coherente con la entrega
-documental; no se ejecutaron suites funcionales ni se preparó una BD.
+Después del cierre técnico quedan recepción SMS externa autenticada,
+cuenta/ruta mexicana/remitente/tarifas, presupuesto y piloto con números aprobados.
+I2 solo acredita núcleo interno sintético; no hay endpoint SMS, ackurl, firma o
+consulta inventados. No hay cuenta/saldo LabsMobile confirmados por José.
+Ambas barreras permanecen cerradas; sin envíos reales, compras, Integraciones,
+limpieza operativa, despliegue, SSH ni acceso a VPS. La iniciativa permanece
+Doing y no se cierra por integrar PR. El usuario ejecutará los comandos de la
+guía de VPS y compartirá sus resultados para registrar el QA posterior.

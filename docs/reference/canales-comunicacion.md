@@ -4,7 +4,9 @@ I1 sustituye directamente Infobip por LabsMobile en desarrollo/QA, conforme al
 [ADR 0050](../explanation/adr-0050-proveedor-sms-labsmobile.md). No existe migración
 histórica ni convivencia de proveedores. I2 implementa el [núcleo interno de seguimiento](seguimiento-sms.md)
 con pruebas sintéticas; recepción autenticada externa pendiente. I3 incorpora el [catálogo global de Notificaciones](plantillas-notificaciones.md) para SMS y correo.
-Piloto/cierre (I4) siguen pendientes. Esta implementación no habilita tráfico.
+I4 corrige los hallazgos del barrido conjunto; su evidencia e integración constan
+en la [Agent Note](../agent-notes/comunicaciones-notificaciones.md). El piloto externo
+sigue pendiente. Esta implementación no habilita tráfico.
 
 La [nota original de producto](comunicaciones-por-canales-envios-y-seguimiento.md) fija el alcance. Este contrato describe el código de la rama de comunicaciones. La salida externa permanece desactivada hasta configurar `COMMUNICATIONS_SEND_ENABLED=true` en un entorno autorizado, con proveedor, consentimiento y reglas aprobados para cada equipo. La configuración y las pruebas locales no acreditan entrega real ni despliegue.
 
