@@ -10,6 +10,16 @@ test("el operador configura reglas de comunicaciones sin activar tráfico extern
     await expect(page.getByRole("heading", { name: "Correo" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "SMS" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "WhatsApp" })).toBeVisible();
+    await page.getByRole("combobox", { name: "Canal", exact: true }).selectOption("sms");
+    await expect(page.getByTestId("sms-environment")).toContainText("se configuran en el entorno");
+    await expect(page.locator("textarea")).toHaveCount(0);
+    await expect(page.getByText("Los envíos SMS están desactivados en este entorno.", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Comprobar conexión técnica" })).toBeDisabled();
+    await page.getByRole("combobox", { name: "Elegibilidad", exact: true }).selectOption("testing");
+    await page.getByRole("button", { name: "Guardar canal" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Canal actualizado." })).toBeVisible();
+    await expect(page.getByTestId("sms-environment")).toBeVisible();
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: "test-results/communications-desktop.png", fullPage: true });
 
     await page.getByRole("button", { name: "Reglas y plantillas" }).click();
@@ -33,6 +43,11 @@ test("la pantalla de comunicaciones cabe en un móvil y conserva sus cuatro secc
         await expect(page.getByRole("heading", { name: "Comunicaciones", exact: true })).toBeVisible();
         await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     }
+    await page.getByRole("button", { name: "Canales", exact: true }).click();
+    await page.getByRole("combobox", { name: "Canal", exact: true }).selectOption("sms");
+    await expect(page.getByTestId("sms-environment")).toBeVisible();
+    await expect(page.locator("textarea")).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: "test-results/communications-mobile.png", fullPage: true });
     assertConsole();
 });

@@ -48,7 +48,7 @@ test('el inventario vacío es repetible y solo ejecuta lecturas sin enviar ni au
         ->and($first['cutover_ready'])->toBeFalse()
         ->and($first['channels']['total'])->toBe(0)
         ->and($first['deliveries']['total'])->toBe(0)
-        ->and($first['deliveries']['provider_provenance'])->toBe('not_recorded')
+        ->and($first['deliveries']['provider_provenance'])->toBe('requires_evidence_review')
         ->and($first['webhooks']['total'])->toBe(0)
         ->and($first['failed_jobs']['communication'])->toBe(0);
     foreach ($queries as $sql) {
@@ -88,7 +88,7 @@ test('los estados y la procedencia se cuentan sin descifrar secretos ni imprimir
         ->and($report['deliveries']['total'])->toBe(3)
         ->and($report['deliveries']['with_external_id'])->toBe(2)
         ->and($report['deliveries']['by_status']['uncertain'])->toBe(1)
-        ->and($report['deliveries']['provider_provenance'])->toBe('not_recorded')
+        ->and($report['deliveries']['provider_provenance'])->toBe('requires_evidence_review')
         ->and($report['webhooks']['unmatched'])->toBe(1)
         ->and(DB::table('activity_log')->count())->toBe($before);
     $output = json_encode($report);

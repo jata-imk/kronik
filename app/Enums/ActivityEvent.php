@@ -88,6 +88,7 @@ enum ActivityEvent: string
     case CommunicationDeliveryCancelled = 'communication.delivery_cancelled';
     case CommunicationDeliveryStatusUpdated = 'communication.delivery_status_updated';
     case CommunicationTestSent = 'communication.test_sent';
+    case CommunicationSmsTestDataCleaned = 'communication.sms_test_data_cleaned';
     case TwoFactorCompleted = 'login.2fa_completed';
     case UserProfileUpdated = 'user.profile.updated';
     case MenubarItemCreated = 'menubar_item.created';
@@ -213,6 +214,7 @@ enum ActivityEvent: string
             self::CommunicationDeliveryCancelled => 'Envío de comunicación cancelado',
             self::CommunicationDeliveryStatusUpdated => 'Estado de envío actualizado',
             self::CommunicationTestSent => 'Prueba técnica de canal realizada',
+            self::CommunicationSmsTestDataCleaned => 'Datos SMS de prueba retirados',
             self::ApplicationCreated => 'Solicitud creada',
             self::ApplicationUpdated => 'Borrador de solicitud actualizado',
             self::ApplicationSubmitted => 'Solicitud enviada a revisión',

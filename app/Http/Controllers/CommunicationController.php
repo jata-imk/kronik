@@ -13,9 +13,11 @@ use App\Models\CommunicationConsent;
 use App\Models\CommunicationDelivery;
 use App\Models\CommunicationRule;
 use App\Services\ActivityLogService;
+use App\Services\Communications\CommunicationChannelService;
 use App\Services\Communications\CommunicationOrchestrator;
 use App\Services\Communications\EmailTransport;
-use App\Services\Communications\InfobipSmsTransport;
+use App\Services\Communications\LabsMobileConfiguration;
+use App\Services\Communications\LabsMobileSmsTransport;
 use App\Services\Communications\MetaWhatsAppTransport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -54,10 +56,18 @@ class CommunicationController extends Controller
 
         return Inertia::render('Communications/Index', [
             'channels' => CommunicationChannel::where('team_id', $teamId)->get()
-                ->map(fn ($item) => $item->only(['id', 'channel', 'provider', 'sender', 'enabled', 'eligibility', 'eligibility_reference', 'checked_at'])
-                    + ['has_secret' => filled($item->secret)]),
+                ->map(function ($item) {
+                    $fields = ['id', 'channel', 'provider', 'enabled', 'eligibility', 'eligibility_reference', 'checked_at'];
+                    if ($item->channel !== 'sms') {
+                        $fields[] = 'sender';
+                    }
+
+                    return $item->only($fields) + ['has_secret' => $item->channel === 'sms'
+                        ? app(LabsMobileConfiguration::class)->credentialsConfigured() : filled($item->secret)];
+                }),
+            'smsConfiguration' => app(LabsMobileConfiguration::class)->presence(),
             'capabilities' => ['email' => app(EmailTransport::class)->capabilities(),
-                'sms' => app(InfobipSmsTransport::class)->capabilities(),
+                'sms' => app(LabsMobileSmsTransport::class)->capabilities(),
                 'whatsapp' => app(MetaWhatsAppTransport::class)->capabilities()],
             'rules' => CommunicationRule::where('team_id', $teamId)->orderBy('event_type')->get(),
             'ruleDefaults' => [
@@ -75,7 +85,7 @@ class CommunicationController extends Controller
                 ->latest()->limit(30)->get()->map(fn ($item) => $item->only(['id', 'cliente_id', 'channel', 'purpose', 'source', 'granted_at', 'revoked_at'])),
             'deliveries' => $history->paginate(20)->withQueryString()->through(fn ($item) => $item->only(['id', 'communication_event_id',
                 'cliente_id', 'credito_id', 'channel', 'status', 'reason', 'attempted_at', 'accepted_at', 'delivered_at',
-                'read_at', 'queued_at', 'created_at', 'provider_message_id', 'template_version']) + ['event_type' => $item->event?->event_type]),
+                'read_at', 'queued_at', 'created_at', 'provider_message_id', 'provider', 'provider_correlation_id', 'template_version']) + ['event_type' => $item->event?->event_type]),
             'filters' => $filters,
             'activeTab' => in_array($request->query('tab'), ['channels', 'rules', 'consents', 'history'], true)
                 ? $request->query('tab') : 'channels',
@@ -87,67 +97,9 @@ class CommunicationController extends Controller
         ]);
     }
 
-    public function configureChannel(ConfigureChannelRequest $request, ActivityLogService $activity)
+    public function configureChannel(ConfigureChannelRequest $request, CommunicationChannelService $service)
     {
-        $data = $request->validated();
-        $teamId = $request->user()->current_team_id;
-        if ($data['channel'] === 'email') {
-            if (! filter_var($data['sender'], FILTER_VALIDATE_EMAIL)) {
-                throw ValidationException::withMessages(['sender' => 'Indica un correo remitente válido.']);
-            }
-            if (($data['secret'] ?? null) !== null) {
-                throw ValidationException::withMessages(['secret' => 'Configura las credenciales SMTP en el entorno, no en este formulario.']);
-            }
-        } elseif ($data['channel'] === 'whatsapp' && ! ctype_digit($data['sender'])) {
-            throw ValidationException::withMessages(['sender' => 'Indica el ID numérico del teléfono de WhatsApp Business.']);
-        }
-        if ($data['enabled'] && $data['eligibility'] !== 'approved') {
-            throw ValidationException::withMessages(['enabled' => 'Confirma la elegibilidad del proveedor antes de activar el canal.']);
-        }
-        $item = DB::transaction(function () use ($data, $teamId, $request, $activity) {
-            $item = CommunicationChannel::firstOrNew(['team_id' => $teamId, 'channel' => $data['channel']]);
-            $previousSender = $item->sender;
-            $item->provider = match ($data['channel']) {
-                'email' => 'smtp', 'sms' => 'infobip', 'whatsapp' => 'meta_cloud'
-            };
-            $item->sender = $data['sender'];
-            $item->eligibility = $data['eligibility'];
-            $item->eligibility_reference = $data['eligibility_reference'] ?? null;
-            $item->enabled = $data['enabled'];
-            if ($data['channel'] !== 'email' && filled($data['secret'] ?? null)) {
-                $json = json_decode($data['secret'], true);
-                $valid = $data['channel'] === 'whatsapp'
-                    ? is_array($json) && filled($json['token'] ?? null) && filled($json['api_version'] ?? null)
-                        && filled($json['phone_number_id'] ?? null) && filled($json['waba_id'] ?? null) && filled($json['app_secret'] ?? null)
-                        && filled($json['verify_token'] ?? null) && (string) $json['phone_number_id'] === $data['sender']
-                    : is_array($json) && filled($json['api_key'] ?? null) && filled($json['base_url'] ?? null)
-                        && filled($json['webhook_secret'] ?? null);
-                if (! $valid) {
-                    throw ValidationException::withMessages(['secret' => 'La configuración del proveedor está incompleta o no coincide con el remitente.']);
-                }
-                if ($data['channel'] === 'sms' && ! preg_match('/\A[a-z0-9-]+\.api(?:-[a-z0-9]+)?\.infobip\.com\z/i', $json['base_url'])) {
-                    throw ValidationException::withMessages(['secret' => 'Indica el host de API asignado a la cuenta Infobip.']);
-                }
-                if ($data['channel'] === 'whatsapp' && (! preg_match('/\Av\d+\.\d+\z/', $json['api_version'])
-                    || ! ctype_digit((string) $json['waba_id']) || ! ctype_digit((string) $json['phone_number_id']))) {
-                    throw ValidationException::withMessages(['secret' => 'La versión Graph y los identificadores de Meta deben ser válidos.']);
-                }
-                $item->secret = $data['secret'];
-                $item->checked_at = null;
-            }
-            if ($previousSender !== $data['sender']) {
-                $item->checked_at = null;
-            }
-            if ($item->enabled && $data['channel'] !== 'email' && ! $item->secret) {
-                throw ValidationException::withMessages(['secret' => 'Faltan las credenciales del proveedor.']);
-            }
-            $item->save();
-            $activity->log(ActivityEvent::CommunicationChannelConfigured, 'Canal de comunicación configurado', $item,
-                ['state' => $item->enabled ? 'enabled' : 'disabled', 'provider' => $item->provider],
-                causer: $request->user(), teamId: $teamId, sucursalId: $request->user()->current_sucursal_id, inheritActorContext: false);
-
-            return $item;
-        });
+        $service->configure($request->validated(), $request->user());
 
         return back()->with('success', 'Canal actualizado.');
     }
@@ -229,24 +181,30 @@ class CommunicationController extends Controller
         $data = $request->validate(['channel' => ['required', 'in:sms,whatsapp']]);
         $channel = CommunicationChannel::where('team_id', $request->user()->current_team_id)
             ->where('channel', $data['channel'])->firstOrFail();
-        $settings = json_decode($channel->secret ?? '{}', true);
-        $required = $data['channel'] === 'sms' ? ['api_key', 'base_url'] : ['token', 'api_version', 'waba_id'];
-        if (! is_array($settings) || collect($required)->contains(fn ($key) => ! filled($settings[$key] ?? null))) {
-            throw ValidationException::withMessages(['channel' => 'Configura primero las credenciales del proveedor.']);
-        }
-        try {
-            $response = $data['channel'] === 'sms'
-                ? Http::timeout(10)->withHeaders(['Authorization' => 'App '.$settings['api_key']])
-                    ->get('https://'.$settings['base_url'].'/sms/3/logs', ['limit' => 1])
-                : Http::timeout(10)->withToken($settings['token'])
+        if ($data['channel'] === 'sms') {
+            if ($channel->provider !== 'labsmobile') {
+                throw ValidationException::withMessages(['channel' => 'Retira primero la configuración SMS anterior con la limpieza de datos de prueba.']);
+            }
+            if (! app(LabsMobileConfiguration::class)->credentialsConfigured()) {
+                throw ValidationException::withMessages(['channel' => 'Configura primero la conexión SMS en el entorno.']);
+            }
+            $connected = app(LabsMobileSmsTransport::class)->checkConnection();
+        } else {
+            $settings = json_decode($channel->secret ?? '{}', true);
+            if (! is_array($settings) || collect(['token', 'api_version', 'waba_id'])->contains(fn ($key) => ! filled($settings[$key] ?? null))) {
+                throw ValidationException::withMessages(['channel' => 'Configura primero las credenciales del proveedor.']);
+            }
+            try {
+                $response = Http::timeout(10)->withToken($settings['token'])
                     ->get('https://graph.facebook.com/'.$settings['api_version'].'/'.$settings['waba_id'].'/message_templates', ['limit' => 1]);
-            $connected = $response->successful() && is_array($response->json('results') ?? $response->json('data'));
-        } catch (\Throwable $exception) {
-            $connected = false;
+                $connected = $response->successful() && is_array($response->json('data'));
+            } catch (\Throwable $exception) {
+                $connected = false;
+            }
         }
         DB::transaction(function () use ($channel, $connected, $activity, $request) {
-            if ($connected) {
-                $channel->update(['checked_at' => now()]);
+            if ($connected || $channel->channel === 'sms') {
+                $channel->update(['checked_at' => $connected ? now() : null]);
             }
             $activity->log(ActivityEvent::CommunicationTestSent, 'Conexión de canal comprobada', $channel,
                 ['state' => 'connection_check', 'result' => $connected ? 'accepted' : 'failed'],

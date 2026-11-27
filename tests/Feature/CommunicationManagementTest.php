@@ -106,15 +106,17 @@ test('la ficha del cliente muestra solo autorizaciones de su equipo y enlaza su 
 test('la comprobación de conexión consulta APIs sin enviar mensajes ni confundirla con entrega', function () {
     $admin = actingAsSuperAdmin();
     $this->actingAs($admin);
-    CommunicationChannel::create(['team_id' => $admin->current_team_id, 'channel' => 'sms', 'provider' => 'infobip',
+    CommunicationChannel::create(['team_id' => $admin->current_team_id, 'channel' => 'sms', 'provider' => 'labsmobile',
         'sender' => 'Kronik', 'eligibility' => 'testing', 'enabled' => false,
-        'secret' => json_encode(['api_key' => 'test', 'base_url' => 'tenant.api.infobip.com', 'webhook_secret' => 'firma'])]);
+        'secret' => null]);
     CommunicationChannel::create(['team_id' => $admin->current_team_id, 'channel' => 'whatsapp', 'provider' => 'meta_cloud',
         'sender' => '123456', 'eligibility' => 'testing', 'enabled' => false,
         'secret' => json_encode(['token' => 'test', 'api_version' => 'v27.0', 'waba_id' => '654321',
             'phone_number_id' => '123456', 'app_secret' => 'firma', 'verify_token' => 'verificar'])]);
+    config(['comunicaciones.sms.username' => 'qa@example.test', 'comunicaciones.sms.token' => 'synthetic', 'comunicaciones.sms.rate_cache_store' => 'array']);
+    Http::preventStrayRequests();
     Http::fake([
-        'https://tenant.api.infobip.com/sms/3/logs*' => Http::response(['results' => []], 200),
+        'https://api.labsmobile.com/json/balance' => Http::response(['code' => '0', 'credits' => '0'], 200),
         'https://graph.facebook.com/v27.0/654321/message_templates*' => Http::response(['data' => []], 200),
     ]);
     foreach (['sms', 'whatsapp'] as $channel) {

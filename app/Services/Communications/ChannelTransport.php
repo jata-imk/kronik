@@ -11,5 +11,5 @@ interface ChannelTransport
     public function capabilities(): array;
 
     /** @return array{status: string, message_id: ?string} */
-    public function send(CommunicationChannel $channel, CommunicationRule $rule, string $recipient, string $subject, string $body, array $variables = []): array;
+    public function send(CommunicationChannel $channel, CommunicationRule $rule, string $recipient, string $subject, string $body, array $variables = [], ?string $correlationId = null): array;
 }

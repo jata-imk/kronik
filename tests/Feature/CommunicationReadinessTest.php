@@ -138,7 +138,7 @@ test('dos canales pueden preparar el mismo vencimiento en días distintos sin du
             'daily_limit' => 2, 'subject' => 'Vencimiento', 'body' => 'Hola {nombre}, vence el {fecha_vencimiento}.',
             'template_version' => 1]);
         CommunicationChannel::create(['team_id' => $credito->team_id, 'channel' => $channel,
-            'provider' => $channel === 'sms' ? 'infobip' : 'smtp', 'sender' => 'avisos-qa',
+            'provider' => $channel === 'sms' ? 'labsmobile' : 'smtp', 'sender' => 'avisos-qa',
             'eligibility' => 'approved', 'enabled' => true]);
         app(CommunicationOrchestrator::class)->grantConsent($credito->cliente, $credito->team_id,
             ['channel' => $channel, 'purpose' => 'preventive', 'source' => 'QA', 'evidence_reference' => 'QA-1'], $actor);

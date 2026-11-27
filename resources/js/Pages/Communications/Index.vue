@@ -1,7 +1,7 @@
 <script setup>
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { Link, router, useForm } from "@inertiajs/vue3";
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 
 const props = defineProps({
     channels: { type: Array, required: true },
@@ -13,6 +13,7 @@ const props = defineProps({
     canManage: Boolean,
     canTest: Boolean,
     sendingEnabled: Boolean,
+    smsConfiguration: { type: Object, required: true },
     testRecipient: String,
     filters: { type: Object, required: true },
     activeTab: String,
@@ -34,9 +35,13 @@ const testForm = useForm({ channel: "email", recipient: props.testRecipient || "
 const checkForm = useForm({ channel: "sms" });
 
 function loadChannel() {
+    channelForm.cancel();
+    checkForm.cancel();
     const item = selectedChannelData.value;
     channelForm.defaults({ channel: selectedChannel.value, sender: item?.sender || "", secret: "", enabled: item?.enabled || false, eligibility: item?.eligibility || "unverified", eligibility_reference: item?.eligibility_reference || "" });
     channelForm.reset();
+    channelForm.clearErrors();
+    checkForm.clearErrors();
 }
 
 function loadRule() {
@@ -48,19 +53,24 @@ function loadRule() {
 
 loadChannel();
 loadRule();
+watch(() => selectedChannelData.value?.id, loadChannel);
+watch(() => props.canManage, (allowed) => { if (!allowed) loadChannel(); });
 
 const preview = computed(() => {
     const due = new Date();
     due.setDate(due.getDate() + Number(ruleForm.lead_days || 0));
     return ruleForm.body.replaceAll("{nombre}", "María").replaceAll("{fecha_vencimiento}", due.toLocaleDateString("es-MX"));
 });
+const reasons = { sms_content_invalid: "El texto o el teléfono SMS no cumple los límites permitidos.", sms_rate_limited: "Esperando disponibilidad del proveedor SMS.", sms_provider_replaced: "Salida de prueba invalidada al sustituir el proveedor SMS." };
 const statuses = { prepared: "Preparado", queued: "En cola", sending: "En proceso", accepted: "Aceptado por proveedor", delivered: "Entregado", read: "Leído", failed: "Fallido", cancelled: "Cancelado", uncertain: "Resultado incierto" };
 
 function saveChannel() {
+    if (!props.canManage || channelForm.processing) return;
     if (selectedChannelData.value?.enabled && !channelForm.enabled && !window.confirm("¿Desactivar este canal? Los envíos pendientes se detendrán antes de salir.")) return;
-    channelForm.put(route("comunicaciones.channels.update"), { preserveScroll: true, onSuccess: () => channelForm.reset("secret") });
+    channelForm.transform((data) => selectedChannel.value === "sms" ? { channel: data.channel, enabled: data.enabled, eligibility: data.eligibility, eligibility_reference: data.eligibility_reference } : data).put(route("comunicaciones.channels.update"), { preserveScroll: true, onSuccess: loadChannel });
 }
 function checkConnection() {
+    if (!props.canTest || checkForm.processing) return;
     checkForm.channel = selectedChannel.value;
     checkForm.post(route("comunicaciones.connection.check"), { preserveScroll: true });
 }
@@ -96,17 +106,26 @@ function filterHistory() {
                         <p class="text-sm">{{ channels.find((channel) => channel.channel === item.key)?.enabled ? 'Habilitado por equipo' : 'Deshabilitado' }}</p>
                         <p class="text-sm text-surface-500">{{ channels.find((channel) => channel.channel === item.key)?.eligibility || 'Sin configurar' }}</p>
                         <p v-if="channels.find((channel) => channel.channel === item.key)?.checked_at" class="text-xs text-surface-500">Última consulta técnica: {{ new Date(channels.find((channel) => channel.channel === item.key).checked_at).toLocaleString('es-MX') }}</p>
-                        <p v-if="item.key === 'sms'" class="mt-2 text-sm">Pendiente de proveedor que acepte avisos financieros en México.</p>
+                        <div v-if="item.key === 'sms'" class="mt-2 space-y-1 text-sm">
+                            <p>LabsMobile · {{ smsConfiguration.configured ? 'Configuración técnica completa' : 'Configuración técnica incompleta' }}</p>
+                            <p>{{ smsConfiguration.sending_enabled ? 'Barrera SMS habilitada' : 'Los envíos SMS están desactivados en este entorno.' }}</p>
+                            <p>Seguimiento de entrega pendiente. La conexión técnica no autoriza envíos.</p>
+                        </div>
                         <p class="mt-2 text-xs text-surface-500">Plantillas: sí · Adjuntos: no · Respuestas: no · Entrega: {{ capabilities[item.key]?.delivery_receipts ? 'con webhook' : 'sin confirmación' }} · Lectura: {{ capabilities[item.key]?.read_receipts ? 'si el proveedor confirma' : 'sin confirmación' }}</p>
                     </div>
                 </div>
                 <form v-if="canManage" class="grid gap-4 rounded-lg border border-surface-200 p-4 dark:border-surface-700 md:grid-cols-2" @submit.prevent="saveChannel">
                     <h2 class="md:col-span-2 text-lg font-semibold">Configurar canal</h2>
-                    <label class="grid gap-1">Canal<select v-model="selectedChannel" class="rounded border p-2 dark:bg-surface-900" @change="loadChannel"><option value="email">Correo SMTP</option><option value="sms">SMS Infobip</option><option value="whatsapp">WhatsApp Cloud API</option></select></label>
-                    <label class="grid gap-1">{{ selectedChannel === 'email' ? 'Correo remitente' : selectedChannel === 'sms' ? 'Remitente SMS autorizado' : 'ID del número de Meta' }}<input v-model="channelForm.sender" class="rounded border p-2 dark:bg-surface-900" required /><small>{{ channelForm.errors.sender }}</small></label>
+                    <label class="grid gap-1">Canal<select v-model="selectedChannel" class="rounded border p-2 dark:bg-surface-900" @change="loadChannel"><option value="email">Correo SMTP</option><option value="sms">SMS LabsMobile</option><option value="whatsapp">WhatsApp Cloud API</option></select></label>
+                    <label v-if="selectedChannel !== 'sms'" class="grid gap-1">{{ selectedChannel === 'email' ? 'Correo remitente' : 'ID del número de Meta' }}<input v-model="channelForm.sender" class="rounded border p-2 dark:bg-surface-900" required /><small>{{ channelForm.errors.sender }}</small></label>
                     <label class="grid gap-1">Elegibilidad<select v-model="channelForm.eligibility" class="rounded border p-2 dark:bg-surface-900"><option value="unverified">Sin verificar</option><option value="testing">Pruebas</option><option value="approved">Aprobada para este uso</option><option value="rejected">Rechazada</option></select></label>
                     <label class="grid gap-1">Referencia de aprobación<input v-model="channelForm.eligibility_reference" class="rounded border p-2 dark:bg-surface-900" placeholder="Folio o referencia interna" /><small>{{ channelForm.errors.eligibility_reference }}</small></label>
-                    <label v-if="selectedChannel !== 'email'" class="grid gap-1 md:col-span-2">{{ selectedChannel === 'sms' ? 'Credenciales Infobip en JSON (api_key, base_url, webhook_secret)' : 'Credenciales Meta en JSON (token, api_version, waba_id, phone_number_id, app_secret, verify_token)' }}<textarea v-model="channelForm.secret" class="rounded border p-2 dark:bg-surface-900" rows="2" autocomplete="off" :placeholder="selectedChannelData?.has_secret ? 'Credencial guardada; deja vacío para conservarla' : 'Credencial nueva'" /><small>{{ channelForm.errors.secret }}</small></label>
+                    <label v-if="selectedChannel === 'whatsapp'" class="grid gap-1 md:col-span-2">Credenciales Meta en JSON (token, api_version, waba_id, phone_number_id, app_secret, verify_token)<textarea v-model="channelForm.secret" class="rounded border p-2 dark:bg-surface-900" rows="2" autocomplete="off" :placeholder="selectedChannelData?.has_secret ? 'Credencial guardada; deja vacío para conservarla' : 'Credencial nueva'" /><small>{{ channelForm.errors.secret }}</small></label>
+                    <div v-else-if="selectedChannel === 'sms'" class="text-sm md:col-span-2" data-testid="sms-environment">
+                        <p>Las credenciales y el remitente SMS se configuran en el entorno.</p>
+                        <p>Conexión: {{ smsConfiguration.credentials ? 'configurada' : 'incompleta' }} · Remitente: {{ smsConfiguration.sender ? 'configurado' : 'pendiente' }}</p>
+                        <p>Máximo dos segmentos por aviso después de sustituir las variables. No se recorta el texto.</p>
+                    </div>
                     <p v-else class="text-sm md:col-span-2">El servidor SMTP se configura en el entorno con MAIL_*. El correo remitente debe tener dominio autenticado y aprobación para este uso.</p>
                     <label class="flex items-center gap-2"><input v-model="channelForm.enabled" type="checkbox" /> Activar canal para este equipo</label>
                     <button type="submit" class="rounded bg-primary-600 px-4 py-2 text-white disabled:opacity-50" :disabled="channelForm.processing">Guardar canal</button>
@@ -119,7 +138,7 @@ function filterHistory() {
                     <p v-if="testForm.errors.recipient" class="text-red-600" role="alert">{{ testForm.errors.recipient }}</p>
                 </form>
                 <div v-if="canTest && selectedChannel !== 'email'" class="rounded-lg border border-surface-200 p-4 dark:border-surface-700">
-                    <button type="button" class="rounded border border-primary-600 px-4 py-2 disabled:opacity-50" :disabled="checkForm.processing || !selectedChannelData?.has_secret" @click="checkConnection">Comprobar conexión técnica</button>
+                    <button type="button" class="rounded border border-primary-600 px-4 py-2 disabled:opacity-50" :disabled="checkForm.processing || !selectedChannelData?.has_secret || (selectedChannel === 'sms' && selectedChannelData?.provider !== 'labsmobile')" @click="checkConnection">Comprobar conexión técnica</button>
                     <p class="mt-2 text-sm">Consulta la API sin enviar mensajes. Una respuesta válida no confirma que el proveedor permita avisos financieros ni que un destinatario los reciba.</p>
                     <p v-if="checkForm.errors.channel" class="text-red-600" role="alert">{{ checkForm.errors.channel }}</p>
                 </div>
@@ -178,7 +197,7 @@ function filterHistory() {
                     <label class="grid gap-1">Hasta<input v-model="historyFilters.to" type="date" class="rounded border p-2 dark:bg-surface-900" /></label>
                     <button type="submit" class="self-end rounded bg-primary-600 px-4 py-2 text-white">Filtrar</button>
                 </form>
-                <div class="overflow-x-auto rounded-lg border border-surface-200 dark:border-surface-700"><table class="w-full min-w-[700px] text-left text-sm"><thead><tr class="bg-surface-100 dark:bg-surface-800"><th class="p-3">Fecha</th><th class="p-3">Cliente / crédito</th><th class="p-3">Evento / canal</th><th class="p-3">Estado</th><th class="p-3">Detalle</th></tr></thead><tbody><template v-for="item in deliveries.data" :key="item.id"><tr class="border-t border-surface-200 dark:border-surface-700"><td class="p-3">{{ new Date(item.created_at).toLocaleString('es-MX') }}</td><td class="p-3">{{ item.cliente_id }} / {{ item.credito_id }}</td><td class="p-3">{{ item.event_type === 'payment_received' ? 'Pago recibido' : 'Próximo vencimiento' }} · {{ item.channel }}</td><td class="p-3">{{ statuses[item.status] || item.status }}</td><td class="p-3"><button type="button" class="text-primary-600 underline" :aria-expanded="expanded === item.id" @click="expanded = expanded === item.id ? null : item.id">{{ expanded === item.id ? 'Cerrar' : 'Ver intento' }}</button></td></tr><tr v-if="expanded === item.id"><td colspan="5" class="bg-surface-100 p-4 dark:bg-surface-800"><dl class="grid gap-2 sm:grid-cols-2"><div><dt class="font-semibold">Motivo</dt><dd>{{ item.reason || '—' }}</dd></div><div><dt class="font-semibold">Versión de plantilla</dt><dd>{{ item.template_version }}</dd></div><div><dt class="font-semibold">Intentado</dt><dd>{{ item.attempted_at ? new Date(item.attempted_at).toLocaleString('es-MX') : '—' }}</dd></div><div><dt class="font-semibold">Aceptado</dt><dd>{{ item.accepted_at ? new Date(item.accepted_at).toLocaleString('es-MX') : '—' }}</dd></div><div><dt class="font-semibold">Entregado</dt><dd>{{ item.delivered_at ? new Date(item.delivered_at).toLocaleString('es-MX') : '—' }}</dd></div><div><dt class="font-semibold">Leído</dt><dd>{{ item.read_at ? new Date(item.read_at).toLocaleString('es-MX') : '—' }}</dd></div><div class="sm:col-span-2"><dt class="font-semibold">ID del proveedor</dt><dd class="break-all">{{ item.provider_message_id || '—' }}</dd></div></dl></td></tr></template><tr v-if="!deliveries.data.length"><td colspan="5" class="p-5 text-center">Aún no hay envíos en este contexto.</td></tr></tbody></table></div>
+                <div class="overflow-x-auto rounded-lg border border-surface-200 dark:border-surface-700"><table class="w-full min-w-[700px] text-left text-sm"><thead><tr class="bg-surface-100 dark:bg-surface-800"><th class="p-3">Fecha</th><th class="p-3">Cliente / crédito</th><th class="p-3">Evento / canal</th><th class="p-3">Estado</th><th class="p-3">Detalle</th></tr></thead><tbody><template v-for="item in deliveries.data" :key="item.id"><tr class="border-t border-surface-200 dark:border-surface-700"><td class="p-3">{{ new Date(item.created_at).toLocaleString('es-MX') }}</td><td class="p-3">{{ item.cliente_id }} / {{ item.credito_id }}</td><td class="p-3">{{ item.event_type === 'payment_received' ? 'Pago recibido' : 'Próximo vencimiento' }} · {{ item.channel }}</td><td class="p-3">{{ statuses[item.status] || item.status }}</td><td class="p-3"><button type="button" class="text-primary-600 underline" :aria-expanded="expanded === item.id" @click="expanded = expanded === item.id ? null : item.id">{{ expanded === item.id ? 'Cerrar' : 'Ver intento' }}</button></td></tr><tr v-if="expanded === item.id"><td colspan="5" class="bg-surface-100 p-4 dark:bg-surface-800"><dl class="grid gap-2 sm:grid-cols-2"><div><dt class="font-semibold">Motivo</dt><dd>{{ reasons[item.reason] || item.reason || '—' }}</dd></div><div><dt class="font-semibold">Versión de plantilla</dt><dd>{{ item.template_version }}</dd></div><div><dt class="font-semibold">Intentado</dt><dd>{{ item.attempted_at ? new Date(item.attempted_at).toLocaleString('es-MX') : '—' }}</dd></div><div><dt class="font-semibold">Aceptado</dt><dd>{{ item.accepted_at ? new Date(item.accepted_at).toLocaleString('es-MX') : '—' }}</dd></div><div><dt class="font-semibold">Entregado</dt><dd>{{ item.delivered_at ? new Date(item.delivered_at).toLocaleString('es-MX') : '—' }}</dd></div><div><dt class="font-semibold">Leído</dt><dd>{{ item.read_at ? new Date(item.read_at).toLocaleString('es-MX') : '—' }}</dd></div><div v-if="item.provider"><dt class="font-semibold">Proveedor</dt><dd>{{ item.provider }}</dd></div><div v-if="item.provider_correlation_id"><dt class="font-semibold">Correlación</dt><dd class="break-all">{{ item.provider_correlation_id }}</dd></div><div class="sm:col-span-2"><dt class="font-semibold">ID del proveedor</dt><dd class="break-all">{{ item.provider_message_id || '—' }}</dd></div></dl></td></tr></template><tr v-if="!deliveries.data.length"><td colspan="5" class="p-5 text-center">Aún no hay envíos en este contexto.</td></tr></tbody></table></div>
                 <nav class="flex justify-between" aria-label="Páginas del historial"><Link v-if="deliveries.prev_page_url" :href="deliveries.prev_page_url">Anterior</Link><span v-else /><Link v-if="deliveries.next_page_url" :href="deliveries.next_page_url">Siguiente</Link></nav>
             </section>
         </main>

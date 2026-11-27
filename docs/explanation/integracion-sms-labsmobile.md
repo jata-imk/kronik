@@ -1,16 +1,19 @@
 # Investigación de LabsMobile para los SMS de Kronik
 
-Consulta: 2026-11-24. José eligió LabsMobile por costo; la integración, la cuenta
-y el piloto permanecen pendientes. Ver [ADR 0050](adr-0050-proveedor-sms-labsmobile.md)
+Consulta técnica: 2026-11-24. José eligió LabsMobile por costo; transporte y
+configuración I1 se implementan el 25/11/2026. Cuenta, activación y piloto siguen
+pendientes. Ver [ADR 0050](adr-0050-proveedor-sms-labsmobile.md)
 y [Agent Note](../agent-notes/comunicaciones-notificaciones.md).
-El [contrato de canales](../reference/canales-comunicacion.md) describe todavía
-el código con Infobip de `ecb9d4a`; esta investigación no acredita un cambio funcional.
+El [contrato de canales](../reference/canales-comunicacion.md) describe el transporte
+LabsMobile implementado en I1. Esta investigación conserva los antecedentes y los
+pendientes externos; no acredita cuenta, tráfico, entrega ni seguimiento LabsMobile.
 
 ## Sustitución del código Infobip
 
-Alcance solicitado por José para la siguiente sesión de planeación. Conservar
-Infobip en este commit documental; su sustitución se implementará y probará como
-un incremento concreto, sin un segundo proveedor activo ni fallback automático.
+El inventario siguiente describe las superficies identificadas en la base funcional.
+I1 sustituye transporte, configuración y comprobación; retira la ruta y conciliación
+Infobip y añade limpieza selectiva QA. I2 deberá implementar seguimiento LabsMobile,
+con autenticidad confirmada. No hay un segundo proveedor activo ni fallback.
 
 | Superficie identificada en `ecb9d4a` | Trabajo que debe incluir el plan |
 | --- | --- |

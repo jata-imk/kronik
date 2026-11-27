@@ -1,7 +1,9 @@
 # ADR 0050: LabsMobile como proveedor del canal SMS
 
-Estado: aceptado para la planeación el 2026-11-24 por decisión de José.
-Implementación, contratación y activación pendientes.
+Estado: aceptado el 2026-11-24 por decisión de José. Transporte/configuración I1
+implementados en su rama el 2026-11-25; integración, despliegue, contratación y
+activación no acreditados. Seguimiento LabsMobile pendiente de I2.
+El [contrato de canales](../reference/canales-comunicacion.md) describe el código vigente.
 
 ## Contexto
 
@@ -31,11 +33,11 @@ condiciones y piloto. No se añaden campañas, cobranza vencida ni conversacione
 
 ## Consecuencias
 
-La implementación posterior deberá adaptar transporte, configuración/UI,
-orquestación y conciliación que hoy fijan Infobip, con pruebas y auditoría.
-Revisar la divergencia frente a `main` y conservar la elegibilidad financiera.
-Los contratos implementados siguen describiendo Infobip hasta cambiar el código;
-deben distinguir esa evidencia de la decisión futura aceptada.
+I1 adapta transporte, configuración/UI y orquestación, y retira recepción y
+conciliación Infobip, con pruebas y auditoría. El contrato vigente describe
+LabsMobile; `ecb9d4a` conserva el antecedente funcional anterior. La divergencia
+frente a `main` se revisó sin fusionar, conservando la elegibilidad financiera.
+El seguimiento LabsMobile se implementará en I2 tras confirmar autenticidad.
 
 La revisión pública deja pendientes cobertura concreta de OMV de Altán, vigencia
 de entrega por ruta, autenticación/conciliación de callbacks y tarifa de cuenta.
@@ -47,6 +49,6 @@ debe incluir las referencias activas, configuración y jobs del proveedor anteri
 antes de retirar código. José confirmó el 25/11/2026 que solo existen desarrollo
 y QA, sin producción, clientes ni históricos que conservar; los datos de prueba
 son desechables. Se sustituye Infobip directamente, con limpieza explícita cuando
-corresponda, sin migración histórica ni convivencia de proveedores. La propuesta de reutilizar
-el [editor documental](editor-plantillas-notificaciones.md) sigue en evaluación;
-no forma parte de la decisión de proveedor ya aceptada.
+corresponda, sin migración histórica ni convivencia de proveedores. La reutilización del
+[editor documental](editor-plantillas-notificaciones.md) corresponde a I3;
+no forma parte de la sustitución de transporte de I1.
