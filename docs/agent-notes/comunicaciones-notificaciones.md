@@ -32,6 +32,14 @@ Validaciones, revisión medium, PR y CI del resultado/destino se registrarán al
 completarse. Esta integración aún no acredita publicación, despliegue ni QA
 externo. La iniciativa sigue Doing y ambas barreras permanecen cerradas.
 
+Primera revisión medium de `183cae5`, contra ambos padres y acumulado
+`bfa0b87..183cae5`: dos P2. Se corrigen la clasificación de destinos del menú
+contextual con lectura independiente y el desafío Meta normalizado por PHP,
+con regresiones de renderizado/permisos y verificación sin efectos. Requiere
+revisión final del código corregido. La primera publicación se interrumpió
+durante el hook al detectar el cruce del menú, sin resultado global ni push;
+no se considera una pasada aprobada. Frontend previo: 225/82 archivos y build.
+
 El resto de esta nota conserva la evidencia histórica de I0–I4 y del traspaso.
 
 **Cierre técnico I4 entregado y consolidado en la rama original de Bryan.** José autorizó consolidar #93–#96 e I4 en la

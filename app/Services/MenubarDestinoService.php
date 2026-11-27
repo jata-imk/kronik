@@ -145,6 +145,8 @@ class MenubarDestinoService
             'productos-crediticios.index' => ['read productos-crediticios'],
             'productos-crediticios.calendario.index' => [CalendarioCrediticioService::CONSULTAR],
             'plantillas-documentos.index' => ['read plantillas-documentos'],
+            'comunicaciones.index' => ['read comunicaciones'],
+            'notificaciones.index' => ['read plantillas-notificaciones'],
             'admin.dashboard' => ['access admin'],
             'admin.users.index' => ['read users'], 'admin.users.activity' => ['read activity-log'],
             'admin.teams.index' => ['read teams'], 'admin.roles.index' => ['read roles'],

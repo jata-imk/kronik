@@ -56,6 +56,11 @@ del módulo. Se excluyen escrituras y búsquedas JSON (`solicitudes.clientes`,
 El seeder sigue siendo aditivo/idempotente y no activa entradas nuevas.
 Consultar [carga y operación](how-to/configurar-menu-contextual.md).
 
+El catálogo conjunto incluye Comunicaciones y Notificaciones junto al calendario
+crediticio. El resolvedor exige respectivamente `read comunicaciones` y
+`read plantillas-notificaciones` en el equipo seleccionado; consultar estos
+destinos no exige permisos de gestión ni edición.
+
 ## Resolvedor y autorización
 
 `HandleInertiaRequests` comparte `menubarItems`, calculado por `MenubarService`.

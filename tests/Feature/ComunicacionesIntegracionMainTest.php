@@ -4,10 +4,12 @@ use App\Enums\ActivityEvent;
 use App\Models\CommunicationEvent;
 use App\Models\MenubarItem;
 use App\Models\MenubarItemModule;
+use App\Models\User;
 use App\Services\ActivityLogService;
 use App\Services\Credito\PagoService;
 use App\Services\Credito\ProyeccionCreditoService;
 use App\Services\MenubarCatalogoService;
+use App\Services\MenubarDestinoService;
 use Database\Seeders\MenubarItemsSeeder;
 use Database\Seeders\ModulesAndPermissionsSeeder;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +26,43 @@ test('el catálogo conjunto conserva calendario comunicaciones y notificaciones 
     $links = MenubarItemModule::count();
     $this->seed([ModulesAndPermissionsSeeder::class, MenubarItemsSeeder::class]);
     expect(MenubarItem::count())->toBe($items)->and(MenubarItemModule::count())->toBe($links);
+});
+
+test('los destinos de comunicaciones exigen lectura independiente en el equipo seleccionado', function () {
+    $this->seed(ModulesAndPermissionsSeeder::class);
+    $actor = User::factory()->withPersonalTeam()->create();
+    $team = $actor->ownedTeams()->sole();
+    $actor->forceFill(['current_team_id' => $team->id])->save();
+    grantTeamPermissions($actor, $team, ['read comunicaciones', 'read plantillas-notificaciones']);
+    setPermissionsTeamId($team->id);
+    $destinations = app(MenubarDestinoService::class);
+    expect($destinations->permitido('comunicaciones.index', [], $actor))->toBeTrue()
+        ->and($destinations->permitido('notificaciones.index', [], $actor))->toBeTrue()
+        ->and($actor->can('manage comunicaciones'))->toBeFalse()
+        ->and($actor->can('update plantillas-notificaciones'))->toBeFalse();
+    $requests = [];
+    foreach (['comunicaciones.index' => 'comunicaciones', 'notificaciones.index' => 'plantillas-notificaciones'] as $name => $moduleName) {
+        $item = MenubarItem::create(['label' => 'Destino de lectura '.$moduleName, 'type' => 'route:name', 'value' => $name, 'sort_order' => 1]);
+        MenubarItemModule::create(['menubar_item_id' => $item->id,
+            'module_id' => \App\Models\Module::where('name', $moduleName)->sole()->id, 'routes' => [$name]]);
+        $request = \Illuminate\Http\Request::create(route($name));
+        $namedRoute = clone app('router')->getRoutes()->getByName($name);
+        $namedRoute->bind($request);
+        $request->setRouteResolver(fn () => $namedRoute);
+        $request->setUserResolver(fn () => $actor);
+        $requests[] = [$request, $item->id];
+        $rendered = collect(app(\App\Services\MenubarService::class)->getMenuItems($request))->firstWhere('key', 'item:'.$item->id);
+        expect($rendered)->not->toBeNull()->and($rendered['url'] ?? null)->toBe(route($name));
+    }
+    $other = $actor->ownedTeams()->create(['name' => 'Equipo sin lectura sintético', 'personal_team' => false]);
+    $actor->forceFill(['current_team_id' => $other->id])->save();
+    setPermissionsTeamId($other->id);
+    $actor->unsetRelation('permissions')->unsetRelation('roles');
+    expect($destinations->permitido('comunicaciones.index', [], $actor))->toBeFalse()
+        ->and($destinations->permitido('notificaciones.index', [], $actor))->toBeFalse();
+    foreach ($requests as [$request, $itemId]) {
+        expect(collect(app(\App\Services\MenubarService::class)->getMenuItems($request))->firstWhere('key', 'item:'.$itemId))->toBeNull();
+    }
 });
 
 test('el reverso conserva la fecha civil y cancela el aviso en su contexto original después de cambiar equipo', function () {

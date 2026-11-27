@@ -414,4 +414,11 @@ duplican actividad. Pagos, reversos, proyecciones y candidatos conservan su
 transacción y contexto original. `ComunicacionesIntegracionMainTest` cubre
 cancelación tras cambiar equipo y rollback completo al fallar su auditoría;
 se conservan las regresiones de identidad, privacidad y concurrencia de I0–I4.
+El resolvedor contextual clasifica también ambos destinos nuevos con sus permisos
+independientes de lectura. Su regresión verifica el menú renderizado y su
+desaparición al cambiar a un equipo sin permisos, sin exigir gestión.
+La corrección del desafío de verificación Meta no añade una acción auditable:
+es una comprobación técnica GET sin persistencia; token y desafío no se registran.
+`CommunicationWebhookTest` cubre nombres normalizados/originales, rechazo del
+token incorrecto y ausencia de actividad/acuses. POST firmado mantiene sus eventos.
 El estado de revisión, PR y CI por SHA está en la Agent Note.

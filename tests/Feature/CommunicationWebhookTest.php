@@ -8,6 +8,25 @@ use Illuminate\Support\Facades\DB;
 
 beforeEach(fn () => $this->withoutVite());
 
+test('la verificación Meta devuelve el desafío exacto con nombres originales o normalizados por PHP', function (bool $normalized) {
+    $actor = \App\Models\User::factory()->withPersonalTeam()->create();
+    $team = $actor->ownedTeams()->sole();
+    CommunicationChannel::create(['team_id' => $team->id, 'channel' => 'whatsapp', 'provider' => 'meta_cloud',
+        'sender' => 'synthetic-number', 'enabled' => false, 'eligibility' => 'testing',
+        'secret' => json_encode(['verify_token' => 'synthetic-verify-token'])]);
+    $query = ['hub.mode' => 'subscribe', 'hub.verify_token' => 'synthetic-verify-token', 'hub.challenge' => '00123456789'];
+    if ($normalized) {
+        parse_str(http_build_query($query), $query);
+    }
+    $url = route('webhooks.comunicaciones.whatsapp.verify', $team);
+    $before = \App\Models\Activity::count();
+    $this->call('GET', $url, $query)->assertOk()->assertSeeText('00123456789')->assertContent('00123456789');
+    $query[$normalized ? 'hub_verify_token' : 'hub.verify_token'] = 'invalid-synthetic-token';
+    $this->call('GET', $url, $query)->assertForbidden();
+    expect(\App\Models\Activity::count())->toBe($before)
+        ->and(DB::table('communication_webhook_events')->count())->toBe(0);
+})->with(['nombres originales' => false, 'nombres normalizados por PHP' => true]);
+
 test('Meta exige firma y número del equipo, deduplica y no retrocede de leído a entregado', function () {
     [$actor, $credit, $data] = creditoPagableQa($this);
     $data['previa_hash'] = $this->postJson(route('creditos.pagos.preview', $credit), $data)->assertOk()->json('previa_hash');
