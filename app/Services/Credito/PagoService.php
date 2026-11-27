@@ -148,18 +148,19 @@ final class PagoService
                     $snapshot['cronograma'] = $anterior->snapshot;
                     $snapshot['despues']['cronograma_version'] = (int) $credito->cronogramas()->max('version') + 1;
                 }
+                $fechaEfectiva = $pago->fecha_efectiva->toDateString();
                 $reverso = $credito->pagos()->create(['tipo' => 'reverso', 'reversa_de' => $pago->id, 'actor_id' => $actor->id,
-                    'fecha_efectiva' => $pago->fecha_efectiva, 'importe' => $pago->importe, 'motivo' => $data['motivo'],
+                    'fecha_efectiva' => $fechaEfectiva, 'importe' => $pago->importe, 'motivo' => $data['motivo'],
                     'idempotency_key' => $data['idempotency_key'], 'payload_hash' => $hash, 'snapshot' => $snapshot, 'snapshot_hash' => $this->hash($snapshot)]);
                 if (isset($snapshot['cronograma'])) {
                     $credito->cronogramas()->create(['version' => $snapshot['despues']['cronograma_version'], 'credito_pago_id' => $reverso->id,
-                        'fecha_efectiva' => $pago->fecha_efectiva, 'snapshot' => $snapshot['cronograma'], 'snapshot_hash' => $this->hash($snapshot['cronograma'])]);
+                        'fecha_efectiva' => $fechaEfectiva, 'snapshot' => $snapshot['cronograma'], 'snapshot_hash' => $this->hash($snapshot['cronograma'])]);
                 }
                 foreach ($credito->movimientos()->where('credito_pago_id', $pago->id)->get() as $movimiento) {
                     $credito->movimientos()->create(['credito_pago_id' => $reverso->id, 'actor_id' => $actor->id, 'tipo' => 'reverso',
-                        'concepto' => $movimiento->concepto, 'fecha_efectiva' => $pago->fecha_efectiva, 'importe' => D::sub('0', $movimiento->importe, 2)]);
+                        'concepto' => $movimiento->concepto, 'fecha_efectiva' => $fechaEfectiva, 'importe' => D::sub('0', $movimiento->importe, 2)]);
                 }
-                app(ProyeccionCreditoService::class)->sincronizar($credito, $pago->fecha_efectiva->toDateString());
+                app(ProyeccionCreditoService::class)->sincronizar($credito, $fechaEfectiva);
                 app(\App\Services\CommunicationEventService::class)->paymentReversed($credito, $pago);
                 app(ActivityLogService::class)->log(ActivityEvent::CreditPaymentReversed, 'Pago QA revertido por compensación', $credito,
                     ['related' => ['type' => 'credito_pago', 'id' => $reverso->id]], $actor, sucursalId: $credito->sucursal_id);

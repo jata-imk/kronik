@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from "vue";
-import { useForm } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import ActionSection from "@/Components/ActionSection.vue";
 import DialogModal from "@/Components/DialogModal.vue";
 

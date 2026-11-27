@@ -69,7 +69,17 @@ La imagen de referencia se interpreta como una **retícula isométrica de puntos
 
 ## Estructura y navegación
 
-El menú lateral se define en `NavigationService` y admite hasta tres niveles: sección, grupo y destino. Orden: **Inicio → Operación → Configuración → Administración → Cuenta**. Dentro de Operación: Clientes (Listado, Expedientes KYC, Consultas SIC), Originación (Solicitudes, Evaluación, Cumplimiento), Créditos y pagos. Mantener la ruta activa visible y abrir sus ancestros. La disponibilidad depende de permisos reales; nunca anunciar una acción que termina en 403. Los accesos contextuales son propios de la página y no deben duplicar el menú principal.
+El menú lateral se define en `NavigationService` y admite hasta tres niveles: sección, grupo y destino. Orden: **Inicio → Operación → Configuración → Administración → Cuenta**. Dentro de Operación: Clientes (Listado, Expedientes KYC, Consultas SIC), Originación (Solicitudes, Evaluación, Cumplimiento), Créditos y pagos. Identificar la ruta activa independientemente de la expansión manual de sus ancestros. La disponibilidad depende de permisos reales; nunca anunciar una acción que termina en 403. Los accesos contextuales son propios de la página y no deben duplicar el menú principal.
+
+### Expansión del menú lateral
+
+Las secciones son cabeceras permanentes; los grupos son botones nativos. Una pulsación alterna el grupo, incluso si contiene la página actual: cerrar y volver a abrir siempre es posible. Solo una rama permanece expandida; abrir un hermano cierra la anterior. Cerrar un ancestro descarta la expansión de sus descendientes.
+
+Al entrar directamente, recargar completamente o cambiar el `pathname` mediante Inertia (incluidos atrás/adelante), se abren los ancestros de la página seleccionada. Filtros, query, fragmentos y recargas parciales con el mismo árbol autorizado conservan el estado manual, también si se vuelve a montar el layout. La expansión vive en memoria: no se persiste en localStorage. Si cambia la estructura autorizada, se descartan las claves anteriores y se resuelve la nueva selección.
+
+Un grupo con una página seleccionada conserva fondo de énfasis y negrita aunque esté cerrado; su descripción accesible identifica el destino. Solo el enlace del destino tiene `aria-current="page"`. La selección utiliza `to` y `activeRoutes` existentes, sin añadir entradas ni permisos. Los botones mantienen foco, operan con Enter/Espacio y exponen `aria-expanded` y `aria-controls`; el subárbol cerrado es inerte y queda fuera de Tab. Alternar un grupo no navega ni cierra el panel móvil u overlay.
+
+Consultar [la validación del sidebar](../how-to/validar-sidebar.md) para comprobar esta conducta en escritorio, móvil y temas. El menubar superior configurable tiene un contrato independiente.
 
 En móvil, el menú es un panel modal: se cierra con el botón «Cerrar menú», al tocar la máscara, al elegir una ruta o con Escape. El botón del encabezado indica si está abierto mediante `aria-expanded`.
 

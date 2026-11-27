@@ -46,6 +46,15 @@ se expresan en la zona de almacenamiento de la aplicación, también en madrugad
 La reserva del intento y su auditoría siguen en la misma transacción; no se
 mantiene esa transacción abierta durante el HTTP/SMTP.
 
+La integración con main conserva las fechas civiles de pagos/reversos y el
+calendario contractual congelado. Los candidatos utilizan las obligaciones
+proyectadas con su vencimiento ajustado, sin volver a calcularlo desde el
+calendario vigente. Sin cobertura financiera válida no se prepara un aviso.
+Los formularios de canales, reglas, consentimientos y Notificaciones comparten
+la protección de captura al navegar; cancelar conserva los datos y errores.
+Un cambio efectivo de equipo/sucursal o una retirada de permisos cancela y
+limpia la captura correspondiente, sin guardar ni auditar esa limpieza visual.
+
 ## Conexiones
 
 - **Correo:** usa el transporte Laravel `MAIL_*` del entorno y un remitente por equipo. No introducir credenciales SMTP en la UI. Probar únicamente con el destinatario autorizado en `COMMUNICATIONS_TEST_RECIPIENT`; el endpoint rechaza transportes `log` y `array`. Confirmar dominio, SPF, DKIM, DMARC y política del proveedor antes de activar. El botón de prueba informa aceptación técnica, no recepción.

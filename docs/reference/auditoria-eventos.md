@@ -167,9 +167,9 @@ un solo código por acción, sin crear catálogos paralelos.
 | `creditos` | Pago QA revertido | `credito.payment_reversed` | U | Crédito | Cambio aplicado | R | related | Q | Implementado; validar entrega en Agent Note | PagoService::reversar | AuditDomainCoverageTest; CreditoPagosTest; CreditoAnticiposTest; BulletPagosTest (evidencia sintética) |
 | `Autenticación` | Autenticación de dos factores completada | `login.2fa_completed` | U | Usuario | Autenticación completada | C | result | Q | Implementado; validar entrega en Agent Note | TwoFactorSessionController::store | AuditCoverageTest |
 | `Perfil` | Perfil de usuario actualizado | `user.profile.updated` | U | Usuario | Cambio aplicado | C | changed_fields | Q | Implementado; validar entrega en Agent Note | UpdateUserProfileInformation::update | AuditCoverageTest |
-| `menubar-items` | Elemento de menú creado | `menubar_item.created` | U | Elemento de menú | Cambio aplicado | C | changed_fields, result | Q | Implementado; validar entrega en Agent Note | MenubarItemService::guardar | Admin/ConsultaEmpresaMenuTest |
-| `menubar-items` | Elemento de menú actualizado | `menubar_item.updated` | U | Elemento de menú | Cambio aplicado | C | changed_fields, result | Q | Implementado; validar entrega en Agent Note | MenubarItemService::guardar | Admin/ConsultaEmpresaMenuTest |
-| `menubar-items` | Elemento de menú eliminado | `menubar_item.deleted` | U | Elemento de menú | Cambio aplicado | C | changed_fields, result | Q | Implementado; validar entrega en Agent Note | MenubarItemService::eliminar | Admin/ConsultaEmpresaMenuTest |
+| `menubar-items` | Elemento de menú creado | `menubar_item.created` | U | Elemento de menú | Cambio aplicado | C | changed_fields, result | Q | Implementado; validar entrega en Agent Note | MenubarItemService::guardar | Admin/ConsultaEmpresaMenuTest; Admin/MenubarConfiguracionTest |
+| `menubar-items` | Elemento de menú actualizado | `menubar_item.updated` | U | Elemento de menú | Cambio aplicado | C | changed_fields, result | Q | Implementado; validar entrega en Agent Note | MenubarItemService::guardar | Admin/ConsultaEmpresaMenuTest; Admin/MenubarConfiguracionTest |
+| `menubar-items` | Elemento de menú eliminado | `menubar_item.deleted` | U | Elemento de menú | Cambio aplicado | C | changed_fields, result | Q | Implementado; validar entrega en Agent Note | MenubarItemService::eliminar | Admin/ConsultaEmpresaMenuTest; Admin/MenubarConfiguracionTest |
 | `configuracion-empresa` | Empresa actualizada | `empresa.updated` | U | Configuración | Cambio aplicado | C | changed_fields | Q | Implementado; validar entrega en Agent Note | EmpresaConfiguracionController::update | Admin/EmpresaConfiguracionTest; ProductoDiasGraciaTest |
 | `configuracion-empresa` | Operación bloqueada por el estado de la empresa | `empresa.operacion_bloqueada` | U / S/I | Recurso de la operación | blocked | C / J | state, product, result, related | Q | Implementado; validar entrega en Agent Note | OperacionEmpresaBloqueada::registrar | EmpresaOperacionTest; SicQaTest |
 | `sucursales` | Sucursal creada | `sucursal.created` | U | Sucursal | Cambio aplicado | Equipo iniciador / sucursal afectada | changed_fields | Q | Implementado; validar entrega en Agent Note | SucursalController::store | Admin/SucursalTest; Admin/ActivityLogTest |
@@ -200,6 +200,8 @@ un solo código por acción, sin crear catálogos paralelos.
 | `historial-crediticio` | Resultado SIC visualizado | `cliente.sic.evidence_viewed` | U | Cliente (conciliación) / intento SIC | Cambio aplicado | J | state, result, related; proveedor/producto si aplica | Q | Implementado; validar entrega en Agent Note | HistorialCrediticioController::detalle | SicQaTest; ConsultaSucursalTest (lectura) |
 | `circulo-credito` | Consulta SIC Fintech Score | `cliente.sic.fintech_score.queried` | S/I | Cliente (conciliación) / intento SIC | Cambio aplicado | J | state, result, related; proveedor/producto si aplica | Q | Implementado; validar entrega en Agent Note | SicOperacionService::ejecutar | SicQaTest; ConsultaSucursalTest (lectura) |
 | `circulo-credito` | Consulta de reporte de crédito con FICO Score | `cliente.sic.credit_report_fico.queried` | S/I | Cliente (conciliación) / intento SIC | Cambio aplicado | J | state, result, related; proveedor/producto si aplica | Q | Implementado; validar entrega en Agent Note | SicOperacionService::ejecutar | SicQaTest; ConsultaSucursalTest (lectura) |
+| `productos-crediticios` | Guardar un borrador de calendario nuevo o con cambios | `calendario_crediticio.draft_saved` | U con gestión de calendario | Versión del calendario | Cambio aplicado | C | changed_fields, result | Q | Implementado | CalendarioCrediticioService::guardar | CalendarioCrediticioTest |
+| `productos-crediticios` | Publicar una versión institucional | `calendario_crediticio.published` | Super Admin global | Versión del calendario | Publicación aplicada; reintento idéntico sin duplicar | C | changed_fields, result | Q | Implementado | CalendarioCrediticioService::publicar | CalendarioCrediticioTest |
 | `productos-crediticios` | Producto crediticio creado | `producto_crediticio.created` | U / S/I | Producto; versión en ejecución automática | Cambio aplicado | C / J | changed_fields, state, result, related | Q | Implementado; validar entrega en Agent Note | ProductoVersionService::crear | ProductosCrediticiosTest; VersionMotorCreditoTest |
 | `productos-crediticios` | Producto crediticio actualizado | `producto_crediticio.updated` | U / S/I | Producto; versión en ejecución automática | Cambio aplicado | C / J | changed_fields, state, result, related | Q | Implementado; validar entrega en Agent Note | ProductoVersionService::actualizar | ProductosCrediticiosTest; VersionMotorCreditoTest |
 | `productos-crediticios` | Producto crediticio versionado | `producto_crediticio.versioned` | U / S/I | Producto; versión en ejecución automática | Cambio aplicado | C / J | changed_fields, state, result, related | Q | Implementado; validar entrega en Agent Note | ProductoVersionService::nuevaVersion | ProductosCrediticiosTest; VersionMotorCreditoTest; ProductoDiasGraciaTest |
@@ -248,6 +250,7 @@ demuestra por sí sola ejecución ni despliegue.
 | Superficie | Decisión y justificación | Evidencia |
 | --- | --- | --- |
 | `dashboard`, `admin` y bandejas | Consulta, navegación, filtros, búsqueda y paginación no mutan negocio ni generan actividad adicional. | ConsultaSucursalTest, Admin/ActivityLogTest, SelectedTeamManagementTest |
+| Sidebar | Expandir/contraer solo modifica presentación en memoria del navegador. No cambia recursos, permisos ni evidencia reservada; no requiere ActivityEvent ni emisión mediante ActivityLogService. La navegación conserva los eventos propios de sus destinos. | AppMenuItem.test.js; E2E/sidebar.spec.js; [Agent Note](../agent-notes/sidebar-desplegables.md) |
 | `activity-log` listado | Se conserva lectura sin evento; el CSV sí registra generación. | AuditCoverageTest, Admin/ActivityLogTest, E2E auditoria-actividad |
 | Productos, plantillas, políticas, catálogos y simulación | Consulta histórica y cálculo puro no añaden eventos. Previews sintéticos no crean evidencia de negocio. | ConsultaProductosTest, ConsultaPlantillasTest, ConsultaPoliticasTest, CapacidadesCreditoTest |
 | Biblioteca de imágenes | Consultar recursos de configuración no equivale a acceder a evidencia privada de clientes; el alta tiene su evento. | Documentos/DocumentoEditorTest |
@@ -395,3 +398,20 @@ actividad ni devuelve contacto/hash/evidencia. La campana conserva la única
 emisión backend de `operator_notification.read`; su cola frontend no crea otro
 evento. Se mantienen las regresiones de rollback, actor/contexto originales y
 privacidad de las suites I0–I3. Evidencia final por SHA en la Agent Note.
+
+La previsualización, consulta y apertura de grupos del Menubar no generan eventos adicionales: no persisten configuración ni ejecutan destinos. La retirada de activaciones usa el evento de actualización existente. Véase [el contrato del Menubar](../menubar-items.md).
+
+El ajuste visual y la confirmación de descarte no ejecutan operaciones de negocio
+ni persisten datos; no generan actividad adicional. Una navegación aceptada conserva
+los eventos de lectura o gestión que correspondan al destino.
+
+## Integración de main y Comunicaciones — 27/11/2026
+
+La integración reúne los eventos y emisores de calendario, menú, pagos y
+Comunicaciones; no crea acciones auditables nuevas. Los cambios de catálogo,
+renumeración ADR y guardas de captura no persisten operaciones de negocio ni
+duplican actividad. Pagos, reversos, proyecciones y candidatos conservan su
+transacción y contexto original. `ComunicacionesIntegracionMainTest` cubre
+cancelación tras cambiar equipo y rollback completo al fallar su auditoría;
+se conservan las regresiones de identidad, privacidad y concurrencia de I0–I4.
+El estado de revisión, PR y CI por SHA está en la Agent Note.

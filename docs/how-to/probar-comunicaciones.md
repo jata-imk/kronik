@@ -4,6 +4,17 @@ La [nota original](../reference/comunicaciones-por-canales-envios-y-seguimiento.
 
 ## Regresión local
 
+La integración con main añade `ComunicacionesIntegracionMainTest`: catálogo
+conjunto idempotente, reverso civil con contexto original tras cambiar equipo,
+rollback ante fallo de auditoría y recordatorios sobre el calendario contractual
+ajustado aunque cambie el publicado. Preparar las proyecciones derivadas al
+avanzar el reloj sintético, igual que lo hace el programador, antes de exigir
+cobertura completa. Esto no contabiliza devengos de negocio.
+
+Las regresiones frontend y E2E comprueban cancelar/aceptar descarte al navegar
+desde Notificaciones, selección protegida de canal/regla y limpieza forzada
+al cambiar contexto. Se conservan calendario, Menubar y sidebar de main.
+
 Usar PHP compatible con Laravel y SQLite habilitado (I1 se valida con PHP 8.3.29).
 Confirmar que la ejecución usa `APP_ENV=testing`, SQLite `:memory:`, correo array,
 colas fake y HTTP fake; no reutilizar la BD local para pruebas.

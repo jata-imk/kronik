@@ -17,7 +17,9 @@ import Toast from "primevue/toast";
 
 const { layoutConfig, layoutState, isSidebarActive, closeMenu } = useLayout();
 const page = usePage();
-const hasContextualMenu = computed(() => (page.props.menubarItems ?? []).some((item) => !["Inicio", "Regresar", "Administración"].includes(item.label)));
+const hasContextualMenu = computed(() => (page.props.menubarItems ?? []).some(item => item.kind !== "system")
+    || Boolean(page.props.menubarAdmin?.canRead || page.props.menubarAdmin?.canCreate)
+    || page.props.menubarEstado?.status === "unavailable");
 
 const outsideClickListener = ref(null);
 
@@ -116,7 +118,10 @@ onUnmounted(() => {
                     </template>
                 </Card>
 
-                <slot v-else />
+                <template v-else>
+                    <AppMenubar v-if="hasContextualMenu" />
+                    <slot />
+                </template>
             </main>
             <app-footer></app-footer>
         </div>

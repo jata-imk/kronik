@@ -2,6 +2,7 @@ import { shallowMount } from "@vue/test-utils";
 import { reactive } from "vue";
 import { beforeEach, expect, it, vi } from "vitest";
 import Index from "./Index.vue";
+import { forgetUnsavedChanges, hasUnsavedChanges } from "@/Utils/unsavedChanges";
 
 const { sent, cancelled } = vi.hoisted(() => ({
     sent: vi.fn(),
@@ -23,9 +24,9 @@ vi.mock("@inertiajs/vue3", () => ({
                 form.errors = {};
             },
             defaults: (value) => {
-                defaults = { ...value };
+                defaults = value ? { ...value } : Object.fromEntries(Object.keys(defaults).map(key => [key, form[key]]));
             },
-            reset: () => Object.assign(form, defaults),
+            reset: (...keys) => Object.assign(form, keys.length ? Object.fromEntries(keys.map(key => [key, defaults[key]])) : defaults),
             transform: (callback) => {
                 transform = callback;
                 return form;
@@ -44,14 +45,41 @@ vi.mock("@inertiajs/vue3", () => ({
                 ),
             post: sent,
         });
+        Object.defineProperty(form, "isDirty", { get: () => Object.keys(defaults).some(key => form[key] !== defaults[key]) });
         return form;
     },
 }));
 
 beforeEach(() => {
+    forgetUnsavedChanges();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
     sent.mockClear();
     cancelled.mockClear();
     vi.stubGlobal("route", (name) => name);
+});
+
+it("conserva la captura al cancelar cambio de canal o regla y limpia al cambiar contexto", async () => {
+    const wrapper = render({ activeTab: "channels", contextoOperativo: { team_id: 1, sucursal_id: 1 } });
+    await wrapper.find("select").setValue("whatsapp");
+    wrapper.vm.channelForm.secret = "SYNTHETIC-UNSAVED";
+    expect(hasUnsavedChanges()).toBe(true);
+    window.confirm.mockReturnValue(false);
+    await wrapper.find("select").setValue("sms");
+    expect(wrapper.vm.selectedChannel).toBe("whatsapp");
+    expect(wrapper.find("select").element.value).toBe("whatsapp");
+    expect(wrapper.vm.channelForm.secret).toBe("SYNTHETIC-UNSAVED");
+    wrapper.vm.ruleForm.daily_limit = 7;
+    wrapper.vm.selectRule("event", { target: { value: "upcoming_due" } });
+    expect(wrapper.vm.selectedEvent).toBe("payment_received");
+    expect(wrapper.vm.ruleForm.daily_limit).toBe(7);
+    wrapper.vm.consentForm.evidence_reference = "SYNTHETIC-REFERENCE";
+    wrapper.vm.testForm.recipient = "changed@example.test";
+    await wrapper.setProps({ contextoOperativo: { team_id: 2, sucursal_id: 1 } });
+    expect(wrapper.vm.channelForm.secret).toBe("");
+    expect(wrapper.vm.consentForm.evidence_reference).toBe("");
+    expect(wrapper.vm.testForm.recipient).toBe("");
+    expect(hasUnsavedChanges()).toBe(false);
+    wrapper.unmount();
 });
 
 function render(permissions = {}) {

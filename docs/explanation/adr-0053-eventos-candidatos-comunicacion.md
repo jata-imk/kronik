@@ -1,4 +1,4 @@
-# ADR 0048: eventos candidatos antes de seleccionar canal
+# ADR 0053: eventos candidatos antes de seleccionar canal
 
 Estado: aceptado para implementación local, 2026-11-14.
 
@@ -13,3 +13,9 @@ Persistir primero ocurrencias de negocio idempotentes y cancelables, ligadas al 
 ## Consecuencias
 
 Los pagos QA y la tarea horaria pueden producir eventos candidatos verificables sin alcanzar a clientes. Un reverso o cambio de calendario puede cancelar el candidato; la evidencia cancelada sigue disponible. La distribución multicanal, el seguimiento de intentos y la operación productiva siguen pendientes. Véase el [contrato de eventos](../reference/eventos-comunicacion.md).
+
+## Renumeración de integración — 27/11/2026
+
+Originalmente ADR 0048 en la rama de Comunicaciones. Se renumera a 0053
+para conservar el ADR 0048 independiente de main, sin cambiar esta decisión
+ni su contexto histórico.

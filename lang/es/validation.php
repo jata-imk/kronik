@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'present' => 'El campo :attribute debe estar presente.',
+    'json' => 'El campo :attribute debe contener una configuración JSON válida.',
     'decimal' => 'El campo :attribute debe ser un número con entre :min y :max decimales.',
     'prohibited_unless' => 'El campo :attribute debe quedar vacío para la opción seleccionada.',
     'accepted' => 'El campo :attribute debe ser aceptado.',

@@ -6,7 +6,8 @@ status: active
 
 # Desplegar Kronik en una VPS Debian 12
 
-Última revisión documental: 2026-09-10. La ampliación del editor requiere las comprobaciones adicionales de la sección 12.1.
+Revisión general: 2026-09-10; sección 9.2 del scheduler actualizada el 2026-11-14.
+La ampliación del editor requiere las comprobaciones adicionales de la sección 12.1.
 
 Esta guía instala una instancia de Kronik para una financiera. Cubre una VPS
 vacía y una VPS que ya administra sitios con CloudPanel o Plesk.

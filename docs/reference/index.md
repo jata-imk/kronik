@@ -1,6 +1,9 @@
 # Referencia
 
 - [Seguimiento interno LabsMobile: acuses, conciliación y autenticación pendiente](seguimiento-sms.md).
+
+- [Calendario crediticio](calendario-crediticio.md).
+
 - [Tablero financiero: fuentes, indicadores y consistencia](tablero-financiero.md)
 
 [Buscar por tema](../topic/index.md) · [Índice general](../index.md)
@@ -50,3 +53,5 @@
 - [Fechas efectivas y captura histórica](captura-historica-creditos.md).
 
 - [Plantillas globales de Notificaciones: versiones, permisos y previas](plantillas-notificaciones.md).
+
+- [Menubar: catálogo, contexto y configuración](../menubar-items.md).

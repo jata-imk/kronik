@@ -1,14 +1,22 @@
 import { shallowMount } from "@vue/test-utils";
 import { reactive, nextTick } from "vue";
-import { expect, it, vi } from "vitest";
+import { beforeEach, expect, it, vi } from "vitest";
+import { router } from "@inertiajs/vue3";
+import { forgetUnsavedChanges, hasUnsavedChanges } from "@/Utils/unsavedChanges";
 import Notifications from "./Notifications.vue";
 const state = vi.hoisted(() => ({ page: null, submit: vi.fn() }));
 vi.mock("@inertiajs/vue3", () => ({ Link: { name: "Link", template: "<a><slot/></a>" }, router: { get: vi.fn(), post: vi.fn() }, usePage: () => state.page, useForm: (data) => {
-    let defaults = data;
+    let defaults = { ...data };
     const f = reactive({ ...data, errors: {}, processing: false });
-    Object.assign(f, { data: () => Object.fromEntries(Object.keys(data).map(key => [key, f[key]])), cancel() {}, defaults: value => { defaults = value; }, reset: () => Object.assign(f, defaults), clearErrors: () => { f.errors = {}; }, post: state.submit, put: state.submit });
+    Object.assign(f, { data: () => Object.fromEntries(Object.keys(data).map(key => [key, f[key]])), cancel() {}, defaults: value => { defaults = value ?? f.data(); }, reset: () => Object.assign(f, defaults), clearErrors: () => { f.errors = {}; }, post: state.submit, put: state.submit });
+    Object.defineProperty(f, "isDirty", { get: () => Object.keys(defaults).some(key => f[key] !== defaults[key]) });
     return f;
 } }));
+beforeEach(() => {
+    forgetUnsavedChanges();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    vi.clearAllMocks();
+});
 it("consulta no guarda por teclado y descarta captura cuando cambia capacidad o versión", async () => {
     globalThis.route = () => "/";
     state.page = reactive({ props: { auth: { permissions: { "read-comunicaciones": true } }, contextoOperativo: { team_id: 1, sucursal_id: 1 } } });
@@ -46,5 +54,17 @@ it("consulta no guarda por teclado y descarta captura cuando cambia capacidad o 
     expect(w.vm.form.name).toBe("Nueva sin guardar");
     expect(w.vm.form.body).toBe("Texto {desconocida}");
     expect(w.vm.form.errors.body).toBe("Variable no permitida");
+    expect(hasUnsavedChanges()).toBe(true);
+    window.confirm.mockReturnValue(false);
+    router.get.mockClear();
+    w.vm.visit(9, 3);
+    w.vm.create();
+    expect(router.get).not.toHaveBeenCalled();
+    expect(w.vm.creating).toBe(true);
+    expect(w.vm.form.body).toBe("Texto {desconocida}");
+    state.page.props.contextoOperativo.sucursal_id = 4;
+    await nextTick();
+    expect(w.vm.creating).toBe(false);
+    expect(hasUnsavedChanges()).toBe(false);
     w.unmount();
 });

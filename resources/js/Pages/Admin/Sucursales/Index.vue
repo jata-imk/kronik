@@ -8,7 +8,9 @@ import CodigoPostalAutocomplete from "@/Components/CodigoPostalAutocomplete.vue"
 import IntlTelInput from "@/Components/IntlTelInput.vue";
 import { useDireccionCodigoPostal } from "@/Composables/useDireccionCodigoPostal";
 import { useTelefonoInternacional } from "@/Composables/useTelefonoInternacional";
-import { router, useForm, usePage } from "@inertiajs/vue3";
+import { router, usePage } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
+import { confirmFormDiscard } from "@/Utils/unsavedChanges";
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
 import { useToast } from "primevue/usetoast";
 import { useConfirm } from "primevue/useconfirm";
@@ -206,6 +208,7 @@ watch([() => props.sucursalSeleccionada, () => props.modoSucursal, () => can("up
 }, { immediate: true });
 
 const closeDialog = () => {
+    if (!readonly.value && !confirmFormDiscard(form)) return;
     form.cancel();
     serverList.visit({ modo: null, page: page.props.listado?.current_page ?? 1 });
     form.clearErrors();
@@ -218,7 +221,8 @@ const submit = () => {
         preserveScroll: true,
         only: ["sucursales", "sucursalSeleccionada", "listado", "modoSucursal", "auth"],
         onSuccess: () => {
-            visible.value = false;
+            form.defaults?.();
+            closeDialog();
             toast.add({
                 severity: "success",
                 summary: selectedSucursal.value
@@ -339,7 +343,7 @@ const deactivate = (sucursal) => {
                 <FoliosSucursalForm v-if="sucursalFolios && foliosVisible" :key="sucursalFolios.id" :sucursal="sucursalFolios" :editable="can('update-sucursales')" />
             </Dialog>
 
-            <Dialog v-model:visible="visible" @hide="closeDialog" :header="readonly ? 'Consultar sucursal' : selectedSucursal ? 'Editar sucursal' : 'Crear sucursal'" modal :style="{ width: '720px', maxWidth: '95vw' }">
+            <Dialog :visible="visible" @update:visible="value => { if (!value) closeDialog(); }" :header="readonly ? 'Consultar sucursal' : selectedSucursal ? 'Editar sucursal' : 'Crear sucursal'" modal :style="{ width: '720px', maxWidth: '95vw' }">
                 <Message v-if="readonly" severity="info">Consulta · solo lectura.</Message>
                 <form class="flex flex-col gap-5" @submit.prevent="submit">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -467,7 +471,7 @@ const deactivate = (sucursal) => {
                     </div>
 
                     <div class="flex justify-end gap-2 pt-3 border-t border-surface-200 dark:border-surface-700">
-                        <Button :label="readonly ? 'Cerrar consulta' : 'Cancelar'" severity="secondary" icon="pi pi-times" @click.prevent="visible = false" />
+                        <Button :label="readonly ? 'Cerrar consulta' : 'Cancelar'" severity="secondary" icon="pi pi-times" @click.prevent="closeDialog" />
                         <Button v-if="!readonly" label="Guardar" icon="pi pi-check" type="submit" :loading="form.processing" />
                     </div>
                 </form>

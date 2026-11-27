@@ -9,7 +9,9 @@
 
 - [Evaluación de proveedores SMS para México](evaluacion-proveedores-sms-mexico.md).
 
-- [ADR 0047: bandeja interna contextual](adr-0047-bandeja-interna-contextual.md).
+- [ADR 0052: bandeja interna contextual](adr-0052-bandeja-interna-contextual.md).
+
+- [ADR 0048 · Calendario crediticio y condiciones congeladas](adr-0048-calendario-crediticio.md)
 
 - [ADR 0046: lecturas financieras derivadas del core](adr-0046-lecturas-financieras-tablero.md).
 
@@ -82,7 +84,10 @@
 - [ADR 0043: escenarios SIC QA](adr-0043-escenarios-sic-qa.md).
 
 - [ADR 0045: fechas efectivas y captura histórica QA](adr-0045-fechas-efectivas-captura-historica.md).
-- [ADR 0048: eventos candidatos antes de seleccionar canal](adr-0048-eventos-candidatos-comunicacion.md).
+- [ADR 0053: eventos candidatos antes de seleccionar canal](adr-0053-eventos-candidatos-comunicacion.md).
 - [ADR 0049: orquestación de comunicaciones externas](adr-0049-orquestacion-comunicaciones-externas.md).
 
 - [ADR 0051: Notificaciones globales y previsualización HTML](adr-0051-notificaciones-globales-y-previas-html.md).
+
+
+- [ADR 0047: Menubar contextual compartido](adr-0047-menubar-contextual-compartido.md).

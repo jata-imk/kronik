@@ -5,6 +5,10 @@ use Database\Seeders\MenubarItemsSeeder;
 use Database\Seeders\ModulesAndPermissionsSeeder;
 use Inertia\Testing\AssertableInertia as Assert;
 
+beforeEach(function () {
+    $this->withoutVite();
+});
+
 function configureMenubarFixture($test): void
 {
     $test->seed(ModulesAndPermissionsSeeder::class);

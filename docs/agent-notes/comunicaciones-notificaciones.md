@@ -11,6 +11,29 @@
 
 ## Estado — 27/11/2026
 
+### Integración de main en curso — 27/11/2026
+
+Rama `integracion/main-comunicaciones-2026-11-27` desde el traspaso local
+`9d938590664d92a87aaa2fbe0c9a11445af896e5`, conservado sobre el destino remoto
+`f0485cf1539a42800304da2068507d7450772856`. Main incorporado como origen:
+`217aceff88e938b9037b8a11990916beb9fe4f19`; WhatsApp excluida y sin cambios,
+`871936207889c0d429cd1d0fe9c0d546f2094997`. Refs revalidados mediante fetch.
+El CI #318 aprueba únicamente `f0485cf`, no el resultado combinado.
+
+Resolución conjunta: fechas civiles/reversos con eventos y proyecciones atómicos;
+catálogo único de main ampliado con Comunicaciones/Notificaciones; guardas de
+captura aplicadas a los formularios nuevos y conservadas en el editor documental;
+calendario, permisos, auditoría, rutas, validación española y reinicio QA reunidos.
+CI conserva ambos recorridos y los cinco harness MariaDB. ADR originales de
+Comunicaciones 0047/0048 renumerados a 0052/0053, con contexto histórico y enlaces;
+0047/0048 de main conservan su identidad. Sin nuevas API, migraciones o variables.
+
+Validaciones, revisión medium, PR y CI del resultado/destino se registrarán al
+completarse. Esta integración aún no acredita publicación, despliegue ni QA
+externo. La iniciativa sigue Doing y ambas barreras permanecen cerradas.
+
+El resto de esta nota conserva la evidencia histórica de I0–I4 y del traspaso.
+
 **Cierre técnico I4 entregado y consolidado en la rama original de Bryan.** José autorizó consolidar #93–#96 e I4 en la
 rama original, conservando ramas auxiliares. Sustituye el «sin merge» del
 traspaso solo para ese destino. No incluye `main` ni la rama separada de Bryan

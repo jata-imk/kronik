@@ -1,5 +1,6 @@
 <script setup>
-import { Link, useForm } from "@inertiajs/vue3";
+import { Link } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import { computed, ref } from "vue";
 import PrivateDocumentViewer from "@/Components/Documents/PrivateDocumentViewer.vue";
 

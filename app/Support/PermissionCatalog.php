@@ -23,7 +23,7 @@ class PermissionCatalog
         'create' => 'Crear', 'read' => 'Consultar', 'update' => 'Editar', 'delete' => 'Eliminar o desactivar',
         'access' => 'Acceder a', 'transfer' => 'Transferir', 'activate' => 'Activar', 'retire' => 'Retirar',
         'version' => 'Crear versiones de', 'simulate' => 'Simular', 'manage commissions' => 'Administrar comisiones de',
-        'manage origination' => 'Configurar originación de', 'generate' => 'Generar', 'download' => 'Descargar',
+        'read calendar' => 'Consultar calendario de', 'manage calendar' => 'Preparar calendario de', 'manage origination' => 'Configurar originación de', 'generate' => 'Generar', 'download' => 'Descargar',
         'reconcile' => 'Conciliar intentos de', 'add members' => 'Agregar integrantes a',
         'remove members' => 'Quitar integrantes de', 'update members' => 'Editar integrantes de',
         'assign' => 'Asignar responsable de', 'review' => 'Revisar', 'cancel' => 'Cancelar', 'approve' => 'Aprobar',

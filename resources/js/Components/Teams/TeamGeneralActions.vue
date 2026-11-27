@@ -1,6 +1,6 @@
 <script setup>
 import { useOpcionesRemotas } from "@/Composables/useOpcionesRemotas";
-import { useForm } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import { useConfirm } from "primevue/useconfirm";
 import ContextHelp from "@/Components/Products/FinancialFieldHelp.vue";
 

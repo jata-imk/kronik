@@ -10,8 +10,9 @@
 Integrado por autorización del usuario el 13/11/2026: #79 en `ba49793` y #80 en
 `defe471`, después de #65. Heads revisados `4057d70` y `e657487`, con CI aprobada
 en las ejecuciones 43159286071 y 43159958047. La segunda PR se redirigió a main
-tras integrar su dependencia. Sin despliegue ni aceptación manual en QA compartido;
-la integración no autoriza dinero real. PR #81 quedó integrada en `19a0614`
+tras integrar su dependencia. El usuario confirmó `19a0614` desplegado en su VPS
+el 14/11; sigue pendiente la aceptación manual específica del flujo histórico.
+La integración no autoriza dinero real. PR #81 quedó integrada en `19a0614`
 el 14/11: una captura pendiente impide publicar saldos consolidados vigentes y
 su cierre sincroniza proyecciones/cierre/auditoría atómicamente, probado con
 rollback. Review medium acumulado de `9835ef7` contra `67bba2c` sin hallazgos y
@@ -43,7 +44,8 @@ UI 86aa88f: review medium contra 4057d70 sin defectos accionables. Barrido mediu
 Consulta por servicios reales, Windows/PHP 8.3.16/SQLite en memoria, historias de 30/365/1825 días: tres consultas cada una, sin escrituras; observación local 9.069/628.607/5751.555 ms y memoria incremental 32744/11392/11440 bytes. No es SLA ni prueba de 10 mil créditos. El avance diario existente cuesta más para historias largas; seguimiento de proyecciones/capacidad permanece abierto.
 
 Sin decisiones de negocio bloqueantes. Integración #79 → #80 ya autorizada y
-realizada. Pendientes: despliegue y aceptación manual de QA siguiendo la guía;
+realizada y código desplegado en la revisión `19a0614`, confirmada por el usuario.
+Pendiente: aceptación manual del flujo histórico en QA siguiendo la guía;
 no se acredita cierre de la validación integral Bullet ni del roadmap amplio.
 
 Árbol principal preservado: 14 hashes de archivos preexistentes idénticos y main local/remoto 67bba2c al cierre de implementación. Worktrees anteriores intactos; ambos trabajos en worktrees aislados bajo output/desembolsos-historicos. Diff/hashes previos y logs locales quedan fuera de la entrega.

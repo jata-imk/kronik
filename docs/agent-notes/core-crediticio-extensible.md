@@ -13,8 +13,14 @@ Review medium acumulado de `9835ef7` contra `67bba2c` sin hallazgos y
 competencias MariaDB con proyecciones, PDF y recorridos históricos/Bullet/simple.
 Estado, pruebas y límites en la [Agent Note del tablero](tablero-propuesta-visual.md)
 y [ADR 0046](../explanation/adr-0046-lecturas-financieras-tablero.md).
-Despliegue y QA operativo siguen pendientes; la integración no cierra las tareas
-del core ni acredita aceptación integral Bullet. Sin operaciones sobre la BD real.
+El usuario confirmó `19a0614` desplegado en su VPS el 14/11: reconstrucción y
+diagnóstico de dos créditos sin incidencias, aviso de cobertura resuelto y
+`creditos:proyectar` automático con DONE a las 10:50. Cron activo y enabled;
+administración del VPS exclusivamente por el usuario. El 17/11 confirma además
+merge, despliegue y QA satisfactorios del seguimiento visual #82, integrado en
+`bfa0b87`. Se registra su aceptación general del tablero sin atribuir escenarios
+individuales no detallados. No cierra la aceptación integral Bullet ni las
+capacidades futuras de líneas/disposiciones del core. Detalles en la Agent Note.
 
 ## Retoma documental de PR #65 — 13/11/2026
 

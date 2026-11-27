@@ -161,7 +161,7 @@ class ModulesAndPermissionsSeeder extends Seeder
             'configuracion-empresa' => ['read', 'update'],
             'sucursales' => ['create', 'read', 'update', 'delete'],
             'clientes' => ['create', 'read', 'update', 'delete', 'transfer'],
-            'productos-crediticios' => ['create', 'read', 'update', 'activate', 'retire', 'version', 'simulate', 'manage commissions', 'manage origination'],
+            'productos-crediticios' => ['create', 'read', 'update', 'activate', 'retire', 'version', 'simulate', 'manage commissions', 'manage origination', 'read calendar', 'manage calendar'],
             'plantillas-documentos' => ['create', 'read', 'update', 'activate', 'retire', 'version'],
             'documentos' => ['read', 'generate', 'download'],
             'historial-crediticio' => ['read'],

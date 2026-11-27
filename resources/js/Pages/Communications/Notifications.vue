@@ -1,6 +1,8 @@
 <script setup>
 import AppLayout from "@sakai-vue/layout/AppLayout.vue";
-import { Link, router, useForm, usePage } from "@inertiajs/vue3";
+import { Link, router, usePage } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
+import { confirmFormDiscard } from "@/Utils/unsavedChanges";
 import { computed, ref, watch } from "vue";
 import DocumentEditor from "@/Components/Documents/DocumentEditor.vue";
 import TemplateVariablesPanel from "@/Components/Templates/TemplateVariablesPanel.vue";
@@ -51,20 +53,23 @@ function syncFromServer() {
 watch(() => [props.selected, props.version, props.mode, props.permissions, page.props.contextoOperativo], syncFromServer, { immediate: true, deep: true });
 function create() {
     if (!props.permissions.read || !props.permissions.create) return;
+    if (!confirmFormDiscard(form)) return;
     load();
     form.defaults({ key: "", name: "", description: "", event_type: "payment_received", channel: "sms", format: "text", subject: "", body: "", change_summary: "" });
     form.reset();
     creating.value = true;
 }
 function visit(templateId, versionId, mode = "consulta") {
+    if (!confirmFormDiscard(form)) return;
     form.cancel();
     creating.value = false;
     router.get(route("notificaciones.index"), { ...search.value, plantilla_id: templateId, version_id: versionId, modo: mode }, { preserveScroll: true });
 }
 function save() {
     if (!editable.value || form.processing) return;
-    if (creating.value) form.post(route("notificaciones.store"), { preserveScroll: true });
-    else form.put(route("notificaciones.update", [props.selected.id, props.version.id]), { preserveScroll: true });
+    const options = { preserveScroll: true, onSuccess: () => form.defaults() };
+    if (creating.value) form.post(route("notificaciones.store"), options);
+    else form.put(route("notificaciones.update", [props.selected.id, props.version.id]), options);
 }
 function changeChannel() {
     if (!editable.value || !creating.value) return;
@@ -92,6 +97,7 @@ function action(kind) {
     if (!props.permissions[kind === "duplicate" ? "version" : kind] || !props.version) return;
     const messages = { duplicate: "¿Crear un borrador desde esta versión exacta?", activate: "¿Activar esta versión? Quedará inmutable y cancelará los pendientes de la versión sustituida.", retire: "¿Retirar esta versión y cancelar sus pendientes sin recrearlos?" };
     if (kind === "duplicate" && !props.permissions.version) return;
+    if (!confirmFormDiscard(form)) return;
     if (!window.confirm(messages[kind])) return;
     router.post(route("notificaciones." + kind, kind === "duplicate" ? [props.selected.id, props.version.id] : props.version.id), {}, { preserveScroll: true });
 }

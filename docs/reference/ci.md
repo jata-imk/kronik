@@ -57,11 +57,12 @@ Su evidencia se conserva aparte de los siguientes escenarios Bullet y dual.
 - `npm run build`.
 - `npm run test:unit` con Vitest, Vue Test Utils y jsdom.
 - `php artisan test`.
-- Concurrencia de folios, auditoría, Bullet y Comunicaciones con procesos independientes en MariaDB aislada.
+- Concurrencia de folios, auditoría, Bullet, Comunicaciones y publicaciones de calendario con procesos independientes en MariaDB aislada.
 
 El workflow instala Chromium y ejecuta preflight PDF real y recorridos Playwright
 aislados de gracia, tablero, históricos, Bullet, originación dual, RFC genéricos,
-Comunicaciones, Notificaciones y documentos/consulta de versiones. Conserva las
+Comunicaciones, Notificaciones, documentos/consulta de versiones, calendario y
+navegación protegida (Menubar y sidebar). Conserva las
 trazas/capturas de navegador como artifacts. Los escenarios y comandos vigentes
 son los declarados en el YAML, además de build, Vitest y Pest.
 

@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
-import { Link, router, useForm } from "@inertiajs/vue3";
+import { Link, router } from "@inertiajs/vue3";
+import { useGuardedForm as useForm } from "@/Composables/useGuardedForm";
 import ActionMessage from "@/Components/ActionMessage.vue";
 import FormSection from "@/Components/FormSection.vue";
 import InputLabel from "@/Components/InputLabel.vue";

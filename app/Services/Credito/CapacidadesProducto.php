@@ -32,6 +32,7 @@ final class CapacidadesProducto
             $prefix.'reglas.metodos_amortizacion' => ['required', 'array', 'min:1'],
             $prefix.'reglas.metodos_amortizacion.*' => ['required', Rule::in(CatalogoCapacidadesCredito::valores('metodos_amortizacion', $motor, $configuracion)), 'distinct'],
             $prefix.'reglas.convencion_interes' => ['sometimes', 'required', 'string', Rule::in(CatalogoCapacidadesCredito::valores('convenciones_interes', $motor, $configuracion))],
+            $prefix.'reglas.ajuste_dia_inhabil' => ['sometimes', 'required', Rule::in([CalendarioCrediticioService::CONSERVAR, CalendarioCrediticioService::AJUSTAR])],
             $prefix.'reglas.base_ordinaria' => ['sometimes', 'required', Rule::in(['saldo_insoluto'])],
             $prefix.'reglas.base_moratoria' => ['sometimes', 'required', Rule::in(CatalogoCapacidadesCredito::valores('bases_moratorias', $motor, $configuracion))],
             $prefix.'reglas.politica_interes_bullet' => ['sometimes', 'required', Rule::in(CatalogoCapacidadesCredito::valores('politicas_interes_bullet', $motor, $configuracion))],
@@ -44,6 +45,7 @@ final class CapacidadesProducto
         // Mantener el error histórico de convención en su clave original.
         $motor->validarConvencion(ConvencionInteres::desdeProducto($condiciones));
         Validator::make($prefix === '' ? $condiciones : ['version' => $condiciones], self::reglas($prefix, $motor, $configuracion), [], [
+            $prefix.'reglas.ajuste_dia_inhabil' => 'ajuste por días inhábiles',
             $prefix.'reglas.base_ordinaria' => 'base ordinaria',
             $prefix.'reglas.base_moratoria' => 'base moratoria',
             $prefix.'reglas.politica_interes_bullet' => 'política de intereses Bullet',
