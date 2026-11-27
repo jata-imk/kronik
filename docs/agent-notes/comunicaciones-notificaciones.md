@@ -4,20 +4,24 @@
 
 - [Tarea en Notion](https://app.notion.com/p/3fe61db7db7f81e4af50c4f0f3ab7e41), estado Doing.
 - Destino autorizado: `feat/comunicaciones-notificaciones`, rama original de Bryan.
-- I4: `feat/comunicaciones-i4-cierre`, desde I3 `82c7756`.
+- I4: [PR #97](https://github.com/jata-imk/kronik/pull/97), rama `feat/comunicaciones-i4-cierre` desde I3 `82c7756`.
 - PR: [#91 original](https://github.com/jata-imk/kronik/pull/91), [#93 I0](https://github.com/jata-imk/kronik/pull/93), [#94 I1](https://github.com/jata-imk/kronik/pull/94), [#95 I2](https://github.com/jata-imk/kronik/pull/95), [#96 I3](https://github.com/jata-imk/kronik/pull/96).
 - [Plan de incrementos](../explanation/plan-incrementos-sms.md), [ADR 0049](../explanation/adr-0049-orquestacion-comunicaciones-externas.md), [ADR 0050](../explanation/adr-0050-proveedor-sms-labsmobile.md), [ADR 0051](../explanation/adr-0051-notificaciones-globales-y-previas-html.md).
 - [Guía de VPS y variables](../how-to/preparar-comunicaciones-vps.md), [QA](../how-to/probar-comunicaciones.md), [seguimiento SMS](../reference/seguimiento-sms.md), [auditoría](../reference/auditoria-eventos.md).
 
 ## Estado — 27/11/2026
 
-Cierre técnico I4 en validación. José autorizó consolidar #93–#96 e I4 en la
+**Cierre técnico I4 entregado y consolidado en la rama original de Bryan.** José autorizó consolidar #93–#96 e I4 en la
 rama original, conservando ramas auxiliares. Sustituye el «sin merge» del
 traspaso solo para ese destino. No incluye `main` ni la rama separada de Bryan
 `feat/comunicaciones-whatsapp`. Sin despliegue ni validación externa.
 
 Código final I4: `3f62b15f328afc8ae7b86fff13a41ea3d4612b80`, después de `5fe2d88`.
-Código publicado; PR, CI e integración pendientes de completar en esta sesión.
+HEAD I4 publicado `ce6eabe306796ccfa2a85ca8b4f4038d476cec63`;
+[CI #317 aprobado](https://github.com/jata-imk/kronik/actions/runs/46018325274),
+todos los pasos, incluidos los siete E2E de Notificaciones/HTML/históricos.
+[Revisión terminada](https://github.com/jata-imk/kronik/pull/97#issuecomment-7221167616)
+y [resultado CI previo a integrar](https://github.com/jata-imk/kronik/pull/97#issuecomment-7221402717).
 Pre-push completo repetido: **1,168 aprobadas, dos omitidas optativas y 49,778
 aserciones**, duración 541.21 s; build Vite aprobado. Primera ejecución
 interrumpida sin resultado global, no computada como aprobación.
@@ -86,13 +90,39 @@ CI incluye ahora el harness de concurrencia de comunicaciones y el push al desti
   espera anterior al POST/redirección. Se conservaron traza, captura y vídeo;
   se añadió espera de respuesta y mocks/consola compartidos sin omitir pasos.
   Repetición aislada de política: una aprobada. No se presenta la pasada fallida
-  como aprobación global. CI debe repetir los siete recorridos sobre su SHA.
+  como aprobación global. CI #317 repitió y aprobó los siete sobre `ce6eabe`.
 - PDF real: 9,704 bytes. Guardas Node E2E: cuatro aprobadas. Pint, diff --check,
   UTF-8/LF, enlaces locales, índices y cobertura temática comprobados.
 - Pruebas PHP secuenciales por checkout; revisión estática en paralelo sin PHP.
   No se modificó `.env`, ni se ejecutaron migraciones o limpieza operativas.
 
-## Integración y límites
+## Integración en la rama original
+
+Los merges conservan cada HEAD y su autoría, sin rebase/squash ni borrado de ramas:
+
+| PR | HEAD incorporado | Merge en original |
+| --- | --- | --- |
+| #93 / I0 | `9d0473d` real, incluye `213a4b6` | `02a5c669e8dcef4d03c316ced87b69e78b766087` |
+| #94 / I1 | `85d2db6` | `be75a625d89931e7b68362baa9275367535f5e54` |
+| #95 / I2 | `2c865b1` | `d0f6ac3a78b7a03229e5e90ebd7104b16ab275b9` |
+| #96 / I3 | `82c7756` | `7a89da34fd7a1a01cb6dc850dce74ba82a2a57b0` |
+| #97 / I4 | `ce6eabe` | `13f33272f52c6ea6f5089773e3da31f844f43af7` |
+
+La API rechazó #93 con 409 tanto para su HEAD publicado como para el ref real,
+con mensajes de rama desactualizada/modificada. Se volvió a comprobar que el
+destino seguía `547d9e5` y se consolidaron secuencialmente los cinco HEAD mediante
+Git. El árbol completo de `13f3327` es **idéntico** al de I4 aprobado `ce6eabe`
+(`0a8b3bebdd40207f09d2b51aec9bb24ad216fbfe`), incluida la corrección documental
+I0. No hay resolución de conflictos ni modificaciones funcionales al integrar.
+
+Este cierre documental solo actualiza la nota. La publicación conserva el código
+`3f62b15` probado/revisado y usa la excepción del hook después de comprobar esa
+identidad y los enlaces. La confirmación de refs/PR y el CI por SHA del HEAD final
+del destino se registran en la tarea Notion y el comentario de cierre de #97,
+sin atribuir a ese SHA el CI #317 de otra revisión. El propio historial de esta
+nota identifica su commit documental; no requiere escribir su SHA dentro de sí.
+
+## Límites de integración y despliegue
 
 Antes de consolidar: destino `547d9e5`, main `217acef`, ancestro común `bfa0b87`;
 main/I3 divergían 89/32 commits. Main conserva cambios independientes de pagos,
@@ -109,8 +139,9 @@ el código; no confirma los secretos ni la ejecución de la VPS.
 
 ## Pendientes reales y siguiente paso
 
-Completar publicación/CI e integración autorizada en la rama original y registrar
-SHA, revisiones y resultado vigente. Conservar main y todas las ramas auxiliares.
+I4 no requiere más desarrollo dentro de este alcance. Conservar main y todas las
+ramas auxiliares. Para la próxima validación, obtener primero rama/SHA de la VPS
+y seguir la guía enlazada; si usa main, evaluar una integración posterior separada.
 
 Después del cierre técnico quedan recepción SMS externa autenticada,
 cuenta/ruta mexicana/remitente/tarifas, presupuesto y piloto con números aprobados.
