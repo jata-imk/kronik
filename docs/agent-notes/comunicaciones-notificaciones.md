@@ -1,5 +1,116 @@
 # Comunicaciones y notificaciones
 
+## Retoma vigente — SMS I0, 25/11/2026
+
+**Corrección de alcance confirmada por José el 25/11/2026:** Kronik solo está en
+desarrollo y QA; nunca ha estado en producción, no existen clientes ni datos
+históricos que conservar y los datos de prueba son desechables. La suposición de
+necesitar una migración histórica fue incorrecta. Se elimina ese incremento
+independiente: el siguiente I1 implementa directamente LabsMobile y retira
+Infobip, tratando datos/jobs de prueba mediante limpieza explícita cuando haga
+falta. No desarrollar backfill, compatibilidad de callbacks ni conciliación de
+históricos Infobip. El inventario I0 queda como herramienta opcional de QA.
+La corrección es documental: no se borraron datos ni se ejecutó I1.
+
+José autorizó la implementación y después pidió **una sesión y una PR por
+incremento** para no arrastrar contexto. Cada cierre debe conservar esta Agent
+Note, evidencia en Notion y prompt de continuación. `/review medium` y hallazgos
+resueltos en cada PR; al cerrar SMS, pase acumulado de todas las PR contra
+`ecb9d4a`, sin sustituirlo por las revisiones individuales.
+
+- Rama de I0: `feat/sms-i0-inventario`, creada desde `547d9e5` dentro del worktree
+  `storage/framework/testing/comunicaciones-worktree`. Base de la PR:
+  `feat/comunicaciones-notificaciones`. No se fusionó main ni se forzó historia.
+- [PR #93](https://github.com/jata-imk/kronik/pull/93), abierta y no integrada.
+  Código y pruebas finales `3095384a5be2b94e2f29be35b4ea826ebbbbc764`; arranque `0fe03d5`.
+  El commit documental posterior registra este cierre sin cambiar código.
+- Alcance I0: comando `comunicaciones:inventariar-sms`, servicio agregado de solo
+  lectura, contrato y matriz de compatibilidad. El inventario conserva Infobip y
+  no cambia conexiones, jobs, reglas, proyecciones ni auditoría de negocio.
+- Compatibilidad de QA: se clasifican las siete tablas de comunicaciones en el
+  reinicio existente, respetando sus barreras y claves foráneas, y se corrigen
+  fixtures de menús que chocaban con módulos/vínculos ya registrados. El ciclo
+  completo de reinicio se probó solo en SQLite aislado; no se reinició ningún
+  entorno operativo. No cambia el flujo normal de pagos ni de comunicaciones.
+- El [plan canónico por incrementos](../explanation/plan-incrementos-sms.md)
+  registra las decisiones finales y cruces con main; prevalece sobre alternativas
+  abiertas del traspaso anterior. Una instalación es una financiera; los equipos
+  son departamentos. Credenciales por entorno, plantillas de Notificaciones
+  globales con permisos por acción, sin exclusividad de Super Admin, dos segmentos
+  tras sustitución y cancelación de pendientes al cambiar/retirar redacción.
+- [Tarea de Integraciones creada en Notion](https://app.notion.com/p/42361db7db7f81e6b747c5ea0241cbb4),
+  pendiente para después. No se implementa su catálogo ni se modifican CDC o Meta
+  en I0. Brian conserva WhatsApp/Facebook y su trabajo compartido.
+- Dependencias instaladas desde lockfiles sin cambios versionados; `.env` local
+  sintético con SQLite `:memory:`, correo `array` y envíos desactivados. No se
+  copiaron secretos ni se preparó una BD operativa. PHP 8.3.29 / Node 22.22.3.
+- Prueba nueva del inventario: 14 aprobadas, 116 aserciones. Conjunto final de
+  inventario, menús y reinicio QA: 53 aprobadas, 504 aserciones. Pint aprobado y
+  build Vite aprobado. El pre-push completo sobre `3095384` aprobó **1,016 pruebas,
+  48,249 aserciones**, con dos omitidas optativas (renderer Chromium real y
+  benchmark de cartera). Ejecutó también build sin saltar el hook. UTF-8/LF,
+  salto final y 144 enlaces locales de 15 archivos comprobados.
+- Primera revisión medium sobre `0fe03d5`: señaló la identificación del almacén
+  database activo con varias conexiones. La completitud ya consideraba todos
+  los almacenes; se corrigió además `active_inspectable`, se agregó `active` por
+  almacén y se probaron ambas selecciones de cola. La revisión del rango de esta
+  PR se repitió después de los cambios de código y fixtures.
+- Segunda `/review medium`: Codex CLI 0.172.0 con esfuerzo medium, base
+  `547d9e5` y código `b6899f5`, terminó sin defectos accionables. Se revisó todo
+  el diff de la PR, incluidos los ajustes de QA. El señalamiento anterior quedó
+  resuelto; no hay hallazgos de código pendientes. El pase acumulado de SMS contra
+  `ecb9d4a` sigue siendo requisito del cierre final, no está acreditado por esta revisión.
+- Ajuste final de portabilidad de pruebas `3095384`: el esquema ausente se
+  simula en otra conexión SQLite, sin renombrar tablas de la aplicación ni DDL
+  en su transacción. Las 14 pruebas/116 aserciones pasaron de nuevo. Tercera
+  revisión medium del diff completo de la PR sobre ese SHA: sin defectos
+  accionables. Después pasó también el pre-push completo y build citados arriba.
+- Publicación Git confirmada a `origin/feat/sms-i0-inventario`; Notion registra
+  PR y evidencia. CI remoto y cualquier integración deben comprobarse por su SHA
+  al retomar; no se afirma despliegue ni validación contra proveedores.
+- No hay migraciones, seeders ni variables nuevas de este incremento. El comando
+  CLI de consulta no necesita evento auditable nuevo; justificación y pruebas
+  enlazadas desde la matriz. No hay UI nueva ni E2E adicional requerido para I0.
+
+### Siguiente sesión
+
+Retomar **I1, sustitución directa de Infobip por LabsMobile**, después de verificar
+el estado y SHA de la
+[PR I0 #93](https://github.com/jata-imk/kronik/pull/93). Conservar el código revisado de I0 aunque aún no esté integrado y no asumir
+que publicar una rama equivale a integración. No empezar I2–I4 en esa sesión.
+Resolver primero cualquier hallazgo pendiente de I0 y elegir la base de la nueva
+PR desde el estado real; nunca mezclar main ni sobrescribir comunicaciones.
+
+Prompt de continuación:
+
+> Continuemos SMS de Kronik, exclusivamente el incremento I1 (sustitución directa por LabsMobile).
+> Trabaja en C:\Users\jose.tejero\Documents\Proyectos\kronik\storage\framework\testing\comunicaciones-worktree.
+> Lee AGENTS.md, docs/agent-notes/comunicaciones-notificaciones.md,
+> docs/explanation/plan-incrementos-sms.md, docs/reference/inventario-sms.md y el
+> alcance vigente de Notion 3fe61db7db7f81e4af50c4f0f3ab7e41.
+> I0 está en la PR #93 https://github.com/jata-imk/kronik/pull/93,
+> rama feat/sms-i0-inventario, código y pruebas revisados 3095384. Verifica revisiones, CI y estado de
+> integración antes de elegir la rama de I1; preserva todo el trabajo compartido.
+> Base funcional del barrido final: ecb9d4a. No fusiones main ni habilites tráfico.
+> Kronik solo existe en dev/QA: nunca estuvo en producción, no hay clientes ni
+> históricos que conservar y sus datos de prueba son desechables. No implementes
+> migración histórica ni compatibilidad con Infobip. El inventario I0 es opcional.
+> Implementa solo I1: transporte LabsMobile, configuración por entorno, UI sin
+> escritura de secretos, comprobación de conexión, barrera SMS, límites y retiro
+> activo de Infobip, con pruebas aisladas y auditoría. Resuelve datos y jobs de
+> prueba mediante limpieza explícita cuando corresponda, sin purgar colas ajenas
+> ni modificar correo/Meta. Guarda proveedor/correlación de los nuevos intentos.
+> Credenciales por entorno; plantillas globales con permisos por acción; equipos
+> son departamentos, no financieras. No implementes el catálogo de Integraciones,
+> que tiene su tarea independiente, ni seguimiento/editor de incrementos posteriores.
+> Publica la PR del incremento, ejecuta /review medium y resuelve hallazgos.
+> Actualiza documentación, Agent Note y Notion; entrega prompt para I2.
+> Una sesión por incremento. Al terminar I4 exige pase del rango completo y todas
+> las PR contra ecb9d4a antes de cerrar la funcionalidad.
+
+Si algún incremento añade tablas, clasificarlas también en el reinicio QA y mantener su
+regresión en esa misma PR. I0 descubrió y corrigió ese faltante de la base anterior.
+
 ## Referencias
 
 - [Requisito de Notion](https://app.notion.com/p/Kronik-Comunicaciones-por-canales-env-os-y-seguimiento-3fe61db7db7f81e4af50c4f0f3ab7e41) y [copia literal conservada](../reference/comunicaciones-por-canales-envios-y-seguimiento.md).
@@ -119,9 +230,10 @@ Punto de entrada de la siguiente sesión:
    junto con el alcance vigente de Notion.
 3. Proponer un incremento de reemplazo completo de Infobip: transporte,
    configuración, UI, conexión, webhook/conciliación, pruebas, credenciales,
-   jobs pendientes y procedencia histórica. Hay referencias activas en varias
-   capas y las salidas no guardan un proveedor propio; no borrar evidencia ni
-   mantener un proveedor de respaldo implícito.
+   jobs pendientes. La petición inicial de procedencia histórica queda sustituida
+   por la confirmación del 25/11/2026: solo existen dev/QA y datos desechables.
+   Hay referencias activas en varias capas; no mantener un proveedor de respaldo
+   implícito ni desarrollar compatibilidad histórica innecesaria.
 4. Evaluar la propuesta de editor visual con categoría Notificaciones: compartir
    inserción/búsqueda de variables, texto plano, vista previa y segmentación
    después de sustituir variables. Decidir alcance global/equipo, permisos,

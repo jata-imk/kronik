@@ -21,6 +21,8 @@ class ResetDevelopmentDataService
 
     // Child tables precede parents. Foreign keys remain enabled throughout the reset.
     private const TABLES = [
+        'communication_webhook_events', 'communication_deliveries', 'communication_consents',
+        'communication_rules', 'communication_channels', 'communication_events', 'operator_notifications',
         'credito_lectura_obligaciones', 'credito_lecturas',
         'credito_capturas_historicas', 'credito_cronogramas', 'credito_movimientos', 'credito_pagos', 'credito_desembolsos', 'creditos',
         'solicitud_formalizaciones', 'solicitud_firmas', 'solicitud_paquetes',

@@ -12,6 +12,7 @@
 - [Notificaciones internas de operadores](notificaciones-internas.md)
 - [Eventos candidatos de comunicación](eventos-comunicacion.md)
 - [Canales externos de comunicación](canales-comunicacion.md)
+- [Inventario de solo lectura previo al corte SMS](inventario-sms.md)
 - [Automatizacion de Documentacion](automatizacion-documentacion.md)
 - [CI](ci.md)
 - [Comandos Artisan](comandos-artisan.md)

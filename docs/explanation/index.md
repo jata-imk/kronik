@@ -1,5 +1,7 @@
 # Explicación
 
+- [Plan por incrementos de SMS: decisiones, compatibilidad y traspasos](plan-incrementos-sms.md).
+
 - [Evaluación del editor para plantillas de notificaciones](editor-plantillas-notificaciones.md).
 
 - [Investigación de LabsMobile para SMS: estados, cobertura y piloto](integracion-sms-labsmobile.md).

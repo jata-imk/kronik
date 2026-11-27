@@ -295,6 +295,23 @@ con dinero real. Véase [ADR 0037](../explanation/adr-0037-cobertura-tecnica-aud
 
 ## Mantener la cobertura
 
+### Inventario técnico SMS — I0, 25/11/2026
+
+`InventariarSms` y `SmsMigrationInventory::collect` solo leen agregados de
+conexiones, salidas, callbacks y almacenamiento de colas. No consultan contenido
+documental ni descifran credenciales, ejecutan envíos o cambian estado de negocio.
+No requieren un evento nuevo ni agregan filas por observación; los emisores de
+comunicaciones anteriores permanecen vigentes. Acceso técnico CLI, sin sujeto,
+actor funcional ni permisos web nuevos. `SmsMigrationInventoryTest` comprueba
+ausencia de nuevas actividades y escrituras, privacidad, repetición y cero HTTP.
+
+La compatibilidad del reinicio QA clasifica las siete tablas de comunicaciones
+sin añadir otra acción de mantenimiento: conserva el registro existente en
+`development_data_resets` y sus conteos. El reinicio exige sus barreras previas y
+no contacta proveedores; `ResetDevelopmentDataMinimalTest` comprueba limpieza del
+ciclo y comunicaciones con claves foráneas habilitadas. No se audita el contenido
+de conexiones, mensajes o consentimientos eliminados.
+
 Toda nueva acción debe añadir/ajustar emisor y prueba en la misma entrega y actualizar
 esta matriz. Cubrir permisos, actor/sujeto, contexto original, resultado, privacidad,
 rechazos y rollback; añadir reintento/concurrencia cuando corresponda. Los cálculos

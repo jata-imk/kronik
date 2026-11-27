@@ -99,6 +99,14 @@ Consultar la [matriz de auditoría](auditoria-eventos.md).
 
 ## Colas
 
+### Inventario previo al corte SMS
+
+`php artisan comunicaciones:inventariar-sms` consulta conexiones SMS, salidas,
+callbacks y colas de comunicaciones sin escribir ni enviar. `--json` produce el
+informe procesable; retorna 1 si la observación está incompleta. No inspecciona
+Redis/SQS/Beanstalkd ni certifica preparación para el corte. Ver el
+[contrato del inventario](inventario-sms.md) antes de ejecutarlo en otro entorno.
+
 ```bash
 php artisan queue:work
 ```

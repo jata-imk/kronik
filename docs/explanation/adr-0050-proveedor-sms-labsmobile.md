@@ -43,7 +43,10 @@ Estas preguntas delimitan la prueba de la integración, sin reabrir la elección
 de proveedor ya aceptada. No hay migraciones ni cambios funcionales en este ADR.
 
 El [plan de sustitución](integracion-sms-labsmobile.md#sustitución-del-código-infobip)
-debe incluir las referencias activas, configuración, jobs y cualquier histórico
-del proveedor anterior antes de retirar código. La propuesta de reutilizar
+debe incluir las referencias activas, configuración y jobs del proveedor anterior
+antes de retirar código. José confirmó el 25/11/2026 que solo existen desarrollo
+y QA, sin producción, clientes ni históricos que conservar; los datos de prueba
+son desechables. Se sustituye Infobip directamente, con limpieza explícita cuando
+corresponda, sin migración histórica ni convivencia de proveedores. La propuesta de reutilizar
 el [editor documental](editor-plantillas-notificaciones.md) sigue en evaluación;
 no forma parte de la decisión de proveedor ya aceptada.

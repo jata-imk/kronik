@@ -16,6 +16,10 @@ La rama incluye la bandeja contextual, eventos de pago/vencimiento y orquestaci�
 
 ## Seguimiento
 
+- [Plan SMS por incrementos y sesiones, con matriz de compatibilidad](../explanation/plan-incrementos-sms.md).
+- [Inventario previo al corte SMS: comando, alcance y límites](../reference/inventario-sms.md).
+- [Tarea posterior: catálogo de Integraciones por entorno](https://app.notion.com/p/42361db7db7f81e6b747c5ea0241cbb4).
+
 - [Evaluación de editor, variables y categoría de notificaciones](../explanation/editor-plantillas-notificaciones.md).
 - [Investigación de LabsMobile: API, estados, OMV y caducidad](../explanation/integracion-sms-labsmobile.md).
 - [ADR 0050: elección de LabsMobile para SMS](../explanation/adr-0050-proveedor-sms-labsmobile.md).
